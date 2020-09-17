@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "Modo secur de &brandShortName;">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; ora flue in Modo secur, que temporarimente disactiva tu parametros personalisate, themas e extensiones.">
+<!ENTITY safeModeDescription2.label       "Tu pote render permanente alcun o tote iste cambios:">
+
+<!ENTITY disableAddons.label              "Disactivar tote le additivos">
+<!ENTITY disableAddons.accesskey          "D">
+
+<!ENTITY resetToolbars.label              "Remontar barras de utensiles e controlos">
+<!ENTITY resetToolbars.accesskey          "R">
+
+<!ENTITY changeAndRestartButton.label     "Facer cambios e reinitiar">
+<!ENTITY changeAndRestartButton.accesskey "c">
+
+<!ENTITY continueButton.label             "Continuar in modo secur">
+<!ENTITY continueButton.accesskey         "C">

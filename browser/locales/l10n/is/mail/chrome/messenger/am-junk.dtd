@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Ruslpóstsstillingar">
+<!ENTITY trainingDescription.label "Ef þetta er gert virkt, verðurðu fyrst að þjálfa &brandShortName; til að bera kennsl á ruslpóst með því að nota ruslpóst takkann til að merkja póst sem ruslpóst eða ekki. Þú þarft að merkja bæði ruslpóst og ekki ruslpóst. Eftir það mun &brandShortName; geta merkt ruslpóst sjálfkrafa.">
+<!ENTITY level.label "Virkja þjálfaða ruslpóstssíu fyrir þennan reikning">
+<!ENTITY level.accesskey "e">
+
+<!ENTITY move.label "Færa ruslpóst í:">
+<!ENTITY move.accesskey "F">
+<!ENTITY junkFolderOn.label "&quot;Ruslpóst&quot; mappa á:">
+<!ENTITY junkFolderOn.accesskey "R">
+<!ENTITY otherFolder.label "Annað:">
+<!ENTITY otherFolder.accesskey "A">
+<!ENTITY purge1.label "Eyða sjálfkrafa ruslpósti eldri en">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "daga">
+
+<!ENTITY whitelistHeader.label "Ekki merkja sjálfkrafa póst sem ruslpóst ef sendandi er í: ">
+<!ENTITY whitelistHeader.accesskey "d">
+
+<!ENTITY ispHeadersWarning.label "Ef gert virkt, mun &brandShortName; sjálfkrafa merkja þann póst sem ber þetta ytra auðkenni sem ruslpóst.">
+<!ENTITY ispHeaders.label "Treysta ruslpóstshausum sem eru búnir til af: ">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "Val">
+<!ENTITY junkActions.label "Viðtökustaður og varðveisla">
+
+<!ENTITY globalJunkPrefs.label "Víðværar ruslpóstsstillingar…">
+<!ENTITY globalJunkPrefs.accesskey "V">

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Poskićowarja wotinstalować">
+<!ENTITY providerUninstall.accept.label                    "Wubraneho wotskazać">
+<!ENTITY providerUninstall.accept.accesskey                "u">
+<!ENTITY providerUninstall.cancel.label                    "Přidatk wobchować">
+<!ENTITY providerUninstall.cancel.accesskey                "b">
+<!ENTITY providerUninstall.preName.label                   "Chceće slědowaceho poskićowarja wotinstalować abo znjemóžnić:">
+<!ENTITY providerUninstall.postName.label                  "To zawinuje, zo slědowace protyki so znjemóžnja.">
+<!ENTITY providerUninstall.reinstallNote.label             "Jeli nochceće tutoho poskićowarja znowa instalować, móžeće protyki tutoho poskićowarja wotskazać.">

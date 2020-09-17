@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+<!-- Toolbar-only items -->
+
+
+<!ENTITY compositionToolbar.tooltip "Bar Offer Ysgrifennu">
+<!ENTITY previewToolbarCmd.label "Pori">
+<!ENTITY previewToolbarCmd.tooltip "Llwytho'r dudalen yn y porwr">
+<!-- File menu items -->
+
+<!ENTITY exportToTextCmd.label "Allforio i Destun…">
+<!ENTITY exportToTextCmd.accesskey "D">
+<!ENTITY previewCmd.label "Pori'r Dudalen">
+<!ENTITY previewCmd.accesskey "P">
+<!ENTITY sendPageCmd.label "Anfon y Dudalen…">
+<!ENTITY sendPageCmd.accesskey "A">
+<!-- View menu items -->
+
+<!ENTITY compositionToolbarCmd.label "Bar Offer Ysgrifennu">
+<!ENTITY compositionToolbarCmd.accesskey "Y">
+<!ENTITY formattingToolbarCmd.label "Bar Offer Fformatio">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Bar Offer Modd Golygu">
+<!ENTITY editmodeToolbarCmd.accesskey "M">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "Fformat">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "Grid lleoli">
+<!ENTITY grid.accesskey "G">
+<!ENTITY pageProperties.label "Teitl Tudalen a Phriodoleddau…">
+<!ENTITY pageProperties.accesskey "T">
+<!-- Tools menu items -->
+
+<!ENTITY validateCmd.label "Gwirio HTML">
+<!ENTITY validateCmd.accesskey "G">
+<!-- Display Mode toolbar and View menu items -->
+
+<!ENTITY NormalModeTab.label "Arferol">
+<!ENTITY NormalMode.label "Modd Golygu Arferol">
+<!ENTITY NormalMode.accesskey "A">
+<!ENTITY NormalMode.tooltip "Dangos borderi tabl ac angorau a enwyd">
+<!ENTITY AllTagsModeTab.label "Tagiau HTML">
+<!ENTITY AllTagsMode.label "Tagiau HTML">
+<!ENTITY AllTagsMode.accesskey "H">
+<!ENTITY AllTagsMode.tooltip "Dangos eiconau am bob tag HTML">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "De i Chwith">
+<!ENTITY HTMLSourceModeTab.label "Cod gwreiddiol">
+<!ENTITY HTMLSourceMode.label "Cod Gwreiddiol HTML">
+<!ENTITY HTMLSourceMode.accesskey "C">
+<!ENTITY HTMLSourceMode.tooltip "Golygu Cod Gwreiddiol HTML">
+<!ENTITY PreviewModeTab.label "Rhagolwg">
+<!ENTITY PreviewMode.label "Rhagolwg">
+<!ENTITY PreviewMode.accesskey "R">
+<!ENTITY PreviewMode.tooltip "Dangos fel WYSWYG (Be ti'n gweld yw be ti'n cael - fel yn y porwr)">

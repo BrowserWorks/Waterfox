@@ -1,0 +1,172 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "页面载入出错">
+<!ENTITY retry.label "重试">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "无法连接">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "此地址访问受限">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "找不到服务器">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> 
+<li>检查看看网址有没有输入错误，比如把 
+<strong>www</strong>.example.com 输入成了 
+<strong>ww</strong>.example.com</li> 
+<div id='searchbox'> 
+<input id='searchtext' type='search'></input> 
+<button id='searchbutton'>搜索</button> 
+</div> 
+<li>如果您无法载入任何页面，请检查您的设备的数据或 Wi-Fi 连接。 
+<button id='wifi'>启用 Wi-Fi</button> 
+</li> 
+</ul>">
+
+<!ENTITY fileNotFound.title "找不到文件">
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>请检查文件名是否有大小写错误、输错字。</li> 
+<li>请检查文件是否已被移动，重命名或删除。</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.title "访问该文件的要求被拒绝">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>文件可能已被移走、移除，或者没有访问该文件的权限。</li>
+</ul>
+">
+
+<!ENTITY generic.title "噢！">
+<!ENTITY generic.longDesc "<p>&brandShortName; 因未知原因无法载入此页面。</p>">
+
+<!ENTITY malformedURI.title "网址无效">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> 
+<li>网址通常长得像 
+<strong>http://www.example.com/</strong></li> 
+<div id='searchbox'> 
+<input id='searchtext' type='search'></input> 
+<button id='searchbutton'>搜索</button> 
+</div> 
+<li>请确认您使用的是正斜杠（即 
+<strong>/</strong>）。</li> 
+</ul>">
+
+<!ENTITY netInterrupt.title "连接被中断">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "文档已过期">
+<!ENTITY notCached.longDesc "<p>您请求的文档已无法在 &brandShortName; 的缓存中找到。</p><ul><li>为了您的安全，&brandShortName; 不会自动重新获取敏感信息文档。</li><li>您可以点击“重试”来重新请求从网站获取该文档。</li></ul>">
+
+<!ENTITY netOffline.title "脱机模式">
+
+<!ENTITY contentEncodingError.title "内容编码错误">
+<!ENTITY contentEncodingError.longDesc "<ul><li>建议向此网站的管理员反馈这个问题。</li></ul>">
+
+<!ENTITY unsafeContentType.title "不安全的文件类型">
+<!ENTITY unsafeContentType.longDesc "<ul><li>建议向此网站的管理员反馈这个问题。</li></ul>">
+
+<!ENTITY netReset.title "连接被重置">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "连接超时">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "无法理解该地址">
+<!ENTITY unknownProtocolFound.longDesc "<ul> 
+<li>您可能需要安装其他软件才能打开此地址。</li> 
+</ul>">
+
+<!ENTITY proxyConnectFailure.title "代理服务器拒绝连接">
+<!ENTITY proxyConnectFailure.longDesc "<ul><li>请检查浏览器的代理服务器设置是否正确。</li><li>请联系您的网络管理员以确认代理服务器工作正常。</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "无法找到代理服务器">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> 
+<li>请检查代理服务器设置，确保其设置正确。</li> 
+<li>请检查您的设备是否有可使用的数据或 Wi-Fi 连接。 
+<button id='wifi'>启用 Wi-Fi</button> 
+</li> 
+</ul>">
+
+<!ENTITY redirectLoop.title "此页面不能正确地重定向">
+<!ENTITY redirectLoop.longDesc "<ul><li>此问题有时可能是因为禁用或拒绝接受 Cookie 导致的。</li></ul>">
+
+<!ENTITY unknownSocketType.title "意外的服务器响应">
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>请检查您的系统安装了个人安全管理程序。</li> 
+<li>这可能是因为服务器端非标准的配置所导致。</li> 
+</ul>">
+
+<!ENTITY nssFailure2.title "安全连接失败">
+<!ENTITY nssFailure2.longDesc2 "<ul> 
+<li>您尝试查看的页面无法显示，因为已收到数据的可靠性无法证实。</li> 
+<li>建议向此网站的管理员反馈这个问题。</li> 
+</ul>">
+
+<!ENTITY nssBadCert.title "安全连接失败">
+<!ENTITY nssBadCert.longDesc2 "<ul> 
+<li>这可能是服务器配置的问题，或是有人尝试冒充该服务器所致。</li> 
+<li>如果您之前曾成功连接该服务器，那么此这个错误可能是暂时的，您可以稍后再试试看。</li> 
+</ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> 
+<li>该网站可能暂时无法使用或太过忙碌。请稍后再试一次。</li> 
+<li>如果您无法载入任何页面，请检查您的移动设备的数据或 Wi-Fi 连接。 
+<button id='wifi'>启用 Wi-Fi</button> 
+</li> 
+</ul>">
+
+<!ENTITY cspBlocked.title "已依照内容安全政策而拦截">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; 阻止了这个页面的载入，其内容安全政策不允许其以这种方式被载入。</p>">
+
+<!ENTITY corruptedContentErrorv2.title "内容损坏错误">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>您尝试查看的页面无法显示，因为检测到传输的数据含有错误。</p><ul><li>建议向此网站的管理员反馈这个问题。</li></ul>">
+
+<!ENTITY securityOverride.linkText "或者，您可以将此网站设为例外…">
+<!ENTITY securityOverride.getMeOutOfHereButton "带我离开！">
+<!ENTITY securityOverride.exceptionButtonLabel "添加例外…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>您不应在使用您不完全信任的互联网连接时，或在不曾看到关于此服务器的警告的情况下添加例外。</p> 
+ 
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> 
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "远程 XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>建议向此网站的管理员反馈这个问题。</li></ul></p>">
+
+<!ENTITY sslv3Used.title "无法安全连接">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "高级信息：SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "您的连接不安全">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "高级信息：SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "您的连接不安全">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> 使用了过时的安全技术，容易遭受攻击。攻击者可能轻易获取您认为安全传输的信息。需要网站管理员先修正服务器，然后您才能访问此网站。</p><p>错误代码：NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "网络协议错误">
+<!ENTITY networkProtocolError.longDesc "<p>您尝试查看的页面无法显示，因为检测到了网络协议中的错误。</p><ul><li>建议向此网站的管理员反馈这个问题。</li></ul>">

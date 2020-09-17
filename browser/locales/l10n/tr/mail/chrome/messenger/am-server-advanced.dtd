@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Gelișmiș Hesap Ayarları">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP sunucu dizini:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Sadece abone olunan dizinleri göster">
+<!ENTITY usingSubscription.accesskey "e">
+<!ENTITY dualUseFolders.label "Sunucu, alt dizin ve ileti içeren dizinleri destekliyor">
+<!ENTITY dualUseFolders.accesskey "S">
+<!ENTITY maximumConnectionsNumber.label "Önbelleğe alınacak bağlantı sayısı üst sınırı">
+<!ENTITY maximumConnectionsNumber.accesskey "n">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Bu tercihler IMAP sunucunuzdaki ad uzaylarını tanımlar">
+<!ENTITY personalNamespace.label "Kişisel ad uzayı:">
+<!ENTITY personalNamespace.accesskey "z">
+<!ENTITY publicNamespace.label "Genel (paylaşılan):">
+<!ENTITY publicNamespace.accesskey "e">
+<!ENTITY otherUsersNamespace.label "Diğer kullanıcılar:">
+<!ENTITY otherUsersNamespace.accesskey "i">
+<!ENTITY overrideNamespaces.label "Sunucunun bu ad uzaylarının üstüne yazmasına izin ver">
+<!ENTITY overrideNamespaces.accesskey "u">
+<!ENTITY pop3DeferringDesc.label "Bu hesabın sunucusundan e-posta indirirken yeni iletileri depolamak için şu dizini kullan:">
+<!ENTITY accountInbox.label "Bu hesabın gelen kutusu">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Farklı bir hesabın gelen kutusu">
+<!ENTITY deferToServer.accesskey "k">
+<!ENTITY deferGetNewMail.label "Yeni e-postaları alırken bu sunucuyu dahil et">
+<!ENTITY deferGetNewMail.accesskey "Y">

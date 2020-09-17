@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label "Recercar de messatges dins :">
+<!ENTITY searchHeading.accesskey     "d">
+<!ENTITY searchSubfolders.label      "Recercar dins los sosdorsièrs">
+<!ENTITY searchSubfolders.accesskey  "s">
+<!ENTITY resetButton.label           "Escafar">
+<!ENTITY resetButton.accesskey       "f">
+<!ENTITY openButton.label            "Dobrir">
+<!ENTITY openButton.accesskey        "o">
+<!ENTITY deleteButton.label          "Escafar">
+<!ENTITY deleteButton.accesskey      "e">
+<!ENTITY searchDialogTitle.label "Recercar los messatges">
+<!ENTITY results.label               "Resultats">
+<!ENTITY closeCmd.key                "W">
+<!ENTITY saveAsVFButton.label        "Salvar coma dorsièr virtual">
+<!ENTITY saveAsVFButton.accesskey    "v">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Recercar dins :">
+<!ENTITY abSearchHeading.accesskey   "d">
+<!ENTITY propertiesButton.label      "Proprietats">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "Escriure">
+<!ENTITY composeButton.accesskey     "r">
+<!ENTITY abSearchDialogTitle.label   "Recèrca avançada dins lo quasernet d'adreças">
+

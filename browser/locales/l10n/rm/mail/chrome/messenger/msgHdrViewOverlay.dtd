@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "A">
+<!ENTITY fromField4.label "Da">
+<!ENTITY senderField4.label "Speditur">
+<!ENTITY author.label "Autur(a)">
+<!ENTITY organizationField4.label "Organisaziun">
+<!ENTITY replyToField4.label "Respunder a">
+
+<!ENTITY subjectField4.label "Object">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Gruppas da discussiun">
+<!ENTITY followupToField4.label "Followup-to">
+<!ENTITY tagsHdr4.label "Etichettas">
+<!ENTITY dateField4.label "Data">
+<!ENTITY userAgentField4.label "User-agent">
+<!ENTITY referencesField4.label "Referenzas">
+<!ENTITY messageIdField4.label "ID dal messadi">
+<!ENTITY inReplyToField4.label "Sco resposta a">
+<!ENTITY originalWebsite4.label "pagina web">
+
+<!ENTITY hdrArchiveButton1.label "Archivar">
+<!ENTITY hdrArchiveButton1.tooltip "Archivar quest messadi">
+<!ENTITY hdrSmartReplyButton1.label "Respunder smart">
+<!ENTITY hdrReplyButton1.label "Respunder">
+<!ENTITY hdrReplyButton2.tooltip "Respunder al speditur da quest messadi">
+<!ENTITY hdrReplyAllButton1.label "Respunder a tuts">
+<!ENTITY hdrReplyAllButton1.tooltip "Respunder al speditur ed a tut ils destinaturs">
+<!ENTITY hdrReplyListButton1.label "Respunder a la glista">
+<!ENTITY hdrReplyListButton1.tooltip "Respunder a la glista dad e-mail">
+<!ENTITY hdrFollowupButton1.label "Followup">
+<!ENTITY hdrFollowupButton1.tooltip "Trametter in followup a questa gruppa da discussiun">
+<!ENTITY hdrForwardButton1.label "Renviar">
+<!ENTITY hdrForwardButton1.tooltip "Renviar quest messadi">
+<!ENTITY hdrJunkButton1.label "Nungiavischà">
+<!ENTITY hdrJunkButton1.tooltip "Marcar quest messadi sco nungiavischà">
+<!ENTITY hdrTrashButton1.label "Stizzar">
+<!ENTITY hdrTrashButton1.tooltip "Stizzar quest messadi">
+
+<!ENTITY hdrViewToolbarShowFull.label "Mussar las iconas ed il text">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "Mussar mo las iconas">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "I">
+<!ENTITY hdrViewToolbarShowText.label "Mussar mo il text">
+<!ENTITY hdrViewToolbarShowText.accesskey "T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Adina mussar respunder al speditur">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY otherActionsButton2.label "Dapli">
+<!ENTITY otherActionsButton.tooltip "Ulteriuras acziuns">
+<!ENTITY otherActionsOpenConversation1.label "Avrir sco conversaziun">
+<!ENTITY otherActionsOpenConversation1.accesskey "c">
+<!ENTITY otherActionsOpenInNewWindow1.label "Avrir en ina nova fanestra">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "A">
+<!ENTITY otherActionsOpenInNewTab1.label "Avrir en in nov tab">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "t">
+<!ENTITY markAsReadMenuItem1.label "Marcar sco legì">
+<!ENTITY markAsReadMenuItem1.accesskey "r">
+<!ENTITY markAsUnreadMenuItem1.label "Marcar sco nunlegì">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "Memorisar sut…">
+<!ENTITY saveAsMenuItem1.accesskey "s">
+<!ENTITY viewSourceMenuItem1.label "Vesair il text da funtauna">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "Stampar…">
+<!ENTITY otherActionsPrint1.accesskey "p">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Mussar sco standard la trav d'agiuntas">
+<!ENTITY startExpandedCmd.accesskey    "S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Avrir">
+<!ENTITY openAttachmentCmd.accesskey    "A">
+<!ENTITY saveAsAttachmentCmd.label    "Memorisar sut…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "s">
+<!ENTITY detachAttachmentCmd.label    "Statgar…">
+<!ENTITY detachAttachmentCmd.accesskey    "t">
+<!ENTITY deleteAttachmentCmd.label    "Stizzar">
+<!ENTITY deleteAttachmentCmd.accesskey    "z">
+<!ENTITY openAllAttachmentsCmd.label    "Avrir tuts…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "v">
+<!ENTITY saveAllAttachmentsCmd.label    "Memorisar tuts…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+<!ENTITY detachAllAttachmentsCmd.label    "Statgar tuts…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "t">
+<!ENTITY deleteAllAttachmentsCmd.label    "Stizzar tuts…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "u">
+
+<!ENTITY openAttachment.tooltip "Avrir la datoteca agiuntada">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Mussar l'ordinatur da destinaziun">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "o">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Mussar en il finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Memorisar">
+<!ENTITY saveAttachmentButton1.tooltip     "Memorisar la datoteca agiuntada">
+<!ENTITY saveAllAttachmentsButton1.label   "Memorisar tuts">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Memorisar tut las datotecas agiuntadas">
+
+<!ENTITY copyLinkCmd.label        "Copiar l'adressa da la colliaziun">
+<!ENTITY copyLinkCmd.accesskey    "C">
+
+<!ENTITY CopyMessageId.label "Copiar la ID dal messadi…">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "Avrir il messadi che correspunda a la ID">
+<!ENTITY OpenMessageForMsgId.accesskey "A">
+<!ENTITY OpenBrowserWithMsgId.label "Avrir il navigatur cun la ID da messadi correspundenta">
+<!ENTITY OpenBrowserWithMsgId.accesskey "n">

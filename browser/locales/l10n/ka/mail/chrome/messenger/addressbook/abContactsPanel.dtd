@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "პარამეტრები">
+<!ENTITY propertiesMenu.accesskey           "პ">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "მისამართების წიგნაკის პარამეტრები">
+<!ENTITY abPropertiesMenu.accesskey         "წ">
+<!ENTITY contactPropertiesMenu.label        "პირის მონაცემების პარამეტრები">
+<!ENTITY contactPropertiesMenu.accesskey    "პ">
+<!ENTITY mailingListPropertiesMenu.label    "საფოსტო სიის პარამეტრები">
+<!ENTITY mailingListPropertiesMenu.accesskey "პ">
+
+<!ENTITY abContextMenuButton.tooltip        "მისამართების წიგნაკის კონტექსტური მენიუ">
+<!ENTITY addressbookPicker.label            "წიგნაკი:">
+<!ENTITY addressbookPicker.accesskey        "კ">
+<!ENTITY searchContacts.label               "ხალხის ძიება:">
+<!ENTITY searchContacts.accesskey           "ნ">
+<!ENTITY SearchNameOrEmail.label            "წერილის სახელი">
+
+<!ENTITY addtoToFieldMenu.label             "დამატება ველში">
+<!ENTITY addtoToFieldMenu.accesskey         "ვ">
+<!ENTITY addtoCcFieldMenu.label             "დამატება ასლის ველში">
+<!ENTITY addtoCcFieldMenu.accesskey         "ს">
+<!ENTITY addtoBccFieldMenu.label            "დამატება ფარული ასლის ველში">
+<!ENTITY addtoBccFieldMenu.accesskey        "ფ">
+<!ENTITY deleteAddrBookCard.label           "წაშლა">
+<!ENTITY deleteAddrBookCard.accesskey       "წ">
+<!ENTITY propertiesContext.label            "პარამეტრები">
+<!ENTITY propertiesContext.accesskey        "პ">
+<!ENTITY abPropertiesContext.label          "პარამეტრები">
+<!ENTITY abPropertiesContext.accesskey      "რ">
+<!ENTITY editContactContext.label           "პირის მონაცემების ჩასწორება">
+<!ENTITY editContactContext.accesskey       "ჩ">
+<!ENTITY editMailingListContext.label       "სიის ჩასწორება">
+<!ENTITY editMailingListContext.accesskey   "ს">
+
+<!ENTITY newContactAbContext.label          "ახალი პირი">
+<!ENTITY newContactAbContext.accesskey      "კ">
+<!ENTITY newListAbContext.label             "ახალი სია">
+<!ENTITY newListAbContext.accesskey         "ს">
+
+<!ENTITY toButton.label                     "დამატება ველში - ვის:">
+<!ENTITY toButton.accesskey                 "ვ">
+<!ENTITY ccButton.label                     "დამატება ველში - ასლი:">
+<!ENTITY ccButton.accesskey                 "ს">
+<!ENTITY bccButton.label                    "ფარულ ასლებში დამატება:">
+<!ENTITY bccButton.accesskey                "ფ">

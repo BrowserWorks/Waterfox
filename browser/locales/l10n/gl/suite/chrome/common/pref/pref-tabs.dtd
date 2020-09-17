@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Navegación con lapelas">
+<!ENTITY tabDisplay.label "Visualización de lapelas">
+<!ENTITY autoHide.label "Ocultar a barra de lapelas cando só teña unha lapela aberta">
+<!ENTITY autoHide.accesskey "d">
+<!ENTITY background.label "Cambiar a novas lapelas abertas desde ligazóns">
+<!ENTITY background.accesskey "s">
+<!ENTITY warnOnClose.label "Avisarme ao pechar unha xanela con varias lapelas">
+<!ENTITY warnOnClose.accesskey "h">
+<!ENTITY relatedAfterCurrent.label "Abrir lapelas relacionadas despois da lapela actual">
+<!ENTITY relatedAfterCurrent.accesskey "o">
+<!ENTITY loadGroup.label "Cando abra un grupo de marcadores">
+<!ENTITY loadGroupAppend.label "Engadir lapelas">
+<!ENTITY loadGroupAppend.accesskey "a">
+<!ENTITY loadGroupReplace.label "Substituír lapelas existentes">
+<!ENTITY loadGroupReplace.accesskey "r">
+<!ENTITY openTabs.label "Abrir lapelas en vez de xanelas cando">

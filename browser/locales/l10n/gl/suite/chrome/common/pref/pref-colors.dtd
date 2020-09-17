@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "Cores">
+<!ENTITY color                             "Texto e fondo">
+<!ENTITY textColor.label                   "Texto:">
+<!ENTITY textColor.accesskey               "T">
+<!ENTITY backgroundColor.label             "Fondo:">
+<!ENTITY backgroundColor.accesskey         "F">
+<!ENTITY useSystemColors.label             "Usar as cores do sistema">
+<!ENTITY useSystemColors.accesskey         "s">
+
+<!ENTITY underlineLinks.label              "Subliñar as ligazóns">
+<!ENTITY underlineLinks.accesskey          "u">
+<!ENTITY links                             "Cores das ligazóns">
+<!ENTITY linkColor.label                   "Ligazóns non visitadas:">
+<!ENTITY linkColor.accesskey               "L">
+<!ENTITY activeLinkColor.label             "Ligazóns activas:">
+<!ENTITY activeLinkColor.accesskey         "c">
+<!ENTITY visitedLinkColor.label            "Ligazóns visitadas:">
+<!ENTITY visitedLinkColor.accesskey        "v">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Cando unha páxina web forneza as súas propias cores e fondos">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Usar sempre as cores e fondos especificados pola páxina web">
+<!ENTITY alwaysUseDocumentColors.accesskey "a">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Usar as miñas cores, ignorando as cores e imaxe de fondo especificadas pola páxina web">
+<!ENTITY useMyColors.accesskey             "m">

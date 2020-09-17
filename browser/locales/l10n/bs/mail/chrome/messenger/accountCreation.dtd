@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "Vaše ime:">
+<!ENTITY name.accesskey                  "i">
+<!ENTITY name.text                       "Vaše ime, kako će biti prikazano drugima">
+<!ENTITY email.label                     "Email adresa:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY email.text                      "Vaša postojeća adresa e-pošte">
+<!ENTITY password.label                  "Lozinka:">
+<!ENTITY password.accesskey              "L">
+<!ENTITY password.placeholder            "Lozinka">
+<!ENTITY password.text                   "Opcionalno, samo će se koristiti za provjeru valjanosti korisničkog imena">
+<!ENTITY rememberPassword.label          "Zapamti lozinku">
+<!ENTITY rememberPassword.accesskey      "Z">
+
+<!ENTITY imapLong.label                  "IMAP (udaljeni direktoriji)">
+<!ENTITY pop3Long.label                  "POP3 (zadržite poštu na svom računaru)">
+
+<!ENTITY incoming.label                  "Dolazni:">
+<!ENTITY outgoing.label                  "Odlazni:">
+<!ENTITY username.label                  "Korisničko ime:">
+<!ENTITY auth.label                      "Autentikacija">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                       "POP3">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Automatska detekcija">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Nikakva">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!ENTITY advancedSetup.label             "Napredno podešavanje">
+<!ENTITY advancedSetup.accesskey         "a">
+<!ENTITY cancel.label                    "Otkaži">
+<!ENTITY cancel.accesskey                "O">
+<!ENTITY continue.label                  "Nastavi">
+<!ENTITY continue.accesskey              "N">
+<!ENTITY stop.label                      "Zaustavi">
+<!ENTITY stop.accesskey                  "Z">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Ponovo testiraj">
+<!ENTITY half-manual-test.accesskey      "t">
+<!ENTITY open-provisioner.label          "Napravite novu adresu e-pošte…">
+<!ENTITY open-provisioner.accesskey      "n">
+
+
+<!ENTITY warning.label                   "Upozorenje!">
+<!ENTITY incomingSettings.label          "Dolazne postavke:">
+<!ENTITY outgoingSettings.label          "Odlazne postavke:">
+<!ENTITY technicaldetails.label          "Tehnički detalji">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Razumijem rizike.">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Gotovo">
+<!ENTITY doneAccount.accesskey           "G">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Promijeni postavke">
+<!ENTITY changeSettings.accesskey        "s">
+
+<!ENTITY contactYourProvider.description "&brandShortName; će vam omogućiti primanje vaših email poruka koristeći date postavke. Međutim, trebali biste kontaktirati svog administratora ili email provajdera u vezi s ovim nepravilnim vezama. Za više informacija pogledajte Thunderbird često postavljana pitanja.">
+
+<!ENTITY insecureServer.tooltip.title    "Upozorenje! Ovo je nesiguran server.">
+<!ENTITY insecureServer.tooltip.details  "Kliknite na krug za više detalja.">
+
+<!ENTITY insecureUnencrypted.description "Vaš email i autentikacija se šalju neenkriptovani, tako da vašu lozinku (i vašu poruku) mogu pročitati i drugi ljudi. &brandShortName; će vam omogućiti primanje vaših emailova, ali biste trebali kontaktirati vašeg email provajdera radi podešavanja servera sa sigurnom vezom.">
+<!ENTITY insecureSelfSigned.description  "Server koristi certifikat kojem ne možemo vjerovati, te ne možemo biti sigurni da neko neće presresti promet između &brandShortName;a i vašeg servera. &brandShortName; će vam omogućiti primanje vaših emailova, ali biste trebali kontaktirati vašeg email provajdera radi podešavanja servera s provjerenim certifikatom.">
+<!ENTITY secureServer.description        "Čestitamo! Ovo je sigurni server.">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Auxiliar d'importació">
+
+<!ENTITY importFromWin.label            "Importa les opcions, paràmetres de compte, llibreta d'adreces i altres dades des de:">
+<!ENTITY importFromNonWin.label         "Importa les preferències, paràmetres dels comptes, llibreta d'adreces i altres dades des de:">
+<!ENTITY importSourceNotFound.label     "No s'ha trobat cap aplicació per importar-ne les dades.">
+
+<!ENTITY importFromNothing.label        "No importis res">
+<!ENTITY importFromNothing.accesskey    "r">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 o posterior">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Importació dels paràmetres i carpetes de correu">
+<!ENTITY importItems.title              "Elements per importar">
+<!ENTITY importItems.label              "Seleccioneu quins elements voleu importar:">
+
+<!ENTITY migrating.title                "S'està important…">
+<!ENTITY migrating.label                "Els següents elements s'estan important en aquests moments…">
+
+<!ENTITY selectProfile.title            "Seleccioneu un perfil">
+<!ENTITY selectProfile.label            "Els següents perfils estan disponibles per importar-se des de:">
+
+<!ENTITY done.title                     "Fi de la importació">
+<!ENTITY done.label                     "Els elements següents s'han importat correctament:">

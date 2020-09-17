@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Kontohaldur">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Kirjade vastuvõtuks on vajalik kõigepealt luua konto.">
+<!ENTITY accountTypeTitle.label "Uue konto loomine">
+<!ENTITY accountTypeDesc2.label "See haldur kogub konto kasutamiseks vajaliku informatsiooni. Kui sa ei tea kogu nõutavat infot, võta ühendust oma teenusepakkuja või süsteemiadministraatoriga.">
+<!ENTITY accountTypeDirections.label "Vali loodava konto tüüp:">
+<!ENTITY accountTypeMail.label "E-posti konto">
+<!ENTITY accountTypeMail.accesskey "E">
+<!ENTITY accountTypeNews.label "Uudistegruppide konto">
+<!ENTITY accountTypeNews.accesskey "U">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unixi Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identiteet">
+<!ENTITY identityDesc.label "Igal kontol võib olla erinev identiteet. See on info, mis kirjadega saatja kohta kaasa läheb.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Sisesta nimi, mida soovid näidata väljuvate kirjade &quot;Saatja&quot; väljal.">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(näiteks &quot;Ants Kaerajaan&quot;).">
+<!ENTITY fullnameLabel.label "Sinu nimi:">
+<!ENTITY fullnameLabel.accesskey "S">
+
+<!ENTITY emailLabel.label "E-posti aadress:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Saabuva e-posti serveri teave">
+<!ENTITY incomingServerTypeDesc.label "Vali, mis tüüpi serveriga on tegu.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Kirjad jäetakse serverisse">
+<!ENTITY leaveMsgsOnSrvr.accesskey "K">
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Vaikimisi:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Sisesta oma saabuva e-posti serveri aadress (näiteks &quot;mail.eesti.ee&quot;).">
+<!ENTITY incomingServer.label "Saabuva e-posti server:">
+<!ENTITY incomingServer.accesskey "S">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Sisesta oma saabuva e-posti serveri kasutajanimi (näiteks &quot;akaerajaan&quot;).">
+<!ENTITY incomingUsername.label "Kasutajanimi:">
+<!ENTITY incomingUsername.accesskey "u">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Sisesta oma (NNTP) uudisteserveri aadress (näiteks &quot;uudised.puust.punaseks.ee&quot;).">
+<!ENTITY newsServerLabel.label "Uudistegruppide server:">
+<!ENTITY newsServerLabel.accesskey "U">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Väljuva e-posti serveri teave">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Sisesta oma väljuva e-posti (SMTP) serveri aadress (näiteks &quot;smtp.eesti.ee&quot;).">
+<!ENTITY outgoingServer.label "Väljuva e-posti server:">
+<!ENTITY outgoingServer.accesskey "V">
+<!ENTITY outgoingUsername.description "Sisesta oma väljuva e-posti serveri kasutajanimi (tavaliselt on see sama saabuva e-posti serveri kasutajanimega).">
+<!ENTITY outgoingUsername.label "Kasutajanimi:">
+<!ENTITY outgoingUsername.accesskey "i">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Väljuva e-posti servereid saab muuta konto sätete alt.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Kasutatakse olemasolevat väljuva e-posti (SMTP) serverit &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Kasutatakse olemasolevat (SMTP) kasutajanime &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Väljuva e-posti (SMTP) server &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot; on identne sinu saabuva e-posti serveriga. Sellele ligipääsemiseks kasutatakse sinu saabuva e-posti kasutajanime.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Konto nimi">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Sisesta nimi, millega soovid sellele kontole viidata (näiteks &quot;Kodu&quot;, &quot;Töö&quot;, &quot;Uudised&quot;).">
+<!ENTITY accnameLabel.label "Konto nimi:">
+<!ENTITY accnameLabel.accesskey "K">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Õnnitlused!">
+<!ENTITY completionText.label "Palun kontrolli, kas alljärgnev on korrektne.">
+<!ENTITY serverTypePrefix.label "Saabuva e-posti serveri tüüp:">
+<!ENTITY serverNamePrefix.label "Saabuva e-posti server:">
+<!ENTITY smtpServerNamePrefix.label "Väljuva e-posti serveri (SMTP) nimi:">
+<!ENTITY newsServerNamePrefix.label "Uudisteserver:">
+<!ENTITY downloadOnLogin.label "Tõmba kirjad nüüd">
+<!ENTITY downloadOnLogin.accesskey "T">
+<!ENTITY deferStorageDesc.label "Eemalda see linnuke, et salvestada konto kirjad eraldi kausta. See muudatus paneb konto ilmuma eraldi. Muul juhul oleks see osa kohalike kaustade globaalsest saabuvate kirjade kaustast.">
+<!ENTITY deferStorage.label "Kasutatakse globaalset saabuvate kirjade kausta">
+<!ENTITY deferStorage.accesskey "K">
+<!ENTITY clickFinish.label "Vajuta nupul Lõpeta, et sätted salvestada ning Kontohaldur sulgeda.">
+<!ENTITY clickFinish.labelMac "Vajuta nupul Lõpeta, et sätted salvestada ning Kontohaldur sulgeda.">

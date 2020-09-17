@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "उन्नत खाता जमावट">
+<!ENTITY serverDirectory.label "IMAP सर्वर निर्देशिका:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "सिर्फ सदस्यता लिया फोल्डर दिखायें">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "सर्वर उन फोल्डर का समर्थन करता है जो कि उप फोल्डर और संदेश शामिल करता है">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "कैश के लिये सर्वर संबंधन की अधिकतम संख्या">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "ये वरीयता आपके IMAP सर्वर पर नेमस्पेस को निर्दिष्ट करता है">
+<!ENTITY personalNamespace.label "निजी नेमस्पेस:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "सार्वजनिक (shared):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "अन्य उपयोक्ता:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "इन नेमस्पेस के अध्यारोहन के लिये सर्वर को अनुमति दें">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY deferToServer.label "अलग खाता के लिये इनबॉक्स">
+<!ENTITY deferToServer.accesskey "D">
+<!ENTITY deferGetNewMail.label "नया मेल आने पर इस सर्वर को शामिल करें">
+<!ENTITY deferGetNewMail.accesskey "I">

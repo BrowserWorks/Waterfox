@@ -1,0 +1,186 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Tinuk' Ruch'akul" >
+
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "Richin" >
+<!ENTITY newevent.to.label                  "Chi re" >
+
+<!ENTITY newevent.status.label                    "B'anikil" >
+<!ENTITY newevent.eventStatus.none.label          "Man jikib'an ta" >
+<!ENTITY newevent.todoStatus.none.label           "Man jikib'an ta" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Q'aton" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Q'aton" >
+<!ENTITY newevent.status.confirmed.label          "Xjikib'äx" >
+
+<!-- The following entity is for New Task dialog only -->
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.disallowcounter.tooltip     "Taya' rutzijol chi man xkek'ul ta junamel taq ch'ob'onïk">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "K'ak'a'">
+<!ENTITY  event.menu.item.new.accesskey                   "K">
+<!ENTITY  event.menu.item.new.event.label                 "Nimaq'ij">
+<!ENTITY  event.menu.item.new.event.accesskey             "N">
+<!ENTITY  event.menu.item.new.message.label               "Tzijol">
+<!ENTITY  event.menu.item.new.contact.label               "Kib'i' Achib'il pa Kitz'ib'awuj Ochochib'äl">
+<!ENTITY  event.menu.item.new.contact.accesskey           "C">
+<!ENTITY  event.menu.item.close.label                     "Titz'apïx">
+<!ENTITY  event.menu.item.close.accesskey                 "p">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Tiyak">
+<!ENTITY  event.menu.item.save.accesskey                  "k">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Tiyak chuqa' Titz'apïx">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "x">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "Tiyuj…">
+<!ENTITY  event.menu.item.delete.accesskey                "y">
+<!ENTITY  event.menu.item.page.setup.label                "Runuk'ulem Ruxaq">
+<!ENTITY  event.menu.item.page.setup.accesskey            "u">
+<!ENTITY  event.menu.item.print.label                     "Titz'ajb'äx">
+<!ENTITY  event.menu.item.print.accesskey                 "b">
+
+<!ENTITY  event.menu.edit.label                           "Tinuk'">
+<!ENTITY  event.menu.edit.accesskey                       "n">
+<!ENTITY  event.menu.edit.undo.label                      "Titzolïx">
+<!ENTITY  event.menu.edit.undo.accesskey                  "z">
+<!ENTITY  event.menu.edit.redo.label                      "Tikamulüx">
+<!ENTITY  event.menu.edit.redo.accesskey                  "m">
+<!ENTITY  event.menu.edit.cut.label                       "Tiqupïx">
+<!ENTITY  event.menu.edit.cut.accesskey                   "t">
+<!ENTITY  event.menu.edit.copy.label                      "Tiwachib'ëx">
+<!ENTITY  event.menu.edit.copy.accesskey                  "C">
+<!ENTITY  event.menu.edit.paste.label                     "Titz'ajb'äx">
+<!ENTITY  event.menu.edit.paste.accesskey                 "b">
+<!ENTITY  event.menu.edit.select.all.label                "Ticha' Ronojel">
+<!ENTITY  event.menu.edit.select.all.accesskey            "A">
+
+<!ENTITY  event.menu.view.label                           "Titz'et">
+<!ENTITY  event.menu.view.accesskey                       "t">
+<!ENTITY  event.menu.view.toolbars.label                  "Taq cholsamajib'äl">
+<!ENTITY  event.menu.view.toolbars.accesskey              "T">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Tichinäx…">
+
+<!ENTITY  event.menu.options.label                            "Taq cha'oj">
+<!ENTITY  event.menu.options.priority2.label                  "Ya'on ruq'ij">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Man jikib'an ta">
+<!ENTITY  event.menu.options.priority.low.label               "Ko'öl">
+<!ENTITY  event.menu.options.priority.low.accesskey           "K">
+<!ENTITY  event.menu.options.priority.normal.label            "Relik">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "R">
+<!ENTITY  event.menu.options.priority.high.label              "Nïm">
+<!ENTITY  event.menu.options.priority.high.accesskey          "N">
+<!ENTITY  event.menu.options.privacy.label                    "Ichinanem">
+<!ENTITY  event.menu.options.privacy.accesskey                "I">
+<!ENTITY  event.menu.options.show.time.free.label             "Sipan">
+
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Tiyak">
+<!ENTITY  event.toolbar.saveandclose.label                "Tiyak chuqa' Titz'apïx">
+<!ENTITY  event.toolbar.delete.label                      "Tiyuj">
+<!ENTITY  event.toolbar.privacy.label                     "Ichinanem">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Tiyak">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Tiyak chuqa' Titz'apïx">
+<!ENTITY  event.toolbar.delete.tooltip                    "Tiyuj">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "B'i'aj:" >
+<!ENTITY event.location.label                             "Ochochib'al:" >
+<!ENTITY event.categories.label                           "Ruwäch:">
+<!ENTITY event.calendar.label                             "Cholb'äl q'ij:" >
+<!ENTITY event.calendar.accesskey                         "C">
+<!ENTITY event.from.label                                 "Tikirib'äl:" >
+<!ENTITY task.from.label                                  "Tikirib'äl:" >
+<!ENTITY event.to.label                                   "K'isib'äl:" >
+<!ENTITY task.status.label                                "B'anikil:" >
+<!ENTITY event.description.label                          "Tzijoxkil:" >
+<!ENTITY event.attachments.label                          "Taq taqoj:" >
+<!ENTITY event.attachments.url.label                      "Ajk'amaya'l Ruxaq…">
+<!ENTITY event.attachments.popup.remove.label             "Tiyuj" >
+<!ENTITY event.attachments.popup.open.label               "Tijaq" >
+<!ENTITY event.attachments.popup.removeAll.label          "Keyuj Ronojel" >
+<!ENTITY event.priority2.label                            "Ya'on ruq'ij:">
+
+<!ENTITY event.reminder.custom.label                      "Ichinan…" >
+
+
+<!ENTITY event.statusbarpanel.privacy.label               "Ichinanem:">
+
+<!-- Recurrence dialog -->
+
+<!ENTITY event.repeat.custom.label                      "Ichinan…">
+
+
+
+
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "Toq'ij" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "Luq'ij" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "Maq'ij" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "Miq'ij" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "Juq'ij" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "Wiq'ij" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "Saq'ij" >
+
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+
+
+
+<!-- Attendees dialog -->
+
+<!-- Timezone dialog -->
+
+<!-- Read-Only dialog -->
+
+<!-- Summary dialog -->

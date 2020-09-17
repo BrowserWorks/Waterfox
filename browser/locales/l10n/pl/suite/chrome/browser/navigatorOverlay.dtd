@@ -1,0 +1,146 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Karta przeglądarki">
+<!ENTITY tabCmd.accesskey "t">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Otwórz adres internetowy…">
+<!ENTITY openCmd.accesskey "i">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Otwórz plik…">
+<!ENTITY openFileCmd.accesskey "o">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Zamknij pozostałe karty">
+<!ENTITY closeOtherTabs.accesskey "t">
+
+<!ENTITY uploadFile.label "Wyślij plik…">
+<!ENTITY uploadFile.accesskey "p">
+
+<!ENTITY printSetupCmd.label "Ustawienia strony…">
+<!ENTITY printSetupCmd.accesskey "U">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Znajdź na tej stronie…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Pokaż/Ukryj">
+<!ENTITY toolbarsCmd.accesskey "U">
+<!ENTITY tabbarCmd.label "Pasek kart">
+<!ENTITY tabbarCmd.accesskey "p">
+<!ENTITY taskbarCmd.label "Pasek stanu">
+<!ENTITY taskbarCmd.accesskey "s">
+<!ENTITY componentbarCmd.label "Pasek komponentów">
+<!ENTITY componentbarCmd.accesskey "k">
+
+<!ENTITY fullScreenCmd.label "Tryb pełnoekranowy">
+<!ENTITY fullScreenCmd.accesskey "e">
+
+<!ENTITY useStyleSheetMenu.label "Użyj arkusza stylów">
+<!ENTITY useStyleSheetMenu.accesskey "s">
+<!ENTITY useStyleSheetNone.label "Brak">
+<!ENTITY useStyleSheetNone.accesskey "r">
+<!ENTITY useStyleSheetPersistentOnly.label "Domyślny arkusz stylów">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "D">
+<!ENTITY bidiSwitchPageDirectionItem.label "Zmień kierunek strony">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "s">
+<!ENTITY pageSourceCmd.label "Źródło strony">
+<!ENTITY pageSourceCmd.accesskey "d">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Informacje o stronie">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Przejdź">
+<!ENTITY goMenu.accesskey "d">
+<!ENTITY goHomeCmd.label "Strona domowa">
+<!ENTITY goHomeCmd.accesskey "s">
+<!ENTITY historyCmd.label "Historia">
+<!ENTITY historyCmd.accesskey "H">
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Ostatnio zamknięte karty">
+<!ENTITY recentTabs.accesskey "r">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Ostatnio zamknięte okna">
+<!ENTITY recentWindows.accesskey "a">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Przywróć poprzednią sesję">
+<!ENTITY historyRestoreLastSession.accesskey "y">
+<!ENTITY syncTabsMenu.label "Karty z innych komputerów">
+<!ENTITY syncTabsMenu.accesskey "o">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Zakładki">
+<!ENTITY bookmarksMenu.accesskey "Z">
+<!ENTITY addCurPageCmd.label "Dodaj zakładkę do tej strony">
+<!ENTITY addCurPageCmd.accesskey "D">
+<!ENTITY addCurPageAsCmd.label "Dodaj zakładkę…">
+<!ENTITY addCurPageAsCmd.accesskey "a">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Dodaj zakładkę do bieżącej grupy kart…">
+<!ENTITY addCurTabsAsCmd.accesskey "g">
+<!ENTITY manBookmarksCmd.label "Menedżer zakładek…">
+<!ENTITY manBookmarksCmd.accesskey "z">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Szukaj w sieci">
+<!ENTITY searchInternetCmd.accesskey "S">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Przetłumacz dokument">
+<!ENTITY translateMenu.accesskey "t">
+
+<!ENTITY cookieMessageTitle.label "Uprawnienia witryny zostały zmienione">
+<!ENTITY cookieDisplayCookiesCmd.label "Menedżer ciasteczek">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "M">
+<!ENTITY cookieAllowCookiesCmd.label "Zezwalaj na ustawianie ich przez tę witrynę">
+<!ENTITY cookieAllowCookiesCmd.accesskey "a">
+<!ENTITY cookieAllowCookiesMsg.label "Ciasteczka pochodzące z tej witryny zawsze będą akceptowane.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Zezwalaj na ciasteczka sesyjne dla tej witryny">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "s">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Ta witryna będzie mogła ustawić ciasteczko tylko na czas trwania bieżącej sesji.">
+<!ENTITY cookieCookiesDefaultCmd.label "Użyj domyślnych uprawnień">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "U">
+<!ENTITY cookieCookiesDefaultMsg.label "Ciasteczka pochodzące z tej witryny będą akceptowane lub odrzucane w zależności od ustawień domyślnych.">
+<!ENTITY cookieBlockCookiesCmd.label "Blokuj pochodzące z tej witryny">
+<!ENTITY cookieBlockCookiesCmd.accesskey "b">
+<!ENTITY cookieBlockCookiesMsg.label "Ciasteczka pochodzące z tej witryny będą zawsze odrzucane.">
+
+<!ENTITY cookieImageMessageTitle.label "Uprawnienia witryny zostały zmienione">
+<!ENTITY cookieDisplayImagesCmd.label "Menedżer obrazów">
+<!ENTITY cookieDisplayImagesCmd.accesskey "M">
+<!ENTITY cookieAllowImagesCmd.label "Zezwalaj na pobieranie ich z tej witryny">
+<!ENTITY cookieAllowImagesCmd.accesskey "a">
+<!ENTITY cookieAllowImagesMsg.label "Obrazy pochodzące z tej witryny będą zawsze pobierane.">
+<!ENTITY cookieImagesDefaultCmd.label "Użyj domyślnych uprawnień">
+<!ENTITY cookieImagesDefaultCmd.accesskey "U">
+<!ENTITY cookieImagesDefaultMsg.label "Obrazy pochodzące z tej witryny będą pobierane w zależności od ustawień domyślnych.">
+<!ENTITY cookieBlockImagesCmd.label "Blokuj pochodzące z tej witryny">
+<!ENTITY cookieBlockImagesCmd.accesskey "b">
+<!ENTITY cookieBlockImagesMsg.label "Obrazy pochodzące z tej witryny nigdy nie będą pobierane.">
+
+<!ENTITY popupsMessageChangeTitle.label "Uprawnienia witryny zostały zmienione">
+<!ENTITY popupAllowCmd.label "Zezwalaj na otwieranie ich przez tę witrynę">
+<!ENTITY popupAllowCmd.accesskey "a">
+<!ENTITY popupAllowMsg.label "Wyskakujące okna pochodzące z tej witryny będą zawsze pokazywane.">
+<!ENTITY popupDefaultCmd.label "Użyj domyślnych uprawnień">
+<!ENTITY popupDefaultCmd.accesskey "U">
+<!ENTITY popupDefaultMsg.label "Wyskakujące okna pochodzące z tej witryny będą pokazywane w zależności od ustawień domyślnych.">
+<!ENTITY popupBlockCmd.label "Blokuj pochodzące z tej witryny">
+<!ENTITY popupBlockCmd.accesskey "B">
+<!ENTITY popupBlockMsg.label "Wyskakujące okna pochodzące z tej witryny nie będą pokazywane.">
+<!ENTITY popupsManage.label "Menedżer wyskakujących okien">
+<!ENTITY popupsManage.accesskey "M">
+
+<!ENTITY cookieCookieManager.label "Zarządzaj ciasteczkami">
+<!ENTITY cookieCookieManager.accesskey "c">
+<!ENTITY cookieImageManager.label "Zarządzaj obrazami">
+<!ENTITY cookieImageManager.accesskey "i">
+<!ENTITY popupsManager.label "Zarządzaj wyskakującymi oknami">
+<!ENTITY popupsManager.accesskey "o">
+
+<!ENTITY clearPrivateDataCmd.label "Wyczyść prywatne dane…">
+<!ENTITY clearPrivateDataCmd.accesskey "W">

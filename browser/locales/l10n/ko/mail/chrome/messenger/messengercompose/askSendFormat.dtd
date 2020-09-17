@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "HTML 메일 질문">
+
+<!ENTITY recipient.label "받는 사람 일부가 HTML 형식을 표시하지 못할 수 있습니다.">
+
+<!ENTITY question.label "일반 텍스트로 변환하여 보내시겠습니까? 아니면 무조건 HTML 형식으로 보내시겠습니까?">
+
+<!ENTITY plainTextAndHtml.label "일반 텍스트와 HTML 형식으로 보내기">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "일반 텍스트로 보내기">
+<!ENTITY plainTextOnly.accesskey "P">
+<!ENTITY htmlOnly.label "HTML 형식으로 보내기">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "보내기">
+<!ENTITY send.accesskey "S">

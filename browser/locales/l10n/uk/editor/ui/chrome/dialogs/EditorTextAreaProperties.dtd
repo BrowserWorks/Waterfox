@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Властивості текстового поля">
+
+<!ENTITY Settings.label "Параметри">
+
+<!ENTITY TextAreaName.label "Назва поля:">
+<!ENTITY TextAreaName.accessKey "Н">
+<!ENTITY TextAreaRows.label "Рядків:">
+<!ENTITY TextAreaRows.accessKey "Р">
+<!ENTITY TextAreaCols.label "Стовпців:">
+<!ENTITY TextAreaCols.accessKey "С">
+<!ENTITY TextAreaReadOnly.label "Тільки для читання">
+<!ENTITY TextAreaReadOnly.accessKey "Т">
+<!ENTITY TextAreaDisabled.label "Вимкнене">
+<!ENTITY TextAreaDisabled.accessKey "В">
+<!ENTITY TextAreaTabIndex.label "Послідовність переходу:">
+<!ENTITY TextAreaTabIndex.accessKey "П">
+<!ENTITY TextAreaAccessKey.label "Клавіша доступу:">
+<!ENTITY TextAreaAccessKey.accessKey "К">
+<!ENTITY InitialText.label "Початковий текст:">
+<!ENTITY InitialText.accessKey "т">
+
+<!ENTITY TextAreaWrap.label "Режим переносу:">
+<!ENTITY TextAreaWrap.accessKey "Р">
+<!ENTITY WrapDefault.value "За замовчанням">
+<!ENTITY WrapOff.value "Вимкнути">
+<!ENTITY WrapHard.value "Жорсткий">
+<!ENTITY WrapSoft.value "М’який">
+<!ENTITY WrapPhysical.value "Фізичний">
+<!ENTITY WrapVirtual.value "Віртуальний">

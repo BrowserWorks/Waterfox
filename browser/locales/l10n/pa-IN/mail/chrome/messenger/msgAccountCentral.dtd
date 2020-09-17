@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "ਈ-ਮੇਲ"> 
+<!ENTITY readMsgsLink.label           "ਪੜ੍ਹੇ ਸੁਨੇਹੇ"> 
+<!ENTITY composeMsgLink.label         "ਇੱਕ ਨਵਾਂ ਸੁਨੇਹਾ ਲਿਖੋ"> 
+
+<!ENTITY newsSectionHdr.label         "ਨਿਊਜ਼ਗਰੁੱਪ"> 
+<!ENTITY subscribeNewsLink.label      "ਨਿਊਜ਼ਗਰੁੱਪ ਮੈਂਬਰੀ ਪਰਬੰਧ"> 
+
+<!ENTITY feedsSectionHdr.label        "ਫੀਡ">
+<!ENTITY subscribeFeeds.label         "ਮੈਂਬਰੀ ਪਰਬੰਧ">
+
+<!ENTITY accountsSectionHdr.label     "ਅਕਾਊਂਟ"> 
+
+<!ENTITY subscribeImapFolders.label   "ਫੋਲਡਰ ਮੈਂਬਰੀ ਪਰਬੰਧ">
+
+<!ENTITY settingsLink.label           "ਇਸ ਅਕਾਊਂਟ ਲਈ ਸੈਟਿੰਗ ਕਰੋ"> 
+
+<!ENTITY advFeaturesSectionHdr.label  "ਤਕਨੀਕੀ ਫੀਚਰ"> 
+<!ENTITY searchMsgsLink.label         "ਸੁਨੇਹੇ ਖੋਜ"> 
+<!ENTITY filtersLink.label            "ਸੁਨੇਹਾ ਫਿਲਟਰ ਪਰਬੰਧ">
+<!ENTITY junkSettings.label           "ਜੰਕ ਮੇਲ ਸੈਟਿੰਗ">
+<!ENTITY offlineLink.label            "ਆਫਲਾਈਨ ਸੈਟਿੰਗ">
+

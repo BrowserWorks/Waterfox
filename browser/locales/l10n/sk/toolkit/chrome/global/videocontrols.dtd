@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "Prehrať">
+<!ENTITY playButton.pauseLabel "Pozastaviť">
+<!ENTITY muteButton.muteLabel "Stlmiť">
+<!ENTITY muteButton.unmuteLabel "Zapnúť zvuk">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Na celú obrazovku">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Ukončiť režim celej obrazovky">
+<!ENTITY castingButton.castingLabel "Prehrať na obrazovke">
+<!ENTITY closedCaption.off "Vypnuté">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Ovládanie hlasitosti">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Obraz v obraze">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "Sledovať ako obraz v obraze">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "Prehrávajte videá v popredí a zároveň robte v aplikácii &brandShortName; kľudne niečo iné">
+
+<!ENTITY error.aborted "Načítavanie videa zastavené.">
+<!ENTITY error.network "Prehrávanie videa bolo prerušené kvôli chybe siete.">
+<!ENTITY error.decode "Video nemôže byť prehraté, pretože súbor je poškodený.">
+<!ENTITY error.srcNotSupported "Formát videa alebo typ MIME nie je podporovaný.">
+<!ENTITY error.noSource2 "Nebolo nájdené video s podporovaným formátom a typom MIME.">
+<!ENTITY error.generic "Prehrávanie videa bolo prerušené kvôli neznámej chybe.">
+
+<!ENTITY status.pictureInPicture "Toto video sa prehráva ako obraz v obraze.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ලැයිස්තු ලක්ෂණ">
+
+<!ENTITY ListType.label "ලැයිස්තු ආකාරය">
+<!ENTITY bulletStyle.label "බුලට් ආකාරය:">
+<!ENTITY startingNumber.label "ආරම්භය:">
+<!ENTITY startingNumber.accessKey "S">
+<!ENTITY none.value "කිසිවක් නැත">
+<!ENTITY bulletList.value "බුලට් (අංක නොකළ)ලැයිස්තුව">
+<!ENTITY numberList.value "අංක කළ ලැයිස්තුව">
+<!ENTITY definitionList.value "සවිස්තර ලැයිස්තුව">
+<!ENTITY changeEntireListRadio.label "සම්පූර්ණ ලැයිස්තුව වෙනස් කරන්න">
+<!ENTITY changeEntireListRadio.accessKey "C">
+<!ENTITY changeSelectedRadio.label "තේරූ අයිතමයන් පමණක් වෙනස් කරන්න">
+<!ENTITY changeSelectedRadio.accessKey "i">

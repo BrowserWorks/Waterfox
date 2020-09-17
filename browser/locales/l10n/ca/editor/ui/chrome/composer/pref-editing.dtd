@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Paràmetres d'una pàgina nova">
+
+<!ENTITY  authorName.label          "Autor:">
+<!ENTITY  authorName.accesskey      "A">
+<!ENTITY  pageColorHeader           "Aspecte per defecte de la pàgina">
+
+<!ENTITY defaultColors.label        "Colors per defecte del lector (no defineixis els colors de la pàgina)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "Utilitza els colors personalitzats:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "Text normal">
+<!ENTITY normalText.accesskey       "n">
+<!ENTITY linkText.label             "Text de l'enllaç">
+<!ENTITY linkText.accesskey         "T">
+<!ENTITY activeLinkText.label       "Text de l'enllaç actiu">
+<!ENTITY activeLinkText.accesskey   "T">
+<!ENTITY visitedLinkText.label      "Text de l'enllaç visitat">
+<!ENTITY visitedLinkText.accesskey  "v">
+<!ENTITY background.label           "Fons:">
+<!ENTITY background.accesskey       "o">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Imatge de fons:">
+<!ENTITY backgroundImage.accesskey  "g">
+<!ENTITY chooseFile.label           "Trieu un fitxer…">
+<!ENTITY chooseFile.accesskey       "r">
+

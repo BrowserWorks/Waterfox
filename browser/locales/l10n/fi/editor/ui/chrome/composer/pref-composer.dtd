@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title                "Composer">
+<!ENTITY  recentFiles.title          "Viimeisimmät sivut -valikko">
+<!ENTITY  documentsInMenu.label      "Suurin valikossa näytettävien sivujen määrä:">
+<!ENTITY  documentsInMenu.accesskey  "S">
+<!ENTITY  savingFiles.title              "Kun tallennan tai julkaisen sivun">
+<!ENTITY  preserveExisting.label         "Säilytä lähteen muotoilu">
+<!ENTITY  preserveExisting.accesskey     "S">
+<!ENTITY  preserveExisting.tooltip       "Säilytä rivinvaihdot ja sivun muotoilu">
+<!ENTITY  saveAssociatedFiles.label      "Tallenna myös sivuun liittyvät kuvat ja muut tiedostot sivua tallennettaessa">
+<!ENTITY  saveAssociatedFiles.accesskey  "T">
+<!ENTITY  showPublishDialog.label        "Näytä julkaisuikkuna aina sivuja julkaistaessa">
+<!ENTITY  showPublishDialog.accesskey    "N">
+<!ENTITY  composerEditing.label          "Muokkaus">
+<!ENTITY  maintainStructure.label        "Säilytä taulukon muotoilu lisättäessä tai poistettaessa soluja">
+<!ENTITY  maintainStructure.tooltip      "Säilyttää taulukon suorakulmaisen muodon lisäämällä automaattisesti soluja kun soluja lisätään tai poistetaan">
+<!ENTITY  maintainStructure.accesskey    "t">
+<!ENTITY  useCSS.label                   "Käytä CSS-tyylejä HTML-elementtien ja -attribuuttien sijaan">
+<!ENTITY  useCSS.accesskey               "C">
+<!ENTITY  crInPCreatesNewP.label         "Rivinvaihto kirjoitettaessa kappaletta aloittaa aina uuden kappaleen">
+<!ENTITY  crInPCreatesNewP.accesskey     "U">

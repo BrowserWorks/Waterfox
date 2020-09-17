@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "&brandProductName; bertsio zahar bat abiarazi duzu">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "&brandProductName; bertsio berriak aldaketak egin ditzake zure profilean ez direnak bateragarriak bertsio zahar honekin. Erabili profil hau bertsio berriarekin bakarrik edo sortu profil berri bat &brandShortName; instalazio honetarako. Profil berria sortzeak zure kontuak, egutegiak eta gehigarriak berriz ezartzea eskatzen du.">
+
+<!ENTITY window.moreinfo "Informazio gehiago…">
+<!ENTITY window.create "Sortu profil berria">
+<!ENTITY window.quit-win "Irten">
+<!ENTITY window.quit-nonwin "Irten">

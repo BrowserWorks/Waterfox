@@ -1,0 +1,80 @@
+<!--
+# Translator(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "סרגל כלים עריכה">
+<!ENTITY previewToolbarCmd.label "דפדפן">
+<!ENTITY previewToolbarCmd.tooltip "טען דף זה לתוך הדפדפן">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "יצוא לטקסט…">
+<!ENTITY exportToTextCmd.accesskey "ט">
+<!ENTITY previewCmd.label "עיין בדף">
+<!ENTITY previewCmd.accesskey "ע">
+<!ENTITY sendPageCmd.label "שליחת דף…">
+<!ENTITY sendPageCmd.accesskey "ש">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "סרגל כלים עריכה">
+<!ENTITY compositionToolbarCmd.accesskey "ע">
+<!ENTITY formattingToolbarCmd.label "סרגל כלים עיצוב">
+<!ENTITY formattingToolbarCmd.accesskey "צ">
+<!ENTITY editmodeToolbarCmd.label "סרגל כלים מצב עריכה">
+<!ENTITY editmodeToolbarCmd.accesskey "מ">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "עיצוב">
+<!ENTITY formatMenu.accesskey "ע">
+<!ENTITY grid.label "רשת מיצוב">
+<!ENTITY grid.accesskey "ר">
+<!ENTITY pageProperties.label "כותרת הדף ומאפיינים…">
+<!ENTITY pageProperties.accesskey "כ">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "בדוק תקינות HTML‏">
+<!ENTITY validateCmd.accesskey "ת">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "רגילה">
+<!ENTITY NormalMode.label "מצב עריכה רגיל">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "הצג גבולות טבלה ועוגנים">
+<!ENTITY AllTagsModeTab.label "תגיות HTML‏">
+<!ENTITY AllTagsMode.label "תגיות HTML‏">
+<!ENTITY AllTagsMode.accesskey "H">
+<!ENTITY AllTagsMode.tooltip "הראה צלמיות עבור כל תגיות ה־HTML">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "rtl">
+<!ENTITY HTMLSourceModeTab.label "קוד מקור">
+<!ENTITY HTMLSourceMode.label "קוד מקור HTML">
+<!ENTITY HTMLSourceMode.accesskey "מ">
+<!ENTITY HTMLSourceMode.tooltip "ערוך קוד מקור HTML">
+<!ENTITY PreviewModeTab.label "תצוגה מקדימה">
+<!ENTITY PreviewMode.label "תצוגה מקדימה">
+<!ENTITY PreviewMode.accesskey "P">
+<!ENTITY PreviewMode.tooltip "תצוגה ויזואלית (כמו בדפדפן)">
+

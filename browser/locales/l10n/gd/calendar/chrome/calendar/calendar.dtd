@@ -1,0 +1,407 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- General -->
+<!ENTITY calendar.calendar.label     "Mìosachan">
+<!ENTITY calendar.calendar.accesskey "c">
+
+<!ENTITY calendar.newevent.button.tooltip         "Cruthaich tachartas ùr" >
+<!ENTITY calendar.newtask.button.tooltip          "Cruthaich saothair ùr" >
+
+<!ENTITY calendar.unifinder.showcompletedtodos.label "Seall saothraichean crìochnaichte">
+
+<!ENTITY calendar.today.button.label          "An-diugh">
+<!ENTITY calendar.tomorrow.button.label       "A-màireach">
+<!ENTITY calendar.upcoming.button.label       "Gu bhith ann">
+
+<!ENTITY calendar.events.filter.all.label "Gach tachartas">
+<!ENTITY calendar.events.filter.today.label "Tachartasan an-diugh">
+<!ENTITY calendar.events.filter.future.label "Gach tachartas san àm ri teachd">
+<!ENTITY calendar.events.filter.current.label "An latha a thagh thu">
+<!ENTITY calendar.events.filter.currentview.label "Tachartasan san t-sealladh làithreach">
+<!ENTITY calendar.events.filter.next7Days.label "Tachartasan anns na 7 làithean seo tighinn">
+<!ENTITY calendar.events.filter.next14Days.label "Tachartasan sa chola-deug seo tighinn">
+<!ENTITY calendar.events.filter.next31Days.label "Tachartasan san 31 latha seo tighinn">
+<!ENTITY calendar.events.filter.thisCalendarMonth.label "Tachartasan sa mhìos mhìosachain seo">
+
+<!-- LOCALIZATION NOTE(calendar.unifinder.tree.done.tooltip)
+   - This label and tooltip is used for the column with the checkbox in the
+   - task tree view. -->
+<!ENTITY calendar.unifinder.tree.done.label                "Dèanta">
+<!ENTITY calendar.unifinder.tree.done.tooltip2             "Seòrsaich a-rèir coileanaidh">
+<!ENTITY calendar.unifinder.tree.priority.label            "Prìomhachas">
+<!ENTITY calendar.unifinder.tree.priority.tooltip2         "Seòrsaich a-rèir prìomhachais">
+<!ENTITY calendar.unifinder.tree.title.label               "Tiotal">
+<!ENTITY calendar.unifinder.tree.title.tooltip2            "Seòrsaich a-rèir tiotail">
+<!ENTITY calendar.unifinder.tree.percentcomplete.label     "&#037; deiseil">
+<!ENTITY calendar.unifinder.tree.percentcomplete.tooltip2  "Seòrsaich a-rèir ceudad coileanaidh">
+<!ENTITY calendar.unifinder.tree.startdate.label           "A' tòiseachadh">
+<!ENTITY calendar.unifinder.tree.startdate.tooltip2        "Seòrsaich a-rèir latha tòiseachaidh">
+<!ENTITY calendar.unifinder.tree.enddate.label             "A' crìochnachadh">
+<!ENTITY calendar.unifinder.tree.enddate.tooltip2          "Seòrsaich a-rèir latha crìochnachaidh">
+<!ENTITY calendar.unifinder.tree.duedate.label             "Ceann-ama">
+<!ENTITY calendar.unifinder.tree.duedate.tooltip2          "Seòrsaich a-rèir latha libhrigidh">
+<!ENTITY calendar.unifinder.tree.completeddate.label       "Deiseil">
+<!ENTITY calendar.unifinder.tree.completeddate.tooltip2    "Seòrsaich a-rèir latha coileanaidh">
+<!ENTITY calendar.unifinder.tree.categories.label          "Roinn-seòrsa">
+<!ENTITY calendar.unifinder.tree.categories.tooltip2       "Seòrsaich a-rèir roinn-seòrsa">
+<!ENTITY calendar.unifinder.tree.location.label            "Àite">
+<!ENTITY calendar.unifinder.tree.location.tooltip2         "Seòrsaich a-rèir ionaid">
+<!ENTITY calendar.unifinder.tree.status.label              "Staid">
+<!ENTITY calendar.unifinder.tree.status.tooltip2           "Seòrsaich a-rèir staid">
+<!ENTITY calendar.unifinder.tree.calendarname.label        "Ainm a' mhìosachain">
+<!ENTITY calendar.unifinder.tree.calendarname.tooltip2     "Seòrsaich a-rèir ainm a' mhìosachain">
+<!ENTITY calendar.unifinder.tree.duration.label            "Feum air ann an">
+<!ENTITY calendar.unifinder.tree.duration.tooltip2         "Seòrsaich a-rèir ùine gu libhrigeadh">
+<!ENTITY calendar.unifinder.close.tooltip                  "Dùin lorg is liosta nan tachartasan">
+
+<!ENTITY calendar.today.button.tooltip          "Rach gun latha an-diugh" >
+<!ENTITY calendar.todaypane.button.tooltip      "Seall leòsan an latha" >
+
+<!ENTITY calendar.day.button.tooltip            "Na seall dhomh ach aon latha" >
+<!ENTITY calendar.week.button.tooltip           "Seall dhomh an t-seachdain air fad" >
+<!ENTITY calendar.month.button.tooltip          "Seall dhomh mìos air fad" >
+<!ENTITY calendar.multiweek.button.tooltip      "Seall dhomh iomadh seachdain còmhla" >
+
+<!ENTITY calendar.nextday.label                 "An ath-latha" >
+<!ENTITY calendar.prevday.label                 "An latha roimhe" >
+<!ENTITY calendar.nextday.accesskey             "A" >
+<!ENTITY calendar.prevday.accesskey             "A" >
+<!ENTITY calendar.nextweek.label                "An ath-sheachdain" >
+<!ENTITY calendar.prevweek.label                "An t-seachdain roimhe" >
+<!ENTITY calendar.nextweek.accesskey            "A" >
+<!ENTITY calendar.prevweek.accesskey            "s" >
+<!ENTITY calendar.nextmonth.label               "An ath-mhìos" >
+<!ENTITY calendar.prevmonth.label               "Am mìos roimhe" >
+<!ENTITY calendar.nextmonth.accesskey           "A" >
+<!ENTITY calendar.prevmonth.accesskey           "s" >
+
+<!ENTITY calendar.navigation.nextday.tooltip    "Latha air adhart" >
+<!ENTITY calendar.navigation.prevday.tooltip    "Latha air ais" >
+<!ENTITY calendar.navigation.nextweek.tooltip   "Seachdain air adhart" >
+<!ENTITY calendar.navigation.prevweek.tooltip   "Seachdain air ais" >
+<!ENTITY calendar.navigation.nextmonth.tooltip  "Mìos air adhart" >
+<!ENTITY calendar.navigation.prevmonth.tooltip  "Mìos air ais" >
+
+<!ENTITY calendar.newevent.button.label         "Tachartas ùr" >
+<!ENTITY calendar.newtask.button.label          "Saothair ùr" >
+<!ENTITY calendar.print.button.label            "Clò-bhuail" >
+<!ENTITY calendar.print.button.accesskey        "C">
+
+<!ENTITY calendar.day.button.label              "Latha" >
+<!ENTITY calendar.week.button.label             "Seachdain" >
+<!ENTITY calendar.month.button.label            "Mìos" >
+<!ENTITY calendar.multiweek.button.label        "Iomadh s." >
+<!ENTITY calendar.onlyworkday.checkbox.label    "Làithean-obrach na seachdaine a-mhàin" >
+<!ENTITY calendar.onlyworkday.checkbox.accesskey  "r" >
+<!ENTITY calendar.displaytodos.checkbox.label   "Saothraichean san t-sealladh" >
+<!ENTITY calendar.displaytodos.checkbox.accesskey "S" >
+<!ENTITY calendar.completedtasks.checkbox.label     "Seall saothraichean crìochnaichte" >
+<!ENTITY calendar.completedtasks.checkbox.accesskey "c" >
+
+<!ENTITY calendar.orientation.label "Thoir car dhen t-sealladh" >
+<!ENTITY calendar.orientation.accesskey "o" >
+
+<!ENTITY calendar.search.options.searchfor " anns a bheil">
+
+<!ENTITY calendar.list.header.label                 "Mìosachan">
+
+<!ENTITY calendar.task.filter.title.label           "Seall">
+<!ENTITY calendar.task.filter.all.label             "A h-uile">
+<!ENTITY calendar.task.filter.all.accesskey         "A">
+<!ENTITY calendar.task.filter.today.label           "An-diugh">
+<!ENTITY calendar.task.filter.today.accesskey       "A">
+<!ENTITY calendar.task.filter.next7days.label       "Na seachd làithean seo tighinn">
+<!ENTITY calendar.task.filter.next7days.accesskey   "N">
+<!ENTITY calendar.task.filter.notstarted.label      "Saothraichean nach do thòisich fhathast">
+<!ENTITY calendar.task.filter.notstarted.accesskey  "a">
+<!ENTITY calendar.task.filter.overdue.label         "Saothraichean thar an tìde">
+<!ENTITY calendar.task.filter.overdue.accesskey     "o">
+<!ENTITY calendar.task.filter.completed.label       "Saothraichean crìochnaichte">
+<!ENTITY calendar.task.filter.completed.accesskey   "c">
+<!ENTITY calendar.task.filter.open.label            "Saothraichean gun chrìochnachadh">
+<!ENTITY calendar.task.filter.open.accesskey        "S">
+
+<!-- LOCALIZATION NOTE(calendar.task.filter.current.label)
+     "Current Tasks" will show all tasks, except those with a start date set
+     that is after today and after the selected date. If a task repeats, a
+     separate entry will be shown for each of the occurrences that happen on or
+     before today (or the selected date, whichever is later). -->
+<!ENTITY calendar.task.filter.current.label         "Saothraichean làithreach">
+<!ENTITY calendar.task.filter.current.accesskey     "S">
+
+<!ENTITY calendar.task-details.title.label           "tiotail">
+<!ENTITY calendar.task-details.organizer.label       "o">
+<!ENTITY calendar.task-details.priority.label        "prìomhachas">
+<!ENTITY calendar.task-details.priority.low.label    "Ìseal">
+<!ENTITY calendar.task-details.priority.normal.label "Àbhaisteach">
+<!ENTITY calendar.task-details.priority.high.label   "Àrd">
+<!ENTITY calendar.task-details.status.label          "staid">
+<!ENTITY calendar.task-details.category.label        "roinn">
+<!ENTITY calendar.task-details.repeat.label          "ath-dhèan">
+<!ENTITY calendar.task-details.attachments.label     "ceanglachain">
+<!ENTITY calendar.task-details.start.label           "latha tòiseachaidh">
+<!ENTITY calendar.task-details.due.label             "ceann-ama">
+
+<!ENTITY calendar.task.category.button.tooltip  "Cuir saothraichean ann an roinnean">
+<!ENTITY calendar.task.complete.button.tooltip  "Cuir comharra gu bheil na saothraichean a thagh thu crìochnaichte">
+<!ENTITY calendar.task.priority.button.tooltip  "Atharraich am prìomhachas">
+
+<!ENTITY calendar.task.text-filter.textbox.emptytext.base1           "Criathraich na saothraichean #1">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.nonmac "&lt;Ctrl+Shift+K&gt;">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.mac    "&lt;&#x21E7;&#x2318;K&gt;">
+
+<!-- Context Menu -->
+<!ENTITY calendar.context.modifyorviewitem.label      "Fosgail">
+<!ENTITY calendar.context.modifyorviewitem.accesskey  "o">
+<!ENTITY calendar.context.modifyorviewtask.label      "Fosgail saothair…">
+<!ENTITY calendar.context.modifyorviewtask.accesskey  "o">
+<!ENTITY calendar.context.newevent.label              "Tachartas ùr…">
+<!ENTITY calendar.context.newevent.accesskey          "T">
+<!ENTITY calendar.context.newtodo.label               "Saothair ùr…">
+<!ENTITY calendar.context.newtodo.accesskey           "S">
+<!ENTITY calendar.context.deletetask.label            "Sguab às an t-saothair">
+<!ENTITY calendar.context.deletetask.accesskey        "S">
+<!ENTITY calendar.context.deleteevent.label           "Sguab às an tachartas">
+<!ENTITY calendar.context.deleteevent.accesskey       "S">
+<!ENTITY calendar.context.cutevent.label              "Gearr às">
+<!ENTITY calendar.context.cutevent.accesskey          "G">
+<!ENTITY calendar.context.copyevent.label             "Dèan lethbhreac">
+<!ENTITY calendar.context.copyevent.accesskey         "c">
+<!ENTITY calendar.context.pasteevent.label            "Cuir ann">
+<!ENTITY calendar.context.pasteevent.accesskey        "C">
+<!ENTITY calendar.context.button.label                "Leòsan an latha">
+<!ENTITY calendar.context.button.accesskey            "t">
+
+<!ENTITY calendar.context.attendance.menu.label                 "Làthaireachd">
+<!ENTITY calendar.context.attendance.menu.accesskey             "d">
+<!ENTITY calendar.context.attendance.occurrence.label           "An teachd seo">
+<!ENTITY calendar.context.attendance.all2.label                 "Sreath slàn">
+<!ENTITY calendar.context.attendance.send.label                 "Cuir brath an-dràsta">
+<!ENTITY calendar.context.attendance.send.accesskey             "S">
+<!ENTITY calendar.context.attendance.dontsend.label             "Na cuir brath">
+<!ENTITY calendar.context.attendance.dontsend.accesskey         "D">
+
+<!ENTITY calendar.context.attendance.occ.accepted.accesskey     "A">
+<!ENTITY calendar.context.attendance.occ.accepted.label         "Air gabhail ris">
+<!ENTITY calendar.context.attendance.occ.tentative.accesskey    "y">
+<!ENTITY calendar.context.attendance.occ.tentative.label        "Air gabhail ris gun chinnt">
+<!ENTITY calendar.context.attendance.occ.declined.accesskey     "c">
+<!ENTITY calendar.context.attendance.occ.declined.label         "Air a dhiùltadh">
+<!ENTITY calendar.context.attendance.occ.delegated.accesskey    "g">
+<!ENTITY calendar.context.attendance.occ.delegated.label        "Air a thiomnachadh">
+<!ENTITY calendar.context.attendance.occ.needsaction.accesskey  "S">
+<!ENTITY calendar.context.attendance.occ.needsaction.label      "Feum air gnìomh fhathast">
+<!ENTITY calendar.context.attendance.occ.inprogress.accesskey   "I">
+<!ENTITY calendar.context.attendance.occ.inprogress.label       "Ga phròiseasadh">
+<!ENTITY calendar.context.attendance.occ.completed.accesskey    "C">
+<!ENTITY calendar.context.attendance.occ.completed.label        "Air a choileanadh">
+
+<!ENTITY calendar.context.attendance.all.accepted.accesskey     "e">
+<!ENTITY calendar.context.attendance.all.accepted.label         "Air gabhail ris">
+<!ENTITY calendar.context.attendance.all.tentative.accesskey    "v">
+<!ENTITY calendar.context.attendance.all.tentative.label        "Air gabhail ris gun chinnt">
+<!ENTITY calendar.context.attendance.all.declined.accesskey     "d">
+<!ENTITY calendar.context.attendance.all.declined.label         "Air a dhiùltadh">
+<!ENTITY calendar.context.attendance.all.delegated.accesskey    "l">
+<!ENTITY calendar.context.attendance.all.delegated.label        "Air a thiomnachadh">
+<!ENTITY calendar.context.attendance.all.needsaction.accesskey  "l">
+<!ENTITY calendar.context.attendance.all.needsaction.label      "Feum air gnìomh fhathast">
+<!ENTITY calendar.context.attendance.all.inprogress.accesskey   "p">
+<!ENTITY calendar.context.attendance.all.inprogress.label       "Ga phròiseasadh">
+<!ENTITY calendar.context.attendance.all.completed.accesskey    "m">
+<!ENTITY calendar.context.attendance.all.completed.label        "Air a choileanadh">
+
+<!-- Task Context Menu -->
+<!ENTITY calendar.context.progress.label              "Adhartas">
+<!ENTITY calendar.context.progress.accesskey          "A">
+<!ENTITY calendar.context.priority.label              "Prìomhachas">
+<!ENTITY calendar.context.priority.accesskey          "r">
+<!ENTITY calendar.context.postpone.label              "Cuir dàil san t-saothair">
+<!ENTITY calendar.context.postpone.accesskey          "s">
+
+<!ENTITY percnt "&#38;#37;" ><!--=percent sign-->
+
+<!ENTITY calendar.context.markcompleted.label     "Cuir comharra gu bheil e crìochnaichte">
+<!ENTITY calendar.context.markcompleted.accesskey "o">
+
+<!ENTITY progress.level.0             "0&percnt; crìochnaichte">
+<!ENTITY progress.level.0.accesskey   "0">
+<!ENTITY progress.level.25            "25&percnt; crìochnaichte">
+<!ENTITY progress.level.25.accesskey  "2">
+<!ENTITY progress.level.50            "50&percnt; crìochnaichte">
+<!ENTITY progress.level.50.accesskey  "5">
+<!ENTITY progress.level.75            "75&percnt; crìochnaichte">
+<!ENTITY progress.level.75.accesskey  "7">
+<!ENTITY progress.level.100            "100&percnt; crìochnaichte">
+<!ENTITY progress.level.100.accesskey  "1">
+
+<!ENTITY priority.level.none                "Gun sònrachadh">
+<!ENTITY priority.level.none.accesskey      "s">
+<!ENTITY priority.level.low                 "Ìseal">
+<!ENTITY priority.level.low.accesskey       "l">
+<!ENTITY priority.level.normal              "Àbhaisteach">
+<!ENTITY priority.level.normal.accesskey    "À">
+<!ENTITY priority.level.high                "Àrd">
+<!ENTITY priority.level.high.accesskey      "U">
+
+<!ENTITY calendar.context.postpone.1hour.label      "1 uair a thìde">
+<!ENTITY calendar.context.postpone.1hour.accesskey  "u">
+<!ENTITY calendar.context.postpone.1day.label       "1 latha">
+<!ENTITY calendar.context.postpone.1day.accesskey   "l">
+<!ENTITY calendar.context.postpone.1week.label      "1 seachdain">
+<!ENTITY calendar.context.postpone.1week.accesskey  "s">
+
+<!ENTITY calendar.copylink.label       "Dèan lethbhreac de dh'ionad a' cheangail">
+<!ENTITY calendar.copylink.accesskey   "D">
+
+<!-- Task View -->
+<!-- Note that the above *.context.* strings are currently used for the other
+     task action buttons -->
+<!ENTITY calendar.taskview.delete.label     "Sguab às">
+
+<!-- Server Context Menu -->
+<!ENTITY calendar.context.newserver.label              "Mìosachan ùr…">
+<!ENTITY calendar.context.newserver.accesskey          "n">
+<!ENTITY calendar.context.findcalendar.label           "Lorg mìosachan…" >
+<!ENTITY calendar.context.findcalendar.accesskey       "L" >
+<!ENTITY calendar.context.deleteserver2.label          "Sguab às mìosachan...">
+<!ENTITY calendar.context.deleteserver2.accesskey      "S">
+
+<!-- LOCALIZATION NOTE (calendar.context.removeserver.label): Removing the
+      calendar is the general action of removing it, while deleting means to
+      clear the data and unsubscribing means just taking it out of the calendar
+      list. -->
+<!ENTITY calendar.context.removeserver.label           "Thoir air falbh mìosachan...">
+<!ENTITY calendar.context.removeserver.accesskey       "T">
+<!ENTITY calendar.context.unsubscribeserver.label      "Crìochnaich fo-sgrìobhadh do mhìosachan...">
+<!ENTITY calendar.context.unsubscribeserver.accesskey  "o">
+<!ENTITY calendar.context.synccalendars.label          "Sioncronaich na mìosachain">
+<!ENTITY calendar.context.synccalendars.accesskey      "m">
+<!ENTITY calendar.context.publish.label                "Foillsich mìosachan…">
+<!ENTITY calendar.context.publish.accesskey            "F">
+<!ENTITY calendar.context.export.label                 "Às-phortaich mìosachan…">
+<!ENTITY calendar.context.export.accesskey             "m">
+<!ENTITY calendar.context.properties.label             "Roghainnean">
+<!ENTITY calendar.context.properties.accesskey         "R">
+
+<!-- LOCALIZATION NOTE (calendar.context.showcalendar.accesskey)
+     This is the access key used for the showCalendar string -->
+<!ENTITY calendar.context.showcalendar.accesskey      "h">
+
+<!-- LOCALIZATION NOTE (calendar.context.hidecalendar.accesskey)
+     This is the access key used for the hideCalendar string -->
+<!ENTITY calendar.context.hidecalendar.accesskey      "H">
+
+<!-- LOCALIZATION NOTE (calendar.context.showonly.accesskey)
+     This is the access key used for the showOnlyCalendar string -->
+<!ENTITY calendar.context.showonly.accesskey           "A">
+<!ENTITY calendar.context.showall.label                "Seall gach mìosachan">
+<!ENTITY calendar.context.showall.accesskey            "a">
+
+<!ENTITY calendar.context.convertmenu.label              "Iompaich 'na">
+<!ENTITY calendar.context.convertmenu.accesskey.mail     "n">
+<!ENTITY calendar.context.convertmenu.accesskey.calendar "v">
+<!ENTITY calendar.context.convertmenu.event.label        "Thachartas…">
+<!ENTITY calendar.context.convertmenu.event.accesskey    "T">
+<!ENTITY calendar.context.convertmenu.message.label      "Theachdaireachd…">
+<!ENTITY calendar.context.convertmenu.message.accesskey  "T">
+<!ENTITY calendar.context.convertmenu.task.label         "Shaothair…">
+<!ENTITY calendar.context.convertmenu.task.accesskey     "t">
+
+<!ENTITY calendar.tasks.view.minimonth.label           "Meanbh-mhìos">
+<!ENTITY calendar.tasks.view.minimonth.accesskey       "M">
+
+<!ENTITY calendar.tasks.view.calendarlist.label        "Liosta nam mìosachan">
+<!ENTITY calendar.tasks.view.calendarlist.accesskey    "L">
+
+<!ENTITY calendar.tasks.view.filtertasks.label           "Criathraich na saothraichean">
+<!ENTITY calendar.tasks.view.filtertasks.accesskey       "C">
+
+<!-- Calendar Alarm Dialog -->
+
+<!ENTITY calendar.alarm.location.label              "Seòladh:" >
+<!ENTITY calendar.alarm.details.label               "Mion-fhiosrachadh…" >
+
+<!ENTITY calendar.alarm.snoozefor.label             "Dèan dùsal fad" >
+<!ENTITY calendar.alarm.snoozeallfor.label          "Dèan dùsal airson a h-uile fad" >
+<!ENTITY calendar.alarm.title.label                 "Caismeachd mìosachain" >
+<!ENTITY calendar.alarm.dismiss.label               "Leig seachad" >
+<!ENTITY calendar.alarm.dismissall.label            "Leig seachad a h-uile" >
+
+<!ENTITY calendar.alarm.snooze.5minutes.label       "5 mionaidean" >
+<!ENTITY calendar.alarm.snooze.10minutes.label      "10 mionaidean" >
+<!ENTITY calendar.alarm.snooze.15minutes.label      "15 mionaidean" >
+<!ENTITY calendar.alarm.snooze.30minutes.label      "30 mionaid" >
+<!ENTITY calendar.alarm.snooze.45minutes.label      "45 mionaid" >
+<!ENTITY calendar.alarm.snooze.1hour.label          "1 uair a thìde" >
+<!ENTITY calendar.alarm.snooze.2hours.label         "2 uair a thìde" >
+<!ENTITY calendar.alarm.snooze.1day.label           "1 latha" >
+
+<!-- LOCALIZATION NOTE (calendar.alarm.snooze.cancel)
+     This string is not seen in the UI, it is read by screen readers when the
+     user focuses the "Cancel" button in the "Snooze for..." popup of the alarm
+     dialog. -->
+<!ENTITY calendar.alarm.snooze.cancel               "Sguir dhen dùsal">
+
+<!-- Calendar Server Dialog -->
+<!ENTITY calendar.server.dialog.title.edit          "Deasaich am mìosachan">
+<!ENTITY calendar.server.dialog.name.label          "Ainm a' mhìosachain:">
+
+<!-- Calendar Properties -->
+<!ENTITY calendarproperties.color.label                    "Dath:">
+<!ENTITY calendarproperties.webdav.label                   "iCalendar (ICS)">
+<!ENTITY calendarproperties.caldav.label                   "CalDAV">
+<!ENTITY calendarproperties.format.label                   "Fòrmat:">
+<!ENTITY calendarproperties.location.label                 "Àite:">
+<!ENTITY calendarproperties.refreshInterval.label          "Ùraich am mìosachan:">
+<!ENTITY calendarproperties.refreshInterval.manual.label   "A làimh">
+<!ENTITY calendarproperties.name.label                     "Ainm:">
+<!ENTITY calendarproperties.readonly.label                 "Ri leughadh a-mhàin">
+<!ENTITY calendarproperties.firealarms.label               "Seall caismeachdan">
+<!ENTITY calendarproperties.cache3.label                   "Taic far loidhne">
+<!ENTITY calendarproperties.enabled2.label                 "Cuir am mìosachan seo an comas">
+<!ENTITY calendarproperties.forceDisabled.label            "Cha deach solaraiche a' mhìosachain seo a lorg. Tachraidh seo gu tric ma chuir thu à comas tuilleadain sònraichte no ma dhì-stàlaich thu iad.">
+<!ENTITY calendarproperties.unsubscribe.label              "Sguir dhen fho-sgrìobhadh">
+<!ENTITY calendarproperties.unsubscribe.accesskey          "u">
+
+<!-- Calendar Publish Dialog -->
+<!ENTITY calendar.publish.dialog.title              "Foillsich mìosachan">
+<!ENTITY calendar.publish.url.label                 "An URL foillseachaidh">
+<!ENTITY calendar.publish.publish.button      "Foillsich">
+<!ENTITY calendar.publish.close.button      "Dùin">
+
+<!ENTITY calendar.publish.example.url.description   "Rudeigin car coltach ri http://www.myserver.com/webdav/test.ics">
+
+<!-- Select Calendar Dialog -->
+<!ENTITY calendar.select.dialog.title    "Tagh mìosachan">
+
+<!-- Calendar Printing -->
+<!ENTITY calendar.print.window.title "Clò-bhuail mìosachan">
+<!ENTITY calendar.print.title.label "Tiotal:">
+<!ENTITY calendar.print.layout.label "Co-dhealbhachd:">
+<!ENTITY calendar.print.range.label "Na thèid a chlò-bhualadh">
+<!ENTITY calendar.print.currentView2.label "An sealladh làithreach">
+<!ENTITY calendar.print.selectedEventsAndTasks.label "Na tachartasan/saothraichean a thagh thu">
+<!ENTITY calendar.print.tasks.label "Saothraichean">
+<!ENTITY calendar.print.events.label "Tachartasan">
+<!ENTITY calendar.print.custom.label "Raon làithean sònraichte:">
+<!ENTITY calendar.print.from.label "O:">
+<!ENTITY calendar.print.to.label "Gu:">
+<!ENTITY calendar.print.settingsGroup.label "Roghainnean a' chlò-bhualaidh">
+<!ENTITY calendar.print.optionsGroup.label "Roghainnean">
+<!ENTITY calendar.print.taskswithnoduedate.label "Saothraichean gun cheann-ama">
+<!ENTITY calendar.print.completedtasks.label "Saothraichean crìochnaichte">
+
+<!-- Error reporting -->
+<!ENTITY calendar.error.detail "Mion-fhiosrachadh…">
+<!ENTITY calendar.error.code "Còd na mearachd:">
+<!ENTITY calendar.error.description "Tuairisgeul:">
+<!ENTITY calendar.error.title "Thachair mearachd">
+
+<!-- Extract buttons in message header -->
+<!ENTITY calendar.extract.event.button         "Cuir ris mar thachartas">
+<!ENTITY calendar.extract.task.button          "Cuir ris mar shaothair">
+<!ENTITY calendar.extract.event.button.tooltip "Tog fiosrachadh mìosachain on teachdaireachd is cuir ris a' mhìosachan e mar thachartas">
+<!ENTITY calendar.extract.task.button.tooltip  "Tog fiosrachadh mìosachain on teachdaireachd is cuir ris a' mhìosachan e mar shaothair">

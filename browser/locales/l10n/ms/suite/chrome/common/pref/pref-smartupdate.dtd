@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "Pemasangan Perisian">
+<!ENTITY addOnsTitle.label                    "Add-ons">
+<!ENTITY addOnsAllow.label                    "Izinkan laman web memasang add-ons dan kemaskini">
+<!ENTITY addOnsAllow.accesskey                "k">
+<!ENTITY allowedSitesLink.label               "Laman web Diizinkan">
+<!ENTITY autoAddOnsUpdates.label              "Semak kemaskini secara automatik">
+<!ENTITY autoAddOnsUpdates.accesskey          "o">
+<!ENTITY daily.label                          "harian">
+<!ENTITY addOnsDaily.accesskey                "h">
+<!ENTITY weekly.label                         "mingguan">
+<!ENTITY addOnsWeekly.accesskey               "m">
+<!ENTITY addOnsModeAutomatic.label            "Muat turun dan pasang kemaskini secara automatik">
+<!ENTITY addOnsModeAutomatic.accesskey        "k">
+<!ENTITY enablePersonalized.label             "Add-on peribadi yang disyorkan">
+<!ENTITY enablePersonalized.accesskey         "A">
+<!ENTITY addonManagerLink.label               "Urus Add-ons">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "Semak kemaskini secara automatik">
+<!ENTITY autoAppUpdates.accesskey             "t">
+<!ENTITY appDaily.accesskey                   "a">
+<!ENTITY appWeekly.accesskey                  "g">
+<!ENTITY appModeAutomatic.label               "Muat turun dan pasang kemaskini secara automatik">
+<!ENTITY appModeAutomatic.accesskey           "s">
+<!ENTITY updateHistoryButton.label            "Papar Sejarah Kemaskini…">
+<!ENTITY updateHistoryButton.accesskey        "P">

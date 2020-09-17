@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Tunnukset">
+<!ENTITY pref.tags.caption          "Muokkaa tunnuksia">
+<!ENTITY pref.tags.description      "Tunnuksilla voi luokitella viestejä sekä asettaa ne tärkeysjärjestykseen. Voit muuttaa tunnusten ulkoasua ja tärkeysjärjestystä alla olevilla asetuksilla. Listan alussa olevat tunnukset ovat tärkeämpiä kuin alempana olevat.">
+<!ENTITY tagColumn.label            "Tunnus">
+<!ENTITY colorColumn.label          "Väri">
+<!ENTITY defaultTagName.label       "Nimeämätön tunnus">
+<!ENTITY addTagButton.label         "Lisää">
+<!ENTITY addTagButton.accesskey     "L">
+<!ENTITY deleteTagButton.label      "Poista">
+<!ENTITY deleteTagButton.accesskey  "o">
+<!ENTITY raiseTagButton.label       "Nosta tärkeysastetta">
+<!ENTITY raiseTagButton.accesskey   "N">
+<!ENTITY lowerTagButton.label       "Laske tärkeysastetta">
+<!ENTITY lowerTagButton.accesskey   "a">
+<!ENTITY restoreButton.label        "Palauta alkutila">
+<!ENTITY restoreButton.accesskey    "P">

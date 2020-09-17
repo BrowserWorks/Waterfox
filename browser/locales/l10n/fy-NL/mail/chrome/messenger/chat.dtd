@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Onlinekontakten">
+<!ENTITY offlineContactsHeader.label   "Offlinekontakten">
+<!ENTITY conversationsHeader.label     "Petearen">
+<!ENTITY searchResultConversation.label "Sykresultaat">
+<!ENTITY chat.noConv.title             "Petearen wurde hjir werjûn.">
+<!ENTITY chat.noConv.description       "Brûk de kontaktlist yn it lofterpaniel om in petear te begjinnen.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; hat op dit stuit gjin foarige petearen foar dit kontakt bewarre.">
+<!ENTITY chat.noAccount.title             "Jo hawwe noch gjin chataccount ynsteld.">
+<!ENTITY chat.noAccount.description       "Lit &brandShortName; jo troch it ynstelproses fan jo chataccount liede.">
+<!ENTITY chat.accountWizard.button       "Begjinne">
+<!ENTITY chat.noConnectedAccount.title             "Jo chataccounts binne net ferbûn.">
+<!ENTITY chat.noConnectedAccount.description       "Jo kinne ferbine fia it 'Chatsteat' finster:">
+<!ENTITY chat.showAccountManager.button       "Chatsteat toane">
+
+<!ENTITY chat.participants             "Dielnimmers:">
+<!ENTITY chat.previousConversations    "Foarige petearen:">
+<!ENTITY chat.ongoingConversation      "Rinnend petear">
+
+<!ENTITY openConversationCmd.label     "In petear begjinne">
+<!ENTITY openConversationCmd.accesskey "I">
+<!ENTITY closeConversationCmd.label    "Petear slute">
+<!ENTITY closeConversationCmd.accesskey "P">
+<!ENTITY aliasCmd.label                "Omneame">
+<!ENTITY aliasCmd.accesskey            "O">
+<!ENTITY deleteCmd.label               "Kontakt fuortsmite">
+<!ENTITY deleteCmd.accesskey           "f">
+
+<!ENTITY openConversationButton.tooltip  "In petear begjinne">
+<!ENTITY closeConversationButton.tooltip "Petear slute">
+
+<!ENTITY addBuddyButton.label          "Kontakt tafoegje">
+<!ENTITY joinChatButton.label          "Chat meidwaan">
+<!ENTITY chatAccountsButton.label      "Accounts toane">
+
+<!ENTITY status.available          "Beskikber">
+<!ENTITY status.unavailable        "Net beskikber">
+<!ENTITY status.offline            "Offline">
+
+<!ENTITY openLinkCmd.label            "Keppeling iepenje…">
+<!ENTITY openLinkCmd.accesskey        "i">

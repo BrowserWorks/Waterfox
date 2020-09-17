@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Sykje">
+
+<!ENTITY newPref.namePlaceholder       "Namme">
+
+<!ENTITY newPref.valueBoolean          "Boolean">
+<!ENTITY newPref.valueString           "String">
+<!ENTITY newPref.valueInteger          "Integer">
+
+<!ENTITY newPref.stringPlaceholder     "Fier in string yn">
+<!ENTITY newPref.numberPlaceholder     "Fier in nûmer yn">
+
+<!ENTITY newPref.toggleButton          "Omskeakelje">
+<!ENTITY newPref.cancelButton          "Annulearje">
+
+<!ENTITY contextMenu.copyPrefName      "Namme kopiearje">
+<!ENTITY contextMenu.copyPrefValue     "Wearde kopiearje">

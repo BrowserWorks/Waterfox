@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Serĉi kaj anstataŭigi">
+<!ENTITY findField.label "Serĉi tekston:">
+<!ENTITY findField.accesskey "t">
+<!ENTITY replaceField.label "Anstataŭigi per:">
+<!ENTITY replaceField.accesskey "p">
+<!ENTITY caseSensitiveCheckbox.label "Konsideri grandon de literoj">
+<!ENTITY caseSensitiveCheckbox.accesskey "K">
+<!ENTITY wrapCheckbox.label "En la tuta dokumento">
+<!ENTITY wrapCheckbox.accesskey "E">
+<!ENTITY backwardsCheckbox.label "Serĉi antaŭen">
+<!ENTITY backwardsCheckbox.accesskey "a">
+<!ENTITY findNextButton.label "Serĉi sekvan">
+<!ENTITY findNextButton.accesskey "S">
+<!ENTITY replaceButton.label "Anstataŭigi">
+<!ENTITY replaceButton.accesskey "A">
+<!ENTITY replaceAndFindButton.label "Serĉi kaj anstataŭigi">
+<!ENTITY replaceAndFindButton.accesskey "k">
+<!ENTITY replaceAllButton.label "Anstataŭigi ĉiujn">
+<!ENTITY replaceAllButton.accesskey "j">
+<!ENTITY closeButton.label "Fermi">
+<!ENTITY closeButton.accesskey "F">

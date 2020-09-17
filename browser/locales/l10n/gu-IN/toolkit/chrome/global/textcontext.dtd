@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "શબ્દકોષમાં એડ-ઓન">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "શબ્દકોષમાં ઉમેરો રદ કરો">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "જોડણી ચકાસણી ચકાસો">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(કોઈ જોડણી સૂચનો નથી)">
+<!ENTITY spellDictionaries.label "ભાષાઓ">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "સાફ કરો">
+
+<!ENTITY fillLoginMenu.label          "લૉગિન ભરો">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "પાસવર્ડ ભરો">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "વપરાશકર્તાનામ ભરો">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(લૉગિન સૂચનો ના બતાવો)">
+<!ENTITY viewSavedLogins.label        "સાચવેલા લૉગિન્સ જુઓ">

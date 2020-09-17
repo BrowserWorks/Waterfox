@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importimine">
+
+<!ENTITY importFromWin.label            "Valikud, kontode sätted, aadressiraamatud, filtrid ja muud andmed imporditakse rakendusest:">
+<!ENTITY importFromNonWin.label         "Eelistused, kontode sätted, aadressiraamatud, filtrid ja muud andmed imporditakse rakendusest:">
+<!ENTITY importSourceNotFound.label     "Rakendust, kust andmeid importida, ei leitud.">
+
+<!ENTITY importFromNothing.label        "Midagi ei impordita">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 või uuem">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Sätted ja kirjade kaustad imporditakse rakendusest:">
+<!ENTITY importItems.title              "Imporditavad elemendid">
+<!ENTITY importItems.label              "Vali, millised elemendid imporditakse:">
+
+<!ENTITY migrating.title                "Importimine...">
+<!ENTITY migrating.label                "Toimub järgnevate elementide importimine...">
+
+<!ENTITY selectProfile.title            "Profiili valimine">
+<!ENTITY selectProfile.label            "Importimiseks on saadaval järgnevad profiilid:">
+
+<!ENTITY done.title                     "Importimine on lõpetatud">
+<!ENTITY done.label                     "Järgnevate elementide importimine õnnestus:">

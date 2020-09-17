@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Senni tafelwit">
+
+<!ENTITY size.label "Teɣzi">
+<!ENTITY numRowsEditField.label "Izirigen:">
+<!ENTITY numRowsEditField.accessKey "z">
+<!ENTITY numColumnsEditField.label "Tigejda:">
+<!ENTITY numColumnsEditField.accessKey "g">
+<!ENTITY widthEditField.label "Tehri:">
+<!ENTITY widthEditField.accessKey "h">
+<!ENTITY borderEditField.label "Tama:">
+<!ENTITY borderEditField.accessKey "m">
+<!ENTITY borderEditField.tooltip "Sekcem amḍan i tama n telwit, neɣ sekcem warrun (0) ma ulac tama">
+<!ENTITY pixels.label "ipiksilen">

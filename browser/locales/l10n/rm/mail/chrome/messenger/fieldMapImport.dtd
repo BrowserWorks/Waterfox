@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importar in cudeschet d'adressas">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Datas importadas per l'endataziun nr.: ">
+<!ENTITY fieldMapImport.next.label "Enavant">
+<!ENTITY fieldMapImport.next.accesskey "a">
+<!ENTITY fieldMapImport.previous.label "Enavos">
+<!ENTITY fieldMapImport.previous.accesskey "o">
+<!ENTITY fieldMapImport.text "Utilisescha ils buttuns 'Ensi' ed 'Engiu' per attribuir ils champs dal cudeschet d'adressas a sanestra a las datas da l'import a dretga. Deactivescha tut ils elements che na duain betg vegnir importads.">
+<!ENTITY fieldMapImport.up.label "Ensi">
+<!ENTITY fieldMapImport.up.accesskey "s">
+<!ENTITY fieldMapImport.down.label "Engiu">
+<!ENTITY fieldMapImport.down.accesskey "g">
+<!ENTITY fieldMapImport.fieldListTitle "Champs dal cudeschet d'adressas">
+<!ENTITY fieldMapImport.dataTitle "Datas che duain vegnir importadas">
+<!ENTITY fieldMapImport.skipFirstRecord.label "L'emprima endataziun cuntegna ils nums da champ">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "e">

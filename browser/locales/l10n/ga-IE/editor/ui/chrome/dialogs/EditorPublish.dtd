@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Foilsigh an Leathanach">
+<!ENTITY windowTitleSettings.label    "Socruithe Foilsithe">
+<!ENTITY publishTab.label             "Foilsigh">
+<!ENTITY settingsTab.label            "Socruithe">
+<!ENTITY publishButton.label          "Foilsigh">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Ainm an tSuímh:">
+<!ENTITY siteList.accesskey           "S">
+<!ENTITY siteList.tooltip             "Roghnaigh an suíomh a theastaíonn uait foilsiú chuige">
+<!ENTITY newSiteButton.label          "Suíomh nua">
+<!ENTITY newSiteButton.accesskey      "n">
+<!ENTITY docDirList.label             "Fochomhadlann suímh an leathanaigh seo:">
+<!ENTITY docDirList.accesskey         "s">
+<!ENTITY docDirList.tooltip           "Roghnaigh nó cuir isteach ainm chianfhochomhadlann an leathanaigh seo">
+<!ENTITY publishImgCheckbox.label     "Cuir íomhánna agus comhaid eile san áireamh">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip   "Foilsigh íomhánna agus comhaid eile a dhéantar tagairt orthu sa leathanach seo">
+<!ENTITY sameLocationRadio.label      "Úsáid an suíomh céanna agus an leathanach">
+<!ENTITY sameLocationRadio.accesskey  "u">
+<!ENTITY sameLocationRadio.tooltip    "Foilsigh comhaid go dtí an suíomh céanna ar a bhfuil an leathanach">
+<!ENTITY useSubdirRadio.label         "Úsáid an fhochomhadlann suímh seo:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Foilsigh comhaid chuig an chianfhochomhadlann roghnaithe">
+<!ENTITY otherDirList.tooltip         "Roghnaigh nó iontráil ainm na fochomhadlainne cianda ar a bhfoilseofar comhaid">
+<!ENTITY pageTitle.label              "Teideal an Leathanaigh:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Iontráil teideal a chuirfear ar an leathanach san fhuinneog nó i leabharmharcanna">
+<!ENTITY pageTitleExample.label       "m.sh.: &quot;Mo Leathanach Gréasáin&quot;">
+<!ENTITY filename.label               "Ainm comhaid:">
+<!ENTITY filename.accesskey           "A">
+<!ENTITY filename.tooltip             "Iontráil ainm don chomhad seo, le &quot;.html&quot; air más leathanach Gréasáin é">
+<!ENTITY filenameExample.label        "m.sh.: &quot;moleathanach.html&quot;">
+<!ENTITY setDefaultButton.label       "Socraigh mar Réamhshocrú">
+<!ENTITY setDefaultButton.accesskey   "R">
+<!ENTITY removeButton.label           "Bain Suíomh">
+<!ENTITY removeButton.accesskey       "B">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Suíomhanna Foilsithe">
+<!ENTITY serverInfo.label             "Eolas faoin bhfreastalaí">
+<!ENTITY loginInfo.label              "Eolas Logála Isteach">
+<!ENTITY siteName.label               "Ainm an tSuímh:">
+<!ENTITY siteName.accesskey           "S">
+<!ENTITY siteName.tooltip             "Leasainm mar aitheantas ar an suíomh seo (m.sh. &quot;MoShuíomh&quot;)">
+<!ENTITY siteUrl.label                "Seoladh foilsithe (m.sh. &quot;ftp://ftp.mossi.ie/mo_ainm&quot;):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "An seoladh FTP:// nó HTTP:// a thugann do Sholáthraí Seirbhísí Idirlín nó do sheirbhís óstála Gréasáin duit">
+<!ENTITY browseUrl.label              "Seoladh HTTP do leathanaigh bhaile (m.sh. &quot;http://www.mossi.ie/mo_ainm&quot;):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "Seoladh HTTP:// do chomhadlainne baile (gan ainm comhaid):">
+<!ENTITY username.label               "Ainm úsáideora:">
+<!ENTITY username.accesskey           "s">
+<!ENTITY username.tooltip             "An t-ainm úsáideora a úsáideann tú chun logáil isteach chuig do Sholáthraí Seirbhísí Idirlín nó do sheirbhís óstála Gréasáin">
+<!ENTITY password.label               "Focal Faire:">
+<!ENTITY password.accesskey           "F">
+<!ENTITY password.tooltip             "An focal faire a bhaineann le d'ainm úsáideora">
+<!ENTITY savePassword.label           "Sábháil an focal faire">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Roghnaigh é seo chun d'fhocal faire a shábháil go slán le Bainisteoir na bhFocal Faire">

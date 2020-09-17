@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Gestionează identitățile pentru acest cont. Prima identitate este folosită în mod implicit.">
+<!ENTITY identitiesListAdd.label  "Adaugă…">
+<!ENTITY identitiesListAdd.accesskey  "A">
+<!ENTITY identitiesListEdit.label "Editează…">
+<!ENTITY identitiesListEdit.accesskey "E">
+<!ENTITY identitiesListDefault.label "Setează ca implicit">
+<!ENTITY identitiesListDefault.accesskey "i">
+<!ENTITY identitiesListDelete.label "Șterge">
+<!ENTITY identitiesListDelete.accesskey "t">
+<!ENTITY identitiesListClose.label "Închide">
+<!ENTITY identitiesListClose.accesskey "c">

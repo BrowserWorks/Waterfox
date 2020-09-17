@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "অক্ষর প্রবেশ">
+<!ENTITY category.label "শ্রেণীবিভাগ">
+<!ENTITY letter.label "বর্ণ (L):">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "অক্ষর (C):">
+<!ENTITY character.accessKey "C">
+<!ENTITY accentUpper.label "ঝোঁক চিহ্ন - বড় হাতের অক্ষরে">
+<!ENTITY accentLower.label "ঝোঁক চিহ্ন - ছোট হাতের অক্ষরে">
+<!ENTITY otherUpper.label "অন্যান্য বড় হাতের অক্ষর">
+<!ENTITY otherLower.label "অন্যান্য ছোট হাতের অক্ষর">
+<!ENTITY commonSymbols.label "সাধারণ প্রতীক">
+<!ENTITY insertButton.label "প্রবেশ">
+<!ENTITY closeButton.label "বন্ধ">

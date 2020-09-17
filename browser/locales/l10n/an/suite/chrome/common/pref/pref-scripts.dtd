@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-scripts.xul -->
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+
+
+<!ENTITY pref.scripts.title              "Scripts &amp; Plugins">
+
+<!ENTITY navigator.label                 "Navegador">
+<!ENTITY navigator.accesskey             "N">
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+
+<!ENTITY enableJavaScript.label          "Activar Javascript para">
+<!ENTITY allowScripts.label              "Permitir a os scripts:">
+<!ENTITY allowScripts.accesskey          "P">
+<!ENTITY allowWindowMoveResize.label     "Mover u cambiar a grandaria de finestras existents">
+<!ENTITY allowWindowFlip.label           "Cambiar o plano de profundidat d'as finestras">
+<!ENTITY allowWindowStatusChange.label   "Cambiar o texto d'a barra d'estau">
+<!ENTITY allowWindowImageSrcChange.label "Cambiar imachens">
+<!ENTITY allowContextmenuDisable.label   "Desactivar u reemplazar menús contextuals">
+<!ENTITY allowHideStatusBar.label        "Amagar a barra d'estau">
+
+<!ENTITY enablePlugins.label             "Enable Plugins for">
+<!ENTITY enablePluginForSuite.label      "Suite">
+<!ENTITY enablePluginForSuite.accesskey  "u">
+
+<!ENTITY whenPageRequiresPlugins.label   "When a page requires plugins">
+<!ENTITY activateAllPlugins.label        "Activate all plugins by default">
+<!ENTITY activateAllPlugins.accesskey    "d">
+<!ENTITY warnPluginsRequired.label       "Warn me if additional plugins need to be installed">
+<!ENTITY warnPluginsRequired.accesskey   "W">

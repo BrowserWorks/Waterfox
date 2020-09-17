@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Confermas da retschavida (MDN)">
+<!ENTITY useGlobalPrefs.label         "Utilisar mias preferenzas globalas areguard las confermas da retschavida">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY globalReceipts.label         "Preferenzas globalas…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "Adattar las confermas da retschavida per quest conto">
+<!ENTITY useCustomPrefs.accesskey     "C">
+<!ENTITY requestReceipt.label         "Adina pretender ina conferma da retschavida">
+<!ENTITY requestReceipt.accesskey     "A">
+<!ENTITY receiptArrive.label          "Sch'ina conferma da retschavida arriva:">
+<!ENTITY leaveIt.label                "Laschar ella en mia posta entrada">
+<!ENTITY leaveIt.accesskey            "I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Spustar ella en l'ordinatur &quot;Tramess&quot;">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "Sch'i vegn dumandà da trametter ina conferma da retschavida:">
+<!ENTITY returnSome.label             "Permetter confermas da retschavida per tscherts messadis">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Mai trametter ina conferma da retschavida">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Sche jau na figuresch betg en la lingia 'A:' u 'CC:' dal messadi:">
+<!ENTITY notInToCc.accesskey          "T">
+<!ENTITY outsideDomain.label          "Sch'il speditur è ordaifer mia domena:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "En tut ils auters cas:">
+<!ENTITY otherCases.accesskey         "u">
+<!ENTITY askMe.label                  "Ma dumandar">
+<!ENTITY alwaysSend.label             "Adina trametter">
+<!ENTITY neverSend.label              "Mai trametter">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "SSL/TLS ოქმის ვერსიები">
+<!ENTITY SSLTLSWarnings.caption             "SSL/TLS გაფრთხილებები">
+<!ENTITY SSLMixedContent.caption            "შერეული მონაცემები">
+<!ENTITY SSLClientAuthMethod.caption        "კლიენტის სერტიფიკატის შერჩევა">
+
+<!ENTITY pref.ssltls.title                  "გადაცემის უსაფრთხო შრე (SSL/TLS)">
+<!ENTITY limit.description                  "შეგიძლიათ შეზღუდოთ დაშიფრული უსაფრთხო კავშირის რეჟიმები. შეარჩიეთ ერთერთი ვერსია ან ვერსიების უწყვეტი შუალედი.">
+<!ENTITY limit.enable.label                 "ჩართვა:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName;-ს შეუძლია გაცნობოთ გვერდის უსაფრთხოების მდგომარეობა, მისი მონახულებისას. მიუთითეთ &brandShortName;-ს, რომ გაჩვენოთ გაფრთხილება:">
+<!ENTITY warn.enteringsecure                "დაშიფვრის შესაძლებლობის მქონე გვერდის ჩატვირთვისას">
+<!ENTITY warn.enteringsecure.accesskey      "ფ">
+<!ENTITY warn.insecurepost                  "შევსებული ველების მონაცემთა გადაგზავნისას, დაუშიფრავი გვერდიდან, სხვა დაუშიფრავ გვერდზე">
+<!ENTITY warn.insecurepost.accesskey        "უ">
+<!ENTITY warn.leavingsecure                 "დაშიფვრის შესაძლებლობის მქონე გვერდის დატოვებისას">
+<!ENTITY warn.leavingsecure.accesskey       "ტ">
+
+<!ENTITY mixed.description                  "დაშიფრული გვერდები, შესაძლოა შეიცავდეს დაუშიფრავ შიგთავსსაც, რომელიც დაუცველია თაღლითობისა და ხელყოფისგან. &brandShortName;-ს შეუძლია მათი აღმოჩენა და შეზღუდვა:">
+<!ENTITY warn.mixedactivecontent            "გაფრთხილება, როცა დაშიფრული გვერდი დაუშიფრავ შიგთავსს შეიცავს">
+<!ENTITY warn.mixedactivecontent.accesskey  "ფ">
+<!ENTITY block.activecontent                "არ ჩაიტვირთოს დაუშიფრავი შიგთავსი, დაშიფრულ გვერდებზე">
+<!ENTITY block.activecontent.accesskey      "რ">
+<!ENTITY warn.mixeddisplaycontent           "გაფრთხილება, როცა დაშიფრული გვერდი სხვა სახის, ან შერეული სახის შიგთავსსაც შეიცავს">
+<!ENTITY warn.mixeddisplaycontent.accesskey "გ">
+<!ENTITY block.displaycontent               "არ ჩაიტვირთოს სხვა სახის, ან შერეული სახის შიგთავსი, დაშიფრულ გვერდებზე">
+<!ENTITY block.displaycontent.accesskey     "შ">
+
+<!ENTITY certselect.description             "განსაზღვრეთ, თუ, როგორ შეარჩიოს &brandShortName;-მ უსაფრთხოების სერტიფიკატები გვერდებისთვის, რომლებიც მას საჭიროებენ:">
+<!ENTITY certselect.auto                    "თვითშერჩევა">
+<!ENTITY certselect.auto.accesskey          "თ">
+<!ENTITY certselect.ask                     "შეკითხვა ყოველ ჯერზე">
+<!ENTITY certselect.ask.accesskey           "ჯ">

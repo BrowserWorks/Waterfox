@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Тіркелгі баптаулары">
+<!ENTITY accountName.label "Тіркелгі атауы:">
+<!ENTITY accountName.accesskey "а">
+<!ENTITY identityTitle.label "Негізгі жеке мәліметтер">
+<!ENTITY identityDesc.label "Әр тіркелгінің жеке мәліметтері бар, ол деген басқа адамдар сіздің хабарламаларыңызды оқыған кезде көретін ақпараты.">
+<!ENTITY name.label "Сіздің атыңыз:">
+<!ENTITY name.accesskey "ы">
+<!ENTITY email.label "Эл. пошта адресі:">
+<!ENTITY email.accesskey "Э">
+<!ENTITY catchAll.label "Жеткізу тақырыптамалары сәйкес болған кезде, мына жеке мәліметтерден жауап беру:">
+<!ENTITY catchAll.accesskey "д">
+<!ENTITY replyTo.label "Жауап беру адресі:">
+<!ENTITY replyTo.accesskey "Ж">
+<!ENTITY replyTo.placeholder "Алушылар бұл басқа адреске жауап береді">
+<!ENTITY organization.label "Мекеме:">
+<!ENTITY organization.accesskey "М">
+<!ENTITY signatureText.label "Қолтаңба мәтіні:">
+<!ENTITY signatureText.accesskey "т">
+<!ENTITY signatureHtml.label "HTML қолдану (мыс., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "л">
+<!ENTITY signatureFile.label "Орнына файлдан қолтаңбаны тіркеу (мәтін, HTML немесе сурет):">
+<!ENTITY signatureFile.accesskey "т">
+<!ENTITY edit.label "Түзету…">
+<!ENTITY choose.label "Таңдау…">
+<!ENTITY choose.accesskey "Т">
+<!ENTITY editVCard.label "Картаны түзету…">
+<!ENTITY editVCard.accesskey "е">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Хабарламаларға менің vCard-ты қосу">
+<!ENTITY attachVCard.accesskey "м">
+
+<!ENTITY manageIdentities.label "Жеке мәліметтерді басқару…">
+<!ENTITY manageIdentities.accesskey "б">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Шығыс сервер (SMTP):">
+<!ENTITY smtpName.accesskey "ы">
+<!ENTITY smtpDefaultServer.label "Негізгі серверді қолдану">
+
+<!ENTITY smtpServerEdit.label "SMTP серверін түзету…">
+<!ENTITY smtpServerEdit.accesskey "р">

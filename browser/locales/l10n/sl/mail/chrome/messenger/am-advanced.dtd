@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Nastavitve strežnika za odhodno pošto (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Med upravljanjem z identitetami lahko s seznama izberete odhodni strežnik (SMTP) ali pa z izbiro &quot;Uporabi privzeti strežnik&quot; uporabite privzetega.">
+
+<!ENTITY smtpListAdd.label  "Dodaj …">
+<!ENTITY smtpListAdd.accesskey  "D">
+<!ENTITY smtpListEdit.label "Uredi …">
+<!ENTITY smtpListEdit.accesskey "U">
+<!ENTITY smtpListDelete.label "Izbriši">
+<!ENTITY smtpListDelete.accesskey "b">
+<!ENTITY smtpListSetDefault.label "Nastavi na privzeto">
+<!ENTITY smtpListSetDefault.accesskey "N">
+
+<!ENTITY serverDetails.label "Podrobnosti izbranega strežnika:">
+<!ENTITY serverDescription.label "Opis: ">
+<!ENTITY serverName.label "Ime strežnika: ">
+<!ENTITY serverPort.label "Vrata: ">
+<!ENTITY userName.label   "Uporabniško ime: ">
+<!ENTITY connectionSecurity.label "Varnost povezave: ">
+<!ENTITY authMethod.label   "Metoda overitve: ">

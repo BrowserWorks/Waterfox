@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Egenskaber for felt">
+<!ENTITY Legend.label "Beskrivelse">
+<!ENTITY Legend.accesskey "B">
+<!ENTITY EditLegendText.label "Rediger beskrivelse:">
+<!ENTITY EditLegendText.accesskey "R">
+<!ENTITY LegendAlign.label "Juster beskrivelse:">
+<!ENTITY LegendAlign.accesskey "J">
+<!ENTITY AlignDefault.label "Standard">
+<!ENTITY AlignLeft.label "Venstre">
+<!ENTITY AlignCenter.label "Centrer">
+<!ENTITY AlignRight.label "Højre">
+<!ENTITY RemoveFieldSet.label "Fjern felt">
+<!ENTITY RemoveFieldSet.accesskey "F">

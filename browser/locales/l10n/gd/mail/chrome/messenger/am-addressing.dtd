@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Sgrìobhadh ⁊ seòlachadh">
+<!ENTITY addressingGroupTitle.label "Seòlachadh">
+<!ENTITY addressingText.label      "Nuair a lorgas mi seòladh:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Cleachd na roghainnean frithealaiche LDAP uile-choitcheann agam airson a' chunntais seo">
+<!ENTITY useGlobal.accesskey       "u">
+<!ENTITY editDirectories.label     "Deasaich nam pasganan…">
+<!ENTITY editDirectories.accesskey "e">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Cleachd frithealaiche LDAP eile:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "Chan eil gin">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Sgrìobhadh">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Sgrìobh teachdaireachdan ann an cruth HTML">
+<!ENTITY useHtml.accesskey                    "c">
+<!ENTITY autoQuote.label                      "Thoir luaidh air an teachdaireachd thùsail a ghnàth nuair a sgrìobhas tu freagairt">
+<!ENTITY autoQuote.accesskey                  "T">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Nuair a nithear iomradh,">
+<!ENTITY quoting.accesskey                    "q">
+<!ENTITY aboveQuote.label                     "tòisich air mo fhreagairt os cionn an luaidh">
+<!ENTITY belowQuote.label                     "tòisich air mo fhreagairt fon luaidh">
+<!ENTITY selectAndQuote.label                 "tagh an luaidh">
+<!ENTITY place.label                          "agus cuir an t-earr-sgrìobhadh agam">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "fon luaidh (mholar seo)">
+<!ENTITY aboveText.label                      "fo mo fhreagairt (os cionn an luaidh)">
+<!ENTITY includeSigOnReply.label              "Cuir an t-earr-sgrìobhadh agam 'nam fhreagairtean">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "Cuir an t-earr-sgrìobhadh agam ann an teachdaireachdan a tha mi a' sìneadh air adhart">
+<!ENTITY includeSigOnForward.accesskey        "C">
+
+<!ENTITY globalComposingPrefs.label           "Roghainnean sgrìobhaidh uile-choitcheann…">
+<!ENTITY globalComposingPrefs.accesskey       "R">
+
+<!ENTITY globalAddressingPrefs.label          "Roghainnean sheòlaidhean uile-choitcheanns…">
+<!ENTITY globalAddressingPrefs.accesskey      "o">

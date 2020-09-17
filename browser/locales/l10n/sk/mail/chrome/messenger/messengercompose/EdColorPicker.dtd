@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Farba">
+<!ENTITY lastPickedColor.label "Naposledy vybraná farba">
+<!ENTITY lastPickedColor.accessKey "N">
+<!ENTITY chooseColor1.label "Vyberte farbu:">
+<!ENTITY chooseColor2.label "Zadajte reťazec farby HTML">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(napr.: &quot;#0000ff&quot; alebo &quot;blue&quot;):">
+<!ENTITY default.label "Implicitná">
+<!ENTITY default.accessKey "I">
+<!ENTITY palette.label "Paleta:">
+<!ENTITY standardPalette.label "Štandardná">
+<!ENTITY webPalette.label "Všetky webové farby">
+<!ENTITY background.label "Pozadie pre:">
+<!ENTITY background.accessKey "P">
+<!ENTITY table.label "tabuľku">
+<!ENTITY table.accessKey "t">
+<!ENTITY cell.label "bunku(y)">
+<!ENTITY cell.accessKey "b">

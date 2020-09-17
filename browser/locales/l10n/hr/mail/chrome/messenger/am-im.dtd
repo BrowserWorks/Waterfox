@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Postavke računa">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Općenito">
+<!ENTITY account.advanced              "Napredne mogućnosti">
+<!ENTITY account.name                  "Korisničko ime:">
+<!ENTITY account.password              "Lozinka:">
+<!ENTITY account.alias                 "Pseudonim:">
+<!ENTITY account.newMailNotification   "Obavjesti o novoj pošti">
+<!ENTITY account.autojoin              "Automatsko spojeni kanali:">
+<!ENTITY account.proxySettings.caption "Proxy postavke:">
+<!ENTITY account.proxySettings.change.label     "Promijeni…">
+<!ENTITY account.proxySettings.change.accessKey "P">

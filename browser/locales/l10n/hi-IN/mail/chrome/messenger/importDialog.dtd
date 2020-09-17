@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurances of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "आयात करें">
+
+<!ENTITY importTitle.label        "&brandShortName; मेल आयात विजार्ड">
+
+<!ENTITY importDescription2.label "उनके आयात किये जाने के बाद, आप उन्हें &brandShortName; मेल और/या पता पुस्तिका के अंदर अभिगम में समर्थ होंगे.">
+
+<!ENTITY selectDescription.label  "प्रोग्राम चुनें जिससे आप आयात करना पसंद करेंगे:">
+
+<!ENTITY back.label               "&lt; पीछें">
+<!ENTITY forward.label            "आगे &gt;">
+<!ENTITY finish.label             "समाप्त">
+<!ENTITY cancel.label             "रद्द करें">
+
+<!ENTITY select.label             "आयात के लिये पदार्थ का प्रकार चुनें:">
+
+<!ENTITY title.label              "शीर्षक">
+<!ENTITY processing.label         "आयात कर रहा है...">
+

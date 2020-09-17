@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Darempredoù enlinenn">
+<!ENTITY offlineContactsHeader.label   "Darempredoù ezlinenn">
+<!ENTITY conversationsHeader.label     "Kaozeadennoù">
+<!ENTITY searchResultConversation.label "Disoc'hoù klask">
+<!ENTITY chat.noConv.title             "Skrammet e vo ar c'haozeadennoù amañ.">
+<!ENTITY chat.noConv.description       "Arverit roll an darempredoù ar penel war an tu kleiz a-benn kregiñ ur gaozeadenn.">
+<!ENTITY chat.noPreviousConv.description       "N'eus kaozeadenn ebet enrollet war &brandShortName; evit an darempred-mañ.">
+<!ENTITY chat.noAccount.title             "N'hoc'h eus ket kefluniet ur gont postelerezh prim c'hoazh.">
+<!ENTITY chat.noAccount.description       "Lezit &brandShortName; da sturiañ ac'hanoc'h dre argerzh kefluniañ ho kont postelerezh prim.">
+<!ENTITY chat.accountWizard.button       "Deraouiñ">
+<!ENTITY chat.noConnectedAccount.title             "Ho kontoù postelerezh n'int ket kennasket.">
+<!ENTITY chat.noConnectedAccount.description       "Gallout a rit kennaskañ anezho diouzh 'Stad ar postelerezh prim' :">
+<!ENTITY chat.showAccountManager.button       "Diskouez stad ar postelerezh prim">
+
+<!ENTITY chat.participants             "Perzhidi :">
+<!ENTITY chat.previousConversations    "Kaozeadenn kent :">
+<!ENTITY chat.ongoingConversation      "Kaozeadenn vremanel">
+
+<!ENTITY openConversationCmd.label     "Kregiñ ur gaozeadenn">
+<!ENTITY openConversationCmd.accesskey "K">
+<!ENTITY closeConversationCmd.label    "Serriñ ar gaozeadenn">
+<!ENTITY closeConversationCmd.accesskey "S">
+<!ENTITY aliasCmd.label                "Adenvel">
+<!ENTITY aliasCmd.accesskey            "A">
+<!ENTITY deleteCmd.label               "Lemel an darempred">
+<!ENTITY deleteCmd.accesskey           "L">
+
+<!ENTITY openConversationButton.tooltip  "Kregiñ ur gaozeadenn">
+<!ENTITY closeConversationButton.tooltip "Serriñ ur gaozeadenn">
+
+<!ENTITY addBuddyButton.label          "Ouzhpennañ un darempred">
+<!ENTITY joinChatButton.label          "Kevreañ ouzh ar postelerezh prim">
+<!ENTITY chatAccountsButton.label      "Diskouez ar c'hontoù">
+
+<!ENTITY status.available          "Hegerz">
+<!ENTITY status.unavailable        "Ac'hubet">
+<!ENTITY status.offline            "Ezlinenn">
+
+<!ENTITY openLinkCmd.label            "Digeriñ an ere…">
+<!ENTITY openLinkCmd.accesskey        "D">

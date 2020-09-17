@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+<!ENTITY enbPluginCheckMailNews.label     "Sähköposti- ja keskusteluryhmäohjelmassa">
+<!ENTITY enbPluginCheckMailNews.accesskey "ä">
+
+<!-- These are added to the Window menu -->
+<!ENTITY mail.label                       "Sähköposti ja keskusteluryhmät">
+<!ENTITY mail.accesskey                   "ä">
+<!ENTITY addressbook.label                "Osoitekirja">
+<!ENTITY addressbook.accesskey            "O">
+
+<!-- These are added to Preferences dialog -->
+<!ENTITY viewingMessages.label            "Viestien luku">
+<!ENTITY notifications.label              "Ilmoitukset">
+<!ENTITY composingMessages.label          "Viestien kirjoitus">
+<!ENTITY format.label                     "Lähetysmuoto">
+<!ENTITY address.label                    "Osoitteet">
+<!ENTITY junk.label                       "Roska- ja huijausposti">
+<!ENTITY tags.label                       "Tunnukset">
+<!ENTITY return.label                     "Vastaanottokuittaukset">
+<!ENTITY characterEncoding2.label         "Merkistökoodaus">
+<!ENTITY networkStorage.label             "Verkko ja tallennus">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newFolderDialog.title "Новая папка">
+<!ENTITY name.label "Назва:">
+<!ENTITY name.accesskey "Н">
+<!ENTITY description.label "Стварыць як падпапку:">
+<!ENTITY description.accesskey "С">
+<!ENTITY folderRestriction1.label "Гэты паслугач абмяжоўвае папкі двума адмысловымі тыпамі.">
+<!ENTITY folderRestriction2.label "Дазволіць вашай новай папцы змяшчаць:">
+<!ENTITY foldersOnly.label "Толькі папкі">
+<!ENTITY messagesOnly.label "Толькі лісты">
+<!ENTITY accept.label "Стварыць папку">
+<!ENTITY accept.accesskey "т">

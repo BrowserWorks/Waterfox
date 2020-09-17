@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP nettverk">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Direkte tilkobling">
+<!ENTITY prefProxy.label                     "Proxy">
+<!ENTITY prefEnableHTTP10.label              "Bruk HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "B">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "r">
+<!ENTITY prefEnableHTTP11.label              "Bruk HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "H">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "HTTP-tilkoblinger kan bli finjustert med disse innstillingene for å bedre enten ytelse eller kompabilitet. Noen proxyer, for eksempel, trenger HTTP/1.0 for å virke (se versjonsnotatet for mer informasjon.)">
+<!ENTITY prefUseragent.label                 "User Agent-tekst">
+<!ENTITY prefFirefoxCompat.label             "Annonser kompatibilitet med Firefox">
+<!ENTITY prefFirefoxCompat.accesskey         "A">
+<!ENTITY prefLightningShow.label             "Annonser Lightning-installasjon">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "ADVARSEL: deaktivering av disse innstillingene kan føre til at nettsteder eller tjenester ikke fungerer som de skal.">
+<!ENTITY prefFirefoxStrict.label             "Identifiser som Firefox">
+<!ENTITY prefFirefoxStrict.accesskey         "I">
+<!ENTITY prefFirefoxNone.label               "Identifiser som SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "Identifiser som SeaMonkey og annonser Firefox-kompatibilitet">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "ADVARSEL: endring av denne innstillingen kan føre til at nettsteder eller tjenester ikke fungerer som de skal.">

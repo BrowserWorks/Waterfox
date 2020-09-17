@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+<!ENTITY pref.security.title              "Privacidade &amp; Seguranza">
+
+<!ENTITY tracking.label                   "Seguimento do usuario">
+<!ENTITY trackingIntro.label              "Os sitios web poden seguir como os usa, o que afecta a súa privacidade.">
+
+<!ENTITY dntTellSites.label               "Informar aos sitios web sobre as miñas preferencias de seguimento">
+<!ENTITY dntTellSites.accesskey           "t">
+<!ENTITY dntTrackingNotOkay.label         "Non quero ser seguido">
+<!ENTITY dntTrackingNotOkay.accesskey     "n">
+<!ENTITY dntTrackingOkay.label            "Consinto que me sigan">
+<!ENTITY dntTrackingOkay.accesskey        "c">
+
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label               "Navegación segura">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; pode bloquear os sitios web denunciados por conter contido malicioso.">
+
+<!ENTITY blockAttackSites.label           "Bloquear sitios indicados como de ataque (malware, viruses)">
+<!ENTITY blockAttackSites.accesskey       "B">
+
+<!ENTITY blockWebForgeries.label          "Bloquear sitios indicados como falsos (Phishing)">
+<!ENTITY blockWebForgeries.accesskey      "P">

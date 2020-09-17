@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder "Otsi">
+
+<!ENTITY newPref.namePlaceholder   "Nimi">
+
+<!ENTITY newPref.valueBoolean      "tõeväärtus">
+<!ENTITY newPref.valueString       "string">
+<!ENTITY newPref.valueInteger      "täisarv">
+
+<!ENTITY newPref.stringPlaceholder "Sisesta string">
+<!ENTITY newPref.numberPlaceholder "Sisesta number">
+
+<!ENTITY newPref.toggleButton      "Vastanda">
+<!ENTITY newPref.cancelButton      "Loobu">
+
+<!ENTITY contextMenu.copyPrefName  "Kopeeri nimi">
+<!ENTITY contextMenu.copyPrefValue "Kopeeri väärtus">

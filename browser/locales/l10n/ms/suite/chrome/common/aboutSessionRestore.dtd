@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Pulih Sesi">
+<!ENTITY restorepage.pagetitle      "Adakah anda mahu pulihkan sesi anda?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Sesi &brandShortName; anda yang terdahulu ditutup secara tidak sengaja. Kami minta maaf atas kesulitan ini. Anda boleh pulihkan tab dan tetingkap sesi yang terdahulu, atau mulakan sesi yang baru jika anda tidak perlukan lagi sesi yang dahulu.">
+<!ENTITY restorepage.remedies       "Jika &brandShortName; tertutup secara kerap:">
+<!ENTITY restorepage.dueToChrome    "Cuba nyahaktifkan ekstensi yang baru dipasang dari dalam Pengurus Add-ons.">
+<!ENTITY restorepage.dueToContent   "Cuba pulihkan sesi tanpa halaman Web yang anda syak menjadi punca masalah ini:">
+
+<!ENTITY restorepage.restoreButton  "Pulih Sesi Dahulu">
+<!ENTITY restorepage.restore.access "P">
+<!ENTITY restorepage.cancelButton   "Mulakan Sesi Baru">
+<!ENTITY restorepage.cancel.access  "M">
+
+<!ENTITY restorepage.restoreHeader  "Pulih">
+<!ENTITY restorepage.listHeader     "Tetingkap dan Tab">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Tetingkap &#37;S">

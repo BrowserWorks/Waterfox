@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Akaun - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Status pesanan segera">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Akaun Baru">
+<!ENTITY accountManager.newAccount.accesskey "B">
+<!ENTITY accountManager.close.label          "Tutup">
+<!ENTITY accountManager.close.accesskey      "p">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Akaun tidak dikonfigurasikan lagi">
+<!ENTITY accountManager.noAccount.description "Klik butang &accountManager.newAccount.label; untuk membolehkan &brandShortName; membimbing anda melaksanakan proses mengkonfigurasi.">
+<!ENTITY account.autoSignOn.label     "Daftar masuk semasa permulaan">
+<!ENTITY account.autoSignOn.accesskey "D">
+<!ENTITY account.connect.label        "Sambung">
+<!ENTITY account.connect.accesskey    "b">
+<!ENTITY account.disconnect.label     "Memutuskan">
+<!ENTITY account.disconnect.accesskey "t">
+<!ENTITY account.delete.label         "Buang">
+<!ENTITY account.delete.accesskey     "B">
+<!ENTITY account.edit.label           "Sifat">
+<!ENTITY account.edit.accesskey       "S">
+<!ENTITY account.moveup.label         "Pindah atas">
+<!ENTITY account.movedown.label       "Pindah bawah">
+<!ENTITY account.cancelReconnection.label         "Batal sambungan semula">
+<!ENTITY account.cancelReconnection.accesskey     "B">
+<!ENTITY account.copyDebugLog.label     "Salin Log Nyahpepijat">
+<!ENTITY account.copyDebugLog.accesskey "S">
+<!ENTITY account.showDebugLog.label     "Papar Log Nyahpepijat">
+<!ENTITY account.showDebugLog.accesskey "P">
+<!ENTITY account.connecting           "Sedang menyambung…">
+<!ENTITY account.disconnecting        "Memutuskan…">
+<!ENTITY account.disconnected         "Tidak Bersambung">

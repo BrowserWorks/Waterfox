@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "წერილების შექმნა და დამისამართება">
+<!ENTITY addressingGroupTitle.label "დამისამართება">
+<!ENTITY addressingText.label      "მისამართების ძებნისას:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "LDAP სერვერის საერთო პარამეტრების გამოყენება ამ ანგარიშისათვის">
+<!ENTITY useGlobal.accesskey       "L">
+<!ENTITY editDirectories.label     "საქაღალდეების ჩასწორება…">
+<!ENTITY editDirectories.accesskey "ქ">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "სხვა LDAP სერვერის გამოყენება:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "არა">
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "წერილების შექმნა">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "წერილების შედგენა HTML ფორმატში">
+<!ENTITY useHtml.accesskey                    "შ">
+<!ENTITY autoQuote.label                      "პასუხისას დედნის ავტომატური ციტირება">
+<!ENTITY autoQuote.accesskey                  "პ">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "ციტირებისას,">
+<!ENTITY quoting.accesskey                    "ც">
+<!ENTITY aboveQuote.label                     "ჩემი პასუხის დაწყება ციტირების ზემოთ">
+<!ENTITY belowQuote.label                     "ჩემი პასუხის დაწყება ციტირების ქვემოთ">
+<!ENTITY selectAndQuote.label                 "შერჩევა ციტატის">
+<!ENTITY place.label                          "და ჩემი ხელმოწერის განთავსება">
+<!ENTITY place.accesskey                      "ხ">
+<!ENTITY belowText.label                      "ციტირების ქვემოთ (სასურველია)">
+<!ENTITY aboveText.label                      "ჩემი პასუხის ქვემოთ (ციტირების ზემოთ)">
+<!ENTITY includeSigOnReply.label              "ხელმოწერის თანდართვა პასუხებზე">
+<!ENTITY includeSigOnReply.accesskey          "ლ">
+<!ENTITY includeSigOnForward.label            "ხელმოწერის თანდართვა გადაგზავნისას">
+<!ENTITY includeSigOnForward.accesskey        "ზ">
+
+<!ENTITY globalComposingPrefs.label           "წერილთა შედგენის საერთო პარამეტრები…">
+<!ENTITY globalComposingPrefs.accesskey       "ო">
+
+<!ENTITY globalAddressingPrefs.label          "დამისამართების საერთო პარამეტრები…">
+<!ENTITY globalAddressingPrefs.accesskey      "ტ">

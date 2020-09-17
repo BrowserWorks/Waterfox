@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importare agendă de contacte">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Date importate pentru înregistrarea: ">
+<!ENTITY fieldMapImport.next.label "Înainte">
+<!ENTITY fieldMapImport.next.accesskey "n">
+<!ENTITY fieldMapImport.previous.label "Înapoi">
+<!ENTITY fieldMapImport.previous.accesskey "p">
+<!ENTITY fieldMapImport.text "Folosește Mută sus și Mută jos pentru a potrivi câmpurile agendei de contacte din stânga cu datele corecte de importat din dreapta. Nu bifa elementele pe care nu vrei să le imporți.">
+<!ENTITY fieldMapImport.up.label "Mută în sus">
+<!ENTITY fieldMapImport.up.accesskey "u">
+<!ENTITY fieldMapImport.down.label "Mută în jos">
+<!ENTITY fieldMapImport.down.accesskey "M">
+<!ENTITY fieldMapImport.fieldListTitle "Câmpuri din agenda de contacte">
+<!ENTITY fieldMapImport.dataTitle "Date de importat">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Primul rând conține numele câmpurilor">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "P">

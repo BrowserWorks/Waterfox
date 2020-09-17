@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Tajin yekanöx taq rutzjol pa:">
+<!ENTITY searchHeading.accesskey     "k">
+<!ENTITY searchSubfolders.label      "Tikanöx achyakwuj">
+<!ENTITY searchSubfolders.accesskey  "k">
+<!ENTITY searchOnServer.label        "Tib'an ri kanoxïk pa k'uxasamaj">
+<!ENTITY searchOnServer.accesskey    "a">
+<!ENTITY resetButton.label           "Tijosq'ïx">
+<!ENTITY resetButton.accesskey       "j">
+<!ENTITY openButton.label            "Tijaq">
+<!ENTITY openButton.accesskey        "q">
+<!ENTITY deleteButton.label          "Tiyuj">
+<!ENTITY deleteButton.accesskey      "y">
+<!ENTITY searchDialogTitle.label     "Kekanöx Tzijol">
+<!ENTITY results.label               "Taq q'i'oj">
+<!ENTITY moveButton.label            "Tiq'asäx Pa">
+<!ENTITY moveButton.accesskey        "P">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Tijaq pa Yakwuj">
+<!ENTITY openInFolder.accesskey      "j">
+<!ENTITY saveAsVFButton.label        "Tiyak achi'el Ruyakwuj Kanoxïk">
+<!ENTITY saveAsVFButton.accesskey    "y">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Tikanöx pa:">
+<!ENTITY abSearchHeading.accesskey   "k">
+<!ENTITY propertiesButton.label      "Taq ichinil">
+<!ENTITY propertiesButton.accesskey  "i">
+<!ENTITY composeButton.label         "Titz'ib'äx">
+<!ENTITY composeButton.accesskey     "T">
+<!ENTITY deleteCardButton.label      "Tiyuj">
+<!ENTITY deleteCardButton.accesskey  "y">
+<!ENTITY abSearchDialogTitle.label   "Q'axinäq Kikanoxik Kitz'ib'awuj Ochochib'äl">
+

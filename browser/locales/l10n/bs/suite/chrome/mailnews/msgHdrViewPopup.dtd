@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Dodaj u adresar…">
+<!ENTITY EditContact.label                 "Uredi kontakt…">
+<!ENTITY ViewContact.label                 "Prikaži kontakt">
+<!ENTITY SendMailTo.label                  "Sastavi email za…">
+<!ENTITY CopyEmailAddress.label            "Kopiraj email adresu">
+<!ENTITY CreateFilterFrom.label            "Stvori filter iz…">
+<!ENTITY openInBrowser.label               "Otvori u browseru">
+<!ENTITY bookmarkLinkCmd.label             "Zabilježi ovaj link…">
+<!ENTITY copyLinkCmd.label                 "Kopiraj lokaciju linka">
+<!ENTITY CopyMessageId.label               "Kopiraj ID poruke">
+<!ENTITY OpenMessageForMsgId.label         "Otvori poruku radi ID">
+<!ENTITY OpenBrowserWithMsgId.label        "Otvori pretraživač uz pomoć ID-a poruke">

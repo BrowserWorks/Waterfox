@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Krijoni Kalendar të Ri" >
+<!ENTITY wizard.label             "Krijoni kalendar të ri" >
+<!ENTITY wizard.description       "Vendosni kalendarin tuaj" >
+
+<!ENTITY initialpage.description    "Kalendari juaj mund të depozitohet te kompjuteri juaj ose te një shërbyes që të mund ta përdorni së largëti ose ta ndani me shokë apo kolegë tuajt." >
+<!ENTITY initialpage.computer.label  "Në Kompjuterin Tim">
+<!ENTITY initialpage.network.label  "Në Rrjet">
+
+<!ENTITY locationpage.description         "Jepni të dhëna rreth çka është e nevojshme për të hyrë në kalendarin tuaj të largët" >
+<!ENTITY locationpage.login.description   "Opsionale: jepni emër përdoruesi dhe fjalëkalim" >
+<!ENTITY locationpage.username.label      "Emër përdoruesi:" >
+<!ENTITY locationpage.password.label      "Fjalëkalim:" >
+
+<!ENTITY custompage.shortdescription  "Përshtateni kalendarin tuaj" >
+<!ENTITY custompage.longdescription   "Mund t&apos;i jepni kalendarit tuaj një nofkë dhe të ngjyrosni veprimtari nga ky kalendar." >
+
+<!ENTITY finishpage.shortdescription  "Kalendari u Krijua" >
+<!ENTITY finishpage.longdescription   "Kalendari juaj u krijua." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Tjetër">
+
+<!ENTITY buttons.create.label "Krijoje Kalendarin">
+<!ENTITY buttons.create.accesskey "K">
+
+<!ENTITY buttons.find.label "Gjej Kalendarë">
+<!ENTITY buttons.find.accesskey "G">
+
+<!ENTITY buttons.back.label "Mbrapsht">
+<!ENTITY buttons.back.accesskey "M">
+
+<!ENTITY buttons.subscribe.label "Pajtohuni">
+<!ENTITY buttons.subscribe.accesskey "P">
+
+<!ENTITY calendartype.label "Lloj Kalendari:">
+<!ENTITY location.label "Vendndodhje:">
+<!ENTITY location.placeholder "URL ose emër strehe e shërbyesit të kalendarit">
+
+<!ENTITY network.nocredentials.label "Kjo vendndodhje nuk lyp kredenciale">
+<!ENTITY network.loading.description "Ju lutemi, prisni teksa zbulohen kalendarët tuaj.">
+<!ENTITY network.notfound.description "S’u gjetën kalendarë në këtë vendndodhje. Ju lutemi, kontrolloni rregullimet tuaja.">
+<!ENTITY network.authfail.description "Kredencialet që keni dhënë nuk u pranuan. Ju lutemi, kontrolloni rregullimet tuaja.">
+
+<!ENTITY network.subscribe.single.description "Ju lutemi, përzgjidhni kalendarët te të cilët do të donit të pajtoheshit.">
+<!ENTITY network.subscribe.multiple.description "Ka disa lloje kalendarësh të gatshëm për këtë vend. Ju lutemi, përzgjidhni llojin e kalendarit, mandej vëruni shenjë kalendarëve te të cilët do të donit të pajtoheshit.">

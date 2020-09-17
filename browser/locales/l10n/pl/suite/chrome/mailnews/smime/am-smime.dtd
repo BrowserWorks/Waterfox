@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Zabezpieczenia wiadomości">
+<!ENTITY securityTab.label "Zabezpieczenia">
+<!ENTITY securityHeading.label "Aby wysyłać i odbierać wiadomości podpisane cyfrowo lub zaszyfrowane, należy określić certyfikat podpisu osobistego oraz certyfikat szyfrujący.">
+<!ENTITY encryptionGroupTitle.label "Szyfrowanie wiadomości">
+<!ENTITY encryptionChoiceLabel.label "Domyślne ustawienia szyfrowania podczas wysyłania wiadomości:">
+<!ENTITY neverEncrypt.label "Nigdy (nie używaj szyfrowania)">
+<!ENTITY neverEncrypt.accesskey "N">
+<!ENTITY alwaysEncryptMessage.label "Wymagaj (nie można wysłać wiadomości jeśli nie wszyscy adresaci mają certyfikat)">
+<!ENTITY alwaysEncryptMessage.accesskey "a">
+<!ENTITY encryptionCert.message "Certyfikat, który będzie używany do szyfrowania i deszyfrowania otrzymanych wiadomości:">
+<!ENTITY digitalSign.certificate.button "Wybierz…">
+<!ENTITY digitalSign.certificate.accesskey "z">
+<!ENTITY digitalSign.certificate_clear.button "Wyczyść">
+<!ENTITY digitalSign.certificate_clear.accesskey "c">
+<!ENTITY encryption.certificate.button "Wybierz…">
+<!ENTITY encryption.certificate.accesskey "e">
+<!ENTITY encryption.certificate_clear.button "Wyczyść">
+<!ENTITY encryption.certificate_clear.accesskey "y">
+<!ENTITY signingGroupTitle.label "Podpis cyfrowy">
+<!ENTITY signMessage.label "Podpisuj cyfrowo wiadomości (domyślnie)">
+<!ENTITY signMessage.accesskey "d">
+<!ENTITY signingCert.message "Certyfikat, który będzie używany do cyfrowego podpisywania wysyłanych wiadomości:">
+
+<!ENTITY certificates.label "Certyfikaty">
+<!ENTITY manageCerts2.label "Zarządzaj certyfikatami…">
+<!ENTITY manageCerts2.accesskey "a">
+<!ENTITY manageDevices.label "Zarządzaj urządzeniami zabezpieczającymi…">
+<!ENTITY manageDevices.accesskey "u">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Wybierz certyfikat">
+<!ENTITY certPicker.info "Certyfikat:">
+<!ENTITY certPicker.detailsLabel "Szczegóły wybranego certyfikatu:">

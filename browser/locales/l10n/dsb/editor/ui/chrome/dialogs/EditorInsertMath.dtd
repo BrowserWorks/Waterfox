@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Math zasajźiś">
+
+<!ENTITY sourceEditField.label "Zapódajśo žrědłowy kode LaTeX:">
+
+<!ENTITY options.label "Nastajenja">
+<!ENTITY optionInline.label "Inline-modus">
+<!ENTITY optionInline.accesskey "n">
+<!ENTITY optionDisplay.label "Zwobraznjeński modus">
+<!ENTITY optionDisplay.accesskey "b">
+<!ENTITY optionLTR.label "Směr nalěwo napšawo">
+<!ENTITY optionLTR.accesskey "l">
+<!ENTITY optionRTL.label "Směr napšawo nalěwo">
+<!ENTITY optionRTL.accesskey "r">
+
+<!ENTITY insertButton.label "Zasajźiś">
+<!ENTITY insertButton.accesskey "Z">

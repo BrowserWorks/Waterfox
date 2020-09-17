@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "Demando pri retleteroj en HTML">
+
+<!ENTITY recipient.label "Kelkaj de ricevontoj ne estas listigitaj kiel eblantaj ricevi mesaĝojn en la HTML‑formo.">
+
+<!ENTITY question.label "Ĉu sendi la mesaĝon en HTML aŭ konverti ĝin al platteksto?">
+
+<!ENTITY plainTextAndHtml.label "Sendi kiel plattekston kaj HTML">
+<!ENTITY plainTextAndHtml.accesskey "k">
+<!ENTITY plainTextOnly.label "Sendi nur kiel plattekston">
+<!ENTITY plainTextOnly.accesskey "p">
+<!ENTITY htmlOnly.label "Sendi nur kiel HTML">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Sendi">
+<!ENTITY send.accesskey "S">

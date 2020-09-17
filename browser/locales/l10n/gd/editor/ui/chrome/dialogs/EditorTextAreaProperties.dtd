@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Roghainnean raon an teacsa">
+
+<!ENTITY Settings.label "Roghainnean">
+
+<!ENTITY TextAreaName.label "Ainm an raoin:">
+<!ENTITY TextAreaName.accessKey "n">
+<!ENTITY TextAreaRows.label "Sreathan:">
+<!ENTITY TextAreaRows.accessKey "r">
+<!ENTITY TextAreaCols.label "Colbhan:">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "Ri leughadh a-mhàin">
+<!ENTITY TextAreaReadOnly.accessKey "R">
+<!ENTITY TextAreaDisabled.label "Air a chur à comas">
+<!ENTITY TextAreaDisabled.accessKey "o">
+<!ENTITY TextAreaTabIndex.label "Clàr-innse tabaichte:">
+<!ENTITY TextAreaTabIndex.accessKey "i">
+<!ENTITY TextAreaAccessKey.label "Iuchair inntrigidh:">
+<!ENTITY TextAreaAccessKey.accessKey "I">
+<!ENTITY InitialText.label "An teacsa tùsail:">
+<!ENTITY InitialText.accessKey "t">
+
+<!ENTITY TextAreaWrap.label "Am modh pasgaidh:">
+<!ENTITY TextAreaWrap.accessKey "m">
+<!ENTITY WrapDefault.value "Bunaiteach">
+<!ENTITY WrapOff.value "Dheth">
+<!ENTITY WrapHard.value "Cruaidh">
+<!ENTITY WrapSoft.value "Bog">
+<!ENTITY WrapPhysical.value "Fiosaigeach">
+<!ENTITY WrapVirtual.value "Mas-fhìor">

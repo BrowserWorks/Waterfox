@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Փոստարկղի կարգավորումներ">
+<!ENTITY accountName.label "Փոստարկղի անունը.">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Հիմնական որոշիչներ">
+<!ENTITY identityDesc.label "Յուրք. փոստարկղ ունի իր որոշիչը, դա այն տեղեկությունն է, որ այլ մարդիկ տեսնում են ընթերցելով Ձեր նամակները։">
+<!ENTITY name.label "Ձեր անունը.">
+<!ENTITY name.accesskey "Y">
+<!ENTITY email.label "էլ. փոստ.">
+<!ENTITY email.accesskey "է">
+<!ENTITY catchAll.label "Պատասխանեք այս ինքնությունից, երբ առաքման էջագլուխները համընկնում են.">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Պատասխանել հասցեի.">
+<!ENTITY replyTo.accesskey "ե">
+<!ENTITY replyTo.placeholder "Ստացողները կպատասխանեն այս այլ հասցեին">
+<!ENTITY organization.label "Կազմակերպություն.">
+<!ENTITY organization.accesskey "Կ">
+<!ENTITY signatureText.label "Ստորագրության տեքստը.">
+<!ENTITY signatureText.accesskey "ք">
+<!ENTITY signatureHtml.label "Օգտ. HTML (օր.՝ &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Կցել ստորագրությունը ֆայլից (տեքստ, HTML կամ պատկեր).">
+<!ENTITY signatureFile.accesskey "ց">
+<!ENTITY edit.label "Խմբագրել...">
+<!ENTITY choose.label "Ընտրել…">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "Խմբագրել այցեքարտը...">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Կցել իմ այցեքարտը նամակներին">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Կառավարել որոշիչները...">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Ելքային սպասարկիչը (SMTP).">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "Օգտ. հիմնական սպասարկիչը">
+
+<!ENTITY smtpServerEdit.label "Խմբագրել SMTP սպասարկիչը…">
+<!ENTITY smtpServerEdit.accesskey "P">

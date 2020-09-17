@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Vlastnosti tabuľky">
+<!ENTITY applyButton.label                "Použiť">
+<!ENTITY applyButton.accesskey            "P">
+<!ENTITY closeButton.label                "Zavrieť">
+<!ENTITY tableTab.label                   "Tabuľka">
+<!ENTITY cellTab.label                    "Bunky">
+<!ENTITY tableRows.label                  "Riadkov:">
+<!ENTITY tableRows.accessKey              "d">
+<!ENTITY tableColumns.label               "Stĺpcov:">
+<!ENTITY tableColumns.accessKey           "c">
+<!ENTITY tableHeight.label                "Výška">
+<!ENTITY tableHeight.accessKey            "V">
+<!ENTITY tableWidth.label                 "Šírka:">
+<!ENTITY tableWidth.accessKey             "r">
+<!ENTITY tableBorderSpacing.label         "Okraje a rozostup">
+<!ENTITY tableBorderWidth.label           "Šírka okrajov:">
+<!ENTITY tableBorderWidth.accessKey       "o">
+<!ENTITY tableSpacing.label               "Rozostup:">
+<!ENTITY tableSpacing.accessKey           "s">
+<!ENTITY tablePadding.label               "Veľkosť:">
+<!ENTITY tablePadding.accessKey           "e">
+<!ENTITY tablePxBetwCells.label           "bodov medzi bunkami">
+<!ENTITY tablePxBetwBrdrCellContent.label "bodov medzi okrajom a obsahom bunky">
+<!ENTITY tableAlignment.label             "Zarovnanie tabuľky:">
+<!ENTITY tableAlignment.accessKey         "n">
+<!ENTITY tableCaption.label               "Titulok:">
+<!ENTITY tableCaption.accessKey           "T">
+<!ENTITY tableCaptionAbove.label          "Nad tabuľkou">
+<!ENTITY tableCaptionBelow.label          "Pod tabuľkou">
+<!ENTITY tableCaptionLeft.label           "Vľavo od tabuľky">
+<!ENTITY tableCaptionRight.label          "Vpravo od tabuľky">
+<!ENTITY tableCaptionNone.label           "Žiadny">
+<!ENTITY tableInheritColor.label           "(Viditeľná farba stránky)">
+
+<!ENTITY cellSelection.label              "Výber">
+<!ENTITY cellSelectCell.label             "Bunka">
+<!ENTITY cellSelectRow.label              "Riadok">
+<!ENTITY cellSelectColumn.label           "Stĺpec">
+<!ENTITY cellSelectNext.label             "Ďalší">
+<!ENTITY cellSelectNext.accessKey         "a">
+<!ENTITY cellSelectPrevious.label         "Predchádzajúci">
+<!ENTITY cellSelectPrevious.accessKey     "e">
+<!ENTITY applyBeforeChange.label          "Aktuálne zmeny sa prejavia pri zmene výberu.">
+<!ENTITY cellContentAlignment.label       "Zarovnanie obsahu">
+<!ENTITY cellHorizontal.label             "Vodorovné:">
+<!ENTITY cellHorizontal.accessKey         "H">
+<!ENTITY cellVertical.label               "Zvislé:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Štýl bunky:">
+<!ENTITY cellStyle.accessKey              "b">
+<!ENTITY cellNormal.label                 "Normálny">
+<!ENTITY cellHeader.label                 "Hlavička">
+<!ENTITY cellTextWrap.label               "Zalamovanie textu:">
+<!ENTITY cellTextWrap.accessKey           "m">
+<!ENTITY cellWrap.label                   "Zalamovať">
+<!ENTITY cellNoWrap.label                 "Nezalamovať">
+<!ENTITY cellAlignTop.label               "Hore">
+<!ENTITY cellAlignMiddle.label            "Do stredu">
+<!ENTITY cellAlignBottom.label            "Dole">
+<!ENTITY cellAlignJustify.label           "Obojstranne">
+<!ENTITY cellInheritColor.label           "(Viditeľná farba tabuľky)">
+<!ENTITY cellUseCheckboxHelp.label        "Označte tie vlastnosti, ktoré sa majú aplikovať na všetky vybrané bunky.">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Veľkosť">
+<!ENTITY pixels.label                     "bodov">
+<!ENTITY backgroundColor.label            "Farba pozadia:">
+<!ENTITY backgroundColor.accessKey        "F">
+<!ENTITY AlignLeft.label                  "Doľava">
+<!ENTITY AlignCenter.label                "Na stred">
+<!ENTITY AlignRight.label                 "Doprava">

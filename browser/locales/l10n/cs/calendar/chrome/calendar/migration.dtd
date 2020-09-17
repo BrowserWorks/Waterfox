@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "Import aplikace &brandFullName;">
+<!ENTITY migration.welcome "Vítejte">
+<!ENTITY migration.importing "Importování">
+<!ENTITY migration.list.description "Aplikace &brandShortName; umí importovat vaše kalendáře z řady populárních aplikací. V následujících aplikacích na vašem počítači byly nalezeny kalendáře. Zvolte prosím, ze kterých aplikací si přejete kalendáře naimportovat.">
+<!ENTITY migration.progress.description "Importování vybraných dat">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Prilagodite alatnu traku">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Možete dodati ili ukloniti stavke tako da ih povučete na ili sa alatne trake.">
+<!ENTITY show.label               "Prikaži:">
+<!ENTITY iconsAndText.label       "Ikone i tekst">
+<!ENTITY icons.label              "Ikone">
+<!ENTITY text.label               "Tekst">
+<!ENTITY iconsBesideText.label    "Ikone uz tekst">
+<!ENTITY useSmallIcons.label      "Koristi male ikone">
+<!ENTITY restoreDefaultSet.label  "Vrati zadani set">
+<!ENTITY showTitlebar2.label      "Naslovna traka">
+<!ENTITY extraDragSpace2.label    "Prostor za povlačenje">
+<!ENTITY saveChanges.label        "Gotovo">
+<!ENTITY undoChanges.label        "Poništi promjene">

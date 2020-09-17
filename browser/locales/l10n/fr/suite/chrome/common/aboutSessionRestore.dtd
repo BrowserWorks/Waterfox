@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Restauration de session">
+<!ENTITY restorepage.pagetitle      "Voulez-vous restaurer votre session ?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Votre dernière session de &brandShortName; s’est terminée de manière inattendue. Nous sommes sincèrement désolés pour ce désagrément. Vous pouvez restaurer les onglets et fenêtres de votre session précédente, ou démarrer une nouvelle session si ceux-ci ne sont plus nécessaires.">
+<!ENTITY restorepage.remedies       "Si &brandShortName; se ferme à maintes reprises :">
+<!ENTITY restorepage.dueToChrome    "Essayez de désactiver les éventuelles extensions ajoutées récemment depuis la fenêtre des modules complémentaires.">
+<!ENTITY restorepage.dueToContent   "Essayez de restaurer votre session sans la ou les pages que vous soupçonnez d’être à l’origine du problème :">
+
+<!ENTITY restorepage.restoreButton  "Restaurer la session précédente">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.cancelButton   "Démarrer une nouvelle session">
+<!ENTITY restorepage.cancel.access  "s">
+
+<!ENTITY restorepage.restoreHeader  "Restaurer">
+<!ENTITY restorepage.listHeader     "Fenêtres et onglets">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Fenêtre &#37;S">

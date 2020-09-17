@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "ශබ්ද කෝෂයට එක් කරන්න">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "ශබ්ද කෝෂයට එක්කිරීම අහෝසි කරන්න">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "අක්‍ෂර වින්‍යාසය පිරික්සන්න">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(අක්‍ෂර වින්‍යාස යෝජනා නැත)">
+<!ENTITY spellDictionaries.label "භාෂාව">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "හිස් කරන්න">
+
+<!ENTITY fillLoginMenu.label          "පිවිසුම පුරවන්න">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "මුරපදය පුරවන්න">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "පරිශීලක නම පුරවන්න">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(පිවිසුම් යෝජනා නොමැත)">
+<!ENTITY viewSavedLogins.label        "සුරැකි පිවිසුම් පෙන්වන්න">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Stavningskontroll">
+<!ENTITY generalSpelling.label                "Generellt">
+<!ENTITY checkSpellingWhenTyping.label        "Stavningskontrollera medan jag skriver:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "S">
+<!ENTITY dontCheckSpelling.label              "Aldrig">
+<!ENTITY multilineCheckSpelling.label         "I fält med flera rader">
+<!ENTITY alwaysCheckSpelling.label            "I alla fält">
+<!ENTITY spellForMailAndNews.label            "E-post &amp; Diskussionsgrupper">
+<!ENTITY checkSpellingBeforeSend.label        "Stavningskontrollera innan meddelande skickas">
+<!ENTITY checkSpellingBeforeSend.accesskey    "a">
+<!ENTITY spellCheckInline.label               "Stavningskontrollera medan jag skriver">
+<!ENTITY spellCheckInline.accesskey           "m">
+<!ENTITY languagePopup.label                  "Språk:">
+<!ENTITY languagePopup.accessKey              "å">
+<!ENTITY moreDictionaries.label               "Hämta fler ordlistor&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "Ingen ordlista tillgänglig.">

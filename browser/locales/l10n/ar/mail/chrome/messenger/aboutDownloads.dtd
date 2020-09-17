@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "الملفات المحفوظة">
+<!ENTITY aboutDownloads.empty                      "لا ملفات المحفوظة">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "افتح المجلد المحتوي">
+<!ENTITY cmd.show.accesskey                        "م">
+<!ENTITY cmd.showMac.label                         "اعرض في فايندر">
+<!ENTITY cmd.showMac.accesskey                     "ف">
+<!ENTITY cmd.open.label                            "افتح">
+<!ENTITY cmd.open.accesskey                        "ف">
+<!ENTITY cmd.removeFromHistory.label               "احذف من التأريخ">
+<!ENTITY cmd.removeFromHistory.accesskey           "ح">
+<!ENTITY cmd.clearList.label                       "امسح القائمة">
+<!ENTITY cmd.clearList.accesskey                   "م">
+<!ENTITY cmd.clearList.tooltip                     "يزيل كل المدخلات من قائمة الملفات المحفوظة، باستثناء التنزيلات الجارية.">
+<!ENTITY cmd.searchDownloads.label                 "ابحث…">
+<!ENTITY cmd.searchDownloads.key                   "F">

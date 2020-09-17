@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; в Надежден режим">
+<!ENTITY window.width                     "39em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; работи в безопасен режим, в който временно са отменени вашите лични настройки, теми и разширения.">
+<!ENTITY safeModeDescription2.label       "Можете да направите някои от тези или всички промени постоянни:">
+
+<!ENTITY disableAddons.label              "Изключване на всички добавки">
+<!ENTITY disableAddons.accesskey          "И">
+
+<!ENTITY resetToolbars.label              "Преустановяване на ленти с инструменти и контроли">
+<!ENTITY resetToolbars.accesskey          "П">
+
+<!ENTITY changeAndRestartButton.label     "Извършване на промените и рестартиране">
+<!ENTITY changeAndRestartButton.accesskey "И">
+
+<!ENTITY continueButton.label             "Продължаване в безопасен режим">
+<!ENTITY continueButton.accesskey         "р">

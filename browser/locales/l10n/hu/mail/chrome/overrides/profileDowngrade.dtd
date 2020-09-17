@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "A &brandProductName; egy régebbi verzióját indította el">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "A &brandProductName; egy újabb verziója olyan módosításokat végezhetett a profilján, melyek már nem kompatibilisek ezzel a régebbi verzióval. Csak az újabb verzióval használja ezt a profilt, vagy hozzon létre egy új profilt a &brandShortName; ezen telepítéséhez. Az új profil létrehozása a fiókok, naptárak és kiegészítők újra beállítását teszi szükségessé.">
+
+<!ENTITY window.moreinfo "További információ…">
+<!ENTITY window.create "Új profil létrehozása">
+<!ENTITY window.quit-win "Kilépés">
+<!ENTITY window.quit-nonwin "Kilépés">

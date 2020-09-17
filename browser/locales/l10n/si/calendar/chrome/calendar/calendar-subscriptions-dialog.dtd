@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Subscriptions Dialog -->
+<!ENTITY calendar.subscriptions.dialog.title                            "දිනදර්ශන දායකත්වය ලබාගැනීම">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "මේවා අයත් දිනදර්ශන පෙන්වන්න:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "සොයන්න">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "දායකත්ය ලබාගැනීමට දිනදර්ශන තෝරන්න:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "දායකත්වය ලබාගන්න">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "දායකත්වය හරින්න">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "සොයන්න…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "ගැලපීම් හමු නොවීය.">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "ලිපි ආරක්ෂාව">
+<!ENTITY signatureCert.label "අත්සන් සහතිකය පෙන්වීම">
+<!ENTITY encryptionCert.label "සංකේතන සහතිකය පෙන්වීම">
+
+<!ENTITY signer.name "අත්සන් කළේ:">
+<!ENTITY recipient.name "සඳහා සංකේතනය කළ:">
+<!ENTITY email.address "වි.තැ. ලිපිනය:">
+<!ENTITY issuer.name "සහතිකය නිකුත් කළේ:">
+

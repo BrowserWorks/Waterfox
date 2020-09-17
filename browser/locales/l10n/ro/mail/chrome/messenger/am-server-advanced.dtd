@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Setări avansate pentru cont">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Director pe serverul IMAP:">
+<!ENTITY serverDirectory.accesskey "D">
+<!ENTITY usingSubscription.label "Afișează doar dosarele la care sunt abonat(ă)">
+<!ENTITY usingSubscription.accesskey "b">
+<!ENTITY dualUseFolders.label "Serverul suportă dosare care conțin subdosare și mesaje">
+<!ENTITY dualUseFolders.accesskey "v">
+<!ENTITY maximumConnectionsNumber.label "Număr maxim de conexiuni memorate temporar">
+<!ENTITY maximumConnectionsNumber.accesskey "x">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Aceste preferințe specifică spații de nume de pe serverul IMAP">
+<!ENTITY personalNamespace.label "Spațiu de nume personal:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Public (partajat):">
+<!ENTITY publicNamespace.accesskey "P">
+<!ENTITY otherUsersNamespace.label "Alți utilizatori:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "Permite serverului să suprascrie aceste spații de nume">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY pop3DeferringDesc.label "Când se descarcă mesajele de serverul acestui cont, folosește următorul dosar pentru mesajele noi:">
+<!ENTITY accountInbox.label "Căsuță poștală pentru acest cont">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Căsuța poștală pentru cont diferit">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "Include acest server la recepționarea mesajelor noi">
+<!ENTITY deferGetNewMail.accesskey "I">

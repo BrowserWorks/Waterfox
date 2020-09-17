@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Përpunim i Mëtejshëm…">
+<!ENTITY AdvancedEditButton.accessKey "P">
+<!ENTITY AdvancedEditButton.tooltip "Shtoni ose ndryshoni atribute HTML, atribute stili dhe JavaScript">
+<!ENTITY chooseFileButton.label "Zgjidhni Kartelë…">
+<!ENTITY chooseFileButton.accessKey "Z">
+<!ENTITY chooseFileLinkButton.label "Zgjidhni Kartelë…">
+<!ENTITY chooseFileLinkButton.accessKey "K">
+<!ENTITY makeUrlRelative.label "URL-ja është e lidhur me vendndodhjen e faqes">
+<!ENTITY makeUrlRelative.accessKey "U">
+<!ENTITY makeUrlRelative.tooltip "Ndryshim midis URL-je relative dhe URL-je absolute. Për të ndryshuar këtë, duhet fillimisht ta ruani faqen.">
+
+<!ENTITY LinkURLEditField2.label "Jepni vendndodhjen e një faqeje web, një kartelë vendore, ose përzgjidhni një Spirancë ose Krye të Emërtuar prej menusë së kontekstit për fushën:">
+<!ENTITY LinkURLEditField2.accessKey "J">

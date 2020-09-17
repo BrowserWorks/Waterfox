@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title "Адлюстраванне лістоў">
+<!ENTITY style.label "Стыль:">
+<!ENTITY style.accesskey "С">
+<!ENTITY regular.label "Звычайны">
+<!ENTITY bold.label "Выразны">
+<!ENTITY italic.label "Рукапісны">
+<!ENTITY boldItalic.label "Выразны рукапісны">
+<!ENTITY size.label "Памер:">
+<!ENTITY size.accesskey "П">
+<!ENTITY bigger.label "Большы">
+<!ENTITY smaller.label "Меншы">
+<!ENTITY color.label "Колер:">
+<!ENTITY color.accesskey "К">
+<!ENTITY displayPlainText.caption "Простатэкставыя лісты">
+<!ENTITY fontPlainText.label "Шрыфт:">
+<!ENTITY fontPlainText.accesskey "Ш">
+<!ENTITY displayQuoted.label "Наладжванні лістоў-вытрымак:">
+<!ENTITY wrapInMsg.label "Загінаць тэкст, каб змяшчаўся ў шырыні акна">
+<!ENTITY wrapInMsg.accesskey "г">
+<!ENTITY convertEmoticons.label "Адлюстроўваць пачуццезнакі графічна">
+<!ENTITY convertEmoticons.accesskey "ч">
+<!ENTITY generalMessageDisplay.caption "Агульныя">
+<!ENTITY autoMarkAsRead.label "Самастойна пазначаць лісты прачытанымі">
+<!ENTITY autoMarkAsRead.accesskey "ч">
+<!ENTITY markAsReadAfter.label "Толькі пасля адлюстравання на працягу">
+<!ENTITY markAsReadAfter.accesskey "п">
+<!ENTITY secondsLabel.label "секундаў">
+<!ENTITY openingMessages.label "Калі лісты адчыняюцца, адлюстроўваць іх у:">
+<!ENTITY newWindowRadio.label "Новым акне лістоў">
+<!ENTITY newWindowRadio.accesskey "н">
+<!ENTITY existingWindowRadio.label "Існым акне лістоў">
+<!ENTITY existingWindowRadio.accesskey "І">
+<!ENTITY disableContent.label "Затрымліваць выявы і іншае змесціва з адлеглых крыніцаў">
+<!ENTITY disableContent.accesskey "З">
+<!ENTITY showCondensedAddresses.label "Паказваць толькі адлюстроўнае імя для людзей з маёй адраснай кнігі">
+<!ENTITY showCondensedAddresses.accesskey "П">
+<!ENTITY closeMsgWindowOnDelete.label "Закрываць акно ліста пасля выдалення ліста">
+<!ENTITY closeMsgWindowOnDelete.accesskey "к">

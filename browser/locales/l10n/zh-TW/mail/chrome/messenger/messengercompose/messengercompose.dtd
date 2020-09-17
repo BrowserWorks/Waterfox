@@ -1,0 +1,348 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "新郵件: (無主旨)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "檔案">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY newMenu.label "新增">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "郵件">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "M">
+<!ENTITY newContact.label "通訊錄連絡人…">
+<!ENTITY newContact.accesskey "C">
+<!ENTITY attachMenu.label "附件">
+<!ENTITY attachMenu.accesskey "t">
+<!ENTITY attachFileCmd.label "檔案…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "雲端鏈結">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "網頁…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "個人名片 (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY remindLater.label "待會提醒我">
+<!ENTITY remindLater.accesskey "L">
+<!ENTITY closeCmd.label "關閉">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "C">
+<!ENTITY saveCmd.label "儲存">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "另存新檔">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsFileCmd.label "檔案…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "草稿">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "範本">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY sendNowCmd.label "立刻寄出">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "稍候再寄">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "L">
+<!ENTITY printSetupCmd.label "頁面設定…">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printPreviewCmd.label "預覽列印">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "列印…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "P">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "編輯">
+<!ENTITY editMenu.accesskey "E">
+<!ENTITY undoCmd.label "復原">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "U">
+<!ENTITY redoCmd.label "取消「復原」">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "R">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "w">
+<!ENTITY deleteCmd.label "刪除">
+<!ENTITY deleteCmd.accesskey "D">
+<!ENTITY editRewrapCmd.label "重新斷行">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "重新命名附件…">
+<!ENTITY renameAttachmentCmd.accesskey "e">
+<!ENTITY reorderAttachmentsCmd.label "重排附件…">
+<!ENTITY reorderAttachmentsCmd.accesskey "s">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "附件窗格">
+<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
+     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
+     as attachments.accesskey. -->
+<!ENTITY toggleAttachmentPaneCmd.accesskey "m">
+<!ENTITY selectAllCmd.accesskey "A">
+<!ENTITY findBarCmd.label "尋找…">
+<!ENTITY findBarCmd.accesskey "F">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "尋找及取代…">
+<!ENTITY findReplaceCmd.accesskey "l">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "找下一個">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "找前一個">
+<!ENTITY findPrevCmd.accesskey "v">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "重排附件">
+<!ENTITY moveAttachmentTopPanelBtn.label "移到頂端">
+<!ENTITY moveAttachmentUpPanelBtn.label "上移">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "一起移動">
+<!ENTITY moveAttachmentDownPanelBtn.label "下移">
+<!ENTITY moveAttachmentBottomPanelBtn.label "移到底端">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "排序: A-Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "排序: Z-A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "排序選擇項目: A-Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "排序選擇項目: Z-A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "檢視">
+<!ENTITY viewMenu.accesskey "V">
+<!ENTITY viewToolbarsMenuNew.label "工具列">
+<!ENTITY viewToolbarsMenuNew.accesskey "T">
+<!ENTITY menubarCmd.label "選單列">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY showCompositionToolbarCmd.label "編輯工具列">
+<!ENTITY showCompositionToolbarCmd.accesskey "o">
+<!ENTITY showFormattingBarCmd.label "格式列">
+<!ENTITY showFormattingBarCmd.accesskey "F">
+<!ENTITY showTaskbarCmd.label "狀態列">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "自訂…">
+<!ENTITY customizeToolbar.accesskey "C">
+
+<!ENTITY addressSidebar.label "通訊錄">
+<!ENTITY addressSidebar.accesskey "o">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "格式">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "選項">
+<!ENTITY optionsMenu.accesskey "p">
+<!ENTITY checkSpellingCmd2.label "檢查拼字…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "h">
+<!ENTITY enableInlineSpellChecker.label "即時拼字檢查">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY quoteCmd.label "引用前封訊息">
+<!ENTITY quoteCmd.accesskey "Q">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "附加個人名片 (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "收件回執">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "遞送狀態通知">
+<!ENTITY dsnMenu.accesskey "N">
+<!ENTITY deliveryFormatMenu.label "傳送格式">
+<!ENTITY deliveryFormatMenu.accesskey "F">
+<!ENTITY autoFormatCmd.label "自動偵測">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "只有純文字">
+<!ENTITY plainTextFormatCmd.accesskey "P">
+<!ENTITY htmlFormatCmd.label "只有 HTML">
+<!ENTITY htmlFormatCmd.accesskey "R">
+<!ENTITY bothFormatCmd.label "純文字及 HTML">
+<!ENTITY bothFormatCmd.accesskey "L">
+<!ENTITY priorityMenu.label "重要性">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY priorityButton.title "重要性">
+<!ENTITY priorityButton.tooltiptext "變更訊息重要性">
+<!ENTITY priorityButton.label "重要性:">
+<!ENTITY lowestPriorityCmd.label "最低">
+<!ENTITY lowestPriorityCmd.accesskey "L">
+<!ENTITY lowPriorityCmd.label "低">
+<!ENTITY lowPriorityCmd.accesskey "o">
+<!ENTITY normalPriorityCmd.label "標準">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "高">
+<!ENTITY highPriorityCmd.accesskey "i">
+<!ENTITY highestPriorityCmd.label "最高">
+<!ENTITY highestPriorityCmd.accesskey "H">
+<!ENTITY fileCarbonCopyCmd.label "寄送副本到">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "歸檔至此">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "工具">
+<!ENTITY tasksMenu.accesskey "T">
+<!ENTITY messengerCmd.label "郵件與新聞群組">
+<!ENTITY messengerCmd.accesskey "M">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "通訊錄">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "帳號設定">
+<!ENTITY accountManagerCmd2.accesskey "S">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label "選項">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label "偏好設定">
+<!ENTITY preferencesCmdUnix.accesskey "n">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "縮到最小">
+<!ENTITY bringAllToFront.label "將此程式所有視窗移至最前">
+<!ENTITY zoomWindow.label "縮放">
+<!ENTITY windowMenu.label "視窗">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "傳送">
+<!ENTITY quoteButton.label "引言">
+<!ENTITY addressButton.label "聯絡人">
+<!ENTITY attachButton.label "附件">
+<!ENTITY spellingButton.label "拼字檢查">
+<!ENTITY saveButton.label "儲存">
+<!ENTITY printButton.label "列印">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "立刻寄出此訊息">
+<!ENTITY sendlaterButton.tooltip "稍後再寄出此封郵件">
+<!ENTITY quoteButton.tooltip "引入前封郵件的文字">
+<!ENTITY addressButton.tooltip "從通訊錄裡選擇收件者">
+<!ENTITY attachButton.tooltip2 "新增附件">
+<!ENTITY spellingButton.tooltip "對郵件的全部或反白部分檢查拼字">
+<!ENTITY saveButton.tooltip "儲存此訊息">
+<!ENTITY cutButton.tooltip              "剪下">
+<!ENTITY copyButton.tooltip             "複製">
+<!ENTITY pasteButton.tooltip            "貼上">
+<!ENTITY printButton.tooltip "列印此訊息">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style "width: 8em;">
+<!ENTITY extraRecipients.tooltip "其他類型的地址欄位">
+<!ENTITY fromAddr2.label "從">
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY toAddr2.label "到">
+<!ENTITY ccAddr2.label "副本">
+<!ENTITY bccAddr2.label "密件副本">
+<!ENTITY replyAddr2.label "回函地址">
+<!ENTITY newsgroupsAddr2.label "新聞群組">
+<!ENTITY followupAddr2.label "原文參見">
+<!ENTITY subject2.label "主旨">
+<!ENTITY subject.accesskey "S">
+<!ENTITY attachmentBucketCloseButton.tooltip "隱藏附件窗格">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "插入表情符號">
+<!ENTITY smiley1Cmd.label "微笑">
+<!ENTITY smiley2Cmd.label "皺眉頭">
+<!ENTITY smiley3Cmd.label "眨眼">
+<!ENTITY smiley4Cmd.label "吐舌頭">
+<!ENTITY smiley5Cmd.label "大笑">
+<!ENTITY smiley6Cmd.label "不好意思">
+<!ENTITY smiley7Cmd.label "猶豫">
+<!ENTITY smiley8Cmd.label "驚訝">
+<!ENTITY smiley9Cmd.label "親吻">
+<!ENTITY smiley10Cmd.label "大叫">
+<!ENTITY smiley11Cmd.label "酷臉">
+<!ENTITY smiley12Cmd.label "愛錢臉">
+<!ENTITY smiley13Cmd.label "失言">
+<!ENTITY smiley14Cmd.label "無辜">
+<!ENTITY smiley15Cmd.label "大哭">
+<!ENTITY smiley16Cmd.label "閉嘴">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "找不到任何建議">
+<!ENTITY spellCheckIgnoreWord.label "忽略單字">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "新增到字典">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "復原">
+<!ENTITY undo.accesskey "U">
+<!ENTITY cut.label "剪下">
+<!ENTITY cut.accesskey "t">
+<!ENTITY copy.label "複製">
+<!ENTITY copy.accesskey "C">
+<!ENTITY paste.label "貼上">
+<!ENTITY paste.accesskey "P">
+<!ENTITY pasteQuote.label "以引言方式貼上">
+<!ENTITY pasteQuote.accesskey "Q">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "開啟">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "刪除">
+<!ENTITY delete.accesskey "D">
+<!ENTITY removeAttachment.label "移除附加檔案">
+<!ENTITY removeAttachment.accesskey "m">
+<!ENTITY renameAttachment.label "重新命名…">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY reorderAttachments.label "重排附件…">
+<!ENTITY reorderAttachments.accesskey "s">
+<!ENTITY removeAllAttachments.label "移除所有附件">
+<!ENTITY removeAllAttachments.accesskey "v">
+<!ENTITY selectAll.label "全選">
+<!ENTITY selectAll.accesskey "A">
+<!ENTITY attachFile.label "附加檔案…">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachCloud.label "雲端鏈結…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "轉換成…">
+<!ENTITY convertCloud.accesskey "C">
+<!ENTITY cancelUpload.label "取消上傳">
+<!ENTITY cancelUpload.accesskey "n">
+<!ENTITY convertRegularAttachment.label "普通附件">
+<!ENTITY convertRegularAttachment.accesskey "a">
+<!ENTITY attachPage.label "附加網頁…">
+<!ENTITY attachPage.accesskey "W">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "啟動時顯示附件窗格">
+<!ENTITY initiallyShowAttachmentPane.accesskey "S">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "新增字典…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "聯絡人">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "自訂寄件地址…">
+<!ENTITY customizeFromAddress.accesskey "A">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "訊息內文">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "拼字檢查語言">
+<!ENTITY encodingStatusPanel.tooltip "文字編碼">

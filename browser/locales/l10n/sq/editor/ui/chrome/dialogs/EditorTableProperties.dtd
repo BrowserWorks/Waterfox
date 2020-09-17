@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Veti Tabele">
+<!ENTITY applyButton.label                "Zbatoje">
+<!ENTITY applyButton.accesskey            "Z">
+<!ENTITY closeButton.label                "Mbylleni">
+<!ENTITY tableTab.label                   "Tabelë">
+<!ENTITY cellTab.label                    "Kuti">
+<!ENTITY tableRows.label                  "Rreshta:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Shtylla:">
+<!ENTITY tableColumns.accessKey           "S">
+<!ENTITY tableHeight.label                "Lartësi:">
+<!ENTITY tableHeight.accessKey            "L">
+<!ENTITY tableWidth.label                 "Gjerësi:">
+<!ENTITY tableWidth.accessKey             "G">
+<!ENTITY tableBorderSpacing.label         "Anë dhe Hapësira">
+<!ENTITY tableBorderWidth.label           "Anë:">
+<!ENTITY tableBorderWidth.accessKey       "A">
+<!ENTITY tableSpacing.label               "Hapësirë:">
+<!ENTITY tableSpacing.accessKey           "H">
+<!ENTITY tablePadding.label               "Zbutje:">
+<!ENTITY tablePadding.accessKey           "b">
+<!ENTITY tablePxBetwCells.label           "piksela ndërmjet kutish">
+<!ENTITY tablePxBetwBrdrCellContent.label "piksela ndërmjet ane kutie dhe lënde">
+<!ENTITY tableAlignment.label             "Drejtim Tabele:">
+<!ENTITY tableAlignment.accessKey         "D">
+<!ENTITY tableCaption.label               "Kapje:">
+<!ENTITY tableCaption.accessKey           "K">
+<!ENTITY tableCaptionAbove.label          "Sipër Tabelës">
+<!ENTITY tableCaptionBelow.label          "Poshtë Tabelës">
+<!ENTITY tableCaptionLeft.label           "Majtas Tabelës">
+<!ENTITY tableCaptionRight.label          "Djathtas Tabelës">
+<!ENTITY tableCaptionNone.label           "Asnjë">
+<!ENTITY tableInheritColor.label           "(Lejo ngjyrë faqeje të duket nëpër të)">
+
+<!ENTITY cellSelection.label              "Përzgjedhje">
+<!ENTITY cellSelectCell.label             "Kuti">
+<!ENTITY cellSelectRow.label              "Rresht">
+<!ENTITY cellSelectColumn.label           "Shtyllë">
+<!ENTITY cellSelectNext.label             "Pasuesi">
+<!ENTITY cellSelectNext.accessKey         "P">
+<!ENTITY cellSelectPrevious.label         "I mëparshmi">
+<!ENTITY cellSelectPrevious.accessKey     "M">
+<!ENTITY applyBeforeChange.label          "Ndryshimet e tanishme do të zbatohen përpara ndryshimit të përzgjedhjes.">
+<!ENTITY cellContentAlignment.label       "Drejtim Lënde">
+<!ENTITY cellHorizontal.label             "Horizontal:">
+<!ENTITY cellHorizontal.accessKey         "H">
+<!ENTITY cellVertical.label               "Vertikal:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Stil Kutie:">
+<!ENTITY cellStyle.accessKey              "S">
+<!ENTITY cellNormal.label                 "Normal">
+<!ENTITY cellHeader.label                 "Titull">
+<!ENTITY cellTextWrap.label               "Mbështjellje Teksti:">
+<!ENTITY cellTextWrap.accessKey           "M">
+<!ENTITY cellWrap.label                   "Mbështille">
+<!ENTITY cellNoWrap.label                 "Mos e mbështill">
+<!ENTITY cellAlignTop.label               "Sipër">
+<!ENTITY cellAlignMiddle.label            "Përmes">
+<!ENTITY cellAlignBottom.label            "Poshtë">
+<!ENTITY cellAlignJustify.label           "Përligj">
+<!ENTITY cellInheritColor.label           "(Lër ngjyrë tabele të duket nëpër të)">
+<!ENTITY cellUseCheckboxHelp.label        "Përdor kutiza për të përcaktuar cilat veti zbatohen mbi të gjitha kutitë e përzgjedhura">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Madhësi">
+<!ENTITY pixels.label                     "piksela">
+<!ENTITY backgroundColor.label            "Ngjyrë Sfondi:">
+<!ENTITY backgroundColor.accessKey        "N">
+<!ENTITY AlignLeft.label                  "Majtas">
+<!ENTITY AlignCenter.label                "Në Qendër">
+<!ENTITY AlignRight.label                 "Djathtas">

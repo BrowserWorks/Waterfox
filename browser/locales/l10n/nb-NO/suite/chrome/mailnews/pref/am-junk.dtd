@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Søppelpostinnstillinger">
+<!ENTITY trainingDescription.label "Dersom påslått må du først trene opp &brandShortName; til å identifisere søppelpost ved å bruke søppel-knappen i verktøylinjen for å merke meldinger som søppel eller ikke. Du må identifisere både søppel og ikke-søppelmeldinger. Etter det vil &brandShortName; være i stand til å automatisk merke søppelpost.">
+<!ENTITY level.label "Slå på adaptiv søppelkontroll for denne kontoen">
+<!ENTITY level.accesskey "S">
+
+<!ENTITY move.label "Flytt ny søppelpost til:">
+<!ENTITY move.accesskey "F">
+<!ENTITY junkFolderOn.label "&quot;Uønsket&quot;-mappen på:">
+<!ENTITY junkFolderOn.accesskey "U">
+<!ENTITY otherFolder.label "Annen:">
+<!ENTITY otherFolder.accesskey "A">
+<!ENTITY purge1.label "Automatisk slett søppelpost eldre enn">
+<!ENTITY purge1.accesskey "A">
+<!ENTITY purge2.label "dager">
+
+<!ENTITY whitelistHeader.label "Ikke merk søppelpost som søppel automatisk dersom avsenderen er i: ">
+<!ENTITY whitelistHeader.accesskey "I">
+
+<!ENTITY ispHeadersWarning.label "Dersom påslått vil &brandShortName; automatisk vurdere meldinger merket av disse eksterne klassifikasjonene som søppelpost.">
+<!ENTITY ispHeaders.label "Stol på e-posthoder satt av: ">
+<!ENTITY ispHeaders.accesskey "S">
+
+<!ENTITY junkClassification.label "Valg">
+<!ENTITY junkActions.label "Mål og bevaring">
+
+<!ENTITY globalJunkPrefs.label "Globale søppelpostinnstillinger …">
+<!ENTITY globalJunkPrefs.accesskey "G">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Importować">
+<!ENTITY importAll.label          "Wšo importować">
+<!ENTITY importAll.accesskey      "W">
+<!ENTITY importMail.label         "E-mejl">
+<!ENTITY importMail.accesskey     "E">
+<!ENTITY importFeeds.label        "Kanalowe abonementy">
+<!ENTITY importFeeds.accesskey    "K">
+<!ENTITY importAddressbook.label  "Adresniki">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Nastajenja">
+<!ENTITY importSettings.accesskey "N">
+<!ENTITY importFilters.label      "Filtry">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; importowanski asistent">
+<!ENTITY importShortDesc.label    "E-mejl, adresniki, nastajenja a filtry z druhich programow importować">
+
+<!ENTITY importDescription1.label "Tutón asistent budźe e-mejlowe powěsće, zapiski adresnikow, kanalowe abonementy, nastajenja a/abo filtry z druhich e-mejlowych programow a zwučenych formatow adresnikow do &brandShortName; importować.">
+<!ENTITY importDescription2.label "Hdyž buchu importowane, změjeće na nje přistup ze &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Prošu wubjerće datajowy typ, kotryž chceće importować:">
+<!ENTITY selectDescriptionB.label "Prošu wubjerće eksistowace konto abo załožće nowe konto:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Mjeno:">
+<!ENTITY acctName.accesskey       "M">
+<!ENTITY noModulesFound.label     "Žane nałoženje abo žana dataja, z kotrejež dadźa so daty importować.">
+
+<!ENTITY back.label               "&lt; Wróćo">
+<!ENTITY forward.label            "Dale &gt;">
+<!ENTITY finish.label             "Dokónčić">
+<!ENTITY cancel.label             "Přetorhnyć">
+
+<!ENTITY select.label             "abo wubjerće typ materiala, kotryž chceće importować:">
+
+<!ENTITY title.label              "Titul">
+<!ENTITY processing.label         "Importuje so…">

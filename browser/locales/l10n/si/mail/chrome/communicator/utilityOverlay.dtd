@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "ගොනුව">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "නව">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "සැකසුම්">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "අහෝසි කරන්න">
+<!ENTITY undoCmd.accesskey          "U">
+<!ENTITY redoCmd.label            "යළි කරන්න">
+<!ENTITY redoCmd.accesskey          "R">
+<!ENTITY deleteCmd.label          "මකන්න">
+<!ENTITY deleteCmd.accesskey        "D">
+<!ENTITY preferencesCmd2.label "විකල්ප">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "මනාපයන්">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY viewMenu.label          "දසුන්">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "මෙවලම් තීරු">
+<!ENTITY viewToolbarsMenu.accesskey      "T">
+<!ENTITY showTaskbarCmd.label          "තත්ත්ව තීරුව">
+<!ENTITY showTaskbarCmd.accesskey        "S">
+
+<!ENTITY closeCmd.label      "වසන්න">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "C">
+
+<!ENTITY quitApplicationCmd.label  "පිටවෙන්න">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "x">
+
+<!ENTITY quitApplicationCmdUnix.label  "පිටවෙන්න">
+<!ENTITY quitApplicationCmdUnix.accesskey  "Q">
+
+<!ENTITY quitApplicationCmdMac.label  "&brandShortName; පිටවෙන්න">
+<!ENTITY quitApplicationCmdMac.accesskey  "q">

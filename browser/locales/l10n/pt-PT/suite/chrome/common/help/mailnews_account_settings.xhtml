@@ -1,0 +1,1099 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Mail &amp; Newsgroups Account Settings</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+<link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+      type="text/css"/>
+</head>
+<body>
+
+<h1 id="mail_and_newsgroups_account_settings">Mail &amp; Newsgroups Account
+  Settings</h1>
+
+<p>This section describes the settings in the Mail &amp; Newsgroups Account
+  Settings dialog box. Unlike the Preferences dialog box, which applies
+  settings to all accounts, the Mail &amp; Newsgroups Account Settings dialog
+  box lets you specify settings on a per-account basis.</p>
+
+<p>If you are not currently viewing the Mail &amp; Newsgroups Account Settings
+  dialog box, follow these steps:</p>
+
+<ol>
+  <li>Begin from the Mail window.</li>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account
+    Settings.</li>
+  <li>Select the name of the account whose settings you want to view or
+    change.</li>
+</ol>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#account_settings">Account Settings</a></li>
+    <li><a href="#server_settings">Server Settings</a></li>
+    <li><a href="#copies_and_folders">Copies &amp; Folders</a></li>
+    <li><a href="#addressing">Composition &amp; Addressing</a></li>
+    <li><a href="#synchronization_and_storage">Synchronization &amp; Storage</a></li>
+    <li><a href="#junk_settings">Junk Settings</a></li>
+    <li><a href="#return_receipts">Return Receipts</a></li>
+    <li><a href="#security">Security</a></li>
+    <li><a href="#local_folders">Local Folders</a></li>
+    <li><a href="#outgoing_server">Outgoing Server (SMTP)</a></li>
+  </ul>
+</div>
+
+<h2 id="account_settings">Mail &amp; Newsgroups Account Settings - Account
+  Settings</h2>
+
+<p>This section describes how to view or change your Account Settings, such as
+  your user name, reply-to address, and signature. If you are not already
+  viewing the Account Settings, begin from the Mail window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Select the name of the account to display the Account Settings
+    panel.</li>
+</ol>
+
+<ul>
+  <li><strong>Account Name</strong>: The name for this account.</li>
+  <li>For any type of account but Blogs &amp; News Feeds:
+    <ul>
+      <li><strong>Identity</strong>: Stores your name, email address, reply-to
+        address (only if different from your email address), and organization
+        (optional).</li>
+      <li><strong>Signature text</strong>: If you want to attach a signature to
+        all outgoing messages, type its text into this box. Check <strong>Use
+        HTML</strong> to enable HTML code, e.g., &lt;b&gt;bold&lt;/b&gt;
+        (optional).</li>
+      <li><strong>Attach the signature from a file instead</strong>: Lets you
+        choose to attach the signature from a file (in text, HTML, or image
+        format) rather than entering its text. Checking this option overrides
+        any text entered into the signature box. Click Choose to locate the
+        signature file (optional).
+
+        <p>More signature options are located in
+          <a href="#addressing">Composition &amp; Addressing</a>.</p>
+      </li>
+      <li><strong>Attach my vCard to messages</strong>: Lets you choose if your
+        vCard should be attached to your outgoing messages. Click Edit Card to
+        edit the card information (optional).</li>
+    </ul>
+  </li>
+  <li>For Blogs &amp; News Feeds accounts:
+    <ul>
+      <li><strong>Check for new articles at startup</strong>: Select this
+        checkbox if you want to check this account automatically for new blogs
+        &amp; news messages whenever you start Mail &amp; Newsgroups.</li>
+      <li><strong>Check for new articles every [__] minutes</strong>: Select
+        this checkbox if you want to specify the number of minutes between feed
+        checks. You can also check for new blogs &amp; news messages at any time
+        by clicking Get Msgs in the Mail window.</li>
+      <li><strong>By default, show the article summary instead of loading the
+        web page</strong>: Select this checkbox if you want &brandShortName;
+        to display a brief summary of the article (bundled inside the feed)
+        instead of loading the full web page. Showing the article summary is
+        slightly faster than the full web page, but you may miss part of the
+        article content.</li>
+      <li><strong>Empty Trash on Exit</strong>: Empties the Trash folder
+        whenever you quit Mail &amp; Newsgroups.</li>
+      <li><strong>Manage Subscriptions...</strong>: Shows the Feed Subscriptions
+        dialog, that allows you to add, edit and remove feeds to this blogs
+        &amp; news feeds account.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h2 id="server_settings">Mail &amp; Newsgroups Account Settings - Server
+  Settings</h2>
+
+<p>&brandShortName; Mail &amp; Newsgroups can work with two types of mail
+  servers: IMAP and POP. If you are not sure which server type your Internet
+  service provider supports, ask your service provider. If your Internet
+  service provider supports both, the following descriptions may help you
+  choose which one to use.</p>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#about_internet_message_access_protocol">About Internet
+      Message Access Protocol (IMAP)</a></li>
+    <li><a href="#about_post_office_protocol">About Internet Post Office
+      Protocol (POP)</a></li>
+    <li><a href="#imap_server_settings">IMAP Server Settings</a></li>
+    <li><a href="#advanced_imap_server_settings">Advanced IMAP Server
+      Settings</a></li>
+    <li><a href="#pop_server_settings">POP Server Settings</a></li>
+    <li><a href="#news_server_settings">News Server Settings</a></li>
+  </ul>
+</div>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h3 id="about_internet_message_access_protocol">About Internet Message Access
+  Protocol (IMAP)</h3>
+
+<p><strong>Advantages</strong>: Your messages and any changes to them stay on
+  your server, saving local disk space. Also, you always have access to an
+  updated mailbox, and you can get your mail from multiple locations.
+  Performance on a modem is faster, since you initially download message
+  headers only.</p>
+
+<p><strong>Disadvantages</strong>: Not all ISPs support IMAP.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h3 id="about_post_office_protocol">About Post Office Protocol (POP)</h3>
+
+<p><strong>Advantages</strong>: Your messages are downloaded to your local
+  computer all at once, but you can also specify whether to keep copies of the
+  messages on the server and delete messages on the server when they are
+  deleted locally. Most ISPs currently support POP.</p>
+
+<p><strong>Disadvantages</strong>: If you use more than one computer, messages
+  might reside on one or the other, but not both. POP doesn&apos;t work as well
+  as IMAP over a slow link connection. Also, you can&apos;t access all mail
+  folders from multiple locations.</p>
+
+<p>Note that more recent POP servers have features that allow retrieving only
+  the headers instead of the full message, like IMAP allows. Using these
+  features allows performance with POP to be nearly as fast as with IMAP.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h3 id="imap_server_settings">IMAP Server Settings</h3>
+
+<p>If you are not already viewing the IMAP server settings, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Select the account name and click the Server Settings category. (If you
+    chose an IMAP server when you set up this account, you see your IMAP server
+    settings.)</li>
+</ol>
+
+<ul>
+  <li><strong>Server Type</strong>: The server type (IMAP Mail Server) that you
+    specified when you created this account. To change the server type
+    associated with this account, you must delete the account and then
+    re-create it.</li>
+  <li><strong>Server Name</strong>: The server name that you specified when you
+    created this account. If you are having problems getting mail from this
+    account, verify with your service provider or system administrator that the
+    server name you entered is correct.</li>
+  <li><strong>User Name</strong>: The user name that you specified when you
+    created this account.</li>
+  <li><strong>Port</strong>: Unless otherwise instructed to do so by your
+    service provider or system administrator, leave this setting
+    unchanged.</li>
+  <li><strong>Connection security</strong>: Choose one of the available options
+    to establish a <a href="glossary.xhtml#secure_connection">secure
+    connection</a> to your incoming IMAP server. You can choose one of these:
+    <ul>
+      <li><strong>None</strong>: &brandShortName; will use a plain connection,
+        without encryption at all. You should choose this <strong>only</strong>
+        if your incoming server doesn&apos;t support any type of security.</li>
+      <li><strong>STARTTLS</strong>: Require an encrypted connection, use the
+        <a href="glossary.xhtml#starttls">STARTTLS</a> method. This mechanism
+        will usually run on the standard IMAP port 143.</li>
+      <li><strong>SSL/TLS</strong>: Require an encrypted connection, use the
+        IMAP-over-SSL method. The default port for this is 993.
+      </li>
+    </ul>
+  </li>
+  <li><strong>Use secure authentication</strong>: Choose this setting if you
+    want to use secure mechanisms for logging in like CRAM-MD5. If you are
+    unsure if your service supports this, contact your service provider or
+    system administrator.</li>
+  <li><strong>Check for new messages at startup</strong>: Choose this setting
+    if you want Mail &amp; Newsgroups to automatically check this account for
+    new messages whenever you start Mail &amp; Newsgroups.</li>
+  <li><strong>Check for new messages every [__] minutes</strong>: Choose this
+    setting to automatically check for new messages, and then specify the
+    number of minutes between mail checks. If you do not select this setting,
+    you can check for new messages at any time by clicking Get Msgs in the Mail
+    window.</li>
+  <li id="when_i_delete_a_message"><strong>When I delete a message</strong>:
+    Choose the behavior you want for deleted messages. <q>Move it to this
+    folder</q>, where you can choose the specific folder to use, is recommended
+    unless you are instructed to use a different setting by your system
+    administrator or service provider. Messages marked as deleted are removed
+    only when you compact folders.</li>
+  <li><strong>Clean up (Expunge) Inbox on Exit</strong>: Removes deleted
+    messages from the Inbox when you exit Mail &amp; Newsgroups. Choose this
+    if you chose to mark messages as deleted.</li>
+  <li><strong>Empty Trash on Exit</strong>: Empties the Trash folder whenever
+    you quit Mail &amp; Newsgroups.</li>
+  <li><strong>Advanced</strong>: Lets you choose a different outgoing server
+    (SMTP) for outgoing messages from this account. You can also reach the
+    <a href="#advanced_imap_server_settings">Advanced IMAP Server Settings</a>
+    through this button.</li>
+  <li><strong>Local directory</strong>: The location on your hard disk where
+    mail for this account is stored.</li>
+</ul>
+
+<h3 id="advanced_imap_server_settings">Advanced IMAP Server Settings</h3>
+
+<p>In most cases, advanced IMAP server settings are automatically supplied by
+  the server. If you are unsure about the settings for this dialog box,
+  contact your ISP or system administrator.</p>
+
+<p>If you are not already viewing the advanced IMAP server settings, begin
+  from the Mail window.</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Select the account name and click the Server Settings category.</li>
+  <li>If the mail server type is an IMAP server, you can click Advanced to set
+    additional IMAP options, such as:
+    <ul>
+      <li>the IMAP server directory path</li>
+      <li>showing only <q>subscribed folders</q></li>
+      <li>support for subfolders</li>
+      <li>any personal and public (shared folder) namespaces for this
+        directory</li>
+    </ul>
+  </li>
+</ol>
+
+<p>For more information, see
+  <a href="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories">Adding
+  and Removing LDAP Directories</a>.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h3 id="pop_server_settings">POP Server Settings</h3>
+
+<p>If you are not already viewing the POP server settings, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Select the account name and click the Server Settings category name. (If
+    you chose a POP server when you set up this account, you see your POP
+    server settings.)</li>
+</ol>
+
+<ul>
+  <li><strong>Server Type</strong>: The server type (POP Mail Server) that you
+    specified when you created this account. To change the server type
+    associated with this account, you must delete the account and then
+    re-create it.</li>
+  <li><strong>Server Name</strong>: The server name that you specified when you
+    created this account. If you are having problems getting mail from this
+    account, verify with your service provider or system administrator that the
+    server name you entered is correct.</li>
+  <li><strong>User Name</strong>: The user name that you specified when you
+    created this account.</li>
+  <li><strong>Port</strong>: Unless otherwise instructed to do so by your
+    service provider or system administrator, leave this setting
+    unchanged.</li>
+  <li><strong>Connection security</strong>: Choose one of the available options
+    to establish a <a href="glossary.xhtml#secure_connection">secure
+    connection</a> to your incoming POP server. You can choose one of these:
+    <ul>
+      <li><strong>None</strong>: &brandShortName; will use a plain connection,
+        without encryption at all. You should choose this <strong>only</strong>
+        if your incoming server doesn&apos;t support any type of security.</li>
+      <li><strong>STARTTLS</strong>: Require an encrypted connection, use the
+        <a href="glossary.xhtml#starttls">STARTTLS</a> method. This mechanism
+        will usually run on the standard POP port 110.</li>
+      <li><strong>SSL/TLS</strong>: Require an encrypted connection, use the
+        POP-over-SSL method. The default port for this is 995.
+      </li>
+    </ul>
+  </li>
+  <li><strong>Use secure authentication</strong>: Choose this setting if you
+    want to use secure mechanisms for logging in like CRAM-MD5 and APOP. If you
+    are unsure if your server supports this, contact your service provider or
+    system administrator.</li>
+  <li><strong>Check for new messages at startup</strong>: Choose this setting
+    if you want Mail &amp; Newsgroups to automatically check this account for
+    new messages whenever you start Mail &amp; Newsgroups. For POP accounts,
+    Mail &amp; Newsgroups doesn&apos;t download the new messages until you
+    click Get Msgs on the Mail toolbar.</li>
+  <li><strong>Check for new messages every [__] minutes</strong>: Choose this
+    setting to automatically check for new messages, and then specify the
+    number of minutes between mail checks. If you do not select this setting,
+    you can check for new messages at any time by clicking Get Msgs in the Mail
+    window.</li>
+  <li><strong>Automatically download any new messages</strong>: Choose this
+    setting if you want Mail &amp; Newsgroups to retrieve messages immediately
+    each time it checks the server.</li>
+  <li><strong>Fetch headers only</strong>: Choose this setting if you want to
+    only download the headers instead of entire messages when downloading new
+    mail. This option requires your POP server to support the <q>TOP</q>
+    command. Most recent POP servers support it, but if you are unsure about
+    your server, contact your service provider or system administrator.</li>
+  <li><strong>Leave messages on server</strong>: Choose this setting to store a
+    copy of messages on the mail server in addition to downloading them to your
+    computer.
+    <ul>
+      <li><strong>For at most [__] days</strong>: Choose this setting to remove
+        messages from the server automatically after the number of days you
+        enter here.</li>
+      <li><strong>Until I delete them</strong>: Choose this setting to remove
+        messages from the server once you delete them.</li>
+    </ul>
+  </li>
+  <li><strong>Empty Trash on Exit</strong>: Choose this setting to empty the
+    Trash folder whenever you quit Mail &amp; Newsgroups.</li>
+  <li><strong>Advanced</strong>: Lets you choose where new messages should be
+    put. You can also set the server to be queried when checking for new
+    messages.</li>
+  <li><strong>Local directory</strong>: The location on your hard disk where
+    mail for this account is stored.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h3 id="news_server_settings">News Server Settings</h3>
+
+<p>This section describes how to change news server settings. If you are not
+  already viewing news server settings, begin from the Mail window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Select the account name and click the Server Settings category. (If you
+    chose a newsgroup server when you set up this account, you see your
+    newsgroup server settings.)</li>
+</ol>
+
+<ul>
+  <li><strong>Server Type</strong>: The server type (NNTP) that you specified
+    when you created this account.</li>
+  <li><strong>Server Name</strong>: The server name that you specified when you
+    created this account. If you are having problems receiving messages from
+    this account, verify with your service provider or system administrator
+    that the server name you entered is correct.</li>
+  <li><strong>Port</strong>: Unless otherwise instructed to do so by your
+    service provider or system administrator, leave this setting
+    unchanged.</li>
+  <li><strong>Connection security</strong>: Choose &quot;SSL/TLS&quot; if your
+    news server is configured to send and receive encrypted messages, or
+    &quot;None&quot; if it doesn&apos;t support it. If you are unsure, contact
+    your service provider or system administrator.</li>
+  <li><strong>Check for new messages at startup</strong>: Choose this setting
+    to automatically check for new messages when you first open the Mail &amp;
+    Newsgroup component of &brandShortName;.</li>
+  <li><strong>Check for new messages every [__] minutes</strong>: Choose this
+    setting to automatically check for new messages, and then specify the
+    number of minutes between mail checks. If you do not select this setting,
+    you can check for new messages at any time by clicking Get Msgs in the Mail
+    window.</li>
+  <li><strong>Ask me before downloading more than [__] messages</strong>:
+    Choose this setting to conserve disk space and download time, by setting a
+    limit for the number of messages you can retrieve at one time.</li>
+  <li><strong>Always request authentication when connecting to this
+    server</strong>: Some servers allow you to talk to them without logging in,
+    but will silently hide all the <em>private</em> groups/postings unless you
+    are logged in. Choose this setting to force &brandShortName; to
+    authenticate each time it connects to this server even when the server
+    doesn&apos;t ask (also called <q>Pushed Authentication</q>).</li>
+  <li><strong>newsrc file</strong>: The path to the newsrc file is mostly
+    displayed for your information. The newsrc file stores information about
+    the newsgroups to which you are subscribed and the messages you have read
+    in each newsgroup.</li>
+  <li><strong>Local directory</strong>: The location on your hard disk where
+    mail for this account is stored.</li>
+  <li><strong>Default Character Encoding</strong>: Click this drop-down list to
+    select the character encoding you want Mail &amp; Newsgroups to use as the
+    default for incoming newsgroup messages. This is recommended if it&apos;s
+    likely you might receive messages in which the character encoding (MIME
+    charset) is not indicated, such as when reading messages in international
+    newsgroups.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h2 id="copies_and_folders">Mail &amp; Newsgroups Account Settings - Copies
+  &amp; Folders</h2>
+
+<p>This section describes the settings for sending automatic copies, and for
+  storing copies of outgoing messages, message drafts, and message
+  templates.</p>
+
+<p>By default, &brandShortName; Mail &amp; Newsgroups stores copies of your
+  outgoing messages in the Sent folder for the current account.
+  &brandShortName; Mail &amp; Newsgroups also stores message drafts in the
+  Drafts folder and message templates in the Templates folder for the
+  current account.</p>
+
+<p>If you are not already viewing the settings for Copies &amp; Folders, begin
+  from the Mail window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Select the account, and click Copies &amp; Folders. You see the Copies
+    &amp; Folders panel.</li>
+</ol>
+
+<ul>
+  <li><strong>Place a copy in</strong>: Select where to store copies of your
+    outgoing mail and newsgroup messages. If you don&apos;t want to use the
+    default Sent folder for the current account, click Other and then choose
+    an account and then choose the folder for storing copies.</li>
+  <li><strong>Bcc these email addresses</strong>: Select whether you want to
+    always send a blind carbon copy (bcc) to another addressee, and enter the
+    address. If you want to always send a blind carbon copy to yourself, just
+    add your address to this list. Separate addresses with comma (,).</li>
+  <li><strong>Keep message drafts in</strong>: Select where to store message
+    drafts. If you don&apos;t want to use the default Drafts folder for the
+    current account, click Other and then choose another account and folder
+    for storing drafts.</li>
+  <li><strong>Keep message templates in</strong>: Select where to store
+    message templates. If you don&apos;t want to use the default Templates
+    folder for the current account, click Other and then choose another account
+    and folder for storing templates.</li>
+  <li><strong>Show confirmation dialog when messages are saved</strong>: Choose
+    this option if you want Mail &amp; Newsgroups to display a confirmation
+    dialog box when you save a draft message or a template. If checked, a
+    dialog box will appear when you save a draft or template to remind you
+    where &brandShortName; Mail &amp; Newsgroups is saving the draft or
+    template.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h2 id="addressing">Mail &amp; Newsgroups Account Settings - Composition &amp;
+  Addressing</h2>
+
+<p>You use Composition settings to choose how to format text, handle replies,
+  and how a signature you defined is included.</p>
+
+<p>If you are not already viewing the Composition settings, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Select the account and click the Composition &amp; Addressing
+    category.</li>
+</ol>
+
+<ul>
+  <li><strong>Compose messages in HTML format</strong>: Use the HTML editor as
+    the default editor for writing mail and newsgroup messages. Leave this item
+    unchecked to use the plain-text editor by default. HTML messages can
+    include formatted text, links, images, and tables, just like a web page.
+    However, some recipients may not be able to receive HTML messages.
+
+    <p><strong>Tip</strong>: If you only want to use an editor occasionally,
+      you can hold down the Shift key while clicking the Compose or the Reply
+      button to switch to the non-default on an as-needed basis.</p>
+  </li>
+  <li><strong>Automatically quote the original message when replying</strong>: 
+    Select this to include the original message text in your reply. Use the 
+    drop-down list to select if the cursor should be positioned below or above
+    the quoted text. You can also choose the quoting to be automatically
+    selected.
+    <ul>
+      <li><strong>and place my signature</strong>: This drop-down list lets you
+        choose where you want your signature to be placed. It&apos;s only
+        applicable if you decided to <a href="#account_settings">attach a
+        signature</a> and to place the cursor above the quoted text.</li>
+    </ul>
+  </li>
+</ul>
+
+<ul>
+  <li><strong>Include signature for replies</strong>: If you have created a
+    signature, select this option to include it in your reply to a message.
+    The signature is added according to your settings for quote and signature
+    placement.</li>
+  <li><strong>Include signature for forwards</strong>: If you have created a
+    signature, select this option to include it when you forward a message.
+    The signature is placed according to your reply settings when
+    <a href="mailnews_preferences.xhtml#composition">forwarding inline</a>.</li>
+</ul>
+
+<p>You use Addressing settings to override the global LDAP server settings
+  specified for all <a
+  href="mailnews_preferences.xhtml#addressing_preferences">address books</a> in
+  the Preferences dialog box. LDAP server settings affect the behavior of
+  <a href="mailnews_preferences.xhtml#address_autocompletion">address
+  autocompletion</a>, and you can change these settings for each account if
+  necessary.</p>
+
+<p>Address autocompletion uses your address books to find matching entries when
+  you type email addresses in the addressing area of the Compose window.</p>
+
+<p>If you are not already viewing the Addressing settings, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Select the account and click the Composition &amp; Addressing
+    category.</li>
+</ol>
+
+<ul>
+  <li><strong>Automatically append my domain to addresses</strong>: Select
+    this if you want Mail &amp; Newsgroups to automatically complete
+    addresses you type with the domain from your account&apos;s address.</li>
+  <li><strong>Use my global LDAP server preferences for this account</strong>:
+    This is the default. Select this if you don&apos;t want to override the
+    global LDAP server preferences for this account.</li>
+  <li><strong>Use a different LDAP server</strong>: Select this option and then
+    choose another LDAP server from the list if you want to use a different
+    LDAP directory server for address autocompletion with this account. If
+    necessary, click Edit Directories to edit individual directory server
+    settings, add a directory server, or delete a directory server. For more
+    information, see <a
+    href="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories">Adding
+    and Removing LDAP Directories</a>.</li>
+</ul>
+
+<p>The directory you select will also be searched for matching certificates
+  when you attempt to send an encrypted message to one or more recipients for
+  whom you don&apos;t have certificates on file.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h2 id="synchronization_and_storage">Mail &amp; Newsgroups Account Settings -
+  Synchronization &amp; Storage</h2>
+
+<p>Synchronization &amp; Storage settings let you conserve disk space or set
+  up an account so that you can use it while offline (disconnected from the
+  Internet). The settings available depend on the mail server type (IMAP, POP,
+  or News) associated with the account.</p>
+
+<div class="contentsBox">
+  <ul>
+    <li><a href="#synchronization_and_storage_settings_imap">Synchronization
+      &amp; Storage Settings (IMAP)</a></li>
+    <li><a href="#disk_space_settings_pop">Disk Space Settings (POP)</a></li>
+    <li><a href="#disk_space_settings_blogs">Disk Space Settings
+      (Blogs)</a></li>
+    <li><a href="#synchronization_and_storage_settings_nntp">Synchronization
+      &amp; Storage Settings (News)</a></li>
+    <li><a href="#retention_policy">Common Retention Policy Settings</a></li>
+  </ul>
+</div>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h3 id="synchronization_and_storage_settings_imap">Synchronization &amp;
+  Storage Settings (IMAP)</h3>
+
+<p>If you are not already viewing the synchronization and storage preferences
+  for an IMAP account, begin from the Mail window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Choose the Synchronization &amp; Storage category for an IMAP
+    account.</li>
+</ol>
+
+<ul>
+  <li><strong>Keep messages for this account on this computer</strong>: Select
+    this option so that messages in your folders will be available when you
+    are working offline. This setting also applies to any new folders
+    created or subscribed to.</li>
+  <li><strong>Advanced</strong>: Click to open a dialog to select the
+    folders that you want to make available for offline use. See <a
+    href="mailnews_offline.xhtml#selecting_items_for_offline_viewing">Selecting
+    Items for Offline Viewing</a> for more information.
+
+    <p><strong>Note</strong>: While the default setting can be overridden for
+      an individual folder, those per-folder settings are <em>removed</em>
+      whenever the <q>Keep messages for this account</q> box is toggled.</p>
+  </li>
+  <li><strong>Synchronize all messages locally regardless of age</strong>:
+    When synchronization is enabled for an account or a folder, <em>all</em>
+    messages are downloaded and local copies of them kept on disk, unless
+    a size limit is specified.</li>
+  <li><strong>Synchronize the most recent [__] [days]</strong>: Only copies of
+    messages younger than the specified number of days (weeks, months, years)
+    are kept locally for synchronization, after that they are removed from the
+    offline storage. This does <em>not</em> affect the originals on the server,
+    only the local copies are removed if the given age is reached.</li>
+  <li><strong>Don't download messages larger than [__] KB</strong>: Select this
+    option to conserve disk space by preventing large messages from being
+    downloaded. Enter the maximum size for downloaded messages. Changing
+    this option does <em>not</em> affect messages that have already been
+    downloaded.</li>
+  <li>The <a href="#retention_policy">retention settings</a> can be used to
+    free up space by deleting old messages. Note that these settings apply
+    to <em>both</em> local copies and their originals on the server.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h3 id="disk_space_settings_pop">Disk Space Settings (POP)</h3>
+
+<p>Messages from POP accounts are fully downloaded to your local machine unless
+  you have enabled the <q>Fetch headers only</q> setting. This section
+  describes how you can save disk space for a POP account. If your account has
+  the <q>Fetch headers only</q> setting enabled, then these Disk Space
+  preferences are ignored. If you are not already viewing the Disk Space
+  preferences for a POP account, follow these steps:</p>
+
+<p>Begin from the Mail window.</p>
+
+<ol>
+  <li>Open the Edit menu, choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Click the Disk Space category for a POP account.</li>
+</ol>
+
+<ul>
+  <li><strong>Messages larger than [__] KB</strong>: Select this option to
+    conserve disk space by preventing large messages from being downloaded.
+    Enter the maximum size for downloaded messages.</li>
+  <li>The <a href="#retention_policy">retention settings</a> can be used to
+    free up space by deleting old messages. Note that these settings apply
+    to <em>both</em> local copies and their originals on the server.
+
+    <p><strong>Note</strong>: If your POP account is set up to use a Global
+      Inbox, the retention period settings of the target Inbox apply.</p>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h3 id="disk_space_settings_blogs">Disk Space Settings (Blogs)</h3>
+
+<p>Messages from blogs &amp; news feeds accounts are only stored in your local
+  machine in their short form, ie. the article summary, regardless of whether
+  your settings are to show the full articles by default. Still, there are
+  options to control how much disk space is used by your blogs &amp; news feeds
+  account. If you are not already viewing the Disk Space preferences for a
+  blogs &amp; news feeds account, follow these steps:</p>
+
+<p>Begin from the Mail window.</p>
+
+<ol>
+  <li>Open the Edit menu, choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Click the Disk Space category for a blogs &amp; news feeds account.</li>
+</ol>
+
+<p>There, you can specify which messages should be deleted to recover disk
+  space:</p>
+
+<ul>
+  <li><strong>Don&apos;t delete any messages</strong>: Select this option to
+    keep all messages forever. Keep in mind that, if you are subscribed to very
+    high-traffic blogs, this will increase the occupied disk space steadily and
+    could eventually fill up your hard disk.</li>
+  <li><strong>Delete all but the most recent [____] messages</strong>: Select this
+    option to keep in each feed only a maximum number of messages. Enter the
+    maximum number of messages (being 1,000 by default).</li>
+  <li><strong>Delete messages more than [__] days old</strong>: Select this
+    option to keep in each feed only messages that are not older than the number
+    of days you enter here (being 30 days by default).</li>
+  <li><strong>Always keep flagged messages</strong>: Check this option to
+    save (not delete) flagged messages, regardless of its age.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h3 id="synchronization_and_storage_settings_nntp">Synchronization &amp;
+  Storage Settings (News)</h3>
+
+<p>If you are not already viewing the offline and disk space settings for a
+  News account, begin from the Mail window:</p>
+
+<ol>
+  <li>Open the Edit menu, and choose Mail &amp; Newsgroups Account Settings.
+    You see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Choose the Synchronization &amp; Storage category for a News account.</li>
+</ol>
+
+<ul>
+  <li><strong>Select newsgroups for offline use</strong>: Click to select the
+    newsgroups that you want to make available for offline use. See <a
+    href="mailnews_offline.xhtml#selecting_items_for_offline_viewing">Selecting
+    Items for Offline Viewing</a> for more information.</li>
+</ul>
+
+<p>The following settings help to save disk space and download time. Specify
+  which messages you don&apos;t want to download locally:</p>
+
+<ul>
+  <li><strong>Read messages</strong>: Select this option to only download
+    message bodies from messages you haven&apos;t already read.</li>
+  <li><strong>Messages larger than [__] KB</strong>: Select this option to
+    conserve disk space by preventing large messages from being downloaded.
+    Enter the maximum size for downloaded messages.</li>
+  <li><strong>Messages more than [__] days old</strong>: Select this option to
+    only download messages that are not older than the number of days you enter
+    here.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h3 id="retention_policy">Common Retention Policy Settings</h3>
+
+<p>&brandShortName; can automatically delete old messages for you. You
+  can configure this process with the options listed below
+  <strong>To recover disk space, old messages can be permanently
+  deleted</strong>:</p>
+
+<ul>
+  <li><strong>Don't delete any messages</strong>: Keep all messages. Never
+    delete messages automatically based on their age.</li>
+  <li><strong>Delete all but the most recent [__] messages</strong>: Enter the
+    number of messages to keep. With this setting only messages older than these
+    messages are deleted.</li>
+  <li><strong>Delete messages more than [__] days old </strong>:
+    Keep all messages that arrived within the given number of days.</li>
+</ul>
+
+<p>With the following settings you can further constrain the three options to
+  delete messages automatically. This is especially useful in combination with
+  the option to keep all messages.</p> 
+
+<ul>
+  <li><strong>Always keep flagged messages</strong>: Use this option to deny
+    &brandShortName; to delete any messages you have flagged.</li>
+  <li><strong>Remove bodies from message more than [__] days old</strong>:
+    Select this option to retain all headers but to delete message bodies that
+    are older than the number of days you specify here (news accounts only).
+    Any option to delete the entire message based on age still applies.</li>
+</ul>
+
+<p>This policy can be overridden for an individual folder in the Folder
+  Properties, Retention Policy tab.</p>
+
+<p><strong>Note:</strong> If message synchronization is enabled (for IMAP), or
+  messages are left on the server (for POP accounts), the settings apply to
+  <em>both</em> local copies and their originals on the server.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h2 id="junk_settings">Mail &amp; Newsgroups Account Settings - Junk
+  Settings</h2>
+  
+<p>This section describes how to use the account junk settings. If
+  you are not currently viewing the Junk Settings, follow these steps:</p>
+
+<ol>
+  <li>Open the Edit menu, and choose Mail &amp; Newsgroups Account Settings.
+    You see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Click the Junk Settings category for your mail account.</li>
+</ol>
+
+<p>You use the Junk Settings panel to define your account-specific settings
+  for the adaptive mail filter. Global junk settings are changed under
+  <a href="mailnews_preferences.xhtml#junk_and_suspect_preferences">Mail &amp;
+  Newsgroups Preferences - Junk &amp; Suspect Mail</a>.</p>
+  
+<ul>  
+  <li><strong>Enable adaptive junk mail controls for this account</strong>:
+    Toggle this option to activate or deactivate junk mail classification.</li>
+  <li><strong>Do not mark mail as junk if the sender is in [the address
+    book chosen from all your address books available in the drop down
+    box]</strong>:
+    Choose this option to prevent messages from people you know inadvertently
+    classified as junk mail.</li>
+  <li><strong>Trust junk mail headers set by [an external junk filter
+    like Spam Assassin or Spam Pal]</strong>: Choose this option if you want to
+    trust the junk classification of external filter programs.</li>
+  <li><strong>Move new junk messages to</strong>:
+    Check this option to automatically move messages flagged as Junk to a
+    special folder.
+    <ul>
+      <li><strong><q>Junk</q> folder on [account]</strong>: Select this to use
+        the default Junk folder.</li>
+      <li><strong>Other: [account]</strong>: Select this to choose your own
+        custom-named junk folder.</li>
+      <li><strong>Automatically delete junk messages older than [__] days from
+        this folder</strong>: If you are confident old messages classified as
+        junk are indeed junk mail, check this option to automatically delete
+        old junk messages after a grace period.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h2 id="return_receipts">Mail &amp; Newsgroups Account Settings - Return
+  Receipts</h2>
+
+<p>This section describes how to use the Return Receipts account settings. If
+  you are not currently viewing the Return Receipts settings, follow these
+  steps:</p>
+
+<ol>
+  <li>Open the Edit menu, and choose Mail &amp; Newsgroups Account Settings.
+    You see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Click the Return Receipts category for your mail account.</li>
+</ol>
+
+<p>You use the Return Receipts settings to define return receipt settings for
+  outgoing messages from this mail account. You also use the Return Receipt
+  settings to specify how to manage requests you receive for return receipts.
+  These settings override global return receipt preferences you specified using
+  <a href="mailnews_preferences.xhtml#return_receipts_preferences">Mail &amp;
+  Newsgroups Preferences - Return Receipts</a>.</p>
+
+<ul>
+  <li><strong>Use my global return receipt preferences for this
+    account</strong>: By default, this account uses the return receipt
+    preferences specified by <a
+    href="mailnews_preferences.xhtml#return_receipts_preferences">Mail &amp;
+    Newsgroups Preferences - Return Receipts</a>.</li>
+  <li><strong>Customize return receipts for this account</strong>: Lets you
+    change the return receipt preferences for this account.
+    <ul>
+      <li><strong>When sending messages, always request a return
+        receipt</strong>: Enables automatic return receipt requests for all
+        outgoing messages from this mail account.</li>
+      <li><strong>Leave it in my Inbox</strong>: Return receipt
+        confirmation messages are delivered to the Inbox for this account.
+
+        <p><strong>Tip</strong>: Choose this option if you want to use a
+          filter that automatically moves return receipt confirmation
+          messages to a folder you specify. For information on creating and
+          using filters, see <a
+          href="mailnews_organizing.xhtml#creating_message_filters">Creating
+          Message Filters</a>.</p>
+      </li>
+      <li><strong>Move it to my Sent Mail folder</strong>: Incoming return
+        receipt confirmation messages are moved to the Sent mail folder for
+        this account.</li>
+      <li><strong>Never send a return receipt</strong>: Choose this option if
+        you do not want to send a return receipt in response to requests for
+        return receipts from others.</li>
+      <li><strong>Allow return receipts for some messages</strong>: Choose how
+        you want to respond to requests you receive for return receipts.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h2 id="security">Mail &amp; Newsgroups Account Settings - Security</h2>
+
+<p>This section describes how to configure the Mail &amp; Newsgroup Account
+  Settings that control mail message security. Before you do so, however, you
+  must obtain one or more mail certificates. For details, see
+  <a href="mail_sec_help.xhtml">Signing &amp; Encrypting Messages</a>.</p>
+
+<p>If you are not already viewing the Security settings for your mail account,
+  begin from the Mail window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account
+    Settings.</li>
+  <li>Click Security under the name of the mail account whose security settings
+    you want to configure.</li>
+</ol>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#about_certificates">About Certificates</a></li>
+    <li><a href="#digital_signing">Digital Signing</a></li>
+    <li><a href="#encryption">Encryption</a></li>
+  </ul>
+</div>
+
+<h3 id="about_certificates">About Certificates</h3>
+
+<p>The main purpose of the Security panel in Mail &amp; Newsgroup Account
+  Settings is to select two certificates:</p>
+
+<ul>
+  <li>The email certificate you want to use for signing mail messages you send
+    to other people.</li>
+  <li>The email certificate you want other people to use when they encrypt
+    messages they send to you.</li>
+</ul>
+
+<p>Depending on the policies of the
+  <a href="glossary.xhtml#certificate_authority">certificate authority (CA)</a>
+  that issues your certificate(s), you can use one certificate for both
+  purposes or two different certificates. Even if you use just one, you must
+  specify it twice, once for digital signing and once for encryption.</p>
+
+<p>The certificates you select here are included with every signed message you
+  send. These certificates allow your recipients to verify your digital
+  signature and to encrypt messages that they send to you.</p>
+
+<h3 id="digital_signing">Digital Signing</h3>
+
+<p>You use the Digital Signing area in the <a href="#security">Security
+  panel</a> to specify how you want to sign your email messages:</p>
+
+<ul>
+  <li><strong>Use this certificate to digitally sign messages you
+    send</strong>: If this field is empty or if it displays the wrong
+    certificate, click Select to choose from the certificates you have on
+    file.</li>
+  <li><strong>Digitally sign messages</strong>: Select this checkbox if you
+    want to digitally sign all the messages you send. (A personal certificate
+    must be specified below before you can select this checkbox.)</li>
+</ul>
+
+<p>Regardless of whether the <q>Digitally sign messages</q> checkbox is
+  selected here, you can change your mind before you send an individual
+  message.</p>
+
+<p>To change the digital signature setting for a message you are writing in
+  the Compose window, click the arrow below the Security icon near the top of
+  the window and select or deselect <q>Digital Sign This Message</q>. For
+  details, see
+  <a href="mail_sec_help.xhtml#signing_and_encrypting_a_new_message">Signing
+  &amp; Encrypting a New Message.</a></p>
+
+<h3 id="encryption">Encryption</h3>
+
+<p>You use the Encryption area in the <a href="#security">Security panel</a> to
+  specify how you routinely want to use encryption when sending your
+  messages:</p>
+
+<ul>
+  <li><strong>Use this certificate to encrypt &amp; decrypt messages sent to
+    you</strong>: If this field is empty or if it displays the wrong
+    certificate, click Select to choose from the certificates you have on
+    file.</li>
+  <li><strong>Never</strong>: Select this option if you never want to use
+    encryption, or only occasionally.</li>
+  <li><strong>Required</strong>: Select this option if you always want to use
+    encryption. If you don&apos;t have all the necessary certificates, the
+    message won&apos;t be sent unless you explicitly turn off encryption for
+    that message only.</li>
+</ul>
+
+<p>Regardless of which encryption option you select, you can change your mind
+  before you send an individual message.</p>
+
+<p>To change the encryption setting for a message you are writing in the
+  Compose window, click the arrow below the Security icon near the top of the
+  window and choose the encryption setting you want. For details, see
+  <a href="mail_sec_help.xhtml#signing_and_encrypting_a_new_message">Signing
+  &amp; Encrypting a New Message.</a></p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+
+<h2 id="local_folders">Mail &amp; Newsgroups Account Settings - Local
+  Folders</h2>
+
+<p>Local Folders is the account where &brandShortName; Mail &amp; Newsgroups
+  saves any messages that you send while working offline. Messages you send
+  while working offline are saved in the Unsent Messages folder under Local
+  Folders. Any folders you create under the Local Folders account reside on
+  your hard disk, so Local Folders is a good place to save messages that you
+  want to keep.</p>
+
+<p>If you are not already viewing the Local Folders settings, begin from the
+  Mail window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Select the Local Folders category.</li>
+</ol>
+
+<ul>
+  <li><strong>Account Name</strong>: The name associated with the Local Folders
+    account.</li>
+  <li><strong>Local directory</strong>: The location on your hard disk where
+    mail for this account is stored.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning
+  of section</a>]</p>
+
+<h2 id="outgoing_server">Mail &amp; Newsgroups Account Settings - Outgoing
+  Server (SMTP)</h2>
+
+<p>The outgoing server will transport your outgoing mail to the intended
+  recipients.</p>
+
+<p>If you are not already viewing the Outgoing Server (SMTP) settings, begin
+  from the Mail window:</p>
+
+<ol>
+  <li>Click on any Mail window.</li>
+  <li>From the Edit menu, choose Mail &amp; Newsgroup Account Settings.</li>
+  <li>Select Outgoing Server (SMTP) and either edit an existing server or
+      add a new one. If you are not sure which option to choose, check with
+      your ISP or system administrator)<br/>
+      You can choose from these servers via the Outgoing Server dropdown in
+      the <a href="#account_settings">Identity Settings</a>.</li>
+</ol>
+
+<ul>
+  <li><strong>Description</strong>: A short freetext description of that server
+    configuration. This will show up as first part in the server list.</li>
+  <li><strong>Server name</strong>: The SMTP server that will deliver your
+    outgoing mail. To use a different SMTP server, change this field.</li>
+  <li><strong>Port</strong>: The port on which the SMTP server will be
+    connected. By default it holds the standard port for the specified
+    encryption. Change it if the mail server is listening for connections
+    on a non-standard port.</li>
+  <li><strong>Use name and password</strong>: If your SMTP server requires
+    authentication to send mail, select this option and enter your user name.
+    The first time you send mail, you will be prompted for your password. At
+    that time you can instruct &brandShortName; to save your password for
+    future sessions.</li>
+  <li><strong>Use secure authentication</strong>: Choose this setting if you
+    want to use secure mechanisms for logging in like CRAM-MD5. If you are
+    unsure if your service supports this, contact your service provider or
+    system administrator.</li>
+  <li><strong>Use secure connection</strong>: There are two methods for
+    establishing a <a href="glossary.xhtml#secure_connection">secure
+    connection</a> to your outgoing server. Pick the one your server supports
+    (if you make a choice for which your server is not configured, you will
+    get an error message when sending mail).
+    <ul>
+      <li><strong>STARTTLS, if available</strong>: &brandShortName; will try to
+        negotiate encryption using the
+        <a href="glossary.xhtml#starttls">STARTTLS</a> method. If the server
+        doesn&apos;t support it, an unencrypted connection is used.</li>
+      <li><strong>STARTTLS</strong>: Require an encrypted connection, use the
+        <a href="glossary.xhtml#starttls">STARTTLS</a> method. This mechanism
+        will usually run on the standard SMTP port 25.</li>
+      <li><strong>SSL/TLS</strong>: Require an encrypted connection, use the
+        SMTP-over-SSL (also known as SMTPS) method. The default port for this
+        is 465.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Return to beginning of
+  section</a>]</p>
+</body>
+</html>

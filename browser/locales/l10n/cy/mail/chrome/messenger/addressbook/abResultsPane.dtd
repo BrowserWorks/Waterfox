@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Llyfr Cyfeiriadau">
+<!ENTITY Addrbook.accesskey                    "C">
+<!ENTITY GeneratedName.label                   "Enw">
+<!ENTITY GeneratedName.accesskey               "E">
+<!ENTITY PrimaryEmail.label                    "E-bost">
+<!ENTITY PrimaryEmail.accesskey                "b">
+<!ENTITY Company.label                         "Corff">
+<!ENTITY Company.accesskey                     "o">
+<!ENTITY _PhoneticName.label                   "Enw Seinegol">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Llysenw">
+<!ENTITY NickName.accesskey                    "l">
+<!ENTITY SecondEmail.label                     "E-bost Ychwanegol">
+<!ENTITY SecondEmail.accesskey                 "b">
+<!ENTITY Department.label                      "Adran">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "Teitl">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Symudol">
+<!ENTITY CellularNumber.accesskey              "S">
+<!ENTITY PagerNumber.label                     "Swnyn">
+<!ENTITY PagerNumber.accesskey                 "w">
+<!ENTITY FaxNumber.label                       "Ffacs">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Ffôn Cartref">
+<!ENTITY HomePhone.accesskey                   "F">
+<!ENTITY WorkPhone.label                       "Ffôn Gwaith">
+<!ENTITY WorkPhone.accesskey                   "G">
+<!ENTITY ChatName.label                        "Enw Sgwrsio">
+<!ENTITY ChatName.accesskey                    "S">
+<!ENTITY sortAscending.label                   "Esgyn">
+<!ENTITY sortAscending.accesskey               "E">
+<!ENTITY sortDescending.label                  "Disgyn">
+<!ENTITY sortDescending.accesskey              "D">

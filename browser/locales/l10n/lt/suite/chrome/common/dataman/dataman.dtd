@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Duomenų tvarkytuvė">
+
+
+<!ENTITY select.all.label "Visų tipų duomenys">
+<!ENTITY select.cookies.label "Tik slapukai">
+<!ENTITY select.permissions.label "Tik leidimai">
+<!ENTITY select.preferences.label "Tik nuostatos">
+<!ENTITY select.passwords.label "Tik slaptažodžiai">
+<!ENTITY select.storage.label "Tik saugykla">
+
+<!ENTITY domain.search.placeholder "Ieškoti srities">
+
+
+<!ENTITY domain.tree.domain.label "Sritis">
+
+<!ENTITY domain.ctx.forgetdomain.label "Užmiršti apie šią sritį">
+<!ENTITY domain.ctx.forgetdomain.accesskey "U">
+<!ENTITY domain.ctx.forgetglobal.label "Užmiršti globalius duomenis">
+<!ENTITY domain.ctx.forgetglobal.accesskey "U">
+
+
+<!ENTITY tab.cookies.label "Slapukai">
+<!ENTITY tab.permissions.label "Leidimai">
+<!ENTITY tab.preferences.label "Nuostatos">
+<!ENTITY tab.passwords.label "Slaptažodžiai">
+<!ENTITY tab.storage.label "Saugykla">
+<!ENTITY tab.formdata.label "Formų duomenys">
+<!ENTITY tab.forget.label "Užmiršimas">
+<!-- cookies -->
+
+<!ENTITY cookies.description "Šioje vardų srityje esančios svetainės turi jūsų kompiuteryje įrašiusios šiuos slapukus:">
+
+<!ENTITY cookies.tree.name.label "Slapuko vardas">
+
+
+<!ENTITY cookies.infobox.label "Informacija apie pažymėtą slapuką">
+
+<!ENTITY cookies.info.value.label "Kita informacija:">
+<!ENTITY cookies.info.host.label "Pagrindinis kompiuteris:">
+<!ENTITY cookies.info.domain.label "Sritis:">
+<!ENTITY cookies.info.path.label "Kelias:">
+<!ENTITY cookies.info.sendtype.label "Serverio saugumas:">
+<!ENTITY cookies.info.expires.label "Galioja iki:">
+
+
+
+
+
+
+
+<!ENTITY cookies.blockOnRemove.label "Pašalinus slapukus, uždrausti juos įrašiusioms svetainėms įrašyti naujus slapukus">
+<!ENTITY cookies.blockOnRemove.accesskey "d">
+<!-- permissions -->
+
+
+<!ENTITY perm.Allow "Leisti">
+<!ENTITY perm.AllowSameDomain "Leisti vienoje srityje">
+
+<!ENTITY perm.Block "Neleisti">
+
+
+
+<!-- preferences -->
+
+<!ENTITY prefs.description "Turinio nuostatos įgalina „&brandShortName;“ įsiminti kai kuriuos atskirose svetainėse taikytinus parametrus (mastelį ir pan.)">
+
+<!ENTITY prefs.tree.name.label "Nuostata">
+<!ENTITY prefs.tree.value.label "Reikšmė">
+
+
+
+
+
+
+<!-- passwords -->
+
+<!ENTITY pwd.description "Kompiuteryje yra įrašyti šios srities svetainių šie slaptažodžiai:">
+
+<!ENTITY pwd.tree.username.label "Naudotojo vardas">
+<!ENTITY pwd.tree.password.label "Slaptažodis">
+
+
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Kopijuoti slaptažodį">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "K">
+
+
+
+
+<!-- storage -->
+
+<!ENTITY storage.description "Kompiuteryje yra laikomos šios srities svetainių šios saugyklos:">
+
+<!ENTITY storage.tree.type.label "Tipas">
+<!ENTITY storage.tree.size.label "Dydis">
+
+
+
+
+
+
+<!-- form data -->
+
+<!ENTITY fdata.search.placeholder "Ieškoti formos lauko reikšmės">
+
+<!ENTITY fdata.tree.fieldname.label "Lauko vardas">
+<!ENTITY fdata.tree.value.label "Reikšmė">
+<!ENTITY fdata.tree.usecount.label "Naudota kartų">
+<!ENTITY fdata.tree.firstused.label "Pirmąkart naudota">
+<!ENTITY fdata.tree.lastused.label "Paskutinįkart naudota">
+
+
+
+
+
+
+<!-- forget -->
+
+<!ENTITY forget.cookies.label "slapukus">
+<!ENTITY forget.cookies.accesskey "s">
+<!ENTITY forget.permissions.label "leidimus">
+<!ENTITY forget.permissions.accesskey "d">
+<!ENTITY forget.preferences.label "turinio nuostatas">
+<!ENTITY forget.preferences.accesskey "n">
+<!ENTITY forget.passwords.label "slaptažodžius">
+<!ENTITY forget.passwords.accesskey "o">
+<!ENTITY forget.storage.label "saugyklas">
+<!ENTITY forget.storage.accesskey "a">
+<!ENTITY forget.formdata.label "formų duomenis">
+<!ENTITY forget.formdata.accesskey "m">
+
+<!ENTITY forget.button.label "Užmiršti šiuos duomenis">
+<!ENTITY forget.button.accesskey "U">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Pranešimų saugojimo būdo konvertavimas">
+<!ENTITY converterDialog.continueButton "Tęsti">
+<!ENTITY converterDialog.cancelButton "Atsisakyti">
+<!ENTITY converterDialog.finishButton "Baigti">
+<!ENTITY converterDialog.complete "Konvertavimas baigtas, „&brandShortName;“ dabar paleis iš naujo.">
+<!ENTITY converterDialog.error "Nepavyko konvertuoti.">
+

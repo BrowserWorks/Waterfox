@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "Vybrat…">
+<!ENTITY digitalSign.certificate.accesskey "b">
+<!ENTITY digitalSign.certificate_clear.button "Vymazat">
+<!ENTITY digitalSign.certificate_clear.accesskey "y">
+<!ENTITY encryption.certificate.button "Vybrat…">
+<!ENTITY encryption.certificate.accesskey "r">
+<!ENTITY encryption.certificate_clear.button "Vymazat">
+<!ENTITY encryption.certificate_clear.accesskey "m">
+<!ENTITY signingGroupTitle.label "Elektronický podpis">
+<!ENTITY signMessage.accesskey "E">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Výběr certifikátu">
+<!ENTITY certPicker.info  "Certifikát:">
+<!ENTITY certPicker.detailsLabel "Podrobnosti o vybraném certifikátu:">
+

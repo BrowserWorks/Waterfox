@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Gestion des certificats">
+<!ENTITY  managecerts.text         "Utilisez le Gestionnaire de certificats pour vos certificats personnels ainsi que pour les autres certificats.">
+<!ENTITY  managecerts.button       "Gérer les certificats…">
+<!ENTITY  managecerts.accesskey    "G">
+<!ENTITY  managedevices.caption    "Gestion des périphériques de sécurité">
+<!ENTITY  managedevices.text       "Utilisez le Gestionnaire de périphériques pour gérer les périphériques de sécurité, comme les cartes à puce.">
+<!ENTITY  managedevices.button     "Gérer les périphériques de sécurité…">
+<!ENTITY  managedevices.accesskey  "h">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Certificats">
+<!ENTITY  certs.label              "Certificats">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "Utiliser le protocole de statut de certificat en ligne (OCSP) pour confirmer la validité actuelle de vos certificats">
+<!ENTITY enableOCSP.accesskey                     "U">
+<!ENTITY validation.requireOCSP.description       "Quand la connexion à un serveur OCSP échoue, considérer le certificat comme étant invalide">
+<!ENTITY validation.requireOCSP.accesskey         "Q">

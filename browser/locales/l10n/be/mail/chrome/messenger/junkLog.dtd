@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Метрыка прыстасоўных сітаў пошты-лухты">
+<!ENTITY adaptiveJunkLogInfo.label "Метрыка дзейнасці прыстасоўных сітаў пошты-лухты">
+<!ENTITY clearLog.label "Ачысціць метрыку">
+<!ENTITY clearLog.accesskey "А">
+<!ENTITY closeLog.label "Закрыць">
+<!ENTITY closeLog.accesskey "З">

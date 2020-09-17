@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Rozšyrjone wobźěłanje…">
+<!ENTITY AdvancedEditButton.accessKey "R">
+<!ENTITY AdvancedEditButton.tooltip "HTML-atributy, stilowe atributy a JavaScript pśidaś abo změniś">
+<!ENTITY chooseFileButton.label "Dataju wubraś…">
+<!ENTITY chooseFileButton.accessKey "D">
+<!ENTITY chooseFileLinkButton.label "Dataju wubraś…">
+<!ENTITY chooseFileLinkButton.accessKey "t">
+<!ENTITY makeUrlRelative.label "URL jo relatiwny k bokoju adrese">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Mjazy relatiwnym a absolutnym URL pśeměniś. Dejśo nejpjerwjej bok składowaś, aby to změnił.">
+
+<!ENTITY LinkURLEditField2.label "Zapódajśo adresu webowego boka, lokalneje dataje abo wubjeŕśo pomjenjonu kokulu abo nadpismo z kontekstowego menija póla:">
+<!ENTITY LinkURLEditField2.accessKey "b">

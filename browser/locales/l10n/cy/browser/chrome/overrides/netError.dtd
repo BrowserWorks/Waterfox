@@ -1,0 +1,135 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Anhawster llwytho tudalen">
+<!ENTITY retry.label "Ceisiwch eto">
+<!ENTITY returnToPreviousPage.label "Ewch Nôl">
+<!ENTITY returnToPreviousPage1.label "Ewch Nôl (Argymell)">
+<!ENTITY advanced2.label "Uwch…">
+<!ENTITY viewCertificate.label "Darllen Tystysgrif">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Heb Ganfod Gweinydd">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Os yw'r cyfeiriad yna'n gywir, dyma dri pheth i chi roi cynnig arnyn nhw</strong>
+<ul>
+  <li>Ceisiwch eto'n hwyrach.</li>
+  <li>Gwiriwch eich cysylltiad rhwydwaith.</li>
+  <li>Os ydych wedi eich cysylltu ond y tu nôl i fur cadarn, gwiriwch fod gan &brandShortName; ganiatâd i gael mynediad i'r We.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Gwiriwch yr enw ffeil am brif lythrennu neu wallau teipio eraill.</li> <li>Gwiriwch i weld os yw'r ffeil wedi symud, ailenwi neu ei dileu.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Gall ei fod wedi ei dynnu, symud neu fod caniatâd ffeiliau yn rhwystro mynediad.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>Nid yw &brandShortName; yn gallu llwytho'r dudalen am ryw reswm.</p>">
+
+<!ENTITY captivePortal.title "Mewngofnodi i'r rhwydwaith">
+<!ENTITY captivePortal.longDesc2 "<p>Rhaid i chi fewngofnodi i'r rhwydwaith hwn cyn i chi gael mynediad i'r Rhyngrwyd.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Agor Tudalen Mewngofnodi i'r Rhwydwaith">
+
+<!ENTITY malformedURI.pageTitle "URL annilys">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Nid yw'r ddogfen gofynnwyd amdani ar gael yn storfa dros dro &brandShortName;.</p><ul><li>Fel cam i sicrhau diogelwch nid yw &brandShortName; yn gofyn eto am ddogfennau sensitif.</li><li>Cliciwch Ceisio Eto i ofyn eto am y ddogfen o'r wefan.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Clicio &quot;Ceisio newid eto&quot; i newid i&apos;r modd ar-lein ac ail lwytho'r dudalen.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Cysylltwch â pherchnogion y wefan i'w hysbysu o'r anhawster.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Cysylltwch â pherchnogion y wefan i'w hysbysu o'r anhawster.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Efallai bydd angen i chi osod meddalwedd arall i agor y cyfeiriad yma.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Gwiriwch osodiadau'r dirprwy i wneud yn siŵr eu bod yn gywir.</li> <li>Cysylltwch â'ch gweinyddwr system i wneud yn siŵr fod y gweinydd dirprwyol yn gweithio.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Gwiriwch y gosodiadau dirprwyol i wneud yn siŵr eu bod yn gywir.</li> <li>Gwiriwch fod gan eich cyfrifiadur cyswllt a'r we sy'n gweithio.</li> <li>Os yw eich cyfrifiadur wedi ei ddiogelu gan fur cadarn neu ddirprwy, gwnewch yn siŵr fod gan &brandShortName; fynediad i'r we.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Gall y broblem yma fod wedi ei hachosi drwy analluogi neu wrthod cwci.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Gwiriwch fod gan eich system Reolwr Diogelwch Personol wedi ei osod.</li> <li>Gall hyn fod oherwydd ffurfweddiad ansafonol ar y gweinydd.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Nid oes modd dangos y dudalen rydych yn ceisio ei darllen am nad oes modd dilysu'r data rydych wedi ei dderbyn.</li> <li>Cysylltwch â pherchnogion y wefan i'w hysbysu o'r anhawster.</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "Mae &brandShortName; wedi canfod bygythiad diogelwch posib ac nid yw wedi mynd i <span class='hostname'/>. Os ewch i'r gwefan yma, gall ymosodwyr geisio dwyn gwybodaeth fel eich cyfrineiriau, e-byst neu fanylion cardiau credyd.">
+<!ENTITY certerror.sts.introPara "Mae &brandShortName; wedi canfod bygythiad diogelwch posib ac nid yw wedi mynd i <span class='hostname'/> gan fod y wefan angen cysylltiad diogel.">
+
+<!ENTITY certerror.expiredCert.introPara "Mae &brandShortName; wedi canfod bygythiad diogelwch posib ac nid yw wedi mynd i <span class='hostname'/>. Un ai mae'r wefan wedi ei gam ffurfweddu neu mae cloc eich cyfrifiadur wedi ei osod i'r amser anghywir.">
+<!ENTITY certerror.expiredCert.secondPara2 "Mae'n debyg fod tystysgrif y wefan wedi dod i ben, sy'n atal &brandShortName; rhag cysylltu'n ddiogell. Os ewch chi i'r wefan hon gall ymosodwyr geisio dwy gwybodaeth fel eich cyfrineiriau, e-byst neu fanylion cerdyn credyd.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Mae'n debyg fod tystysgrif y wefan wedi dod i ben, sy'n atal &brandShortName; rhag cysylltu'n ddiogell.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Beth allwch chi wneud am hyn?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "<p>Mae hyn yn fater i'r wefan a does dim fedrwch chi wneud am y peth.</p>
+<p>Os ydych chi ar rwydwaith corfforaethol neu yn defnyddio meddalwedd gwrth-firws gallwch ofyn i'r timau cefnogi am gymorth. Gallwch hefyd hysbysu gweinyddwr y wefan am y broblem.</p>">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "<p>Mae cloc eich cyfrifiadur wedi ei osod i <span id='wrongSystemTime_systemDate2'/>. Gwnewch yn siŵr fod y dyddiad, amser a chylch amser yn gywir yn eich gosodiadau system ac yna adnewyddu <span class='hostname'/>.</p>
+<p>Os yw eich cloc eisoes wedi ei osod i'r amser cywir, mwy na thebyg mae'r wefan wedi ei gam osod a does dim fedrwch chi ei wneud i ddatrys y broblem. Gallwch hysbysu gweinyddwr y wefan am y broblem.</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>Mae'n fater i'r wefan a does dim fedrwch chi wneud i ddatrys y mater. Gallwch hysbysu gweinyddwr y wefan am y broblem.</p>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Efallai bod y wefan yn brysur neu nad yw ar gael dros dro. Ceisiwch eto ymhen ychydig.</li> <li>Os nad ydych yn gallu llwytho unrhyw dudalennau, gwiriwch gysylltiad rhwydwaith eich cyfrifiadur.</li> <li>Os yw eich cyfrifiadur neu rwydwaith wedi ei ddiogelu gan fur cadarn neu ddirprwy, gwnewch yn siŵr fod gan &brandShortName; hawl i fynediad i'r we.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>Mae &brandShortName; wedi rhwystro'r dudalen rhag llwytho yn y ffordd yma gan fod gan y dudalen bolisi diogelwch cynnwys sy'n atal hynny.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>Mae &brandShortName; wedi atal y dudalen hon rhag llwytho yn y cyd-destun hwn oherwydd bod gan y dudalen bolisi X-Frame-Options sy'n ei gwrthod.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Nid oes modd dangos y dudalen rydych yn ceisio ei gweld yn sgil canfod gwall trosglwyddo data.</p><ul><li>Cysylltwch â pherchnogion y wefan i'w hysbysu o'r anhawster.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Derbyn y Bygythiad a Pharhau">
+
+<!ENTITY errorReporting.automatic2 "Mae adroddiadau gwall fel hyn y cynorthwyo Mozilla i adnabod a rhwystro gwefannau maleisus">
+<!ENTITY errorReporting.learnMore "Dysgu rhagor…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Cysylltwch â pherchnogion y wefan i'w hysbysu am y broblem..</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Gwybodaeth uwch: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Rhybudd: Risg Diogelwch Posibl o'ch Blaen">
+<!ENTITY certerror.sts.pagetitle  "Peidiwch cysylltu: Mater Diogelwch Posib">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "Mae gan <span class='hostname'></span> bolisi diogelwch o'r enw HTTP Strict Transport Security (HSTS), sy'n golygu mai dim ond yn ddiogel mae modd i &brandShortName; gysylltu. Nid oes modd gosod eithriad er mwyn ymweld â'r wefan.">
+<!ENTITY certerror.copyToClipboard.label "Copïo testun i'r clipfwrdd">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "Mae <p><span class='hostname'></span> yn defnyddio technoleg diogelwch sy'n hen ac yn agored i ymosodiad. Gall yr ymosodwr weld manylion am hyn roeddech yn meddwl ei fod yn ddiogel. Mae angen i weinyddwr y wefan drwsio'r gweinydd yn gyntaf cyn bod modd i chi ymweld â' r wefan.</p><p>Cod gwall: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Tudalen wedi'i Rhwystro">
+
+<!ENTITY certerror.mitm.longDesc "Mae <span class='hostname'></span> mwy na thebyg yn wefan diogel, ond nid oedd modd sefydlu cysylltiad diogel. Achoswyd hyn gan <span class='mitm-name'/>, sy'n un a'i feddalwedd ar eich cyfrifiadur neu rwydwaith.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Os yw eich meddalwedd gwrth-firws yn cynnwys nodwedd sy'n sganio cysylltiadau wedi eu hamgryptio (“web scanning” neu “https scanning”), gallwch analluogu'r nodwedd honno. Os nad yw hynny'n gweithio, gallwch dynnu ac ailosod y feddalwedd gwrth-firws.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Os ydych ar rwydwaith corfforaethol, cysylltwch a'ch adran TG.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Os nad ydych yn gyfarwydd â <span class='mitm-name'/>, yna gall hyn fod yn ymosodiad ac ni ddylech barhau ar y wefan hon.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Os nad ydych yn gyfarwydd â <span class='mitm-name'/>, yna gall hyn fod yn ymosodiad ac nid oes dim y gallwch ei wneud i gael mynediad i'r wefan.">
+
+<!ENTITY clockSkewError.longDesc "Mae eich cyfrifiadur yn meddwl ei bod hi'n <span id='wrongSystemTime_systemDate1'/>, sy'n rhwystro &brandShortName; rhag cysylltu'n ddiogel. I fynd i <span class='hostname'></span>, diweddarwch gloc eich cyfrifiadur yng ngosodiadau eich system i'r dyddiad, amser a chylch amser cyfredol ac yna adnewyddu <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Mae'n edrych fel mai eich gosodiadau diogelwch rhwydwaith sy'n achosi hyn. Hoffech chi adfer y gosodiadau rhagosodedig?">
+<!ENTITY prefReset.label "Adfer y gosodiadau rhagosodedig">
+
+<!ENTITY enableTls10.longDesc "Efallai na fydd y wefan hon yn cefnogi protocol TLS 1.2, sef y fersiwn leiafswm ei chefnogi gan &brandShortName;. Efallai y gall galluogi TLS 1.0 a TLS 1.1 ganiatáu i'r cysylltiad hwn lwyddo.">
+<!ENTITY enableTls10.note "Bydd TLS 1.0 a TLS 1.1 yn cael eu hanalluogi yn barhaol mewn fersiynau yn y dyfodol.">
+<!ENTITY enableTls10.label "Galluogi TLS 1.0 a 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Nid oes modd dangos y dudalen rydych yn ceisio'i gweld oherwydd cafwyd gwall yn y protocol rhwydwaith.</p><ul><li>Cysylltwch â pherchenogion y wefan i roi gwybod iddynt am y broblem hon.</li></ul>">

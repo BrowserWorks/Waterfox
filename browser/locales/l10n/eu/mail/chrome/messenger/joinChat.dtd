@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "Batu txatera">
+<!ENTITY name.label                     "Gela">
+<!ENTITY optional.label                 "(aukerakoa)">
+<!ENTITY account.label                  "Kontua">
+<!ENTITY autojoin.label                 "Batu automatikoki txat-gela honetara">
+<!ENTITY autojoin.accesskey             "a">

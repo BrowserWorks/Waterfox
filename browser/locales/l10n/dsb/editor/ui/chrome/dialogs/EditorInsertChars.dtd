@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Znamuško zasajźiś">
+<!ENTITY category.label "Kategorija">
+<!ENTITY letter.label "Pismik:">
+<!ENTITY letter.accessKey "P">
+<!ENTITY character.label "Znamuško:">
+<!ENTITY character.accessKey "Z">
+<!ENTITY accentUpper.label "Wjeliki pismik z akcentom">
+<!ENTITY accentLower.label "Mały pismik z akcentom">
+<!ENTITY otherUpper.label "Druge wjelike pismiki">
+<!ENTITY otherLower.label "Druge małe pismiki">
+<!ENTITY commonSymbols.label "Zwucone symbole">
+<!ENTITY insertButton.label "Zasajźiś">
+<!ENTITY closeButton.label "Zacyniś">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY selectAddressWindow.title "Adresleri seçin">
+<!-- Buttons -->
+
+<!ENTITY toButton.label "Kime->">
+<!ENTITY toButton.accesskey "K">
+<!ENTITY ccButton.label "Kopya->">
+<!ENTITY ccButton.accesskey "K">
+<!ENTITY bccButton.label "Bcc->">
+<!ENTITY bccButton.accesskey "B">
+<!ENTITY newButton.label "Yeni…">
+<!ENTITY newButton.accesskey "Y">
+<!ENTITY editButton.label "Düzenle…">
+<!ENTITY editButton.accesskey "e">
+<!ENTITY removeButton.label "Kaldır">
+<!ENTITY removeButton.accesskey "r">
+<!ENTITY lookIn.label "İçine bak:">
+<!ENTITY lookIn.accesskey "i">
+<!ENTITY for.label "amaç:">
+<!ENTITY for.accesskey "a">
+<!ENTITY for.placeholder "İsim veya E-posta">
+<!ENTITY addressMessageTo.label "İleti alıcısı:">
+<!-- Tooltips items -->  
+
+<!ENTITY addressPickerNewButton.tooltip "Yeni adres defteri kartı oluştur">
+<!ENTITY addressPickerEditButton.tooltip "Seçili kartı düzenle">
+

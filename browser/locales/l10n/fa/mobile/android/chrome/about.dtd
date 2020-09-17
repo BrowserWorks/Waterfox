@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "درباره &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; آزمایشی است و ممکن است ناپایدار باشد.">
+<!ENTITY aboutPage.checkForUpdates.link         "بررسی برای بروزرسانی‌ها »">
+<!ENTITY aboutPage.checkForUpdates.checking     "بررسی برای بروزرسانی‌ها…">
+<!ENTITY aboutPage.checkForUpdates.none         "هیچ بروزرسانی‌ای موجود نیست">
+<!ENTITY aboutPage.checkForUpdates.available2   "بارگیری بروزرسانی">
+<!ENTITY aboutPage.checkForUpdates.downloading  "درحال بارگیری بروزرسانی…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "نصب بروزرسانی">
+<!ENTITY aboutPage.faq.label                    "پرسش‌های متداول">
+<!ENTITY aboutPage.support.label                "پشتیبانی">
+<!ENTITY aboutPage.privacyPolicy.label          "سیاست حریم خصوصی">
+<!ENTITY aboutPage.rights.label                 "حقوق خود را بدانید">
+<!ENTITY aboutPage.relNotes.label               "یادداشت‌های انتشار">
+<!ENTITY aboutPage.credits.label                "دست‌اندرکاران">
+<!ENTITY aboutPage.license.label                "اطلاعات مجوز">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "فایرفاکس و نشان‌های فایرفاکس، علائم تجاری بنیاد موزیلا محسوب می‌شوند.">

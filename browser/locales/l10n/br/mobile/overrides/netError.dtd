@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Kudenn o kargañ ar bajennad">
+<!ENTITY retry.label "Klask en-dro">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "N'haller ket kennaskañ">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Dindan strishadurioù emañ ar chomlec'h-mañ">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Dafariad ebet kavet">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>Gwiriit ar chomlec'h da gaout fazioù biziata evel <strong>ww</strong>.example.com e-lec'h <strong>www</strong>.example.com</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Klask</button> </div> <li>Ma n'eus ket tro da gargañ pajennad ebet, gwiriit roadennoù ho trevnad pe ho kennask dre Wi-Fi. <button id='wifi'>Enable Wi-Fi</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "Restr ebet kavet">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Gwiriit anv ar chomlec'h rak marteze ez eus fazioù pennlizherennoù pe fazioù skrivañ all.</li> <li>Gwiriit hag-eñ eo bet dilec'hiet, adanvet pe dilamet ar restr</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Nac'het eo bet haeziñ d'ar restr">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Gallout a ra bezañ dilamet, dilec'hiet, pe n'eus ket ar gwirioù a-zere evit an haeziñ.</li> </ul>">
+
+<!ENTITY generic.title "Hopala.">
+<!ENTITY generic.longDesc " <p>N'hall ket &brandShortName; kargañ ar bajennad-mañ.</p>">
+
+<!ENTITY malformedURI.title "N'eo ket talvoudek ar chomlec'h">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>Skrivet e vez ar chomlec'hioù evel <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Klask</button> </div> <li>Bezit sur ez arverit beskelloù (d.l.e. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Troc'het eo bet ar c'hennask">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Diamzeret eo an teul">
+<!ENTITY notCached.longDesc "<p>N'eo ket hegerz an teul goulennet e-barzh krubuilh &brandShortName;.</p><ul><li>&brandShortName; ne c'houlenn ket en-dro teulioù kizidik ent emgefreek evit ho tiogelroez.</li><li>Klikit war Klask en-dro a-benn goulenn an teul digant al lec'hienn en-dro.</li></ul>">
+
+<!ENTITY netOffline.title "Mod ezlinenn">
+
+<!ENTITY contentEncodingError.title "Fazi enrinegañ an endalc'had">
+<!ENTITY contentEncodingError.longDesc " <ul> <li>Kit e darempred gant perc'henned al lec'hienn evit kas keloù dezho a-zivout ar gudenn-mañ.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Rizh restr arvarus ">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Kit e darempred gant perc'henned al lec'hienn evit kas keloù dezho a-zivout ar gudenn-mañ.</li> </ul>">
+
+<!ENTITY netReset.title "Ehanet eo bet ar c'hennaskañ">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Diamzeret eo ar c'hennask">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "N'eo ket bet komprenet ar chomlec'h">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Ezhomm hoc'h eus staliañ ur meziant all evit digeriñ ar chomlec'h marteze.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "An dafariad proksi a nac'h ar c'hennaskañ">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Gwiriit an arventennoù proksi evit bezañ sur ez int reizh.</li> <li>Kit e darempred gant hoc'h ardoer reizhiad evit bezañ sur ez a en-dro an dafariad proksi.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "N'eo ket bet kavet an dafariad proksi">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Gwiriit an arventennoù proksi evit bezañ sur ez int reizh.</li> <li>Gwiriit da vezañ sur ez eus ur c'hennask dre Wi-Fi ha roadennoù o vont en-dro. <button id='wifi'>Gweredekaat ar  Wi-Fi</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "Adheñchañ ar bajenn n'eo ket dereat">
+<!ENTITY redirectLoop.longDesc "<ul> <li>A-wechoù e c'hoarvez ar gudenn-mañ rak diweredekaet pe nac'het eo bet an toupinoù.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Respont dic'hortoz a-berzh an dafariad">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Bezit sur eo bet staliet an ardoer diogelroez personel (Personal Security Manage).</li> <li>Marteze e c'hoarvez an dra-se abalamour d'ur c'hefluniadur anskoueriek war an dafariad.</li> </ul>">
+
+<!ENTITY nssFailure2.title "C'hwitadenn war ar c'hennaskañ diogel">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>N'hall ket bezañ diskouezet ar bajennad emaoc'h o klask gwelout rak n'hall ket bezañ gwiriet dilested ar roadennoù bet degemeret.</li> <li>Kit e darempred gant perc'henned al lec'hienn evit kas keloù dezho a-zivout ar gudenn-mañ.</li> </ul>">
+
+<!ENTITY nssBadCert.title "C'hwitadenn war ar c'hennaskañ diogel">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Marteze e vefe ur gudenn gant kefluniadur an dafariad, pe unan bennak o klask dreveziñ an dafariad.</li> <li>Mard oc'h bet kennasket ouzh an dafariad gant berzh a-raok ez eus ur fazi padennek moarvat, klaskit diwezhatoc'h.</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>Marteze ez eo al lec'hienn dihegerz pe re ac'hubet evit poent. Klaskit tuchant.</li> <li>Ma n'oc'h ket evit pellgargañ pajennad ebet, gwiriit da vezañ sur ez eus ur c'hennask dre Wi-Fi ha roadennoù o vont en-dro. <button id='wifi'>Gweredekaat ar Wi-Fi</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "Harzet gant ur reolenn diogelroez a-fet endalc'hadoù">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; en deus miret ar bajennad-mañ ouzh bezañ pellgarget gant an doare-mañ rak ar bajenn-mañ he deus reolennoù a-fet diogelroez a zisaotren d'hen ober.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Fazi a-fet endalc'had bet kontronet">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ar bajenn emaoc'h o klask gweladenniñ n'hall ket bezañ skrammet rak degouezhet ez eus bet ur fazi e-pad treuzkas ar roadennoù.</p><ul><li>Mar plij, kit e darempred gant perc'henned al lec'hienn a-benn kelaouiñ anezho eus ar gudenn-mañ.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Pe un nemedenn a vez ouzhpennet ganeoc'h...">
+<!ENTITY securityOverride.getMeOutOfHereButton "Lamit kuit ac'hanon deus amañ !">
+<!ENTITY securityOverride.exceptionButtonLabel "Ouzhpennañ un nemedenn…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Gwell e vefe deoc'h chom hep ouzhpennañ un nemedenn ma n'eus ket fiziañs penn-da-benn en dafariad-mañ ganeoc'h pe ma n'oc'h ket boaziet gwelout un taol evezh a-berzh an dafariad-mañ.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL a-bell">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Mar plij, kit e darempred gant perc'henned al lec'hienn evit kelaouiñ anezho diwar-benn ar gudenn-mañ.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "N'haller ket kennaskañ outi ent diarvar">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Titouroù kempleshoc'h : SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "N'eo ket diarvar ho kennask">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Titouroù kempleshoc'h : SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "N'eo ket diarvar ho kennask">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> a arver ur c'halverezh diogelroez diamzeret ha bresk. Gallout a rafe un tager dizoloiñ titouroù a gredec'h diarvar. Ret vo da verour al lec'hienn ratreañ an dafariad a-raok ma c'hallfec'h gweladenniñ al lec'hienn.</p><p>Boneg fazi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Fazi komenad rouedad">
+<!ENTITY networkProtocolError.longDesc "<p>N'haller ket diskouez ar bajenn a glaskit gwelet peogwir eo bet dinoet ur fazi komenad rouedad.</p><ul><li>Kit e darempred gant perc'henned al lec'hienn evit o c'helaouiñ eus ar gudenn.</li></ul>">

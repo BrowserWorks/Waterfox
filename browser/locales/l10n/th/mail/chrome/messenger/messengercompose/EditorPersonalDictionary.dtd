@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "พจนานุกรมส่วนบุคคล">
+
+<!ENTITY wordEditField.label "คำใหม่:">
+<!ENTITY wordEditField.accessKey "ค">
+<!ENTITY AddButton.label "เพิ่ม">
+<!ENTITY AddButton.accessKey "พ">
+<!ENTITY DictionaryList.label "คำในพจนานุกรม">
+<!ENTITY DictionaryList.accessKey "น">
+<!ENTITY RemoveButton.label "เอาออก">
+<!ENTITY RemoveButton.accessKey "อ">
+
+<!ENTITY CloseButton.label "ปิด">
+<!ENTITY CloseButton.accessKey "ป">

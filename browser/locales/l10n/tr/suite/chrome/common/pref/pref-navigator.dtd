@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title "Browser">
+
+<!ENTITY navRadio.label "Display on">
+<!ENTITY navRadio.accesskey "n">
+<!ENTITY navStartPageMenu.label "Browser Startup">
+<!ENTITY newWinPageMenu.label "Yeni pencere">
+<!ENTITY newTabPageMenu.label "Yeni sekme">
+
+<!ENTITY blankPageRadio.label "Blank page">
+<!ENTITY blankPageRadio.accesskey "B">
+<!ENTITY homePageRadio.label "Home page">
+<!ENTITY homePageRadio.accesskey "m">
+<!ENTITY lastPageRadio.label "Last page visited">
+<!ENTITY lastPageRadio.accesskey "L">
+<!ENTITY restoreSessionRadio.label "Restore Previous Session">
+<!ENTITY restoreSessionRadio.accesskey "P">
+
+<!ENTITY header2.label "Açılış sayfası">
+<!ENTITY homePageIntro.label "Clicking the Home button takes you to this group of pages:">
+<!ENTITY useCurrent.label "Use Current Page">
+<!ENTITY useCurrent.accesskey "U">
+<!ENTITY useCurrentGroup.label "Use Current Group">
+<!ENTITY useCurrentGroup.accesskey "G">
+<!ENTITY browseFile.label "Dosyayı seçin…">
+<!ENTITY browseFile.accesskey "s">
+<!ENTITY useDefault.label "Öntanımlı Ayarlar">
+<!ENTITY useDefault.accesskey "r">
+
+<!ENTITY defaultBrowserGroup.label "Varsayılan Tarayıcı">
+<!ENTITY defaultBrowserButton.label "Set Default Browser">
+<!ENTITY defaultBrowserButton.accesskey "D">
+<!ENTITY alreadyDefaultText "&brandShortName; is already your default browser.">
+<!ENTITY defaultPendingText "&brandShortName; will be set as your default browser when you click OK.">
+<!ENTITY makeDefaultText "Set &brandShortName; as your default browser.">

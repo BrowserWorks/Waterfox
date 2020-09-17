@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "მოგესალმებათ &brandShortName; საფოსტო და ჯგუფების პროგრამაში">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'მოგესალმებათ <a id="vendorURL" href="">&brandShortName;</a> საფოსტო და ჯგუფების პროგრამაში!'>
+<!ENTITY description.label
+"&brandShortName; ამავე დროს ღია კოდების ძლიერი საფოსტო და ჯგუფების კლიენტი პროგრამაა,
+რომელსაც უსარგებლო წერილების ამოცნობისა და სხვა უამრავი შესაძლებლობა გააჩნია.">
+<!ENTITY features.title "შესაძლებლობები">
+<!ENTITY feat_multiacc.label "მრავალი ანგარიშის მხარდაჭერა">
+<!ENTITY feat_junk.label "ჯართის ამოცნობა">
+<!ENTITY feat_feeds.label "წამკითხავი">
+<!ENTITY feat_filters.label "წერილების ფილტრები">
+<!ENTITY feat_htmlmsg.label "HTML წერილების მხარდაჭერა">
+<!ENTITY feat_abook.label "მისამართების წიგნაკი">
+<!ENTITY feat_tags.label "ჭდეებისა და წერილების ჩვენების მორგება">
+<!ENTITY feat_integration.label
+"მუშაობის მჭიდრო შეთავსება &brandShortName;-ს სხვა პროგრამებთან">
+<!ENTITY dict.title "ლექსიკონები">
+<!ENTITY dict_intro.label "ლექსიკონები გამოიყენება თქვენი წერილების მართლწერის შესამოწმებლად.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'ბევრი სხვა დამატებითი ენა შეიძლება ჩაიდგას
+<a id="dictURL" href="">ლექსიკონების</a> სექციიდან
+<a href="https://addons.mozilla.org/seamonkey/">Mozilla მოდულების</a>. გვერდიდან'>
+<!ENTITY dict_info.label2
+'უამრავი დამატებითი ენის დაყენებაა შესაძლებელი
+<a id="dictURL" href="">ლექსიკონების</a> გვერდიდან
+<a href="https://addons.thunderbird.net/seamonkey/">SeaMonkey-ისა და Thunderbird-ის დამატებების საიტზე</a>.'>
+<!ENTITY info.title "დამატებითი ინფორმაცია">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="http://www.mozilla.org/mailnews/">ჩვენ</a> მადლიერი ვართ თქვენი გამოგზავნილი
+შეცდომის პატაკებისა და მოთხოვნებსთვის, მაგრამ გთხოვთ ჯერ გაეცნოთ <a id="releaseNotesURL" href="">ვერსიის მონაცემებს</a> და ჯერ აქ
+<a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> მოიძიოთ.'>

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "कैलेन्डर औज़ारपट्टी">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "C">
+<!ENTITY lightning.toolbar.task.name "कार्य औजार पट्टी">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "तुल्यकालित करें">
+<!ENTITY lightning.toolbar.sync.tooltip "कैलेन्डर फिर लोड करें और तुल्यकालित करें">
+<!ENTITY lightning.toolbar.delete.label "मिटाएँ">
+<!ENTITY lightning.toolbar.delete.tooltip "चुने गए घटनाओं और कार्य को मिटाएँ">
+<!ENTITY lightning.toolbar.edit.label "संपादन">
+<!ENTITY lightning.toolbar.edit.tooltip "चुने गई घटना और कार्य का सम्पादन करें">
+<!ENTITY lightning.toolbar.gototoday.label "आज पर जाएँ">
+<!ENTITY lightning.toolbar.gototoday.tooltip "आज पर जाएँ">
+<!ENTITY lightning.toolbar.print.label "छापें">
+<!ENTITY lightning.toolbar.print.tooltip "घटनाओं और कार्य को छापें">
+<!-- Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.calendar.label     "कैलेन्डर">
+<!ENTITY lightning.toolbar.calendar.tooltip   "कैलेंडर टैब में जाएँ">
+<!ENTITY lightning.toolbar.calendar.accesskey "C">
+<!ENTITY lightning.toolbar.task.label         "कार्य">
+<!ENTITY lightning.toolbar.task.tooltip       "अगले टैब में जाएँ">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+<!-- Toolbar write button -->
+
+<!ENTITY lightning.toolbar.newevent.label     "कार्यक्रम">
+<!ENTITY lightning.toolbar.newevent.tooltip   "एक नया कार्यक्रम बनायें">
+<!ENTITY lightning.toolbar.newtask.label      "कार्य">
+<!ENTITY lightning.toolbar.newtask.tooltip    "नया कार्य शुरू करें">
+<!-- Calendar and Task Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.day.label                 "दिन">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "सप्ताह">
+<!ENTITY lightning.toolbar.week.accesskey            "W">
+<!ENTITY lightning.toolbar.multiweek.label           "बहु सप्ताह">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "u">
+<!ENTITY lightning.toolbar.month.label               "माह">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "एप्पमेन्यू">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "&brandShortName; प्रदर्शित करें मेन्यू">
+<!ENTITY lightning.toolbar.calendarmenu.label        "पंचांग फलक">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "P">
+<!ENTITY lightning.toolbar.calendarpane.label        "फलक कैलेंडर दिखाये">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "P">

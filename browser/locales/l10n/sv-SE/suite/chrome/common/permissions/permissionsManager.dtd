@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "Undantag">
+<!ENTITY treehead.sitename.label        "Webbplats">
+<!ENTITY treehead.status.label          "Status">
+<!ENTITY remove.label                   "Ta bort plats">
+<!ENTITY remove.accesskey               "T">
+<!ENTITY removeall.label                "Ta bort alla platser">
+<!ENTITY removeall.accesskey            "a">
+<!ENTITY address.label                  "Webbplatsens adress:">
+<!ENTITY address.accesskey              "W">
+<!ENTITY block.label                    "Blockera">
+<!ENTITY block.accesskey                "B">
+<!ENTITY session.label                  "Tillåt för sessionen">
+<!ENTITY session.accesskey              "s">
+<!ENTITY allow.label                    "Tillåt">
+<!ENTITY allow.accesskey                "å">

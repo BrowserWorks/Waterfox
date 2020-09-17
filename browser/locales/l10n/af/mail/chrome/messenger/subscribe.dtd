@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Inteken">
+<!ENTITY subscribeButton.label        "Inteken">
+<!ENTITY subscribeButton.accesskey    "I">
+<!ENTITY unsubscribeButton.label      "Afteken">
+<!ENTITY unsubscribeButton.accesskey  "A">
+<!ENTITY newGroupsTab.label           "Nuwe groepe">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Verfris">
+<!ENTITY refreshButton.accesskey      "V">
+<!ENTITY stopButton.label             "Stop">
+<!ENTITY stopButton.accesskey         "t">
+<!ENTITY server.label                 "Rekening:">
+<!ENTITY server.accesskey             "R">
+<!ENTITY subscribedHeader.label       "Inteken">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Wys items wat dit bevat:">
+<!ENTITY namefield.accesskey          "y">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Opstellen &amp; adressering">
+<!ENTITY addressingGroupTitle.label "Adressering">
+<!ENTITY addressingText.label      "Bij het opzoeken van adressen:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Mijn algemene LDAP-serverinstellingen gebruiken voor deze account">
+<!ENTITY useGlobal.accesskey       "M">
+<!ENTITY editDirectories.label     "Directory’s bewerken…">
+<!ENTITY editDirectories.accesskey "w">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Een andere LDAP-server gebruiken:">
+<!ENTITY directories.accesskey     "n">
+<!ENTITY directoriesNone.label     "Geen">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Opstellen">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Berichten opstellen in HTML-indeling">
+<!ENTITY useHtml.accesskey                    "B">
+<!ENTITY autoQuote.label                      "Automatisch het originele bericht citeren bij antwoorden">
+<!ENTITY autoQuote.accesskey                  "A">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Bij citeren">
+<!ENTITY quoting.accesskey                    "c">
+<!ENTITY aboveQuote.label                     "mijn reactie boven de geciteerde tekst starten">
+<!ENTITY belowQuote.label                     "mijn reactie onder de geciteerde tekst starten">
+<!ENTITY selectAndQuote.label                 "de geciteerde tekst selecteren">
+<!ENTITY place.label                          "en mijn ondertekening plaatsen">
+<!ENTITY place.accesskey                      "o">
+<!ENTITY belowText.label                      "onder de geciteerde tekst (aanbevolen)">
+<!ENTITY aboveText.label                      "onder mijn antwoord (boven de geciteerde tekst)">
+<!ENTITY includeSigOnReply.label              "Ondertekening invoegen bij antwoorden">
+<!ENTITY includeSigOnReply.accesskey          "t">
+<!ENTITY includeSigOnForward.label            "Ondertekening invoegen bij doorsturen">
+<!ENTITY includeSigOnForward.accesskey        "s">
+
+<!ENTITY globalComposingPrefs.label           "Algemene opstelvoorkeuren…">
+<!ENTITY globalComposingPrefs.accesskey       "e">
+
+<!ENTITY globalAddressingPrefs.label          "Algemene adresseringsvoorkeuren…">
+<!ENTITY globalAddressingPrefs.accesskey      "r">

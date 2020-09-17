@@ -1,0 +1,321 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "ಪರಿವಿಡಿ ತೆರೆ">
+<!ENTITY navbarOverflow.label                "ಹೆಚ್ಚಿನ ಉಪಕರಣಗಳು…">
+
+<!-- LOCALIZATION NOTE (duplicateTabs.label): This is a command to duplicate
+a tab (i.e. it is a verb, not adjective). -->
+<!-- LOCALIZATION NOTE (duplicateTab.accesskey, duplicateTabs.accesskey):
+These items have the same accesskey but will never be visible at the same time. -->
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Pin ಹಾಳೆ">
+<!ENTITY  unpinTab.label                     "Tab ಅನ್ನು ಮುಕ್ತಗೊಳಿಸು">
+
+<!ENTITY  listAllTabs.label      "ಎಲ್ಲಾ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಪಟ್ಟಿ ಮಾಡು">
+
+<!ENTITY tabCmd.label "ಹೊಸ ಹಾಳೆ">
+<!ENTITY openFileCmd.label "ಕಡತವನ್ನು ತೆರೆ…">
+<!ENTITY printCmd.label "ಮುದ್ರಿಸು...">
+
+
+<!ENTITY menubarCmd.label "ಮೆನು ಪಟ್ಟಿಕೆ">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY personalbarCmd.label "ಪುಟಗುರುತುಗಳ ಉಪಕರಣ ಪಟ್ಟಿ">
+<!ENTITY personalbarCmd.accesskey "B">
+<!ENTITY bookmarksToolbarItem.label "ಪುಟಗುರುತುಗಳ ಉಪಕರಣ ಪಟ್ಟಿ ಯ ಅಂಶಗಳು">
+
+<!ENTITY fullScreenCmd.label "ಪೂರ್ಣ ಪರದೆ">
+
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "ಈಗ ಪೂರ್ಣ ತೆರೆಯಲ್ಲಿದೆ">
+<!ENTITY fullscreenWarning.generic.label "ಈ ದಸ್ತಾವೇಜು ಈಗ ಪೂರ್ಣ ತೆರೆಯಲ್ಲಿದೆ">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "ಪೂರ್ಣತೆರೆಯಿಂದ ನಿರ್ಗಮಿಸು (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "ಪೂರ್ಣತೆರೆಯಿಂದ ನಿರ್ಗಮಿಸು (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "ಯು ನಿಮ್ಮ ಪಾಯಿಂಟರ್‍‍ನ ನಿಯಂತ್ರಣ ಹೊಂದಿದೆ. ನಿಯಂತ್ರಣ ಹಿಂಪಡೆಯಲು ಎಸ್ಕೇಪ್ ಪ್ರೆಸ್ ಮಾಡಿ.">
+<!ENTITY pointerlockWarning.generic.label "ಈ ದಸ್ತಾವೇಜು ನಿಮ್ಮ ಪಾಯಿಂಟರ್‍‍ನ ನಿಯಂತ್ರಣ ಹೊಂದಿದೆ. ನಿಯಂತ್ರಣ ಹಿಂಪಡೆಯಲು ಎಸ್ಕೇಪ್ ಪ್ರೆಸ್ ಮಾಡಿ.">
+
+<!ENTITY showAllBookmarks2.label "ಎಲ್ಲಾ ಪುಟಗುರುತುಗಳನ್ನು ತೋರಿಸು">
+<!ENTITY recentBookmarks.label "ಇತ್ತೀಚಿಗೆ ಮಾಡಲಾದ ಪುಟಗುರುತುಗಳು">
+<!ENTITY bookmarksToolbarChevron.tooltip "ಇನ್ನಷ್ಟು ಪುಟಗುರುತುಗಳನ್ನು ತೋರಿಸು">
+
+<!ENTITY printButton.label            "ಮುದ್ರಿಸು">
+<!ENTITY printButton.tooltip          "ಈ ಪುಟವನ್ನು ಮುದ್ರಿಸು">
+
+
+<!ENTITY searchItem.title             "ಹುಡುಕು">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "ನೆಲೆ">
+
+<!ENTITY bookmarksButton.label          "ಪುಟಗುರುತುಗಳು">
+
+<!ENTITY bookmarksSubview.label             "ಪುಟಗುರುತುಗಳು">
+<!ENTITY bookmarksMenuButton2.label         "ಪುಟಗುರುತುಗಳ ಪರಿವಿಡಿ">
+<!ENTITY bookmarksMenuButton.other.label    "ಇತರೆ ಪುಟಗುರುತುಗಳು">
+<!ENTITY bookmarksMenuButton.mobile.label   "ಮೊಬೈಲ್ ಬುಕ್‌ಮಾರ್ಕುಗಳು">
+<!ENTITY viewBookmarksSidebar2.label        "ಪುಟಗುರುತುಗಳ ಉಪಕರಣಪಟ್ಟಿಯನ್ನು ನೋಡು">
+<!ENTITY hideBookmarksSidebar.label         "ಪುಟಗುರುತುಗಳ ಬದಿಪಟ್ಟಿಯನ್ನು ಅಡಗಿಸು">
+<!ENTITY viewBookmarksToolbar.label         "ಪುಟಗುರುತುಗಳ ಉಪಕರಣಪಟ್ಟಿಯನ್ನು ನೋಡು">
+<!ENTITY hideBookmarksToolbar.label         "‍ಪುಟಗುರುತುಗಳ ಉಪಕರಣಪಟ್ಟಿಯನ್ನು ಅಡಗಿಸು">
+<!ENTITY searchBookmarks.label              "ಬುಕ್‌ಮಾರ್ಕುಗಳಿಗಾಗಿ ಹುಡುಕು">
+<!ENTITY bookmarkingTools.label             "ಬುಕ್‌ಮಾರ್ಕುಗಳ ಉಪಕರಣಗಳು">
+<!ENTITY addBookmarksMenu.label             "‍ಪುಟಗುರುತುಗಳ ಮೆನುವನ್ನು ಉಪಕರಣಪಟ್ಟಿಗೆ ಸೇರಿಸಿ">
+<!ENTITY removeBookmarksMenu.label          "‍ಪುಟಗುರುತುಗಳ ಮೆನುವನ್ನು ಉಪಕರಣಪಟ್ಟಿಯಿಂದ ತೆಗೆಯಿರಿ">
+
+<!ENTITY historyButton.label            "ಇತಿಹಾಸ">
+
+<!ENTITY downloads.label              "ಡೌನ್‍ಲೋಡ್‍ಗಳು">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "ಡೌನ್‌ಲೋಡ್‌ಗಳು">
+<!ENTITY addons.label                 "ಆಡ್-ಆನ್‍ಗಳು">
+
+<!ENTITY webDeveloperMenu.label       "ಜಾಲ ವಿಕಸನೆಗಾರ">
+
+
+<!ENTITY newNavigatorCmd.label        "ಹೊಸ ಕಿಟಕಿ">
+<!ENTITY newPrivateWindow.label     "ಹೊಸ ಖಾಸಗಿ ಕಿಟಕಿ">
+
+<!ENTITY editMenu.label         "ಸಂಪಾದನೆ">
+<!ENTITY preferencesCmd2.label       "ಆಯ್ಕೆಗಳು">
+<!ENTITY preferencesCmdUnix.label       "ಆದ್ಯತೆಗಳು">
+
+<!ENTITY overflowCustomizeToolbar.label       "ಉಪಕರಣಪಟ್ಟಿಯನ್ನು ನನ್ನಿಚ್ಛೆಗೆ ತಕ್ಕಂತೆ ಹೊಂದಿಸು…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY historyMenu.label "ಇತಿಹಾಸ">
+<!ENTITY historyUndoMenu.label "ಇತ್ತೀಚೆಗೆ ಮುಚ್ಚಲಾದ ಟ್ಯಾಬ್‌ಗಳು">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "ಇತ್ತೀಚಿಗೆ ಮುಚ್ಚಲಾದ ಕಿಟಕಿಗಳು">
+
+<!ENTITY appMenuHistory.showAll.label "ಎಲ್ಲಾ ಇತಿಹಾಸವನ್ನು ತೋರಿಸು">
+<!ENTITY appMenuHistory.clearRecent.label "ಇತ್ತೀಚಿನ ಇತಿಹಾಸವನ್ನು ಅಳಿಸಿಹಾಕು…">
+<!ENTITY appMenuHistory.restoreSession.label "ಹಿಂದಿನ ಅಧಿವೇಶನವನ್ನು ಮರಳಿ ಸ್ಥಾಪಿಸು">
+<!ENTITY appMenuHistory.viewSidebar.label "ಇತಿಹಾಸ ಪಕ್ಕದಂಕಣ ಪ್ರದರ್ಶಿಸಿ">
+<!ENTITY appMenuHistory.recentHistory.label "ಇತ್ತೀಚಿನ ಇತಿಹಾಸ">
+<!ENTITY appMenuHelp.label "ಸಹಾಯ">
+
+<!ENTITY appMenuRemoteTabs.label "ಸಿಂಕ್ ಮಾಡಿದ ಟ್ಯಾಬ್‌ಗಳು">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "ಯಾವುದೆ ತೆರೆದ ಹಾಳೆಗಳಿಲ್ಲ">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "ಇನ್ನಷ್ಟು ತೋರಿಸು">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "ಈ ಸಾಧನದ ಇನ್ನಷ್ಟು ಹಾಳೆಗಳನ್ನು ತೋರಿಸು">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "ಎಲ್ಲವನ್ನೂ ತೋರಿಸು‍">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "ಈ ಸಾಧನದ ಎಲ್ಲಾ ಹಾಳೆಗಳನ್ನು ತೋರಿಸು‍">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "ನಿಮ್ಮ ಇತರೆ ಸಾಧನಗಳಿಂದ ಟ್ಯಾಬ್‌ಗಳ ಪಟ್ಟಿಯನ್ನು ನೋಡಲು ಟ್ಯಾಬ್‌ ಸಿಂಕ್ ಮಾಡುವಿಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "ಇತರೆ ಸಾಧನಗಳಲ್ಲಿನ ನಿಮ್ಮ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಇಲ್ಲಿ ನೋಡಬೇಕೆ?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "ಸಿಂಕ್‌ನ ಆದ್ಯತೆಗಳನ್ನು ತೆರೆಯಿರಿ">
+<!ENTITY appMenuRemoteTabs.unverified.label "ನಿಮ್ಮ ಖಾತೆಯನ್ನು ಪರಿಶೀಲಿಸಬೇಕಾಗಿದೆ.">
+<!ENTITY appMenuRemoteTabs.managedevices.label "ಸಾಧನಗಳನ್ನು ನಿರ್ವಹಿಸು…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "ಸಿಂಕ್ ಮಾಡಿದ ಟ್ಯಾಬ್‌ಗಳ ಬದಿಪಟ್ಟಿಯನ್ನು ನೋಡಿ">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "ಮತ್ತೊಂದು ಸಾಧನಕ್ಕೆ ಸಂಪರ್ಕವನ್ನು ಸಾಧಿಸು">
+
+<!ENTITY appMenuRecentHighlights.label "ಇತ್ತೀಚಿನ ಮುಖ್ಯಾಂಶಗಳು">
+
+<!ENTITY customizeMenu.addToToolbar.label "Add ಉಪಕರಣಪಟ್ಟಿಗೆ">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "ಒವರ್‌ಫ್ಲೋ ಮೆನುವಿಗೆ ಸೇರಿಸಿ">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "ಒವರ್‌ಫ್ಲೋ ಮೆನುವಿನಿಂದ ಅನ್‌ಪಿನ್ ಮಾಡಿ">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "Remove ಉಪಕರಣ ಪಟ್ಟಿಯಿಂದ">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "‌‌‌Add ಹೆಚ್ಚಿನ ಅಂಶಗಳು">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "ಮತ್ತಷ್ಟು">
+
+<!ENTITY contentSearchSubmit.tooltip  "ಹುಡುಕನ್ನು ಒಪ್ಪಿಸು">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "ಹುಡುಕು">
+<!ENTITY searchIcon.tooltip           "ಹುಡುಕು">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "ಕೊಂಡಿ ನಕಲಿಸು‍">
+
+<!ENTITY emailPageCmd.label           "ಕೊಂಡಿಯನ್ನು ಇಮೈಲ್ ಮಾಡು…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "ಗಾತ್ರ ಬದಲಿಸು">
+
+<!ENTITY sidebarCloseButton.tooltip     "ಬದಿಪಟ್ಟಿಯನ್ನು ಮುಚ್ಚು">
+
+<!ENTITY quitApplicationCmdWin2.label       "ಹೊರನಡೆ">
+<!ENTITY quitApplicationCmdWin2.accesskey   "x">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName; ನಿರ್ಗಮಿಸು">
+<!ENTITY quitApplicationCmd.label       "ತ್ಯಜಿಸು">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "ತ್ಯಜಿಸು &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "ಪುಟಿಕೆಯನ್ನು ನಿರ್ಬಂಧಿಸುವ (ಪಾಪ್ಅಪ್ ಬ್ಲಾಕರ್) ಆದ್ಯತೆಗಳನ್ನು ಸಂಪಾದಿಸು...">
+<!ENTITY editPopupSettings.label "ಪುಟಿಕೆಯನ್ನು ನಿರ್ಬಂಧಿಸುವ (ಪಾಪ್ಅಪ್ ಬ್ಲಾಕರ್)ಆಯ್ಕೆಗಳನ್ನು ಸಂಪಾದಿಸು...">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "ಈ ಪುಟದಲ್ಲಿ ಹುಡುಕು...">
+
+<!ENTITY spellAddDictionaries.label "ಶಬ್ಧಕೋಶವನ್ನು ಸೇರಿಸು...">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "ಜಾಲವೀಕ್ಷಣಾ ಟ್ಯಾಬ್‌ಗಳು">
+
+
+<!ENTITY syncBrand.shortName.label    "ಸಿಂಕ್‌">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "ಸ್ವಯಂ-ಮರೆಮಾಡು">
+
+
+<!-- LOCALIZATION NOTE (contentBlocking.fastBlock.blocked.label):
+     This label signals that this type of content blocking is turned
+     ON and is successfully blocking malicious/slow content, so this is
+     a positive thing. It forms the end of the (imaginary) sentence
+     "Slow-Loading Trackers [are] Blocked"-->
+<!-- LOCALIZATION NOTE (contentBlocking.fastBlock.blocking.label):
+     This label signals that this type of content blocking is turned
+     ON, so this is a positive thing. It forms the verb in (imaginary) sentence
+     "Firefox is blocking Slow-Loading Trackers"-->
+<!-- LOCALIZATION NOTE (contentBlocking.fastBlock.add.label):
+     This is displayed as a link to preferences, where the user can add
+     this specific type of content blocking. When this text is shown
+     the type of content blocking is currently not enabled. -->
+
+
+<!-- LOCALIZATION NOTE (contentBlocking.trackingProtection.blocked.label):
+     This label signals that this type of content blocking is turned
+     ON and is successfully blocking tracker content, so this is
+     a positive thing. It forms the end of the (imaginary) sentence
+     "Trackers [are] Blocked"-->
+<!-- LOCALIZATION NOTE (contentBlocking.tranckingProtection.blocking.label):
+     This label signals that this type of content blocking is turned
+     ON, so this is a positive thing. It forms the verb in the (imaginary) sentence
+     "Firefox is blocking Trackers"-->
+<!-- LOCALIZATION NOTE (contentBlocking.trackingProtection.add.label):
+     This is displayed as a link to preferences, where the user can add
+     this specific type of content blocking. When this text is shown
+     the type of content blocking is currently not enabled. -->
+
+<!-- LOCALIZATION NOTE (contentBlocking.3rdPartyCookies.blocked.label):
+     This label signals that this type of content blocking is turned
+     ON and is successfully blocking third-party cookies, so this is
+     a positive thing. It forms the end of the (imaginary) sentence
+     "Third-Party Cookies [are] Blocked"-->
+<!-- LOCALIZATION NOTE (contentBlocking.tranckingProtection.blocking.label):
+     This label signals that this type of content blocking is turned
+     ON, so this is a positive thing. It forms the verb in the (imaginary) sentence
+     "Firefox is blocking Third-Party Cookies"-->
+<!-- LOCALIZATION NOTE (contentBlocking.3rdPartyCookies.add.label):
+     This is displayed as a link to preferences, where the user can add
+     this specific type of content blocking. When this text is shown
+     the type of content blocking is currently not enabled. -->
+
+
+
+
+
+<!-- LOCALIZATION NOTE (trackingProtection.unblock3.label, trackingProtection.unblock3.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate3.label, trackingProtection.unblockPrivate3.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+
+<!-- LOCALIZATION NOTE (trackingProtection.unblock5.label, trackingProtection.unblock5.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate6.label, trackingProtection.unblockPrivate6.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+
+
+<!ENTITY uiTour.infoPanel.close "ಮುಚ್ಚು">
+
+<!ENTITY panicButton.thankyou.msg1                "ನಿಮ್ಮ ಇತ್ತೀಚಿನ ಜಾಲ ಇತಿಹಾಸವನ್ನು ಅಳಿಸಲಾಗಿದೆ.">
+<!ENTITY panicButton.thankyou.msg2                "ಸುರಕ್ಷಿತ ಜಾಲವೀಕ್ಷಣೆ!">
+<!ENTITY panicButton.thankyou.buttonlabel         "ಧನ್ಯವಾದಗಳು!">
+
+<!ENTITY updateAvailable.panelUI.label "&brandShorterName; ಅನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ ನವೀಕರಿಸಿ">
+
+<!ENTITY updateManual.panelUI.label "ಹೊಸ &brandShorterName; ಅನ್ನು ಡೌನ್ಲೋಡ್‍ಮಾಡಿ">
+
+<!ENTITY updateRestart.panelUI.label2 "&brandShorterName; ಅನ್ನು ಅಪ್‌ಡೇಟ್ ಮಾಡಲು ಪುನಃ ಪ್ರಾರಂಭಿಸಿ">
+
+
+<!ENTITY sendToDevice.syncNotReady.label "ಸಾಧನಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಲಾಗುತ್ತಿದೆ…">
+
+<!ENTITY pageAction.shareUrl.label "ಹಂಚು">
+<!ENTITY pageAction.shareMore.label "ಇನ್ನಷ್ಟು…">
+
+<!ENTITY libraryButton.tooltip "ಇತಿಹಾಸ, ಉಳಿಸಿದ ಬುಕ್‍ಮಾರ್ಕ್‌ಗಳು ಮತ್ತು ಹೆಚ್ಚಿದುದನ್ನು ನೋಡಿ">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+
+<!-- LOCALIZATION NOTE: (addonPostInstallMessage.label):
+     The first <image> tag is replaced with the icon for the add-ons menu.
+     The second <image> tag is replaced with the icon for the toolbar menu. -->
+

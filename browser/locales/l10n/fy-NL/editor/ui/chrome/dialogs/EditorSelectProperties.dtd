@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Seleksjelisteigenskippen">
+
+<!ENTITY Select.label "Seleksjelist">
+<!ENTITY SelectName.label "Listnamme:">
+<!ENTITY SelectName.accesskey "n">
+<!ENTITY SelectSize.label "Hichte:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "Mearfâldige seleksje">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "Utskeakele">
+<!ENTITY SelectDisabled.accesskey "U">
+<!ENTITY SelectTabIndex.label "Ljepblêdyndeks:">
+<!ENTITY SelectTabIndex.accesskey "Y">
+
+<!ENTITY OptGroup.label "Opsjegroep">
+<!ENTITY OptGroupLabel.label "Label:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "Utskeakele">
+<!ENTITY OptGroupDisabled.accesskey "U">
+
+<!ENTITY Option.label "Opsje">
+<!ENTITY OptionText.label "Tekst:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Wearde:">
+<!ENTITY OptionValue.accesskey "W">
+<!ENTITY OptionSelected.label "Inisjeel selektearre">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "Utskeakele">
+<!ENTITY OptionDisabled.accesskey "U">
+
+<!ENTITY TextHeader.label "Tekst">
+<!ENTITY ValueHeader.label "Wearde">
+<!ENTITY SelectedHeader.label "Selektearre">
+
+<!ENTITY AddOption.label "Opsje tafoegje">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "Groep tafoegje">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "Fuortsmite">
+<!ENTITY RemoveElement.accesskey "F">
+<!ENTITY MoveElementUp.label "Omheech ferpleatse">
+<!ENTITY MoveElementUp.accesskey "h">
+<!ENTITY MoveElementDown.label "Omleech ferpleatse">
+<!ENTITY MoveElementDown.accesskey "l">

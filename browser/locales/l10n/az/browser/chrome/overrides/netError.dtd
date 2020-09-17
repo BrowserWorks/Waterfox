@@ -1,0 +1,129 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Səhifə yüklənmə xətası">
+<!ENTITY retry.label "Təkrar Yoxla">
+<!ENTITY returnToPreviousPage.label "Geri Get">
+<!ENTITY returnToPreviousPage1.label "Geri get (Məsləhətlidir)">
+<!ENTITY advanced2.label "Təkmilləşmiş…">
+<!ENTITY viewCertificate.label "Sertifikatı Gör">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Server tapılmadı">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Əgər ünvan düzgündürsə, bu üç fərqli şeyləri yoxlaya bilərsiz:</strong>
+<ul>
+  <li>Daha sonra təkrar yoxlayın.</li>
+  <li>İnternet bağlantınızı yoxlayın.</li>
+  <li>Əgər qoşulusunuz və firewall arxasındasınızsa, &brandShortName; səyyahının internetə qoşulma icazəsi olduğundan əmin olun.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Faylın adını böyük hərf və ya digər yazı xətaları üçün yoxlayın.</li> <li>Faylın köçürülmüş, adı dəyişdirilmiş və ya silinmiş olmasını yoxlayın.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Fayl ya silindiyi, ya yeri dəyişdirildiyi, ya da icazələri dəyişdirildiyi üçün əlaqə mümkün deyil.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>&brandShortName; bəzi səbəblərə görə bu səhifəni yükləyə bilmir.</p>">
+
+<!ENTITY captivePortal.title "Şəbəkəyə daxil ol">
+<!ENTITY captivePortal.longDesc2 "
+<p>İnternetə çıxmaq üçün bu şəbəkəyə daxil olmalısınız.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Şəbəkə Giriş Səhifəsini Aç">
+
+<!ENTITY malformedURI.pageTitle "Səhv URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>İstədiyiniz sənəd &brandShortName; keşində mövcud deyil.</p><ul><li>Təhlükəsizlik tədbiri olaraq, &brandShortName; həssas sənədləri avtomatik olaraq yenidən istəmir.</li><li>Sənədi vebsaytdan yenidən istəmək üçün, Təkrar Yoxla düyməsinə klikləyin.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Onlayn rejimə keçmək və səhifəni yeniləmək üçün &quot;Təkrar Yoxla&quot; düyməsinə basın.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Zəhmət olmasa, Sayt sahibləri ilə əlaqə yaradıb bu problemi onlara bildirin.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Zəhmət olmasa, Sayt sahibləri ilə əlaqə yaradıb bu problemi onlara bildirin.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Bu ünvanı açmaq üçün başqa proqram quraşdırmalısınız.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Proxy tənzimləmələrinin düzgün qurulmuş olmasını yoxlayın.</li> <li>Şəbəkə administratoru ilə əlaqə saxlayıb proxy serverinizin işlək olmasından əmin olun.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Proxy-server seçimlərinin düzgün olduğuna əmin olun.</li> <li>Kompüterinizin aktiv şəbəkə bağlantısı olduğuna əmin olun.</li> <li>Kompüteriniz təhlükəsizlik divarı və ya proksi ilə qorunursa, &brandShortName; üçün icazələrin verildiyinə əmin olun</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Bu problem, əsasən, çərəzləri söndürdükdə və ya qəbul etmədikdə baş verir.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Sizin sistemə Şəxsi Təhlükəsizlik Meneceri quraşdırıldığına əmin olun.</li> <li>Buna serverin standart olmayan konfiqurasiyası səbəb ola bilər.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Açmaq istədiyiniz səhifə göstərilə bilmir, çünki alınan məlumatların doğruluğu təsdiqlənəmədi.</li> <li>Zəhmət olmasa sayt sahibləri ilə əlaqə saxlayın və bu xətadan xəbərdar edin.</li> </ul>">
+
+<!ENTITY certerror.introPara2 "&brandShortName; <span class='hostname'/> saytında potensial təhlükə tapdı və davam etmədi. Əgər bu saytı ziyarət etsəniz hücumçular parol, e-poçt, kredit kartı kimi məlumatlarınızı oğurlaya bilərlər.">
+<!ENTITY certerror.sts.introPara "&brandShortName; potensial güvənlik təhlükəsi aşkarladı və <span class='hostname'/> saytına davam etmədi çünki, bu sayt təhlükəsiz əlaqə tələb edir.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; xəta aşkarladı və <span class='hostname'/> saytına davam etmədi. Ya bu sayt səhv konfiqurasiya edilib və ya kompüterinizin saatı səhvdir.">
+<!ENTITY certerror.expiredCert.secondPara2 "Görünür saytın sertifikatının vaxtı çıxıb, buna görə də &brandShortName; ona təhlükəsiz qoşula bilmir. Əgər bu saytı ziyarət etsəniz, hücum edənlər parol, e-poçt və kredit-kartı kimi məlumatlarınızı oğurlaya bilərlər.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Görünür saytın sertifikatının vaxtı çıxıb, buna görə də &brandShortName; ona təhlükəsiz qoşula bilmir.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Bununla bağlı nə edə bilərsiz?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Böyük ehtimalla bu saytın xətasıdır və bununla bağlı heç nə edə bilməzsiz.</p>
+<p>Əgər korporativ şəbəkədəsinizsə və ya antivirus proqramı işlədirsinizsə kömək üçün dəstək komandası ilə əlaqə qura bilərsiz. Həmçinin, problemlə bağlı saytın administratoruna xəbər verə bilərsiz.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Kompüterinizin saatı <span id='wrongSystemTime_systemDate2'/> olaraq qurulub. Sistem tənzimləmələrində kompüterinizin tarixinin, vaxtının və saat zolağının düz qurulduğuna əmin olun, daha sonra <span class='hostname'/> ünvanını yeniləyin.</p>
+<p>Əgər saatınız artıq düzgündürsə, ola bilsin sayt özü səhv quraşdırılıb və problemi həll edə bilməzsiz. Saytın administrasiyasına xəta ilə əlaqədər xəbər verə bilərsiz.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Böyük ehtimalla bu saytın xətasıdır və bununla bağlı heç nə edə bilməzsiz. Problemlə bağlı saytın administratoruna xəbər verə bilərsiz.</p>
+">
+
+<!ENTITY sharedLongDesc "<ul> <li>Sayt müvəqqəti olaraq qapalı ya da çox məşğul ola bilər. Bir az gözləyib təzədən yoxlayın.</li> <li>Heç bir səhifə açılmırsa, kompüterinizin internet bağlantısını yoxlayın.</li> <li>Əgər kompüteriniz ya da şəbəkəniz Firewall və ya proxy ilə qorunursa, &brandShortName; proqramının internetə bağlanma icazəsinin olduğuna əmin olun.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; bu səhifənin bu üsulla yüklənməsinin qarşısını aldı, çünki, səhifədə olan fayllardan birinin təhlükəsizlik siyasəti bunu qadağan edir.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Baxmaq istədiyiniz səhifə açıla bilmir, çünki fayl ötürülməsi zamanı bir xəta baş verdi.</p><ul><li>Lütfən sayt sahibləri ilə əlaqə yaradıb bu problemi onlara bildirin.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButton1Label "Riski qəbul et və davam et">
+
+<!ENTITY errorReporting.automatic2 "Bu kimi xətaları Mozillaya xəbər edərək təhlükəli saytları təyin edib bloklamaya kömək edə bilərsiz.">
+<!ENTITY errorReporting.learnMore "Ətraflı öyrən…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Lütfən sayt sahibləri ilə əlaqə yaradıb bu problemi onlara bildirin.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Təkmilləşmiş məlumat: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Diqqət: Qabaqda potensial təhlükə riski var">
+<!ENTITY certerror.sts.pagetitle  "Qoşulmadı: Potensial Güvənlik Təhlükəsi">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> saytının HTTP Strict Transport Security (HSTS) adlı təhlükəsizlik siyasəti var, bu deməkdir ki, &brandShortName; bununla ancaq təhlükəsiz əlaqə qura bilər. Bu sayta istisna verə bilməzsiz.">
+<!ENTITY certerror.copyToClipboard.label "Mətni buferə köçür">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> vaxtı keçmiş və hücumlara açıq bir texnologiyadan istifadə edir. Hücumçular etibarlı olduğunu düşündüyünüz məlumatlarınızı əldə edə bilərlər. Saytın idarəçisi problemi həll etdikdən sonra təkrar daxil ola bilərsiz.</p><p>Xəta kodu: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Əngəllənmiş Səhifə">
+
+<!ENTITY clockSkewError.longDesc "Kompüteriniz saatı <span id='wrongSystemTime_systemDate1'/> kimi fikirləşir, bu da &brandShortName; səyyahının təhlükəsiz əlaqə qurmağına mane olur. <span class='hostname'></span> saytını ziyarət etmək üçün sistem tənzimləmələrindən kompüterinizin saatını hazırki tarix, vaxt və saat zolağı ilə yeniləyin və <span class='hostname'></span> saytını təzədən yükləməyi yoxlayın.">
+
+<!ENTITY prefReset.longDesc "Şəbəkə təhlükəsizliyi tənzimləmələri buna səbəb ola bilər. Standart tənzimləməri geri yükləmək istəyirsinizmi?">
+<!ENTITY prefReset.label "Ön tənzimləmələri bərpa et">
+
+<!ENTITY networkProtocolError.longDesc "<p>Görmək istədiyiniz sayt göstərilə bilmir, çünki, şəbəkə protokolunda xəta aşkarlandı.</p><ul><li>Lütfən sayt administrasiyası ilə əlaqə saxlayaraq xətadan xəbərdar edin.</li></ul>">

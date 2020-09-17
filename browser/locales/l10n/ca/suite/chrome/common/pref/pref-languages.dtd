@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+
+<!ENTITY languages.customize.prefLangDescript           "De vegades, les pàgines web estan disponibles en diverses llengües. Trieu, per ordre de preferència, les llengües que voleu visualitzar les pàgines web.">
+<!ENTITY languages.customize.title                      "Llengües">
+<!ENTITY langtitle.label                                "Llengües per a les pàgines web">
+<!ENTITY languages.customize.prefAddLangDescript        "Seleccioneu les llengües que voleu afegir.">
+<!ENTITY languages.customize.addButton.label            "Afegeix...">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+<!ENTITY languages.customize.deleteButton.label         "Suprimeix">
+<!ENTITY languages.customize.deleteButton.accesskey     "m">
+<!ENTITY languages.customize.add.title.label            "Afegeix llengües">
+<!ENTITY languages.customize.available.label            "Llengües:">
+<!ENTITY languages.customize.active.label               "Llengües en ordre de preferència:">
+<!ENTITY languages.customize.active.accesskey           "L">
+<!ENTITY languages.customize.others.label               "Altres:">
+<!ENTITY languages.customize.others.accesskey           "A">
+<!ENTITY languages.customize.Fallback.grouplabel        "Codificació de caràcters per al contingut antic">
+<!ENTITY languages.customize.Fallback.label             "Codificació de caràcters alternativa:">
+<!ENTITY languages.customize.Fallback.accesskey         "C">
+<!ENTITY languages.customize.Fallback.desc              "S'utilitza per al contingut antic que no declara la seva codificació.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "p. ex.: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "Amunt">
+<!ENTITY languages.customize.moveUp.accesskey           "u">
+<!ENTITY languages.customize.moveDown.label             "Avall">
+<!ENTITY languages.customize.moveDown.accesskey         "v">

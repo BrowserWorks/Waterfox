@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Serĉi">
+
+<!ENTITY newPref.namePlaceholder       "Nomo">
+
+<!ENTITY newPref.valueBoolean          "Logika">
+<!ENTITY newPref.valueString           "Teksto">
+<!ENTITY newPref.valueInteger          "Numero">
+
+<!ENTITY newPref.stringPlaceholder     "Tajpu tekston">
+<!ENTITY newPref.numberPlaceholder     "Tajpu numeron">
+
+<!ENTITY newPref.toggleButton          "Baskuli">
+<!ENTITY newPref.cancelButton          "Nuligi">
+
+<!ENTITY contextMenu.copyPrefName      "Kopii nomon">
+<!ENTITY contextMenu.copyPrefValue     "Kopii valoron">

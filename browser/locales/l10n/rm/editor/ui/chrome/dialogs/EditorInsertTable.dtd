@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Inserir tabella">
+
+<!ENTITY size.label "Grondezza">
+<!ENTITY numRowsEditField.label "Lingias:">
+<!ENTITY numRowsEditField.accessKey "L">
+<!ENTITY numColumnsEditField.label "Colonnas:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "Largezza:">
+<!ENTITY widthEditField.accessKey "g">
+<!ENTITY borderEditField.label "Bordura:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "Endatescha in dumber per la bordura da la tabella u endatescha nulla (0) per nagina bordura">
+<!ENTITY pixels.label "pixels">

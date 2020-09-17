@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Priodweddau Maes Ffurflen">
+<!ENTITY windowTitleImage.label "Priodweddau Delwedd Ffurflen">
+
+<!ENTITY InputType.label "Math o Faes">
+<!ENTITY InputType.accesskey "M">
+<!ENTITY text.value "Testun">
+<!ENTITY password.value "Cyfrinair">
+<!ENTITY checkbox.value "Blwch Ticio">
+<!ENTITY radio.value "Botwm Radio">
+<!ENTITY submit.value "Botwm Cyflwyno">
+<!ENTITY reset.value "Botwm Ailgychwyn">
+<!ENTITY file.value "Ffeil">
+<!ENTITY hidden.value "Cuddiedig">
+<!ENTITY image.value "Delwedd">
+<!ENTITY button.value "Botwm">
+
+<!ENTITY InputSettings.label "Gosodiadau Maes">
+<!ENTITY InputName.label "Enw Maes:">
+<!ENTITY InputName.accesskey "E">
+<!ENTITY GroupName.label "Enw Grŵp:">
+<!ENTITY GroupName.accesskey "G">
+<!ENTITY InputValue.label "Gwerth Maes:">
+<!ENTITY InputValue.accesskey "w">
+<!ENTITY InitialValue.label "Gwerth Cychwynnol:">
+<!ENTITY InitialValue.accesskey "C">
+<!ENTITY InputChecked.label "Gwiriad Cyntaf">
+<!ENTITY InputChecked.accesskey "i">
+<!ENTITY InputSelected.label "Dewis Cyntaf">
+<!ENTITY InputSelected.accesskey "D">
+<!ENTITY InputReadOnly.label "Darllen yn unig">
+<!ENTITY InputReadOnly.accesskey "u">
+<!ENTITY InputDisabled.label "Anablwyd">
+<!ENTITY InputDisabled.accesskey "A">
+<!ENTITY tabIndex.label "Mynegai Tab:">
+<!ENTITY tabIndex.accesskey "M">
+<!ENTITY TextSize.label "Maint Maes:">
+<!ENTITY TextSize.accesskey "M">
+<!ENTITY TextLength.label "Hyd Mwyaf:">
+<!ENTITY TextLength.accesskey "H">
+<!ENTITY AccessKey.label "Allwedd Mynediad:">
+<!ENTITY AccessKey.accesskey "A">
+<!ENTITY Accept.label "Mathau Derbyn:">
+<!ENTITY Accept.accesskey "D">
+
+<!ENTITY ImageProperties.label "Priodweddau Delweddau…">
+<!ENTITY ImageProperties.accesskey "P">

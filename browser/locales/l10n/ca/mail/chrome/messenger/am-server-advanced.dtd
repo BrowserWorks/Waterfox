@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Paràmetres avançats del compte">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Directori del servidor IMAP:">
+<!ENTITY serverDirectory.accesskey "D">
+<!ENTITY usingSubscription.label "Mostra només les carpetes subscrites">
+<!ENTITY usingSubscription.accesskey "o">
+<!ENTITY dualUseFolders.label "El servidor permet l'ús de carpetes que contenen subcarpetes i missatges">
+<!ENTITY dualUseFolders.accesskey "v">
+<!ENTITY maximumConnectionsNumber.label "Nombre màxim de connexions del servidor en memòria cau">
+<!ENTITY maximumConnectionsNumber.accesskey "m">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Aquestes preferències indiquen els espais de noms del servidor IMAP">
+<!ENTITY personalNamespace.label "Espai de noms personal:">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Públic (compartit):">
+<!ENTITY publicNamespace.accesskey "b">
+<!ENTITY otherUsersNamespace.label "Altres usuaris:">
+<!ENTITY otherUsersNamespace.accesskey "u">
+<!ENTITY overrideNamespaces.label "Permet que el servidor substitueixi aquests espais de noms">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3DeferringDesc.label "En baixar el correu del servidor d'aquest compte, utilitza la carpeta següent per emmagatzemar els missatges nous:" >
+<!ENTITY accountInbox.label "Safata d'entrada d'aquest compte">
+<!ENTITY accountInbox.accesskey "S">
+<!ENTITY deferToServer.label "Safata d'entrada d'un altre compte">
+<!ENTITY deferToServer.accesskey "f">
+<!ENTITY deferGetNewMail.label "Inclou aquest servidor en comprovar si hi ha correu nou">
+<!ENTITY deferGetNewMail.accesskey "I">

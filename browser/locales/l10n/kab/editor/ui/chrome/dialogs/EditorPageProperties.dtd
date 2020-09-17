@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Timeẓliyin n usebter">
+<!ENTITY location.label "Tansa:">
+<!ENTITY lastModified.label "Asnifel aneggaru:">
+<!ENTITY titleInput.label "Azwel">
+<!ENTITY titleInput.accessKey "z">
+<!ENTITY authorInput.label "Ameskar:">
+<!ENTITY authorInput.accessKey "m">
+<!ENTITY descriptionInput.label "Aglam:">
+<!ENTITY descriptionInput.accessKey "l">
+<!ENTITY locationNewPage.label "[Asebter amaynut, ur yettwakles ara yakan]">
+<!ENTITY EditHEADSource1.label "Iseqdacen leqqayen:">
+<!ENTITY EditHEADSource2.label "I weẓreg n ugbur nniḍen n temnaṭ &lt;head&gt;  seqdec &quot;Aɣbalu HTML&quot; di Tmeẓṛi Umuɣ neɣ afeggag n ifecka n uskar n teẓrigt.">

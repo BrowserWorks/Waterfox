@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Importálás">
+<!ENTITY importAll.label          "Teljes importálás">
+<!ENTITY importAll.accesskey      "T">
+<!ENTITY importMail.label         "Levelezés">
+<!ENTITY importMail.accesskey     "L">
+<!ENTITY importFeeds.label        "Hírforrások">
+<!ENTITY importFeeds.accesskey    "H">
+<!ENTITY importAddressbook.label  "Címjegyzékek">
+<!ENTITY importAddressbook.accesskey "C">
+<!ENTITY importSettings.label     "Beállítások">
+<!ENTITY importSettings.accesskey "B">
+<!ENTITY importFilters.label      "Szűrők">
+<!ENTITY importFilters.accesskey  "S">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; e-mail importáló varázsló">
+<!ENTITY importShortDesc.label    "Levelek, címjegyzékek, beállítások és levélszűrők importálása más levelezőprogramokból.">
+
+<!ENTITY importDescription1.label "Ez a varázsló leveleket, címjegyzékeket, beállításokat és levélszűrőket importál be más levelezőprogramokból vagy elterjedt címjegyzék formátumokból a &brandShortName; programba.">
+<!ENTITY importDescription2.label "Az importálás után ezek az adatok hozzáférhetők lesznek a  &brandShortName; levelezőben, illetve a címjegyzékben.">
+
+<!ENTITY selectDescription.label  "Válassza ki azt a programot, amelyből importálni szeretne:">
+<!ENTITY selectDescriptionB.label "Válasszon ki egy létező fiókot, vagy hozzon létre egy újat:">
+<!ENTITY selectDescription.accesskey "p">
+<!ENTITY acctName.label           "Név:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Nem található alkalmazás vagy fájl az adatok importálásához.">
+
+<!ENTITY back.label               "&lt; Vissza">
+<!ENTITY forward.label            "Tovább &gt;">
+<!ENTITY finish.label             "Befejezés">
+<!ENTITY cancel.label             "Mégse">
+
+<!ENTITY select.label             "Válassza ki az importálandó adat típusát:">
+
+<!ENTITY title.label              "Cím">
+<!ENTITY processing.label         "Importálás…">

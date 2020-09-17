@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "הסרת ספק">
+<!ENTITY providerUninstall.accept.label                    "ביטול המינוי הנבחר">
+<!ENTITY providerUninstall.accept.accesskey                "ב">
+<!ENTITY providerUninstall.cancel.label                    "השארת התוספת">
+<!ENTITY providerUninstall.cancel.accesskey                "ה">
+<!ENTITY providerUninstall.preName.label                   "ביקשת להסיר או לנטרל:">
+<!ENTITY providerUninstall.postName.label                  "פעולה זו תרגום לנטרול היומנים שלהלן.">
+<!ENTITY providerUninstall.reinstallNote.label             "אלא אם כן אתה מתכנן להתקין ספק זה מחדש, תוכל לבחור בביטול המינוי מהיומנים של ספק זה.">
+

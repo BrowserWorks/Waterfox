@@ -1,0 +1,348 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Nová správa: (žiadny predmet)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Súbor">
+<!ENTITY fileMenu.accesskey "S">
+<!ENTITY newMenu.label "Nová">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "Správa">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "S">
+<!ENTITY newContact.label "Kontakt adresára…">
+<!ENTITY newContact.accesskey "K">
+<!ENTITY attachMenu.label "Priložiť">
+<!ENTITY attachMenu.accesskey "P">
+<!ENTITY attachFileCmd.label "Súbor…">
+<!ENTITY attachFileCmd.accesskey "S">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Odkaz na súbor">
+<!ENTITY attachCloudCmd.accesskey "O">
+<!ENTITY attachPageCmd.label "Webovú stránku…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Vizitku (vCard)">
+<!ENTITY attachVCardCmd.accesskey "V">
+<!ENTITY remindLater.label "Pripomenúť neskôr">
+<!ENTITY remindLater.accesskey "m">
+<!ENTITY closeCmd.label "Zavrieť okno">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "Z">
+<!ENTITY saveCmd.label "Uložiť">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "U">
+<!ENTITY saveAsCmd.label "Uložiť ako">
+<!ENTITY saveAsCmd.accesskey "k">
+<!ENTITY saveAsFileCmd.label "Súbor…">
+<!ENTITY saveAsFileCmd.accesskey "S">
+<!ENTITY saveAsDraftCmd.label "Koncept">
+<!ENTITY saveAsDraftCmd.accesskey "N">
+<!ENTITY saveAsTemplateCmd.label "Šablónu">
+<!ENTITY saveAsTemplateCmd.accesskey "b">
+<!ENTITY sendNowCmd.label "Odoslať">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "O">
+<!ENTITY sendLaterCmd.label "Odoslať neskôr">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "d">
+<!ENTITY printSetupCmd.label "Nastavenie tlače…">
+<!ENTITY printSetupCmd.accesskey "a">
+<!ENTITY printPreviewCmd.label "Ukážka pred tlačou">
+<!ENTITY printPreviewCmd.accesskey "e">
+<!ENTITY printCmd.label "Tlačiť…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "T">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Upraviť">
+<!ENTITY editMenu.accesskey "U">
+<!ENTITY undoCmd.label "Späť">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "S">
+<!ENTITY redoCmd.label "Znovu">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "Z">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "m">
+<!ENTITY deleteCmd.label "Odstrániť">
+<!ENTITY deleteCmd.accesskey "O">
+<!ENTITY editRewrapCmd.label "Zalomiť znovu">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Premenovať prílohu…">
+<!ENTITY renameAttachmentCmd.accesskey "e">
+<!ENTITY reorderAttachmentsCmd.label "Zmeniť usporiadanie príloh…">
+<!ENTITY reorderAttachmentsCmd.accesskey "s">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Panel príloh">
+<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
+     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
+     as attachments.accesskey. -->
+<!ENTITY toggleAttachmentPaneCmd.accesskey "p">
+<!ENTITY selectAllCmd.accesskey "a">
+<!ENTITY findBarCmd.label "Hľadať…">
+<!ENTITY findBarCmd.accesskey "H">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Hľadať a nahradiť…">
+<!ENTITY findReplaceCmd.accesskey "d">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Hľadať ďalej">
+<!ENTITY findAgainCmd.accesskey "d">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Hľadať predchádzajúce">
+<!ENTITY findPrevCmd.accesskey "r">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Zmeniť usporiadanie príloh">
+<!ENTITY moveAttachmentTopPanelBtn.label "Presunúť nahor">
+<!ENTITY moveAttachmentUpPanelBtn.label "Presunúť vyššie">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Presunúť spolu">
+<!ENTITY moveAttachmentDownPanelBtn.label "Presunúť nižšie">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Presunúť nadol">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Usporiadať od A do Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Usporiadať od Z do A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Usporiadať výber od A do Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Usporiadať výber od Z do A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Zobraziť">
+<!ENTITY viewMenu.accesskey "Z">
+<!ENTITY viewToolbarsMenuNew.label "Panely s nástrojmi">
+<!ENTITY viewToolbarsMenuNew.accesskey "P">
+<!ENTITY menubarCmd.label "Hlavná ponuka">
+<!ENTITY menubarCmd.accesskey "H">
+<!ENTITY showCompositionToolbarCmd.label "Panel Písanie správy">
+<!ENTITY showCompositionToolbarCmd.accesskey "a">
+<!ENTITY showFormattingBarCmd.label "Panel Formátovanie">
+<!ENTITY showFormattingBarCmd.accesskey "F">
+<!ENTITY showTaskbarCmd.label "Stavový riadok">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "Prispôsobiť…">
+<!ENTITY customizeToolbar.accesskey "P">
+
+<!ENTITY addressSidebar.label "Bočný panel Kontakty">
+<!ENTITY addressSidebar.accesskey "K">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Formát">
+<!ENTITY formatMenu.accesskey "F">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Možnosti">
+<!ENTITY optionsMenu.accesskey "M">
+<!ENTITY checkSpellingCmd2.label "Kontrola pravopisu…">
+<!ENTITY checkSpellingCmd2.key "P">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "K">
+<!ENTITY enableInlineSpellChecker.label "Automatická kontrola pravopisu">
+<!ENTITY enableInlineSpellChecker.accesskey "A">
+<!ENTITY quoteCmd.label "Citovať správu">
+<!ENTITY quoteCmd.accesskey "C">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Priložiť vizitku (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Potvrdenie o prečítaní">
+<!ENTITY returnReceiptMenu.accesskey "d">
+<!ENTITY dsnMenu.label "Doručiť notifikáciu o stave">
+<!ENTITY dsnMenu.accesskey "o">
+<!ENTITY deliveryFormatMenu.label "Doručiť vo formáte">
+<!ENTITY deliveryFormatMenu.accesskey "f">
+<!ENTITY autoFormatCmd.label "Automaticky">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Len text">
+<!ENTITY plainTextFormatCmd.accesskey "L">
+<!ENTITY htmlFormatCmd.label "Len HTML">
+<!ENTITY htmlFormatCmd.accesskey "H">
+<!ENTITY bothFormatCmd.label "Text a HTML">
+<!ENTITY bothFormatCmd.accesskey "T">
+<!ENTITY priorityMenu.label "Priorita">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY priorityButton.title "Priorita">
+<!ENTITY priorityButton.tooltiptext "Zmeniť prioritu správy">
+<!ENTITY priorityButton.label "Priorita:">
+<!ENTITY lowestPriorityCmd.label "Najnižšia">
+<!ENTITY lowestPriorityCmd.accesskey "a">
+<!ENTITY lowPriorityCmd.label "Nízka">
+<!ENTITY lowPriorityCmd.accesskey "N">
+<!ENTITY normalPriorityCmd.label "Normálna">
+<!ENTITY normalPriorityCmd.accesskey "o">
+<!ENTITY highPriorityCmd.label "Vysoká">
+<!ENTITY highPriorityCmd.accesskey "s">
+<!ENTITY highestPriorityCmd.label "Najvyššia">
+<!ENTITY highestPriorityCmd.accesskey "v">
+<!ENTITY fileCarbonCopyCmd.label "Uložiť kópiu do">
+<!ENTITY fileCarbonCopyCmd.accesskey "U">
+<!ENTITY fileHereMenu.label "Uložiť sem">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Nástroje">
+<!ENTITY tasksMenu.accesskey "N">
+<!ENTITY messengerCmd.label "Pošta a diskusie">
+<!ENTITY messengerCmd.accesskey "P">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Adresár">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Nastavenie účtov">
+<!ENTITY accountManagerCmd2.accesskey "N">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label "Možnosti">
+<!ENTITY preferencesCmd2.accesskey "M">
+<!ENTITY preferencesCmdUnix.label "Možnosti">
+<!ENTITY preferencesCmdUnix.accesskey "M">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Minimalizovať okno">
+<!ENTITY bringAllToFront.label "Všetko preniesť do popredia">
+<!ENTITY zoomWindow.label "Zväčšiť okno">
+<!ENTITY windowMenu.label "Okno">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Odoslať">
+<!ENTITY quoteButton.label "Citovať">
+<!ENTITY addressButton.label "Adresa">
+<!ENTITY attachButton.label "Priložiť">
+<!ENTITY spellingButton.label "Pravopis">
+<!ENTITY saveButton.label "Uložiť">
+<!ENTITY printButton.label "Tlačiť">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Odoslať správu">
+<!ENTITY sendlaterButton.tooltip "Odoslať túto správu neskôr">
+<!ENTITY quoteButton.tooltip "Citovať predchádzajúcu správu">
+<!ENTITY addressButton.tooltip "Vybrať adresáta z Adresára">
+<!ENTITY attachButton.tooltip2 "Pripojiť prílohu">
+<!ENTITY spellingButton.tooltip "Skontrolovať pravopis označeného textu alebo celej stránky">
+<!ENTITY saveButton.tooltip "Uložiť túto správu">
+<!ENTITY cutButton.tooltip              "Vystrihnúť">
+<!ENTITY copyButton.tooltip             "Kopírovať">
+<!ENTITY pasteButton.tooltip            "Prilepiť">
+<!ENTITY printButton.tooltip "Vytlačiť túto správu">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style "width: 8em;">
+<!ENTITY extraRecipients.tooltip "Iné typy polí adries">
+<!ENTITY fromAddr2.label "Od">
+<!ENTITY fromAddr.accesskey "O">
+<!ENTITY toAddr2.label "Komu">
+<!ENTITY ccAddr2.label "Kópia">
+<!ENTITY bccAddr2.label "Skrytá kópia">
+<!ENTITY replyAddr2.label "Odpoveď komu">
+<!ENTITY newsgroupsAddr2.label "Diskusná skupina">
+<!ENTITY followupAddr2.label "Pokračovať na">
+<!ENTITY subject2.label "Predmet">
+<!ENTITY subject.accesskey "d">
+<!ENTITY attachmentBucketCloseButton.tooltip "Skryť panel príloh">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "Vložiť emotikon">
+<!ENTITY smiley1Cmd.label "Úsmev">
+<!ENTITY smiley2Cmd.label "Zamračenie">
+<!ENTITY smiley3Cmd.label "Žmurknutie">
+<!ENTITY smiley4Cmd.label "Vyplazený jazyk">
+<!ENTITY smiley5Cmd.label "Smiech">
+<!ENTITY smiley6Cmd.label "Rozpaky">
+<!ENTITY smiley7Cmd.label "Nerozhodnosť">
+<!ENTITY smiley8Cmd.label "Prekvapenie">
+<!ENTITY smiley9Cmd.label "Bozk">
+<!ENTITY smiley10Cmd.label "Krik">
+<!ENTITY smiley11Cmd.label "Pohoda">
+<!ENTITY smiley12Cmd.label "O peniazoch">
+<!ENTITY smiley13Cmd.label "Umlčanie">
+<!ENTITY smiley14Cmd.label "Nevinnosť">
+<!ENTITY smiley15Cmd.label "Plač">
+<!ENTITY smiley16Cmd.label "Tajné">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Neboli nájdené žiadne návrhy">
+<!ENTITY spellCheckIgnoreWord.label "Ignorovať slovo">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "Pridať do slovníka">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "Späť">
+<!ENTITY undo.accesskey "S">
+<!ENTITY cut.label "Vystrihnúť">
+<!ENTITY cut.accesskey "V">
+<!ENTITY copy.label "Kopírovať">
+<!ENTITY copy.accesskey "K">
+<!ENTITY paste.label "Prilepiť">
+<!ENTITY paste.accesskey "P">
+<!ENTITY pasteQuote.label "Prilepiť ako citát">
+<!ENTITY pasteQuote.accesskey "c">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Otvoriť">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "Odstrániť">
+<!ENTITY delete.accesskey "d">
+<!ENTITY removeAttachment.label "Odstrániť prílohu">
+<!ENTITY removeAttachment.accesskey "d">
+<!ENTITY renameAttachment.label "Premenovať…">
+<!ENTITY renameAttachment.accesskey "P">
+<!ENTITY reorderAttachments.label "Zmeniť usporiadanie príloh…">
+<!ENTITY reorderAttachments.accesskey "s">
+<!ENTITY removeAllAttachments.label "Odstrániť všetky prílohy">
+<!ENTITY removeAllAttachments.accesskey "v">
+<!ENTITY selectAll.label "Vybrať všetko">
+<!ENTITY selectAll.accesskey "a">
+<!ENTITY attachFile.label "Priložiť súbor…">
+<!ENTITY attachFile.accesskey "s">
+<!ENTITY attachCloud.label "Odkaz na súbor…">
+<!ENTITY attachCloud.accesskey "O">
+<!ENTITY convertCloud.label "Skonvertovať na…">
+<!ENTITY convertCloud.accesskey "S">
+<!ENTITY cancelUpload.label "Zrušiť odosielanie">
+<!ENTITY cancelUpload.accesskey "Z">
+<!ENTITY convertRegularAttachment.label "Klasická príloha">
+<!ENTITY convertRegularAttachment.accesskey "K">
+<!ENTITY attachPage.label "Priložiť webovú stránku…">
+<!ENTITY attachPage.accesskey "w">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Zobrazovať panel príloh">
+<!ENTITY initiallyShowAttachmentPane.accesskey "Z">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Pridať slovníky…">
+<!ENTITY spellAddDictionaries.accesskey "P">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Kontakty">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Nastavenie adresy odosielateľa…">
+<!ENTITY customizeFromAddress.accesskey "a">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Telo správy">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Jazyk pre kontrolu pravopisu">
+<!ENTITY encodingStatusPanel.tooltip "Kódovanie textu">

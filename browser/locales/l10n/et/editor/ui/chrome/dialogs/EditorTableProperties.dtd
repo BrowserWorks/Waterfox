@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Tabeli omadused">
+<!ENTITY applyButton.label                "Rakenda">
+<!ENTITY applyButton.accesskey            "R">
+<!ENTITY closeButton.label                "Sulge">
+<!ENTITY tableTab.label                   "Tabel">
+<!ENTITY cellTab.label                    "Lahtrid">
+<!ENTITY tableRows.label                  "Ridu:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Veerge:">
+<!ENTITY tableColumns.accessKey           "e">
+<!ENTITY tableHeight.label                "Kõrgus:">
+<!ENTITY tableHeight.accessKey            "K">
+<!ENTITY tableWidth.label                 "Laius:">
+<!ENTITY tableWidth.accessKey             "L">
+<!ENTITY tableBorderSpacing.label         "Piirjooned ja vahed">
+<!ENTITY tableBorderWidth.label           "Piirjoon:">
+<!ENTITY tableBorderWidth.accessKey       "n">
+<!ENTITY tableSpacing.label               "Vahed:">
+<!ENTITY tableSpacing.accessKey           "V">
+<!ENTITY tablePadding.label               "Täidis:">
+<!ENTITY tablePadding.accessKey           "T">
+<!ENTITY tablePxBetwCells.label           "pikslit lahtrite vahel">
+<!ENTITY tablePxBetwBrdrCellContent.label "pikslit piirjoone ja lahtri sisu vahel">
+<!ENTITY tableAlignment.label             "Tabeli joondus:">
+<!ENTITY tableAlignment.accessKey         "a">
+<!ENTITY tableCaption.label               "Pealkiri:">
+<!ENTITY tableCaption.accessKey           "e">
+<!ENTITY tableCaptionAbove.label          "Tabeli kohal">
+<!ENTITY tableCaptionBelow.label          "Tabeli all">
+<!ENTITY tableCaptionLeft.label           "Tabelist vasakul">
+<!ENTITY tableCaptionRight.label          "Tabelist paremal">
+<!ENTITY tableCaptionNone.label           "Puudub">
+<!ENTITY tableInheritColor.label          "(Lehe värv paistab läbi)">
+
+<!ENTITY cellSelection.label              "Valik">
+<!ENTITY cellSelectCell.label             "Lahter">
+<!ENTITY cellSelectRow.label              "Rida">
+<!ENTITY cellSelectColumn.label           "Veerg">
+<!ENTITY cellSelectNext.label             "Järgmine">
+<!ENTITY cellSelectNext.accessKey         "J">
+<!ENTITY cellSelectPrevious.label         "Eelmine">
+<!ENTITY cellSelectPrevious.accessKey     "E">
+<!ENTITY applyBeforeChange.label          "Tehtud muutused rakendatakse enne valiku muutmist.">
+<!ENTITY cellContentAlignment.label       "Sisu joondamine">
+<!ENTITY cellHorizontal.label             "Horisontaalselt:">
+<!ENTITY cellHorizontal.accessKey         "H">
+<!ENTITY cellVertical.label               "Vertikaalselt:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Lahtri stiil:">
+<!ENTITY cellStyle.accessKey              "s">
+<!ENTITY cellNormal.label                 "Tavaline">
+<!ENTITY cellHeader.label                 "Päis">
+<!ENTITY cellTextWrap.label               "Teksti murdmine:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "mähitakse">
+<!ENTITY cellNoWrap.label                 "ei mähita">
+<!ENTITY cellAlignTop.label               "Üles">
+<!ENTITY cellAlignMiddle.label            "Keskele">
+<!ENTITY cellAlignBottom.label            "Alla">
+<!ENTITY cellAlignJustify.label           "Rööpselt">
+<!ENTITY cellInheritColor.label           "(Tabeli värv paistab läbi)">
+<!ENTITY cellUseCheckboxHelp.label        "Kasuta märkeruute, et määrata, millised omadused valitud lahtritele rakendatakse">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Suurus">
+<!ENTITY pixels.label                     "pikslit">
+<!ENTITY backgroundColor.label            "Taustavärv:">
+<!ENTITY backgroundColor.accessKey        "T">
+<!ENTITY AlignLeft.label                  "Vasakule">
+<!ENTITY AlignCenter.label                "Keskele">
+<!ENTITY AlignRight.label                 "Paremale">

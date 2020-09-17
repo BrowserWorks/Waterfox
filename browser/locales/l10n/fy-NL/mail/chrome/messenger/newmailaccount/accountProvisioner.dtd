@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Wolkom by &brandShortName;">
+<!ENTITY header2.label "Wolle jo in nij e-mailadres?">
+<!ENTITY other.languages "Wy toane allinnich providers mei adressen út jo regio.  Klik hjir om alle providers te toanen.">
+<!ENTITY error.line1 "Sorry, wy kinne gjin foarstelde e-mailadressen fine.">
+<!ENTITY error.line2 "Jo kinne sykje op nicknames of oare termen om e-mails te finen">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Jo kinne ek ien fan de ">
+<!ENTITY error.suggest.middle "fergeze alternative e-mailaccounts">
+<!ENTITY error.suggest.after " probearje.">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Hallo ">
+<!ENTITY success.title.after ", de folgjende e-mailadressen binne foar jo beskikber:">
+<!ENTITY success.tip "(Jo kinne ek sykje op bynammen of oare termen om mear e-mailadressen te finen)">
+<!ENTITY partnership.description "Yn gearwurking mei in oantal providers kin &brandShortName; jo in nij e-mailaccount oanbiede. Folje yn de boppesteande fjilden jo foar- en efternamme of oare wurden dy't jo befalle yn, om te starten.">
+<!ENTITY existing.header "Jo hawwe al in adres dy't jo brûke wolle?">
+<!ENTITY tinyheader.title "Hawwe jo al in adres?">
+<!ENTITY tinyheader.existing "Slach dit oer en gebrûk myn besteande e-mailadres">
+<!ENTITY content.close "Ik tink dat ik letter myn account konfigurearje.">
+<!ENTITY successful.title "Lokwinske!">
+<!ENTITY successful.successMessage "Jo hawwe mei sukses jo account ynsteld.">
+<!ENTITY successful.write "Skriuw in e-mail">
+<!ENTITY successful.write.desc "Lit jo freonen en famylje jo nije adres witte.<br/> Dêrfoar hawwe jo dochs dit nije account?">
+<!ENTITY successful.customize "&brandShortName; oanpasse mei in oantal fantastyske add-ons">
+<!ENTITY successful.customize.desc "Der binne tûzenen add-ons dy't jo brûke kinne om &brandShortName; oan te passen oan al jo winsken.">
+<!ENTITY successful.attach "Persoanlike ûndertekening keppelje oan myn e-mail">
+<!ENTITY successful.attach.desc "Jo kinne automatysk in quote of persoanlike ynformaasje keppelje oan it ein fan elke e-mail dy't jo ferstjoere.">
+<!ENTITY successful.close "Dit finster slute.">
+<!ENTITY input.namePlaceholder "Jo namme of bynamme">
+<!ENTITY input.search "Sykje">
+<!ENTITY search_engine.title "Jo sykmasine oanpasse">
+<!ENTITY search_engine.message "Jo e-mailprovider kin ek websykmooglikheden oanbiede.">
+<!ENTITY search_engine.button "Foltôgje">

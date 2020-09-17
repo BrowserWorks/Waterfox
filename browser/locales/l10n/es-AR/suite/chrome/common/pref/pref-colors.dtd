@@ -1,0 +1,31 @@
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "Colores">
+<!ENTITY color                             "Texto y fondo">
+<!ENTITY textColor.label                   "Texto:">
+<!ENTITY textColor.accesskey               "T">
+<!ENTITY backgroundColor.label             "Fondo:">
+<!ENTITY backgroundColor.accesskey         "F">
+<!ENTITY useSystemColors.label             "Usar colores del sistema">
+<!ENTITY useSystemColors.accesskey         "s">
+
+<!ENTITY underlineLinks.label              "Subrayar enlaces">
+<!ENTITY underlineLinks.accesskey          "u">
+<!ENTITY links                             "Colores de los enlaces">
+<!ENTITY linkColor.label                   "Enlaces no visitados:">
+<!ENTITY linkColor.accesskey               "l">
+<!ENTITY activeLinkColor.label             "Enlaces activos:">
+<!ENTITY activeLinkColor.accesskey         "c">
+<!ENTITY visitedLinkColor.label            "Enlaces visitados:">
+<!ENTITY visitedLinkColor.accesskey        "v">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Enlaces visitados:">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Usar siempre los colores y fondo especificados por la página web">
+<!ENTITY alwaysUseDocumentColors.accesskey "a">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Usar mis colores elegidos, ignorando los colores e imágenes de fondo indicadas">
+<!ENTITY useMyColors.accesskey             "m">
+<!ENTITY automaticColors.label             "Solamente ignorar los colores de la página cuando se use un tema de alto contraste">
+<!ENTITY automaticColors.accesskey         "O">

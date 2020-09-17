@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Menú de pàgines recents">
+<!ENTITY  documentsInMenu.label         "Nombre màxim de pàgines llistades:">
+<!ENTITY  documentsInMenu.accesskey     "N">
+<!ENTITY  savingFiles.title             "En desar fitxers">
+<!ENTITY  preserveExisting.label        "Preserva el format de la font original">
+<!ENTITY  preserveExisting.accesskey    "P">
+<!ENTITY  preserveExisting.tooltip      "Preserva els salts de línia i el format de la pàgina original">
+<!ENTITY  saveAssociatedFiles.label     "Desa les imatges i altres fitxers associats quan es desin les pàgines">
+<!ENTITY  saveAssociatedFiles.accesskey "s">
+<!ENTITY  showPublishDialog.label       "Sempre mostra el diàleg Publica quan es publiquin pàgines">
+<!ENTITY  showPublishDialog.accesskey   "a">
+<!ENTITY  composerEditing.label         "Edició">
+<!ENTITY  maintainStructure.label       "Mantén el format de la taula quan s'insereixen o suprimeixen cel·les">
+<!ENTITY  maintainStructure.tooltip     "Conserva la forma rectangular de la taula afegint automàticament cel·les després d'inserir-ne o suprimir-ne">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "Utilitza els estils CSS en comptes d'elements HTML i d'atributs">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "Retorn en un paràgraf sempre en crea un de nou">
+<!ENTITY  crInPCreatesNewP.accesskey    "R">

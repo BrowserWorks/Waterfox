@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Contraseña maestra">
+<!ENTITY  managepassword.caption                 "Vencimiento de la contraseña maestra">
+<!ENTITY  managepassword.text                    "&brandShortName; le pedirá su contraseña maestra:">
+<!ENTITY  managepassword.askfirsttime            "La primera vez que se necesite">
+<!ENTITY  managepassword.askfirsttime.accesskey  "t">
+<!ENTITY  managepassword.askeverytime            "Cada vez que se necesite">
+<!ENTITY  managepassword.askeverytime.accesskey  "e">
+<!ENTITY  managepassword.asktimeout              "Si no ha sido usada por ">
+<!ENTITY  managepassword.asktimeout.accesskey    "n">
+<!ENTITY  managepassword.timeout.unit            "minutos o más">
+
+<!ENTITY  changepassword.caption                 "Cambiar Contraseña Maestra">
+<!ENTITY  changepassword.text                    "La contraseña maestra protege información sensible, como múltiples contraseñas de acceso y certificados.">
+<!ENTITY  changepassword.button                  "Cambiar la contraseña…">
+<!ENTITY  changepassword.accesskey               "C">
+
+<!ENTITY  resetpassword.caption                  "Reiniciar contraseña maestra">
+<!ENTITY  resetpassword.text                     "Si reinicia su contraseña maestra, todas su contraseñas de páginas y correo, datos de formularios, certificados personales y claves privadas se perderán.">
+<!ENTITY  resetpassword.button                   "Reiniciar contraseña">
+<!ENTITY  resetpassword.accesskey                "R">

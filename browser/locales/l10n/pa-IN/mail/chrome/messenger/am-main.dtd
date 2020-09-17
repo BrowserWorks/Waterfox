@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "ਅਕਾਊਂਟ ਸੈਟਿੰਗ">
+<!ENTITY accountName.label "ਅਕਾਊਂਟ ਨਾਂ:">
+<!ENTITY accountName.accesskey "N">
+
+<!ENTITY identityTitle.label "ਡਿਫਾਲਟ ਪਛਾਣ">
+<!ENTITY identityDesc.label "ਹਰ ਅਕਾਊਂਟ ਦੀ ਇੱਕ ਪਛਾਣ ਹੁੰਦੀ ਹੈ, ਜੋ ਕਿ ਜਾਣਕਾਰੀ ਹੈ , ਜਿਸ ਨੂੰ  ਹੋਰ ਲੋਕ ਤੁਹਾਡੀ ਮੇਲ ਪੜ੍ਹਨ ਦੌਰਾਨ ਵੇਖ ਸਕਦੇ ਹਨ।">
+<!ENTITY name.label "ਤੁਹਾਡਾ ਨਾਂ:">
+<!ENTITY name.accesskey "Y">
+<!ENTITY email.label "ਈ-ਮੇਲ ਐਡਰੈੱਸ:">
+<!ENTITY email.accesskey "E">
+<!ENTITY replyTo.label "ਜਵਾਬੀ ਐਡਰੈੱਸ:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Recipients will reply to this other address">
+<!ENTITY organization.label "ਸੰਸਥਾ:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "ਦਸਤਖਤ ਟੈਕਸਟ:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "HTML ਵਰਤੋਂ (ਜਿਵੇਂ, &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Attach the signature from a file instead (text, HTML, or image):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "ਸੋਧ...">
+<!ENTITY choose.label "ਚੁਣੋ...">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "ਕਾਰਡ ਸੋਧ...">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "ਸੁਨੇਹੇ ਵਿੱਚ ਮੇਰਾ vCard ਸ਼ਾਮਿਲ ਕਰੋ">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "ਪਛਾਣ ਪਰਬੰਧ...">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "ਬਾਹਰੀ ਸਰਵਰ (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "ਡਿਫਾਲਟ ਸਰਵਰ ਵਰਤੋਂ">
+

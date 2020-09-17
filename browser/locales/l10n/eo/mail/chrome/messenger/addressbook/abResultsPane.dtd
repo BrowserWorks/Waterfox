@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Adresaro">
+<!ENTITY Addrbook.accesskey                    "A">
+<!ENTITY GeneratedName.label                   "Nomo">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "Retpoŝta adreso">
+<!ENTITY PrimaryEmail.accesskey                "R">
+<!ENTITY Company.label                         "Firmao/organizaĵo">
+<!ENTITY Company.accesskey                     "F">
+<!ENTITY _PhoneticName.label                   "Elparolo de nomo">
+<!ENTITY _PhoneticName.accesskey               "E">
+<!ENTITY NickName.label                        "Kaŝnomo">
+<!ENTITY NickName.accesskey                    "K">
+<!ENTITY SecondEmail.label                     "Plia retpoŝta adreso">
+<!ENTITY SecondEmail.accesskey                 "i">
+<!ENTITY Department.label                      "Sekcio">
+<!ENTITY Department.accesskey                  "S">
+<!ENTITY JobTitle.label                        "Posteno">
+<!ENTITY JobTitle.accesskey                    "P">
+<!ENTITY CellularNumber.label                  "Poŝtelefono">
+<!ENTITY CellularNumber.accesskey              "t">
+<!ENTITY PagerNumber.label                     "Televokilo">
+<!ENTITY PagerNumber.accesskey                 "v">
+<!ENTITY FaxNumber.label                       "Telekopiilo">
+<!ENTITY FaxNumber.accesskey                   "o">
+<!ENTITY HomePhone.label                       "Telefono hejma">
+<!ENTITY HomePhone.accesskey                   "h">
+<!ENTITY WorkPhone.label                       "Telefono laboreja">
+<!ENTITY WorkPhone.accesskey                   "l">
+<!ENTITY ChatName.label                        "Tujmesaĝila nomo">
+<!ENTITY ChatName.accesskey                    "j">
+<!ENTITY sortAscending.label                   "Kreskante">
+<!ENTITY sortAscending.accesskey               "r">
+<!ENTITY sortDescending.label                  "Malkreskante">
+<!ENTITY sortDescending.accesskey              "M">

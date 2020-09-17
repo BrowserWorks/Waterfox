@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "გვერდითი ზოლი">
+<!ENTITY sidebar.reload.label           "განახლება">
+<!ENTITY sidebar.reload.accesskey       "R">
+<!ENTITY sidebar.picker.label           "ჩანართები">
+<!ENTITY sidebar.customize.label        "გვერდითი ზოლის მორგება…">
+<!ENTITY sidebar.customize.accesskey    "გ">
+<!ENTITY sidebar.hide.label             "ჩანართის დამალვა">
+<!ENTITY sidebar.hide.accesskey         "H">
+<!ENTITY sidebar.switch.label           "ჩანართზე გადართვა">
+<!ENTITY sidebar.switch.accesskey       "T">
+<!ENTITY sidebarCmd.label               "გვერდითი ზოლი">
+<!ENTITY sidebarCmd.accesskey           "b">
+<!ENTITY sidebar.loading.label          "ჩატვირთვა…">
+<!ENTITY sidebar.loadstopped.label      "ჩატვირთვა შეჩერებულია">
+<!ENTITY sidebar.loading.stop.label     "შეჩერება">
+<!ENTITY sidebar.loading.stop.accesskey "ჩ">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "გვერდითი ზოლი ამჟამად ცარიელია.">
+<!ENTITY sidebar.no-panels.add       'ჩანართების დამატება შეგიძლიათ „ჩანართების“ ღილაკზე დაწკაპებით.'>
+<!ENTITY sidebar.no-panels.hide      'თუ გვერდითი ზოლის სრულად დამალვა გსურთ, მენიუში დაწკაპეთ „ჩვენება“ და აირჩიეთ „გვერდითი ზოლი“ ქვემენიუში „ჩვენება/დამალვა“.'>
+<!ENTITY sidebar.sbDirectory.label   "გვერდითი ზოლის საქაღალდე…">
+
+<!ENTITY sidebar.pagenotfound.label  "ეს ჩანართი ამჟამად ვერ გამოიყენება.">
+<!ENTITY sidebar.close.tooltip       "გვერდითი ზოლის დახურვა">
+<!ENTITY sidebar.open.tooltip        "გვერდითი ზოლის გახსნა">
+
+<!ENTITY sidebar.search.label         "ძიება">
+<!ENTITY sidebar.client-bookmarks.label     "სანიშნები">
+<!ENTITY sidebar.client-history.label       "ისტორია">
+<!ENTITY sidebar.client-addressbook.label   "წიგნაკი">

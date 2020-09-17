@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  SSLProtocolVersions.caption       "Versions d'o protocolo SSL">
+<!ENTITY  SSLWarnings.caption               "Alvertencias SSL">
+<!ENTITY  SSLMixedContent.caption           "Mixed Content">
+<!ENTITY  SSLClientAuthMethod.caption       "Selección de certificau de sesión">
+
+<!ENTITY pref.ssl.title                     "Capa de Connexions Seguras (SSL)">
+<!ENTITY limit.description                  "You can restrict which encryption protocols to use for secure connections. Choose a single version or a contiguous range of versions.">
+<!ENTITY limit.enable.label                 "Enable:">
+<!ENTITY limit.ssl30.label                  "SSL 3.0">
+<!ENTITY limit.ssl30.accesskey              "3">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+
+<!ENTITY warn.description2                  "&brandShortName; can alert you to the security status of the web page you are viewing. Set &brandShortName; to show a warning when:">
+<!ENTITY warn.enteringsecure                "Cargar una pachina que utiliza zifrau">
+<!ENTITY warn.enteringsecure.accesskey      "C">
+<!ENTITY warn.insecurepost                  "Ninviar datos de formulario dende una pachina sin zifrar a unatra sin zifrar">
+<!ENTITY warn.insecurepost.accesskey        "Y">
+<!ENTITY warn.leavingsecure                 "Abandonar una pachina que utiliza zifrau">
+<!ENTITY warn.leavingsecure.accesskey       "A">
+
+<!ENTITY mixed.description                  "Encrypted pages may contain unencrypted content that is vulnerable to eavesdropping or forgery. &brandShortName; can detect and block it:">
+<!ENTITY warn.mixedactivecontent            "Warn me when encrypted pages contain insecure content">
+<!ENTITY warn.mixedactivecontent.accesskey  "W">
+<!ENTITY block.activecontent                "Don't load insecure content on encrypted pages">
+<!ENTITY block.activecontent.accesskey      "D">
+<!ENTITY warn.mixeddisplaycontent           "Warn me when encrypted pages contain other types of mixed content">
+<!ENTITY warn.mixeddisplaycontent.accesskey "c">
+<!ENTITY block.displaycontent               "Don't load other types of mixed content on encrypted pages">
+<!ENTITY block.displaycontent.accesskey     "m">
+
+<!ENTITY certselect.description             "Decida cómo trigará &brandShortName; un certificau de seguranza ta presentar a os puestos web que requieran un:">
+<!ENTITY certselect.auto                    "Trigar automaticament">
+<!ENTITY certselect.auto.accesskey          "A">
+<!ENTITY certselect.ask                     "Preguntar cada vez">
+<!ENTITY certselect.ask.accesskey           "E">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Inprimaki eremu propietateak">
+<!ENTITY windowTitleImage.label "Inprimaki irudi propietateak">
+
+<!ENTITY InputType.label "Eremu mota">
+<!ENTITY InputType.accesskey "t">
+<!ENTITY text.value "Testua">
+<!ENTITY password.value "Pasahitza">
+<!ENTITY checkbox.value "Kontrol-laukia">
+<!ENTITY radio.value "Aukera botoia">
+<!ENTITY submit.value "Bidali botoia">
+<!ENTITY reset.value "Berrezarri botoia">
+<!ENTITY file.value "Fitxategia">
+<!ENTITY hidden.value "Ezkutukoa">
+<!ENTITY image.value "Irudia">
+<!ENTITY button.value "Botoia">
+
+<!ENTITY InputSettings.label "Eremu ezarpenak">
+<!ENTITY InputName.label "Eremu izena:">
+<!ENTITY InputName.accesskey "n">
+<!ENTITY GroupName.label "Talde izena:">
+<!ENTITY GroupName.accesskey "n">
+<!ENTITY InputValue.label "Eremuaren balioa:">
+<!ENTITY InputValue.accesskey "b">
+<!ENTITY InitialValue.label "Hasierako balioa:">
+<!ENTITY InitialValue.accesskey "b">
+<!ENTITY InputChecked.label "Hasieran markatua">
+<!ENTITY InputChecked.accesskey "k">
+<!ENTITY InputSelected.label "Hasieran hautatua">
+<!ENTITY InputSelected.accesskey "s">
+<!ENTITY InputReadOnly.label "Irakurtzeko soilik">
+<!ENTITY InputReadOnly.accesskey "r">
+<!ENTITY InputDisabled.label "Ezgaituta">
+<!ENTITY InputDisabled.accesskey "E">
+<!ENTITY tabIndex.label "Tabulazio-indizea:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY TextSize.label "Eremu tamaina:">
+<!ENTITY TextSize.accesskey "E">
+<!ENTITY TextLength.label "Gehienezko luzera:">
+<!ENTITY TextLength.accesskey "l">
+<!ENTITY AccessKey.label "Laster-tekla:">
+<!ENTITY AccessKey.accesskey "k">
+<!ENTITY Accept.label "Onartutako motak:">
+<!ENTITY Accept.accesskey "a">
+
+<!ENTITY ImageProperties.label "Irudiaren propietateak…">
+<!ENTITY ImageProperties.accesskey "e">

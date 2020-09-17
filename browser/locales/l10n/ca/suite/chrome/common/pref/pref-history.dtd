@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Historial">
+
+<!ENTITY  pref.history.caption              "Historial de navegació">
+<!ENTITY  historyPages.label                "L'historial és una llista de les pàgines que heu visitat anteriorment.">
+<!ENTITY  enableHistory.label               "Recorda les pàgines visitades">
+<!ENTITY  enableHistory.accesskey           "R">
+<!ENTITY  clearHistory.label                "Buida l'historial">
+<!ENTITY  clearHistory.accesskey            "r">
+
+<!ENTITY  locationBarHistory.caption        "Historial de la barra d'ubicació">
+<!ENTITY  urlBarHistoryEnabled.caption      "Habilita l'historial de la barra d'ubicació">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "H">
+<!ENTITY  clearLocationBar.label            "Neteja la llista de llocs emmagatzemats al menú de la barra d'ubicació.">
+<!ENTITY  clearLocationBarButton.label      "Neteja la barra d'ubicació">
+<!ENTITY  clearLocationBarButton.accesskey  "b">
+<!ENTITY  formfillHistory.caption           "Historial de formularis i cerca">
+<!ENTITY  enableFormfill.label              "Habilita l'historial de formularis i cerca">
+<!ENTITY  enableFormfill.accesskey          "H">
+<!ENTITY  formfillExpire.label              "Recorda l'historial de formularis i cerca fins a ">
+<!ENTITY  formfillExpire.accesskey          "f">
+<!ENTITY  formfillDays.label                "dies">

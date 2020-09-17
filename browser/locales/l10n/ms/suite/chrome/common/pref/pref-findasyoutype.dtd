@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Cari Semasa Anda Menaip">
+<!ENTITY findAsYouTypeBehavior.label "Cari Semasa Anda Menaip">
+<!ENTITY findAsYouTypeTip.label "Panduan: Untuk memulakan Cari Semasa Anda Menaip secara manual, taip / untuk mencari teks atau ' untuk mencari pautan, diikuti dengan teks yang hendak dicari.">
+<!ENTITY findAsYouTypeTimeout.label "Buang carian semasa selepas beberapa saat tanpa aktiviti">
+<!ENTITY findAsYouTypeTimeout.accesskey "B">
+<!ENTITY findAsYouTypeSound.label "Mainkan bunyian apabila teks yang ditaip tidak ditemui">
+<!ENTITY findAsYouTypeSound.accesskey "M">
+<!ENTITY findAsYouTypeEnableAuto.label "Cari secara automatik apabila menaip dalam halaman web:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "C">
+<!ENTITY findAsYouTypeAutoText.label "Sebarang teks dalam halaman">
+<!ENTITY findAsYouTypeAutoText.accesskey "S">
+<!ENTITY findAsYouTypeAutoLinks.label "Pautan sahaja">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "P">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Papar bar alatan carian apabila mencari semasa anda menaip">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "P">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Nota: Cari semasa anda menaip tidak boleh melaksanakan entri teks terbuka tanpa paparan bar carian.">

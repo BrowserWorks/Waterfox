@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietates de campos del formulario">
+<!ENTITY windowTitleImage.label "Proprietates de imagines del formulario">
+
+<!ENTITY InputType.label "Typo de campo">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Texto">
+<!ENTITY password.value "Contrasigno">
+<!ENTITY checkbox.value "Quadrato a marcar">
+<!ENTITY radio.value "Button radio">
+<!ENTITY submit.value "Button de invio">
+<!ENTITY reset.value "Button Reinitialisar">
+<!ENTITY file.value "File">
+<!ENTITY hidden.value "Celate">
+<!ENTITY image.value "Imagine">
+<!ENTITY button.value "Button">
+
+<!ENTITY InputSettings.label "Parametros del campo">
+<!ENTITY InputName.label "Nomine del campo:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Nomine del gruppo:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Valor del campo:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "Valor initial:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "Verificate initialmente">
+<!ENTITY InputChecked.accesskey "V">
+<!ENTITY InputSelected.label "Seligite initialmente">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "Lectura solmente">
+<!ENTITY InputReadOnly.accesskey "L">
+<!ENTITY InputDisabled.label "Disactivate">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Indice tubulation:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "Dimension de campo:">
+<!ENTITY TextSize.accesskey "C">
+<!ENTITY TextLength.label "Longor maxime:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "Clave de accesso:">
+<!ENTITY AccessKey.accesskey "C">
+<!ENTITY Accept.label "Acceptar le Typos:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "Proprietates del imagine…">
+<!ENTITY ImageProperties.accesskey "E">

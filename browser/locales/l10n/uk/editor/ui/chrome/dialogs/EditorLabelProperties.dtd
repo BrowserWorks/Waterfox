@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Властивості мітки">
+
+<!ENTITY Settings.label "Параметри">
+<!ENTITY Settings.accesskey "П">
+
+<!ENTITY EditLabelText.label "Змінити текст:">
+<!ENTITY EditLabelText.accesskey "З">
+<!ENTITY LabelFor.label "Для елементу:">
+<!ENTITY LabelFor.accesskey "Д">
+<!ENTITY AccessKey.label "Клавіша доступу:">
+<!ENTITY AccessKey.accesskey "К">
+
+<!ENTITY RemoveLabel.label "Вилучити мітку">
+<!ENTITY RemoveLabel.accesskey "В">

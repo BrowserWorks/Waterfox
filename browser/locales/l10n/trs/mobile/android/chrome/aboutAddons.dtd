@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Sa ga'ue nutò'">
+<!ENTITY aboutAddons.header2                    "Nej sa nutâ't">
+
+<!ENTITY addonAction.enable                     "dugi'iaj sun' ma">
+<!ENTITY addonAction.disable                    "Dunikïn'">
+<!ENTITY addonAction.uninstall                  "Guxun' ma">
+<!ENTITY addonAction.undo                       "Dunahuî' ma">
+<!ENTITY addonAction.update                     "Nagi'iaj nakà">
+
+<!ENTITY addonUnsigned.message                  "Sa nata' na ni ga'ue si nu natsij &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "Gahuin chrun' doj">

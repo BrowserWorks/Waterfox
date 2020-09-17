@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Amarag n ukter">
+
+<!ENTITY importFromWin.label            "Kter isefran, iɣewwaṛen n umiḍan, imedlis n tensa, imzizdigen akked isefka nniḍen si:">
+<!ENTITY importFromNonWin.label         "Kter ismenyifen, iɣewwaṛen n umiḍan, imedlis n tensa, imzizdigen akked isefka nniḍen si:">
+<!ENTITY importSourceNotFound.label     "Ulac asnas yettwafen akken ad d-ketred isefka.">
+
+<!ENTITY importFromNothing.label        "Ur keter-ara">
+<!ENTITY importFromNothing.accesskey    "U">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 neq ugar">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Kter isefran akked ikaramen n tirawt">
+<!ENTITY importItems.title              "Iferdisen ara d-ketred">
+<!ENTITY importItems.label              "Fren iferdisen ara d-ketreḍ:">
+
+<!ENTITY migrating.title                "Akter…">
+<!ENTITY migrating.label                "Iferdisen-agi ad ttwaktaren aka tura…">
+
+<!ENTITY selectProfile.title            "Fren amaɣnu">
+<!ENTITY selectProfile.label            "Imaɣuten-agi heggan i wakken ad ttwaketren si:">
+
+<!ENTITY done.title                     "Akter yemmed">
+<!ENTITY done.label                     "Iferdisen-agi ttwaketren akken iwata:">

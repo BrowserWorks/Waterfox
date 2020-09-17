@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Makwako &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; kitwero temo ento nyo pe cung matek.">
+<!ENTITY aboutPage.checkForUpdates.link         "Rot pi Ngec»">
+<!ENTITY aboutPage.checkForUpdates.checking     "Tye ka yenyo pi ngec…">
+<!ENTITY aboutPage.checkForUpdates.none         "Ngec pe nonge">
+<!ENTITY aboutPage.checkForUpdates.available2   "Gam ngec manyen">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Gamo ngec manyen…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Ket ngec manyen">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "Cwak te">
+<!ENTITY aboutPage.privacyPolicy.label          "Cik pa Dano">
+<!ENTITY aboutPage.rights.label                 "Nge Twero ni">
+<!ENTITY aboutPage.relNotes.label               "Gony Coc">
+<!ENTITY aboutPage.credits.label                "Den">
+<!ENTITY aboutPage.license.label                "Ngec me lanycec">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox ki cal me Firefox obedo alama cato wil pa guti me Mozilla.">

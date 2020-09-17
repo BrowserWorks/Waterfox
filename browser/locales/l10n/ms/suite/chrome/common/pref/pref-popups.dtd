@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Tetingkap Popup">
+
+<!ENTITY pref.popups.caption            "Tetingkap Popup">
+
+<!ENTITY popupBlock.label               "Sekat tetingkap popup yang tidak diminta">
+<!ENTITY popupBlock.accesskey           "S">
+
+<!ENTITY viewPermissions.label          "Urus Keizinan">
+<!ENTITY viewPermissions.accesskey      "U">
+
+<!ENTITY whenBlock.description          "Apabila tetingkap popup telah disekat:">
+<!ENTITY playSound.label                "Mainkan bunyian:">
+<!ENTITY playSound.accesskey            "M">
+<!ENTITY systemSound.label              "Bip sistem">
+<!ENTITY systemSound.accesskey          "B">
+<!ENTITY customSound.label              "Penyesuaian fail bunyian">
+<!ENTITY customSound.accesskey          "P">
+
+<!ENTITY selectSound.label              "Cari…">
+<!ENTITY selectSound.accesskey          "i">
+<!ENTITY playSoundButton.label          "Main">
+<!ENTITY playSoundButton.accesskey      "n">
+
+<!ENTITY displayIcon.label              "Papar ikon di dalam bar status pelayar">
+<!ENTITY displayIcon.accesskey          "P">
+
+<!ENTITY displayNotification.label      "Papar bar notifikasi pada bahagian atas ruang kandungan">
+<!ENTITY displayNotification.accesskey  "p">
+
+<!ENTITY popupNote.description          "Nota: Menyekat semua popup mungkin menghalang ciri penting dalam sesetengah laman web daripada berfungsi, seperti tetingkap log masuk perbankan dan laman web membeli-belah. Untuk maklumat cara untuk mengizinkan laman web tertentu menggunakan popup dan pada masa yang sama menyekat pop-up lain, klik Bantuan. Walaupun disekat, laman web boleh menggunakan kaedah lain untuk memaparkan popup.">
+

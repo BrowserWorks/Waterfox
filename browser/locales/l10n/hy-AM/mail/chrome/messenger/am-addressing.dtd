@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Նոր նամակ &amp; Հասցեավորում">
+<!ENTITY addressingGroupTitle.label "Հասցեագրում">
+<!ENTITY addressingText.label      "Հասցեները նայելիս.">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Այս փոստարկղի համար օգտ. հիմնական LDAP սպասարկիչը">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "Խմբագրել թղթապանակները...">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Օգտ. տարբեր LDAP սպասարկիչներ.">
+<!ENTITY directories.accesskey     "տ">
+<!ENTITY directoriesNone.label     "Չկա">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Նամակ գրել">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Նամակները կազմել HTML տեսակի">
+<!ENTITY useHtml.accesskey                    "C">
+<!ENTITY autoQuote.label                      "Պատասխանելիս մեջբերել բնօրինակ նամակը">
+<!ENTITY autoQuote.accesskey                  "ե">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Մեջբերելիս՝">
+<!ENTITY quoting.accesskey                    "q">
+<!ENTITY aboveQuote.label                     "պատասխանել մեջբերումից առաջ">
+<!ENTITY belowQuote.label                     "պատասխանել մեջբերումից հետո">
+<!ENTITY selectAndQuote.label                 "ընտրել մեջբերումը">
+<!ENTITY place.label                          "և դնել իմ ստորագրությունը">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "մեջբերումից հետո (խորհուրդ է տրվում)">
+<!ENTITY aboveText.label                      "իմ պատասխանից հետո (խորհուրդ է տրվում)">
+<!ENTITY includeSigOnReply.label              "Պատասխանելիս ներառել ստորագրությունը">
+<!ENTITY includeSigOnReply.accesskey          "ն">
+<!ENTITY includeSigOnForward.label            "Փոխանցելիս ներառել ստորագրությունը">
+<!ENTITY includeSigOnForward.accesskey        "Փ">
+
+<!ENTITY globalComposingPrefs.label           "Նոր նամակ գրելու հիմնական նախապատվություններ...">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Ընդհանրական հասցեագրման նախապատվություններ…">
+<!ENTITY globalAddressingPrefs.accesskey      "կ">

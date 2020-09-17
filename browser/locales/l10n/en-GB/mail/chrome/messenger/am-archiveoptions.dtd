@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Archive Options">
+<!ENTITY archiveGranularityPrefix.label "When archiving messages, place them in:">
+<!ENTITY archiveFlat.label "A single folder">
+<!ENTITY archiveFlat.accesskey "s">
+<!ENTITY archiveYearly.label "Yearly archived folders">
+<!ENTITY archiveYearly.accesskey "Y">
+<!ENTITY archiveMonthly.label "Monthly archived folders">
+<!ENTITY archiveMonthly.accesskey "M">
+<!ENTITY keepFolderStructure.label "Keep existing folder structure of archived messages">
+<!ENTITY keepFolderStructure.accesskey "K">
+<!ENTITY archiveExample.label "Example">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Archives">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Inbox">

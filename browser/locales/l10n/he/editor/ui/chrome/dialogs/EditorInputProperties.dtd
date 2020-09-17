@@ -1,0 +1,58 @@
+<!--
+# Translator(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "תכונות שדות של טפסים">
+<!ENTITY windowTitleImage.label "תכונות תמונת טופס">
+
+<!ENTITY InputType.label "סוג שדה">
+<!ENTITY InputType.accesskey "ס">
+<!ENTITY text.value "טקסט">
+<!ENTITY password.value "ססמה">
+<!ENTITY checkbox.value "תיבת סימון">
+<!ENTITY radio.value "כפתור רדיו">
+<!ENTITY submit.value "כפתור שלח">
+<!ENTITY reset.value "כפתור איפוס">
+<!ENTITY file.value "קובץ">
+<!ENTITY hidden.value "נסתר">
+<!ENTITY image.value "תמונה">
+<!ENTITY button.value "כפתור">
+
+<!ENTITY InputSettings.label "הגדרות שדה">
+<!ENTITY InputName.label "שם שדה:">
+<!ENTITY InputName.accesskey "ש">
+<!ENTITY GroupName.label "שם קבוצה:">
+<!ENTITY GroupName.accesskey "ש">
+<!ENTITY InputValue.label "ערך שדה:">
+<!ENTITY InputValue.accesskey "ע">
+<!ENTITY InitialValue.label "ערך התחלתי:">
+<!ENTITY InitialValue.accesskey "ה">
+<!ENTITY InputChecked.label "מסומן מההתחלה">
+<!ENTITY InputChecked.accesskey "C">
+<!ENTITY InputSelected.label "נבחר מההתחלה">
+<!ENTITY InputSelected.accesskey "ת">
+<!ENTITY InputReadOnly.label "קריאה בלבד">
+<!ENTITY InputReadOnly.accesskey "ק">
+<!ENTITY InputDisabled.label "לא מאופשר">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "מפתח טאב:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "גודל שדה:">
+<!ENTITY TextSize.accesskey "ג">
+<!ENTITY TextLength.label "אורך מקסימלי:">
+<!ENTITY TextLength.accesskey "א">
+<!ENTITY AccessKey.label "מקש גישה:">
+<!ENTITY AccessKey.accesskey "מ">
+<!ENTITY Accept.label "קבל סוגים:">
+<!ENTITY Accept.accesskey "ק">
+
+<!ENTITY ImageProperties.label "מאפייני תמונה...">
+<!ENTITY ImageProperties.accesskey "ת">
+
+

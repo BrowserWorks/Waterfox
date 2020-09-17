@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (newsError.title): The title of the news error page.
+     Not generally visible. -->
+
+<!ENTITY newsError.title "Duilgheadas a’ luchdadh an artaigil">
+<!-- LOCALIZATION NOTE (articleNotFound.title): The main heading for the news
+     error page. -->
+
+<!ENTITY articleNotFound.title "Cha deach a t-artaigil a lorg">
+<!-- LOCALIZATION NOTE (articleNotFound.desc): A longer description for the news
+     error page. -->
+
+<!ENTITY articleNotFound.desc "Tha frithealaiche a’ bhuidhinn naidheachdan ag innse nach urrainn dha an t-artaigil a lorg.">
+<!-- LOCALIZATION NOTE (serverResponded.title): A string preceding the text
+     response from the newsgroup server describing the error. -->
+
+<!ENTITY serverResponded.title "Fhreagair frithealaiche a’ bhuidhinn naidheachd:">
+<!-- LOCALIZATION NOTE (articleExpired.title): A string explaining that the
+     article may have expired. -->
+
+<!ENTITY articleExpired.title "Saoil an do dh’fhalbh an ùine air an artaigil?">
+<!-- LOCALIZATION NOTE (trySearching.title): A string preceding the message's
+     ID. -->
+
+<!ENTITY trySearching.title "Feuch is dèan lorg airson an artaigil:">
+<!-- LOCALIZATION NOTE (removeExpiredArticles.title): The label for the button
+     to remove all expired articles from the newsgroup. -->
+
+<!ENTITY removeExpiredArticles.title "Thoir air falbh gach artaigil a dh’fhalbh an ùine air">

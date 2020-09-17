@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Napredne postavke računa">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP poslužiteljska mapa:">
+<!ENTITY serverDirectory.accesskey "M">
+<!ENTITY usingSubscription.label "Prikaži samo mape na koje sam pretplaćen(a)">
+<!ENTITY usingSubscription.accesskey "r">
+<!ENTITY dualUseFolders.label "Poslužitelj podržava mape koje sadrže podmape i poruke">
+<!ENTITY dualUseFolders.accesskey "l">
+<!ENTITY maximumConnectionsNumber.label "Maksimalan broj veza s poslužiteljem spremljen u priručnoj memoriji">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Ove postavke određuju imenski prostor na vašem IMAP poslužitelju">
+<!ENTITY personalNamespace.label "Osobni imenski prostor:">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Javni (dijeljeni):">
+<!ENTITY publicNamespace.accesskey "J">
+<!ENTITY otherUsersNamespace.label "Drugi korisnici:">
+<!ENTITY otherUsersNamespace.accesskey "o">
+<!ENTITY overrideNamespaces.label "Dozvoli poslužitelju da nadjača ovaj imenski prostor">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3DeferringDesc.label "Prilikom preuzimanja pošte s poslužitelja ovog računa, koristi sljedeću mapu za pohranu novih poruka:" >
+<!ENTITY accountInbox.label "Primljena pošta za ovaj račun">
+<!ENTITY accountInbox.accesskey "P">
+<!ENTITY deferToServer.label "Primljena pošta za drugi račun">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "Uključi ovaj poslužitelj prilikom primanja nove pošte">
+<!ENTITY deferGetNewMail.accesskey "U">

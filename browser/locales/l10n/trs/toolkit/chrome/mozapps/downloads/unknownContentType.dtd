@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Nagui rè' guendâ na'nïn rè' riña:">
+<!ENTITY  from.label                  "'na':">
+<!ENTITY  actionQuestion.label        "Nuhuìn si gi'iaj &brandShortName; ngà archibô nan?">
+
+<!ENTITY  openWith.label              "Na'nïn ngà">
+<!ENTITY  openWith.accesskey          "o">
+<!ENTITY  other.label                 "A'ngoj...">
+
+<!ENTITY  saveFile.label              "Na'nïnj sà' Archîbo">
+<!ENTITY  saveFile.accesskey          "s">
+
+<!ENTITY  rememberChoice.label        "Dunaj gi'iaj aga' nan sun gi'iát dan ngà nej archibô hua dananj asìj yakaj gan'anj hiaj.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "ahuin si huin:">
+
+<!ENTITY  chooseHandlerMac.label      "Naguī…">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "Natsij ni'iajt…">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "Na'nïnj sà't archibô nan ruhuâ raj?">

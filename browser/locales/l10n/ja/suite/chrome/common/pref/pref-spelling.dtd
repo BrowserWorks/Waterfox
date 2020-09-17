@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "スペルチェック">
+<!ENTITY generalSpelling.label                "全般">
+<!ENTITY checkSpellingWhenTyping.label        "次の場所への入力時にスペルチェックを行う:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "W">
+<!ENTITY dontCheckSpelling.label              "スペルチェックしない">
+<!ENTITY multilineCheckSpelling.label         "複数行のテキストボックスのみ">
+<!ENTITY alwaysCheckSpelling.label            "すべてのテキストボックス">
+<!ENTITY spellForMailAndNews.label            "メールとニュースグループ">
+<!ENTITY checkSpellingBeforeSend.label        "メッセージ送信前にスペルチェックを行う">
+<!ENTITY checkSpellingBeforeSend.accesskey    "C">
+<!ENTITY spellCheckInline.label               "自動的にスペルチェックを行う">
+<!ENTITY spellCheckInline.accesskey           "e">
+<!ENTITY languagePopup.label                  "言語:">
+<!ENTITY languagePopup.accessKey              "L">
+<!ENTITY moreDictionaries.label               "他の辞書をダウンロード...">
+<!ENTITY noSpellCheckAvailable.label          "辞書がありません。">

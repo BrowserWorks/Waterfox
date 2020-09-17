@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "Vali...">
+<!ENTITY digitalSign.certificate.accesskey "V">
+<!ENTITY digitalSign.certificate_clear.button "Puhasta">
+<!ENTITY digitalSign.certificate_clear.accesskey "P">
+<!ENTITY encryption.certificate.button "Vali...">
+<!ENTITY encryption.certificate.accesskey "a">
+<!ENTITY encryption.certificate_clear.button "Puhasta">
+<!ENTITY encryption.certificate_clear.accesskey "h">
+<!ENTITY signingGroupTitle.label "Digiallkirjastamine">
+<!ENTITY signMessage.accesskey "K">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Sertifikaadi valimine">
+<!ENTITY certPicker.info  "Sertifikaat:">
+<!ENTITY certPicker.detailsLabel "Valitud sertifikaadi üksikasjad:">
+

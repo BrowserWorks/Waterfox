@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Průvodce vytvořením účtu">
+
+<!ENTITY accountProtocolTitle.label "Síť chatu">
+<!ENTITY accountProtocolInfo.label "Vyberte prosím síť vašeho účtu chatu.">
+<!ENTITY accountProtocolField.label "Síť:">
+<!ENTITY accountProtocolGetMore.label "Více…">
+
+<!ENTITY accountUsernameTitle.label "Uživatelské jméno">
+<!ENTITY accountUsernameDuplicate.label "Tento účet je již vytvořen!">
+
+<!ENTITY accountPasswordTitle.label "Heslo">
+<!ENTITY accountPasswordInfo.label "Vložte prosím heslo k vašemu účtu.">
+<!ENTITY accountPasswordField.label "Heslo:">
+<!ENTITY accountPasswordManager.label "Vložené heslo bude uloženo ve Správci hesel. Pokud chcete být dotázáni na heslo pokaždé, když dojde k připojení tohoto účtu, nechte toto pole prázdné.">
+
+<!ENTITY accountAdvancedTitle.label "Rozšířené možnosti">
+<!ENTITY accountAdvancedInfo.label "Pokud chcete, můžete tento krok přeskočit.">
+<!ENTITY accountAdvanced.newMailNotification.label "Upozornit na novou poštu">
+<!ENTITY accountAliasGroupbox.caption "Místní alias">
+<!ENTITY accountAliasField.label "Alias:">
+<!ENTITY accountAliasInfo.label "Bude zobrazen pouze v okně vaší konverzace. Vzdálené kontakty ho neuvidí.">
+<!ENTITY accountProxySettings.caption "Nastavení proxy">
+<!ENTITY accountProxySettings.change.label "Změnit…">
+<!ENTITY accountProxySettings.change.accessKey "m">
+
+<!ENTITY accountSummaryTitle.label "Souhrn">
+<!ENTITY accountSummaryInfo.label "Souhrn zadaných informací je zobrazen níže. Před vytvořením účtu si je prosím zkontrolujte.">
+<!ENTITY accountSummary.connectNow.label "Nyní připojit tento účet.">

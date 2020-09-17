@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Program zvyšovania spokojnosti používateľov ChatZilly">
+<!ENTITY window.size   "width: 42em;">
+
+<!ENTITY intro.label "Program zvyšovania spokojnosti používateľov ChatZilly zhromažďuje informácie o tom, akým spôsobom používate ChatZillu, pričom pri tejto činnosti vás neobťažuje. Týmto pomôžete vývojárom zistiť, ktoré funkcie ChatZilly by mali byť vylepšené. Nezhromažďujú sa žiadne informácie, pomocou ktorých by bolo možné vás identifikovať.">
+
+<!ENTITY groupSend.label        "Odoslať nasledujúce údaje:">
+<!ENTITY sendClient.label       "Čas spustenia a ukončenia ChatZilly">
+<!ENTITY sendClient.accesskey   "a">
+<!ENTITY sendCommand.label      "Používané príkazy, ponuky a dialógové okná">
+<!ENTITY sendCommand.accesskey  "P">
+<!ENTITY sendID.label           "Vaše unikátne ID:">
+<!ENTITY sendIDSrc.label        "(vygenerované náhodne)">
+
+<!ENTITY groupNotSent.label     "Nasledujúce údaje nie sú nikdy odosielané:">
+<!ENTITY notsentNickname.label  "Vaša prezývka">
+<!ENTITY notsentMessages.label  "Obsah správ, vrátane akcií a upozornení">
+<!ENTITY notsentArguments.label "Parametre a údaje zadané pri používaní príkazov, ponúk a dialógových okien">
+<!ENTITY notsentURLs.label      "Názvy a adresy URL sietí, serverov, kanálov a používateľov">
+<!ENTITY notsentFiles.label     "Názvy a obsah odosielaných a prijímaných súborov">

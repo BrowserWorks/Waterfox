@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "​ရှာဖွေပါ">
+
+<!ENTITY newPref.namePlaceholder       "အမည်">
+
+<!ENTITY newPref.valueBoolean          "Boolean">
+<!ENTITY newPref.valueString           "စာကြောင်း">
+<!ENTITY newPref.valueInteger          "ကိန်းပြည့်">
+
+<!ENTITY newPref.stringPlaceholder     "စာတစ်ကြောင်းထည့်ပါ">
+<!ENTITY newPref.numberPlaceholder     "နံပတ်တစ်လုံး ထည့်ပါ">
+
+<!ENTITY newPref.toggleButton          "အထိန်းခလုပ်">
+<!ENTITY newPref.cancelButton          "ပယ်​ဖျက်ပါ">
+
+<!ENTITY contextMenu.copyPrefName      "အမည် ကူးယူပါ">
+<!ENTITY contextMenu.copyPrefValue     "တန်ဖိုး ကူးယူပါ">

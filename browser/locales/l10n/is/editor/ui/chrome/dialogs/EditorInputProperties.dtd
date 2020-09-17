@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Eiginleikar svæðis á formi">
+<!ENTITY windowTitleImage.label "Eiginleikar myndar á formi">
+<!ENTITY InputType.label "Svæðategund">
+<!ENTITY InputType.accesskey "t">
+<!ENTITY text.value "Texti">
+<!ENTITY password.value "Lykilorð">
+<!ENTITY checkbox.value "Gátreitur">
+<!ENTITY radio.value "Hægri hnappur">
+<!ENTITY submit.value "Senda hnappur">
+<!ENTITY reset.value "Endurstilla hnappur">
+<!ENTITY file.value "Skrá">
+<!ENTITY hidden.value "Falin">
+<!ENTITY image.value "Mynd">
+<!ENTITY button.value "Hnappur">
+<!ENTITY InputSettings.label "Stillingar svæðis">
+<!ENTITY InputName.label "Nafn svæðis:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Nafn hóps:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Gildi svæðis:">
+<!ENTITY InputValue.accesskey "v">
+<!ENTITY InitialValue.label "Upphafsgildi:">
+<!ENTITY InitialValue.accesskey "U">
+<!ENTITY InputChecked.label "Upphaflega hakað">
+<!ENTITY InputChecked.accesskey "h">
+<!ENTITY InputSelected.label "Upphaflega valið">
+<!ENTITY InputSelected.accesskey "v">
+<!ENTITY InputReadOnly.label "Skrifvarin">
+<!ENTITY InputReadOnly.accesskey "r">
+<!ENTITY InputDisabled.label "Óvirkt">
+<!ENTITY InputDisabled.accesskey "v">
+<!ENTITY tabIndex.label "Dálk tilvísun:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY TextSize.label "Stærð svæðis:">
+<!ENTITY TextSize.accesskey "S">
+<!ENTITY TextLength.label "Hámarksstærð:">
+<!ENTITY TextLength.accesskey "H">
+<!ENTITY AccessKey.label "Aðgangslykill:">
+<!ENTITY AccessKey.accesskey "k">
+<!ENTITY Accept.label "Leyfilegar tegundir:">
+<!ENTITY Accept.accesskey "a">
+<!ENTITY ImageProperties.label "Mynd eiginleikar…">
+<!ENTITY ImageProperties.accesskey "e">

@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Ofbyldingseigenskippen">
+
+<!ENTITY pixelsPopup.value "piksels">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Ofbyldingslokaasje:">
+<!ENTITY locationEditField.accessKey "f">
+<!ENTITY locationEditField.tooltip "Typ de bestânsnamme of -lokaasje fan de ôfbylding">
+<!ENTITY locationEditField.shortenedDataURI "Ynkoarte URI-gegevens (kopiearjen sil de folsleine URI op it klamboerd sette)">
+<!ENTITY title.label "Arktip:">
+<!ENTITY title.accessKey "t">
+<!ENTITY title.tooltip "It HTML-attribút ‘title’ dat ferskynt as sweefjende tip">
+<!ENTITY altText.label "Alternative tekst:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Typ de tekst dy't ferskynt yn stee fan de ôfbylding">
+<!ENTITY noAltText.label "Gjin alternative tekst brûke">
+<!ENTITY noAltText.accessKey "G">
+
+<!ENTITY previewBox.label "Ofbyldingsfoarbyld">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Werklike ôfmjittingen:">
+<!ENTITY actualSizeRadio.label "Werklike ôfmjittingen">
+<!ENTITY actualSizeRadio.accessKey "W">
+<!ENTITY actualSizeRadio.tooltip "De ôfbylding werombringe oant syn orzjinele ôfmjittingen">
+<!ENTITY customSizeRadio.label "Oanpaste ôfmjittingen">
+<!ENTITY customSizeRadio.accessKey "n">
+<!ENTITY customSizeRadio.tooltip "De ôfbyldingsôfmjittingen lykas yn de side wizigje">
+<!ENTITY heightEditField.label "Hichte:">
+<!ENTITY heightEditField.accessKey "H">
+<!ENTITY widthEditField.label "Breedte:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY constrainCheckbox.label "Ferhâldingen behâlde">
+<!ENTITY constrainCheckbox.accessKey "e">
+<!ENTITY constrainCheckbox.tooltip "De ôfbyldingsferhâldingen behâlde">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Ofbyldingsmap">
+<!ENTITY removeImageMapButton.label "Fuortsmite">
+<!ENTITY removeImageMapButton.accessKey "F">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Tekst útline lâns ôfbylding">
+<!ENTITY bottomPopup.value "Underoan">
+<!ENTITY topPopup.value "Boppe-oan">
+<!ENTITY centerPopup.value "Yn it midden">
+<!ENTITY wrapRightPopup.value "Rjochts rjochtsje">
+<!ENTITY wrapLeftPopup.value "Lofts rjochtsje">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Marzjes">
+<!ENTITY leftRightEditField.label "Lofts en rjochts">
+<!ENTITY leftRightEditField.accessKey "s">
+<!ENTITY topBottomEditField.label "Boppe en ûnder:">
+<!ENTITY topBottomEditField.accessKey "o">
+<!ENTITY borderEditField.label "Folle râne:">
+<!ENTITY borderEditField.accessKey "r">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "In râne werjaan om de keppelingsôfbylding">
+<!ENTITY showImageLinkBorder.accessKey "r">
+<!ENTITY LinkAdvancedEditButton.label "Keppel avansearre bewurkjen…">
+<!ENTITY LinkAdvancedEditButton.accessKey "K">
+<!ENTITY LinkAdvancedEditButton.tooltip "HTML-attributen, stylkenmerken en JavaScript tafoegje of oanpasse">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Formulier">
+<!ENTITY imageLocationTab.label "Lokaasje">
+<!ENTITY imageDimensionsTab.label "Ofmjittingen">
+<!ENTITY imageAppearanceTab.label "Uterlik">
+<!ENTITY imageLinkTab.label "Keppeling">

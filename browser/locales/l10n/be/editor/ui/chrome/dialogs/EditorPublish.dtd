@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Публікаванне старонкі">
+<!ENTITY windowTitleSettings.label "Наладжванні публікавання">
+<!ENTITY publishTab.label "Публікаванне">
+<!ENTITY settingsTab.label "Наладжванні">
+<!ENTITY publishButton.label "Публікаванне">
+<!ENTITY siteList.label "Назва пляцоўкі:">
+<!ENTITY siteList.accesskey "Н">
+<!ENTITY siteList.tooltip "Выберыце пляцоўку, дзе вы хочаце публікаваць">
+<!ENTITY newSiteButton.label "Новая пляцоўка">
+<!ENTITY newSiteButton.accesskey "Н">
+<!ENTITY docDirList.label "Паддырэкторыя пляцоўкі гэтай старонкі:">
+<!ENTITY docDirList.accesskey "п">
+<!ENTITY docDirList.tooltip "Выберыце або ўвядзіце назву адлеглай паддырэкторыі для гэтай старонкі">
+<!ENTITY publishImgCheckbox.label "Уключыць выявы і іншыя файлы">
+<!ENTITY publishImgCheckbox.accesskey "і">
+<!ENTITY publishImgCheckbox.tooltip "Публікаваць выявы і іншыя файлы, на якія спасылаецца гэтая старонка">
+<!ENTITY sameLocationRadio.label "Ужываць тое ж месцазнаходжанне, што для старонкі">
+<!ENTITY sameLocationRadio.accesskey "У">
+<!ENTITY sameLocationRadio.tooltip "Публікаваць файлы ў тым жа месцы, дзе і старонку">
+<!ENTITY useSubdirRadio.label "Карыстацца гэтай паддырэкторыяй пляцоўкі:">
+<!ENTITY useSubdirRadio.accesskey "д">
+<!ENTITY useSubdirRadio.tooltip "Публікаваць файлы ў вылучаную адлеглую паддырэкторыю">
+<!ENTITY otherDirList.tooltip "Выберыце або ўвядзіце назву адлеглай паддырэкторыі, у якой будуць публікавацца файлы">
+<!ENTITY pageTitle.label "Загаловак старонкі:">
+<!ENTITY pageTitle.accesskey "З">
+<!ENTITY pageTitle.tooltip "Увядзіце загаловак для вызначэння старонкі ў акне і ў закладках">
+<!ENTITY pageTitleExample.label "напрыклад: &quot;Мая старонка Сеціва&quot;">
+<!ENTITY filename.label "Назва файла:">
+<!ENTITY filename.accesskey "ф">
+<!ENTITY filename.tooltip "Увядзіце назву для гэтага файла, разам з канчаткам '.html' для старонкі сеціва">
+<!ENTITY filenameExample.label "напрыклад: &quot;маястаронка.html&quot;">
+<!ENTITY setDefaultButton.label "Прызначыць змоўчнай">
+<!ENTITY setDefaultButton.accesskey "з">
+<!ENTITY removeButton.label "Выдаліць пляцоўку">
+<!ENTITY removeButton.accesskey "В">
+<!ENTITY publishSites.label "Пляцоўкі публікавання">
+<!ENTITY serverInfo.label "Звесткі аб паслугачы">
+<!ENTITY loginInfo.label "Уваходныя звесткі">
+<!ENTITY siteName.label "Назва пляцоўкі:">
+<!ENTITY siteName.accesskey "Н">
+<!ENTITY siteName.tooltip "Мянушка, якая вызначае гэтую пляцоўку публікавання (напрыклад: 'МаяПляцоўка')">
+<!ENTITY siteUrl.label "Адрас публікавання (напрыклад: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey "А">
+<!ENTITY siteUrl.tooltip "Адрас FTP:// або HTTP:// дадзены вашым ISP ці службай сеціва-утрымання">
+<!ENTITY browseUrl.label "HTTP адрас вашай хатняй старонкі (напрыклад: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey "T">
+<!ENTITY browseUrl.tooltip "Адрас HTTP:// вашай дамашняй дырэкторыі (без назвы файла)">
+<!ENTITY username.label "Імя карыстальніка:">
+<!ENTITY username.accesskey "к">
+<!ENTITY username.tooltip "Імя карыстальніка, якое вы ўжываеце для ўваходу да вашага ISP або службы сеціва-утрымання">
+<!ENTITY password.label "Пароль:">
+<!ENTITY password.accesskey "П">
+<!ENTITY password.tooltip "Пароль, спалучаны з вашым імям карыстальніка">
+<!ENTITY savePassword.label "Захаваць пароль">
+<!ENTITY savePassword.accesskey "З">
+<!ENTITY savePassword.tooltip "Вылучыце гэта для бяспечнага захавання вашага пароля кіраўніком пароляў">

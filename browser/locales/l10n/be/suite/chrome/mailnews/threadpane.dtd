@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Нізка">
+<!ENTITY fromColumn.label "Ад">
+<!ENTITY recipientColumn.label "Атрымальнік">
+<!ENTITY attachmentColumn.label "Далучэнні">
+<!ENTITY subjectColumn.label "Тэма">
+<!ENTITY dateColumn.label "Дата">
+<!ENTITY priorityColumn.label "Прыярытэт">
+<!ENTITY tagsColumn.label "Меткі">
+<!ENTITY accountColumn.label "Рахунак">
+<!ENTITY statusColumn.label "Статус">
+<!ENTITY sizeColumn.label "Памер">
+<!ENTITY junkStatusColumn.label "Статус лухты">
+<!ENTITY unreadColumn.label "Непрачытаных у нізцы">
+<!ENTITY totalColumn.label "Усяго ў нізцы">
+<!ENTITY readColumn.label "Чытанне">
+<!ENTITY receivedColumn.label "Атрыманне">
+<!ENTITY flagColumn.label "Сцяжок">
+<!ENTITY locationColumn.label "Месцазнаходжанне">
+<!ENTITY idColumn.label "У парадку атрымання">
+<!ENTITY columnChooser2.tooltip "Вылучыць слупкі для адлюстравання">
+<!ENTITY threadColumn2.tooltip "Паказваць нізкі лістоў">
+<!ENTITY fromColumn2.tooltip "Размеркаваць па адпраўнікам">
+<!ENTITY recipientColumn2.tooltip "Размеркаваць па атрымальнікам">
+<!ENTITY attachmentColumn2.tooltip "Размеркаваць па далучэнням">
+<!ENTITY subjectColumn2.tooltip "Размеркаваць па тэмам">
+<!ENTITY dateColumn2.tooltip "Размеркаваць па датам">
+<!ENTITY priorityColumn2.tooltip "Размеркаваць па прыярытэтам">
+<!ENTITY tagsColumn2.tooltip "Размеркаваць па мецінам">
+<!ENTITY accountColumn2.tooltip "Размеркаваць па рахункам">
+<!ENTITY statusColumn2.tooltip "Размеркаваць па статусам">
+<!ENTITY sizeColumn2.tooltip "Размеркаваць па памерам">
+<!ENTITY junkStatusColumn2.tooltip "Размеркаваць па статусу лухты">
+<!ENTITY unreadColumn2.tooltip "Колькасць непрачытаных лістоў у нізцы">
+<!ENTITY totalColumn2.tooltip "Агульная колькасць лістоў у нізцы">
+<!ENTITY readColumn2.tooltip "Размеркаваць па статусу чытання">
+<!ENTITY receivedColumn2.tooltip "Размеркаваць па даце атрымання">
+<!ENTITY flagColumn2.tooltip "Размеркаваць па сцяжкам">
+<!ENTITY locationColumn2.tooltip "Размеркаваць па месцазнаходжанню">
+<!ENTITY idColumn2.tooltip "Размеркаваць па парадку атрымання">

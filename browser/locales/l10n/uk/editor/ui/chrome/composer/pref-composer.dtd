@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Редактор">
+<!ENTITY  recentFiles.title             "Меню недавніх сторінок">
+<!ENTITY  documentsInMenu.label         "Найбільше число сторінок у списку:">
+<!ENTITY  documentsInMenu.accesskey     "Н">
+<!ENTITY  savingFiles.title             "При збереженні чи публікації сторінок">
+<!ENTITY  preserveExisting.label        "Зберігати оригінальне форматування початкового коду">
+<!ENTITY  preserveExisting.accesskey    "З">
+<!ENTITY  preserveExisting.tooltip      "Зберігати форматування та переноси оригінальної сторінки">
+<!ENTITY  saveAssociatedFiles.label     "Зберегти зображення та інші пов’язані файли при збереженні сторінок">
+<!ENTITY  saveAssociatedFiles.accesskey "п">
+<!ENTITY  showPublishDialog.label       "Завжди показувати діалог при публікації сторінок">
+<!ENTITY  showPublishDialog.accesskey   "д">
+<!ENTITY  composerEditing.label         "Редагування">
+<!ENTITY  maintainStructure.label       "Підтримувати макет таблиці при внесенні/вилученні клітин">
+<!ENTITY  maintainStructure.tooltip     "Зберігає прямокутну форму таблиці, автоматично додаючи клітини після вставки чи вилучення клітин">
+<!ENTITY  maintainStructure.accesskey   "М">
+<!ENTITY  useCSS.label                  "Використовувати стилі CSS замість атрибутів та елементів HTML">
+<!ENTITY  useCSS.accesskey              "с">
+<!ENTITY  crInPCreatesNewP.label        "Клавіша Enter в абзаці створює новий абзац">
+<!ENTITY  crInPCreatesNewP.accesskey    "К">

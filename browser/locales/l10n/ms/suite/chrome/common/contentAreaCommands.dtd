@@ -1,0 +1,158 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label     "Tolak tetingkap popup dari laman web ini">
+<!ENTITY popupWindowRejectCmd.accesskey "o">
+<!ENTITY popupWindowAllowCmd.label      "Izinkan tetingkap popup dari laman web ini">
+<!ENTITY popupWindowAllowCmd.accesskey  "o">
+<!ENTITY openLinkCmdInTab.label       "Buka Pautan dalam Tab Baru">
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+<!ENTITY openLinkCmd.label            "Buka Pautan dalam Tetingkap Baru">
+<!ENTITY openLinkCmd.accesskey        "T">
+<!ENTITY openLinkCmdInPrivateWindow.label     "Buka Pautan dalam Tetingkap Peribadi">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey "d">
+<!ENTITY openLinkInWindowCmd.label    "Buka">
+<!ENTITY openLinkInWindowCmd.accesskey "k">
+<!ENTITY openFrameCmd.label           "Buka Bingkai dalam Tetingkap Baru">
+<!ENTITY openFrameCmd.accesskey       "T">
+<!ENTITY openFrameCmdInTab.label      "Buka Bingkai dalam Tab Baru">
+<!ENTITY openFrameCmdInTab.accesskey  "T">
+<!ENTITY keywordfield.label           "Tambah Kata kunci untuk Carian ini…">
+<!ENTITY keywordfield.accesskey       "K">
+<!ENTITY showOnlyThisFrameCmd.label     "Papar Hanya Bingkai Ini">
+<!ENTITY showOnlyThisFrameCmd.accesskey "P">
+<!ENTITY goBackCmd.label              "Undur">
+<!ENTITY goBackCmd.accesskey          "U">
+<!ENTITY goForwardCmd.label           "Seterusnya">
+<!ENTITY goForwardCmd.accesskey       "S">
+<!ENTITY goUpCmd.label                "Ke Atas">
+<!ENTITY goUpCmd.accesskey            "K">
+<!ENTITY reloadCmd.label              "Muat semula">
+<!ENTITY reloadCmd.accesskey          "M">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY stopCmd.label                "Berhenti">
+<!ENTITY stopCmd.accesskey            "B">
+<!ENTITY reloadFrameCmd.label         "Muat semula Bingkai">
+<!ENTITY reloadFrameCmd.accesskey     "M">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Papar Sumber Dipilih">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Papar Sumber MathML">
+<!ENTITY viewPartialSourceCmd.accesskey "u">
+<!ENTITY viewPageSourceCmd.label      "Papar Sumber Halaman">
+<!ENTITY viewPageSourceCmd.accesskey  "P">
+<!ENTITY viewFrameSourceCmd.label     "Papar Sumber Bingkai">
+<!ENTITY viewFrameSourceCmd.accesskey "P">
+<!ENTITY viewPageInfoCmd.label        "Papar Info Halaman">
+<!ENTITY viewPageInfoCmd.accesskey    "I">
+<!ENTITY viewFrameInfoCmd.label       "Papar Info Bingkai">
+<!ENTITY viewFrameInfoCmd.accesskey   "I">
+<!ENTITY fitImageCmd.label            "Acu Imej mengikut Tetingkap">
+<!ENTITY fitImageCmd.accesskey        "A">
+<!ENTITY reloadImageCmd.label         "Muat Semula Imej">
+<!ENTITY reloadImageCmd.accesskey     "M">
+<!ENTITY viewImageCmd.label           "Papar Imej">
+<!ENTITY viewImageCmd.accesskey       "I">
+<!ENTITY viewVideoCmd.label           "Papar Video">
+<!ENTITY viewVideoCmd.accesskey       "i">
+<!ENTITY viewBGImageCmd.label         "Papar Imej Latar belakang">
+<!ENTITY viewBGImageCmd.accesskey     "r">
+<!ENTITY setDesktopBackgroundCmd.label     "Tetapkan Latar belakang Desktop…">
+<!ENTITY setDesktopBackgroundCmd.accesskey "a">
+<!ENTITY bookmarkPageCmd.label        "Tandabuku Halaman Ini…">
+<!ENTITY bookmarkPageCmd.accesskey    "m">
+<!ENTITY bookmarkLinkCmd.label        "Tandabuku Pautan Ini…">
+<!ENTITY bookmarkLinkCmd.accesskey    "T">
+<!ENTITY bookmarkFrameCmd.label       "Tandabuku Bingkai Ini…">
+<!ENTITY bookmarkFrameCmd.accesskey   "b">
+<!ENTITY savePageAsCmd.label          "Simpan Halaman Sebagai…">
+<!ENTITY savePageCmd.label            "Simpan Halaman">
+<!ENTITY savePageCmd.accesskey        "n">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameAsCmd.label         "Simpan Bingkai Sebagai…">
+<!ENTITY saveFrameCmd.label           "Simpan Bingkai">
+<!ENTITY saveFrameCmd.accesskey       "a">
+<!ENTITY printFrameCmd.label          "Cetak Bingkai…">
+<!ENTITY printFrameCmd.accesskey      "C">
+<!ENTITY saveLinkAsCmd.label          "Simpan Sasaran Pautan Sebagai…">
+<!ENTITY saveLinkCmd.label            "Simpan Sasaran Pautan">
+<!ENTITY saveLinkCmd.accesskey        "S">
+<!ENTITY saveImageAsCmd.label         "Simpan Imej Sebagai…">
+<!ENTITY saveImageCmd.label           "Simpan Imej">
+<!ENTITY saveImageCmd.accesskey       "p">
+<!ENTITY saveVideoCmd.label           "Simpan Video Sebagai…">
+<!ENTITY saveVideoCmd.accesskey       "p">
+<!ENTITY saveAudioCmd.label           "Simpan Audio Sebagai…">
+<!ENTITY saveAudioCmd.accesskey       "p">
+<!ENTITY copyLinkCmd.label            "Salin Lokasi Pautan">
+<!ENTITY copyLinkCmd.accesskey        "L">
+<!ENTITY copyImageCmd.label           "Salin Imej">
+<!ENTITY copyImageCmd.accesskey       "n">
+<!ENTITY copyVideoURLCmd.label        "Salin Lokasi Video">
+<!ENTITY copyVideoURLCmd.accesskey    "L">
+<!ENTITY copyAudioURLCmd.label        "Salin Lokasi Audio">
+<!ENTITY copyAudioURLCmd.accesskey    "L">
+<!ENTITY metadataCmd.label            "Sifat">
+<!ENTITY metadataCmd.accesskey        "S">
+<!ENTITY copyEmailCmd.label           "Salin Alamat E-mel">
+<!ENTITY copyEmailCmd.accesskey       "t">
+<!ENTITY thisFrameMenu.label          "Bingkai Ini">
+<!ENTITY thisFrameMenu.accesskey      "k">
+<!ENTITY mediaPlay.label              "Main">
+<!ENTITY mediaPlay.accesskey          "M">
+<!ENTITY mediaPause.label             "Jeda">
+<!ENTITY mediaPause.accesskey         "J">
+<!ENTITY mediaMute.label              "Senyap">
+<!ENTITY mediaMute.accesskey          "S">
+<!ENTITY mediaUnmute.label            "Nyahsenyap">
+<!ENTITY mediaUnmute.accesskey        "p">
+<!ENTITY mediaPlaybackRate.label        "Kadar Main Semula">
+<!ENTITY mediaPlaybackRate.accesskey    "r">
+<!ENTITY mediaPlaybackRate050.label     "Gerakan Perlahan (½×)">
+<!ENTITY mediaPlaybackRate050.accesskey "G">
+<!ENTITY mediaPlaybackRate100.label     "Gerakan Normal">
+<!ENTITY mediaPlaybackRate100.accesskey "N">
+<!ENTITY mediaPlaybackRate125.label     "Gerakan Pantas (1¼×)">
+<!ENTITY mediaPlaybackRate125.accesskey "P">
+<!ENTITY mediaPlaybackRate150.label     "Kelajuan Tinggi (1½×)">
+<!ENTITY mediaPlaybackRate150.accesskey "T">
+<!ENTITY mediaPlaybackRate200.label     "Kelajuan Berganda">
+<!ENTITY mediaPlaybackRate200.accesskey "B">
+<!ENTITY mediaLoop.label              "Gelung">
+<!ENTITY mediaLoop.accesskey          "u">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label      "Papar Kawalan Media">
+<!ENTITY mediaShowControls.accesskey  "a">
+<!ENTITY mediaHideControls.label      "Sorok Kawalan Media">
+<!ENTITY mediaHideControls.accesskey  "a">
+<!ENTITY videoFullScreen.label        "Skrin Penuh">
+<!ENTITY videoFullScreen.accesskey    "P">
+<!ENTITY videoSaveImage.label         "Simpan Snapsyot Sebagai…">
+<!ENTITY videoSaveImage.accesskey     "S">
+<!ENTITY videoShowStats.label         "Papar Statistik">
+<!ENTITY videoShowStats.accesskey     "t">
+<!ENTITY videoHideStats.label         "Sorok Statistik">
+<!ENTITY videoHideStats.accesskey     "r">
+<!ENTITY search.accesskey             "W">
+<!ENTITY bidiSwitchPageDirectionItem.label        "Tukar Hala Halaman">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "n">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Tukar Hala Teks">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "k">
+<!ENTITY spellAddToDictionary.label     "Tambah dalam Kamus">
+<!ENTITY spellAddToDictionary.accesskey "m">
+<!ENTITY spellUndoAddToDictionary.label      "Batal Tambah dalam Kamus">
+<!ENTITY spellUndoAddToDictionary.accesskey  "u">
+<!ENTITY spellIgnoreWord.label          "Abaikan Perkataan">
+<!ENTITY spellIgnoreWord.accesskey      "P">
+<!ENTITY spellCheckEnable.label         "Semak Ejaan">
+<!ENTITY spellCheckEnable.accesskey     "S">
+<!ENTITY spellNoSuggestions.label       "(Tiada Cadangan Ejaan)">
+<!ENTITY spellDictionaries.label        "Bahasa">
+<!ENTITY spellDictionaries.accesskey    "B">
+<!ENTITY spellAddDictionaries.label     "Muat turun Kamus Lain…">
+<!ENTITY spellAddDictionaries.accesskey "M">
+<!-- Developer Tools -->
+<!ENTITY devtoolsInspect.label          "Periksa Elemen">
+<!ENTITY devtoolsInspect.accesskey      "n">

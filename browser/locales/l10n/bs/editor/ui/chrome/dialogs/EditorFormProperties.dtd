@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Postavke obrasca">
+
+<!ENTITY Settings.label "Postavke">
+
+<!ENTITY FormName.label "Naziv obrasca:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "URL radnje:">
+<!ENTITY FormAction.accesskey "a">
+<!ENTITY FormMethod.label "Metoda:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Kodiranje:">
+<!ENTITY FormEncType.accesskey "K">
+<!ENTITY FormTarget.label "Ciljni okvir:">
+<!ENTITY FormTarget.accesskey "C">
+
+<!ENTITY RemoveForm.label "Ukloni obrazac">
+<!ENTITY RemoveForm.accesskey "U">

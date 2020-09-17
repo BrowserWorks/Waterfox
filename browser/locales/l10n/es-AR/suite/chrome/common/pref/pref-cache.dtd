@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Caché">
+<!ENTITY pref.cache.caption              "Seleccionar opciones de caché">
+<!ENTITY cachePara                       "El caché guarda copias de los sitios que visita frecuentemente en su disco rígido (Recargar siempre muestra la última versión de una página). ">
+<!ENTITY cacheCheck.label                "Dejar que &brandShortName; administre el tamaño del caché.">
+<!ENTITY cacheCheck.accesskey            "l">
+<!ENTITY diskCacheUpTo.label             "Usar hasta">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "MB de espacio en disco para caché.">
+<!ENTITY diskCacheFolder.label           "Ubicación de la carpeta caché:">
+<!ENTITY clearDiskCache.label            "Borrar caché">
+<!ENTITY clearDiskCache.accesskey        "c">
+<!ENTITY chooseDiskCacheFolder.label     "Seleccionar carpeta…">
+<!ENTITY chooseDiskCacheFolder.accesskey "S">
+<!ENTITY diskCacheFolderExplanation      "Los archivos del caché serán guardados en una subcarpeta llamada &quot;Cache&quot; del directorio que especifique. Reinicie &brandShortName; para que se apliquen los cambios.">
+<!ENTITY docCache.label                  "Comparar la página en el caché con la página en la red:">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "Una vez por sesión">
+<!ENTITY checkEveryTime.label            "Cada vez que miro una página">
+<!ENTITY checkNever.label                "Nunca">
+<!ENTITY checkAutomatically.label        "Cuando la página esté vencida">
+
+<!ENTITY prefetchTitle.label             "Carga previa de enlaces">
+<!ENTITY enablePrefetch.label            "Cargar previamente las páginas cuando esté desocupado, de esta manera los enlaces a páginas web diseñados para una carga previa pueden cargarse más rápidamente">
+<!ENTITY enablePrefetch.accesskey        "p">

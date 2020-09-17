@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Panel Hartimi">
+<!ENTITY previewToolbarCmd.label "Shfletoni">
+<!ENTITY previewToolbarCmd.tooltip "Ngarkojeni këtë faqe në shfletues">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Eksportojeni si Tekst…">
+<!ENTITY exportToTextCmd.accesskey "T">
+<!ENTITY previewCmd.label "Shiheni Faqen">
+<!ENTITY previewCmd.accesskey "S">
+<!ENTITY sendPageCmd.label "Dërgojeni Faqen…">
+<!ENTITY sendPageCmd.accesskey "D">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Panel Hartimi">
+<!ENTITY compositionToolbarCmd.accesskey "H">
+<!ENTITY formattingToolbarCmd.label "Panel Formatimi">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Panel Mënyre Përpunimi">
+<!ENTITY editmodeToolbarCmd.accesskey "M">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Formatoni">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "Rrjetë pozicionimi">
+<!ENTITY grid.accesskey "R">
+<!ENTITY pageProperties.label "Titull dhe Veti Faqeje…">
+<!ENTITY pageProperties.accesskey "T">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Vleftësoji HTML-në">
+<!ENTITY validateCmd.accesskey "V">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normal">
+<!ENTITY NormalMode.label "Mënyra e Përpunimit Normal">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Shfaqni anë tabele dhe spiranca të emërtuara">
+<!ENTITY AllTagsModeTab.label "Etiketa HTML">
+<!ENTITY AllTagsMode.label "Etiketa HTML">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Shfaqni ikona për krejt etiketat HTML">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Burim">
+<!ENTITY HTMLSourceMode.label "Burim HTML">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Përpunoni burimin HTML">
+<!ENTITY PreviewModeTab.label "Paraparje">
+<!ENTITY PreviewMode.label "Paraparje">
+<!ENTITY PreviewMode.accesskey "P">
+<!ENTITY PreviewMode.tooltip "Shfaqeni si WYSIWYG (si në shfletues)">

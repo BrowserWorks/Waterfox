@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Правила фільтрації">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Назва фільтру:">
+<!ENTITY filterName.accesskey "І">
+
+<!ENTITY junk.label "Спам">
+<!ENTITY notJunk.label "Не спам">
+
+<!ENTITY lowestPriorityCmd.label "найнижчу">
+<!ENTITY lowPriorityCmd.label "низьку">
+<!ENTITY normalPriorityCmd.label "звичайну">
+<!ENTITY highPriorityCmd.label "високу">
+<!ENTITY highestPriorityCmd.label "найвищу">
+
+<!ENTITY contextDesc.label "Застосувати фільтр:">
+<!ENTITY contextIncomingMail.label "Отримання нової пошти:">
+<!ENTITY contextIncomingMail.accesskey "О">
+<!ENTITY contextManual.label "Вручну">
+<!ENTITY contextManual.accesskey "р">
+<!ENTITY contextBeforeCls.label "(перед перевіркою чи не спам)">
+<!ENTITY contextAfterCls.label "(по перевірці чи не спам)">
+<!ENTITY contextOutgoing.label "Після відправки">
+<!ENTITY contextOutgoing.accesskey "П">
+<!ENTITY contextArchive.label "Архівація">
+<!ENTITY contextArchive.accesskey "А">
+
+<!ENTITY contextPeriodic.accesskey "х">
+
+<!ENTITY filterActionDesc.label "Виконувати наступні дії:">
+<!ENTITY filterActionDesc.accesskey "и">
+
+<!ENTITY filterActionOrderWarning.label "Примітка: Дії фільтру запустяться в іншому порядку.">
+<!ENTITY filterActionOrder.label "див. Порядок виконання">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Перемістити повідомлення у">
+<!ENTITY copyMessage.label "Копіювати повідомлення у">
+<!ENTITY forwardTo.label "Переслати повідомлення до">
+<!ENTITY replyWithTemplate.label "Відповісти за шаблоном">
+<!ENTITY markMessageRead.label "Позначити як прочитане">
+<!ENTITY markMessageUnread.label "Позначити як нечитане">
+<!ENTITY markMessageStarred.label "Додати зірочку">
+<!ENTITY setPriority.label "Змінити важливість на">
+<!ENTITY addTag.label "Помітити повідомлення">
+<!ENTITY setJunkScore.label "Встановити ознаку спаму">
+<!ENTITY deleteMessage.label "Видалити повідомлення">
+<!ENTITY deleteFromPOP.label "Видалити з POP-сервера">
+<!ENTITY fetchFromPOP.label "Завантажити з POP-сервера">
+<!ENTITY ignoreThread.label "Ігнорувати гілку">
+<!ENTITY ignoreSubthread.label "Ігнорувати підгілку">
+<!ENTITY watchThread.label "Відстежувати гілку">
+<!ENTITY stopExecution.label "Припинити роботу фільтра">
+
+<!ENTITY addAction.tooltip "Додати нову дію">
+<!ENTITY removeAction.tooltip "Вилучити цю дію">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

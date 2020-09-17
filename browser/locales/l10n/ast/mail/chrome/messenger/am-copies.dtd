@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Axustes de copies y carpetes">
+<!ENTITY sendingPrefix.label "Al unviar mensaxes, automáticamente: ">
+<!ENTITY fccMailFolder.label "Poner una copia en:">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "Allugar rempuestes na carpeta del mensaxe al que se respuende">
+<!ENTITY fccReplyFollowsParent.accesskey "A">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc a estes direiciones de corréu:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Separtar direiciones con comes">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Cct a estes direiciones de corréu:">
+<!ENTITY bccAddress.accesskey "t">
+<!ENTITY bccAddressList.placeholder "Separtar direiciones con comes">
+<!ENTITY saveMessageDlg.label "Amosar diálogu de confirmación cuando se guarden los mensaxes">
+<!ENTITY saveMessageDlg.accesskey "M">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Carpeta &quot;Unvios Fechos&quot; en:">
+<!ENTITY sentFolderOn.accesskey "U">
+<!ENTITY sentInOtherFolder.label "Otru:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Archivos de mensaxes">
+<!ENTITY keepArchives.label "Guardar archivos de mensaxes en:">
+<!ENTITY keepArchives.accesskey "G">
+<!ENTITY archiveHierarchyButton.label "Opciones d'archiváu…">
+<!ENTITY archiveHierarchyButton.accesskey "h">
+<!ENTITY archivesFolderOn.label "Carpeta &quot;Archivos&quot; en:">
+<!ENTITY archivesFolderOn.accesskey "A">
+<!ENTITY archiveInOtherFolder.label "Otru:">
+<!ENTITY archiveInOtherFolder.accesskey "O">
+<!ENTITY specialFolders.label "Borradores y plantíes">
+<!ENTITY keepDrafts2.label "Calterner borradores en:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Carpeta &quot;Borradores&quot; en:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "Otru:">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "Guardar les plantíes de mensaxes en:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Carpeta &quot;Plantíes&quot; en:">
+<!ENTITY templatesFolderOn.accesskey "n">
+<!ENTITY templateInOtherFolder.label "Otru:">
+<!ENTITY templateInOtherFolder.accesskey "r">

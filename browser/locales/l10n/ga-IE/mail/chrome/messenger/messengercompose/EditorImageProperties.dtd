@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Airíonna Íomhá">
+
+<!ENTITY pixelsPopup.value "picteilíní">
+<!-- These are in the Location tab panel -->
+
+<!ENTITY locationEditField.label "Suíomh na hÍomhá:">
+<!ENTITY locationEditField.accessKey "S">
+<!ENTITY locationEditField.tooltip "Iontráil comhadainm nó suíomh na híomhá">
+<!ENTITY locationEditField.shortenedDataURI "URI sonraí giorraithe (cuirfear an URI iomlán sa ghearrthaisce má chóipeálann tú é)">
+<!ENTITY title.label "Leid Uirlise:">
+<!ENTITY title.accessKey "L">
+<!ENTITY title.tooltip "An aitreabúid HTML &quot;title&quot; a thaispeánfar mar leid uirlise">
+<!ENTITY altText.label "Téacs mar Mhalairt:">
+<!ENTITY altText.accessKey "a">
+<!ENTITY altTextEditField.tooltip "Iontráil an téacs le taispeáint in áit na híomhá">
+<!ENTITY noAltText.label "Ná húsáid téacs mar mhalairt">
+<!ENTITY noAltText.accessKey "N">
+
+<!ENTITY previewBox.label "Réamhamharc Íomhá">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+
+<!ENTITY actualSize.label "Fíormhéid:">
+<!ENTITY actualSizeRadio.label "Fíormhéid">
+<!ENTITY actualSizeRadio.accessKey "F">
+<!ENTITY actualSizeRadio.tooltip "Fill ar fhíormhéid na híomhá">
+<!ENTITY customSizeRadio.label "Méid Saincheaptha">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "Athraigh méid na híomhá agus í á taispeáint sa leathanach">
+<!ENTITY heightEditField.label "Airde:">
+<!ENTITY heightEditField.accessKey "d">
+<!ENTITY widthEditField.label "Leithead:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY constrainCheckbox.label "Cuir Iallach Air">
+<!ENTITY constrainCheckbox.accessKey "C">
+<!ENTITY constrainCheckbox.tooltip "Coimeád cóimheas treoíochta na híomhá">
+<!-- These controls are in the Image Map box of the expanded area -->
+
+<!ENTITY imagemapBox.label "Mapa Íomhá">
+<!ENTITY removeImageMapButton.label "Bain">
+<!ENTITY removeImageMapButton.accessKey "B">
+<!-- These are the options for image alignment -->
+
+<!ENTITY alignment.label "Ailínigh an Téacs leis an Íomhá">
+<!ENTITY bottomPopup.value "Ag an mbun">
+<!ENTITY topPopup.value "Ag an mbarr">
+<!ENTITY centerPopup.value "Sa lár">
+<!ENTITY wrapRightPopup.value "Timfhilleadh ar dheis">
+<!ENTITY wrapLeftPopup.value "Timfhilleadh ar chlé">
+<!-- These controls are in the Spacing Box -->
+
+<!ENTITY spacingBox.label "Spásáil">
+<!ENTITY leftRightEditField.label "Deis agus clé:">
+<!ENTITY leftRightEditField.accessKey "l">
+<!ENTITY topBottomEditField.label "Barr agus Bun:">
+<!ENTITY topBottomEditField.accessKey "B">
+<!ENTITY borderEditField.label "Imlíne sholadach:">
+<!ENTITY borderEditField.accessKey "s">
+<!-- These controls are in the Link Box -->
+
+<!ENTITY showImageLinkBorder.label "Taispeáin imlíne timpeall na híomhá nasctha">
+<!ENTITY showImageLinkBorder.accessKey "i">
+<!ENTITY LinkAdvancedEditButton.label "Ardeagraíocht Naisc…">
+<!ENTITY LinkAdvancedEditButton.accessKey "N">
+<!ENTITY LinkAdvancedEditButton.tooltip "Cuir tréithe HTML, tréithe stíle nó JavaScript leis, nó athraigh iad">
+<!-- These tabs are currently used in the image input dialog -->
+
+<!ENTITY imageInputTab.label "Foirm">
+<!ENTITY imageLocationTab.label "Suíomh">
+<!ENTITY imageDimensionsTab.label "Toisí">
+<!ENTITY imageAppearanceTab.label "Cuma">
+<!ENTITY imageLinkTab.label "Nasc">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Om ChatZilla">
+
+<!ENTITY chatzilla.label       "ChatZilla">
+<!ENTITY version.unknown.label "Ukjent versjon">
+<!ENTITY version.known.label   "Versjon &#37;S">
+<!ENTITY description.label     "En enkel, brukervennlig og utvidbar Internet Relay Chat (IRC)-klient.">
+
+<!ENTITY homepage.label    "Besøk hjemmeside">
+<!ENTITY copyversion.label "Kopier versjonsdetaljer">
+
+<!ENTITY section.core.label    "Kjerneutviklere:">
+<!ENTITY section.locale.label  "Oversetting:">
+<!ENTITY section.contrib.label "Bidragsytere:">

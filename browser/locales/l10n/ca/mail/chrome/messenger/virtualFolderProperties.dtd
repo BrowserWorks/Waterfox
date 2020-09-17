@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Carpeta de cerca desada nova">
+<!ENTITY name.label                 "Nom:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Crea-la com a subcarpeta de:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "Configureu el criteri de cerca que s'utilitza per a aquesta carpeta de cerca desada:">
+
+<!ENTITY folderSelectionCaption.label "Seleccioneu les carpetes que voleu cercar:">
+<!ENTITY chooseFoldersButton.label "Trieu…">
+<!ENTITY chooseFoldersButton.accesskey "T">
+
+<!ENTITY searchOnline.label "Cerca en línia (dóna resultats actualitzats de les carpetes d'IMAP i dels grups de discussió, però triga més temps a l'hora d'obrir la carpeta)">
+<!ENTITY searchOnline.accesskey "I">
+<!ENTITY newFolderButton.label       "Crea">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "Actualitza">
+<!ENTITY editFolderButton.accesskey  "A">

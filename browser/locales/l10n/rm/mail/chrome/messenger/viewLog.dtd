@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Protocol da filters">
+<!ENTITY viewLogInfo.text "Il protocol da filters è ina datoteca che documentescha tge filters ch'èn vegnids exequids per quest conto. Utilisescha la chaschetta da controlla sutvart per activar la registraziun.">
+<!ENTITY clearLog.label "Svidar il protocol">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "Activar il protocol da filters">
+<!ENTITY enableLog.accesskey "E">
+<!ENTITY closeLog.label "Serrar">
+<!ENTITY closeLog.accesskey "S">

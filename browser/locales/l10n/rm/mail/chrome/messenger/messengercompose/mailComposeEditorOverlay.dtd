@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY attachImageSource.label         "Agiuntar questa grafica al messadi">
+<!ENTITY attachImageSource.accesskey     "s">
+
+<!ENTITY attachLinkSource.label          "Agiuntar il text da funtauna da questa colliaziun al messadi">
+<!ENTITY attachLinkSource.accesskey      "s">

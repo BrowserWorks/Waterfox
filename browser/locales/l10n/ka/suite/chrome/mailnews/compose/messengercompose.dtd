@@ -1,0 +1,140 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "შექმნა: (თემის გარეშე)">
+
+<!ENTITY fromAddr.label "ვისგან:">
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY toAddr.label "ვის:">
+<!ENTITY ccAddr.label "ასლი:">
+<!ENTITY bccAddr.label "ფარული ასლი:">
+<!ENTITY replyAddr.label "პასუხი:">
+<!ENTITY newsgroupsAddr.label "ჯგუფი:">
+<!ENTITY followupAddr.label "კრება:">
+<!ENTITY subject.label "თემა:">
+<!ENTITY subject.accesskey "S">
+<!ENTITY attachments.label "დანართები:">
+<!ENTITY attachments.accesskey "c">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "შენახვა">
+<!ENTITY saveCmd.accesskey "s">
+<!ENTITY saveAsCmd.label "ჩაწერა როგორც">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsFileCmd.label "ფაილი…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "ესკიზი">
+<!ENTITY saveAsDraftCmd.accesskey "ე">
+<!ENTITY saveAsTemplateCmd.label "შაბლონი">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY attachMenu.label "თანდართვა">
+<!ENTITY attachMenu.accesskey "t">
+<!ENTITY attachFileCmd.label "ფაილ(ებ)ი…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "ვებ გვერდი…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "პირადი ბარათი (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY sendNowCmd.label "გაგზავნა">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "გაგზავნა მოგვიანებით">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "L">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "გადაფორმატება">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "w">
+<!ENTITY accountManagerCmd.label "ფოსტისა და ჯგუფების ანგარიშთა პარამეტრები…">
+<!ENTITY accountManagerCmd.accesskey "m">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "ფოსტის ხელსაწყოთა ზოლი">
+<!ENTITY showComposeToolbarCmd.accesskey "ო">
+<!ENTITY showFormatToolbarCmd.label "გაფორმების ხელსაწყოთა ზოლი">
+<!ENTITY showFormatToolbarCmd.accesskey "F">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "ფორმატი">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "პარამეტრები">
+<!ENTITY optionsMenu.accesskey "p">
+
+<!ENTITY quoteCmd.label "წერილის ციტირება">
+<!ENTITY quoteCmd.accesskey "Q">
+<!ENTITY selectAddressCmd.label "მისამართების შერჩევა…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "A">
+
+<!ENTITY priorityMenu.label "პრიორიტეტი">
+<!ENTITY priorityMenu.accesskey "p">
+<!ENTITY lowestPriorityCmd.label "უდაბლესი">
+<!ENTITY lowestPriorityCmd.accesskey "l">
+<!ENTITY lowPriorityCmd.label "დაბალი">
+<!ENTITY lowPriorityCmd.accesskey "o">
+<!ENTITY normalPriorityCmd.label "ჩვეულებრივი">
+<!ENTITY normalPriorityCmd.accesskey "n">
+<!ENTITY highPriorityCmd.label "მაღალი">
+<!ENTITY highPriorityCmd.accesskey "i">
+<!ENTITY highestPriorityCmd.label "უმაღლესი">
+<!ENTITY highestPriorityCmd.accesskey "H">
+
+<!ENTITY returnReceiptMenu.label "მიღების დასტური">
+<!ENTITY returnReceiptMenu.accesskey "ტ">
+<!ENTITY dsnMenu.label "მიწოდების სტატუსის გზავნილი">
+<!ENTITY dsnMenu.accesskey "N">
+
+<!ENTITY outputFormatMenu.label "ფორმატი">
+<!ENTITY outputFormatMenu.accesskey  "f">
+<!ENTITY autoFormatCmd.label "თვითამოცნობა">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "მხოლოდ ჩვეულებრივი ტექსტი">
+<!ENTITY plainTextFormatCmd.accesskey "p">
+<!ENTITY htmlFormatCmd.label "მხოლოდ დაფორმატებული (HTML) ტექსტი">
+<!ENTITY htmlFormatCmd.accesskey "r">
+<!ENTITY bothFormatCmd.label "ჩვეულებრივი და დაფორმატებული (HTML) ტექსტი">
+<!ENTITY bothFormatCmd.accesskey "l">
+
+<!ENTITY fileCarbonCopyCmd.label "ასლის გადაგზავნა">
+<!ENTITY fileCarbonCopyCmd.accesskey "გ">
+<!ENTITY fileHereMenu.label "შენახვა აქ">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "გაგზავნა">
+<!ENTITY addressButton.label "მისამართი">
+<!ENTITY attachButton.label "მიმაგრება">
+<!ENTITY spellingButton.label "მართლწერა">
+<!ENTITY saveButton.label "შენახვა">
+<!ENTITY stopButton.label "შეწყვეტა">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "მისამართების პანელი">
+<!ENTITY formatToolbar.tooltip "გაფორმების ხელსაწყოთა ზოლი">
+<!ENTITY sendButton.tooltip "ამ წერილის გაგზავნა ახლავე"> 
+<!ENTITY sendlaterButton.tooltip "ამ წერილის გაგზავნა მოგვიანებით"> 
+<!ENTITY addressButton.tooltip "მიმღების შერჩევა წიგნაკიდან"> 
+<!ENTITY attachButton.tooltip "დანართის ჩათვლით"> 
+<!ENTITY saveButton.tooltip "ამ გზავნილის შენახვა"> 
+<!ENTITY stopButton.tooltip "მიმდინარე გადაცემის შეწყვეტა"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "გახსნა">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY renameAttachment.label "გადარქმევა…">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY deleteAttachment.accesskey "D">
+<!ENTITY selectAllAttachments.accesskey "A">
+<!ENTITY attachFile.label "ფაილ(ებ)ის მიმაგრება…">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachPage.label "ვებგვერდის მიმაგრება…">
+<!ENTITY attachPage.accesskey "W">

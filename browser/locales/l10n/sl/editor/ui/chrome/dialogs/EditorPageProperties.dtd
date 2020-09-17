@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Lastnosti strani">
+<!ENTITY location.label "Mesto:">
+<!ENTITY lastModified.label "Zadnja sprememba:">
+<!ENTITY titleInput.label "Naziv:">
+<!ENTITY titleInput.accessKey "N">
+<!ENTITY authorInput.label "Avtor:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "Opis:">
+<!ENTITY descriptionInput.accessKey "O">
+<!ENTITY locationNewPage.label "[Nova stran, še ni shranjena]">
+<!ENTITY EditHEADSource1.label "Napredni uporabniki:">
+<!ENTITY EditHEADSource2.label "Za urejanje vsebine področja &lt;glavo&gt; uporabite &quot;Vir HTML &quot; v meniju Pogled ali v orodni vrstici za urejevalni način.">

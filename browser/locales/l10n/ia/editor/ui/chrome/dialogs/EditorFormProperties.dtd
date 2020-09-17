@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietates del modulo">
+
+<!ENTITY Settings.label "Parametros">
+
+<!ENTITY FormName.label "Ab nomine:">
+<!ENTITY FormName.accesskey "n">
+<!ENTITY FormAction.label "URL del action:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "Methodo:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Codification:">
+<!ENTITY FormEncType.accesskey "d">
+<!ENTITY FormTarget.label "Quadro destinatario:">
+<!ENTITY FormTarget.accesskey "d">
+
+<!ENTITY RemoveForm.label "Remover formulario">
+<!ENTITY RemoveForm.accesskey "R">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Neuer virtueller Ordner">
+<!ENTITY name.label                 "Name des virtuellen Ordners:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Erstellen als Unterordner von:">
+<!ENTITY description.accesskey      "s">
+
+<!ENTITY searchTermCaption.label "Kriterien für die Suche dieses virtuellen Ordners:">
+
+<!ENTITY folderSelectionCaption.label "Diese Ordner durchsuchen:">
+<!ENTITY chooseFoldersButton.label     "Auswählen…">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label     "Online suchen (Aktuelle Ergebnisse bei IMAP- und News-Konten - Öffnen des virtuellen Ordners dauert länger)">
+<!ENTITY searchOnline.accesskey "O">
+<!ENTITY newFolderButton.label       "Erstellen">
+<!ENTITY newFolderButton.accesskey   "E">
+<!ENTITY editFolderButton.label      "Aktualisieren">
+<!ENTITY editFolderButton.accesskey  "A">

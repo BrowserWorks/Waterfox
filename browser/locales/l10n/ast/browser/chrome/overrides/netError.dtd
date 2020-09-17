@@ -1,0 +1,175 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Hebo un problema al cargar la páxina">
+<!ENTITY retry.label "Retentar">
+<!ENTITY returnToPreviousPage.label "Dir p'atrás">
+<!ENTITY returnToPreviousPage1.label "Dir p'atrás (aconséyase)">
+<!ENTITY advanced2.label "Avanzao…">
+<!ENTITY viewCertificate.label "Ver el certificáu">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Nun s'alcontró'l sirvidor">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Si la direición ye correuta, equí tienes tres coses que pues probar:</strong>
+<ul>
+  <li>Volvi tentalo más sero.</li>
+  <li>Comprueba la conexón d'internet.</li>
+  <li>Si tas coneutáu pero darrera d'un tornafuéu, comprueba que &brandShortName; tien permisu p'acceder a la Web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Comprueba les mayúscules u otros fallos d'escritura nel nome'l ficheru.</li>
+  <li>Mira si'l ficheru se movió, renomó o desanició.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Quiciabes tea desaniciáu, movíu o que los permisos del ficheru tean evitando l'accesu.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; nun pue cargar esta páxina por daqué razón.</p>
+">
+
+<!ENTITY captivePortal.title "Aniciu de sesión na rede">
+<!ENTITY captivePortal.longDesc2 "
+<p>Has aniciar sesión nesta rede enantes de que pueas acceder a internet.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Abrir páxina d'aniciu de sesión">
+
+<!ENTITY malformedURI.pageTitle "URL non válida">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>El documentu solicitáu nun ta disponible na caché de &brandShortName;.</p><ul><li>Como midida de seguranza, &brandShortName; nun vuelve a solicitar documentos sensibles.</li><li>Primi «Tentar de nueves» pa volver a solicitar el documentu del sitiu web.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Primi «Tentar de nueves» pa camudar al mou en llinia y recargar la páxinaess.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Contauta colos dueños del sitiu pa informa-yos d'esti problema, por favor.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Contauta colos dueños del sitiu web pa informa-yos d'esti problema, por favor.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Quiciabes precises instalar otru software p'abrir esta direicón.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Comprueba los axustes del proxy y asegúrate que tán bien.</li>
+  <li>Contauta col to alministrador de rede p'asegurar que'l sirvidor proxy
+    ta funcionando.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Comprueba los axustes del proxy y asegúrate que tán bien.</li>
+  <li>Asegúrate que'l to ordenador tien una conexón a internet que funciona.</li>
+  <li>Si'l to ordenador o rede tán protexíos por un tornafuéu o proxy, asegúrate
+    que &brandShortName; tien permisu p'acceder a la web.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>A vegaes esti problema pue tar causáu por deshabilitar o refugar
+    l'aceutación de cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Comprueba que'l to sistema tien instaláu'l Xestor de Seguranza
+    Personal.</li>
+  <li>Esto quiciabes seya pola mor d'una configuración non estándar
+    nel sirvidor.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Nun pue amosase la páxina que tas tentando de ver porque nun pudo verificase l'autenticidá de los datos recibíos.</li>
+  <li>Contauta colos dueños del sitiu web pa informa-yos d'esti problema.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+
+
+
+
+
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>El sitiu podría tar perocupáu o nun tar disponible temporalmente. Volvi
+    tentalo nun momentu.</li>
+  <li>Si nun yes a cargar páxina dala, comprueba la conexón del to ordenador.</li>
+  <li>Si'l to ordenador ta protexíu por un tornafuéu o proxy, asegúrate que
+    &brandShortName; tien permisu p'acceder a la web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; evitó qu'esta páxina cargue d'esti mou porque tien una política de seguranza de conteníu que nun lo permite.</p>">
+
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Nun pue amosase la páxina que tas tentando de ver porque deteutóse un fallu na tresmisión de datos.</p><ul><li>Contauta colos dueños del sitiu pa informa-yos d'esti problema, por favor.</li></ul>">
+
+
+<!ENTITY errorReporting.automatic2 "Informa de fallos como esti p'ayudar a Mozilla a identificar y bloquiar sitios maliciosos">
+<!ENTITY errorReporting.learnMore "Deprendi más…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Contauta colos dueños del sitiu web pa informa-yos d'esti problema, por favor.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Información avanzada: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.copyToClipboard.label "Copiar testu al cartafueyu">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> usa una teunoloxía de seguranza que nun ta anovada y ye vulnerable a ataques. Un atacante podría, de mou cenciellu, revelar información personal que pensabes que taba segura. L'alministrador del sitiu web precisará iguar el sirvidor enantes que pueas visitalu.</p><p>Códigu de fallu: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+
+
+
+<!ENTITY prefReset.longDesc "Paez que los tos axustes de seguranza de rede puen tar causando esto. ¿Quies reafitalos?">
+<!ENTITY prefReset.label "Reafitar axustes">
+
+

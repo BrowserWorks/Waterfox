@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "Rujikomal Tzijol">
+<!ENTITY subject.plaintextWarning "Ch'utitzijol: Ri taq rucholaj rutaqikil tzijol majub'ey newäx kisik'ixik.">
+<!ENTITY status.heading "Ri rupam atzijol ke re' rub'eyal xtitaq:">
+<!ENTITY status.signed "Kematz'ib'il juch'un:">
+<!ENTITY status.encrypted "Ewan rusik'ixik:">
+<!ENTITY status.certificates "Taq ruwujil b'i'aj:">
+<!ENTITY view.label "Titz'et">
+<!ENTITY view.accesskey "T">
+<!ENTITY tree.recipient "K'ulunel">
+<!ENTITY tree.status "B'anikil">
+<!ENTITY tree.issuedDate "Talun">
+<!ENTITY tree.expiresDate "Xtik'o ruq'ijul">

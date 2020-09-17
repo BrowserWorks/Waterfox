@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Assistent d'importacion">
+
+<!ENTITY importFromWin.label            "Importar las opcions, paramètres dels comptes, quasernet d'adreças, filtres e las autras donadas dempuèi :">
+<!ENTITY importFromNonWin.label         "Importar las preferéncias, paramètres dels comptes, quasernet d'adreças, filtres e las autras donadas dempuèi :">
+
+<!ENTITY importFromNothing.label        "Importar pas res">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Importar los paramètres e los dorsièrs de messatges">
+<!ENTITY importItems.title              "Elements d'importar">
+<!ENTITY importItems.label              "Seleccionatz los elements d'importar :">
+
+<!ENTITY migrating.title                "Importacion…">
+<!ENTITY migrating.label                "Los elements seguents son en cors d'importacion…">
+
+<!ENTITY selectProfile.title            "Seleccionatz lo perfil">
+<!ENTITY selectProfile.label            "Los perfils seguents son disponibles coma font de l'importacion :">
+
+<!ENTITY done.title                     "Importacion acabada">
+<!ENTITY done.label                     "Los elements seguents son estats importats corrèctament :">

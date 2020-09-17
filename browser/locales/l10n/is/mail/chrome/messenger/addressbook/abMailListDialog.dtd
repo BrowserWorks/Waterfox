@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title "Nýr póstlisti">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label "Bæta við: ">
+<!ENTITY addToAddressBook.accesskey "B">
+<!ENTITY ListName.label "Heiti lista: ">
+<!ENTITY ListName.accesskey "l">
+<!ENTITY ListNickName.label "Gælunafn lista: ">
+<!ENTITY ListNickName.accesskey "n">
+<!ENTITY ListDescription.label "Lýsing: ">
+<!ENTITY ListDescription.accesskey "s">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label "Sláðu inn tölvupóstfang til að bæta við í póstlistann:">
+<!ENTITY AddressTitle.accesskey "">
+<!ENTITY UpButton.label "Færa upp">
+<!ENTITY DownButton.label "Færa niður">

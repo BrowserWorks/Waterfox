@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AddToAddressBook.label "Дадаць у адрасную кнігу…">
+<!ENTITY AddToAddressBook.accesskey "к">
+<!ENTITY EditContact.label "Правіць сувязь…">
+<!ENTITY EditContact.accesskey "П">
+<!ENTITY ViewContact.label "Прагляд сувязі">
+<!ENTITY ViewContact.accesskey "г">
+<!ENTITY SendMailTo.label "Укласці ліст да…">
+<!ENTITY SendMailTo.accesskey "у">
+<!ENTITY CopyEmailAddress.label "Капіяваць адрас э-пошты">
+<!ENTITY CopyEmailAddress.accesskey "к">
+<!ENTITY CreateFilterFrom.label "Стварыць сіта з…">
+<!ENTITY CreateFilterFrom.accesskey "с">
+<!ENTITY openInBrowser.label "Адкрыць у азіральніку">
+<!ENTITY openInBrowser.accesskey "к">
+<!ENTITY bookmarkLinkCmd.label "Закласці гэтую спасылку…">
+<!ENTITY bookmarkLinkCmd.accesskey "З">
+<!ENTITY copyLinkCmd.label "Капіяваць месцазнаходжанне спасылкі">
+<!ENTITY copyLinkCmd.accesskey "К">
+<!ENTITY CopyMessageId.label "Капіяваць Вызначальнік-Ліста">
+<!ENTITY CopyMessageId.accesskey "К">
+<!ENTITY OpenMessageForMsgId.label "Адкрыць ліст з вызначальнікам">
+<!ENTITY OpenMessageForMsgId.accesskey "А">
+<!ENTITY OpenBrowserWithMsgId.label "Адкрыць азіральнік з Вызначальнікам-Ліста">
+<!ENTITY OpenBrowserWithMsgId.accesskey "В">

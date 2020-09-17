@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xul -->
+
+<!-- extracted from content/viewSource.xhtml -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Izvor od: ">
+
+<!ENTITY fileMenu.label "Datoteka">
+<!ENTITY savePageCmd.label "Spasi stranicu kao…">
+<!ENTITY pageSetupCmd.label "Postavljanje stranice…">
+<!ENTITY printPreviewCmd.label "Pregled prije štampanja">
+<!ENTITY printCmd.label "Štampaj…">
+<!ENTITY closeCmd.label "Zatvori">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Idi na liniju…">
+
+<!ENTITY viewMenu.label           "Prikaz">
+<!ENTITY reloadCmd.label "Učitaj ponovo">
+<!ENTITY menu_wrapLongLines.title "Prelomi duge linije">
+<!ENTITY menu_highlightSyntax.label "Isticanje sintakse">
+<!ENTITY menu_textSize.label "Veličina teksta">
+<!ENTITY menu_textEnlarge.label "Povećaj">
+<!ENTITY menu_textReduce.label "Smanji">
+<!ENTITY menu_textReset.label "Normalno">
+
+<!ENTITY findOnCmd.label     "Pronađi na ovoj stranici…">
+<!ENTITY findAgainCmd.label  "Pronađi ponovo">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+
+<!ENTITY backCmd.label "Nazad">
+<!ENTITY forwardCmd.label "Naprijed">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Kopiraj lokaciju linka">
+<!ENTITY copyEmailCmd.label "Kopiraj email adresu">
+

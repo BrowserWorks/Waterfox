@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label "&syncBrand.fullName.label; kurulumu">
+<!ENTITY setupButton.accesskey "k">
+<!ENTITY weaveDesc.label "&syncBrand.fullName.label; tüm aygıtlarınızdan tarama geçmişinize, yer imlerinize, parolalarınıza ve açık sekmelerinize erişmenize olanak sağlar.">
+<!-- The page shown when logged in... -->
+
+<!ENTITY accountGroupboxCaption.label "&syncBrand.fullName.label; hesabı">
+<!ENTITY accountName.label "Account Name:">
+<!-- Login error feedback -->
+
+<!ENTITY updatePass.label "Güncelle">
+<!ENTITY updatePass.accesskey "G">
+<!ENTITY resetPass.label "Sıfırla">
+<!ENTITY resetPass.accesskey "S">
+<!-- Manage Account -->
+
+<!ENTITY manageAccount.label "Manage Account">
+<!ENTITY manageAccount.accesskey "A">
+<!ENTITY viewQuota.label "View Quota">
+<!ENTITY viewQuota.accesskey "V">
+<!ENTITY changePassword.label "Change Password">
+<!ENTITY changePassword.accesskey "C">
+<!ENTITY myRecoveryKey.label "My Recovery Key">
+<!ENTITY myRecoveryKey.accesskey "M">
+<!ENTITY resetSync.label "Reset Sync">
+<!ENTITY resetSync.accesskey "R">
+<!ENTITY deactivateDevice.label "Deactivate This Device">
+<!ENTITY deactivateDevice.accesskey "D">
+<!ENTITY addDevice.label "Add a Device">
+<!ENTITY addDevice.accesskey "A">
+<!-- Sync Settings -->
+
+<!ENTITY syncComputerName.label "Computer Name:">
+<!ENTITY syncComputerName.accesskey "N">
+
+<!ENTITY syncMy2.label "Sync My:">
+<!ENTITY engine.bookmarks.label "Yer İmleri">
+<!ENTITY engine.bookmarks.accesskey "e">
+<!ENTITY engine.tabs.label "Sekmeler">
+<!ENTITY engine.tabs.accesskey "S">
+<!ENTITY engine.history.label "Geçmiş">
+<!ENTITY engine.history.accesskey "G">
+<!ENTITY engine.passwords.label "Passwords">
+<!ENTITY engine.passwords.accesskey "w">
+<!ENTITY engine.prefs.label "Tercihler">
+<!ENTITY engine.prefs.accesskey "T">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label "kullanım koşullarını">
+<!ENTITY prefs.ppLink.label "gizlilik politikasını">

@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Broskall">
+<!ENTITY insertSmiley.accesskey "s">
+<!ENTITY smiley1Cmd.label "Bros">
+<!ENTITY smiley1Cmd.accesskey "s">
+<!ENTITY smiley1Cmd.tooltip "Setja inn broskall">
+<!ENTITY smiley2Cmd.label "Fýlusvipur">
+<!ENTITY smiley2Cmd.accesskey "F">
+<!ENTITY smiley2Cmd.tooltip "Setja inn fýlusvip">
+<!ENTITY smiley3Cmd.label "Blikka">
+<!ENTITY smiley3Cmd.accesskey "B">
+<!ENTITY smiley3Cmd.tooltip "Setja inn blikka andlit">
+<!ENTITY smiley4Cmd.label "Ulla">
+<!ENTITY smiley4Cmd.accesskey "U">
+<!ENTITY smiley4Cmd.tooltip "Setja inn ullandi andlit">
+<!ENTITY smiley5Cmd.label "Hlæja">
+<!ENTITY smiley5Cmd.accesskey "l">
+<!ENTITY smiley5Cmd.tooltip "Setja inn hlæjandi andlit">
+<!ENTITY smiley6Cmd.label "Skammast sín">
+<!ENTITY smiley6Cmd.accesskey "m">
+<!ENTITY smiley6Cmd.tooltip "Setja inn skammast sín andlit">
+<!ENTITY smiley7Cmd.label "Óákveðin">
+<!ENTITY smiley7Cmd.accesskey "ð">
+<!ENTITY smiley7Cmd.tooltip "Setja inn óákveðið andlit">
+<!ENTITY smiley8Cmd.label "Undrandi">
+<!ENTITY smiley8Cmd.accesskey "d">
+<!ENTITY smiley8Cmd.tooltip "Setja inn undrandi andlit">
+<!ENTITY smiley9Cmd.label "Kyssa">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "Setja inn kyssandi andlit">
+<!ENTITY smiley10Cmd.label "Öskra">
+<!ENTITY smiley10Cmd.accesskey "Ö">
+<!ENTITY smiley10Cmd.tooltip "Setja inn öskrandi andlit">
+<!ENTITY smiley11Cmd.label "Svalur">
+<!ENTITY smiley11Cmd.accesskey "v">
+<!ENTITY smiley11Cmd.tooltip "Setja inn svalt andlit">
+<!ENTITY smiley12Cmd.label "Peningar">
+<!ENTITY smiley12Cmd.accesskey "P">
+<!ENTITY smiley12Cmd.tooltip "Setja inn peninga andlit">
+<!ENTITY smiley13Cmd.label "Tala af sér">
+<!ENTITY smiley13Cmd.accesskey "r">
+<!ENTITY smiley13Cmd.tooltip "Setja inn tala af sér andlit">
+<!ENTITY smiley14Cmd.label "Saklaus">
+<!ENTITY smiley14Cmd.accesskey "a">
+<!ENTITY smiley14Cmd.tooltip "Setja inn saklaust andlit">
+<!ENTITY smiley15Cmd.label "Gráta">
+<!ENTITY smiley15Cmd.accesskey "t">
+<!ENTITY smiley15Cmd.tooltip "Setja inn grátandi andlit">
+<!ENTITY smiley16Cmd.label "Segi ekki orð">
+<!ENTITY smiley16Cmd.accesskey "e">
+<!ENTITY smiley16Cmd.tooltip "Setja inn segi ekki orð andlit">
+<!ENTITY SmileButton.tooltip "Setja inn broskall">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Shkarko dhe Njëkohëso Mesazhe">
+<!ENTITY MsgSelect.label "Përbërës për Përdorim Pa Qenë i Lidhur">
+<!ENTITY MsgSyncDesc.label "Nëse keni përzgjedhur tashmë dosje poste ose grupe lajmesh për përdorim pa qenë i lidhur, mund t&apos;i shkarkoni dhe/ose njëkohësoni tani. Përndryshe, përdorni butonin &quot;Përzgjidhni&quot; për të zgjedhur dosje poste dhe grupe lajmesh për përdorim pa qenë i lidhur.">
+<!ENTITY MsgSyncDirections.label "Shkarko dhe/ose njëkohëso vijuesen:">
+<!ENTITY syncTypeMail.label "Mesazhe poste">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "Mesazhe Grupi Lajmesh">
+<!ENTITY syncTypeNews.accesskey "G">
+<!ENTITY sendMessage.label "Dërgo mesazhe të Padërguar">
+<!ENTITY sendMessage.accesskey "D">
+<!ENTITY workOffline.label "Puno pa u lidhur, pasi të jetë përfunduar shkarkimi dhe/ose njëkohësimi">
+<!ENTITY workOffline.accesskey "u">
+<!ENTITY selectButton.label "Përzgjidhni…">
+<!ENTITY selectButton.accesskey "P">
+<!ENTITY MsgSelectDesc.label "Zgjidhni dosje poste dhe grupe lajmesh për përdorim pa qenë i lidhur.">
+<!ENTITY MsgSelectInd.label "Shkarkoje">
+<!ENTITY MsgSelectItems.label "Dosje dhe Grupe Lajmesh">

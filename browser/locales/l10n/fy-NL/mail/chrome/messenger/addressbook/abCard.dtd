@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kontakt">
+<!ENTITY Contact.accesskey               "K">
+<!ENTITY Name.box                        "Namme">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Foarnamme:">
+<!ENTITY NameField1.accesskey           "F">
+<!ENTITY NameField2.label               "Efternamme:">
+<!ENTITY NameField2.accesskey           "E">
+<!ENTITY PhoneticField1.label           "Fonetysk:">
+<!ENTITY PhoneticField2.label           "Fonetysk:">
+<!ENTITY DisplayName.label              "Werjefte:">
+<!ENTITY DisplayName.accesskey          "W">
+<!ENTITY preferDisplayName.label        "Altyd werjeftenamme boppe berjochtkop toane">
+<!ENTITY preferDisplayName.accesskey    "y">
+<!ENTITY NickName.label                 "Bynamme:">
+<!ENTITY NickName.accesskey             "B">
+
+<!ENTITY PrimaryEmail.label             "E-mail:">
+<!ENTITY PrimaryEmail.accesskey         "m">
+<!ENTITY SecondEmail.label              "Alternative e-mail:">
+<!ENTITY SecondEmail.accesskey          "i">
+<!ENTITY PreferMailFormat.label         "Wol it leafst berjochten ûntfange opsteld as:">
+<!ENTITY PreferMailFormat.accesskey     "f">
+<!ENTITY PlainText.label                "Platte tekst">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Unbekend">
+<!ENTITY chatName.label                 "Chatnamme:">
+
+<!ENTITY WorkPhone.label                "Wurk:">
+<!ENTITY WorkPhone.accesskey            "k">
+<!ENTITY HomePhone.label                "Thús:">
+<!ENTITY HomePhone.accesskey            "s">
+<!ENTITY FaxNumber.label                "Faks:">
+<!ENTITY FaxNumber.accesskey            "k">
+<!ENTITY PagerNumber.label              "Piper:">
+<!ENTITY PagerNumber.accesskey          "p">
+<!ENTITY CellularNumber.label           "Mobyl:">
+<!ENTITY CellularNumber.accesskey       "b">
+
+<!ENTITY Home.tab                       "Privee">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Adres:">
+<!ENTITY HomeAddress.accesskey          "d">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Wenplak:">
+<!ENTITY HomeCity.accesskey             "n">
+<!ENTITY HomeState.label                "Provinsje:">
+<!ENTITY HomeState.accesskey            "v">
+<!ENTITY HomeZipCode.label              "Postkoade:">
+<!ENTITY HomeZipCode.accesskey          "k">
+<!ENTITY HomeCountry.label              "Lân:">
+<!ENTITY HomeCountry.accesskey          "L">
+<!ENTITY HomeWebPage.label              "Website:">
+<!ENTITY HomeWebPage.accesskey          "b">
+<!ENTITY Birthday.label                 "Jierdei:">
+<!ENTITY Birthday.accesskey             "J">
+<!ENTITY Month.placeholder              "Moanne">
+<!ENTITY Day.placeholder                "Dei">
+<!ENTITY Year.placeholder               "Jier">
+<!ENTITY Age.label                      "Leeftiid:">
+<!ENTITY Age.placeholder                "Leeftiid">
+
+<!ENTITY Work.tab                       "Wurk">
+<!ENTITY Work.accesskey                 "W">
+<!ENTITY JobTitle.label                 "Titel:">
+<!ENTITY JobTitle.accesskey             "i">
+<!ENTITY Department.label               "Ofdieling:">
+<!ENTITY Department.accesskey           "f">
+<!ENTITY Company.label                  "Organisaasje:">
+<!ENTITY Company.accesskey              "n">
+<!ENTITY WorkAddress.label              "Adres:">
+<!ENTITY WorkAddress.accesskey          "d">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Wenplak:">
+<!ENTITY WorkCity.accesskey             "p">
+<!ENTITY WorkState.label                "Provinsje:">
+<!ENTITY WorkState.accesskey            "v">
+<!ENTITY WorkZipCode.label              "Postkoade:">
+<!ENTITY WorkZipCode.accesskey          "k">
+<!ENTITY WorkCountry.label              "Lân:">
+<!ENTITY WorkCountry.accesskey          "L">
+<!ENTITY WorkWebPage.label              "Website:">
+<!ENTITY WorkWebPage.accesskey          "e">
+
+<!ENTITY Other.tab                      "Oars">
+<!ENTITY Other.accesskey                "O">
+<!ENTITY Custom1.label                  "Oars 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Oars 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Oars 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Oars 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Notysjes:">
+<!ENTITY Notes.accesskey                "N">
+
+<!ENTITY Chat.tab                       "Chat">
+<!ENTITY Chat.accesskey                 "a">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "Jabber ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "IRC-bynamme:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Foto">
+<!ENTITY Photo.accesskey                "o">
+<!ENTITY GenericPhoto.label             "Algemiene foto">
+<!ENTITY GenericPhoto.accesskey         "g">
+<!ENTITY DefaultPhoto.label             "Standert">
+<!ENTITY PhotoFile.label                "Op dizze kompjûter">
+<!ENTITY PhotoFile.accesskey            "d">
+<!ENTITY BrowsePhoto.label              "Blêdzje">
+<!ENTITY BrowsePhoto.accesskey          "l">
+<!ENTITY PhotoURL.label                 "Op it ynternet">
+<!ENTITY PhotoURL.accesskey             "y">
+<!ENTITY PhotoURL.placeholder           "Plak of typ it ynternetadres fan in foto">
+<!ENTITY UpdatePhoto.label              "Fernijing">
+<!ENTITY UpdatePhoto.accesskey          "F">
+<!ENTITY PhotoDropTarget.label          "Sleep in nije foto hjirnei ta">

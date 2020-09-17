@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Postavke dugmeta">
+
+<!ENTITY Settings.label "Postavke">
+
+<!ENTITY ButtonType.label "Tip">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Pošalji">
+<!ENTITY reset.value "Resetuj">
+<!ENTITY button.value "Dugme">
+
+<!ENTITY ButtonName.label "Naziv:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Vrijednost:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Indeks taba:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "Onemogućeno">
+<!ENTITY ButtonDisabled.accesskey "O">
+<!ENTITY AccessKey.label "Tipka pristupa:">
+<!ENTITY AccessKey.accesskey "k">
+
+<!ENTITY RemoveButton.label "Ukloni dugme">
+<!ENTITY RemoveButton.accesskey "U">

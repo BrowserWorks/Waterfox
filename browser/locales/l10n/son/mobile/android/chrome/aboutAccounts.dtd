@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox kontey">
+<!ENTITY aboutAccounts.connected.description "War ga ciya sanda">
+<!ENTITY aboutAccounts.syncPreferences.label "Kar ne ka hangandiyan kayandiyaney koroši">
+
+<!ENTITY aboutAccounts.noConnection.title "Interneti ciyari kul šii">
+<!ENTITY aboutAccounts.retry.label "Ceeci koyne">
+
+<!ENTITY aboutAccounts.restrictedError.title "Lalabante">
+<!ENTITY aboutAccounts.restrictedError.description "War ši hin ka Firefox kontey juwal alhaaloo woo ga.">

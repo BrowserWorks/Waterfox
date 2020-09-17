@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Својства на образецот">
+
+<!ENTITY Settings.label "Поставки">
+
+<!ENTITY FormName.label "Име на образецот:">
+<!ENTITY FormName.accesskey "м">
+<!ENTITY FormAction.label "Акција на URL:">
+<!ENTITY FormAction.accesskey "А">
+<!ENTITY FormMethod.label "Метод:">
+<!ENTITY FormMethod.accesskey "М">
+<!ENTITY FormEncType.label "Кодна страница:">
+<!ENTITY FormEncType.accesskey "К">
+<!ENTITY FormTarget.label "Целна рамка:">
+<!ENTITY FormTarget.accesskey "Ц">
+
+<!ENTITY RemoveForm.label "Острани го образецот">
+<!ENTITY RemoveForm.accesskey "р">

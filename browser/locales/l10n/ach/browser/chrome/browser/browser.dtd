@@ -1,0 +1,291 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Yab nying gin ayera">
+<!ENTITY navbarOverflow.label                "Jami tic mukene…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Mwon dirica matidi">
+<!ENTITY  unpinTab.label                     "Pe i wal dirica matidi">
+
+<!ENTITY  listAllTabs.label      "Rwe dirica matino weng">
+<!-- LOCALIZATION NOTE (allTabsMenu.searchTabs.label): "Search" is a verb, as
+in "Search through tabs". -->
+
+<!ENTITY tabCmd.label "Drica matidi manyen">
+<!ENTITY openFileCmd.label "Yab pwail…">
+<!ENTITY printCmd.label "Go…">
+
+
+<!ENTITY menubarCmd.label "Lanyut nying gin ayera">
+<!ENTITY menubarCmd.accesskey "L">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbarCmd.label "Gintic me alama buk">
+<!ENTITY personalbarCmd.accesskey "G">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Alamabuk">
+<!ENTITY bookmarksToolbarItem.label "Jami me gintic me alama buk">
+
+<!ENTITY fullScreenCmd.label "Wang komputa ma opong">
+
+
+<!-- } is above this key on many keyboards -->
+
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Kub Nyonyo Mukene…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Dony iyie &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Cak &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.account.label "Akaunt">
+<!ENTITY fxa.menu.settings.label "Ter">
+<!ENTITY fxa.menu.accountSettings.label "Ter me Akaunt">
+<!ENTITY fxa.menu.manageAccount2.label "Lo Akaunt">
+<!ENTITY fxa.menu.signOut.label "Kat Woko…">
+<!ENTITY fxa.menu.setupSync.label "Ter &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Cwal cut dirica matidi i nyonyo mo keken ma idonyo iyie.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "dong opongo wang kio weng">
+<!ENTITY fullscreenWarning.generic.label "Gin acoya man dong opongo wang kio">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Kat woko ki i wang kio ma opong (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Kat woko ki i wang kio ma opong (esc)">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label, pictureInPicture.accesskey):
+     these two strings are used when right-clicking on a video in the
+     content area when the Picture-in-Picture feature is enabled. -->
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "Tye ki twero i kom lacim ma megi. Dii Esc me dwoko twero cen bot in.">
+<!ENTITY pointerlockWarning.generic.label "Jami eni Tye ki twero i kom lacim ma megi. Dii Esc me dwoko twero cen bot in.">
+
+<!ENTITY showAllBookmarks2.label "Nyut alamabuk weng">
+<!ENTITY recentBookmarks.label "Ma kiketo Alamabuk cokki">
+<!ENTITY bookmarksToolbarChevron.tooltip "Nyut alama buk mukene">
+
+<!ENTITY printButton.label            "Go">
+<!ENTITY printButton.tooltip          "Go pot buk man">
+
+
+<!ENTITY searchItem.title             "Yeny">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Gang">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; Acakki">
+
+<!ENTITY bookmarksButton.label          "Alama buk">
+
+<!ENTITY bookmarksSubview.label             "Alamabuk">
+<!ENTITY bookmarksMenuButton2.label         "Jami ayera me alamabuk">
+<!ENTITY bookmarksMenuButton.other.label    "Alamabuk Mukene">
+<!ENTITY bookmarksMenuButton.mobile.label   "Alamabuk me cing">
+<!ENTITY viewBookmarksSidebar2.label        "Nen gintic alama buk ma inget">
+<!ENTITY hideBookmarksSidebar.label         "Kan lanyut nget me alamabuk">
+<!ENTITY viewBookmarksToolbar.label         "Nen gintic alama buk">
+<!ENTITY hideBookmarksToolbar.label         "Kan gitic me alamabuk">
+<!ENTITY searchBookmarks.label              "Yeny Alamabuk">
+<!ENTITY bookmarkingTools.label             "Gtic me keto alamabuk">
+<!ENTITY addBookmarksMenu.label             "Med jami ayera me alamabuk ii Gitic">
+<!ENTITY removeBookmarksMenu.label          "Kwany jami ayera me alamabuk ki i Gitic">
+
+<!ENTITY historyButton.label            "Gin mukato">
+
+<!ENTITY downloads.label              "Gam">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Gam">
+<!ENTITY addons.label                 "Med-ikome">
+
+<!ENTITY webDeveloperMenu.label       "Layub Kakube">
+
+
+<!ENTITY newNavigatorCmd.label        "Dirica manyen">
+<!ENTITY newPrivateWindow.label     "Dirica manyen me mung">
+
+<!ENTITY editMenu.label         "Yub">
+<!ENTITY preferencesCmd2.label       "Gin ayera">
+<!ENTITY preferencesCmdUnix.label       "Ma imaro">
+<!ENTITY logins.label                           "Donyo iyie ki Mung me donyo">
+
+<!ENTITY overflowCustomizeToolbar.label       "Yub gitic…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "Y">
+
+<!ENTITY historyMenu.label "Gin mukato">
+<!ENTITY historyUndoMenu.label "Dirica matino ma kiloro cokki">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Dirica ma kiloro cokki">
+
+<!ENTITY appMenuHistory.showAll.label "Nyut gin mukato weng">
+<!ENTITY appMenuHistory.clearRecent.label "Jwa gin mukato cokki…">
+<!ENTITY appMenuHistory.restoreSession.label "Dwok kare ma okato ni">
+<!ENTITY appMenuHistory.viewSidebar.label "Nen gintic me gin mukato">
+<!ENTITY appMenuHistory.recentHistory.label "Mukato cokki">
+<!ENTITY appMenuHelp.label "Kony">
+
+<!ENTITY appMenuRemoteTabs.label "Dirica matino ma kiribo">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Dirica matino pe ayaba">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Nyut mukene">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Nyut dirica matino mukene ki i nyonyo man">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Nyut weng">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Nyut dirica matino weng ki i nyonyo man">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Cak ribo dirica matidi me neno nying dirica matino ki i nyonyo ni mukene.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "imito neno dirica matino ki nyonyo mukene?">
+<!ENTITY appMenuRemoteTabs.unverified.label "Myero ki mok ada pa akaunt mamegi.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Dony iyie &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Cak &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Lor nyonyo…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Nen gitic ma inget me dirica matino ma kiribo">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Kub Nyonyo Mukene">
+
+<!ENTITY appMenuRecentHighlights.label "Wiye madito ma cokki">
+
+<!ENTITY customizeMenu.addToToolbar.label "Med bot gintic">
+<!ENTITY customizeMenu.addToToolbar.accesskey "M">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Medi i Jami ayera ma okane">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "War ki ii Jami ayera ma okane">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "W">
+<!ENTITY customizeMenu.removeFromToolbar.label "Kwany ki bot gintic">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "K">
+<!ENTITY customizeMenu.addMoreItems.label "Med jami mukene…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "M">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Mapol">
+
+<!ENTITY contentSearchSubmit.tooltip  "Cwal yeny">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Yeny">
+<!ENTITY searchIcon.tooltip           "Yeny">
+
+<!ENTITY openLinkCmdInTab.accesskey   "d">
+
+<!ENTITY pageAction.copyLink.label    "Lok kakube">
+
+<!ENTITY saveToPocketCmd.label        "Gwok Potbuk i Pocket">
+<!ENTITY pocketMenuitem.label         "Nen Jami ma i Pocket">
+
+<!ENTITY emailPageCmd.label           "Cwal kakube…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Kwoti">
+
+<!ENTITY sidebarCloseButton.tooltip     "Lor gintic ma inget">
+
+<!ENTITY quitApplicationCmdWin2.label       "Kat woko">
+<!ENTITY quitApplicationCmdWin2.accesskey   "a">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Kat woko ki i &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Weki">
+<!ENTITY quitApplicationCmd.accesskey   "W">
+<!ENTITY quitApplicationCmdMac2.label   "Wek &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Yub miti me ageng pye-malo…">
+<!ENTITY editPopupSettings.label "Yub gin ayera me lageng pye-malo…">
+<!ENTITY editPopupSettings.accesskey "Y">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Nong i pot buk man…">
+
+<!ENTITY spellAddDictionaries.label "Med buk me gonyo lok…">
+<!ENTITY spellAddDictionaries.accesskey "M">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Dirica matino me layeny">
+
+<!ENTITY syncBrand.shortName.label    "Ribo">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Kan pire kene">
+
+
+
+
+
+
+<!ENTITY uiTour.infoPanel.close "Lor">
+
+<!ENTITY panicButton.thankyou.msg1                "Gin mukato cokcok mamegi kijwayo woko.">
+<!ENTITY panicButton.thankyou.msg2                "Yeny ma ber!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Pwoc!">
+
+<!ENTITY updateAvailable.panelUI.label "Gam ngec manyen pi &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "Gam &brandShorterName; manyenne">
+<!ENTITY updateRestart.panelUI.label2 "Nwo cako me keto ngec manyen i &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "Ribo nyonyo…">
+
+<!ENTITY pageAction.shareUrl.label "Nywaki">
+<!ENTITY pageAction.shareMore.label "Mapol…">
+
+<!ENTITY libraryButton.tooltip "Nen mukato, alamabuk ma kigwoko, ki mapol">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Kicako jami me nong">

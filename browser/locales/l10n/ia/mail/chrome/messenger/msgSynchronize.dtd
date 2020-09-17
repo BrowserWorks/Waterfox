@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Discargar e synchronisar messages">
+<!ENTITY MsgSelect.label "Elementos pro uso non connexe">
+<!ENTITY MsgSyncDesc.label "Si tu ha jam seligite dossiers de posta o gruppos de discussion pro uso foras de linea, tu pote discargar e/o synchronisar los ora. Si non, usa le button &quot;Seliger&quot; pro seliger dossiers de posta e gruppos de discussion pro uso foras de linea.">
+<!ENTITY MsgSyncDirections.label "Discargar o synchronisar  le sequente:">
+<!ENTITY syncTypeMail.label "Messages de email">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "Messages de gruppos de discussion">
+<!ENTITY syncTypeNews.accesskey "d">
+<!ENTITY sendMessage.label "Inviar le messages non inviate">
+<!ENTITY sendMessage.accesskey "I">
+<!ENTITY workOffline.label "Disconnecter ser post discargate o synchronisate le messages">
+<!ENTITY workOffline.accesskey "D">
+<!ENTITY selectButton.label "Eliger…">
+<!ENTITY selectButton.accesskey "E">
+<!ENTITY MsgSelectDesc.label "Selige dossiers de posta e gruppos de discussion pro uso foras de linea.">
+<!ENTITY MsgSelectInd.label "Discargar">
+<!ENTITY MsgSelectItems.label "Dossiers e gruppos">

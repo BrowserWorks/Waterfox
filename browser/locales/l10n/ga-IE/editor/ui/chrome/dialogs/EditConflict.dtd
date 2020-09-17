@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Roghnaigh Athruithe Eagarthóireachta">
+<!ENTITY conflictWarning.label "Tá an leathanach athraithe ag ríomhchlár eile, ach tá athruithe gan sábháil agat freisin sa Chumadóir.">
+<!ENTITY conflictResolve.label "Roghnaigh an leagan atá le coinneáil:">
+<!ENTITY keepCurrentPageButton.label "Coimeád na hathruithe ar an leathanach reatha">
+<!ENTITY useOtherPageButton.label "Cuir athruithe eile in áit an leathanaigh reatha">

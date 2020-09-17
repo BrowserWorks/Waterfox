@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Akken ad teḥerzeḍ amkan deg udebṣi, ur d-sidir ara:">
+<!ENTITY doNotDownloadNntp.label "Akken ad tḥ€rzeḍ amkan ɣef udebṣi, ur sidir ara i useqdec deg uskar war tuqqna:">
+<!ENTITY doNotDownloadImap.label "Akken ad teḥ€rzeḍ amkan ɣef udebṣi, asider n yeznan seg uqeddac akked uḥraz n yenɣal idiganen i useqdec deg uskar war tuqqna yezmer ad yettusewḥel s uwtay neɣ s teɣzi.">
+<!ENTITY allFoldersOffline2.label "Eǧǧ iznan deg akk ikaramen i umiḍan agi ɣef uselkim agi.">
+<!ENTITY allFoldersOffline2.accesskey "ḍ">
+<!ENTITY allFoldersOfflineNote.label "Alɣu: Abeddel agi ad iḥaz akk ikaramen deg umiḍan agi. I usbadu n ikaramen n yal yiwen, seqdec taqeffalt... n ileqqayen.">
+<!ENTITY offlineNotDownload.label "Iznan meqqren ɣef">
+<!ENTITY offlineNotDownload.accesskey "z">
+<!ENTITY autosyncNotDownload.label "Ur d-sidir ara iznan yugaren">
+<!ENTITY autosyncNotDownload.accesskey "z">
+<!ENTITY kb.label "KAT">
+<!ENTITY daysOld.label "ussan aya">
+<!ENTITY message.label "iznan">
+<!ENTITY nntpNotDownloadRead.label "Ɣaṛ iznan">
+<!ENTITY nntpNotDownloadRead.accesskey "Ɣ">
+<!ENTITY nntpDownloadMsg.label "Iznan yugaren">
+<!ENTITY nntpDownloadMsg.accesskey "z">
+<!ENTITY retentionCleanup.label "Akken ad terreḍ tallunt ɣef udebsi, iznan iqbuṛen zemren ad ttakksen i lebda.">
+<!ENTITY retentionCleanupImap.label "Akken ad terreḍ tallunt ɣef udebsi, iznan iqbuṛen zemren ad ttakksen i lebda, ama d idiganen neɣ wid yellan ɣef uqeddac anmeggag.">
+<!ENTITY retentionCleanupPop.label "Akken ad terreḍ tallunt ɣef udebsi, iznan iqbuṛen zemren ad ttakksen i lebda, ula d wid yellan ɣef uqeddac anmeggag.">
+<!ENTITY retentionKeepMsg.label "Kkes iznan nnig n">
+<!ENTITY retentionKeepMsg.accesskey "k">
+<!ENTITY retentionKeepAll.label "Ur tekkes ula d izen">
+<!ENTITY retentionKeepAll.accesskey "U">
+<!ENTITY retentionKeepRecent.label "Kkes akk acukan wid n melmi kan">
+<!ENTITY retentionKeepRecent.accesskey "c">
+<!ENTITY retentionApplyToFlagged.label "Ḥrez yal tikelt iznan s yetran">
+<!ENTITY retentionApplyToFlagged.accesskey "z">
+<!ENTITY nntpRemoveMsgBody.label "Kkes tafekka seg iznan nnig n">
+<!ENTITY nntpRemoveMsgBody.accesskey "k">
+<!ENTITY offlineSelectNntp.label "Fren igrawen n isallen i useqdec  deg uskar war tuqqna…">
+<!ENTITY offlineSelectNntp.accesskey "F">
+<!ENTITY offlineImapAdvancedOffline.label "Talqayt…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "q">
+<!ENTITY syncGroupTitle.label "Amtawi n yeznan">
+<!ENTITY diskspaceGroupTitle.label "Amkan deg udebṣi">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Mtawi akk iznan idiganen akken bɣu yella  uwtay">
+<!ENTITY allAutosync.accesskey           "n">
+<!ENTITY ageAutosyncBefore.label         "Mtawi wid n melmi kan">
+<!ENTITY ageAutosync.accesskey           "z">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Ussan">
+<!ENTITY weekAgeInterval.label           "Dduṛtat">
+<!ENTITY monthAgeInterval.label          "Igguren">
+<!ENTITY yearAgeInterval.label           "Iseggwasen">
+<!ENTITY ageAutosyncAfter.label          "">

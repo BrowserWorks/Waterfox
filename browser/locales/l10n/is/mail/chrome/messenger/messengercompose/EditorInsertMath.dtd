@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Setja inn stærðfræði">
+
+<!ENTITY sourceEditField.label "Slá inn LaTeX kóða:">
+
+<!ENTITY options.label "Valkostir">
+<!ENTITY optionInline.label "Innfelldur hamur">
+<!ENTITY optionInline.accesskey "n">
+<!ENTITY optionDisplay.label "Birtingarhamur">
+<!ENTITY optionDisplay.accesskey "B">
+<!ENTITY optionLTR.label "Vinstri-til-hægri stefna">
+<!ENTITY optionLTR.accesskey "l">
+<!ENTITY optionRTL.label "Hægri-til-vinstri stefna">
+<!ENTITY optionRTL.accesskey "r">
+
+<!ENTITY insertButton.label "Setja inn">
+<!ENTITY insertButton.accesskey "i">

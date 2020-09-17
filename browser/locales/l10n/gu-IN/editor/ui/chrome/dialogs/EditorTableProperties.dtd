@@ -1,0 +1,83 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "કોષ્ટક ગુણધર્મો">
+<!ENTITY applyButton.label                "લાગુ પાડો">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "બંધ કરો">
+<!ENTITY tableTab.label                   "કોષ્ટક">
+<!ENTITY cellTab.label                    "ખાનાંઓ">
+<!ENTITY tableRows.label                  "હરોળો:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "સ્તંભો:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "ઊંચાઈ:">
+<!ENTITY tableHeight.accessKey            "G">
+<!ENTITY tableWidth.label                 "પહોળાઈ:">
+<!ENTITY tableWidth.accessKey             "W">
+<!ENTITY tableBorderSpacing.label         "કિનારીઓ અને જગ્યાઓ">
+<!ENTITY tableBorderWidth.label           "કિનારી:">
+<!ENTITY tableBorderWidth.accessKey       "B">
+<!ENTITY tableSpacing.label               "જગ્યા:">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "જગ્યા છોડો:">
+<!ENTITY tablePadding.accessKey           "P">
+<!ENTITY tablePxBetwCells.label           "ખાનાંઓ વચ્ચેના પિક્સેલો">
+<!ENTITY tablePxBetwBrdrCellContent.label "ખાનાની કિનારી અને સમાવિષ્ટો વચ્ચેના પિક્સેલો">
+<!ENTITY tableAlignment.label             "કોષ્ટકની ગોઠવણી:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "કેપ્શન:">
+<!ENTITY tableCaption.accessKey           "N">
+<!ENTITY tableCaptionAbove.label          "કોષ્ટક ઉપર">
+<!ENTITY tableCaptionBelow.label          "કોષ્ટક નીચે">
+<!ENTITY tableCaptionLeft.label           "કોષ્ટકની ડાબે">
+<!ENTITY tableCaptionRight.label          "કોષ્ટકની જમણે">
+<!ENTITY tableCaptionNone.label           "કંઈ નહિં">
+<!ENTITY tableInheritColor.label           "(પાના રંગને બતાવવા દો)">
+
+<!ENTITY cellPercent.label                "કોષ્ટકના ટકા">
+<!ENTITY cellSelection.label              "પસંદગી">
+<!ENTITY cellSelectCell.label             "ખાનું">
+<!ENTITY cellSelectRow.label              "હરોળ">
+<!ENTITY cellSelectColumn.label           "સ્તંભ">
+<!ENTITY cellSelectNext.label             "આગળ વધો">
+<!ENTITY cellSelectNext.accessKey         "N">
+<!ENTITY cellSelectPrevious.label         "પહેલાનું">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!ENTITY cellApplyBeforeMove.label        "પસંદગી બદલતાં પહેલા ફેરફારો લાગુ પાડો">
+<!ENTITY cellKeepCurrentData.label        "વર્તમાન સેટીંગ સાચવી રાખો">
+<!-- LOCALIZATION NOTE Next 2 form 1 sentence (we don't want to use HTML tag to wrap) -->
+<!ENTITY applyBeforeChange1.label         "વર્તમાન ફેરફારો લાગુ પડાશે">
+<!ENTITY applyBeforeChange2.label         "પસંદગી બદલતા પહેલા.">
+<!ENTITY cellRowSpan.label                "હરોળ વિસ્તારો:">
+<!ENTITY cellColSpan.label                "સ્તંભ વિસ્તારો:">
+<!ENTITY cellContentAlignment.label       "સમાવિષ્ટ ગોઠવણી">
+<!ENTITY cellHorizontal.label             "આડુ:">
+<!ENTITY cellHorizontal.accessKey         "Z">
+<!ENTITY cellVertical.label               "ઊભુ:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "ખાના શૈલી:">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "સામાન્ય">
+<!ENTITY cellHeader.label                 "હેડર">
+<!ENTITY cellTextWrap.label               "લખાણ લપેટો:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "લપેટો">
+<!ENTITY cellNoWrap.label                 "લપેટો નહિં">
+<!ENTITY cellAlignTop.label               "ઉપર">
+<!ENTITY cellAlignMiddle.label            "મધ્યે">
+<!ENTITY cellAlignBottom.label            "નીચે">
+<!ENTITY cellAlignJustify.label           "ન્યાય">
+<!ENTITY cellAlignAtChar.label            "અક્ષરે:">
+<!ENTITY cellInheritColor.label           "(કોષ્ટક રંગને બતાવવા દો)">
+<!ENTITY cellUseCheckboxHelp.label        "કયા ગુણધર્મો બધા પસંદિત ખાનાંઓને લાગુ પડશે તેના માટે ચકાસણીબોક્સ વાપરો">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "માપ">
+<!ENTITY pixels.label                     "પિક્સેલો">
+<!ENTITY backgroundColor.label            "પાશ્વ ભાગનો રંગ:">
+<!ENTITY backgroundColor.accessKey        "B">
+<!ENTITY AlignLeft.label                  "ડાબુ">
+<!ENTITY AlignCenter.label                "મધ્ય">
+<!ENTITY AlignRight.label                 "જમણું">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Bấm vào đây để kích hoạt phần bổ trợ.">
+<!ENTITY clickToActivatePlugin                               "Kích hoạt phần bổ trợ.">
+<!ENTITY checkForUpdates                                     "Kiểm tra cập nhật…">
+<!ENTITY blockedPlugin.label                                 "Phần bổ trợ này bị chặn để bảo vệ bạn.">
+<!ENTITY hidePluginBtn.label                                 "Ẩn phần bổ trợ">
+<!ENTITY managePlugins                                       "Quản lý phần bổ trợ…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Tải lại trang">
+<!ENTITY reloadPlugin.post                                   " để thử lại.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Gửi báo cáo sự cố">
+<!ENTITY report.submitting                                   "Đang gửi báo cáo…">
+<!ENTITY report.submitted                                    "Báo cáo sự cố đã được gửi.">
+<!ENTITY report.disabled                                     "Báo cáo sự cố đã bị vô hiệu hóa.">
+<!ENTITY report.failed                                       "Gửi không thành công.">
+<!ENTITY report.unavailable                                  "Không có báo cáo nào.">
+<!ENTITY report.comment                                      "Thêm bình luận (bình luận sẽ được hiển thị công khai)">
+<!ENTITY report.pageURL                                      "Thêm URL trang">
+
+<!ENTITY plugin.file                                         "Tập tin">
+<!ENTITY plugin.mimeTypes                                    "Kiểu MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Bật chế độ bảo vệ Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Chặn nội dung Flash gây nguy hiểm và xâm phạm">

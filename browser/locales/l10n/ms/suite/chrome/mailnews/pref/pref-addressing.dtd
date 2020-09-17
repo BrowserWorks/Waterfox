@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Alamat">
+<!ENTITY emailCollectiontitle.label            "Koleksi Alamat E-mel">
+<!ENTITY emailCollectionPicker.label           "Tambah alamat e-mel ke dalam:">
+<!ENTITY emailCollectionPicker.accesskey       "d">
+<!ENTITY emailCollectiontext.label             "Alamat e-mel daripada mesej keluar boleh ditambahkan secara automatik ke dalam buku alamat lokal.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Alamat Auto-lengkap">
+<!ENTITY highlightNonMatches.label             "Serlahkan alamat yang tidak auto-lengkap">
+<!ENTITY highlightNonMatches.accesskey         "a">
+<!ENTITY addressingEnable.label                "Buku Alamat Lokal">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "Apabila mengalamatkan mesej, cari entri yang sepadan dalam:">
+<!ENTITY directories.label                     "Pelayan Direktori:">
+<!ENTITY directories.accesskey                 "D">
+<!ENTITY directoriesNone.label                 "Tiada">
+<!ENTITY editDirectories.label                 "Edit Direktori…">
+<!ENTITY editDirectories.accesskey             "E">

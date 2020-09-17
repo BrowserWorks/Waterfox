@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Setja inn staf">
+<!ENTITY category.label "Flokkur">
+<!ENTITY letter.label "Stafur:">
+<!ENTITY letter.accessKey "S">
+<!ENTITY character.label "Stafur:">
+<!ENTITY character.accessKey "t">
+<!ENTITY accentUpper.label "Kommu hástafir">
+<!ENTITY accentLower.label "Kommu lágstafir">
+<!ENTITY otherUpper.label "Aðrir hástafir">
+<!ENTITY otherLower.label "Aðrir lágstafir">
+<!ENTITY commonSymbols.label "Almenn tákn">
+<!ENTITY insertButton.label "Setja inn">
+<!ENTITY closeButton.label "Loka">

@@ -1,0 +1,278 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!-- File Menu -->
+
+<!ENTITY fileMenu.label "கோப்பு">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY newMenu.label "புதிய">
+<!ENTITY newMenu.accesskey "N">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Edit Menu -->
+
+<!ENTITY editMenu.label "தொகு">
+<!ENTITY editMenu.accesskey "E">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- View Menu -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Format Menu -->
+
+<!-- Options Menu -->
+
+
+
+
+
+
+
+
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Tools Menu -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--  Mac OS X Window Menu -->
+
+
+
+
+<!-- Mail Toolbar -->
+
+
+
+
+
+
+<!-- Mail Toolbar Tooltips -->
+
+
+
+
+
+
+
+
+
+
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpace.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+
+
+
+
+
+
+
+
+
+
+<!-- LOCALIZATION NOTE attachments.accesskey This access key should correspond
+     to the strings in attachmentCount in composeMsgs.properties -->
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Message Pane Context Menu -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Spell checker context menu items -->
+
+<!-- Title for the address picker panel -->
+<!-- Identity popup customize menuitem -->
+
+<!-- Attachment Pane Header Bar Context Menu -->
+

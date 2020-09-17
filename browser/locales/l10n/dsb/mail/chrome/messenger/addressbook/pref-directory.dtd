@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+
+<!ENTITY pref.ldap.window.title    "LDAP - zapisowe serwery">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "LDAP - zapisowy serwer:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Zapisowy LDAP-serwer wubraś:">
+<!ENTITY directoriesText.accesskey "s">
+<!ENTITY addDirectory.label        "Pśidaś">
+<!ENTITY addDirectory.accesskey    "P">
+<!ENTITY editDirectory.label       "Wobźěłaś">
+<!ENTITY editDirectory.accesskey   "b">
+<!ENTITY deleteDirectory.label     "Wulašowaś">
+<!ENTITY deleteDirectory.accesskey "l">

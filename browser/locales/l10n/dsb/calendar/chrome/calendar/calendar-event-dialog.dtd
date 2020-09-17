@@ -1,0 +1,433 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Zapisk wobźěłaś" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Traśe wobchowaś, gaž se kóńcny datum změnja">
+<!ENTITY event.dialog.keepDurationButton.accesskey "T">
+
+<!ENTITY newevent.from.label                "Wót" >
+<!ENTITY newevent.to.label                  "Až do" >
+
+<!ENTITY newevent.status.label                    "Status" >
+<!ENTITY newevent.status.accesskey                "S" >
+<!ENTITY newevent.eventStatus.none.label          "Njepódany" >
+<!ENTITY newevent.eventStatus.none.accesskey      "d" >
+<!ENTITY newevent.todoStatus.none.label           "Njepódany" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Pśetergnjony" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "P" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Pśetergnjony" >
+<!ENTITY newevent.status.tentative.label          "Nachylu" >
+<!ENTITY newevent.status.tentative.accesskey      "N" >
+<!ENTITY newevent.status.confirmed.label          "Wobkšuśony" >
+<!ENTITY newevent.status.confirmed.accesskey      "W" >
+<!ENTITY newevent.status.needsaction.label        "Trjeba akciju" >
+<!ENTITY newevent.status.inprogress.label         "Běžy" >
+<!ENTITY newevent.status.completed.label          "Skóńcony" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#037; dopołne">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Wobźělniki informěrowaś">
+<!ENTITY event.attendees.notify.accesskey            "l">
+<!ENTITY event.attendees.notifyundisclosed.label     "Źělone pśepšosenje na wobźělnika">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "l">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Toś to nastajenje sćelo jadnu pśepšoseńsku mejlku na wobźělnika. Kužde pśepšosenje wopśimujo jano dostawajucego wobźělnika, tak až druge identity wobźělnikow se njepśeraźuju.">
+<!ENTITY event.attendees.disallowcounter.label       "Pśeśiwonaraźenje wótpokazaś">
+<!ENTITY event.attendees.disallowcounter.accesskey   "t">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Pódawa, až njebuźośo pśeśiworaźenja akceptěrowaś">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Nowy">
+<!ENTITY  event.menu.item.new.accesskey                   "N">
+<!ENTITY  event.menu.item.new.event.label                 "Tšojenje">
+<!ENTITY  event.menu.item.new.event.accesskey             "T">
+<!ENTITY  event.menu.item.new.task.label                  "Nadawk">
+<!ENTITY  event.menu.item.new.task.accesskey              "d">
+<!ENTITY  event.menu.item.new.message.label               "Powěsć">
+<!ENTITY  event.menu.item.new.message.accesskey           "w">
+<!ENTITY  event.menu.item.new.contact.label               "Kontakt adresnika">
+<!ENTITY  event.menu.item.new.contact.accesskey           "K">
+<!ENTITY  event.menu.item.close.label                     "Zacyniś">
+<!ENTITY  event.menu.item.close.accesskey                 "Z">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Składowaś">
+<!ENTITY  event.menu.item.save.accesskey                  "S">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Składowaś a zacyniś">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "z">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "Wulašowaś…">
+<!ENTITY  event.menu.item.delete.accesskey                "l">
+<!ENTITY  event.menu.item.page.setup.label                "Bok zarědowaś">
+<!ENTITY  event.menu.item.page.setup.accesskey            "r">
+<!ENTITY  event.menu.item.print.label                     "Śišćaś">
+<!ENTITY  event.menu.item.print.accesskey                 "i">
+
+<!ENTITY  event.menu.edit.label                           "Wobźěłaś">
+<!ENTITY  event.menu.edit.accesskey                       "b">
+<!ENTITY  event.menu.edit.undo.label                      "Anulěrowaś">
+<!ENTITY  event.menu.edit.undo.accesskey                  "A">
+<!ENTITY  event.menu.edit.redo.label                      "Wóspjetowaś">
+<!ENTITY  event.menu.edit.redo.accesskey                  "e">
+<!ENTITY  event.menu.edit.cut.label                       "Wurězaś">
+<!ENTITY  event.menu.edit.cut.accesskey                   "u">
+<!ENTITY  event.menu.edit.copy.label                      "Kopěrowaś">
+<!ENTITY  event.menu.edit.copy.accesskey                  "K">
+<!ENTITY  event.menu.edit.paste.label                     "Zasajźiś">
+<!ENTITY  event.menu.edit.paste.accesskey                 "s">
+<!ENTITY  event.menu.edit.select.all.label                "Wšykno wubraś">
+<!ENTITY  event.menu.edit.select.all.accesskey            "b">
+
+<!ENTITY  event.menu.view.label                           "Naglěd">
+<!ENTITY  event.menu.view.accesskey                       "N">
+<!ENTITY  event.menu.view.toolbars.label                  "Symbolowe rědki">
+<!ENTITY  event.menu.view.toolbars.accesskey              "m">
+<!ENTITY  event.menu.view.toolbars.event.label            "Tšojeńska symbolowa rědka">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "T">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Pśiměriś…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "P">
+<!ENTITY  event.menu.view.showlink.label                  "Pśisłušny wótkaz pokazaś">
+<!ENTITY  event.menu.view.showlink.accesskey              "u">
+
+<!ENTITY  event.menu.options.label                            "Nastajenja">
+<!ENTITY  event.menu.options.accesskey                        "N">
+<!ENTITY  event.menu.options.attendees.label                  "Wobźělniki pśepšosyś…">
+<!ENTITY  event.menu.options.attendees.accesskey              "o">
+<!ENTITY  event.menu.options.timezone2.label                  "Casowe cony pokazaś">
+<!ENTITY  event.menu.options.timezone2.accesskey              "c">
+<!ENTITY  event.menu.options.priority2.label                  "Priorita">
+<!ENTITY  event.menu.options.priority2.accesskey              "P">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Njepódany">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "e">
+<!ENTITY  event.menu.options.priority.low.label               "Niska">
+<!ENTITY  event.menu.options.priority.low.accesskey           "i">
+<!ENTITY  event.menu.options.priority.normal.label            "Normalna">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "Wusoka">
+<!ENTITY  event.menu.options.priority.high.accesskey          "k">
+<!ENTITY  event.menu.options.privacy.label                    "Priwatnosć">
+<!ENTITY  event.menu.options.privacy.accesskey                "P">
+<!ENTITY  event.menu.options.privacy.public.label             "Zjawne tšojenje">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "Z">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Jano cas a datum pokazaś">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "J">
+<!ENTITY  event.menu.options.privacy.private.label            "Priwatne tšojenje">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "r">
+<!ENTITY  event.menu.options.show.time.label                  "Cas pokazaś ako">
+<!ENTITY  event.menu.options.show.time.accesskey              "C">
+<!ENTITY  event.menu.options.show.time.busy.label             "Zabrany">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "b">
+<!ENTITY  event.menu.options.show.time.free.label             "Wólny">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "W">
+
+<!ENTITY event.invite.attendees.label                     "Wobźělniki pśepšosyś…">
+<!ENTITY event.invite.attendees.accesskey                 "o">
+<!ENTITY event.email.attendees.label                      "Mejlku na wšykne wobźělniki spisaś…">
+<!ENTITY event.email.attendees.accesskey                  "M">
+<!ENTITY event.email.tentative.attendees.label            "Mejlku na njerozsuźone wobźělniki spisaś…">
+<!ENTITY event.email.tentative.attendees.accesskey        "r">
+<!ENTITY event.remove.attendees.label2                    "Wšykne wobźělniki wótpóraś">
+<!ENTITY event.remove.attendees.accesskey                 "k">
+<!ENTITY event.remove.attendee.label                      "Wobźělnika wótpóraś">
+<!ENTITY event.remove.attendee.accesskey                  "b">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Składowaś">
+<!ENTITY  event.toolbar.saveandclose.label                "Składowaś a zacyniś">
+<!ENTITY  event.toolbar.delete.label                      "Lašowaś">
+<!ENTITY  event.toolbar.attendees.label                   "Wobźělniki pśepšosyś">
+<!ENTITY  event.toolbar.privacy.label                     "Priwatnosć">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Składowaś">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Składowaś a zacyniś">
+<!ENTITY  event.toolbar.delete.tooltip                    "Lašowaś">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Wobźělniki pśepšosyś">
+<!ENTITY  event.toolbar.attachments.tooltip               "Pśidanki pśidaś">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Priwatnosć změniś">
+<!ENTITY  event.toolbar.priority.tooltip                  "Prioritu změniś">
+<!ENTITY  event.toolbar.status.tooltip                    "Status změniś">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Wólny/zabrany cas změniś">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Naraźenje nałožyś">
+<!ENTITY counter.button.proposal.accesskey                "r">
+<!ENTITY counter.button.proposal.tooltip2                 "Tšojeńske póla wupołniju se z gódnotami z pśeśiwonaraźenja, wšykney wobźělniki informěruju se jano wó składowanju z pśidatnymi změnami abo bźez pśidatnych změnow">
+<!ENTITY counter.button.original.label                    "Originalne daty nałožyś">
+<!ENTITY counter.button.original.accesskey                "i">
+<!ENTITY counter.button.original.tooltip2                 "Póla stajiju se na gódnoty z originalnego tšojenja, nježli až pśeśiwonaraźenje jo se cyniło">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Titel:" >
+<!ENTITY event.title.textbox.accesskey                    "i">
+<!ENTITY event.location.label                             "Městno:" >
+<!ENTITY event.location.accesskey                         "M">
+<!ENTITY event.categories.label                           "Kategorija:">
+<!ENTITY event.categories.accesskey                       "g">
+<!ENTITY event.categories.textbox.label                   "Nowu kategoriju pśidaś" >
+<!ENTITY event.calendar.label                             "Kalender:" >
+<!ENTITY event.calendar.accesskey                         "K">
+<!ENTITY event.attendees.label                            "Wobźělniki:" >
+<!ENTITY event.attendees.accesskey                        "l">
+<!ENTITY event.alldayevent.label                          "Cełodnjowske tšojenje" >
+<!ENTITY event.alldayevent.accesskey                      "d">
+<!ENTITY event.from.label                                 "Start:" >
+<!ENTITY event.from.accesskey                             "S">
+<!ENTITY task.from.label                                  "Start:" >
+<!ENTITY task.from.accesskey                              "S">
+<!ENTITY event.to.label                                   "Kóńc:" >
+<!ENTITY event.to.accesskey                               "k">
+<!ENTITY task.to.label                                    "Termin:" >
+<!ENTITY task.to.accesskey                                "m">
+<!ENTITY task.status.label                                "Status:" >
+<!ENTITY task.status.accesskey                            "a">
+<!ENTITY event.repeat.label                               "Wóspjetowanje:" >
+<!ENTITY event.repeat.accesskey                           "W">
+<!ENTITY event.until.label                                "Až do:">
+<!ENTITY event.until.accesskey                            "A">
+<!ENTITY event.reminder.label                             "Dopomnjeśe:" >
+<!ENTITY event.reminder.accesskey                         "m">
+<!ENTITY event.description.label                          "Wopisanje:" >
+<!ENTITY event.description.accesskey                      "i">
+<!ENTITY event.attachments.label                          "Pśidanki:" >
+<!ENTITY event.attachments.accesskey                      "P" >
+<!ENTITY event.attachments.menubutton.label               "Pśipowjesyś">
+<!ENTITY event.attachments.menubutton.accesskey           "w">
+<!ENTITY event.attachments.url.label                      "Webbok…">
+<!ENTITY event.attachments.url.accesskey                  "e">
+<!ENTITY event.attachments.popup.remove.label             "Wótpóraś" >
+<!ENTITY event.attachments.popup.remove.accesskey         "t" >
+<!ENTITY event.attachments.popup.open.label               "Wócyniś" >
+<!ENTITY event.attachments.popup.open.accesskey           "c" >
+<!ENTITY event.attachments.popup.removeAll.label          "Wšykno wótpóraś" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "W" >
+<!ENTITY event.attachments.popup.attachPage.label         "Webbok pśipowjesyś…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "b" >
+<!ENTITY event.url.label                                  "Pśisłušny wótkaz:" >
+<!ENTITY event.priority2.label                            "Priorita:">
+
+<!ENTITY event.reminder.none.label                        "Żedno dopomnjeśe " >
+<!ENTITY event.reminder.0minutes.before.label             "0 minutow do togo" >
+<!ENTITY event.reminder.5minutes.before.label             "5 minutow do togo" >
+<!ENTITY event.reminder.15minutes.before.label            "15 minutow do togo" >
+<!ENTITY event.reminder.30minutes.before.label            "30 minutow do togo" >
+<!ENTITY event.reminder.1hour.before.label                "1 góźinu do togo" >
+<!ENTITY event.reminder.2hours.before.label               "2 góźinje do togo" >
+<!ENTITY event.reminder.12hours.before.label              "12 góźin do togo" >
+<!ENTITY event.reminder.1day.before.label                 "1 źeń do togo" >
+<!ENTITY event.reminder.2days.before.label                "2 dnja do togo" >
+<!ENTITY event.reminder.1week.before.label                "1 tyźeń do togo" >
+<!ENTITY event.reminder.custom.label                      "Swójske…" >
+
+<!ENTITY event.reminder.multiple.label                    "Někotare dopomnjeśa…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Cas ako:">
+<!ENTITY event.statusbarpanel.privacy.label               "Priwatnosć:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Wóspjetowanje wobźěłaś">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Njewóspjetujo se">
+<!ENTITY event.repeat.daily.label                       "Kuždy źeń">
+<!ENTITY event.repeat.weekly.label                      "Kuždy tyźeń">
+<!ENTITY event.repeat.every.weekday.label               "Kuždy wšedny źeń">
+<!ENTITY event.repeat.bi.weekly.label                   "Dwójotyźeński">
+<!ENTITY event.repeat.monthly.label                     "Kuždy mjasec">
+<!ENTITY event.repeat.yearly.label                      "Kužde lěto">
+<!ENTITY event.repeat.custom.label                      "Swójske…">
+
+<!ENTITY event.recurrence.pattern.label                 "Wóspjetowański muster">
+<!ENTITY event.recurrence.occurs.label                  "Wóspjetowaś" >
+<!ENTITY event.recurrence.day.label                     "kuždy źeń" >
+<!ENTITY event.recurrence.week.label                    "kuždy tyźeń" >
+<!ENTITY event.recurrence.month.label                   "kuždy mjasec" >
+<!ENTITY event.recurrence.year.label                    "kužde lěto" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Kužde" >
+<!ENTITY repeat.units.days.both                         "Źeń" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Kuždy wšedny źeń" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Kuždy" >
+<!ENTITY repeat.units.weeks.both                        "tyźeń" >
+<!ENTITY event.recurrence.on.label                      "On:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Kuždy" >
+<!ENTITY repeat.units.months.both                       "mjasec" >
+<!ENTITY event.recurrence.monthly.every.label           "Kuždy" >
+<!ENTITY event.recurrence.monthly.first.label           "prědny">
+<!ENTITY event.recurrence.monthly.second.label          "drugi">
+<!ENTITY event.recurrence.monthly.third.label           "tśeśi">
+<!ENTITY event.recurrence.monthly.fourth.label          "stwórty">
+<!ENTITY event.recurrence.monthly.fifth.label           "pěty">
+<!ENTITY event.recurrence.monthly.last.label            "slědny">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "njeźela" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "pónjeźela" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "wałtora" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "srjoda" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "stwórtk" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "Pětk" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "Sobota" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "Źeń mjaseca">
+<!ENTITY event.recurrence.repeat.recur.label            "Wóspjetowanje na źeń">
+
+<!ENTITY event.recurrence.every.label                        "Kuždy:" >
+<!ENTITY repeat.units.years.both                             "lěto" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Kužde" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "januar" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "februar" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "měrc" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "apryl" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "maj" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "junij" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "julij" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "awgust" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "september" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "oktober" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "nowember" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "december" >
+<!ENTITY event.recurrence.yearly.every.label                 "Kužde">
+<!ENTITY event.recurrence.yearly.first.label                 "prědne">
+<!ENTITY event.recurrence.yearly.second.label                "druge">
+<!ENTITY event.recurrence.yearly.third.label                 "tśeśi">
+<!ENTITY event.recurrence.yearly.fourth.label                "stwórte">
+<!ENTITY event.recurrence.yearly.fifth.label                 "pěte">
+<!ENTITY event.recurrence.yearly.last.label                  "šeste">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "njeźela" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "pónjeźela" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "wałtora" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "srjoda" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "stwórtk" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "pětk" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "sobota" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "źeń" >
+<!ENTITY event.recurrence.of.label                           "of" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "januar" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "februar" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "měrc" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "apryl" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "maj" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "junij" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "julij" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "awgust" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "september" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "oktober" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "nowember" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "december" >
+
+<!ENTITY event.recurrence.range.label                   "Wobcerk wóspjetowanja">
+<!ENTITY event.recurrence.forever.label                 "Žeden kóńcny datum" >
+<!ENTITY event.recurrence.repeat.for.label              "Napóraś" >
+<!ENTITY event.recurrence.appointments.label            "Terminy" >
+<!ENTITY event.repeat.until.label                       "Wóspjetowaś až do" >
+<!ENTITY event.recurrence.preview.label                 "Pśeglěd">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Wobźělniki pśepšosyś">
+<!ENTITY event.organizer.label                  "Organizator">
+<!ENTITY event.freebusy.suggest.slot            "Cas naraźiś:">
+<!ENTITY event.freebusy.button.next.slot        "Pśiduce městno">
+<!ENTITY event.freebusy.button.previous.slot    "Pjerwjejšne městno">
+<!ENTITY event.freebusy.zoom                    "Skalěrowanje:">
+<!ENTITY event.freebusy.legend.free             "Wólny" >
+<!ENTITY event.freebusy.legend.busy             "Zabrany" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Nachylu" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Z domu" >
+<!ENTITY event.freebusy.legend.unknown          "Žedne informacije" >
+<!ENTITY event.attendee.role.required           "Trěbny wobźělnik">
+<!ENTITY event.attendee.role.optional           "Móžny wobźělnik">
+<!ENTITY event.attendee.role.chair              "Pśedsedaŕ">
+<!ENTITY event.attendee.role.nonparticipant     "Žeden wobźělnik">
+<!ENTITY event.attendee.usertype.individual     "Jadnotliwc">
+<!ENTITY event.attendee.usertype.group          "Kupka">
+<!ENTITY event.attendee.usertype.resource       "Resursa">
+<!ENTITY event.attendee.usertype.room           "Rumnosć">
+<!ENTITY event.attendee.usertype.unknown        "Njeznaty">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Pšosym pódajśo casowu conu">
+<!ENTITY event.timezone.custom.label     "Dalšne casowe cony…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Powšykne">
+<!ENTITY read.only.title.label           "Titel:">
+<!ENTITY read.only.calendar.label        "Kalender:">
+<!ENTITY read.only.event.start.label     "Zachopny datum:">
+<!ENTITY read.only.task.start.label      "Zachopny datum:">
+<!ENTITY read.only.event.end.label       "Kóńcny datum:">
+<!ENTITY read.only.task.due.label        "Termin:">
+<!ENTITY read.only.repeat.label          "Wóspjetowaś:">
+<!ENTITY read.only.location.label        "Městno:">
+<!ENTITY read.only.category.label        "Kategorija:">
+<!ENTITY read.only.organizer.label       "Organizator:">
+<!ENTITY read.only.reply.label           "Wótegrono:">
+<!ENTITY read.only.accept.label          "Wobźělijom se">
+<!ENTITY read.only.decline.label         "Njewobźělijom se">
+<!ENTITY read.only.tentative.label       "Snaź se wobźělijom">
+<!ENTITY read.only.needs.action.label    "Wobkšuśijom pózdźej">
+<!ENTITY read.only.reminder.label        "Dopomnjeśe:">
+<!ENTITY read.only.attachments.label     "Pśidanki:">
+<!ENTITY read.only.attendees.label       "Wobźělniki">
+<!ENTITY read.only.description.label     "Wopisanje">
+<!ENTITY read.only.link.label            "Pśisłušny wótkaz">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Składowaś a zacyniś">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Změny składowaś a wokno zacyniś, mimo aby se wobźěleński status změnił a wótegrono pósłało">
+<!ENTITY summary.dialog.accept.label            "Akceptěrowaś">
+<!ENTITY summary.dialog.accept.tooltiptext      "Pśepšosenje akceptěrowaś">
+<!ENTITY summary.dialog.tentative.label         "Nachylu">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Pśepšosenje nachylu akceptěrowaś">
+<!ENTITY summary.dialog.decline.label           "Wótpokazaś">
+<!ENTITY summary.dialog.decline.tooltiptext     "Pśepšosenje wótpokazaś">
+<!ENTITY summary.dialog.dontsend.label          "Wótegrono njepósłaś">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Waš wobźěleński status změniś, mimo aby se organizatoroju wótegrono pósłało a wokno zacyniło">
+<!ENTITY summary.dialog.send.label              "Něnto wótegrono pósłaś">
+<!ENTITY summary.dialog.send.tooltiptext        "Organizatoroju wótegrono pósłaś a wokno zacyniś">

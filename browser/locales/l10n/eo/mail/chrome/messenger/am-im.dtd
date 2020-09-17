@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Atributoj de konto">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Ĝeneralaj">
+<!ENTITY account.advanced              "Spertulaj agordoj">
+<!ENTITY account.name                  "Uzantnomo:">
+<!ENTITY account.password              "Pasvorto:">
+<!ENTITY account.alias                 "Kromnomo:">
+<!ENTITY account.newMailNotification   "Sciigi pri novaj retleteroj">
+<!ENTITY account.autojoin              "Aŭtomate aliĝi al kanaloj:">
+<!ENTITY account.proxySettings.caption "Agordoj de retperanto:">
+<!ENTITY account.proxySettings.change.label     "Ŝanĝi…">
+<!ENTITY account.proxySettings.change.accessKey "n">

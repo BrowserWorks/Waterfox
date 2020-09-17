@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "წიგნაკში ჩამატება…">
+<!ENTITY AddToAddressBook.accesskey        "ჩ">
+<!ENTITY EditContact.label                 "პირის მონაცემების ჩასწორება…">
+<!ENTITY EditContact.accesskey             "წ">
+<!ENTITY ViewContact.label                 "პირის მონაცემების ჩვენება">
+<!ENTITY ViewContact.accesskey             "ვ">
+<!ENTITY SendMailTo.label                  "წერილის მიწერა მისამართზე…">
+<!ENTITY SendMailTo.accesskey              "ქ">
+<!ENTITY CopyEmailAddress.label            "ელფოსტის მისამართის ასლი">
+<!ENTITY CopyEmailAddress.accesskey        "მ">
+<!ENTITY CopyNameAndEmailAddress.label     "სახელისა და ელფოსტის ასლის აღება">
+<!ENTITY CopyNameAndEmailAddress.accesskey "ხ">
+<!ENTITY CreateFilterFrom.label            "ფილტრის შექმნა…">
+<!ENTITY CreateFilterFrom.accesskey        "ფ">
+<!ENTITY openInBrowser.label               "გახსნა ბრაუზერში">
+<!ENTITY openInBrowser.accesskey           "გ">
+<!ENTITY bookmarkLinkCmd.label             "ამ ბმულის ჩანიშვნა…">
+<!ENTITY bookmarkLinkCmd.accesskey         "ბ">
+<!ENTITY copyLinkCmd.label                 "ბმულის მისამართის ასლი">
+<!ENTITY copyLinkCmd.accesskey             "ლ">
+<!ENTITY CopyMessageId.label               "გზავნილის ასლი კოდით (ID)">
+<!ENTITY CopyMessageId.accesskey           "კ">
+<!ENTITY OpenMessageForMsgId.label         "გზავნილის გახსნა კოდით (ID)">
+<!ENTITY OpenMessageForMsgId.accesskey     "ო">
+<!ENTITY OpenBrowserWithMsgId.label        "ბრაუზერით გზავნილის გახსნა კოდით (ID)">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "რ">

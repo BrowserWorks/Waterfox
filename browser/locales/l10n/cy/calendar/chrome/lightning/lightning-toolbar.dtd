@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Bar Offer Calendr">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "B">
+<!ENTITY lightning.toolbar.task.name "Bar Offer Tasgau">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "Cydweddu">
+<!ENTITY lightning.toolbar.sync.tooltip "Ail-lwytho calendrau a chydweddu newidiadau">
+<!ENTITY lightning.toolbar.delete.label "Dileu">
+<!ENTITY lightning.toolbar.delete.tooltip "Dileu digwyddiadau neu dasgau penodol">
+<!ENTITY lightning.toolbar.edit.label "Golygu">
+<!ENTITY lightning.toolbar.edit.tooltip "Golygu digwyddiadau neu dasgau penodol">
+<!ENTITY lightning.toolbar.gototoday.label "Mynd i Heddiw">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Mynd i Heddiw">
+<!ENTITY lightning.toolbar.print.label "Argraffu">
+<!ENTITY lightning.toolbar.print.tooltip "Argraffu digwyddiadau neu dasgau">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Calendr">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Symud i'r tab calendr">
+<!ENTITY lightning.toolbar.calendar.accesskey "C">
+<!ENTITY lightning.toolbar.task.label         "Tasgau">
+<!ENTITY lightning.toolbar.task.tooltip       "Symud i'r tab tasgau">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Digwyddiad">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Creu digwyddiad newydd">
+<!ENTITY lightning.toolbar.newtask.label      "Tasg">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Creu tasg newydd">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Diwrnod">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Wythnos">
+<!ENTITY lightning.toolbar.week.accesskey            "W">
+<!ENTITY lightning.toolbar.multiweek.label           "Wythnosau">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "y">
+<!ENTITY lightning.toolbar.month.label               "Mis">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "AppMenu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Dangos dewislen &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Paen Calendr">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "P">
+<!ENTITY lightning.toolbar.calendarpane.label        "Dangos Paen Calendr">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "P">

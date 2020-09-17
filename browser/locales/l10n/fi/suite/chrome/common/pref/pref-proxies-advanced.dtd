@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+<!ENTITY  pref.proxies.advanced.title "Välityspalvelimien lisäasetukset">
+<!ENTITY  protocols.caption           "Eri protokollien välityspalvelimet">
+<!ENTITY  protocols.description       "Yleensä sama välityspalvelin ymmärtää kaikkia tässä listattuja protokollia.">
+<!ENTITY  http.label                  "HTTP-välityspalvelin:">
+<!ENTITY  http.accesskey              "v">
+<!ENTITY  ssl.label                   "SSL-välityspalvelin:">
+<!ENTITY  ssl.accesskey               "L">
+<!ENTITY  ftp.label                   "FTP-välityspalvelin:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "Sama välityspalvelin kaikille yhteyskäytännöille">
+<!ENTITY  reuseProxy.accesskey        "a">
+<!ENTITY  port.label                  "Portti:">
+<!ENTITY  HTTPPort.accesskey          "P">
+<!ENTITY  SSLPort.accesskey           "o">
+<!ENTITY  FTPPort.accesskey           "r">
+
+<!ENTITY  socks.caption               "Yleinen välityspalvelin">
+<!ENTITY  socks.description           "SOCKS-välityspalvelin on yleinen välityspalvelin, jota käytetään yritysympäristöissä ja vastaavissa.">
+<!ENTITY  socks.label                 "SOCKS-välityspalvelin:">
+<!ENTITY  socks.accesskey             "S">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "C">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "K">
+<!ENTITY  socksRemoteDNS.label        "Käytä IP-osoitteiden selvittämiseen (suositellaan SOCKS v5:lle)">
+<!ENTITY  socksRemoteDNS.accesskey    "e">
+<!ENTITY  SOCKSport.accesskey         "t">

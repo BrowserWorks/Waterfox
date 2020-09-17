@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog2.title         "Žurnalo valymas">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+<!ENTITY clearTimeDuration.label          "Pašalinti ">
+<!ENTITY clearTimeDuration.accesskey      "P">
+<!ENTITY clearTimeDuration.lastHour       "pastarosios valandos">
+<!ENTITY clearTimeDuration.last2Hours     "pastarųjų dviejų valandų">
+<!ENTITY clearTimeDuration.last4Hours     "pastarųjų keturių valandų">
+<!ENTITY clearTimeDuration.today          "šios dienos">
+<!ENTITY clearTimeDuration.everything     "visus">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "įrašus">
+
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+<!ENTITY detailsProgressiveDisclosure.label     "Išsamiau">
+<!ENTITY detailsProgressiveDisclosure.accesskey "I">
+
+
+<!ENTITY historyGroup.label                "Žurnalas">
+
+<!ENTITY itemHistory.label                 "Naršymo žurnalas">
+<!ENTITY itemHistory.accesskey             "ž">
+<!ENTITY itemCookies.label                 "Slapukai">
+<!ENTITY itemCookies.accesskey             "a">
+<!ENTITY itemCache.label                   "Podėlis">
+<!ENTITY itemCache.accesskey               "P">
+
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+<!ENTITY sanitizeEverythingUndoWarning     "Atlikus šį veiksmą, jo atšaukti neįmanoma.">
+
+<!ENTITY dialog.width                 "32em">

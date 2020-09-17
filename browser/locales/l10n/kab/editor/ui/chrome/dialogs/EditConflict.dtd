@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Fren taẓrigt n isnifal">
+<!ENTITY conflictWarning.label "Asebter-agi yesnifel-it useɣzan nniden, acukan ɣur-k isnifal nniḍen deg umsuddes.">
+<!ENTITY conflictResolve.label "Fren anwa lqem ara teǧǧeḍ:">
+<!ENTITY keepCurrentPageButton.label "Ḥrez isnifal n usebter amiran">
+<!ENTITY useOtherPageButton.label "Semselsi asebter amiran s isnifal nniḍen">

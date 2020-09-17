@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+<!ENTITY enbPluginCheckMailNews.label "Posta ve haber grupları">
+<!ENTITY enbPluginCheckMailNews.accesskey "o">
+<!-- These are added to the Window menu -->
+
+<!ENTITY mail.label "Posta ve haber grupları">
+<!ENTITY mail.accesskey "s">
+<!ENTITY addressbook.label "Adres defteri">
+<!ENTITY addressbook.accesskey "A">
+<!-- These are added to Preferences dialog -->
+
+<!ENTITY viewingMessages.label "İleti görüntüleme">
+<!ENTITY notifications.label "Uyarılar">
+<!ENTITY address.label "Adresler">
+<!ENTITY composingMessages.label "Düzenleme">
+<!ENTITY format.label "İleti biçemi">
+<!ENTITY return.label "Alındı onayı">
+<!ENTITY junk.label "Gereksiz ve şüpheli posta">
+<!ENTITY tags.label "Etiketler">
+<!ENTITY characterEncoding.label "Karakter Kodlaması">
+<!ENTITY networkStorage.label "Ağ ve depolama">

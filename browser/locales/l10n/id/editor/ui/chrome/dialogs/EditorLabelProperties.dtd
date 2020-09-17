@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Properti Label">
+
+<!ENTITY Settings.label "Pengaturan">
+<!ENTITY Settings.accesskey "P">
+
+<!ENTITY EditLabelText.label "Sunting Teks:">
+<!ENTITY EditLabelText.accesskey "t">
+<!ENTITY LabelFor.label "Untuk Kendali:">
+<!ENTITY LabelFor.accesskey "k">
+<!ENTITY AccessKey.label "Kunci Akses:">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveLabel.label "Hapus Label">
+<!ENTITY RemoveLabel.accesskey "H">

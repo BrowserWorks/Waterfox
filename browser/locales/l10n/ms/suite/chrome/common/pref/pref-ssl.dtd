@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "Versi Protokol SSL/TLS">
+<!ENTITY SSLTLSWarnings.caption             "Amaran SSL/TLS">
+<!ENTITY SSLMixedContent.caption            "Kandungan Gabungan">
+<!ENTITY SSLClientAuthMethod.caption        "Pilihan Sijil Klien">
+
+<!ENTITY pref.ssltls.title                  "Keselamatan Lapisan Pengangkutan (SSL/TLS)">
+<!ENTITY limit.description                  "Anda boleh mengehadkan protokol eksripsi untuk menggunakan sambungan yang selamat. Pilih versi tunggal atau pelbagai versi berdampingan.">
+<!ENTITY limit.enable.label                 "Dayakan:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName; boleh memaklumkan status keselamatan halaman web yang anda layari. Tetapkan &brandShortName; untuk memaparkan amaran apabila:">
+<!ENTITY warn.enteringsecure                "Memuatkan halaman yang menyokong enkripsi">
+<!ENTITY warn.enteringsecure.accesskey      "M">
+<!ENTITY warn.insecurepost                  "Menghantar data borang dari halaman yang tiada enkripsi ke halaman yang juga tiada enkripsi">
+<!ENTITY warn.insecurepost.accesskey        "h">
+<!ENTITY warn.leavingsecure                 "Keluar daripada halaman yang menyokong enkripsi">
+<!ENTITY warn.leavingsecure.accesskey       "K">
+
+<!ENTITY mixed.description                  "Halaman enkripsi mungkin mengandungi kandungan tanpa enkripsi yang terdedah kepada pengintip atau pemalsuan. &brandShortName; boleh mengesan dan menyekatnya:">
+<!ENTITY warn.mixedactivecontent            "Beri amaran apabila halaman enkripsi mengandungi kandungan yang tidak selamat">
+<!ENTITY warn.mixedactivecontent.accesskey  "B">
+<!ENTITY block.activecontent                "Jangan muatkan kandungan yang tidak selamat dalam halaman enkripsi">
+<!ENTITY block.activecontent.accesskey      "J">
+<!ENTITY warn.mixeddisplaycontent           "Beri amaran apabila halaman enkripsi mengandungi kandungan gabungan jenis lain">
+<!ENTITY warn.mixeddisplaycontent.accesskey "r">
+<!ENTITY block.displaycontent               "Jangan muatkan kandungan gabungan jenis lain dalam halaman enkripsi">
+<!ENTITY block.displaycontent.accesskey     "m">
+
+<!ENTITY certselect.description             "Tentukan cara &brandShortName; memilih sijil keselamatan untuk diserahkan kepada laman web yang memerlukannya:">
+<!ENTITY certselect.auto                    "Pilih Secara Automatik">
+<!ENTITY certselect.auto.accesskey          "A">
+<!ENTITY certselect.ask                     "Tanya Setiap Kali">
+<!ENTITY certselect.ask.accesskey           "K">

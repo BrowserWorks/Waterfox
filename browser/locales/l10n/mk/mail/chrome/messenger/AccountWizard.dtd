@@ -1,0 +1,103 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Волшебник за сметки">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+
+<!ENTITY accountTypeTitle.label "Поставување на нова сметка">
+<!ENTITY accountTypeDirections.label "Изберете тип на сметка каква што сакате да поставите:">
+<!ENTITY accountTypeMail.label "Сметка за е-пошта">
+<!ENTITY accountTypeMail.accesskey "е">
+<!ENTITY accountTypeNews.label "Сметка за дискусии">
+<!ENTITY accountTypeNews.accesskey "д">
+
+<!-- Entities for Identity page -->
+
+
+<!ENTITY identityTitle.label "Идентитет">
+<!ENTITY identityDesc.label "Секоја сметка може да има сопствен идентитет. Во идентитетот се чуваат информациите кои ве идентификуваат кај примачите на пораката.">
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+
+<!ENTITY fullnameDesc.label "Внесете го името кое сакате да се појавува во &quot;Од&quot; полето во пораките кои ги испраќате">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+	1, do not translate two of "&quot;"
+	2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(на пример, &quot;John Smith&quot;).">
+<!ENTITY fullnameLabel.label "Вашето име:">
+<!ENTITY fullnameLabel.accesskey "а">
+
+<!ENTITY emailLabel.label "Адреса за е-пошта:">
+<!ENTITY emailLabel.accesskey "е">
+<!-- Entities for Server page -->
+
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingServerTypeDesc.label "Изберете го типот на сервер за примање на пораки.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!-- for when the user has an SMTP server pre-configured -->
+<!-- LOCALIZATION NOTE (currentSmtpBefore.label) : Do not translate "SMTP" and "&quot;" in
+     this variable. Also, translate currentSmtpBefore.label and currentSmtpAfter.label as a single sentence,
+	  inserting text after the "&quot;" entity in currentSmtpAfter.label, if required grammatically
+-->
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix, if required grammatically.
+-->
+
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Внесете го името на Вашиот NNTP сервер (на пример:&quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Дискусиони групи:">
+<!ENTITY newsServerLabel.accesskey "и">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY haveSmtp1.prefix "Ќе се користи Вашиот постоечки сервер за испраќање (SMTP): &quot;">
+<!-- Entities for Login page -->
+
+
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Вашето постоечко име за испраќање (SMTP), &quot;">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Вашиот сервер за испраќање (SMTP), &quot;">
+
+<!-- Entities for Account name page -->
+
+
+<!ENTITY accnameTitle.label "Име на сметката">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Внесете го името кое ќе се однесува на оваа сметка (на пример: „Работна сметка“, „Домашна сметка“ или „Сметка за дискусии“).">
+<!ENTITY accnameLabel.label "Име на сметката:">
+<!ENTITY accnameLabel.accesskey "м">
+
+<!-- Entities for Done (Congratulations) page -->
+
+
+<!ENTITY completionTitle.label "Честитки!">
+<!ENTITY completionText.label "Потврдете дека долните информации се точни.">
+<!ENTITY serverTypePrefix.label "Тип на сервер за примање пораки:">
+<!ENTITY serverNamePrefix.label "Примање пораки:">
+<!ENTITY smtpServerNamePrefix.label "Праќање пораки (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Име на NNTP сервер:">
+<!ENTITY downloadOnLogin.label "Преземи ги пораките веднаш">
+<!ENTITY deferStorageDesc.label "Не ја избирајте оваа опција ако сакате оваа сметка да ја чува поштата во сопствен директориум и да биде сметка од прво ниво. Ако ја изберете, тој ќе биде дел од глобалното сандаче.">
+<!ENTITY deferStorage.label "Користи глобално сандаче">
+<!ENTITY clickFinish.label "Кликнете на „Крај“ за да ги снимите овие поставки и за да излезете од волшебникот за сметка.">

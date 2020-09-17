@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "प्रपत्र क्षेत्र गुण">
+<!ENTITY windowTitleImage.label "प्रपत्र चित्र गुण">
+
+<!ENTITY InputType.label "क्षेत्र प्रकार">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "पाठ">
+<!ENTITY password.value "शब्दकूट">
+<!ENTITY checkbox.value "जांचपेटी">
+<!ENTITY radio.value "रेडियो बटन">
+<!ENTITY submit.value "बटन सौंपें">
+<!ENTITY reset.value "बटन फिर सेट करें">
+<!ENTITY file.value "फाइल">
+<!ENTITY hidden.value "प्रच्छन्न">
+<!ENTITY image.value "चित्र">
+<!ENTITY button.value "बटन">
+
+<!ENTITY InputSettings.label "क्षेत्र जमावट">
+<!ENTITY InputName.label "क्षेत्र नाम:">
+<!ENTITY GroupName.label "समूह नाम:">
+<!ENTITY Name.accesskey "N">
+<!ENTITY InputValue.label "क्षेत्र मान:">
+<!ENTITY InitialValue.label "आरंभिक मान:">
+<!ENTITY Value.accesskey "V">
+<!ENTITY InputChecked.label "आरंभिक रूप से जांचा गया">
+<!ENTITY InputChecked.accesskey "C">
+<!ENTITY InputSelected.label "आरंभिक रूप से चयनित">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "सिर्फ पढ़ने के लिये">
+<!ENTITY InputReadOnly.accesskey "R">
+<!ENTITY InputDisabled.label "निष्क्रिय">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "टैब सूची:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "क्षेत्र आकार:">
+<!ENTITY TextSize.accesskey "F">
+<!ENTITY TextLength.label "अधिकतम लंबाई:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "अभिगम कुंजी:">
+<!ENTITY AccessKey.accesskey "K">
+<!ENTITY Accept.label "अभिगम प्रकार:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "चित्र गुण...">
+<!ENTITY ImageProperties.accesskey "E">

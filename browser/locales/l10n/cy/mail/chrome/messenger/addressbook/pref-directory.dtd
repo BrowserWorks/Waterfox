@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+
+<!ENTITY pref.ldap.window.title    "Gweinyddion Cyfeiriadur LDAP">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Gweinyddwyr Cyfeiriadur LDAP:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Dewiswch Gyfeiriadur gweinydd LDAP:">
+<!ENTITY directoriesText.accesskey "D">
+<!ENTITY addDirectory.label        "Ychwanegu">
+<!ENTITY addDirectory.accesskey    "Y">
+<!ENTITY editDirectory.label       "Golygu">
+<!ENTITY editDirectory.accesskey   "G">
+<!ENTITY deleteDirectory.label     "Dileu">
+<!ENTITY deleteDirectory.accesskey "D">

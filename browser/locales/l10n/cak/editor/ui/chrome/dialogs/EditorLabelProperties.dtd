@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kichinil Yaketal">
+
+<!ENTITY Settings.label "Taq nuk'ulem">
+<!ENTITY Settings.accesskey "n">
+
+<!ENTITY EditLabelText.label "Tinuk' Rucholajem Tzij:">
+<!ENTITY EditLabelText.accesskey "R">
+<!ENTITY LabelFor.label "Richin Nichajïx:">
+<!ENTITY LabelFor.accesskey "R">
+<!ENTITY AccessKey.label "Rupitz'b'al Okem:">
+<!ENTITY AccessKey.accesskey "R">
+
+<!ENTITY RemoveLabel.label "Keyuj Yaketal">
+<!ENTITY RemoveLabel.accesskey "K">

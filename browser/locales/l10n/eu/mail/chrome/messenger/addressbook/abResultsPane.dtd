@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Helbide-liburua">
+<!ENTITY Addrbook.accesskey                    "H">
+<!ENTITY GeneratedName.label                   "Izena">
+<!ENTITY GeneratedName.accesskey               "I">
+<!ENTITY PrimaryEmail.label                    "Helbide elektronikoa">
+<!ENTITY PrimaryEmail.accesskey                "H">
+<!ENTITY Company.label                         "Erakundea">
+<!ENTITY Company.accesskey                     "E">
+<!ENTITY _PhoneticName.label                   "Izen fonetikoa">
+<!ENTITY _PhoneticName.accesskey               "f">
+<!ENTITY NickName.label                        "Goitizena">
+<!ENTITY NickName.accesskey                    "G">
+<!ENTITY SecondEmail.label                     "Helbide elektroniko gehigarria">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "Saila">
+<!ENTITY Department.accesskey                  "S">
+<!ENTITY JobTitle.label                        "Titulua">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Mugikorra">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Bilagailua">
+<!ENTITY PagerNumber.accesskey                 "B">
+<!ENTITY FaxNumber.label                       "Faxa">
+<!ENTITY FaxNumber.accesskey                   "x">
+<!ENTITY HomePhone.label                       "Etxeko telefonoa">
+<!ENTITY HomePhone.accesskey                   "t">
+<!ENTITY WorkPhone.label                       "Laneko telefonoa">
+<!ENTITY WorkPhone.accesskey                   "a">
+<!ENTITY ChatName.label                        "Txateko izena">
+<!ENTITY ChatName.accesskey                    "i">
+<!ENTITY sortAscending.label                   "Gorantz">
+<!ENTITY sortAscending.accesskey               "G">
+<!ENTITY sortDescending.label                  "Beherantz">
+<!ENTITY sortDescending.accesskey              "B">

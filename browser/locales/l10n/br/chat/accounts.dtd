@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "Kontoù - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Stad ar postelerezh prim">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Kont nevez">
+<!ENTITY accountManager.newAccount.accesskey "n">
+<!ENTITY accountManager.close.label          "Serriñ">
+<!ENTITY accountManager.close.accesskey      "S">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Kont ebet kefluniet c'hoazh">
+<!ENTITY accountManager.noAccount.description "Klikit war an afell &accountManager.newAccount.label; a-benn lezel &brandShortName; da sturiañ ac'hanoc'h evit kefluniañ unan.">
+<!ENTITY account.autoSignOn.label     "Kennaskañ d'al loc'hañ">
+<!ENTITY account.autoSignOn.accesskey "K">
+<!ENTITY account.connect.label        "Kennaskañ">
+<!ENTITY account.connect.accesskey    "K">
+<!ENTITY account.disconnect.label     "Digennaskañ">
+<!ENTITY account.disconnect.accesskey "D">
+<!ENTITY account.delete.label         "Dilemel">
+<!ENTITY account.delete.accesskey     "D">
+<!ENTITY account.edit.label           "Perzhioù">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "Mont d'ar c'hrec'h">
+<!ENTITY account.movedown.label       "Mont d'an traoñ">
+<!ENTITY account.cancelReconnection.label         "Nullañ an adkennaskañ">
+<!ENTITY account.cancelReconnection.accesskey     "N">
+<!ENTITY account.copyDebugLog.label     "Eilañ restr ar c'herzhlevr diveugañ">
+<!ENTITY account.copyDebugLog.accesskey "E">
+<!ENTITY account.showDebugLog.label     "Diskouez restr ar c'herzhlevr diveugañ">
+<!ENTITY account.showDebugLog.accesskey "D">
+<!ENTITY account.connecting           "O kennaskañ…">
+<!ENTITY account.disconnecting        "O tigennaskañ…">
+<!ENTITY account.disconnected         "N'eo ket kennasket">

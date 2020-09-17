@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Sadržaj">
+<!ENTITY buildToc.label      "Kreiraj sadržaj iz:">
+<!ENTITY tag.label           "Oznaka:">
+<!ENTITY class.label         "Klasa:">
+<!ENTITY header1.label       "Nivo 1">
+<!ENTITY header2.label       "Nivo 2">
+<!ENTITY header3.label       "Nivo 3">
+<!ENTITY header4.label       "Nivo 4">
+<!ENTITY header5.label       "Nivo 5">
+<!ENTITY header6.label       "Nivo 6">
+<!ENTITY makeReadOnly.label  "Učini sadržaj samo za čitanje">
+<!ENTITY orderedList.label   "Pobroji sve unose u sadržaj">

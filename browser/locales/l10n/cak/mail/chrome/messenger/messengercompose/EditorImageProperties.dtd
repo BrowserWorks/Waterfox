@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Taq Richinil Wachib'äl">
+
+<!ENTITY pixelsPopup.value "taq piksel">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Ruwachib'al K'ojlib'äl:">
+<!ENTITY locationEditField.accessKey "K">
+<!ENTITY locationEditField.tooltip "Titz'ib'äx rub'i' ri yakb'äl o ruk'ojlemal wachib'äl">
+<!ENTITY locationEditField.shortenedDataURI "Ch'utinisan taq tzij URI (tiwachib'ëx xtutz'ajb'a' chijun ri URI chupam ri molwuj)">
+<!ENTITY title.label "Pixa':">
+<!ENTITY title.accessKey "P">
+<!ENTITY title.tooltip "Ri html 'b'i'aj' b'anikil, ri nirik'itäj achi'el jun pixa'">
+<!ENTITY altText.label "Cha'el rucholajem tzij:">
+<!ENTITY altText.accessKey "C">
+<!ENTITY altTextEditField.tooltip "Titz'ib'äx ri rucholajem tzij xtirik' pa ruk'exel ri wachib'äl">
+<!ENTITY noAltText.label "Man tokisäx cha'el rucholajem tzij">
+<!ENTITY noAltText.accessKey "M">
+
+<!ENTITY previewBox.label "Nab'ey Rutzub'al Wachib'äl">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Runimilem Wakami:">
+<!ENTITY actualSizeRadio.label "Runimilem Wakami">
+<!ENTITY actualSizeRadio.accessKey "W">
+<!ENTITY actualSizeRadio.tooltip "Titzolïx ri nab'ey rupalem wachib'äl">
+<!ENTITY customSizeRadio.label "Tichinäx Nimilem">
+<!ENTITY customSizeRadio.accessKey "N">
+<!ENTITY customSizeRadio.tooltip "Tijal rupalem ri wachib'äl achi'el nik'ut pa ri ruxaq">
+<!ENTITY heightEditField.label "Raqän:">
+<!ENTITY heightEditField.accessKey "R">
+<!ENTITY widthEditField.label "Ruwa:">
+<!ENTITY widthEditField.accessKey "R">
+<!ENTITY constrainCheckbox.label "Man tijal">
+<!ENTITY constrainCheckbox.accessKey "M">
+<!ENTITY constrainCheckbox.tooltip "Tiyake' runimilem ri wachib'äl">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Rusaqasetul Wachib'äl">
+<!ENTITY removeImageMapButton.label "Tiyuj">
+<!ENTITY removeImageMapButton.accessKey "y">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Ticholajïx Rucholajem Tz'ij rik'in ri Wachib'äl">
+<!ENTITY bottomPopup.value "Pan ikim">
+<!ENTITY topPopup.value "Pan ajsik">
+<!ENTITY centerPopup.value "Pa nik'aj">
+<!ENTITY wrapRightPopup.value "Titz'ajïx pan ajkiq'a'">
+<!ENTITY wrapLeftPopup.value "Titz'ajïx pa xokon">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Rukojol">
+<!ENTITY leftRightEditField.label "Xokon chuqa' Ajkiq'a':">
+<!ENTITY leftRightEditField.accessKey "X">
+<!ENTITY topBottomEditField.label "Ajsik' chuq'a Ikim:">
+<!ENTITY topBottomEditField.accessKey "A">
+<!ENTITY borderEditField.label "Köw Ruchi':">
+<!ENTITY borderEditField.accessKey "R">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Tik'ut ruchi' chi rij ri wachib'äl ximon">
+<!ENTITY showImageLinkBorder.accessKey "B">
+<!ENTITY LinkAdvancedEditButton.label "Ximonel Q'axinäq Nuk'uj…">
+<!ENTITY LinkAdvancedEditButton.accessKey "X">
+<!ENTITY LinkAdvancedEditButton.tooltip "Ketz'aqatisäx o kejalwachïx HTML taq b'anikil, che't taq b'anikil chuqa' JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Nojwuj">
+<!ENTITY imageLocationTab.label "K'ojlib'äl">
+<!ENTITY imageDimensionsTab.label "Taq runimilem">
+<!ENTITY imageAppearanceTab.label "Ruwäch">
+<!ENTITY imageLinkTab.label "Ximonel">

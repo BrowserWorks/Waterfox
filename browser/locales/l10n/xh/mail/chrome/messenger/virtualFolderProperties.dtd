@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Isiqulathi Seefayili Sokuzingela Esitsha Esigciniweyo">
+<!ENTITY name.label                 "Igama:">
+<!ENTITY name.accesskey             "I">
+<!ENTITY description.label          "Yila njengesiqulathi seefayili esonganyelweyo soku:">
+<!ENTITY description.accesskey      "Y">
+
+<!ENTITY searchTermCaption.label "Bumba imiqathango yokuzingela esetyenziselwa esi siqulathi seefayili sokuzingela esigciniweyo: ">
+
+<!ENTITY folderSelectionCaption.label "Khetha iziqulathi zeefayili zokuzingela: ">
+<!ENTITY chooseFoldersButton.label "Khetha...">
+<!ENTITY chooseFoldersButton.accesskey "e">
+
+<!ENTITY searchOnline.label "Zingela Imo Yokusebenza (Inika iziphumo zokuhlaziya ze-IMAP kunye neziqulathi zeefayili Ezitsha kodwa yandisa ixesha lokuvula isiqulathi)">
+<!ENTITY searchOnline.accesskey "I">
+<!ENTITY newFolderButton.label       "Create">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "Update">
+<!ENTITY editFolderButton.accesskey  "U">

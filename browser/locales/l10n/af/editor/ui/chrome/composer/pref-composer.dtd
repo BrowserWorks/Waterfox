@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Onlangsebladsye-kieslys">
+<!ENTITY  documentsInMenu.label         "Maksimum getal bladsye gelys:">
+<!ENTITY  documentsInMenu.accesskey     "g">
+<!ENTITY  savingFiles.title             "Wanneer bladsye gestoor of gepubliseer word">
+<!ENTITY  preserveExisting.label        "Behou oorspronklike bronformatering">
+<!ENTITY  preserveExisting.accesskey    "B">
+<!ENTITY  preserveExisting.tooltip      "Behou reëlbreuke en bladsy se oorspronklike formatering">
+<!ENTITY  saveAssociatedFiles.label     "Stoor prente en ander geassosieerde lêers wanneer bladsye gestoor word">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "Toon altyd publiseerdialoog wanneer bladsye gepubliseer word">
+<!ENTITY  showPublishDialog.accesskey   "T">
+<!ENTITY  composerEditing.label         "Redigering">
+<!ENTITY  maintainStructure.label       "Handhaaf tabeluitleg wanneer selle ingevoeg of geskrap word">
+<!ENTITY  maintainStructure.tooltip     "Behou tabel se reghoekige vorm deur outomaties selle by te voeg nadat selle ingevoeg of geskrap is">
+<!ENTITY  maintainStructure.accesskey   "H">
+<!ENTITY  useCSS.label                  "Gebruik CSS-style in plaas van HTML-elemente en attribute">
+<!ENTITY  useCSS.accesskey              "G">
+<!ENTITY  crInPCreatesNewP.label        "ENTER in 'n paragraaf skep altyd 'n nuwe paragraaf">
+<!ENTITY  crInPCreatesNewP.accesskey    "E">

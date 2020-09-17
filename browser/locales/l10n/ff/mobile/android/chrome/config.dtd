@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Yiylo">
+
+<!ENTITY newPref.namePlaceholder       "Innde">
+
+<!ENTITY newPref.valueBoolean          "Buleaare">
+<!ENTITY newPref.valueString           "Ɓoggol">
+<!ENTITY newPref.valueInteger          "Timmunde">
+
+<!ENTITY newPref.stringPlaceholder     "Naatnu ɓoggol">
+<!ENTITY newPref.numberPlaceholder     "Naatnu limoore">
+
+<!ENTITY newPref.toggleButton          "Toggilo">
+<!ENTITY newPref.cancelButton          "Haaytu">
+
+<!ENTITY contextMenu.copyPrefName      "Natto Innde">
+<!ENTITY contextMenu.copyPrefValue     "Natto Kiisol">

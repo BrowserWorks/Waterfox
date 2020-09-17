@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "Innstillinger">
+<!ENTITY  preferencesDefaultTitleWin.title "Innstillinger">
+<!ENTITY  preferencesCloseButton.label "Lukk">
+<!ENTITY  preferencesCloseButton.accesskey "L">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "Innstillinger">
+<!ENTITY prefWindow.size "width: 102ch; height: 44em;">
+<!ENTITY prefWindowMac.size "width: 62em; height: 41em;">
+<!ENTITY prefWindowWin.size "width: 115ch; height: 43em;">
+<!ENTITY categoryHeader "Kategori">
+
+<!ENTITY appear.label "Utseende">
+<!ENTITY content.label "Innhold">
+<!ENTITY fonts.label "Skrifttyper">
+<!ENTITY colors.label "Farger">
+<!ENTITY media.label "Media">
+<!ENTITY spellingPane.label "Stavekontroll">
+
+<!ENTITY navigator.label "Nettleser">
+<!ENTITY history.label "Historikk">
+<!ENTITY languages.label "Språk">
+<!ENTITY applications.label "Hjelpeprogrammer">
+<!ENTITY locationBar.label "Adresselinje">
+<!ENTITY search.label "Søk på internett">
+<!ENTITY tabWindows.label "Nettlesing med faner">
+<!ENTITY links.label "Lenkeoppførsel">
+<!ENTITY download.label "Nedlasting">
+
+<!ENTITY security.label "Personvern og sikkerhet">
+<!ENTITY privatedata.label "Private data">
+<!ENTITY cookies.label "Infokapsler">
+<!ENTITY images.label "Bilder">
+<!ENTITY popups.label "Sprettoppvinduer">
+<!ENTITY passwords.label "Passord">
+<!ENTITY masterpass.label "Hovedpassord">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "Sertifikater">
+
+<!ENTITY sync.label "Sync">
+
+<!ENTITY advance.label "Avansert">
+<!ENTITY scriptsAndWindows.label "Skript og programtillegg">
+<!ENTITY keynav.label "Tastaturnavigasjon">
+<!ENTITY findAsYouType.label "Finn mens du skriver">
+<!ENTITY cache.label "Hurtiglager">
+<!ENTITY offlineApps.label "Frakoblede apps">
+<!ENTITY proxies.label "Proxy">
+<!ENTITY httpnetworking.label "HTTP-nettverk">
+<!ENTITY smart.label "Programvareinstallasjon">
+<!ENTITY mousewheel.label "Musehjul">
+
+<!ENTITY focusSearch.key "f">

@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xhtml -->
+<!ENTITY searchHeading.label         "Шукати в повідомленнях у:">
+<!ENTITY searchHeading.accesskey     "і">
+<!ENTITY searchSubfolders.label      "Шукати у вкладених теках">
+<!ENTITY searchSubfolders.accesskey  "к">
+<!ENTITY searchOnServer.label        "Виконати пошук на сервері">
+<!ENTITY searchOnServer.accesskey    "с">
+<!ENTITY resetButton.label           "Очистити">
+<!ENTITY resetButton.accesskey       "О">
+<!ENTITY openButton.label            "Відкрити">
+<!ENTITY openButton.accesskey        "д">
+<!ENTITY deleteButton.label          "Вилучити">
+<!ENTITY deleteButton.accesskey      "ч">
+<!ENTITY searchDialogTitle.label     "Пошук повідомлень">
+<!ENTITY results.label               "Результати">
+<!ENTITY moveButton.label            "Перемістити">
+<!ENTITY moveButton.accesskey        "П">
+<!ENTITY closeCmd.key                "W">
+<!ENTITY openInFolder.label          "Відкрити у теці">
+<!ENTITY openInFolder.accesskey      "т">
+<!ENTITY saveAsVFButton.label        "Зберегти як віртуальну теку">
+<!ENTITY saveAsVFButton.accesskey    "б">
+
+<!-- for abSearchDialog.xhtml -->
+<!ENTITY abSearchHeading.label       "Шукати в:">
+<!ENTITY abSearchHeading.accesskey   "Ш">
+<!ENTITY propertiesButton.label      "Властивості">
+<!ENTITY propertiesButton.accesskey  "л">
+<!ENTITY composeButton.label         "Написати">
+<!ENTITY composeButton.accesskey     "Н">
+<!ENTITY deleteCardButton.label      "Видалити">
+<!ENTITY deleteCardButton.accesskey  "В">
+<!ENTITY abSearchDialogTitle.label   "Розширений режим пошуку в адресній книзі">

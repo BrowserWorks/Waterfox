@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Atributoj de tabelo">
+<!ENTITY applyButton.label                "Apliki">
+<!ENTITY applyButton.accesskey            "">
+<!ENTITY closeButton.label                "Fermi">
+<!ENTITY tableTab.label                   "Tabelo">
+<!ENTITY cellTab.label                    "Ĉeloj">
+<!ENTITY tableRows.label                  "Vicoj:">
+<!ENTITY tableRows.accessKey              "V">
+<!ENTITY tableColumns.label               "Kolumnoj:">
+<!ENTITY tableColumns.accessKey           "K">
+<!ENTITY tableHeight.label                "Alto:">
+<!ENTITY tableHeight.accessKey            "t">
+<!ENTITY tableWidth.label                 "Larĝo:">
+<!ENTITY tableWidth.accessKey             "L">
+<!ENTITY tableBorderSpacing.label         "Borderaĵoj kaj marĝenoj">
+<!ENTITY tableBorderWidth.label           "Borderaĵo:">
+<!ENTITY tableBorderWidth.accessKey       "B">
+<!ENTITY tableSpacing.label               "Interspaco:">
+<!ENTITY tableSpacing.accessKey           "I">
+<!ENTITY tablePadding.label               "Marĝenoj:">
+<!ENTITY tablePadding.accessKey           "M">
+<!ENTITY tablePxBetwCells.label           "rastrumeroj inter ĉeloj">
+<!ENTITY tablePxBetwBrdrCellContent.label "rastrumeroj inter borderaĵo kaj enhavo de ĉelo">
+<!ENTITY tableAlignment.label             "Ĝisrandigo de tabelo:">
+<!ENTITY tableAlignment.accessKey         "r">
+<!ENTITY tableCaption.label               "Titolo:">
+<!ENTITY tableCaption.accessKey           "i">
+<!ENTITY tableCaptionAbove.label          "supre de tabelo">
+<!ENTITY tableCaptionBelow.label          "sube de tabelo">
+<!ENTITY tableCaptionLeft.label           "maldekstre de tabelo">
+<!ENTITY tableCaptionRight.label          "dekstre de tabelo">
+<!ENTITY tableCaptionNone.label           "neniu">
+<!ENTITY tableInheritColor.label           "(malmarku, por ke estu videbla fono de la paĝo)">
+
+<!ENTITY cellSelection.label              "Elekto de">
+<!ENTITY cellSelectCell.label             "ĉelo">
+<!ENTITY cellSelectRow.label              "vico">
+<!ENTITY cellSelectColumn.label           "kolumno">
+<!ENTITY cellSelectNext.label             "Sekva">
+<!ENTITY cellSelectNext.accessKey         "S">
+<!ENTITY cellSelectPrevious.label         "Antaŭa">
+<!ENTITY cellSelectPrevious.accessKey     "n">
+<!ENTITY applyBeforeChange.label          "Ŝanĝoj estos aplikitaj post ŝanĝi la elekton.">
+<!ENTITY cellContentAlignment.label       "Ĝisrandigo de enhavo">
+<!ENTITY cellHorizontal.label             "Horizontale:">
+<!ENTITY cellHorizontal.accessKey         "H">
+<!ENTITY cellVertical.label               "Vertikale:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Stilo de ĉelo:">
+<!ENTITY cellStyle.accessKey              "i">
+<!ENTITY cellNormal.label                 "norma">
+<!ENTITY cellHeader.label                 "titolo">
+<!ENTITY cellTextWrap.label               "Faldi tekston:">
+<!ENTITY cellTextWrap.accessKey           "F">
+<!ENTITY cellWrap.label                   "jes">
+<!ENTITY cellNoWrap.label                 "ne">
+<!ENTITY cellAlignTop.label               "supren">
+<!ENTITY cellAlignMiddle.label            "mezen">
+<!ENTITY cellAlignBottom.label            "malsupren">
+<!ENTITY cellAlignJustify.label           "ambaŭflanken">
+<!ENTITY cellInheritColor.label           "(malmarku, por ke estu videbla fono de la tabelo)">
+<!ENTITY cellUseCheckboxHelp.label        "Uzu markbutonojn por elekti kiujn atributojn estos aplikitaj al ĉiuj elektitaj ĉeloj">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Grando">
+<!ENTITY pixels.label                     "rastrumeroj">
+<!ENTITY backgroundColor.label            "Koloro de fono:">
+<!ENTITY backgroundColor.accessKey        "K">
+<!ENTITY AlignLeft.label                  "maldekstren">
+<!ENTITY AlignCenter.label                "centren">
+<!ENTITY AlignRight.label                 "dekstren">

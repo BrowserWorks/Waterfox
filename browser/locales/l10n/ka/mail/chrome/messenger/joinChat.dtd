@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "სასაუბროში შესვლა">
+<!ENTITY name.label                     "ოთახი">
+<!ENTITY optional.label                 "(სურვილისამებრ)">
+<!ENTITY account.label                  "ანგარიში">
+<!ENTITY autojoin.label                 "ავტომატური ჩართვა ამ სასაუბროში">
+<!ENTITY autojoin.accesskey             "A">

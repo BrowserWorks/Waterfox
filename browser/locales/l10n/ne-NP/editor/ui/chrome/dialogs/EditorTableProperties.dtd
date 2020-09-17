@@ -1,0 +1,116 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is Mozilla Communicator client code, released
+   - March 31, 1998.
+   -
+   - The Initial Developer of the Original Code is
+   - Netscape Communications Corporation.
+   - Portions created by the Initial Developer are Copyright (C) 1998-1999
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either of the GNU General Public License Version 2 or later (the "GPL"),
+   - or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the GPL or the LGPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->
+
+<!ENTITY tableWindow.title "तालिका गुण">
+<!ENTITY applyButton.label "लागू गर्नुहोस्">
+<!ENTITY applyButton.accesskey "A">
+<!ENTITY closeButton.label "बन्द गर्नुहोस्">
+<!ENTITY tableTab.label "तालिका">
+<!ENTITY cellTab.label "कक्ष">
+<!ENTITY tableRows.label "पङ्क्ति:">
+<!ENTITY tableRows.accessKey "R">
+<!ENTITY tableColumns.label "स्तम्भ:">
+<!ENTITY tableColumns.accessKey "C">
+<!ENTITY tableHeight.label "उचाइ:">
+<!ENTITY tableHeight.accessKey "G">
+<!ENTITY tableWidth.label "चौडाइ:">
+<!ENTITY tableWidth.accessKey "W">
+<!ENTITY tableBorderSpacing.label "किनारा र खाली स्थान">
+<!ENTITY tableBorderWidth.label "किनारा:">
+<!ENTITY tableBorderWidth.accessKey "B">
+<!ENTITY tableSpacing.label "खाली स्थान:">
+<!ENTITY tableSpacing.accessKey "S">
+<!ENTITY tablePadding.label "प्याडिङ:">
+<!ENTITY tablePadding.accessKey "P">
+<!ENTITY tablePxBetwCells.label "कक्ष बीचका पिक्सेल">
+<!ENTITY tablePxBetwBrdrCellContent.label "कक्ष किनारा र सामाग्री बीचका पिक्सेल">
+<!ENTITY tableAlignment.label "तालिका पङ्क्तिबद्धता:">
+<!ENTITY tableAlignment.accessKey "T">
+<!ENTITY tableCaption.label "क्याप्सन:">
+<!ENTITY tableCaption.accessKey "N">
+<!ENTITY tableCaptionAbove.label "तालिका माथि">
+<!ENTITY tableCaptionBelow.label "तालिका तल">
+<!ENTITY tableCaptionLeft.label "तालिकाको बायाँ">
+<!ENTITY tableCaptionRight.label "तालिकाको दायाँ">
+<!ENTITY tableCaptionNone.label "कुनै पनि होइन">
+<!ENTITY tableInheritColor.label "(यसबाट पृष्ठ रङ देखाउनुहोस्)">
+
+<!ENTITY cellPercent.label "तालिकाको प्रतिशत">
+<!ENTITY cellSelection.label "चयन">
+<!ENTITY cellSelectCell.label "कक्ष">
+<!ENTITY cellSelectRow.label "पङ्क्ति">
+<!ENTITY cellSelectColumn.label "स्तम्भ">
+<!ENTITY cellSelectNext.label "पछिल्लो">
+<!ENTITY cellSelectNext.accessKey "N">
+<!ENTITY cellSelectPrevious.label "अघिल्लो">
+<!ENTITY cellSelectPrevious.accessKey "P">
+<!ENTITY cellApplyBeforeMove.label "चयनलाई परिवर्तन गर्नुभन्दा अगाडि परिवर्तन लागू गर्नुहोस्">
+<!ENTITY cellKeepCurrentData.label "हालका सेटिङ राख्नुहोस्">
+<!-- LOCALIZATION NOTE Next 2 form 1 sentence (we don't want to use HTML tag to wrap) -->
+<!ENTITY applyBeforeChange1.label "हालका परिवर्तन लागू गरिन्छ">
+<!ENTITY applyBeforeChange2.label "चयन परिवर्तन गर्नुभन्दा पहिला ।">
+<!ENTITY cellRowSpan.label "पङ्क्ति स्पान:">
+<!ENTITY cellColSpan.label "स्तम्भ स्पान:">
+<!ENTITY cellContentAlignment.label "सामग्री पङ्क्तिबद्धता">
+<!ENTITY cellHorizontal.label "तेर्सो:">
+<!ENTITY cellHorizontal.accessKey "Z">
+<!ENTITY cellVertical.label "ठाडो:">
+<!ENTITY cellVertical.accessKey "V">
+<!ENTITY cellStyle.label "कक्ष शैली:">
+<!ENTITY cellStyle.accessKey "C">
+<!ENTITY cellNormal.label "सामान्य">
+<!ENTITY cellHeader.label "हेडर">
+<!ENTITY cellTextWrap.label "पाठ बेर्नुहोस्:">
+<!ENTITY cellTextWrap.accessKey "T">
+<!ENTITY cellWrap.label "बेर्नुहोस्">
+<!ENTITY cellNoWrap.label "नबेर्नुहोस्">
+<!ENTITY cellAlignTop.label "माथि">
+<!ENTITY cellAlignMiddle.label "बीचमा">
+<!ENTITY cellAlignBottom.label "तल">
+<!ENTITY cellAlignJustify.label "समरेखन गर्नुहोस्">
+<!ENTITY cellAlignAtChar.label "क्यारेक्टरमा:">
+<!ENTITY cellInheritColor.label "(यसबाट तालिका रङ देखाउनुहोस्)">
+<!ENTITY cellUseCheckboxHelp.label "चयन गरिएका सबै कक्षमा कुन गुण लागि गरिन्छ निर्धारण गर्न जाँच बाकस प्रयोग गर्नुहोस्">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label "साइज">
+<!ENTITY pixels.label "पिक्सेल">
+<!ENTITY backgroundColor.label "पृष्ठभूमि रङ:">
+<!ENTITY backgroundColor.accessKey "B">
+<!ENTITY AlignLeft.label "बायाँ">
+<!ENTITY AlignCenter.label "बीचमा">
+<!ENTITY AlignRight.label "दायाँ">

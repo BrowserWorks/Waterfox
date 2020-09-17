@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Libër Adresash">
+<!ENTITY Addrbook.accesskey                    "L">
+<!ENTITY GeneratedName.label                   "Emër">
+<!ENTITY GeneratedName.accesskey               "E">
+<!ENTITY PrimaryEmail.label                    "Email:">
+<!ENTITY PrimaryEmail.accesskey                "M">
+<!ENTITY Company.label                         "Ent:">
+<!ENTITY Company.accesskey                     "n">
+<!ENTITY _PhoneticName.label                   "Emër Fonetik">
+<!ENTITY _PhoneticName.accesskey               "i">
+<!ENTITY NickName.label                        "Nofkë">
+<!ENTITY NickName.accesskey                    "N">
+<!ENTITY SecondEmail.label                     "Email Shtesë">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "Degë:">
+<!ENTITY Department.accesskey                  "D">
+<!ENTITY JobTitle.label                        "Titull:">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Celular:">
+<!ENTITY CellularNumber.accesskey              "C">
+<!ENTITY PagerNumber.label                     "Faques:">
+<!ENTITY PagerNumber.accesskey                 "q">
+<!ENTITY FaxNumber.label                       "Faks:">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Telefon Shtëpie">
+<!ENTITY HomePhone.accesskey                   "s">
+<!ENTITY WorkPhone.label                       "Telefon Pune">
+<!ENTITY WorkPhone.accesskey                   "P">
+<!ENTITY ChatName.label                        "Emër Fjalosjeje">
+<!ENTITY ChatName.accesskey                    "a">
+<!ENTITY sortAscending.label                   "Rritës">
+<!ENTITY sortAscending.accesskey               "r">
+<!ENTITY sortDescending.label                  "Zbritës">
+<!ENTITY sortDescending.accesskey              "z">

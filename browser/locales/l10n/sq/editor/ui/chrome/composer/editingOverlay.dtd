@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Hapni Kartelë…">
+<!ENTITY openFileCmd.accesskey "H">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Hapni Vendndodhje Web…">
+<!ENTITY openRemoteCmd.accesskey "V">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Faqe Së Fundi">
+<!ENTITY fileRecentMenu.accesskey "F">
+<!ENTITY saveCmd.label "Ruaje">
+<!ENTITY saveCmd.accesskey "R">
+<!ENTITY saveAsCmd.label "Ruajeni Si…">
+<!ENTITY saveAsCmd.accesskey "S">
+<!ENTITY saveAsChangeEncodingCmd2.label "Ruaje Dhe Ndërroji Kodimin e Tekstit">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "N">
+<!ENTITY publishCmd.label "Botoje">
+<!ENTITY publishCmd.accesskey "B">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Botojeni Si…">
+<!ENTITY publishAsCmd.accesskey "i">
+<!ENTITY fileRevert.label "Riktheje">
+<!ENTITY fileRevert.accesskey "k">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Rregullime Sajti Botimi…">
+<!ENTITY publishSettings.accesskey "B">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "I ri">
+<!ENTITY newToolbarCmd.tooltip "Krijoni një faqe të re Hartuesi">
+<!ENTITY openToolbarCmd.label "Hape">
+<!ENTITY openToolbarCmd.tooltip "Hapni një kartelë vendore">
+<!ENTITY saveToolbarCmd.tooltip "Ruajeni kartelën në një vend në kompjuter">
+<!ENTITY publishToolbarCmd.tooltip "Ngarkojeni kartelën në një vendndodhje të largët">
+<!ENTITY printToolbarCmd.label "Shtype">
+<!ENTITY printToolbarCmd.tooltip "Shtypeni këtë faqe">

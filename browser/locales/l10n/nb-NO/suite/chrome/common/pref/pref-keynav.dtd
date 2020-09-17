@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Tastaturnavigering">
+<!ENTITY tabNavigationBehavior.label "Tabulatortast-navigasjon">
+<!ENTITY tabNavigationLinks.label "Lenker">
+<!ENTITY tabNavigationLinks.accesskey "L">
+<!ENTITY tabNavigationForms.label "Knapper, radioknapper, avkryssingsbokser og lister">
+<!ENTITY tabNavigationForms.accesskey "K">
+<!ENTITY tabNavigationTextboxes.label "Merk: tekstbokser er alltid en del av rekkefølgen">
+<!ENTITY tabNavigationDesc.label "Når Tab eller Shift+Tab trykkes, flytt mellom:">
+<!ENTITY accessibilityBrowseWithCaret.label "Nettlesing med tekstmarkør">
+<!ENTITY browseWithCaretDesc.label "Nettlesing med tekstmarkør lar deg navigere og merke innenfor nettsider med piltastene for å flytte en synlig tekstmarkør.">
+<!ENTITY browseWithCaretUse.label "Bruk nettlesing med tekstmarkør">
+<!ENTITY browseWithCaretUse.accesskey "B">
+<!ENTITY browseWithCaretShortCut.label "Bruk F7-snarveien for å slå på eller av nettlesing med tekstmarkør">
+<!ENTITY browseWithCaretShortCut.accesskey "B">
+<!ENTITY browseWithCaretWarn.label "Advar meg før nettlesing med tekstmarkør skrus på">
+<!ENTITY browseWithCaretWarn.accesskey "d">

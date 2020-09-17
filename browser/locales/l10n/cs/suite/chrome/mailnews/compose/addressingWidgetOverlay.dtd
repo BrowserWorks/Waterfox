@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- address labels -->
+<!--LOCALIZATION NOTE addressingWidgetOverlay.dtd The basic mail/news composition headers as they are seen in UI -->
+<!ENTITY toAddr.label "Komu:">
+<!ENTITY ccAddr.label "Kopie:">
+<!ENTITY bccAddr.label "Skrytá kopie:">
+<!ENTITY replyAddr.label "Odpověď:">
+<!ENTITY newsgroupsAddr.label "Diskusní skupina:">
+<!ENTITY followupAddr.label "Sledování:">

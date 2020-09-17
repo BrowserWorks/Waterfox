@@ -1,0 +1,21 @@
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+<!ENTITY enbPluginCheckMailNews.label     "Correo y noticias">
+<!ENTITY enbPluginCheckMailNews.accesskey "a">
+
+<!-- These are added to the Window menu -->
+<!ENTITY mail.label                       "Correo y noticias">
+<!ENTITY mail.accesskey                   "C">
+<!ENTITY addressbook.label                "Libreta de direcciones">
+<!ENTITY addressbook.accesskey            "d">
+
+<!-- These are added to Preferences dialog -->
+<!ENTITY viewingMessages.label            "Vista de Mensajes">
+<!ENTITY notifications.label              "Notificaciones">
+<!ENTITY address.label                    "Direcciones">
+<!ENTITY composingMessages.label          "Redacción">
+<!ENTITY format.label                     "Formato de envío">
+<!ENTITY return.label                     "Acuses de recibo">
+<!ENTITY junk.label                       "Correo basura">
+<!ENTITY tags.label                       "Tags">
+<!ENTITY characterEncoding2.label         "Codificación de texto">
+<!ENTITY networkStorage.label             "Red y almacenamiento">

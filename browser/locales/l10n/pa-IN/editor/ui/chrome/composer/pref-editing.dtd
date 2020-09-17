@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "ਨਵੀਂ ਪੇਜ਼ ਸੈਟਿੰਗ">
+
+<!ENTITY  authorName.label          "ਲੇਖਕ:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "ਡਿਫਾਲਟ ਪੇਜ਼ ਦਿੱਖ">
+
+<!ENTITY defaultColors.label        "ਰੀਡਰ ਦਾ ਡਿਫਾਲਟ ਰੰਗ (ਪੇਜ਼ ਵਿੱਚ ਰੰਗ ਨਾ ਸੈੱਟ ਕਰੋ)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "ਪਸੰਦੀਦਾ ਰੰਗ ਵਰਤੋਂ:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "ਸਧਾਰਨ ਟੈਕਸਟ">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "ਲਿੰਕ ਟੈਕਸਟ">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "ਐਕਟਿਵ ਟੈਕਸਟ ਲਿੰਕ">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "ਖੋਲ੍ਹਿਆ ਲਿੰਕ">
+<!ENTITY visitedLinkText.accesskey  "V">
+<!ENTITY background.label           "ਬੈਕਗਰਾਊਂਡ:">
+<!ENTITY background.accesskey       "B">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "ਬੈਕਗਰਾਊਂਡ ਚਿੱਤਰ:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "ਫਾਇਲ ਚੁਣੋ...">
+<!ENTITY chooseFile.accesskey       "o">

@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog2.title         "Falamhaich an eachdraidh faisg ort">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+
+<!ENTITY clearTimeDuration.label          "An rainse-ama a tha ri fhalamhadh: ">
+<!ENTITY clearTimeDuration.accesskey      "A">
+<!ENTITY clearTimeDuration.lastHour       "An uair a thìde seo chaidh">
+<!ENTITY clearTimeDuration.last2Hours     "An dà uair a thìde seo chaidh">
+<!ENTITY clearTimeDuration.last4Hours     "Na ceithir uairean a thìde seo chaidh">
+<!ENTITY clearTimeDuration.today          "An-diugh">
+<!ENTITY clearTimeDuration.everything     "A h-uile rud">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+
+<!ENTITY detailsProgressiveDisclosure.label     "Mion-fhiosrachadh">
+<!ENTITY detailsProgressiveDisclosure.accesskey "M">
+
+
+<!ENTITY itemHistory.label                 "An eachdraidh brabhsaidh">
+<!ENTITY itemHistory.accesskey             "b">
+<!ENTITY itemCookies.label                 "Briosgaidean">
+<!ENTITY itemCookies.accesskey             "B">
+<!ENTITY itemCache.label                   "Tasgadan">
+<!ENTITY itemCache.accesskey               "T">
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+
+<!ENTITY sanitizeEverythingUndoWarning     "Cha ghabh seo a neo-dhèanamh.">
+
+<!ENTITY dialog.width                 "35em">

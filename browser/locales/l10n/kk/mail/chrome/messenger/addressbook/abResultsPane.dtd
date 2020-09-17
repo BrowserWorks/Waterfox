@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Адрестік кітапша">
+<!ENTITY Addrbook.accesskey                    "п">
+<!ENTITY GeneratedName.label                   "Аты">
+<!ENTITY GeneratedName.accesskey               "а">
+<!ENTITY PrimaryEmail.label                    "Эл. пошта">
+<!ENTITY PrimaryEmail.accesskey                "э">
+<!ENTITY Company.label                         "Мекеме">
+<!ENTITY Company.accesskey                     "е">
+<!ENTITY _PhoneticName.label                   "Қалайша айтылады">
+<!ENTITY _PhoneticName.accesskey               "й">
+<!ENTITY NickName.label                        "Ник аты">
+<!ENTITY NickName.accesskey                    "и">
+<!ENTITY SecondEmail.label                     "Қосымша эл. пошта">
+<!ENTITY SecondEmail.accesskey                 "л">
+<!ENTITY Department.label                      "Бөлім">
+<!ENTITY Department.accesskey                  "м">
+<!ENTITY JobTitle.label                        "Лауазымы">
+<!ENTITY JobTitle.accesskey                    "а">
+<!ENTITY CellularNumber.label                  "Мобильді">
+<!ENTITY CellularNumber.accesskey              "М">
+<!ENTITY PagerNumber.label                     "Пейджер">
+<!ENTITY PagerNumber.accesskey                 "П">
+<!ENTITY FaxNumber.label                       "Факс">
+<!ENTITY FaxNumber.accesskey                   "Ф">
+<!ENTITY HomePhone.label                       "Үй телефоны">
+<!ENTITY HomePhone.accesskey                   "й">
+<!ENTITY WorkPhone.label                       "Жұмыс телефоны">
+<!ENTITY WorkPhone.accesskey                   "с">
+<!ENTITY ChatName.label                        "Чаттағы аты">
+<!ENTITY ChatName.accesskey                    "Ч">
+<!ENTITY sortAscending.label                   "Өсу ретімен">
+<!ENTITY sortAscending.accesskey               "у">
+<!ENTITY sortDescending.label                  "Кему ретімен">
+<!ENTITY sortDescending.accesskey              "е">

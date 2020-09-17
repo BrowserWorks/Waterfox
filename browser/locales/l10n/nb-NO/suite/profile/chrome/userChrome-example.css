@@ -1,0 +1,58 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Rediger denne filen og kopier den som userChrome.css til
+ * din profilmappe/chrome/
+ */
+
+/*
+ * Denne filen kan brukes til å forandre på utseendet til Mozillas
+ * brukergrensesnitt. Om du vil overstyre de forvalgte innstillingene kan
+ * du bruke !important.
+ */
+
+/*
+ * Ikke fjern @namespace-linjen, den må være tilstede for at ting skal fungere.
+ */
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* set default namespace to XUL */
+
+
+/*
+ * Noen mulige regler for å øke tilgjengeligheten:
+ */
+/*
+ * Gjør alle skriftstørrelser om til 20 punkter
+ *
+ * * {
+ *   font-size: 20pt !important
+ * }
+ */
+/*
+ * Gjør skriftstørrelsen i alle menyer om til 15 punkter
+ *
+ * menupopup > * {
+ *   font-size: 15pt !important
+ * }
+ */
+/*
+ * Gir adresselinjen en ikke-proporsjonal skrift.
+ *
+ * #urlbar {
+ *    font-family: monospace !important;
+ * }
+ */
+
+/*
+ * Tar bort lastingsanimasjonen
+ *
+ * #throbber-box {
+ *   display: none !important;
+ * }
+ */
+
+/*
+ * Gå til http://www.mozilla.org/unix/customizing.html (Engelsk) for flere eksempler
+ */
+ 

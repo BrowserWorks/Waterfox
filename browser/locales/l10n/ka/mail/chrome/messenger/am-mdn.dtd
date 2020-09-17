@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "მიღების დასტური">
+<!ENTITY useGlobalPrefs.label         "ამ ანგარიშისათვის ძირითადი პარამეტრების გამოყენება">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY globalReceipts.label         "საერთო პარამეტრები…">
+<!ENTITY globalReceipts.accesskey     "ს">
+<!ENTITY useCustomPrefs.label         "მიღების დასტურის მორგება ამ ანგარიშისათვის">
+<!ENTITY useCustomPrefs.accesskey     "C">
+<!ENTITY requestReceipt.label         "წერილის გაგზავნისას მიღების დასტურის ყოველთვის მოთხოვნა">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "დასტურის მოსვლისას:">
+<!ENTITY leaveIt.label                "მიღებულ წერილებში დატოვება">
+<!ENTITY leaveIt.accesskey            "I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "გადატანა „გაგზავნილი“ წერილების საქაღალდეში">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "მიღების დასტურის მოთხოვნის მიღებისას:">
+<!ENTITY returnSome.label             "დასტურის დაბრუნება ზოგიერთ წერილზე">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "დასტურის არასოდეს დაბრუნება">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "თუ არ ვარ წერილის 'ვის' ან 'ასლი' ველებში:">
+<!ENTITY notInToCc.accesskey          "T">
+<!ENTITY outsideDomain.label          "თუ გამომგზავნი ჩემი დომენიდან არაა:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "ყველა სხვა შემთხვევაში:">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "შეკითხვა ყოველ ჯერზე">
+<!ENTITY alwaysSend.label             "გაგზავნე ყოველთვის">
+<!ENTITY neverSend.label              "არასდროს გაიგზავნოს">

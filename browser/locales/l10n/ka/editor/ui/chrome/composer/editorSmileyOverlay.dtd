@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "სიცილაკი">
+<!ENTITY insertSmiley.accesskey "ს">
+
+<!ENTITY smiley1Cmd.label "ღიმილი">
+<!ENTITY smiley1Cmd.accesskey "ღ">
+<!ENTITY smiley1Cmd.tooltip "მომღიმარე სახის დამატება">
+<!ENTITY smiley2Cmd.label "შეჭმუხვნა">
+<!ENTITY smiley2Cmd.accesskey "მ">
+<!ENTITY smiley2Cmd.tooltip "შეჭმუხნული სახის დამატება">
+<!ENTITY smiley3Cmd.label "ჩაპაჭუნება">
+<!ENTITY smiley3Cmd.accesskey "ა">
+<!ENTITY smiley3Cmd.tooltip "ჩაპაჭუნების სახის დამატება">
+<!ENTITY smiley4Cmd.label "ენის გამოყოფა">
+<!ENTITY smiley4Cmd.accesskey "ე">
+<!ENTITY smiley4Cmd.tooltip "ენაგამოყოფილი სახის დამატება">
+<!ENTITY smiley5Cmd.label "სიცილი">
+<!ENTITY smiley5Cmd.accesskey "ს">
+<!ENTITY smiley5Cmd.tooltip "მოცინარი სახის დამატება">
+<!ENTITY smiley6Cmd.label "დარცხვენა">
+<!ENTITY smiley6Cmd.accesskey "ც">
+<!ENTITY smiley6Cmd.tooltip "დარცხვენილი სახის დამატება">
+<!ENTITY smiley7Cmd.label "დაბნევა">
+<!ENTITY smiley7Cmd.accesskey "დ">
+<!ENTITY smiley7Cmd.tooltip "დაბნეული სახის დამატება">
+<!ENTITY smiley8Cmd.label "გაოცება">
+<!ENTITY smiley8Cmd.accesskey "ო">
+<!ENTITY smiley8Cmd.tooltip "გაოცებული სახის დამატება">
+<!ENTITY smiley9Cmd.label "კოცნა">
+<!ENTITY smiley9Cmd.accesskey "კ">
+<!ENTITY smiley9Cmd.tooltip "ჰაეროვანი კოცნის დამატება">
+<!ENTITY smiley10Cmd.label "ყვირილი">
+<!ENTITY smiley10Cmd.accesskey "ყ">
+<!ENTITY smiley10Cmd.tooltip "მყვირალა სახის დამატება">
+<!ENTITY smiley11Cmd.label "კმაყოფილება">
+<!ENTITY smiley11Cmd.accesskey "ფ">
+<!ENTITY smiley11Cmd.tooltip "კმაყოფილი სახის დამატება">
+<!ENTITY smiley12Cmd.label "ფულიანი">
+<!ENTITY smiley12Cmd.accesskey "უ">
+<!ENTITY smiley12Cmd.tooltip "ფულიანი სახის დამატება">
+<!ENTITY smiley13Cmd.label "ჩაქოლვა">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "ჩაქოლილი სახის დამატება">
+<!ENTITY smiley14Cmd.label "უმანკოება">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "უმანკო სახის დამატება">
+<!ENTITY smiley15Cmd.label "ტირილი">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "მტირალა სახის დამატება">
+<!ENTITY smiley16Cmd.label "პირის მოკუმვა">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "პირმოკუმული სახის დამატება">
+<!ENTITY SmileButton.label "სიცილაკის ჩამატება">
+<!ENTITY SmileButton.tooltip "მომღიმარე სახის ჩამატება">

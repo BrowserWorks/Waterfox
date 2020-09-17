@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "الإعدادات">
+<!ENTITY security.caption "السرّية والاستيثاق">
+<!ENTITY serverName.label "اسم الخادوم:">
+<!ENTITY serverName.accesskey "خ">
+<!ENTITY serverDescription.label "الوصف:">
+<!ENTITY serverDescription.accesskey "و">
+<!ENTITY serverPort.label "المَنفذ:">
+<!ENTITY serverPort.accesskey "م">
+<!ENTITY userName.label "اسم المستخدم:">
+<!ENTITY userName.accesskey "م">
+<!ENTITY connectionSecurity.label "أمن الاتصال:">
+<!ENTITY connectionSecurity.accesskey "ص">
+<!ENTITY connectionSecurityType-0.label "لا شيء">
+<!ENTITY connectionSecurityType-1.label "STARTTLS، إن كان متاحًا">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "خادوم SMTP">
+<!ENTITY serverPortDefault.label "المبدئي:">
+<!ENTITY authMethod.label "طريقة الاستيثاق:">
+<!ENTITY authMethod.accesskey "ط">

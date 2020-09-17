@@ -1,0 +1,966 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY titledefault.label "&brandFullName;">
+<!ENTITY titleSeparator.label " - ">
+
+<!-- File Menu -->
+<!ENTITY newFolderCmd.label "Yakwuj…">
+<!ENTITY newFolderCmd.accesskey "Y">
+<!ENTITY closeTabCmd2.label "Titz'apïx Ruwi'">
+<!ENTITY closeTabCmd2.accesskey "T">
+<!ENTITY closeOtherTabsCmd2.label "Ketz'apïx ri ch'aqa' chik taq ruwi'">
+<!ENTITY closeOtherTabsCmd2.accesskey "x">
+<!ENTITY recentlyClosedTabsCmd.label "Taq Ruwi' k'a b'a' Ketz'apïx">
+<!ENTITY recentlyClosedTabsCmd.accesskey "K">
+
+<!ENTITY undoCloseTabCmd.commandkey "T">
+<!-- LOCALIZATION NOTE (moveToNewWindow.label):
+     Menu option to cause the current tab to be migrated to a new Thunderbird
+     window.
+     -->
+<!ENTITY moveToNewWindow.label "Tisilöx pa K'ak'a' Tzuwäch">
+<!ENTITY moveToNewWindow.accesskey "T">
+<!ENTITY newVirtualFolderCmd.label "Xyak Kanoxïk…">
+<!ENTITY newVirtualFolderCmd.accesskey "y">
+<!ENTITY newOtherAccountsCmd.label "Juley chik Rub'i' Taqoya'l…">
+<!ENTITY newOtherAccountsCmd.accesskey "J">
+<!ENTITY newCreateEmailAccountCmd.label "Tik'ul jun K'ak'a' Rub'i' Taqoya'l…">
+<!ENTITY newCreateEmailAccountCmd.accesskey "T">
+<!ENTITY newExistingEmailAccountCmd.label "Rub'i' Taqoya'l E K'o…">
+<!ENTITY newExistingEmailAccountCmd.accesskey "K">
+<!ENTITY newIMAccountCmd.label "Rub'i' Rutaqoya'l Chat…">
+<!ENTITY newIMAccountCmd.accesskey "C">
+<!ENTITY newFeedAccountCmd.label "Rub'i' Rutaqoya'l B'ey…">
+<!ENTITY newFeedAccountCmd.accesskey "y">
+<!ENTITY newIMContactCmd.label "Rub'i' Rachib'il Chat…">
+<!ENTITY newIMContactCmd.accesskey "h">
+<!ENTITY  newMessageCmd2.key "N">
+<!ENTITY  newMessageCmd.key "M">
+<!ENTITY  newMessageCmd.label "Tzijol">
+<!ENTITY  newMessageCmd.accesskey "t">
+<!ENTITY  newContactCmd.label "Kib'i' Achib'il pa Kitz'ib'awuj Ochochib'äl…">
+<!ENTITY  newContactCmd.accesskey "A">
+<!ENTITY openMessageFileCmd.label "Tijaq Tzijol Eyakon…">
+<!ENTITY openMessageFileCmd.accesskey "j">
+<!ENTITY saveAsMenu.label "Tiyak Achi'el">
+<!ENTITY saveAsMenu.accesskey "y">
+<!ENTITY saveAsFileCmd.label "Yakb'äl">
+<!ENTITY saveAsFileCmd.accesskey "Y">
+<!ENTITY saveAsFileCmd.key "s">
+<!ENTITY saveAsTemplateCmd.label "Kaxawäch">
+<!ENTITY saveAsTemplateCmd.accesskey "K">
+<!ENTITY getNewMsgForCmd.label "Kek'ul K'ak'a' Rutzijol">
+<!ENTITY getNewMsgForCmd.accesskey "k">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "Ronojel Kib'i' Taqoya'l">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "R">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.label "Rub'i' Taqoya'l Wakami">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.accesskey "W">
+<!ENTITY getNextNMsgCmd2.label "Kek'ul Ch'aqa' Chik K'ak'a' taq Tzijol">
+<!ENTITY getNextNMsgCmd2.accesskey "h">
+<!ENTITY sendUnsentCmd.label "Ketaq Oyob'en taq Tzijol">
+<!ENTITY sendUnsentCmd.accesskey "q">
+<!ENTITY subscribeCmd.label "Titz'ib'äx nub'i'…">
+<!ENTITY subscribeCmd.accesskey "b">
+<!ENTITY deleteFolder.label "Tiyuj ri Yakwuj">
+<!ENTITY deleteFolder.accesskey "u">
+<!ENTITY renameFolder.label "Titz'ib'äx chik Rub'i' Yakwuj…">
+<!ENTITY renameFolder.accesskey "T">
+<!ENTITY renameFolder.key "VK_F2">
+<!ENTITY compactFolders.label "Timol k'ïy pa taq Yakwuj">
+<!ENTITY compactFolders.accesskey "Y">
+<!ENTITY emptyTrashCmd.label "Tijam Molb'äl">
+<!ENTITY emptyTrashCmd.accesskey "m">
+<!ENTITY offlineMenu.label "Chupül">
+<!ENTITY offlineMenu.accesskey "l">
+<!ENTITY offlineGoOfflineCmd.label "Chupül Rusamaj">
+<!ENTITY offlineGoOfflineCmd.accesskey "r">
+<!ENTITY synchronizeOfflineCmd.label "Tiqasäx/Sync Wakami…">
+<!ENTITY synchronizeOfflineCmd.accesskey "S">
+<!ENTITY settingsOfflineCmd2.label "Chupül Kinuk'ulem">
+<!ENTITY settingsOfflineCmd2.accesskey "u">
+<!ENTITY downloadSelectedCmd.label "Kek'ul Cha'on taq Tzijol">
+<!ENTITY downloadSelectedCmd.accesskey "l">
+<!ENTITY downloadStarredCmd.label "Kek'ul taq Tzijol K'o Kiq'ij">
+<!ENTITY downloadStarredCmd.accesskey "a">
+<!ENTITY printCmd.label "Titz'ajb'äx…">
+<!ENTITY printCmd.accesskey "b">
+<!ENTITY printCmd.key "p">
+<!ENTITY printPreviewCmd.label "Nab'ey Tz'etoj">
+<!ENTITY printPreviewCmd.accesskey "b">
+<!ENTITY printSetupCmd.label "Tib'an Runuk'ulem Ruxaq…">
+<!ENTITY printSetupCmd.accesskey "u">
+
+<!-- Edit Menu -->
+<!ENTITY deleteMsgCmd.label "Tiyuj Tzijol">
+<!ENTITY deleteMsgCmd.accesskey "y">
+<!ENTITY undeleteMsgCmd.label "Man Tiyuj Rutzijol">
+<!ENTITY undeleteMsgCmd.accesskey "y">
+<!ENTITY deleteMsgsCmd.label "Keyuj Cha'on taq Tzijol">
+<!ENTITY deleteMsgsCmd.accesskey "K">
+<!ENTITY undeleteMsgsCmd.label "Man Keyuj Cha'on taq Tzijol">
+<!ENTITY undeleteMsgsCmd.accesskey "y">
+<!ENTITY deleteFolderCmd.label "Tiyuj ri Yakwuj">
+<!ENTITY deleteFolderCmd.accesskey "y">
+<!ENTITY unsubscribeNewsgroupCmd.label "Tiq'at rutz'ib'axik b'i'aj">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "b">
+<!ENTITY selectMenu.label "Ticha'">
+<!ENTITY selectMenu.accesskey "c">
+<!ENTITY all.label "Ronojel">
+<!ENTITY all.accesskey "R">
+<!ENTITY selectThreadCmd.label "Tzijonem">
+<!ENTITY selectThreadCmd.accesskey "T">
+<!ENTITY selectThreadCmd.key "e">
+<!ENTITY selectFlaggedCmd.label "Taq Rutzijol Ya'on Kiq'ij">
+<!ENTITY selectFlaggedCmd.accesskey "Y">
+<!ENTITY menuFavoriteFolder.label "Ajowanel Yakwuj">
+<!ENTITY menuFavoriteFolder.accesskey "w">
+<!ENTITY folderPropsCmd2.label "Taq ichinil">
+<!ENTITY folderPropsFolderCmd2.label "Kichinil Yakwuj">
+<!ENTITY folderPropsNewsgroupCmd2.label "Kichinil Kimolaj Tzijol">
+<!ENTITY folderPropsCmd.accesskey "o">
+<!ENTITY undoDeleteMsgCmd.label "Titzolïx Tiyuj Rutzijol">
+<!ENTITY redoDeleteMsgCmd.label "Tikamulüx chik Tiyuj Rutzijol">
+<!ENTITY undoMoveMsgCmd.label "Titzolïx Tisilöx Rutzijol">
+<!ENTITY redoMoveMsgCmd.label "Tib'an chik Tisilöx Rutzijol">
+<!ENTITY undoCopyMsgCmd.label "Titzolïx Tiwachib'ëx Rutzijol">
+<!ENTITY redoCopyMsgCmd.label "Tib'an chik Tiwachib'ëx Rutzijol">
+<!ENTITY undoMarkAllCmd.label "Titzolïx Tiya' Retal Ronojel Esik'in">
+<!ENTITY redoMarkAllCmd.label "Tib'an chik Tiya' Retal Ronojel Esik'in">
+<!ENTITY undoDefaultCmd.label "Titzolïx">
+<!ENTITY undoDefaultCmd.accesskey "t">
+<!ENTITY redoDefaultCmd.label "Tikamulüx">
+<!ENTITY redoDefaultCmd.accesskey "k">
+
+<!-- View Menu -->
+<!ENTITY menubarCmd.label "Rukajtz'ik K'utusamaj">
+<!ENTITY menubarCmd.accesskey "K">
+<!ENTITY showMessengerToolbarCmd.label "Rukajtz'ik Rusamajib'al Taqoya'l">
+<!ENTITY showMessengerToolbarCmd.accesskey "o">
+<!ENTITY customizeToolbar.label "Tichinäx…">
+<!ENTITY customizeToolbar.accesskey "c">
+
+<!ENTITY messagePaneLayoutStyle.label "Wachib'enïk">
+<!ENTITY messagePaneLayoutStyle.accesskey "W">
+<!ENTITY messagePaneClassic.label "Cha'on Tz'etoj">
+<!ENTITY messagePaneClassic.accesskey "C">
+<!ENTITY messagePaneWide.label "Nimirisanel Tz'etoj">
+<!ENTITY messagePaneWide.accesskey "N">
+<!ENTITY messagePaneVertical.label "Pa'äl Tz'etoj">
+<!ENTITY messagePaneVertical.accesskey "P">
+<!ENTITY showFolderPaneCmd.label "Ruyakwuj Pas">
+<!ENTITY showFolderPaneCmd.accesskey "R">
+<!ENTITY showFolderPaneColsCmd.label "Ruche'el Ruyakwuj Pas">
+<!ENTITY showFolderPaneColsCmd.accesskey "P">
+<!ENTITY showMessageCmd.label "Rupas Tzijol">
+<!ENTITY showMessageCmd.accesskey "T">
+
+<!ENTITY folderView.label "Taq yakwuj">
+<!ENTITY folderView.accesskey "y">
+<!ENTITY unifiedFolders.label "Tunun">
+<!ENTITY unifiedFolders.accesskey "n">
+<!ENTITY allFolders.label "Ronojel">
+<!ENTITY allFolders.accesskey "R">
+<!ENTITY unreadFolders.label "Man sik'in ta">
+<!ENTITY unreadFolders.accesskey "M">
+<!ENTITY favoriteFolders.label "Ajowab'äl">
+<!ENTITY favoriteFolders.accesskey "A">
+<!ENTITY recentFolders.label "K'ak'a'">
+<!ENTITY recentFolders.accesskey "K">
+<!ENTITY compactVersion.label "Molk'ïy Tz'etoj">
+<!ENTITY compactVersion.accesskey "M">
+<!ENTITY folderPaneBar.label "Rukajtz'ik Rusamajib'al Ruyakwuj Pas">
+<!ENTITY folderPaneBar.accesskey "R">
+
+<!-- Sort Menu -->
+<!ENTITY sortMenu.label "Tichol chi">
+<!ENTITY sortMenu.accesskey "T">
+<!ENTITY sortByDateCmd.label "Q'ijul">
+<!ENTITY sortByDateCmd.accesskey "u">
+<!ENTITY sortByReceivedCmd.label "K'ulun">
+<!ENTITY sortByReceivedCmd.accesskey "l">
+<!ENTITY sortByStarCmd.label "Ya'on ruq'ij">
+<!ENTITY sortByStarCmd.accesskey "Y">
+<!ENTITY sortByAttachmentsCmd.label "Taq taqoj">
+<!ENTITY sortByAttachmentsCmd.accesskey "q">
+<!ENTITY sortByPriorityCmd.label "Ya'on ruq'ij">
+<!ENTITY sortByPriorityCmd.accesskey "Y">
+<!ENTITY sortBySizeCmd.label "Nimilem">
+<!ENTITY sortBySizeCmd.accesskey "m">
+<!ENTITY sortByStatusCmd.label "B'anikil">
+<!ENTITY sortByStatusCmd.accesskey "n">
+<!ENTITY sortByTagsCmd.label "Taq etal">
+<!ENTITY sortByTagsCmd.accesskey "t">
+<!ENTITY sortByJunkStatusCmd.label "Kib'anikil Seq'">
+<!ENTITY sortByJunkStatusCmd.accesskey "S">
+<!ENTITY sortBySubjectCmd.label "Taqikil">
+<!ENTITY sortBySubjectCmd.accesskey "q">
+<!ENTITY sortByFromCmd.label "Richin">
+<!ENTITY sortByFromCmd.accesskey "R">
+<!ENTITY sortByRecipientCmd.label "K'ulunel">
+<!ENTITY sortByRecipientCmd.accesskey "n">
+<!ENTITY sortByCorrespondentCmd.label "Ajtaqikil">
+<!ENTITY sortByCorrespondentCmd.accesskey "q">
+<!ENTITY sortByUnreadCmd.label "Tisik'ïx">
+<!ENTITY sortByUnreadCmd.accesskey "s">
+<!ENTITY sortByOrderReceivedCmd.label "Kicholajem K'uluj">
+<!ENTITY sortByOrderReceivedCmd.accesskey "K">
+<!ENTITY sortAscending.label "Nijote'">
+<!ENTITY sortAscending.accesskey "N">
+<!ENTITY sortDescending.label "Niqa">
+<!ENTITY sortDescending.accesskey "N">
+<!ENTITY sortThreaded.label "Tzijon">
+<!ENTITY sortThreaded.accesskey "T">
+<!ENTITY sortUnthreaded.label "Man Tzijon ta">
+<!ENTITY sortUnthreaded.accesskey "j">
+<!ENTITY groupBySort.label "Echolajin Pa Molaj">
+<!ENTITY groupBySort.accesskey "E">
+<!ENTITY msgsMenu.label "Taq tzijol">
+<!ENTITY msgsMenu.accesskey "t">
+<!ENTITY threads.label "Taq tzijonem">
+<!ENTITY threads.accesskey "e">
+<!ENTITY allMsgsCmd.label "Ronojel">
+<!ENTITY allMsgsCmd.accesskey "R">
+<!ENTITY expandAllThreadsCmd.label "Kerik' Konojel Taq Tzijonem">
+<!ENTITY expandAllThreadsCmd.accesskey "K">
+<!ENTITY expandAllThreadsCmd.key "*">
+<!ENTITY collapseAllThreadsCmd.label "Kek'ol Konojel Taq Tzijonem">
+<!ENTITY collapseAllThreadsCmd.accesskey "K">
+<!ENTITY collapseAllThreadsCmd.key "\">
+<!ENTITY unreadMsgsCmd.label "Man sik'in ta">
+<!ENTITY unreadMsgsCmd.accesskey "M">
+<!ENTITY threadsWithUnreadCmd.label "Taq Tzijonem rik'in man Esik'in ta taq Rutzijol">
+<!ENTITY threadsWithUnreadCmd.accesskey "T">
+<!ENTITY watchedThreadsWithUnreadCmd.label "Taq Tzijonem Etz'eton rik'in man Esik'in ta taq Rutzijol">
+<!ENTITY watchedThreadsWithUnreadCmd.accesskey "E">
+<!ENTITY ignoredThreadsCmd.label "Kerepüx Ch'ab'enïk">
+<!ENTITY ignoredThreadsCmd.accesskey "C">
+
+<!ENTITY headersMenu.label "Taq jub'i'aj">
+<!ENTITY headersMenu.accesskey "j">
+<!ENTITY headersAllCmd.label "Ronojel">
+<!ENTITY headersAllCmd.accesskey "R">
+<!ENTITY headersNormalCmd.label "Relik">
+<!ENTITY headersNormalCmd.accesskey "R">
+<!ENTITY bodyMenu.label "Ruch'akulal Tzijol Achi'el">
+<!ENTITY bodyMenu.accesskey "R">
+<!ENTITY bodyAllowHTML.label "Qitzij HTML">
+<!ENTITY bodyAllowHTML.accesskey "H">
+<!ENTITY bodySanitized.label "Relik HTML">
+<!ENTITY bodySanitized.accesskey "R">
+<!ENTITY bodyAsPlaintext.label "Meb'anikil Rucholajem Tzij">
+<!ENTITY bodyAsPlaintext.accesskey "M">
+<!ENTITY bodyAllParts.label "Ronojel Kiperaj Chakul">
+<!ENTITY bodyAllParts.accesskey "R">
+
+<!ENTITY bodyMenuFeed.label "Ruch'akulal Rutzijol Tzuqunïk Achi'el">
+<!ENTITY bodyMenuFeed.accesskey "R">
+<!ENTITY viewFeedWebPage.label "Ajk'amaya'l Ruxaq">
+<!ENTITY viewFeedWebPage.accesskey "A">
+<!ENTITY viewFeedSummary.label "Ch'utitzijol">
+<!ENTITY viewFeedSummary.accesskey "u">
+<!ENTITY viewFeedSummaryFeedPropsPref.label "B'anikil kan k'o wi">
+<!ENTITY viewFeedSummaryFeedPropsPref.accesskey "B">
+
+<!ENTITY viewAttachmentsInlineCmd.label "Ketz'et Tz'aqatisan taq Taqoj">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "T">
+
+<!ENTITY pageSourceCmd.label "Ruxe'el Tzijol">
+<!ENTITY pageSourceCmd.accesskey "e">
+<!ENTITY pageSourceCmd.key "u">
+<!ENTITY getNewMessagesCmd.key "y">
+<!ENTITY getAllNewMessagesCmd.key "Y">
+
+<!-- Search Menu -->
+<!ENTITY findMenu.label "Tikanöx">
+<!ENTITY findMenu.accesskey "k">
+<!ENTITY findCmd.label "Tikanöx pa re Tzijol re'…">
+<!ENTITY findCmd.accesskey "k">
+<!ENTITY findCmd.key "k">
+<!ENTITY findAgainCmd.label "Tikanöx Chik">
+<!ENTITY findAgainCmd.accesskey "h">
+<!ENTITY findAgainCmd.key "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.key "g">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY searchMailCmd.label "Kekanöx Tzijol…">
+<!ENTITY searchMailCmd.accesskey "T">
+<!ENTITY searchMailCmd.key "f">
+<!ENTITY searchAddressesCmd.label "Kekanöx Ochochib'äl…">
+<!ENTITY searchAddressesCmd.accesskey "K">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Jo'">
+<!ENTITY goMenu.accesskey "J">
+<!ENTITY nextMenu.label "Jun chik">
+<!ENTITY nextMenu.accesskey "J">
+<!ENTITY nextMsgCmd.label "Tzijol">
+<!ENTITY nextMsgCmd.accesskey "T">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "Man xsik'ïx ta Tzijol">
+<!ENTITY nextUnreadMsgCmd.accesskey "M">
+<!ENTITY nextUnreadMsgCmd.key "n">
+<!ENTITY nextStarredMsgCmd.label "Rutzijol Ya'on Ruq'ij">
+<!ENTITY nextStarredMsgCmd.accesskey "Y">
+<!ENTITY nextUnreadThread.label "Tzijonem Man Sik'in ta">
+<!ENTITY nextUnreadThread.accesskey "T">
+<!ENTITY nextUnreadThread.key "t">
+<!ENTITY prevMenu.label "Jun kan">
+<!ENTITY prevMenu.accesskey "k">
+<!ENTITY prevMsgCmd.label "Tzijol">
+<!ENTITY prevMsgCmd.accesskey "T">
+<!ENTITY prevMsgCmd.key "b">
+<!ENTITY prevUnreadMsgCmd.label "Man xsik'ïx ta Tzijol">
+<!ENTITY prevUnreadMsgCmd.accesskey "M">
+<!ENTITY prevUnreadMsgCmd.key "p">
+<!ENTITY goForwardCmd.label "Jun chik">
+<!ENTITY goForwardCmd.accesskey "J">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goBackCmd.label "Chi rij">
+<!ENTITY goBackCmd.accesskey "C">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goChatCmd.label "Chat">
+<!ENTITY goChatCmd.accesskey "c">
+<!ENTITY goChatCmd2.key "H">
+<!ENTITY prevStarredMsgCmd.label "Rutzijol Ya'on Ruq'ij">
+<!ENTITY prevStarredMsgCmd.accesskey "Y">
+<!ENTITY folderMenu.label "Yakwuj">
+<!ENTITY folderMenu.accesskey "Y">
+<!ENTITY goRecentlyClosedTabs.label "Taq Ruwi' k'a b'a' Ketz'apïx">
+<!ENTITY goRecentlyClosedTabs.accesskey "k">
+<!ENTITY startPageCmd.label "Ruxaq Tikirib'äl">
+<!ENTITY startPageCmd.accesskey "T">
+
+<!-- Message Menu -->
+<!ENTITY msgMenu.label "Tzijol">
+<!ENTITY msgMenu.accesskey "T">
+<!ENTITY newMsgCmd.label "K'ak'a' Rutzijol">
+<!ENTITY newMsgCmd.accesskey "K">
+<!ENTITY newNewMsgCmd.label "Tzijol">
+<!ENTITY newNewMsgCmd.accesskey "T">
+<!ENTITY archiveMsgCmd.label "Yakb'äl">
+<!ENTITY archiveMsgCmd.accesskey "Y">
+<!ENTITY archiveMsgCmd.key "a">
+<!ENTITY cancelNewsMsgCmd.label "Tiq'at Rutzijol">
+<!ENTITY cancelNewsMsgCmd.accesskey "T">
+<!ENTITY replyMsgCmd.label "Titzolïx tzij">
+<!ENTITY replyMsgCmd.accesskey "T">
+<!ENTITY replyMsgCmd.key "r">
+<!ENTITY replySenderCmd.label "Titzolïx Tzij Xa Xe Chi Re ri Taqonel">
+<!ENTITY replySenderCmd.accesskey "T">
+<!ENTITY replyNewsgroupCmd2.label "Kojqaxik Kimolaj Tzijol">
+<!ENTITY replyNewsgroupCmd2.accesskey "q">
+<!ENTITY replyToAllMsgCmd.label "Titzolïx tzij chi ke Konojel">
+<!ENTITY replyToAllMsgCmd.accesskey "z">
+<!ENTITY replyToAllMsgCmd.key "r">
+<!ENTITY replyToListMsgCmd.label "Titzolïx tzij chi re ri Cholb'äl">
+<!ENTITY replyToListMsgCmd.accesskey "C">
+<!ENTITY replyToListMsgCmd.key "l">
+<!ENTITY forwardMsgCmd.label "Jun chik">
+<!ENTITY forwardMsgCmd.accesskey "J">
+<!ENTITY forwardMsgCmd.key "l">
+<!ENTITY forwardAsMenu.label "Titaq chik Achi'el">
+<!ENTITY forwardAsMenu.accesskey "c">
+<!ENTITY forwardAsInline.label "Pa k'amab'ey">
+<!ENTITY forwardAsInline.accesskey "P">
+<!ENTITY forwardAsAttachmentCmd.label "Taqoj">
+<!ENTITY forwardAsAttachmentCmd.accesskey "T">
+<!ENTITY editAsNewMsgCmd.label "Tinuk' Achi'el K'ak'a' Tzijol">
+<!ENTITY editAsNewMsgCmd.accesskey "n">
+<!ENTITY editAsNewMsgCmd.key "e">
+<!ENTITY editDraftMsgCmd.label "Tinuk' Yujun Tzijol">
+<!ENTITY editDraftMsgCmd.accesskey "Y">
+<!ENTITY editTemplateMsgCmd.label "Tinuk' Kaxawäch">
+<!ENTITY editTemplateMsgCmd.accesskey "K">
+<!ENTITY newMsgFromTemplateCmd.label "K'ak'a' Rutzijol pa Kaxawäch">
+<!ENTITY newMsgFromTemplateCmd.keycode "VK_RETURN"><!-- do not change "VK_RETURN" -->
+<!ENTITY createFilter.label "Titz'uk Chayub'äl Rik'in Rutzijol…">
+<!ENTITY createFilter.accesskey "u">
+<!ENTITY moveMsgToMenu.label "Tiq'asäx Pa">
+<!ENTITY moveMsgToMenu.accesskey "q">
+<!ENTITY moveCopyMsgRecentMenu.label "K'ak'a'">
+<!ENTITY moveCopyMsgRecentMenu.accesskey "K">
+<!ENTITY copyMessageLocation.label "Tiwachib'ëx Ruk'ojlemal Tzijol">
+<!ENTITY copyMessageLocation.accesskey "T">
+<!ENTITY copyMsgToMenu.label "Tiwachib'ëx Chi Re">
+<!ENTITY copyMsgToMenu.accesskey "w">
+<!ENTITY moveToFolderAgain.label "Tisilöx Chik">
+<!ENTITY moveToFolderAgain.accesskey "i">
+<!ENTITY moveToFolderAgainCmd.key "m">
+<!ENTITY killThreadMenu.label "Tirepüx Ch'ab'enïk">
+<!ENTITY killThreadMenu.accesskey "T">
+<!ENTITY killThreadMenu.key "k">
+<!ENTITY killSubthreadMenu.label "Tirepüx Achch'ab'enïk">
+<!ENTITY killSubthreadMenu.accesskey "A">
+<!ENTITY killSubthreadMenu.key "k">
+<!ENTITY watchThreadMenu.label "Titzu' jun Ch'ab'enïk">
+<!ENTITY watchThreadMenu.accesskey "T">
+<!ENTITY watchThreadMenu.key "w">
+<!ENTITY tagMenu.label "Etal">
+<!ENTITY tagMenu.accesskey "l">
+<!ENTITY tagCmd0.key "0">
+<!ENTITY tagCmd1.key "1">
+<!ENTITY tagCmd2.key "2">
+<!ENTITY tagCmd3.key "3">
+<!ENTITY tagCmd4.key "4">
+<!ENTITY tagCmd5.key "5">
+<!ENTITY tagCmd6.key "6">
+<!ENTITY tagCmd7.key "7">
+<!ENTITY tagCmd8.key "8">
+<!ENTITY tagCmd9.key "9">
+<!ENTITY markMenu.label "Tiya' retal">
+<!ENTITY markMenu.accesskey "r">
+<!ENTITY toggleReadCmd.key "m">
+<!ENTITY markAsReadCmd.label "Achi'el Sik'in">
+<!ENTITY markAsReadCmd.accesskey "S">
+<!ENTITY markAsUnreadCmd.label "Achi'el Man Sik'in Ta">
+<!ENTITY markAsUnreadCmd.accesskey "M">
+<!ENTITY markThreadAsReadCmd.label "tzijonem Achi'el Sik'in">
+<!ENTITY markThreadAsReadCmd.accesskey "T">
+<!ENTITY markThreadAsReadCmd.key "r">
+<!ENTITY markReadByDateCmd.label "Achi'el Sik'in chi Q'ijul…">
+<!ENTITY markReadByDateCmd.accesskey "Q">
+<!ENTITY markReadByDateCmd.key "c">
+<!ENTITY markAllReadCmd.label "Ronojel Sik'in">
+<!ENTITY markAllReadCmd.accesskey "R">
+<!ENTITY markAllReadCmd.key "c">
+<!ENTITY markStarredCmd.label "Titz'aqatisäx Ch'umil">
+<!ENTITY markStarredCmd.accesskey "C">
+<!ENTITY markStarredCmd.key "C">
+<!ENTITY markAsJunkCmd.label "Achi'el Seq'">
+<!ENTITY markAsJunkCmd.accesskey "S">
+<!ENTITY markAsJunkCmd.key "s">
+<!ENTITY markAsNotJunkCmd.label "Achi'el Man Seq' Ta">
+<!ENTITY markAsNotJunkCmd.accesskey "M">
+<!ENTITY markAsNotJunkCmd.key "s">
+<!ENTITY recalculateJunkScoreCmd.label "Kesamajïx Ruchajinela' Seq' Taqoya'l">
+<!ENTITY recalculateJunkScoreCmd.accesskey "R">
+<!ENTITY openMessageWindowCmd.label "Tijaq Rutzijol">
+<!ENTITY openMessageWindowCmd.accesskey "T">
+<!ENTITY openMessageWindowCmd.key "o">
+<!ENTITY openInConversationCmd.label "Tijaq pa Tzijonem">
+<!ENTITY openInConversationCmd.accesskey "n">
+<!ENTITY openInConversationCmd.key "o">
+<!ENTITY openAttachmentListCmd.label "Taq taqoj">
+<!ENTITY openAttachmentListCmd.accesskey "q">
+<!ENTITY openFeedMessage1.label "Toq Yejaq Rutzijol Feed">
+<!ENTITY openFeedMessage1.accesskey "Y">
+<!ENTITY openFeedWebPage.label "Tijaq achi'el Ajk'maya'l Ruxaq">
+<!ENTITY openFeedWebPage.accesskey "A">
+<!ENTITY openFeedSummary.label "Tijaq achi'el Ch'utitzijol">
+<!ENTITY openFeedSummary.accesskey "C">
+<!ENTITY openFeedWebPageInMP.label "Tijalwachïx chi kikojol Ajk'amaya'l Ruxaq chuqa' Ch'utitzijol pa ri Rupas Tzijol">
+<!ENTITY openFeedWebPageInMP.accesskey "T">
+
+<!-- Windows Menu -->
+<!ENTITY windowMenu.label "Window">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Samajib'äl">
+<!ENTITY tasksMenu.accesskey "s">
+<!ENTITY messengerCmd.label "Taqoya'l &amp; Taq Rutzijol">
+<!ENTITY messengerCmd.accesskey "R">
+<!ENTITY addressBookCmd.label "Kiwujil Ochochib'äl">
+<!ENTITY addressBookCmd.accesskey "K">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY addons.label "Taq tz'aqat">
+<!ENTITY addons.accesskey "t">
+<!ENTITY addonPrefs.label "Kicha'oj Tz'aqat">
+<!ENTITY addonPrefs.accesskey "K">
+<!ENTITY addonPrefsUnix.label "Kajowab'al Tz'aqat">
+<!ENTITY addonPrefsUnix.accesskey "K">
+<!ENTITY addonNoPrefs.label "Majun runuk'ulem Tz'aqat nilitäj.">
+<!ENTITY activitymanager.label "Runuk'samajel Samaj">
+<!ENTITY activitymanager.accesskey "j">
+<!ENTITY imAccountsStatus.label "Rub'anikil Chat">
+<!ENTITY imAccountsStatus.accesskey "C">
+<!ENTITY imStatus.available          "Wachel">
+<!ENTITY imStatus.unavailable        "Man wachel ta">
+<!ENTITY imStatus.offline            "Chupül">
+<!ENTITY imStatus.showAccounts       "Kek'ut Kib'i' Taqoya'l…">
+<!ENTITY joinChatCmd.label "Tatunu' awi' pa Chat…">
+<!ENTITY joinChatCmd.accesskey "t">
+<!ENTITY savedFiles.label "Xeyak Yakb'äl">
+<!ENTITY savedFiles.accesskey "l">
+<!ENTITY savedFiles.key "j">
+<!ENTITY filtersCmd2.label "Kichayub'al Tzijol">
+<!ENTITY filtersCmd2.accesskey "K">
+<!ENTITY filtersApply.label "Kesamajïx Chayub'äl pa Yakwuj">
+<!ENTITY filtersApply.accesskey "K">
+<!ENTITY filtersApplyToSelection.label "Kesamajïx Chayub'äl pa Cha'on taq Tzijol">
+<!ENTITY filtersApplyToSelection.accesskey "e">
+<!ENTITY filtersApplyToMessage.label "Kesamajïx Chayub'äl pa Rutzijol">
+<!ENTITY filtersApplyToMessage.accesskey "e">
+<!ENTITY runJunkControls.label "Kesamajïx Kichajinel Seq' Taqoya'l pa Yakwuj">
+<!ENTITY runJunkControls.accesskey "K">
+<!ENTITY deleteJunk.label "Tiyuj ri Taqoya'l Ya'on Retal achi'el Seq' pa Yakwuj">
+<!ENTITY deleteJunk.accesskey "T">
+<!ENTITY importCmd.label "Tijik' pe…">
+<!ENTITY importCmd.accesskey "j">
+<!ENTITY clearRecentHistory.label "Tiyuj K'ak'a' Natab'äl…">
+<!ENTITY clearRecentHistory.accesskey "N">
+<!ENTITY accountManagerCmd2.label "Kinuk'ulem Rub'i' Taqoya'l">
+<!ENTITY accountManagerCmd2.accesskey "K">
+<!-- LOCALIZATION NOTE (accountManagerCmdUnix.accesskey):
+     Belongs to accountManagerCmd.label, which is placed under the Edit menu
+     on Unix systems
+  -->
+<!ENTITY accountManagerCmdUnix2.accesskey "T">
+
+<!-- Developer Tools Submenu -->
+<!ENTITY devtoolsMenu.label "Taq Rusamajib'al B'anonel">
+<!ENTITY devtoolsMenu.accesskey "e">
+<!ENTITY devToolboxCmd.label "Rukajtz'ik B'anonel">
+<!ENTITY devToolboxCmd.accesskey "R">
+<!ENTITY devToolboxCmd.commandkey "i">
+<!ENTITY debugAddonsCmd.label "Kechojmirisäx taq Tz'aqat">
+<!ENTITY debugAddonsCmd.accesskey "T">
+<!ENTITY tabsDebugCmd.label "Ruchojmirisanel Rupam Ruchi'">
+<!ENTITY tabsDebugCmd.accesskey "R">
+<!ENTITY errorConsoleCmd.label "Kitemeb'al Sachoj">
+<!ENTITY errorConsoleCmd.accesskey "S">
+<!ENTITY errorConsoleCmd.commandkey "j">
+
+<!-- Mail Toolbar -->
+<!ENTITY getMsgButton1.label "Tik'ul Rutzijol">
+<!ENTITY newMsgButton.label "Titz'ib'äx">
+<!ENTITY replyButton.label "Titzolïx tzij">
+<!ENTITY replyAllButton.label "Titzolïx tzij chi ke Konojel">
+<!ENTITY replyListButton.label "Titzolïx tzij chi re ri Cholb'äl">
+<!ENTITY forwardButton.label "Jun chik">
+<!ENTITY fileButton.label "Yakb'äl">
+<!ENTITY archiveButton.label "Yakb'äl">
+<!ENTITY openConversationButton.label "Tzijonem">
+<!ENTITY nextButton.label "Jun chik">
+<!ENTITY nextButtonToolbarItem.label "Jun chik Man Sik'in Ta">
+<!ENTITY nextMsgButton.label "Jun chik">
+<!ENTITY previousButton.label "Jun kan">
+<!ENTITY previousButtonToolbarItem.label "Chuwäch Man Sik'in Ta">
+<!ENTITY previousMsgButton.label "Jun kan">
+<!ENTITY backButton1.label "Chi rij">
+<!ENTITY goForwardButton1.label "Jun chik">
+<!ENTITY deleteItem.title "Tiyuj">
+<!ENTITY deleteButton.label "Tiyuj">
+<!ENTITY undeleteButton.label "Man tiyuj">
+<!ENTITY markButton.label "Tiya' retal">
+<!ENTITY printButton.label "Titz'ajb'äx">
+<!ENTITY stopButton.label "Tiq'at">
+<!ENTITY throbberItem.title "K'utunel Samaj">
+<!ENTITY junkItem.title "Seq'">
+<!ENTITY junkButton.label "Seq'">
+<!ENTITY notJunkButton.label "Man Seq' Ta">
+<!ENTITY addressBookButton.label "Kiwujil Ochochib'äl">
+<!ENTITY chatButton.label "Chat">
+<!ENTITY glodaSearch.title "Chijun Kanoxïk">
+<!ENTITY searchItem.title "Anin Kanoxïk">
+<!ENTITY mailViewsToolbarItem.title "Kitz'etoj Taqoya'l">
+<!ENTITY folderLocationToolbarItem.title "Ruk'ojlib'al Yakwuj">
+<!ENTITY tagButton.label "Etal">
+<!ENTITY compactButton.label "Tz'aqatz'öj">
+<!ENTITY appmenuButton.label "AppMenu">
+
+<!-- Mail Toolbar Tooltips-->
+<!ENTITY advancedButton.tooltip "Q'axinäq rukanoxik tzijol">
+<!ENTITY getMsgButton.tooltip "Kek'ul k'ak'a' taq tzijol">
+<!ENTITY getAllNewMsgCmd.label "Kek'ul Ronojel K'ak'a' taq Tzijol">
+<!ENTITY getAllNewMsgCmd.accesskey "K">
+<!ENTITY newMsgButton.tooltip "Titz'uk jun k'ak'a' tzijol">
+<!ENTITY replyButton.tooltip "Titzolïx tzij chi re ri rutzijol">
+<!ENTITY replyAllButton.tooltip "Titzolïx tzij chi re ri taqonel chuqa' chi ke konojel ri ruk'ulb'anela' tzij">
+<!ENTITY replyListButton.tooltip "Titzolïx tzij chi re jun kicholb'al taqotz'ib'">
+<!ENTITY forwardButton.tooltip "Titaq chik cha'on tzijol">
+<!ENTITY forwardAsInline.tooltip "Titaq chik ri cha'on rutzijol achi'el tz'aqatisan cholan tzij">
+<!ENTITY forwardAsAttachment.tooltip "Titaq chik ri cha'on rutzijol achi'el jun taqoj">
+<!ENTITY fileButton.tooltip "Tiyak cha'on tzijol">
+<!ENTITY archiveButton.tooltip "Keyak cha'on taq tzijol">
+<!ENTITY openMsgConversationButton.tooltip "Tik'ut rutzijonem cha'on tzijol">
+<!ENTITY nextButton.tooltip "Tisilöx pa ri jun chik rutzijol man sik'in ta">
+<!ENTITY nextMsgButton.tooltip "Tisilöx pa ri jun chik rutzijol">
+<!ENTITY previousButton.tooltip "Tisilöx pa ri jun kan rutzijol man sik'in ta">
+<!ENTITY previousMsgButton.tooltip "Tisilöx pa ri jun kan rutzijol">
+<!ENTITY goForwardButton.tooltip "Jun chik rutzijol">
+<!ENTITY goBackButton.tooltip "Titzolïx jun rutzijol">
+<!ENTITY deleteButton.tooltip "Tiyuj cha'on tzijol o yakwuj">
+<!ENTITY undeleteButton.tooltip "Man tiyuj cha'on tzijol">
+<!ENTITY markButton.tooltip "Tiya' ketal taq tzijol">
+<!ENTITY printButton.tooltip "Titz'ajb'äx re rutzijol re'">
+<!ENTITY stopButton.tooltip "Tiq'at ri q'axanïk wakami">
+<!ENTITY junkButton.tooltip "Tiya' ketal re cha'on taq rutzijol re' achi'el seq'">
+<!ENTITY notJunkButton.tooltip "Tiya' ketal re cha'on taq rutzijol re' achi'el man seq' ta">
+<!ENTITY addressBookButton.tooltip "Tib'e pa ri kiwujil ochochib'äl">
+<!ENTITY chatButton.tooltip "Tik'ut ri Chat tab">
+<!ENTITY tagButton.tooltip "Ketal taq rutzijol">
+<!ENTITY compactButton.tooltip "Keyuj yujun taq tzijol pa ri ruyakwuj xcha'">
+<!ENTITY appmenuButton1.tooltip "Tik'ut ri &brandShortName; K'utsamaj">
+<!ENTITY addonsButton.tooltip "Ke'anuk'samajij taq Atz'aqat">
+
+<!-- Toolbar Button Popup -->
+<!ENTITY buttonMenuForwardAsInline.label "Titaq chik Tz'aqatisan">
+<!ENTITY buttonMenuForwardAsAttachment.label "Titaq chik Achi'el Taqoj">
+
+<!-- Remote Content Button Popup -->
+<!ENTITY remoteContentOptionsAllowForMsg.label "Tik'ut näj rupam pa re tzijol re'">
+<!ENTITY remoteContentOptionsAllowForMsg.accesskey "T">
+<!ENTITY editRemoteContentSettings.label "Kicha'oj runuk'ik näj rupam…">
+<!ENTITY editRemoteContentSettings.accesskey "K">
+<!ENTITY editRemoteContentSettingsUnix.label "Kajowaxik runuk'ik näj rupam…">
+<!ENTITY editRemoteContentSettingsUnix.accesskey "K">
+
+<!-- Phishing Button Popup -->
+<!ENTITY phishingOptionIgnore.label "Tirepüx rutzijol ruk'ayewal re tzijol re'">
+<!ENTITY phishingOptionIgnore.accesskey "r">
+<!ENTITY phishingOptionSettings.label "Kenuk' kicha'oj kilixik lajab'…">
+<!ENTITY phishingOptionSettings.accesskey "n">
+<!ENTITY phishingOptionSettingsUnix.label "Kenuk' kajowab'al kilixik lajab'…">
+<!ENTITY phishingOptionSettingsUnix.accesskey "n">
+
+<!-- AppMenu Popup -->
+<!ENTITY appmenuNewMsgCmd.label "K'ak'a' Rutzijol">
+<!ENTITY appmenuNewContactCmd.label "Kib'i' Achib'il pa Kitz'ib'awuj Ochochib'äl…">
+<!ENTITY appmenuEditMenu.label "Tinuk'">
+<!ENTITY appmenuToolbarLayout.label "Ruwachib'enïk Rukajtz'ik Samajib'äl…">
+<!ENTITY appmenuSelectThread.label "Ticha' Tzijonem">
+<!ENTITY appmenuSelectFlagged.label "Kecha' taq Tzijol K'o Kiq'ij">
+
+<!-- Tags Menu Popup -->
+<!ENTITY addNewTag.label "K'ak'a' Etal…">
+<!ENTITY addNewTag.accesskey "K">
+<!ENTITY manageTags.label "Kenuk'samajïx taq Etal…">
+<!ENTITY manageTags.accesskey "K">
+
+<!-- Folder Pane -->
+<!ENTITY folderNameColumn.label "B'i'aj">
+<!ENTITY folderUnreadColumn.label "Man sik'in ta">
+<!ENTITY folderTotalColumn.label "Ronojel">
+<!ENTITY folderSizeColumn.label "Nimilem">
+
+<!-- Folder Pane Context Menu -->
+<!ENTITY folderContextGetMessages.label "Kek'ul tzijol">
+<!ENTITY folderContextGetMessages.accesskey "K">
+<!ENTITY folderContextMarkAllFoldersRead.label "Tiya' Ketal Yakwuj Esik'in">
+<!ENTITY folderContextPauseAllUpdates.label "Keq'at Ronojel K'exoj">
+<!ENTITY folderContextPauseUpdates.label "Keq'at K'exoj">
+<!ENTITY folderContextPauseUpdates.accesskey "K">
+<!ENTITY folderContextOpenInNewWindow.label "Tijaq pa K'ak'a' Tzuwäch">
+<!ENTITY folderContextOpenInNewWindow.accesskey "j">
+<!ENTITY folderContextOpenNewTab.label "Tijaq pa jun K'ak'a' Ruwi'">
+<!ENTITY folderContextOpenNewTab.accesskey "R">
+<!ENTITY folderContextNew.label "K'ak'a' Achyakwuj…">
+<!ENTITY folderContextNew.accesskey "K">
+<!ENTITY folderContextRename.label "Tisik'ïx chik">
+<!ENTITY folderContextRename.accesskey "T">
+<!ENTITY folderContextRemove.label "Tiyuj">
+<!ENTITY folderContextRemove.accesskey "y">
+<!ENTITY folderContextCompact.label "Tz'aqatz'öj">
+<!ENTITY folderContextCompact.accesskey "T">
+<!ENTITY folderContextEmptyTrash.label "Tijam Molb'äl">
+<!ENTITY folderContextEmptyTrash.accesskey "m">
+<!ENTITY folderContextEmptyJunk.label "Tijam Seq'">
+<!ENTITY folderContextEmptyJunk.accesskey "S">
+<!ENTITY folderContextSendUnsentMessages.label "Ketaq Oyob'en taq Tzijol">
+<!ENTITY folderContextSendUnsentMessages.accesskey "q">
+<!ENTITY folderContextUnsubscribe.label "Tiq'at rutz'ib'axik b'i'aj">
+<!ENTITY folderContextUnsubscribe.accesskey "T">
+<!ENTITY folderContextMarkNewsgroupRead.label "Tiya' Retal Kimolaj Tzijol achi'el Sik'in">
+<!ENTITY folderContextMarkNewsgroupRead.accesskey "t">
+<!ENTITY folderContextMarkMailFolderRead.label "Tiya' Retal Yakwuj Sik'in">
+<!ENTITY folderContextMarkMailFolderRead.accesskey "t">
+<!ENTITY folderContextSubscribe.label "Titz'ib'äx nub'i'…">
+<!ENTITY folderContextSubscribe.accesskey "b">
+<!ENTITY folderContextSearchForMessages.label "Kekanöx Tzijol…">
+<!ENTITY folderContextSearchForMessages.accesskey "K">
+<!ENTITY folderContextProperties2.label "Taq ichinil">
+<!ENTITY folderContextProperties2.accesskey "i">
+<!ENTITY folderContextFavoriteFolder.label "Ajowanel Yakwuj">
+<!ENTITY folderContextFavoriteFolder.accesskey "a">
+<!ENTITY folderContextSettings2.label "Taq nuk'ulem">
+<!ENTITY folderContextSettings2.accesskey "e">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label "Ri Rub'i' o ri Taqoya'l kik'wan:">
+<!ENTITY SearchNameOrEmail.accesskey "R">
+
+<!-- Gloda Search Bar -->
+<!ENTITY glodaSearchBar.placeholder "Kekanöx tzijol…">
+
+<!-- Quick Search Menu Bar -->
+<!ENTITY searchSubjectMenu.label "Taqikil">
+<!ENTITY searchFromMenu.label "Richin">
+<!ENTITY searchSubjectOrFromMenu.label "Taqikil o Richin">
+<!ENTITY searchRecipient.label "Chi re o Cc">
+<!ENTITY searchSubjectOrRecipientMenu.label "Taqikil, Chi re o Cc">
+<!ENTITY searchMessageBody.label "Ronojel ri Rutzijol">
+<!ENTITY saveAsVirtualFolderMenu.label "Tiyak Kanoxïk achi'el jun Yakwuj…">
+
+<!-- Thread Pane -->
+<!ENTITY selectColumn.label "Ticha' Rutzijol">
+<!ENTITY threadColumn.label "Tzijonem">
+<!ENTITY fromColumn.label "Richin">
+<!ENTITY recipientColumn.label "K'ulunel">
+<!ENTITY correspondentColumn.label "Ajtaqikil">
+<!ENTITY subjectColumn.label "Taqikil">
+<!ENTITY dateColumn.label "Q'ijul">
+<!ENTITY priorityColumn.label "Ya'on ruq'ij">
+<!ENTITY tagsColumn.label "Etal">
+<!ENTITY accountColumn.label "Rub'i' taqoya'l">
+<!ENTITY statusColumn.label "B'anikil">
+<!ENTITY sizeColumn.label "Nimilem">
+<!ENTITY junkStatusColumn.label "Kib'anikil Seq'">
+<!ENTITY unreadColumn.label "Man sik'in ta">
+<!ENTITY totalColumn.label "Ronojel">
+<!ENTITY readColumn.label "Tisik'ïx">
+<!ENTITY receivedColumn.label "K'ulun">
+<!ENTITY starredColumn.label "Ya'on ruq'ij">
+<!ENTITY locationColumn.label "K'ojlib'äl">
+<!ENTITY idColumn.label "Kicholajem K'uluj">
+<!ENTITY attachmentColumn.label "Taq taqoj">
+
+
+<!-- Thread Pane Tooltips -->
+<!ENTITY columnChooser2.tooltip "Kecha' taq che'el richin nik'ut">
+<!ENTITY selectColumn.tooltip "Tik'exlöx yecha' ronojel taq rutzijol">
+<!ENTITY threadColumn2.tooltip "Tik'ut rutzijol chi tzijonem">
+<!ENTITY fromColumn2.tooltip "Kenuk' chi richin">
+<!ENTITY recipientColumn2.tooltip "Tinuk' chi k'ulunel">
+<!ENTITY correspondentColumn2.tooltip "Tinuk' chi ajtaqikil">
+<!ENTITY subjectColumn2.tooltip "Tinuk' chi taqikil">
+<!ENTITY dateColumn2.tooltip "Kenuk' chi q'ijul">
+<!ENTITY priorityColumn2.tooltip "Tinuk' chi ya'on ruq'ij">
+<!ENTITY tagsColumn2.tooltip "Tinuk' chi taq retal">
+<!ENTITY accountColumn2.tooltip "Tinuk' chi rub'i' taqoya'l">
+<!ENTITY statusColumn2.tooltip "Tinuk' chi rub'anikil">
+<!ENTITY sizeColumn2.tooltip "Tinuk' chi nimilem">
+<!ENTITY junkStatusColumn2.tooltip "Tinuk' chi rub'anikil seq'">
+<!ENTITY unreadColumn2.tooltip "Kajilab'al taq tzijol man esik'in ta pa tzijonem">
+<!ENTITY totalColumn2.tooltip "Ronojel ri kajilab'al rutzijol pa tzijonem">
+<!ENTITY readColumn2.tooltip "Tinuk' chi sik'in">
+<!ENTITY receivedColumn2.tooltip "Ticholajïx chi ruq'ijul k'ulun">
+<!ENTITY starredColumn2.tooltip "Tinuk' chi nimirisan">
+<!ENTITY locationColumn2.tooltip "Tinuk' chi k'ojlib'äl">
+<!ENTITY idColumn2.tooltip "Ticholajïx chi k'ulun">
+<!ENTITY attachmentColumn2.tooltip "Tinuk' chi taqoj">
+
+
+<!-- Thread Pane Context Menu -->
+<!ENTITY contextNewMsgFromTemplate.label "K'ak'a' Rutzijol pa Kaxawäch">
+<!ENTITY contextOpenNewWindow.label "Tijaq ri Rutzijol pa jun K'ak'a' Tzuwäch">
+<!ENTITY contextOpenNewWindow.accesskey "T">
+<!-- The contextOpenNewTab.accesskey ("T") potentially conflicts with
+     cutCmd.accessKey which is defined in textcontext.dtd from toolkit. Right
+     now, both menu items can't be visible at the same time, but should someone
+     enable copy/paste of message, this key would probably need to be changed. -->
+<!ENTITY contextOpenNewTab.label "Tijaq Rutzijol pa jun K'ak'a' Ruwi'">
+<!ENTITY contextOpenNewTab.accesskey "R">
+<!ENTITY contextOpenConversation.label "Tijaq Rutzijol pa Tzijonem">
+<!ENTITY contextOpenConversation.accesskey "q">
+<!ENTITY contextOpenContainingFolder.label "Tijaq Rutzijol pa Ruyakwuj K'wayonel">
+<!ENTITY contextOpenContainingFolder.accesskey "n">
+<!ENTITY contextEditMsgAsNew.label "Tinuk' Achi'el K'ak'a' Tzijol">
+<!ENTITY contextEditMsgAsNew.accesskey "T">
+<!ENTITY contextEditDraftMsg.label "Tinuk' Yujun Tzijol">
+<!ENTITY contextEditTemplate.label "Tinuk' Kaxawäch">
+<!ENTITY contextEditTemplate.accesskey "K">
+<!ENTITY contextArchive.label "Yakb'äl">
+<!ENTITY contextArchive.accesskey "k">
+<!ENTITY contextReplySender.label "Titzolïx Tzij Xa Xe Chi Re ri Taqonel">
+<!ENTITY contextReplySender.accesskey "T">
+<!ENTITY contextReplyNewsgroup2.label "Kojqaxik Kimolaj Tzijol">
+<!ENTITY contextReplyNewsgroup2.accesskey "o">
+<!ENTITY contextReplyAll.label "Titzolïx tzij chi ke Konojel">
+<!ENTITY contextReplyAll.accesskey "K">
+<!ENTITY contextReplyList.label "Titzolïx tzij chi re ri Cholb'äl">
+<!ENTITY contextReplyList.accesskey "C">
+<!ENTITY contextForward.label "Jun chik">
+<!ENTITY contextForward.accesskey "J">
+<!ENTITY contextForwardAsMenu.label "Titaq chik Achi'el">
+<!ENTITY contextForwardAsMenu.accesskey "e">
+<!ENTITY contextForwardAsInline.label "Pa k'amab'ey">
+<!ENTITY contextForwardAsInline.accesskey "P">
+<!ENTITY contextForwardAsAttachmentItem.label "Taqoj">
+<!ENTITY contextForwardAsAttachmentItem.accesskey "T">
+<!ENTITY contextMultiForwardAsAttachment.label "Titaq chik achi'el taq taqoj">
+<!ENTITY contextMultiForwardAsAttachment.accesskey "a">
+<!ENTITY contextMoveMsgMenu.label "Tiq'asäx Pa">
+<!ENTITY contextMoveMsgMenu.accesskey "T">
+<!ENTITY contextMoveCopyMsgRecentMenu.label "K'ak'a'">
+<!ENTITY contextMoveCopyMsgRecentMenu.accesskey "K">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.label "Taq ajowab'äl">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.accesskey "a">
+<!ENTITY contextCopyMsgMenu.label "Tiwachib'ëx Chi Re">
+<!ENTITY contextCopyMsgMenu.accesskey "w">
+<!ENTITY contextKillThreadMenu.label "Tirepüx Ch'ab'enïk">
+<!ENTITY contextKillSubthreadMenu.accesskey "b">
+<!ENTITY contextKillThreadMenu.accesskey "T">
+<!ENTITY contextKillSubthreadMenu.label "Tirepüx Achch'ab'enïk">
+<!ENTITY contextWatchThreadMenu.label "Titzu' jun Ch'ab'enïk">
+<!-- LOCALIZATION NOTE (contextWatchThreadMenu.accesskey):
+     In the en-US locale we ran out of access keys, so there is an empty access key for
+     Watch Thread. Localizers can pick a suitable key
+  -->
+<!ENTITY contextWatchThreadMenu.accesskey "">
+<!ENTITY contextSaveAs.label "Tiyak Achi'el…">
+<!ENTITY contextSaveAs.accesskey "y">
+<!ENTITY contextPrint.label "Titz'ajb'äx…">
+<!ENTITY contextPrint.accesskey "t">
+<!ENTITY contextPrintPreview.label "Nab'ey Tz'etoj">
+<!ENTITY contextPrintPreview.accesskey "b">
+
+<!-- LOCALIZATION NOTE (columnPicker.applyTo.label):
+     This option in the thread pane column picker pops up a sub-menu containing
+     the "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" options. This item indicates
+     a desire to apply the currently displayed set of columns to some other
+     folder(s). The sub-menu items indicate whether we want to apply it to just
+     a folder or also its children.
+  -->
+<!ENTITY columnPicker.applyTo.label "Tokisäx tem chi re…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolder.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolderAndChildren.label". It indicates a desire to
+     apply the currently display thread pane column settings to a single folder
+     that the user selects using the same widget as the move to/copy to
+     mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolder.label "Yakwuj…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolderAndChildren.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolder.label". It indicates a desire to
+     apply the currently display thread pane column settings to a folder and all
+     of its descendents. The user selects the folder using the same widget as the
+     move to/copy to mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolderAndChildren.label "Yakwuj chuqa' taq ralk'wal…">
+<!-- LOCALIZATION NOTE (columnPicker.thisFolder.label):
+     This is used in the folder selection widget for the
+     "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" menu options. Whenever
+     a folder has children, it results in a menu popup; the first menu item
+     in that popup is given this label to indicate that that folder should be
+     selected. For example, if folder "A" has two children, "B" and "C", then
+     when the user hovers over "A", a new popup menu will be displayed whose
+     items are "This folder", "B", and "C". This is the equivalent of the
+     "File here" option for the move to/copy to widget.
+  -->
+<!ENTITY columnPicker.thisFolder.label "Re yakwuj re'">
+
+<!-- Media (video/audio) controls -->
+<!ENTITY contextPlay.label "Titzij">
+<!ENTITY contextPlay.accesskey "T">
+<!ENTITY contextPause.label "Titanab'äx">
+<!ENTITY contextPause.accesskey "n">
+<!ENTITY contextMute.label "Timemür">
+<!ENTITY contextMute.accesskey "m">
+<!ENTITY contextUnmute.label "Tak'axäx">
+<!ENTITY contextUnmute.accesskey "k">
+
+<!-- Quick Search Bar -->
+<!-- LOCALIZATION NOTE (quickSearchCmd.key):
+     This is actually the key used for the global message search box; we have
+     not changed
+  -->
+<!ENTITY quickSearchCmd.key "k">
+<!-- LOCALIZATION NOTE (search.label.base1):
+     This is the base of the empty text for the global search box. We replace
+     #1 with the contents of the appropriate search.keyLabel.* value for the
+     platform.
+     The goal is to convey to the user that typing in the box will allow them
+     to search for messages globally and that there is a hotkey they can press
+     to get to the box faster. If the global indexer is disabled, the search
+     box will be collapsed and the user will never see this message.
+  -->
+<!ENTITY search.label.base1 "Tikanöx #1">
+<!-- LOCALIZATION NOTE (search.keyLabel.nonmac):
+     The description of the key-binding to get into the global search box on
+     windows and linux (which use the control key). We use the key defined in
+     the quickSearchCmd.key entity defined above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.nonmac "&lt;Ctrl+K&gt;">
+<!-- LOCALIZATION NOTE (search.keyLabel.mac):
+     The description of the key-binding to get into the global search box on mac
+     systems. We use the key defined in the quickSearchCmd.key entity defined
+     above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.mac "&lt;&#x2318;K&gt;">
+
+<!-- Message Header Context Menu -->
+<!ENTITY AddToAddressBook.label "Titz'aqatisäx pa Kiwujil taq Ochochib'äl…">
+<!ENTITY AddToAddressBook.accesskey "K">
+<!ENTITY AddDirectlyToAddressBook.label "Titz'aqatisäx pa Kiwujil taq Ochochib'äl">
+<!ENTITY AddDirectlyToAddressBook.accesskey "K">
+<!ENTITY EditContact1.label "Tinuk' Rub'i' Achib'il">
+<!ENTITY EditContact1.accesskey "T">
+<!ENTITY ViewContact.label "Titz'et Rub'i' Achib'il">
+<!ENTITY ViewContact.accesskey "T">
+<!ENTITY SubscribeToNewsgroup.label "Tatz'ib'aj ab'i' pa Kimolaj Tzijol">
+<!ENTITY SubscribeToNewsgroup.accesskey "K">
+<!ENTITY SendMessageTo.label "Titz'ib'äx Rutzijol Chi Re">
+<!ENTITY SendMessageTo.accesskey "z">
+<!ENTITY CopyEmailAddress.label "Tiwachib'ëx Rochochib'al Taqoya'l">
+<!ENTITY CopyEmailAddress.accesskey "w">
+<!ENTITY CopyNameAndEmailAddress.label "Tiwachib'ëx Rub'i' chuqa' Rutaqoya'l Ochochib'äl">
+<!ENTITY CopyNameAndEmailAddress.accesskey "R">
+<!ENTITY CopyNewsgroupName.label "Tiwachib'ëx Rub'i' Kimolaj Tzijol">
+<!ENTITY CopyNewsgroupName.accesskey "T">
+<!ENTITY CopyNewsgroupURL.label "Tiwachib'ëx Kimolaj Tzijol URL">
+<!ENTITY CopyNewsgroupURL.accesskey "U">
+<!ENTITY CreateFilterFrom.label "Titz'uk Ruchayub'al…">
+<!ENTITY CreateFilterFrom.accesskey "R">
+<!ENTITY reportPhishingURL.label "Tiya' Rutzijol Q'olonel Taqoya'l">
+<!ENTITY reportPhishingURL.accesskey "o">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Ketz'aqatisäx taq Soltzij…">
+<!ENTITY spellAddDictionaries.accesskey "t">
+
+<!-- Content Pane Context Menu -->
+<!ENTITY saveLinkAsCmd.label "Tiyak Ximonel Achi'el…">
+<!ENTITY saveLinkAsCmd.accesskey "l">
+<!ENTITY saveImageAsCmd.label "Tiyak Wachib'äl Achi'el…">
+<!ENTITY saveImageAsCmd.accesskey "y">
+<!ENTITY copyLinkCmd.label "Tiwachib'ëx Ruk'ojlib'al Ximonel">
+<!ENTITY copyLinkCmd.accesskey "X">
+<!ENTITY copyImageAllCmd.label "Tiwachib'ëx Wachib'äl">
+<!ENTITY copyImageAllCmd.accesskey "W">
+<!ENTITY copyEmailCmd.label "Tiwachib'ëx Rochochib'al Taqoya'l">
+<!ENTITY copyEmailCmd.accesskey "T">
+<!ENTITY stopCmd.label "Tiq'at">
+<!ENTITY stopCmd.accesskey "q">
+<!ENTITY reloadCmd.label "Tisamajïx chik">
+<!ENTITY reloadCmd.accesskey "s">
+<!ENTITY openInBrowser.label "Tijaq Pan Okik'amaya'l">
+<!ENTITY openInBrowser.accesskey "T">
+<!ENTITY openLinkInBrowser.label "Tijaq Ximonel Pan Okik'amaya'l">
+<!ENTITY openLinkInBrowser.accesskey "T">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label "Xk'is">
+
+<!-- Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.label "Ch'utinarisaxïk">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "Tik'am pe Ronojel Chuwa">
+<!ENTITY zoomWindow.label "Sum">
+
+<!-- Mac OS X Application Menu (Cocoa widgets) -->
+<!ENTITY preferencesCmdMac2.label       "Taq ajowab'äl">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+<!ENTITY preferencesCmdMac.modifiers    "accel">
+<!ENTITY servicesMenuMac.label          "Taq samaj">
+<!ENTITY hideThisAppCmdMac.label        "Tewüx &brandShortName;">
+<!ENTITY hideThisAppCmdMac.commandkey   "H">
+<!ENTITY hideThisAppCmdMac.modifiers    "accel">
+<!ENTITY hideOtherAppsCmdMac.label      "Ke'ewäx Juley Chik">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+<!ENTITY hideOtherAppsCmdMac.modifiers  "accel,alt">
+<!ENTITY showAllAppsCmdMac.label        "Tik'ut Ronojel">
+
+<!-- Mac OS X Dock Icon pop-up menu -->
+<!ENTITY dockOptions.label              "Kicha'oj Ruwachaj Chokoy…">
+<!ENTITY writeNewMessageDock.label      "Titz'ib'äx K'ak'a' Tzijol">
+<!ENTITY openAddressBookDock.label      "Tijaq Kiwujil Ochochib'äl">
+
+<!-- Content tab Navigation buttons -->
+

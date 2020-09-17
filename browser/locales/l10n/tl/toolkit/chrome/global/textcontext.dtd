@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Idagdag sa Diksyunaryo">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "I-undo ang Idinagdag sa Diksyunaryo">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "I-check ang Spelling">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(Walang Spelling na Iminumungkahi)">
+<!ENTITY spellDictionaries.label "Mga Wika">
+<!ENTITY spellDictionaries.accesskey "M">
+
+<!ENTITY searchTextBox.clear.label "Burahin">
+
+<!ENTITY fillLoginMenu.label          "Maglagay ng Login">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "Maglagay ng Password">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "Maglagay ng Username">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(Walang Iminumungkahing Login)">
+<!ENTITY viewSavedLogins.label        "Tignan ang Naka-save na Logins">

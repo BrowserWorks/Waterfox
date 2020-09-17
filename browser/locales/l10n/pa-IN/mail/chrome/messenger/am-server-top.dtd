@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+<!ENTITY messageStorage.label "Message Storage">
+
+<!ENTITY securitySettings.label "ਸੁਰੱਖਿਆ ਸੈਟਿੰਗ">
+<!ENTITY serverSettings.label "ਸਰਵਰ ਸੈਟਿੰਗ">
+
+<!-- LOCALIZATION NOTE (newsServer.label) : do not translate "NNTP" in below line -->
+
+<!ENTITY serverType.label "ਸਰਵਰ ਕਿਸਮ:">
+<!ENTITY serverName.label "ਸਰਵਰ ਨਾਂ:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "ਯੂਜ਼ਰ ਨਾਂ:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "ਪੋਰਟ:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "ਡਿਫਾਲਟ:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "ਨਵੇਂ ਸੁਨਹਿਆਂ ਦੀ ਹਰ ">
+<!ENTITY biffStart.accesskey "k">
+<!ENTITY biffEnd.label "ਮਿੰਟ ਬਾਅਦ ਜਾਂਚ ਕਰੋ">
+<!ENTITY connectionSecurity.label "ਕੁਨੈਕਸ਼ਨ ਸੁਰੱਖਿਆ:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "None">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ਜੇ ਉਪਲੱਬਧ ਹੋਵੇ">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Authentication method:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "ਸੁਨੇਹੇ ਸਰਵਰ ਉੱਤੇ ਰਹਿਣ ਦਿਓ">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "ਸਿਰਫ ਹੈੱਡਰ ਹੀ ਵੇਖੋ">
+<!ENTITY headersOnly.accesskey "f">
+<!ENTITY deleteByAgeFromServer.label "ਲੱਗਭਗ">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "ਦਿਨ">
+<!ENTITY deleteOnServer2.label "ਜਦੋਂ ਤੱਕ ਮੈਂ ਉਨ੍ਹਾਂ ਨੂੰ ਹਟਾਵਾਂ ਨਾ">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "ਨਵੇਂ ਸੁਨੇਹੇ ਆਟੋਮੈਟਿਕ ਹੀ ਡਾਊਨਲੋਡ ਕਰੋ">
+<!ENTITY downloadOnBiff.accesskey "m">
+
+<!ENTITY deleteMessagePrefix.label "ਜਦੋਂ ਮੈਂ ਇੱਕ ਸੁਨੇਹਾ ਹਟਾਵਾਂ:">
+<!ENTITY modelMoveToTrash.label "ਇਸ ਨੂੰ ਰੱਦੀ ਵਿੱਚ ਭੇਜ ਦਿਓ">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "ਇਸ ਨੂੰ ਹਟਾਇਆ ਨਿਸ਼ਾਨਬੱਧ ਕਰੋ">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "ਤੁਰੰਤ ਹਟਾ ਦਿਓ">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "ਬੰਦ ਕਰਨ ਉੱਤੇ  Inbox (&quot;Expunge&quot;) ਕਰੋ">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "ਬੰਦ ਕਰਨ ਉੱਤੇ ਰੱਦੀ ਖਾਲੀ ਕਰੋ">
+<!ENTITY emptyTrashOnExit.accesskey "x">
+<!ENTITY loginAtStartup.label "ਸ਼ੁਰੂ ਕਰਨ ਸਮੇਂ ਨਵੇਂ ਸੁਨਹਿਆਂ ਲਈ ਚੈੱਕ ਕਰੋ"> 
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency 
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+	 of messages between them
+-->
+<!ENTITY maxMessagesStart.label "ਹੋਰ ਡਾਊਨਲੋਡ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਮੈਨੂੰ ਪੁੱਛੋ">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "ਸੁਨੇਹਾ">
+<!ENTITY alwaysAuthenticate.label "ਇਸ ਸਰਵਰ ਨਾਲ ਜੁੜਨ ਸਮੇਂ ਹਮੇਸ਼ਾ ਪਰਮਾਣਕਿਤਾ ਲਈ ਬੇਨਤੀ ਕਰੋ">
+<!ENTITY alwaysAuthenticate.accesskey "w">
+<!ENTITY abbreviate.label "ਪੱਤਰ ਫੋਲਡਰ ਵਿੱਚ ਨਿਊਜ਼-ਗਰੁੱਪ ਦਾ ਨਾਂ ਇੰਝ ਵੇਖੋ:">
+<!ENTITY abbreviateOn.label "ਪੂਰਾ ਨਾਂ (ਉਦਾਹਰਨ ਲਈ, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "ਸੰਖੇਪ ਨਾਂ (ਉਦਾਹਰਨ ਲਈ, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "ਤਕਨੀਕੀ...">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY localFolderPicker.label "ਲੋਕਲ ਡਾਇਰੈਕਟਰੀ ਚੁਣੋ">
+<!ENTITY browseFolder.label "ਝਲਕ...">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "ਝਲਕ...">
+<!ENTITY browseNewsrc.accesskey "e">
+
+<!ENTITY accountTitle.label "Account Settings">
+<!ENTITY accountSettingsDesc.label "The following is a special account.  There are no identities associated with it.">
+

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Завантажити та синхронізувати повідомлення">
+<!ENTITY MsgSelect.label "Елементи для автономної роботи">
+<!ENTITY MsgSyncDesc.label "Якщо ви вже вибрали теки пошти або групи новин для автономної роботи, ви можете завантажити і/або синхронізувати їх. Інакше натисніть кнопку «Вибрати», щоб вибрати теки пошти та груп новин для автономної роботи.">
+<!ENTITY MsgSyncDirections.label "Завантажити і/або синхронізувати наступне:">
+<!ENTITY syncTypeMail.label "Пошта">
+<!ENTITY syncTypeMail.accesskey "ш">
+<!ENTITY syncTypeNews.label "Повідомлення груп новин">
+<!ENTITY syncTypeNews.accesskey "г">
+<!ENTITY sendMessage.label "Надіслати ненадіслані повідомлення">
+<!ENTITY sendMessage.accesskey "с">
+<!ENTITY workOffline.label "Перейти в автономний режим після закінчення завантаження і/або синхронізації">
+<!ENTITY workOffline.accesskey "а">
+<!ENTITY selectButton.label "Вибрати…">
+<!ENTITY selectButton.accesskey "б">
+<!ENTITY MsgSelectDesc.label "Виберіть теки пошти та групи новин, які б ви хотіли завантажити для автономної роботи.">
+<!ENTITY MsgSelectInd.label "Завантажити">
+<!ENTITY MsgSelectItems.label "Теки та групи новин">

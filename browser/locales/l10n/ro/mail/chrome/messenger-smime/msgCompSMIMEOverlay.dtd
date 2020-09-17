@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Nu cripta">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "o">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Necesită criptare">
+<!ENTITY menu_securityEncryptRequire.accesskey "C">
+
+<!ENTITY menu_securitySign.label "Semnează digital mesajul">
+<!ENTITY menu_securitySign.accesskey "m">
+
+<!ENTITY menu_securityAttachMyKey.label "Atașează cheia mea publică">
+<!ENTITY menu_securityAttachMyKey.accesskey "A">
+
+<!ENTITY menu_securityTech.label "Tehnologie de criptare">
+<!ENTITY menu_securityTech.accesskey "T">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Vezi informații despre securitate">
+<!ENTITY menu_securityStatus.accesskey "o">
+
+<!ENTITY securityButton.label "Securitate">
+<!ENTITY securityButton.tooltip "Vezi sau schimbă setările de securitate">
+
+<!ENTITY menu_viewSecurityStatus.label "Informații privind securitatea mesajului">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

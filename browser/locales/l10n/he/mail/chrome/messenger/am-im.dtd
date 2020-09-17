@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "מאפייני חשבון">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "כללי">
+<!ENTITY account.advanced              "אפשרויות מתקדמות">
+<!ENTITY account.name                  "שם משתמש:">
+<!ENTITY account.password              "ססמה:">
+<!ENTITY account.alias                 "כינוי:">
+<!ENTITY account.newMailNotification   "הצגת התרעה עם הודעה חדשה">
+<!ENTITY account.autojoin              "ערוצים להצטרפות אוטומטית:">
+<!ENTITY account.proxySettings.caption "הגדרות שרת מתווך:">
+<!ENTITY account.proxySettings.change.label     "שינוי…">
+<!ENTITY account.proxySettings.change.accessKey "ש">

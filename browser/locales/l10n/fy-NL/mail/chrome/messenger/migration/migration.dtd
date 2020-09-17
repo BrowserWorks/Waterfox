@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Ymportearassistint">
+
+<!ENTITY importFromWin.label            "Opsjes, accountynstellingen, adresboek, filters en oare gegevens ymportearje út:">
+<!ENTITY importFromNonWin.label         "Foarkarren, accountynstellingen, adresboek en oare gegevens ymportearje út:">
+<!ENTITY importSourceNotFound.label     "Der is gjin tapassing fûn om gegevens út te ymportearjen.">
+
+<!ENTITY importFromNothing.label        "Neat ymportearje">
+<!ENTITY importFromNothing.accesskey    "t">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 of letter">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Ynstellingen en e-mailmappen ymportearje">
+<!ENTITY importItems.title              "Te ymportearjen items">
+<!ENTITY importItems.label              "Selektearje de te ymportearjen items:">
+
+<!ENTITY migrating.title                "Dwaande mei ymportearjen…">
+<!ENTITY migrating.label                "De folgjende items wurde op dit stuit ymportearre…">
+
+<!ENTITY selectProfile.title            "Profyl selektearje">
+<!ENTITY selectProfile.label            "De folgjende profilen binne beskikber om út te ymportearjen:">
+
+<!ENTITY done.title                     "Ymportearjen foltôge">
+<!ENTITY done.label                     "De folgjende items binne mei sukses ymportearre:">

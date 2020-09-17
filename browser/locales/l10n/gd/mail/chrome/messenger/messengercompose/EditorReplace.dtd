@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Lorg is cuir 'na àite">
+<!ENTITY findField.label "Lorg teacsa:">
+<!ENTITY findField.accesskey "L">
+<!ENTITY replaceField.label "Cuir na leanas 'na àite:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "Aire do litrichean _mòra ’s beaga">
+<!ENTITY caseSensitiveCheckbox.accesskey "M">
+<!ENTITY wrapCheckbox.label "Paisg mun cuairt air">
+<!ENTITY wrapCheckbox.accesskey "P">
+<!ENTITY backwardsCheckbox.label "Lorg air ais">
+<!ENTITY backwardsCheckbox.accesskey "L">
+<!ENTITY findNextButton.label "Lorg an ath-fhear">
+<!ENTITY findNextButton.accesskey "f">
+<!ENTITY replaceButton.label "Cuir 'na àite">
+<!ENTITY replaceButton.accesskey "r">
+<!ENTITY replaceAndFindButton.label "Lorg is cuir 'na àite">
+<!ENTITY replaceAndFindButton.accesskey "L">
+<!ENTITY replaceAllButton.label "Cuir an àite gach aon dhiubh">
+<!ENTITY replaceAllButton.accesskey "a">
+<!ENTITY closeButton.label "Dùin">
+<!ENTITY closeButton.accesskey "D">

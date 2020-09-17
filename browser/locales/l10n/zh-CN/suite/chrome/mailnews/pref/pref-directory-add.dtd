@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "名称：">
+<!ENTITY directoryName.accesskey           "N">
+<!ENTITY directoryHostname.label           "主机名：">
+<!ENTITY directoryHostname.accesskey       "o">
+<!ENTITY directoryBaseDN.label             "基准标识名：">
+<!ENTITY directoryBaseDN.accesskey         "B">
+<!ENTITY findButton.label                  "查找">
+<!ENTITY findButton.accesskey              "F">
+<!ENTITY directorySecure.label             "使用安全连接 (SSL)">
+<!ENTITY directorySecure.accesskey         "U">
+<!ENTITY directoryLogin.label              "使用用户名和密码来登录">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "综述">
+<!ENTITY Offline.tab                       "脱机">
+<!ENTITY Advanced.tab                      "高级">
+<!ENTITY portNumber.label                  "端口号：">
+<!ENTITY portNumber.accesskey              "P">
+<!ENTITY searchFilter.label                "搜索过滤器：">
+<!ENTITY searchFilter.accesskey            "f">
+<!ENTITY scope.label                       "范围：">
+<!ENTITY scope.accesskey                   "c">
+<!ENTITY scopeOneLevel.label               "一级">
+<!ENTITY scopeOneLevel.accesskey           "L">
+<!ENTITY scopeSubtree.label                "子树">
+<!ENTITY scopeSubtree.accesskey            "S">
+<!ENTITY return.label                      "不返回超过">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "结果">
+<!ENTITY offlineText.label                 "您可以将此目录下载到本地，这样它在脱机工作时也可用。">
+<!ENTITY saslMechanism.label               "登录方式：">
+<!ENTITY saslMechanism.accesskey           "m">
+<!ENTITY saslOff.label                     "简单">
+<!ENTITY saslOff.accesskey		   "l">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey		   "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">

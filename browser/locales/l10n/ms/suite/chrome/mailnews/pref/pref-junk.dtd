@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Mel Remeh &amp; Mencurigakan">
+<!ENTITY junkSettings.caption "Tetapan Mel Remeh Global">
+<!ENTITY junkMail.intro "Pergi ke Tetapan Akaun untuk menetapkan tetapan akaun khusus mel remeh.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Apabila saya tandakan mesej sebagai remeh:">
+<!ENTITY manualMark.accesskey           "A">
+<!ENTITY manualMarkModeMove.label       "Pindahkan ke dalam folder akaun &quot;Mel Remeh&quot;">
+<!ENTITY manualMarkModeMove.accesskey   "P">
+<!ENTITY manualMarkModeDelete.label     "Buang">
+<!ENTITY manualMarkModeDelete.accesskey "B">
+
+<!ENTITY markAsRead.intro               "Tandakan mesej sebagai dibaca:">
+<!ENTITY autoMarkAsRead.label           "Apabila &brandShortName; mempertimbangkan mesej sebagai remeh">
+<!ENTITY autoMarkAsRead.accesskey       "r">
+<!ENTITY manualMarkAsRead.label         "Apabila secara manual saya tandakan sebagai remeh">
+<!ENTITY manualMarkAsRead.accesskey     "k">
+
+<!ENTITY enableJunkLogging.label        "Aktifkan log tapisan mel remeh">
+<!ENTITY enableJunkLogging.accesskey    "A">
+<!ENTITY openJunkLog.label              "Papar log">
+<!ENTITY openJunkLog.accesskey          "P">
+<!ENTITY resetTrainingData.label        "Mengeset semula data latihan">
+<!ENTITY resetTrainingData.accesskey    "M">
+
+<!ENTITY pref.suspectMail.caption       "Mel Mencurigakan">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "Penipuan E-mel">
+<!ENTITY enablePhishingDetector.label     "Maklumkan saya jika mesej yang sedang dibaca disyaki sebagai penipuan e-mel">
+<!ENTITY enablePhishingDetector.accesskey "M">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Anti-virus">
+<!ENTITY antiVirus.label                  "Izinkan klien anti-virus supaya lebih mudah mengimbas mesej masuk">
+<!ENTITY antiVirus.accesskey              "I">

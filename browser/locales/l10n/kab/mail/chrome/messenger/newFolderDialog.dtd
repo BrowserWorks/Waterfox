@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Rnu Akaram">
+<!ENTITY name.label                 "Isem:">
+<!ENTITY name.accesskey             "I">
+<!ENTITY description.label          "Rnu-t d adakaram n:">
+<!ENTITY description.accesskey      "R">
+<!ENTITY folderRestriction1.label   "Aqeddac-agi iseḥreṣ ikaramen ɣeṛ snat kan tewsiyin.">
+<!ENTITY folderRestriction2.label   "Sireg akaram-inek amaynut akken ad igber:">
+<!ENTITY foldersOnly.label          "Ikaramen kan">
+<!ENTITY messagesOnly.label         "Iznan kan">
+<!ENTITY accept.label               "Rnu akaram">
+<!ENTITY accept.accesskey           "R">

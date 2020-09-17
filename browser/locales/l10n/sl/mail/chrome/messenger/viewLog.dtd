@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Dnevnik filtrov">
+<!ENTITY viewLogInfo.text "Dnevnik filtrov vsebuje seznam filtrov, s katerimi se je obdelalo sporočila. Za omogočanje beleženja dnevnika označite spodnje izbirno polje.">
+<!ENTITY clearLog.label "Počisti dnevnik">
+<!ENTITY clearLog.accesskey "o">
+<!ENTITY enableLog.label "Omogoči dnevnik filtrov">
+<!ENTITY enableLog.accesskey "e">
+<!ENTITY closeLog.label "Zapri">
+<!ENTITY closeLog.accesskey "Z">

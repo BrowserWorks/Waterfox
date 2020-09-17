@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Keqasäx chuqa' Kekomonïx taq Tzijol">
+<!ENTITY MsgSelect.label "Taq ch'akulal richin Nokisäx toq Majun Okem">
+<!ENTITY MsgSyncDesc.label "We xe'acha' yan ri kiyakwuj taqoya'l o kimolaj tzijol rik'in majun okem, yatikïr ye'aqasaj chuqa'/o ye'axïm wakami. We mani, taqokisaj ri &quot;Ticha'&quot; pitz'b'äl richin ye'acha' ri kiyakwuj taqoya'l chuqa' kimolaj tzijol nawajo' nawokisaj rik'in majun okem.">
+<!ENTITY MsgSyncDirections.label "Tiqasäx chuqa'/o tixim re re':">
+<!ENTITY syncTypeMail.label "Kitzijol taqotz'ib'">
+<!ENTITY syncTypeMail.accesskey "t">
+<!ENTITY syncTypeNews.label "Kitzijol rumolaj tzijol">
+<!ENTITY syncTypeNews.accesskey "r">
+<!ENTITY sendMessage.label "Ketaq Oyob'en taq tzijol">
+<!ENTITY sendMessage.accesskey "K">
+<!ENTITY workOffline.label "Tisamäj rik'in chupun okem toq xtuk'ïs ruqasaxik chuqa'/o rukomonik">
+<!ENTITY workOffline.accesskey "T">
+<!ENTITY selectButton.label "Ticha'…">
+<!ENTITY selectButton.accesskey "a">
+<!ENTITY MsgSelectDesc.label "Kecha' ri taq ruyakwuj taqotz'ib' chuqa' kimolaj tzijol richin ye'okisäx pa chupun okem.">
+<!ENTITY MsgSelectInd.label "Tiqasäx">
+<!ENTITY MsgSelectItems.label "Taq Yakwuj chuqa' Kimolaj Tzijol">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Accountynstellingen">
+<!ENTITY accountName.label "Accountnamme:">
+<!ENTITY accountName.accesskey "A">
+<!ENTITY identityTitle.label "Standertidentiteit">
+<!ENTITY identityDesc.label "Elk account hat in identiteit. Dit is de ynformaasje dy't oaren sjogge as se jo berjochten lêze.">
+<!ENTITY name.label "Jo namme:">
+<!ENTITY name.accesskey "J">
+<!ENTITY email.label "E-mailadres:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Fan dizze identiteit út reagearje as de ôfleverheaders oerienkomme mei:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Antwurdadres:">
+<!ENTITY replyTo.accesskey "n">
+<!ENTITY replyTo.placeholder "Untfangers sille antwurdzje nei dit oare adres">
+<!ENTITY organization.label "Organisaasje:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Undertekeningstekst:">
+<!ENTITY signatureText.accesskey "k">
+<!ENTITY signatureHtml.label "Brûk HTML (byg., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Brûk yn stee dêrfan de ûndertekening út in bestân (tekst, HTML, of ôfbylding):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Bewurkje…">
+<!ENTITY choose.label "Kieze…">
+<!ENTITY choose.accesskey "K">
+<!ENTITY editVCard.label "Kaart bewurkje…">
+<!ENTITY editVCard.accesskey "b">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "vCard oan berjochten keppelje">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Identiteiten beheare…">
+<!ENTITY manageIdentities.accesskey "h">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Utgeande server (SMTP):">
+<!ENTITY smtpName.accesskey "s">
+<!ENTITY smtpDefaultServer.label "Standertserver brûke">
+
+<!ENTITY smtpServerEdit.label "SMTP-server bewurkje…">
+<!ENTITY smtpServerEdit.accesskey "P">

@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Kiwujil Ochochib'äl">
+<!ENTITY blankResultsPaneMessage.label                  "Re kitz'ib'awuj ochochib'äl nuk'üt kib'i' achib'il xa xe chi rij jun kanoxïk">
+<!ENTITY localResultsOnlyMessage.label                  "Ri kib'i' achib'il pa kitz'ib'awuj näj ochochib'äl, man xkek'ut ta pe we man ye'akanoj ta">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Yakb'äl">
+<!ENTITY fileMenu.accesskey                             "Y">
+<!ENTITY newMenu.label                                  "K'ak'a'">
+<!ENTITY newMenu.accesskey                              "K">
+<!ENTITY newContact.label                               "Kib'i' Achib'il pa Kitz'ib'awuj Ochochib'äl…">
+<!ENTITY newContact.accesskey                           "K">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Kicholajil Taqoya'l…">
+<!ENTITY newListCmd.accesskey                           "K">
+<!ENTITY newAddressBookCmd.label                        "Kiwujil Ochochib'äl…">
+<!ENTITY newAddressBookCmd.accesskey                    "K">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP Cholb'äl…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "Rutzijol taqoj">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "t">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Tokisäx Kitz'ib'awuj ROchochib'al Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Titz'apïx">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "t">
+<!ENTITY printSetupCmd.label                            "Tib'an Runuk'ulem Ruxaq…">
+<!ENTITY printSetupCmd.accesskey                        "m">
+<!ENTITY printPreviewContactCmd.label                   "Nab'ey Rutz'etik Rub'i' Achib'il">
+<!ENTITY printPreviewContactCmd.accesskey               "b">
+<!ENTITY printPreviewAddressBook.label                  "Nab'ey Rutz'etik ri Kitz'ib'awuj Ochochib'äl">
+<!ENTITY printPreviewAddressBook.accesskey              "K">
+<!ENTITY printContactCmd.label                          "Titz'ajb'äx Rub'i' Achib'il…">
+<!ENTITY printContactCmd.accesskey                      "z">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Titz'ajb'äx Kitz'ib'awuj Ochochib'äl…">
+<!ENTITY printAddressBook.accesskey                     "O">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Tinuk'">
+<!ENTITY editMenu.accesskey                             "n">
+<!ENTITY deleteCmd.label                                "Tiyuj">
+<!ENTITY deleteAbCmd.label                              "Tiyuj Kiwujil Ochochib'äl">
+<!ENTITY deleteContactCmd.label                         "Tiyuj Rub'i' Achib'il">
+<!ENTITY deleteContactsCmd.label                        "Keyuj Kib'i' Achib'il">
+<!ENTITY deleteListCmd.label                            "Tiyuj Cholb'äl">
+<!ENTITY deleteListsCmd.label                           "Keyuj Cholb'äl">
+<!ENTITY deleteItemsCmd.label                           "Keyuj Ch'akulal">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesMenu.label                           "Taq ichinil">
+<!ENTITY propertiesMenu.accesskey                       "i">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Kichinil Kiwujil taq Ochochib'äl">
+<!ENTITY abPropertiesMenu.accesskey                     "i">
+<!ENTITY contactPropertiesMenu.label                    "Kichinil Rub'i' Achib'il">
+<!ENTITY contactPropertiesMenu.accesskey                "i">
+<!ENTITY mailingListPropertiesMenu.label                "Kichinil Rucholajem Taqoya'l">
+<!ENTITY mailingListPropertiesMenu.accesskey            "i">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Titz'et">
+<!ENTITY viewMenu.accesskey                             "t">
+<!ENTITY viewToolbarsMenu.label                         "Taq molsamajib'äl">
+<!ENTITY viewToolbarsMenu.accesskey                     "m">
+<!ENTITY menubarCmd.label                               "Rukajtz'ik Kutusamaj">
+<!ENTITY menubarCmd.accesskey                           "K">
+<!ENTITY showAbToolbarCmd.label                         "Rumolsamajib'al Kiwujil Ochochib'äl">
+<!ENTITY showAbToolbarCmd.accesskey                     "u">
+<!ENTITY showTaskbarCmd.label                           "Rub'anikil Kajtz'ik">
+<!ENTITY showTaskbarCmd.accesskey                       "R">
+<!ENTITY customizeToolbar.label                         "Tichinäx…">
+<!ENTITY customizeToolbar.accesskey                     "c">
+<!ENTITY layoutMenu.label                               "Wachib'enïk">
+<!ENTITY layoutMenu.accesskey                           "W">
+<!ENTITY showDirectoryPane.label                        "Rucholb'al Tzub'al">
+<!ENTITY showDirectoryPane.accesskey                    "R">
+<!ENTITY showContactPane2.label                         "Rucholb'al Rub'i' Achib'il">
+<!ENTITY showContactPane2.accesskey                     "A">
+<!ENTITY menu_ShowNameAs.label                          "Tik'ut ri B'i'aj Achi'el">
+<!ENTITY menu_ShowNameAs.accesskey                      "B">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "B'i'aj chuqa' Ruk'an B'i'aj">
+<!ENTITY firstLastCmd2.accesskey                        "B">
+<!ENTITY lastFirstCmd.label                             "Ruka'n B'i'aj, B'i'aj">
+<!ENTITY lastFirstCmd.accesskey                         "R">
+<!ENTITY displayNameCmd.label                           "Tik'ut B'i'aj">
+<!ENTITY displayNameCmd.accesskey                       "T">
+<!ENTITY sortMenu.label                                 "Tichol chi">
+<!ENTITY sortMenu.accesskey                             "T">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Samajib'äl">
+<!ENTITY tasksMenu.accesskey                            "s">
+<!ENTITY messengerCmd.label                             "Taqoya'l &amp; Taq Rutzijol">
+<!ENTITY messengerCmd.accesskey                         "T">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY addressBookCmd.label                           "Kiwujil Ochochib'äl">
+<!ENTITY addressBookCmd.accesskey                       "a">
+<!ENTITY addressBookCmd.key                             "O">
+<!ENTITY searchAddressesCmd.label                       "Kekanöx Ochochib'äl…">
+<!ENTITY searchAddressesCmd.accesskey                   "k">
+<!ENTITY importCmd.label                                "Tijik' pe…">
+<!ENTITY importCmd.accesskey                            "j">
+<!ENTITY exportCmd.label                                "Tik'wäx el…">
+<!ENTITY exportCmd.accesskey                            "k">
+<!ENTITY preferencesCmd2.label                          "Taq cha'oj">
+<!ENTITY preferencesCmd2.accesskey                      "o">
+<!ENTITY preferencesCmdUnix.label                       "Taq ajowab'äl">
+<!ENTITY preferencesCmdUnix.accesskey                   "w">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "K'ak'a' Rub'i' Achib'il">
+<!ENTITY newContactButton.accesskey                     "R">
+<!ENTITY newlistButton.label                            "K'ak'a' Cholb'äl">
+<!ENTITY newlistButton.accesskey                        "C">
+<!ENTITY showAsDefault.label                            "Rumolwuj tikirib'äl k'o wi">
+<!ENTITY showAsDefault.accesskey                        "m">
+<!ENTITY editPropertiesButton.label                     "Tinuk'">
+<!ENTITY propertiesContext.label                        "Taq ichinil">
+<!ENTITY propertiesContext.accesskey                    "i">
+<!ENTITY abPropertiesContext.label                      "Taq ichinil">
+<!ENTITY abPropertiesContext.accesskey                  "i">
+<!ENTITY editContactContext.label                       "Tinuk' Rub'i' Achib'il">
+<!ENTITY editContactContext.accesskey                   "T">
+<!ENTITY editMailingListContext.label                   "Tinuk' ri Cholb'äl">
+<!ENTITY editMailingListContext.accesskey               "n">
+<!ENTITY newmsgButton.label                             "Titz'ib'äx">
+<!ENTITY newmsgButton.accesskey                         "t">
+<!ENTITY newIM.label                                    "Chanin Tzijol">
+<!ENTITY newIM.accesskey                                "C">
+<!ENTITY printButton.label                              "Titz'ajb'äx…">
+<!ENTITY printButton.accesskey                          "j">
+<!ENTITY deleteButton2.label                            "Tiyuj">
+<!ENTITY deleteButton2.accesskey                        "y">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Kecha' taq che'el richin nik'ut">
+<!ENTITY newContactButton.tooltip                       "Titz'uk jun k'ak'a' kitz'ib'awuj rochochib'al rub'i' achib'il">
+<!ENTITY newlistButton.tooltip                          "Tinuk' jun k'ak'a' cholb'äl">
+<!ENTITY editPropertiesButton.tooltip                   "Tinuk' ri ch'akulal cha'on">
+<!ENTITY editAbPropertiesButton.tooltip                 "Tinuk' kichinil ri kitz'ib'awuj ochochib'äl echa'on">
+<!ENTITY editContactPropertiesButton.tooltip            "Tinuk' ri rub'i' achib'il cha'on">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Tinuk' ri rucholb'al taqoya'l cha'on">
+<!ENTITY newmsgButton.tooltip                           "Titaq jun rutzijol taqoya'l">
+<!ENTITY newIM.tooltip                                  "Titaq jun aninäq rutzijol o chat">
+<!ENTITY deleteButton2.tooltip                          "Tiyuj ri ch'akulal cha'on">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "B'i'aj o Taqoya'l">
+<!ENTITY SearchNameOrEmail.accesskey                    "B">
+<!ENTITY advancedButton.tooltip                         "Q'axinäq kikanoxik ochochib'äl">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Anin Kanoxïk">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Kiwujil Ochochib'äl">
+<!ENTITY Addrbook.accesskey                             "w">
+<!ENTITY GeneratedName.label                            "B'i'aj">
+<!ENTITY GeneratedName.accesskey                        "B">
+<!ENTITY PrimaryEmail.label                             "Taqoya'l">
+<!ENTITY PrimaryEmail.accesskey                         "T">
+<!ENTITY ChatName.label                                 "Chat B'i'aj">
+<!ENTITY ChatName.accesskey                             "C">
+<!ENTITY Company.label                                  "Moloj">
+<!ENTITY Company.accesskey                              "j">
+<!ENTITY NickName.label                                 "Tz'ukun b'i'aj">
+<!ENTITY NickName.accesskey                             "u">
+<!ENTITY SecondEmail.label                              "Ruka'n Taqoya'l">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "Tinamital">
+<!ENTITY Department.accesskey                           "n">
+<!ENTITY JobTitle.label                                 "B'i'aj">
+<!ENTITY JobTitle.accesskey                             "B">
+<!ENTITY CellularNumber.label                           "Oyonib'äl">
+<!ENTITY CellularNumber.accesskey                       "O">
+<!ENTITY PagerNumber.label                              "Kanöy winäq">
+<!ENTITY PagerNumber.accesskey                          "K">
+<!ENTITY FaxNumber.label                                "Taqowuj">
+<!ENTITY FaxNumber.accesskey                            "T">
+<!ENTITY HomePhone.label                                "Royonib'al Jay">
+<!ENTITY HomePhone.accesskey                            "J">
+<!ENTITY WorkPhone.label                                "Royonib'al Samaj">
+<!ENTITY WorkPhone.accesskey                            "S">
+<!ENTITY sortAscending.label                            "Nijote'">
+<!ENTITY sortAscending.accesskey                        "N">
+<!ENTITY sortDescending.label                           "Niqa">
+<!ENTITY sortDescending.accesskey                       "q">
+<!ENTITY _PhoneticName.label                            "Q'ajatz'ib' B'i'aj">
+<!ENTITY _PhoneticName.accesskey                        "a">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Rub'i' achib'il">
+<!ENTITY home.heading                                   "Tikirib'äl">
+<!ENTITY other.heading                                  "Juley chik">
+<!ENTITY chat.heading                                   "Chat">
+<!ENTITY phone.heading                                  "Oyonib'äl">
+<!ENTITY work.heading                                   "Samaj">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Tzijoxikil">
+<!ENTITY addresses.heading                              "Taq ochochib'äl">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Tik'ul Ruwäch Setul">
+<!ENTITY mapIt.tooltip                                  "Tik'ut jun ruwäch rusetul re ochochib'äl re' k'o pan Ajk'amaya'l">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Window">
+<!ENTITY minimizeWindow.label                           "Ch'utinarisaxïk">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Tik'am pe Ronojel Chuwa">
+<!ENTITY zoomWindow.label                               "Sum">

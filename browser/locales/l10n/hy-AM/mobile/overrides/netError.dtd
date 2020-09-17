@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Էջը բացելու խնդիր">
+<!ENTITY retry.label "Կրկին փորձել">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Չհաջողվեց կապ հաստատել">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Այս հասցեն արգելափակված է">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Սպասարկիչը չի գտնվել">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>Ստուգեք հասցեն՝ արդյոք սխալ չեք մուտքագրել, ինչպես օրինակ՝ <strong>ww</strong>.example.com՝ <strong>www</strong>.example.com-ի փոխարեն</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Որոնում</button> </div> <li>Եթե չի ստացվում բեռնել որևէ էջ, ապա ստուգեք սարքի տվյալները կամ Wi-Fi կապը: <button id='wifi'>Միացնել Wi-Fi-ը</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "Ֆայլը չի գտնվել">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Ստուգեք ֆայլի անունը մեծատառերի կամ այլ տպագրական սխալների համար:</li> <li>Ստուգեք՝ տեսնելու համար, թե արդյոք ֆայլը չի տեղափոխվել, անվանափոխվել կամ ջնջվել:</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Մատչումը ֆայլին մերժված է">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Հնարավոր է՝ այն հեռացվել է, տեղափոխվել կամ ֆայլի թույլտվությունները կանխել են մատչումը:</li></ul>">
+
+<!ENTITY generic.title "Վայ.">
+<!ENTITY generic.longDesc "<p>&brandShortName;-ը ինչ-որ պատճառով չի կարողանում բեռնել էջը:</p>">
+
+<!ENTITY malformedURI.title "Հասցեն վավեր չէ">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>Վեբ հասցեները սովորաբար գրվում են այսպես՝ <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Որոնում</button> </div> <li>Համոզվեք, որ օգտագործել եք հենց այս գրանշանը՝ (օր.՝ <strong>/</strong>):</li> </ul>">
+
+<!ENTITY netInterrupt.title "Կապը խզվեց">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Ավարտվել է">
+<!ENTITY notCached.longDesc "<p>Պահանջվող փաստաթուղթը հասանելի չէ &brandShortName;-ի շտեմում։</p><ul><li>Անվտանգության նկատառումներով &brandShortName;-ը ինքնաբար չի վերապահանջում նմանատիպ փաստաթղթերը։ </li><li>Սեղմեք Կրկին փորձել՝ վերապահանջելու փաստաթուղթը վեբ կայքից։</li></ul>">
+
+<!ENTITY netOffline.title "Ցանցից դուրս">
+
+<!ENTITY contentEncodingError.title "Բովանդակության Կոդավորման Սխալ">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Խնդրում ենք կապնվել կայքի սեփականատիրոջ հետ՝ այս խնդրի մասին տեղյակ պահելու համար:</li> </ul>         ">
+
+<!ENTITY unsafeContentType.title "Ոչ անվտանգ ֆայլի տեսակ">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Խնդրում ենք կապնվել կայքի սեփականատիրոջ հետ՝ այս խնդրի մասին տեղյակ պահելու համար:</li> </ul>         ">
+
+<!ENTITY netReset.title "Կապը խզվեց">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;;">
+
+<!ENTITY netTimeout.title "Կապի հաստատման ժամանակը սպառվեց">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;;">
+
+<!ENTITY unknownProtocolFound.title "Հասցեն անհասկանալի է">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Այս հասցեն բացելու համար հավանաբար կպահանջվի տեղակայել այլ ծրագիր:</li>  </ul>         ">
+
+<!ENTITY proxyConnectFailure.title "Պրոքսի սպասարկիչը մերժում է ընդունել կապը">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Ստուգեք պրոքսի կարգավորումները և համոզվեք, որ դրանք ճիշտ են:</li> <li>Կապվեք ձեր ցանցի ադմինիստրատորի հետ՝ համոզվելու համար, որ պրոքսի  սպասարկիչը աշխատում է:</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Չի ստացվում գտնել պրոքսի սպասարկիչ">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Ստուգեք պրոքսի սպասարկիչի կարգավորումները։</li> <li>Ստուգեք սարքի տվյալները կամ Wi-Fi կապը։  <button id='wifi'>Միացնել Wi-Fi-ը</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "Էջը ճիշտ չէ վերահասցեավորվել">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Այս խնդիրը երբեմն կարող է պատահել cookie-ների անջատումից  կամ մերժումից:</li>  </ul>                   ">
+
+<!ENTITY unknownSocketType.title "Անհասկանալի պատասխան սպասարկիչից">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Ստուգեք և համոզվեք, որ ձեր համակարգը ունի Անձնական Անվտանգության  Կառավարիչ:</li> <li>Սա կարող է հանդիսանալ սպասարկիչի ոչ ստանդարտ կարգավորման արդյունք:</li>  </ul>                       ">
+
+<!ENTITY nssFailure2.title "Անվտանգ կապակցումը ձախողվեց">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Էջը, որ ցանկանում եք դիտել, չի կարող ցուցադրվել, քանի որ ստացվող տվյալների իսկությունը հնարավոր չէ ստուգել:</li> <li>Կապնվեք կայքի ս/տիրոջ հետ՝ խնդրի մասին տեղեկացնելու համար:</li> </ul>">
+
+<!ENTITY nssBadCert.title "Անվտանգ կապակցումը ձախողվեց">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Այս խնդիրը կարող է կապված լինել սպասարկիչի կարգավորման հետ կամ, հնարավոր է, որ որևէ մեկը փորձում է որպես սպասարկիչ հանդես գալ:</li> <li>Եթե դուք այս սպասարկիչին նախկինում հաջողությամբ եք կապակցվել, ապա սխալը կարող է ժամանակավոր բնույթ կրել և կարող եք կրկին փորձել ավելի ուշ:</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>Հնարավոր է՝ կայքը ժամանակավորապես անհասանելի է կամ զբաղված է։ Փորձեք ավելի ուշ։</li> <li>Եթե որևէ էջ չի բեռնվում, ապա ստուգեք սարքի տվյալները կամ Wi-Fi կապը։ <button id='wifi'>Միացնել Wi-Fi-ը</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "Արգելափակվել է Բովանդակության Անվտանգության Քաղաքականության կողմից">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName;­­-ը խոչընդոտեց այս էջի բացումը, քանի որ էջի պարունակության անվտանգության կանոնակարգն արգելում է դա:</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Բովանդակությունը վնասված է">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Տվյալ էջը չի կարող ցուցադրվել, քանի որ տեղի է ունեցնել տվյալների փոխանցման սխալ։</p><ul><li>Կապնվեք վեբ կայքի հեղինակների հետ՝ այս մասին հաղորդելու համար։</li></ul>">
+
+<!ENTITY securityOverride.linkText "Կամ կարող եք ավելացնել բացառություն…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Դուրս բեր ինձ այստեղից:">
+<!ENTITY securityOverride.exceptionButtonLabel "Ավելացնել Բացառություն...">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Դուք չպետք է ավելացնեք բացառություն, եթե դուք օգտվում եք մի ինտերնետ կապից, որին լիարժեք չեք վստահում, կամ եթե դուք սովոր չեք հետևել նախազգուշացմանը այս սպասարկիչի համար:</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Հեռադիր XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Խնդրում ենք, կապնվեք վեբ կայքի սեփականատերերի հետ` այս խնդրի մասին տեղեկացնելու համար:</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Չհաջողվեց անվտանգ կապակցումը">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Լրացուցիչ տեղեկություն՝ SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Կապակցումն անվտանգ չէ">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Լրացուցիչ տեղեկություն՝ SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Կապակցումն անվտանգ չէ">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> օգտագործում է անվտանգ տեխնոլոգիա, որը հնացած է և խոցելի՝ հարձակումների համար: Հարձակվողը կարող է հեշտությամբ հայտնաբերել տեղեկություններ, որոնք ձեր կարծիքով ապահով են: Կայքի վարիչը պետք է նախ ուղղի սպասարկիչը, որպեսզի կարողանաք այցելել կայքը:</p><p>Սխալի կոդը՝ NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Ցանցի հաղորդակարգի սխալ">
+<!ENTITY networkProtocolError.longDesc "<p>Էջը, որ ցանկանում եք դիտել չի կարող ցուցադրվել, քանի որ հայտնաբերվել է ցանցի հաղորդակարգի սխալ:</p><ul><li>Կապնվեք կայքի սեփականատերերի հետ՝ նրանց այդ մասին հաղորդելու համար:</li></ul>">

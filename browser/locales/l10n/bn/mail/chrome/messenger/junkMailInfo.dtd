@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "অপ্রয়োজনীয় মেইল সম্পর্কিত">
+<!ENTITY window.width "450">
+<!ENTITY info1a.label "&brandShortName; স্বয়ংক্রিয়ভাবে আসন্ন বার্তাসমূহ সনাক্ত করে, যেগুলো অপ্রয়োজনীয় মেইল (স্পাম হিসেবেও পরিচিত) হিসেবে প্রদর্শিত হয় । &brandShortName; যে মেইলসমূহকে অপ্রয়োজনীয় মনে করবে, তারা অপ্রয়োজনীয় মেইলের আইকন প্রদর্শন করবে">
+<!ENTITY info1b.label "।">
+<!ENTITY info2.label 'বার্তাসমূহকে "অপ্রয়োজনীয়" বা "অপ্রয়োজনীয় নয়" হিসেবে চিহ্নিত করতে, অপ্রয়োজনীয় মেইলের টুলবার বোতাম ব্যবহার করে অপ্রয়োজনীয় মেইল সনাক্ত করতে, আপনাকে প্রথমত &brandShortName; কে প্রশিক্ষণ দিতে হবে।'>
+<!ENTITY info3.label "একবার &brandShortName; সঠিকভাবে অপ্রয়োজনীয় মেইল সনাক্ত করলে, অপ্রয়োজনীয় মেইলের ফোল্ডারে স্বয়ংক্রিয়ভাবে আসন্ন অপ্রয়োজনীয় মেইল সরিয়ে নিতে, আপনি অপ্রয়োজনীয় মেইল কন্ট্রোল ব্যবহার করতে পারেন।">
+<!ENTITY info4.label "আরও তথ্যের জন্য, সহায়তা ক্লিক করুন।">

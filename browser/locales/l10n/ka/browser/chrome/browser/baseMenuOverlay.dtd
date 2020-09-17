@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName; შესახებ">
+<!ENTITY aboutProduct2.accesskey  "შ">
+
+<!ENTITY preferencesCmdMac.label        "პარამეტრები…">
+
+<!ENTITY servicesMenuMac.label          "მომსახურებები">
+
+<!ENTITY hideThisAppCmdMac2.label       "ჩაიკეცოს &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "სხვების ჩაკეცვა">
+
+<!ENTITY showAllAppsCmdMac.label        "ყველას გამოჩენა">
+
+<!ENTITY touchBarCmdMac.label           "შეხების ზოლის მორგება…">

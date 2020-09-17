@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Suchen und ersetzen">
+<!ENTITY findField.label "Text suchen:">
+<!ENTITY findField.accesskey "S">
+<!ENTITY replaceField.label "Ersetzen durch:">
+<!ENTITY replaceField.accesskey "d">
+<!ENTITY caseSensitiveCheckbox.label "Groß-/Kleinschreibung berücksichtigen">
+<!ENTITY caseSensitiveCheckbox.accesskey "G">
+<!ENTITY wrapCheckbox.label "Bei Dokumentende wieder von vorne beginnen">
+<!ENTITY wrapCheckbox.accesskey "B">
+<!ENTITY backwardsCheckbox.label "Aufwärts suchen">
+<!ENTITY backwardsCheckbox.accesskey "f">
+<!ENTITY findNextButton.label "Weitersuchen">
+<!ENTITY findNextButton.accesskey "W">
+<!ENTITY replaceButton.label "Ersetzen">
+<!ENTITY replaceButton.accesskey "E">
+<!ENTITY replaceAndFindButton.label "Suchen und ersetzen">
+<!ENTITY replaceAndFindButton.accesskey "u">
+<!ENTITY replaceAllButton.label "Alle ersetzen">
+<!ENTITY replaceAllButton.accesskey "A">
+<!ENTITY closeButton.label "Schließen">
+<!ENTITY closeButton.accesskey "c">

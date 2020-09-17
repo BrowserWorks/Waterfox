@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Kthim Faturash">
+<!ENTITY useGlobalPrefs.label         "Përdor për këtë llogari parapëlqimet e mia të përgjithshme për kthim faturash">
+<!ENTITY useGlobalPrefs.accesskey     "P">
+<!ENTITY globalReceipts.label         "Parapëlqime të Përgjithshme…">
+<!ENTITY globalReceipts.accesskey     "a">
+<!ENTITY useCustomPrefs.label         "Përshtatni kthim faturash për këtë llogari">
+<!ENTITY useCustomPrefs.accesskey     "ë">
+<!ENTITY requestReceipt.label         "Kur dërgon mesazhe, kërko përherë një faturë kthimi">
+<!ENTITY requestReceipt.accesskey     "K">
+<!ENTITY receiptArrive.label          "Kur mbërrin një faturë:">
+<!ENTITY leaveIt.label                "Lëre tek Të marrë">
+<!ENTITY leaveIt.accesskey            "L">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Shpjere te dosja ime &quot;Të dërguar&quot;">
+<!ENTITY moveToSent.accesskey         "S">
+<!ENTITY requestMDN.label             "Kur marr një kërkesë për një faturë kthimi:">
+<!ENTITY returnSome.label             "Lejo fatura kthimi për disa mesazhe">
+<!ENTITY returnSome.accesskey         "d">
+<!ENTITY never.label                  "Mos dërgo kurrë një faturë kthimi">
+<!ENTITY never.accesskey              "M">
+<!ENTITY notInToCc.label              "Nëse nuk jam te Për ose Cc e mesazhit:">
+<!ENTITY notInToCc.accesskey          "n">
+<!ENTITY outsideDomain.label          "Nëse dërguesi është jashtë përkatësisë sime:">
+<!ENTITY outsideDomain.accesskey      "u">
+<!ENTITY otherCases.label             "Në krejt rastet e tjera:">
+<!ENTITY otherCases.accesskey         "t">
+<!ENTITY askMe.label                  "Pyetmë">
+<!ENTITY alwaysSend.label             "Dërgoje Përherë">
+<!ENTITY neverSend.label              "Mos e Dërgo Kurrë">

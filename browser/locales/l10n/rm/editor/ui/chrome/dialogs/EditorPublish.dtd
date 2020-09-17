@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Publitgar la pagina">
+<!ENTITY windowTitleSettings.label    "Parameters da publicaziun">
+<!ENTITY publishTab.label             "Publitgar">
+<!ENTITY settingsTab.label            "Parameters">
+<!ENTITY publishButton.label          "Publitgar">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Num da la site:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Tscherna la site, sin la quala ti vuls publitgar">
+<!ENTITY newSiteButton.label          "Nova site">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Sutordinatur da la site per questa pagina:">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "Tscherna u endatescha il num dal sutordinatur extern per questa pagina">
+<!ENTITY publishImgCheckbox.label     "Includer graficas ed autras datotecas">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip   "Publitgar graficas ed autras datotecas cun referiments da questa pagina">
+<!ENTITY sameLocationRadio.label      "Utilisar la medema adressa sco la pagina">
+<!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip    "Publitgar las datotecas sin la medema adressa sco la pagina">
+<!ENTITY useSubdirRadio.label         "Utilisar quest sutordinatur da la website:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Publitgar las datotecas en il sutordinatur extern tschernì">
+<!ENTITY otherDirList.tooltip         "Tscherner u endatar il num dal sutordinatur extern, en il qual las datotecas duain vegnir publitgadas">
+<!ENTITY pageTitle.label              "Titel da la pagina:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Endatescha in titel per identifitgar la pagina en la fanestra ed en ils segnapaginas">
+<!ENTITY pageTitleExample.label       "p.ex..: &quot;Mia pagina web&quot;">
+<!ENTITY filename.label               "Num da datoteca:">
+<!ENTITY filename.accesskey           "d">
+<!ENTITY filename.tooltip             "Endatescha in num per questa datoteca, cun agiuntar '.html' per ina pagina web">
+<!ENTITY filenameExample.label        "p.ex.: &quot;miapagina.html&quot;">
+<!ENTITY setDefaultButton.label       "Definir sco standard">
+<!ENTITY setDefaultButton.accesskey   "D">
+<!ENTITY removeButton.label           "Allontanar questa website da la glista">
+<!ENTITY removeButton.accesskey       "R">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Publitgar sites">
+<!ENTITY serverInfo.label             "Infurmaziun dal server">
+<!ENTITY loginInfo.label              "Infurmaziuns per s'annunziar">
+<!ENTITY siteName.label               "Num da la site:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "In num che identifitgescha questa site da publicaziun (p.ex.: 'MiaWebsite')">
+<!ENTITY siteUrl.label                "Adressa da publicaziun (p.ex.: 'ftp://ftp.mesprovider.ch/mesnumdutilisader'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "L'adressa FTP:// u HTTP:// che tes provider u tes servetsch da web hosting metta a disposiziun">
+<!ENTITY browseUrl.label              "L'adressa HTTP da tia pagina d'entrada (p.ex.: 'http://www.mesprovider.ch/mesnumdutilisader'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "L'adressa HTTP:// da tes ordinatur da basa (betg endatar in num da datoteca)">
+<!ENTITY username.label               "Num d'utilisader:">
+<!ENTITY username.accesskey           "U">
+<!ENTITY username.tooltip             "Il num d'utilisader che ti utiliseschas per s'annunziar tar tes provider u tes servetsch da web hosting">
+<!ENTITY password.label               "Pled-clav:">
+<!ENTITY password.accesskey           "P">
+<!ENTITY password.tooltip             "Il pled-clav associà cun tes num d'utilisader">
+<!ENTITY savePassword.label           "Memorisar il pled-clav">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Activescha questa chaschetta da controlla per memorisar a moda segira tes pled-clav cun l'administratur da pleds-clav">

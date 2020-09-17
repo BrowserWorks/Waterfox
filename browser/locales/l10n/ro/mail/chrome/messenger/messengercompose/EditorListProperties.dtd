@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Proprietăți listă">
+
+<!ENTITY ListType.label "Tip listă">
+<!ENTITY bulletStyle.label "Stil buline:">
+<!ENTITY startingNumber.label "Începe de la:">
+<!ENTITY startingNumber.accessKey "n">
+<!ENTITY none.value "Nimic">
+<!ENTITY bulletList.value "Listă cu buline (fără numerotare)">
+<!ENTITY numberList.value "Listă numerotată">
+<!ENTITY definitionList.value "Listă de definiții">
+<!ENTITY changeEntireListRadio.label "Schimbă toată lista">
+<!ENTITY changeEntireListRadio.accessKey "c">
+<!ENTITY changeSelectedRadio.label "Schimbă doar elementele selectate">
+<!ENTITY changeSelectedRadio.accessKey "i">

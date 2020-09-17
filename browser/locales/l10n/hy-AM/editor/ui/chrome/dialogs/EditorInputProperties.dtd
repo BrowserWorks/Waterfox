@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Դաշտի հատկություններից">
+<!ENTITY windowTitleImage.label "Բլանկի նկարի հատկությունները">
+
+<!ENTITY InputType.label "Դաշտի տեսակ">
+<!ENTITY InputType.accesskey "տ">
+<!ENTITY text.value "Տեքստ">
+<!ENTITY password.value "Գաղտնաբառ">
+<!ENTITY checkbox.value "Ընտրադաշտը">
+<!ENTITY radio.value "Ռադիոյի կոճակ">
+<!ENTITY submit.value "Ուղարկելու կոճակ">
+<!ENTITY reset.value "Վերակայելու կոճակ">
+<!ENTITY file.value "Ֆայլ">
+<!ENTITY hidden.value "Թաքնված">
+<!ENTITY image.value "Նկար">
+<!ENTITY button.value "Կոճակ">
+
+<!ENTITY InputSettings.label "Դաշտի կարգավորում">
+<!ENTITY InputName.label "Դաշտի անունը">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Խմբի անունը">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Դաշտի նշանակությունը.">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "Որոշված նշանակությունը.">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "Որոշակի ընտրված">
+<!ENTITY InputChecked.accesskey "C">
+<!ENTITY InputSelected.label "Որոշակի ընտրված">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "Միայն կարդալու">
+<!ENTITY InputReadOnly.accesskey "R">
+<!ENTITY InputDisabled.label "Անջատված">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Էջի ցուցիչը.">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "Դաշտի գույնը.">
+<!ENTITY TextSize.accesskey "F">
+<!ENTITY TextLength.label "Առավելագույն լայնքը.">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "Մուտքի բանալին.">
+<!ENTITY AccessKey.accesskey "K">
+<!ENTITY Accept.label "Ընդունելի տեսակները.">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "Նկարի հատկությունները…">
+<!ENTITY ImageProperties.accesskey "e">

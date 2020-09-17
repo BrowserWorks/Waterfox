@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Enmeti tabelon">
+
+<!ENTITY size.label "Grando">
+<!ENTITY numRowsEditField.label "Vicoj:">
+<!ENTITY numRowsEditField.accessKey "V">
+<!ENTITY numColumnsEditField.label "Kolumnoj:">
+<!ENTITY numColumnsEditField.accessKey "K">
+<!ENTITY widthEditField.label "Larĝo:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY borderEditField.label "Borderaĵo:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "Entajpu valoron por larĝo de borderaĵo (rando) de la tabelo, aŭ tajpu nulon (0) por ne krei borderaĵon">
+<!ENTITY pixels.label "rastrumeroj">

@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Către">
+<!ENTITY fromField4.label "De la">
+<!ENTITY senderField4.label "Expeditor">
+<!ENTITY author.label "Autor">
+<!ENTITY organizationField4.label "Organizația">
+<!ENTITY replyToField4.label "Răspuns la">
+
+<!ENTITY subjectField4.label "Subiect">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Grupuri de discuții">
+<!ENTITY followupToField4.label "Răspunzi la">
+<!ENTITY tagsHdr4.label "Etichete">
+<!ENTITY dateField4.label "Data">
+<!ENTITY userAgentField4.label "Agent utilizator">
+<!ENTITY referencesField4.label "Referințe">
+<!ENTITY messageIdField4.label "ID mesaj">
+<!ENTITY inReplyToField4.label "Ca răspuns la">
+<!ENTITY originalWebsite4.label "Site web">
+
+<!ENTITY hdrArchiveButton1.label "Arhivează">
+<!ENTITY hdrArchiveButton1.tooltip "Arhivează acest mesaj">
+<!ENTITY hdrSmartReplyButton1.label "Răspuns rapid">
+<!ENTITY hdrReplyButton1.label "Răspunde">
+<!ENTITY hdrReplyButton2.tooltip "Răspunde expeditorului acestui mesaj">
+<!ENTITY hdrReplyAllButton1.label "Răspunde tuturor">
+<!ENTITY hdrReplyAllButton1.tooltip "Răspunde expeditorului și tuturor destinatarilor">
+<!ENTITY hdrReplyListButton1.label "Răspunde listei">
+<!ENTITY hdrReplyListButton1.tooltip "Răspunde listei de adrese">
+<!ENTITY hdrFollowupButton1.label "Urmărește">
+<!ENTITY hdrFollowupButton1.tooltip "Postează un răspuns la acest grup de discuții">
+<!ENTITY hdrForwardButton1.label "Redirecționează">
+<!ENTITY hdrForwardButton1.tooltip "Redirecționează acest mesaj">
+<!ENTITY hdrJunkButton1.label "Nesolicitat">
+<!ENTITY hdrJunkButton1.tooltip "Marchează mesajul ca nesolicitat">
+<!ENTITY hdrTrashButton1.label "Șterge">
+<!ENTITY hdrTrashButton1.tooltip "Șterge acest mesaj">
+
+<!ENTITY hdrViewToolbarShowFull.label "Afișează pictograme și text">
+<!ENTITY hdrViewToolbarShowFull.accesskey "A">
+<!ENTITY hdrViewToolbarShowIcons.label "Afișează doar pictograme">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "i">
+<!ENTITY hdrViewToolbarShowText.label "Afișează doar text">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Afișează întotdeauna răspunsul către expeditor">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "r">
+
+<!ENTITY otherActionsButton2.label "Mai multe">
+<!ENTITY otherActionsButton.tooltip "Mai multe acțiuni">
+<!ENTITY otherActionsOpenConversation1.label "Deschide în conversație">
+<!ENTITY otherActionsOpenConversation1.accesskey "c">
+<!ENTITY otherActionsOpenInNewWindow1.label "Deschide într-o fereastră nouă">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "W">
+<!ENTITY otherActionsOpenInNewTab1.label "Deschide într-o filă nouă">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "t">
+<!ENTITY markAsReadMenuItem1.label "Marchează ca citit">
+<!ENTITY markAsReadMenuItem1.accesskey "r">
+<!ENTITY markAsUnreadMenuItem1.label "Marchează ca necitit">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "Salvează ca…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "Vizualizează sursa">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "Tipărește…">
+<!ENTITY otherActionsPrint1.accesskey "p">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Afișează inițial panoul de atașamente">
+<!ENTITY startExpandedCmd.accesskey    "S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Deschide">
+<!ENTITY openAttachmentCmd.accesskey    "D">
+<!ENTITY saveAsAttachmentCmd.label    "Salvează ca…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "a">
+<!ENTITY detachAttachmentCmd.label    "Elimină atașamentul…">
+<!ENTITY detachAttachmentCmd.accesskey    "E">
+<!ENTITY deleteAttachmentCmd.label    "Șterge">
+<!ENTITY deleteAttachmentCmd.accesskey    "e">
+<!ENTITY openAllAttachmentsCmd.label    "Deschide toate…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "o">
+<!ENTITY saveAllAttachmentsCmd.label    "Salvează toate…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+<!ENTITY detachAllAttachmentsCmd.label    "Elimină toate atașamentele…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "l">
+<!ENTITY deleteAllAttachmentsCmd.label    "Șterge toate atașamentele…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "e">
+
+<!ENTITY openAttachment.tooltip "Deschide fișierul atașat">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Deschide dosarul în care se află">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "F">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Afișează în Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Salvează">
+<!ENTITY saveAttachmentButton1.tooltip     "Salvează fișierul atașat">
+<!ENTITY saveAllAttachmentsButton1.label   "Salvează tot">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Salvează toate fișierele atașate">
+
+<!ENTITY copyLinkCmd.label        "Copiază locația linkului">
+<!ENTITY copyLinkCmd.accesskey    "C">
+
+<!ENTITY CopyMessageId.label "Copiază Message-ID">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "Deschide mesajul pentru ID">
+<!ENTITY OpenMessageForMsgId.accesskey "h">
+<!ENTITY OpenBrowserWithMsgId.label "Deschide browserul cu Message-ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey "b">

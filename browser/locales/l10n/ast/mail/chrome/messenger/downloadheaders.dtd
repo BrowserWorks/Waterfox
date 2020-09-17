@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--null-->
+<!ENTITY all.label "Descargar toles testeres">
+<!ENTITY all.accesskey "D">
+<!--LOCALIZATION NOTE (download.label):
+    consider the download.label and headers.label as a single sentence
+    with the number of headers to be downloaded inserted between them:
+    EXAMPLE: "Download" <some number> "headers"
+    Either label could be set to null ("") if required grammatically.
+-->
+
+<!ENTITY download.label "Descargar">
+<!ENTITY download.accesskey "a">
+<!ENTITY headers.label "Testeres">
+<!ENTITY headers.accesskey "r">
+<!ENTITY mark.label "Conseñar les testeres restantes como lleíes">
+<!ENTITY mark.accesskey "C">

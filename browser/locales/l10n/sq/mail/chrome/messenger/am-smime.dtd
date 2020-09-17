@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Fshehtëzim Skaj-Më-Skaj">
+<!ENTITY e2eLearnMore.label "Mësoni më tepër">
+
+<!ENTITY e2eEnc.description "Pa fshehtëzim skaj-më-skaj lënda e mesazheve është lehtësisht e ekspozuar ndaj furnizuesit tuaj të email-it dhe survejimit masiv.">
+<!ENTITY e2eeReqWarning.description "Nëse kërkoni medoemos fshehtëzim, që të dërgoni një mesazh, duhet të keni kyçin publik ose dëshminë e çdo marrësi.">
+
+<!ENTITY e2eSigning.description "Një nënshkrim dixhital u lejon marrësve të verifikojnë se mesazhi qe dërguar nga ju, dhe se lënda s’është ndryshuar.">
+<!ENTITY e2eTechPref.description "Teknologji e parapëlqyer fshehtëzimesh:">
+
+<!ENTITY doNotEncrypt.label "Si parazgjedhje, mos e aktivizo fshehtëzimin">
+<!ENTITY doNotEncrypt.accesskey "M">
+<!ENTITY requireEncryptMessage.label "Si parazgjedhje, kërko doemos fshehtëzim">
+<!ENTITY requireEncryptMessage.accesskey "d">
+<!ENTITY encryptionCert2.message "Dëshmi personale për fshehtëzim:">
+<!ENTITY digitalSign.certificate.button "Përzgjidhni…">
+<!ENTITY digitalSign.certificate.accesskey "P">
+<!ENTITY digitalSign.certificate_clear.button "Spastroje">
+<!ENTITY digitalSign.certificate_clear.accesskey "o">
+<!ENTITY encryption.certificate.button "Përzgjidhni…">
+<!ENTITY encryption.certificate.accesskey "z">
+<!ENTITY encryption.certificate_clear.button "Spastroje">
+<!ENTITY encryption.certificate_clear.accesskey "a">
+<!ENTITY signingGroupTitle.label "Nënshkrim Numerik">
+<!ENTITY signMessage2.label "Shtoje, si parazgjedhje, dëshminë time dixhitale">
+<!ENTITY signMessage.accesskey "N">
+
+<!ENTITY signingCert2.message "Dëshmi personale për nënshkrim dixhital:">
+
+<!ENTITY sendingDefaults.label "Rregullime parazgjedhje për dërgim mesazhesh">
+
+<!ENTITY technologyAutomatic.label "Përzgjidhe vetvetiu, bazuar në kyçet ose dëshmitë që kihen">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Administroni Dëshmi S/MIME">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "Pajisje Sigurie S/MIME">
+<!ENTITY manageDevices2.accesskey "u">
+
+<!ENTITY technologySMIME.label "Parapëlqe S/MIME">
+<!ENTITY technologyOpenPGP.label "Parapëlqe OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Përzgjidhni Dëshmi">
+<!ENTITY certPicker.info  "Dëshmi:">
+<!ENTITY certPicker.detailsLabel "Hollësi të dëshmisë së përzgjedhur:">
+
+<!ENTITY openpgpKey.message "Kyç personal për fshehtëzim dhe nënshkrim dixhital:">
+<!ENTITY openpgpKey.button "Ujdisni Kyç Personal…">
+<!ENTITY openpgpKey.accesskey "o">

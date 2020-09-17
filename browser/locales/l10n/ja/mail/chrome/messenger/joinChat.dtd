@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title	"チャット参加">
+<!ENTITY name.label		"部屋">
+<!ENTITY optional.label		"(任意)">
+<!ENTITY account.label		"アカウント">
+<!ENTITY autojoin.label		"このチャット部屋に自動参加する">
+<!ENTITY autojoin.accesskey	"A">

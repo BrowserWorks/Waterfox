@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title "Чараўнік імпарту">
+<!ENTITY importAllFrom.label "Імпартаваць усе адзінкі з:">
+<!ENTITY importBookmarksFrom.label "Імпартаваць закладкі з:">
+<!ENTITY importFromThunderbird.label "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label "Файла">
+<!ENTITY importFromFile.accesskey "Ф">
+<!ENTITY importFromNothing.label "Не імпартаваць нічога">
+<!ENTITY importFromNothing.accesskey "Н">
+<!ENTITY importSource.title "Імпартаваць наладжванні і здаткі">
+<!ENTITY importItems.title "Адзінкі для імпарту">
+<!ENTITY importItems.label "Вылучыце адзінкі для імпарту:">
+<!ENTITY selectProfile.title "Выбар профілю">
+<!ENTITY selectProfile.label "Даступны наступныя профілі для імпарту:">
+<!ENTITY migrating.title "Імпартаванне…">
+<!ENTITY migrating.label "Зараз імпартуюцца наступныя адзінкі…">
+<!ENTITY done.title "Імпарт выкананы">
+<!ENTITY done.label "Наступныя адзінкі паспяхова імпартаваны:">

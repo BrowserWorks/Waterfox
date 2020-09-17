@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Localizar texto ao digitar">
+<!ENTITY findAsYouTypeBehavior.label "Localizar texto ao digitar">
+<!ENTITY findAsYouTypeTip.label "Dica: Para começar manualmente a localizar ao digitar, digite / para encontrar texto ou ' para encontrar links, seguido do texto que você deseja encontrar.">
+<!ENTITY findAsYouTypeTimeout.label "Limpar a pesquisa atual depois de alguns segundos de inatividade">
+<!ENTITY findAsYouTypeTimeout.accesskey "L">
+<!ENTITY findAsYouTypeSound.label "Tocar um som quando o texto digitado não for encontrado">
+<!ENTITY findAsYouTypeSound.accesskey "T">
+<!ENTITY findAsYouTypeEnableAuto.label "Localizar automaticamente ao digitar dentro de uma página web:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "L">
+<!ENTITY findAsYouTypeAutoText.label "Qualquer texto na página">
+<!ENTITY findAsYouTypeAutoText.accesskey "a">
+<!ENTITY findAsYouTypeAutoLinks.label "Somente links">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "l">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Mostrar a barra de ferramentas de pesquisa enquanto você localiza ao digitar">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "s">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Observação: Localizar ao digitar sem exibir a barra de localização não permite entrada de texto internacional.">

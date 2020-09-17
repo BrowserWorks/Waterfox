@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Ugur deg usali n usebter">
+<!ENTITY retry.label "Ɛreḍ tikelt-nniḍen">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Igguma ad iqqen">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Tansa-yagi tegdel">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "ulac aqeddac">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>Senqed tuccḍiwin deg tira n tansiwin am <strong>ww</strong>.example.com deg umḍiq n <strong>www</strong>.example.com</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Nadi</button> </div> <li>Ma tekkseḍ armad n usali n yal asebter, senqed isefka n yibenk-inek neɣ tuqqna Wi-Fi. <button id='wifi'>Rmed Wi-Fi</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "Ulac afaylu">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Senqed isekkilen imeqqṛanen n yisem n ufaylu neɣ tuccḍiwin-nniḍen.</li> <li>Wali ma yella afaylu yettwasenkez, yettwasnifel yisem-is neɣ yettwakkes.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Anekcum ɣer ufaylu yegdel">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Ahat yettwakkes, yettusenkez, neɣ tisirag uggint anekcum.</li></ul>">
+
+<!ENTITY generic.title "Ayhu.">
+<!ENTITY generic.longDesc "<p> &brandShortName; ur izmir ara ad d-yessali asebter-agi.</p>">
+
+<!ENTITY malformedURI.title "Tansa-yagi d tarameɣtut">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>Tansiwin web ttwarun am akka <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Nadi</button> </div> <li>Wali ma yella tesseqdaceḍ islacen yettin (i.e. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Tuqqna terken">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Isemli yemmut">
+<!ENTITY notCached.longDesc "<p>Tansa yettwasutren ulac-itt deg tuffirt n &brandShortName;.</p><ul><li>Ɣef sebba n tɣellist, &brandShortName; ur yessutur ara tikelt-nniḍen s wudem awurman isemliyen n tbaḍnit.</li><li>Ɛreḍ tikelt-nniḍen asuter n isemli seg usmel web.</li></ul>">
+
+<!ENTITY netOffline.title "Askar war tuqqna">
+
+<!ENTITY contentEncodingError.title "Tuccḍa n usettengel n ugbur">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Ma ulac aɣilif, nermes imawlan n usmel web ɣef wugur-agi.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Tawsit n ufaylu mačči d taɣelsant">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Ma ulac aɣilif, nermes imawlan n usmel web ɣef wugur-agi.</li> </ul>">
+
+<!ENTITY netReset.title "Tuqqna tettuwennez tikelt-nniḍen.">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Tanzagt n uraǧu tezri">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Ur nessin ara tansa">
+<!ENTITY unknownProtocolFound.longDesc "<ul><li>Ahat issefk ad tesbeddeḍ asnas-nniḍen akken ad tizmired ad teldiḍ tawsit n tansa-agi.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Aqeddacapṛuksi yugi tuqqniwin.">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Senqed ma yella iɣewwaren n upṛuksi d imeɣta.</li> <li>Nermes anedbal-ik n uẓeṭṭa akken ad twaliḍ ma yella apṛuksi itteddu.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Aqeddac apṛuksi ulac-it">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Senqed ma yella iɣewwaṛen n upṛuksi d imeɣta.</li> <li>Wali ma yella ibenkan ɣur-sen isefka itteddun neɣ tuqqna Wi-Fi. <button id='wifi'>Rmed Wi-Fi</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "Asebter ur yettuwelleh ara akken iwata">
+<!ENTITY redirectLoop.longDesc "<ul><li>Ugur-agi ahat yekka-d seg tukksa n urmad neɣ agami n inagan n tuqqna.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Aqeddac yerra-d yir tiririt ur nettwaṛǧi ara">
+<!ENTITY unknownSocketType.longDesc "<ul><li>Senqed ma yella amsefrak n tɣellist tudmawant tebded ɣef unagraw-ik.</li><li>Ahat aqeddac ur ittuswel ara akken iwata.</li></ul>">
+
+<!ENTITY nssFailure2.title "Tuqqna taɣelsant ur teddi ara">
+<!ENTITY nssFailure2.longDesc2 "<ul><li>Asebter-agi i tebɣiḍ ad twaliḍ ur yizmir ara ad d-yettwasken, acku ur nemzir ara ad nessenqed tilawt n isefka d-ittwaremsen</li><li>Ma ulac aɣilif nermes imawlan n usmel web ɣef ugur-agi.</li></ul>">
+
+<!ENTITY nssBadCert.title "Tuqqna taɣelsant ur teddi ara">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Ayagi yezmer ad yili d ugur n twila n uqeddac neɣ d albaɛḍ i yeɛarḍen ad yakwer tamagit n uqeddac-agi.</li> <li>Ma yella teqqneḍ yakan ɣer uqeddac-agi, tuccḍa tezmer ahat ad tili d taskudant, u tzemreḍ ad tɛerḍeḍ i tikelt-nniḍen ticki.</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>Asmel yezmer ulac-it akka tura neɣ ur yeftufi ara. Ɛreḍ tikelt-nniḍen di kra n wakud.</li> <li>ma yella ur tezmireḍ ara ad tessalid asebter, senqed isefka n ibenkan izirazen neɣ tuqqna Wi-Fi. <button id='wifi'>Rmed Wi-Fi</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "Tessewḥel-it tsertit n tɣellist n ugbur">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; isewḥel asali n usebter-agi acku tasertit n tɣellist n ugbur ur tt-yeǧǧi ara.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Tuccḍa tekka-d seg ugbur ixesṛen">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Asebter-agi i tebɣiḍ ad twaliḍ, ur yizmir ara ad d-yettwasken, acku tella tuccḍa di tuzzna n isefka.</p><ul><li>Ma ulac aɣilif nermes imawlan n usmel web ɣef ugur-agi.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Neɣ tzemreḍ ad ternuḍ tasureft…">
+<!ENTITY securityOverride.getMeOutOfHereButton "amek ara ffɣeɣ sya!">
+<!ENTITY securityOverride.exceptionButtonLabel "Rnu Tasureft">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Issefk ad ternuḍ tasureft ma tseqdaceḍ tuqqna ɣer Internet anda tegreḍ taflest neɣ anda ur tuɣeḍ ara tannumi ttawḍen-k-id wulɣuten i uqeddac-agi.</p> <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button><button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL anmeggag">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Ma ulac aɣilif, nermes imawlan n usmel web ɣef wugur-agi.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Ur yezmir ara ad yeqqen s wudem aɣelsan">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Talɣut leqqayen: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Tuqqna yinek mačči d taɣelsant">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Talɣut leqqayen: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Tuqqna-yinek mačči d taɣelsant">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> iseqdac tatiknulujit taqbuṛt ur nezmir ad terr ẓẓedmat. Aẓeddam yezmer ad yaker s wudem fessusen talɣut i tɣileḍ d taɣelsant.  Anedbal n usmel yesra di tazwara ad iseggem aqeddac send ad tizmireḍ ad terzuḍ ɣer usmel.</p><p>Tangalt n tuccḍa: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Tuccḍa deg uneggaf n uẓeṭṭa">
+<!ENTITY networkProtocolError.longDesc "<p>Ur nezmir ara ad d-sken asebter i tebɣiḍ ad twaliḍ acku teḍra-d tuccḍa deg uneggaf n uẓeṭṭa.</p><ul><li>Ttxil nermes bab n usmel akken ad as-tinniḍ ɣef ugur-a.</li></ul>">

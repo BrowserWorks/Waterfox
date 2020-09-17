@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Navigasi Papan kekunci">
+<!ENTITY tabNavigationBehavior.label "Navigasi Kekunci Tab">
+<!ENTITY tabNavigationLinks.label "Pautan">
+<!ENTITY tabNavigationLinks.accesskey "P">
+<!ENTITY tabNavigationForms.label "Butang, butang radio, kotak semakan dan senarai pilihan">
+<!ENTITY tabNavigationForms.accesskey "B">
+<!ENTITY tabNavigationTextboxes.label "Nota: kotak teks dan ruang skrol ada sebahagian daripada susunan tab.">
+<!ENTITY tabNavigationDesc.label "Apabila Tab atau Shift + Tab ditekan, bergerak di antara:">
+<!ENTITY accessibilityBrowseWithCaret.label "Cari Dengan Karet">
+<!ENTITY browseWithCaretDesc.label "Pelayaran karet membolehkan anda menavigasi dan memilih di dalam halaman dengan menggunakan kekunci kursor untuk memindahkan karet yang boleh dilihat.">
+<!ENTITY browseWithCaretUse.label "Guna pelayaran karet">
+<!ENTITY browseWithCaretUse.accesskey "G">
+<!ENTITY browseWithCaretShortCut.label "Guna pintasan F7 untuk menogol pelayan karet">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "Beri amaran sebelum mengaktifkan pelayaran karet">
+<!ENTITY browseWithCaretWarn.accesskey "B">

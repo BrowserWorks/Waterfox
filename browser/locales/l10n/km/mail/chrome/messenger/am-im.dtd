@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "លក្ខណ​សម្បត្តិ​គណនី​">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "General">
+<!ENTITY account.advanced              "​ជម្រើស​កម្រិត​ខ្ពស់">
+<!ENTITY account.name                  "Մականուն.">
+<!ENTITY account.password              "ពាក្យសម្ងាត់៖">
+<!ENTITY account.alias                 "ឈ្មោះ​ក្លែងក្លាយ៖">
+<!ENTITY account.newMailNotification   "ជូនដំណឹង​ពេល​មាន​សារ​ថ្មី">
+<!ENTITY account.autojoin              "ឆានែល​តភ្ជាប់​ស្វ័យប្រវត្តិ">
+<!ENTITY account.proxySettings.caption "ការ​កំណត់​ប្រូកស៊ី">
+<!ENTITY account.proxySettings.change.label     "ផ្លាស់ប្ដូរ...">
+<!ENTITY account.proxySettings.change.accessKey "C">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label "Rozšířené úpravy vlastností">
+<!ENTITY AttName.label "Atribut: ">
+<!ENTITY AttValue.label "Hodnota: ">
+<!ENTITY PropertyName.label "Vlastnost: ">
+<!ENTITY currentattributesfor.label "Aktuální atributy pro:">
+<!ENTITY tree.attributeHeader.label "Atribut">
+<!ENTITY tree.propertyHeader.label "Vlastnost">
+<!ENTITY tree.valueHeader.label "Hodnota">
+<!ENTITY tabHTML.label "Vlastnosti HTML">
+<!ENTITY tabCSS.label "Řádkový styl">
+<!ENTITY tabJSE.label "Události JavaScriptu">
+<!ENTITY editAttribute.label "Klepněte na položku, kterou chcete upravit">
+<!ENTITY removeAttribute.label "Odebrat">

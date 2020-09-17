@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Account en gegevens fuortsmite">
+<!ENTITY removeButton.label           "Fuortsmite">
+<!ENTITY removeButton.accesskey       "F">
+<!ENTITY removeAccount.label          "Accountynformaasje fuortsmite">
+<!ENTITY removeAccount.accesskey      "A">
+<!ENTITY removeAccount.desc           "Dit smyt allinnich de gegevens fan dit account yn &brandShortName; fuort. Dit hat gjin effekt op it account op de server.">
+<!ENTITY removeData.label             "Berjochtgegevens fuortsmite">
+<!ENTITY removeData.accesskey         "B">
+<!ENTITY removeDataChat.label         "Peteargegevens fuortsmite">
+<!ENTITY removeDataChat.accesskey     "P">
+<!ENTITY removeDataLocalAccount.desc  "Smyt alle berjochten, mappen en mei dit account assosjearre filters fuort fan jo lokale skiif. Dit hat gjin effekt op guon berjochten dy't miskien noch op de server stean. Kies dit net as jo fan doel binne de lokale gegevens te argivearjen of letter opnij te brûken yn &brandShortName;.">
+<!ENTITY removeDataServerAccount.desc "Smyt alle berjochten, mappen en mei dit account assosjearre filters fuort fan jo lokale skiif. Jo berjochten en mappen wurde noch hieltyd bewarre op de server.">
+<!ENTITY removeDataChatAccount.desc   "Smyt alle lochs fan petearen dy't foar dit account bewarre binne op jo lokale skiif fuort.">
+<!ENTITY showData.label               "Gegevenslokaasje toane">
+<!ENTITY showData.accesskey           "G">
+<!ENTITY progressPending              "Selektearre gegevens fuortsmite…">
+<!ENTITY progressSuccess              "Mei sukses fuortsmiten.">
+<!ENTITY progressFailure              "Fuortsmiten mislearre.">

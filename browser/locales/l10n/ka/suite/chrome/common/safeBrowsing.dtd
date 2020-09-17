@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "გამიყვანე აქედან!">
+<!ENTITY safeb.palm.decline.label "ამ გაფრთხილების იგნორირება">
+<!ENTITY safeb.palm.reportPage.label "რატომაა ეს გვერდი შეზღუდული?">
+
+<!ENTITY safeb.blocked.malwarePage.title "გვერდი მიჩნეულია მოიერიშედ!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "ეს ვებგვერდი <span id='malware_sitename'/> ნაპატაკებია, როგორც შემტევი გვერდი და დაიბლოკა თქვენი უსაფრთხოების პარამეტრების მიხედვით.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>მოიერიშე გვერდები ცდილობს დააყენოს პროგრამები, რომლებიც პირად მონაცემებს იპარავს, იყენებს თქვენს კომპიუტერს სხვაზე შეტევებისთვის ან სულაც აზიანებს თქვენს სისტემას.</p><p>ზოგიერთი მოიერიშე გვერდი, წინასწარი განზრახვით ავრცელებს მავნე პროგრამებს, თუმცა ხშირია შემთხვევა, როცა საიტი გატეხილია და მისმა მფლობელებმა, ამის შესახებ არც იციან.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "საიტი, შემჩნეულია არასასურველი პროგრამის გავრცელებაში!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/> შემჩნეულია, არასასურველი პროგრამის გავრცელებაში და შეზღუდულია თქვენი უსაფრთხოების პარამეტრების შესაბამისად.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>მსგავსი საიტები ცდილობს დააყენოს არასასურველი პროგრამა, რომელსაც შეუძლია თაღლითური ან სხვა გაუთვალისწინებელი ხერხებით სისტემისთვის ზიანის მოყენება.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "თაღლითური საიტი!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "<span id='phishing_sitename'/> ცნობილია, როგორც თაღლითური საიტი და შეზღუდულია უსაფრთხოების მიზნით.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>თაღლითური საიტები ისეა მოწყობილი, რომ შეძლოს მოტყუებით გაგაკეთებინოთ რამე სახიფათო მოქმედება, მაგალითად, დაგაყენებინოთ პროგრამა, ან ხელყოს თქვენი პირადი მონაცემები, როგორიცაა პაროლები, სატელეფონო ნომრები ან საკრედიტო ბარათები.</p><p>ნებისმიერი მონაცემის ასეთ საიტზე შეყვანამ, შესაძლოა დაგაზარალოთ და ზიანი მოგაყენოთ.</p>">
+
+<!ENTITY safeb.blocked.harmfulPage.title "ეს საიტი შესაძლოა მავნე კოდს შეიცავდეს">
+<!-- Localization note (safeb.blocked.harmfulPage.shortDesc) - Please don't translate the contents of the <span id="harmful_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; ზღუდავს გვერდს <span id='harmful_sitename'/>, ვინაიდან შესაძლოა სახიფათო პროგრამას აყენებდეს და იპარავდეს ან აზიანებდეს თქვენს პირად მონაცემებს (როგორიცაა ფოტოები, პაროლები, შეტყობინებები და საკრედიტო ბარათების ნომრები).">
+<!ENTITY safeb.blocked.harmfulPage.longDesc "">
+
+<!-- Localization note (reportDeceptiveSite, notADeceptiveSite) - The two button strings will never be shown at the same time, so it's okay for them to have the same access key. -->
+<!ENTITY reportDeceptiveSite.label "მოხსენება თაღლითურ საიტზე…">
+<!ENTITY reportDeceptiveSite.accesskey "მ">
+<!ENTITY notADeceptiveSite.label "ეს თაღლითური საიტი არაა…">
+<!ENTITY notADeceptiveSite.accesskey "თ">

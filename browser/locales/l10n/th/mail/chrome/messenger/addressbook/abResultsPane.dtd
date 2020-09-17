@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "สมุดรายชื่อ">
+<!ENTITY Addrbook.accesskey                    "ส">
+<!ENTITY GeneratedName.label                   "ชื่อ">
+<!ENTITY GeneratedName.accesskey               "ช">
+<!ENTITY PrimaryEmail.label                    "อีเมล">
+<!ENTITY PrimaryEmail.accesskey                "อ">
+<!ENTITY Company.label                         "องค์กร">
+<!ENTITY Company.accesskey                     "ง">
+<!ENTITY _PhoneticName.label                   "ชื่อการออกเสียง">
+<!ENTITY _PhoneticName.accesskey               "ก">
+<!ENTITY NickName.label                        "ชื่อเล่น">
+<!ENTITY NickName.accesskey                    "ล">
+<!ENTITY SecondEmail.label                     "อีเมลเพิ่มเติม">
+<!ENTITY SecondEmail.accesskey                 "ม">
+<!ENTITY Department.label                      "แผนก">
+<!ENTITY Department.accesskey                  "ผ">
+<!ENTITY JobTitle.label                        "ชื่อเรื่อง">
+<!ENTITY JobTitle.accesskey                    "ร">
+<!ENTITY CellularNumber.label                  "มือถือ">
+<!ENTITY CellularNumber.accesskey              "ม">
+<!ENTITY PagerNumber.label                     "วิทยุติดตามตัว">
+<!ENTITY PagerNumber.accesskey                 "ว">
+<!ENTITY FaxNumber.label                       "โทรสาร">
+<!ENTITY FaxNumber.accesskey                   "ท">
+<!ENTITY HomePhone.label                       "โทรศัพท์บ้าน">
+<!ENTITY HomePhone.accesskey                   "ร">
+<!ENTITY WorkPhone.label                       "โทรศัพท์ที่ทำงาน">
+<!ENTITY WorkPhone.accesskey                   "พ">
+<!ENTITY ChatName.label                        "ชื่อแชท">
+<!ENTITY ChatName.accesskey                    "ท">
+<!ENTITY sortAscending.label                   "น้อยไปมาก">
+<!ENTITY sortAscending.accesskey               "น">
+<!ENTITY sortDescending.label                  "มากไปน้อย">
+<!ENTITY sortDescending.accesskey              "ป">

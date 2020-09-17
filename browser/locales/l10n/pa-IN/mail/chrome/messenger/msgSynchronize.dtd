@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "ਸੁਨੇਹੇ ਡਾਊਨਲੋਡ ਅਤੇ ਸੈਕਰੋਨਾਈਜ਼ ਕਰੋ">
+<!ENTITY MsgSelect.label "ਆਫਲਾਇਨ ਵਰਤਨ ਲਈ ਸੈਟਿੰਗ">
+<!ENTITY MsgSyncDesc.label "ਜੇਕਰ ਤੁਸੀਂ ਆਫਲਾਈਨ ਇਸਤੇਮਾਲ ਕਰਨ ਲਈ ਮੇਲ ਫੋਲਡਰ ਜਾਂ ਨਿਊਜ਼ਗਰੁੱਪ ਚੁਣ ਲਏ ਹਨ ਤਾਂ ਤੁਸੀਂ ਇਹਨਾਂ ਹੁਣ ਡਾਊਨਲੋਡ ਅਤੇ/ਜਾਂ ਸੈਕਰੋ ਕਰ ਸਕਦੇ ਹੋ। ਨਹੀਂ ਤਾਂ ਆਫਲਾਈਨ ਇਸਤੇਮਾਲ ਕਰਨ ਲਈ ਮੇਲ ਫੋਲਡਰ ਅਤੇ ਨਿਊਜ਼ਗਰੁੱਪ ਵਿੱਚ ਫੋਲਡਰ ਚੁਣਨ ਲਈ &quot;ਚੁਣੋ&quot; ਬਟਨ ਦਬਾਉ।">
+<!ENTITY MsgSyncDirections.label "ਹੇਠ ਦਿੱਤੇ ਡਾਊਨਲੋਡ ਅਤੇ/ਜਾਂ ਸੈਕਰੋਨਾਈਜ਼ ਕਰੋ:">
+<!ENTITY syncTypeMail.label "ਮੇਲ ਸੁਨੇਹੇ">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "ਨਿਊਜ਼ਗਰੁੱਪ ਸੁਨੇਹੇ">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "ਨਾ-ਭੇਜੇ ਸੁਨੇਹੇ ਭੇਜੋ">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "ਇੱਕ ਵਾਰ ਡਾਊਨਲੋਡ ਅਤੇ/ਜਾਂ ਸੈਕਰੋਨਾਈਜ਼ ਹੋਣ ਉਪਰੰਤ ਆਫਲਾਈਨ ਕੰਮ ਕਰੋ">
+<!ENTITY workOffline.accesskey "W">
+<!ENTITY selectButton.label "ਚੁਣੋ...">
+<!ENTITY selectButton.accesskey "E">
+<!ENTITY MsgSelectDesc.label "ਆਫਲਾਈਨ ਇਸਤੇਮਾਲ ਕਰਨ ਲਈ ਮੇਲ ਫੋਲਡਰ ਤੇ ਨਿਊਜ਼ਗਰੁੱਪ ਦੀ ਚੋਣ ਕਰੋ।">
+<!ENTITY MsgSelectInd.label "ਡਾਊਨਲੋਡ">
+<!ENTITY MsgSelectItems.label "ਫੋਲਡਰ ਅਤੇ ਨਿਊਜ਼ਗਰੁੱਪ">

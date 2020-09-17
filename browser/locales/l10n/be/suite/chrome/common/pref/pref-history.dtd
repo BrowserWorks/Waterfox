@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.history.title "Гісторыя">
+<!ENTITY pref.history.caption "Гісторыя азірання">
+<!ENTITY historyPages.label "Гісторыя – гэта спіс напярэдадні наведаных старонак.">
+<!ENTITY enableHistory.label "Памятаць наведаныя старонкі">
+<!ENTITY enableHistory.accesskey "П">
+<!ENTITY clearHistory.label "Знішчыць гісторыю">
+<!ENTITY clearHistory.accesskey "н">
+<!ENTITY locationBarHistory.caption "Гісторыя паліцы месцазнаходжання">
+<!ENTITY clearLocationBar.label "Знішчыць спіс пляцовак сеціва, які захоўваецца ў меню на адраснай паліцы.">
+<!ENTITY clearLocationBarButton.label "Ачысціць паліцу адрасоў">
+<!ENTITY clearLocationBarButton.accesskey "ч">
+<!ENTITY formfillHistory.caption "Гісторыя формаў і пошукаў">
+<!ENTITY enableFormfill.label "Дазволіць гісторыю формаў і пошукаў">
+<!ENTITY enableFormfill.accesskey "Д">
+<!ENTITY formfillExpire.label "Памятаць гісторыя формаў і пошукаў на працягу">
+<!ENTITY formfillExpire.accesskey "ф">
+<!ENTITY formfillDays.label "дзён">

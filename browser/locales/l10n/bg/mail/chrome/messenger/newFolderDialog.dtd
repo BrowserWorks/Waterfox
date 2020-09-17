@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Нова папка">
+<!ENTITY name.label                 "Име:">
+<!ENTITY name.accesskey             "И">
+<!ENTITY description.label          "Създаване като подпапка на:">
+<!ENTITY description.accesskey      "С">
+<!ENTITY folderRestriction1.label   "Сървърът ограничава папките до два специални вида.">
+<!ENTITY folderRestriction2.label   "Вашата нова папка може да съдържа:">
+<!ENTITY foldersOnly.label          "Само папки">
+<!ENTITY messagesOnly.label         "Само писма">
+<!ENTITY accept.label               "Създаване на папка">
+<!ENTITY accept.accesskey           "з">

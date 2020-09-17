@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "සිහිකැඳවීම් සැකසීම">
+<!ENTITY reminder.add.label                                "එක් කරන්න">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "ඉවත් කරන්න">
+<!ENTITY reminder.remove.accesskey                         "R">
+
+<!ENTITY reminder.reminderDetails.label                    "සිහිකැඳවීම් විස්තර">
+<!ENTITY reminder.action.label                             "සිහිකැඳවීමේ ක්‍රියාවක් තෝරන්න">
+
+<!ENTITY reminder.relation.before.label                    "පෙර" >
+<!ENTITY reminder.relation.after.label                     "පසු" >
+
+<!ENTITY reminder.action.alert.label                       "සංඥාවක් පෙන්වන්න">
+<!ENTITY reminder.action.email.label                       "ඊ-මේලයක් යවන්න">
+
+<!ENTITY alarm.units.minutes                               "විනාඩි" >
+<!ENTITY alarm.units.hours                                 "පැය" >
+<!ENTITY alarm.units.days                                  "දින" >

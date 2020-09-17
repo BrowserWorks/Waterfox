@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Taẓrigt leqqayen…">
+<!ENTITY AdvancedEditButton.accessKey "r">
+<!ENTITY AdvancedEditButton.tooltip "Rnu neɣ snifel imyerren HTML, imyerren n uɣanib, d JavaScript">
+<!ENTITY chooseFileButton.label "Fren afaylu...">
+<!ENTITY chooseFileButton.accessKey "f">
+<!ENTITY chooseFileLinkButton.label "Fren afaylu…">
+<!ENTITY chooseFileLinkButton.accessKey "r">
+<!ENTITY makeUrlRelative.label "Tansa URL d tamassaɣt ɣer wadig n usebter">
+<!ENTITY makeUrlRelative.accessKey "b">
+<!ENTITY makeUrlRelative.tooltip "Snifel gar tansa URL tamassaɣt akked tmegdezt. Yessefk ad sekelseḍ di tazwara asebter akken ad tesnifleḍ ay-agi.">
+
+<!ENTITY LinkURLEditField2.label "Sekcem tansa n usebter web, afaylu adigan, neγ tamdeyt yettusemman neɣ aqeṛṛu si tebdert n usfaylu udhim:">
+<!ENTITY LinkURLEditField2.accessKey "w">

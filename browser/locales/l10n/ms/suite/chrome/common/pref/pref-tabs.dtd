@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Pelayaran Bertab">
+
+<!ENTITY tabDisplay.label "Paparan Tab">
+<!ENTITY autoHide.label "Sorok bar tab apabila hanya satu tab sahaja yang terbuka">
+<!ENTITY autoHide.accesskey2 "k">
+<!ENTITY background.label "Tukar ke tab baru yang dibuka daripada pautan">
+<!ENTITY background.accesskey "T">
+<!ENTITY warnOnClose.label "Beri amaran apabila menutup tetingkap dengan berbilang tab">
+<!ENTITY warnOnClose.accesskey "B">
+<!ENTITY relatedAfterCurrent.label "Buka tab berkaitan selepas tab semasa">
+<!ENTITY relatedAfterCurrent.accesskey "b">
+
+<!ENTITY loadGroup.label "Apabila membuka kumpulan tandabuku">
+<!ENTITY loadGroupAppend.label "Tambah tab">
+<!ENTITY loadGroupAppend.accesskey "T">
+<!ENTITY loadGroupReplace.label "Gantikan tab sedia ada">
+<!ENTITY loadGroupReplace.accesskey "G">
+
+<!ENTITY openTabs.label "Buka tab, bukan tetingkap untuk">
+
+<!ENTITY openManagers.label "Buka dalam tab baru, bukan tetingkap tunggal">
+<!ENTITY openDataManager.label "Pengurus Data">
+<!ENTITY openDataManager.accesskey "D">
+<!ENTITY openAddOnsManager.label "Pengurus Add-ons">
+<!ENTITY openAddOnsManager.accesskey "n">

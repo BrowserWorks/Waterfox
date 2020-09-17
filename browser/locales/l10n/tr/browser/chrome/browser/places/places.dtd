@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Arşiv">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Düzenle">
+<!ENTITY organize.accesskey    "D">
+<!ENTITY organize.tooltip      "Yer imlerinizi düzenleyin">
+
+<!ENTITY file.close.label               "Kapat">
+<!ENTITY file.close.accesskey           "K">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Görünümler">
+<!ENTITY views.accesskey                "G">
+<!ENTITY views.tooltip                  "Görünümünüzü değiştirin">
+<!ENTITY view.columns.label             "Sütunları göster">
+<!ENTITY view.columns.accesskey         "ü">
+<!ENTITY view.sort.label                "Sırala">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Sıralanmamış">
+<!ENTITY view.unsorted.accesskey        "r">
+<!ENTITY view.sortAscending.label       "A’dan Z’ye sırala">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z’den A’ya sırala">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Yer imlerini HTML’den içe aktar…">
+<!ENTITY importBookmarksFromHTML.accesskey "H">
+<!ENTITY exportBookmarksToHTML.label       "Yer imlerini HTML olarak dışa aktar…">
+<!ENTITY exportBookmarksToHTML.accesskey   "M">
+<!ENTITY importOtherBrowser.label          "Başka bir tarayıcıdaki verileri içe aktar…">
+<!ENTITY importOtherBrowser.accesskey      "B">
+
+<!ENTITY cmd.backup.label               "Yedekle…">
+<!ENTITY cmd.backup.accesskey           "Y">
+<!ENTITY cmd.restore2.label             "Geri yükle">
+<!ENTITY cmd.restore2.accesskey         "G">
+<!ENTITY cmd.restoreFromFile.label      "Dosya seç…">
+<!ENTITY cmd.restoreFromFile.accesskey  "D">
+
+<!ENTITY col.name.label          "Adı">
+<!ENTITY col.tags.label          "Etiketler">
+<!ENTITY col.url.label           "Konum">
+<!ENTITY col.mostrecentvisit.label "Son ziyaret">
+<!ENTITY col.visitcount.label    "Ziyaret sayısı">
+<!ENTITY col.dateadded.label     "Ekleme tarihi">
+<!ENTITY col.lastmodified.label  "Son değişiklik">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "İçe aktarma ve yedekleme">
+<!ENTITY maintenance.accesskey  "m">
+<!ENTITY maintenance.tooltip    "Yer imlerinizi içe aktarın ve yedekleyin">
+
+<!ENTITY backButton.tooltip  "Geriye gider">
+
+<!ENTITY forwardButton.tooltip  "İleriye gider">
+
+<!ENTITY detailsPane.selectAnItemText.description "Özelliklerini görmek ve değiştirmek için bir öğe seçin">
+

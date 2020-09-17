@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Rregullime Shërbyesi Dërgues (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Kur administroni identitetet tuaja, mund të përdorni një shërbyes nga kjo listë duke e përzgjedhur si Shërbyes Dërgues (SMTP), ose mund të përdorni shërbyesin parazgjedhje prej kësaj liste, duke përzgjedhur &quot;Përdor Shërbyesin Parazgjedhje&quot;.">
+
+<!ENTITY smtpListAdd.label  "Shtoni…">
+<!ENTITY smtpListAdd.accesskey  "S">
+<!ENTITY smtpListEdit.label "Përpunoni…">
+<!ENTITY smtpListEdit.accesskey "P">
+<!ENTITY smtpListDelete.label "Hiqe">
+<!ENTITY smtpListDelete.accesskey "H">
+<!ENTITY smtpListSetDefault.label "Vëre si Parazgjedhje">
+<!ENTITY smtpListSetDefault.accesskey "V">
+
+<!ENTITY serverDetails.label "Hollësi shërbyesi të përzgjedhur:">
+<!ENTITY serverDescription.label "Përshkrim: ">
+<!ENTITY serverName.label "Emër Shërbyesi: ">
+<!ENTITY serverPort.label "Portë: ">
+<!ENTITY userName.label   "Emër Përdoruesi: ">
+<!ENTITY connectionSecurity.label "Siguri Lidhjeje: ">
+<!ENTITY authMethod.label   "Metodë Mirëfilltësimi: ">

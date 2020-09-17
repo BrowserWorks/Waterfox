@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Veti Fushe Formulari">
+<!ENTITY windowTitleImage.label "Veti Figure Formulari">
+
+<!ENTITY InputType.label "Lloj Fushe">
+<!ENTITY InputType.accesskey "L">
+<!ENTITY text.value "Tekst">
+<!ENTITY password.value "Fjalëkalim">
+<!ENTITY checkbox.value "Kutizë">
+<!ENTITY radio.value "Buton">
+<!ENTITY submit.value "Buton Parashtrimi">
+<!ENTITY reset.value "Buton Rimarrjeje">
+<!ENTITY file.value "Kartelë">
+<!ENTITY hidden.value "E fshehur">
+<!ENTITY image.value "Figurë">
+<!ENTITY button.value "Buton">
+
+<!ENTITY InputSettings.label "Rregullime Fushe">
+<!ENTITY InputName.label "Emër Fushe:">
+<!ENTITY InputName.accesskey "F">
+<!ENTITY GroupName.label "Emër Grupi:">
+<!ENTITY GroupName.accesskey "G">
+<!ENTITY InputValue.label "Vlerë Fushe:">
+<!ENTITY InputValue.accesskey "u">
+<!ENTITY InitialValue.label "Vlerë Fillestare:">
+<!ENTITY InitialValue.accesskey "i">
+<!ENTITY InputChecked.label "Me Shenjë Paraprakisht">
+<!ENTITY InputChecked.accesskey "M">
+<!ENTITY InputSelected.label "Përzgjedhur Paraprakisht">
+<!ENTITY InputSelected.accesskey "P">
+<!ENTITY InputReadOnly.label "Vetëm Lexim">
+<!ENTITY InputReadOnly.accesskey "L">
+<!ENTITY InputDisabled.label "E çaktivizuar">
+<!ENTITY InputDisabled.accesskey "Ç">
+<!ENTITY tabIndex.label "Vlerë Tabulacioni:">
+<!ENTITY tabIndex.accesskey "T">
+<!ENTITY TextSize.label "Madhësi Fushe:">
+<!ENTITY TextSize.accesskey "M">
+<!ENTITY TextLength.label "Gjatësi më e Madhe:">
+<!ENTITY TextLength.accesskey "G">
+<!ENTITY AccessKey.label "Tast Përdorimi:">
+<!ENTITY AccessKey.accesskey "Y">
+<!ENTITY Accept.label "Lloje Pranimi:">
+<!ENTITY Accept.accesskey "P">
+
+<!ENTITY ImageProperties.label "Veti Figure…">
+<!ENTITY ImageProperties.accesskey "V">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "הוספת ביטוי מתמטי">
+
+<!ENTITY sourceEditField.label "הכנסת קוד מקור של LaTeX:">
+
+<!ENTITY options.label "אפשרויות">
+<!ENTITY optionDisplay.label "מצב תצוגה">
+<!ENTITY optionDisplay.accesskey "ת">
+<!ENTITY optionLTR.label "כיוון משמאל לימין">
+<!ENTITY optionLTR.accesskey "ש">
+<!ENTITY optionRTL.label "כיוון מימין לשמאל">
+<!ENTITY optionRTL.accesskey "י">
+
+<!ENTITY insertButton.label "Insert">
+<!ENTITY insertButton.accesskey "I">

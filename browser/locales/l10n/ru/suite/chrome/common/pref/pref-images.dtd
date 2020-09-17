@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Изображения">
+
+<!ENTITY imageBlocking.label            "Политика загрузки изображений">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "Укажите, что &brandShortName; следует делать с изображениями.">
+
+<!ENTITY loadAllImagesRadio.label       "Загружать все изображения">
+<!ENTITY loadAllImagesRadio.accesskey   "г">
+<!ENTITY loadOrgImagesRadio.label       "Загружать только собственные изображения сервера">
+<!ENTITY loadOrgImagesRadio.accesskey   "а">
+<!ENTITY loadNoImagesRadio.label        "Не загружать изображения">
+<!ENTITY loadNoImagesRadio.accesskey    "е">
+<!ENTITY viewPermissions.label          "Управление разрешениями">
+<!ENTITY viewPermissions.accesskey      "п">
+<!ENTITY animLoopingTitle.label         "Проигрывать анимацию">
+<!ENTITY animLoopAsSpecified.label      "Проигрывать анимацию столько раз, сколько указано в изображении">
+<!ENTITY animLoopAsSpecified.accesskey  "и">
+<!ENTITY animLoopOnce.label             "Один раз">
+<!ENTITY animLoopOnce.accesskey         "д">
+<!ENTITY animLoopNever.label            "Никогда">
+<!ENTITY animLoopNever.accesskey        "к">

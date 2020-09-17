@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "HTML મેલ પ્રશ્ન">
+
+<!ENTITY recipient.label "અમુક મેળવનારાઓ HTML મેલ મેળવવા માટે સમર્થ નથી એ રીતે યાદી થયેલા છે.">
+
+<!ENTITY question.label "શું તમે સંદેશાને સાદા લખાણમાં ફેરવવા માગો છો અથવા તેને કોઈપણ રીતે HTML માં મોકલવા માંગો છો?">
+
+<!ENTITY plainTextAndHtml.label "સાદા લખાણ અને HTML માં મોકલો">
+<!ENTITY plainTextOnly.label "માત્ર સાદા લખાણમાં જ મોકલો">
+<!ENTITY htmlOnly.label "માત્ર HTML માં જ મોકલો">
+
+<!ENTITY send.label "મોકલો">

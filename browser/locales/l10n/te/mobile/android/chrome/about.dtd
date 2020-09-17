@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName; గురించి">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; ప్రయోగాత్మకమైనది మరియు స్థిరంగా వుండకపోవచ్చు.">
+<!ENTITY aboutPage.checkForUpdates.link         "నవీకరణల కొరకు పరిశీలించు »">
+<!ENTITY aboutPage.checkForUpdates.checking     "నవీకరణల కొరకు చూస్తున్నాం…">
+<!ENTITY aboutPage.checkForUpdates.none         "నవీకరణలేమీ అందుబాటులోలేవు">
+<!ENTITY aboutPage.checkForUpdates.available2   "నవీకరణను దింపు">
+<!ENTITY aboutPage.checkForUpdates.downloading  "నవీకరణను దించుతోంది…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "నవీకరణను స్థాపించు">
+<!ENTITY aboutPage.faq.label                    "సందేహాలు">
+<!ENTITY aboutPage.support.label                "తోడ్పాటు">
+<!ENTITY aboutPage.privacyPolicy.label          "గోప్యతా విదానం">
+<!ENTITY aboutPage.rights.label                 "మీ హక్కులు తెలుసుకోండి">
+<!ENTITY aboutPage.relNotes.label               "విడుదల విశేషాలు">
+<!ENTITY aboutPage.credits.label                "పరపతులు">
+<!ENTITY aboutPage.license.label                "లైసెన్సింగ్ సమాచారం">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox మరియు Firefox చిహ్నాలు Mozilla సంస్థ యొక్క వ్యాపారగుర్తులు.">

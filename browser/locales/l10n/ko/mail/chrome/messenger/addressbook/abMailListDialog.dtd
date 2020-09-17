@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "새 메일링 리스트">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "추가:">
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "목록 이름:">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "목록 별명:">
+<!ENTITY ListNickName.accesskey         "N">
+<!ENTITY ListDescription.label          "설명:">
+<!ENTITY ListDescription.accesskey      "e">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "아래의 목록을 입력하거나 끌어서 가져오기:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "위로 이동">
+<!ENTITY DownButton.label               "아래로 이동">
+

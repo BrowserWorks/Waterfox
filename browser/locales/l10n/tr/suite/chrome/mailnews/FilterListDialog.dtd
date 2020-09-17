@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Posta süzgeçleri">
+<!ENTITY nameColumn.label "Süzgeç ismi">
+<!ENTITY activeColumn.label "Etkin">
+<!ENTITY newButton.label "Yeni…">
+<!ENTITY newButton.accesskey "Y">
+<!ENTITY editButton.label "Düzenle…">
+<!ENTITY editButton.accesskey "e">
+<!ENTITY deleteButton.label "Sil">
+<!ENTITY deleteButton.accesskey "S">
+<!ENTITY reorderUpButton.label "Yukarıya">
+<!ENTITY reorderUpButton.accesskey "Y">
+<!ENTITY reorderDownButton.label "Aşağıya">
+<!ENTITY reorderDownButton.accesskey "A">
+<!ENTITY filterHeader.label "Süzgeçler aşağıdaki sıralamaya göre otomatik olarak çalıştırılır.">
+<!ENTITY filtersForPrefix.label "Süzgeçlenecek hesap:">
+<!ENTITY filtersForPrefix.accesskey "S">
+<!ENTITY viewLogButton.label "Süzgeç günlüğü">
+<!ENTITY viewLogButton.accesskey "l">
+<!ENTITY runFilters.label "Şimdi çalıştır">
+<!ENTITY runFilters.accesskey "a">
+<!ENTITY stopFilters.label "Dur">
+<!ENTITY stopFilters.accesskey "D">
+<!ENTITY folderPickerPrefix.label "Seçili süzgeçleri bu dizinde uygula:">
+<!ENTITY folderPickerPrefix.accesskey "i">
+<!ENTITY choosethis.label "bu dizinleri seç">
+<!ENTITY choosethisnewsserver.label "bu haber sunucusunu seç">

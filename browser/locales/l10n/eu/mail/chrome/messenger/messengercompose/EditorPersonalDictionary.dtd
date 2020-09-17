@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Hiztegi pertsonala">
+
+<!ENTITY wordEditField.label "Hitz berria:">
+<!ENTITY wordEditField.accessKey "H">
+<!ENTITY AddButton.label "Gehitu">
+<!ENTITY AddButton.accessKey "G">
+<!ENTITY DictionaryList.label "Hiztegiko hitzak:">
+<!ENTITY DictionaryList.accessKey "H">
+<!ENTITY RemoveButton.label "Ezabatu">
+<!ENTITY RemoveButton.accessKey "E">
+
+<!ENTITY CloseButton.label "Itxi">
+<!ENTITY CloseButton.accessKey "I">

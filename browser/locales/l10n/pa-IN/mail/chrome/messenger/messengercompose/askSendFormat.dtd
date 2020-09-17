@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "HTML ਮੇਲ ਸਵਾਲ">
+
+<!ENTITY recipient.label "ਕੁਝ ਪ੍ਰਾਪਤ ਕਰਤਾ ਨੂੰ HTML ਮੇਲ ਪ੍ਰਾਪਤ ਨਾ ਕਰਨ ਦੀ ਸੂਚੀ ਵਿੱਚ ਰੱਖਿਆ ਗਿਆ ਹੈ।">
+
+<!ENTITY question.label "ਕੀ ਤੁਸੀਂ ਸੁਨੇਹੇ ਨੂੰ ਪਲੇਨ ਟੈਕਸਟ ਵਿੱਚ ਬਦਲਣਾ ਚਾਹੁੰਦੇ ਹੋ ਜਾਂ ਇਸ ਨੂੰ HTML ਦੇ ਰੂਪ ਵਿੱਚ ਭੇਜਣਾ ਚਾਹੁੰਦੇ ਹੋ?">
+
+<!ENTITY plainTextAndHtml.label "ਪਲੇਨ ਟੈਕਸਟ ਅਤੇ HTML ਵਿੱਚ ਭੇਜੋ">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "ਕੇਵਲ ਪਲੇਨ ਟੈਕਸਟ ਹੀ ਭੇਜੋ">
+<!ENTITY plainTextOnly.accesskey "P">
+<!ENTITY htmlOnly.label "ਕੇਵਲ HTML ਵਿੱਚ ਹੀ ਭੇਜੋ">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "ਭੇਜੋ">
+<!ENTITY send.accesskey "S">

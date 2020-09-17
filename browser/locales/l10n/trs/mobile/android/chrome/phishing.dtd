@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "¡Giri hiuj nan ñùnj!">
+<!ENTITY safeb.palm.decline.label "Si yakaj guendât nuguan' nan">
+<!ENTITY safeb.palm.reportPage.label "¿Nuhuin saj narràn riña sitiô nanj?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Sa ruguñu'unj sò' na huin <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Garrán nan riña 'ngo sitiô yi'ìi">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Sitiô gu'naj <span id='malware_sitename'/> huin 'ngo yi'ìi ni narán aga' na ma da' dugumij sò'.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Nej sitio nayi'nïnj ma'an na ni a'nín nej ma programa ga'ue gi'iaj tu nej nuguan' a'min rayi'ît, asi araj sun ma si gaga't da' gi'iaj yi'ì ma si gaga' a'ngô nej duguî'.</p><p>Hua da'aj nej sitio dan ni 'iaj yi'ì ma si gaga't ni a'ngô da'aj ma nayi'nïnj ma'an</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "¡Sitio diga'ñun'unj!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Sitiô gu'naj <span id='phishing_sitename'/> huin 'ngo yi'ìi ni narán aga' na ma da' dugumij sò'.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p> Nej sitiô kij hua ni guri nej si ma da' ga'ui' yi'ij, ga'ue ga'nin sa kij hua riña si agat ni nataj si yuguit, da'nga' huii, da'nga a'mi nej sugui' so'.</p><p>Si gachrun' ñan pagina nan ni ga'ué gi'iaj tuj daran nuguan' nata' ahui' si guint.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "¡Nikaj sitiô na sa yi'ìi a!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Sitiô nu riña <span id='unwanted_sitename'/> ni hua si nuguàn'anj si nika sa yi'ìi ni narán aga' na ma da' ga nì gache nut. ">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Ga'ì yi'nï' nej sitiô ata yi'ìi ruhuâ ga'nïnj sa ga'uì' yi'ì si aga't ni da ga'ue girè' si gaga't gi'iaj nej yi'ì dan.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Ga’ue si nikāj sitiô nan yi’ìi">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; narán riña pajinâ nan dadin’ huin ruhuaj na’nïn riña ‘ngō app yi’ìi ga’ue gi’iaj tū nuguan’ màn ‘iát (Dàj rû’, ñadu’uât, da’nga’ huìi, nuguan’ a’nïnt nī tarjeta si san’ānjt).">

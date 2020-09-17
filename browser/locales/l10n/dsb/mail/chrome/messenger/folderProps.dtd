@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Kakosći">
+
+<!ENTITY generalInfo.label                       "Powšykne informacije">
+<!ENTITY folderCharsetFallback2.label            "Narownanje za tekstowe koděrowanje:">
+<!ENTITY folderCharsetFallback2.accesskey        "t">
+<!ENTITY folderCharsetEnforce2.label             "Koděrowanje na wšykne powěsći w zarědniku nałožyś (wósobinske nastajenja testowego koděrowanja a awtomatiske zwěsćenje budu se ignorěrowaś)">
+<!ENTITY folderCharsetEnforce2.accesskey         "K">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Indeks zespóminańskeje dataje wótnowiś">
+<!ENTITY folderRebuildSummaryFile2.label         "Zarědnik pórěźiś">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "Z">
+<!ENTITY folderRebuildSummaryFile.explanation    "Wótergi indeksowa dataja zarědnika (.msf) se wobškóźujo a powěsći by mógli felowaś abo wulašowane powěsći se pokazuju; pórěźowanje zarědnika snaź wótpórajo toś te problemy.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Powěsći w toś tom zarědniku do globalnych pytańskich wuslědkow zapśimjeś">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "P">
+
+<!ENTITY retention.label "Pšawidła zachowanja">
+<!ENTITY retentionUseAccount.label  "Móje kontowe nastajenja wužywaś">
+<!ENTITY retentionUseAccount.accesskey "M">
+<!ENTITY daysOld.label "dnjow stare">
+<!ENTITY message.label "powěsćow">
+<!ENTITY retentionCleanup.label "Aby rum na plaśe wótnowiło, daju se stare powěsći na pśecej lašowaś.">
+<!ENTITY retentionCleanupImap.label "Aby rum na plaśe wótnowiło, daju se stare powěsći na pśecej lašowaś, ako lokalne kopije tak teke originalne na dalokem serwerje.">
+<!ENTITY retentionCleanupPop.label "Aby rum na plaśe wótnowiło, daju se stare powěsći na pśecej lašowaś, inkluziwnje originale na dalokem serwerje.">
+<!ENTITY retentionDeleteMsg.label "Powěsći lašowaś, kótarež su wěcej ako">
+<!ENTITY retentionDeleteMsg.accesskey "l">
+<!ENTITY retentionKeepAll.label "Žedne powěsći njelašowaś">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "Wšykne lašowaś, mimo nejnowše">
+<!ENTITY retentionKeepRecent.accesskey "m">
+<!ENTITY retentionApplyToFlagged.label "Powěsći z gwězdku pśecej wobchowaś">
+<!ENTITY retentionApplyToFlagged.accesskey "z">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronizacija">
+<!ENTITY folderCheckForNewMessages2.label         "Gaž dostanjośo nowe powěsći, pśecej slědujucy zarědnik pśeglědaś">
+<!ENTITY folderCheckForNewMessages2.accesskey     "G">
+
+<!ENTITY offlineFolder.check.label               "Toś ten zarědnik za wužywanje offline wubraś">
+<!ENTITY offlineFolder.check.accesskey           "T">
+<!ENTITY offlineFolder.button.label              "Něnto ześěgnuś">
+<!ENTITY offlineFolder.button.accesskey          "N">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Toś tu diskusijnu kupku za wužywanje offline wubraś">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "d">
+<!ENTITY offlineNewsgroup.button.label           "Něnto ześěgnuś">
+<!ENTITY offlineNewsgroup.button.accesskey       "o">
+
+<!ENTITY folderProps.name.label                  "Mě:">
+<!ENTITY folderProps.name.accesskey              "M">
+<!ENTITY folderProps.color.label                 "Symbolowa barwa:">
+<!ENTITY folderProps.color.accesskey             "S">
+<!ENTITY folderProps.reset.tooltip               "Standardnu barwu wótnowiś">
+<!ENTITY folderProps.location.label              "Městno:">
+<!ENTITY folderProps.location.accesskey          "s">
+
+<!ENTITY folderSharingTab.label                  "Źělenje">
+<!ENTITY privileges.button.label                 "Priwilegije…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Maśo slědujuce pšawa:">
+<!ENTITY folderOtherUsers.label                  "Drugi z pśistupom k toś tomu zarědnikoju:">
+<!ENTITY folderType.label                        "Typ zarědnika:">
+
+<!ENTITY folderQuotaTab.label                    "Kwoty">
+<!ENTITY folderQuotaUsage.label                  "Wužyśe:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Licba powěsćow:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "njeznata">
+<!ENTITY sizeOnDisk.label                        "Wjelikosć na plaśe:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "njeznata">

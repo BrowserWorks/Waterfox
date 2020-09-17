@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "ලිපි පෙරනයන්">
+<!ENTITY nameColumn.label "පෙරහනේ නම">
+<!ENTITY activeColumn.label "බලැති (Enabled)">
+<!ENTITY newButton.label "නව...">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "සැකසුම්...">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "මකන්න">
+<!ENTITY deleteButton.accesskey "t">
+<!ENTITY reorderTopButton "ඉහළටම යවන්න">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "පෙරහන නැවත සකසන්න එවිට එය සියල්ලටම පෙර ක්‍රියාත්මක වනු ඇත">
+<!ENTITY reorderUpButton.label "ඉහළට යවන්න">
+<!ENTITY reorderUpButton.accesskey "U">
+<!ENTITY reorderDownButton.label "පහලට යවන්න">
+<!ENTITY reorderDownButton.accesskey "D">
+<!ENTITY reorderBottomButton "පහලටම යවන්න">
+<!ENTITY reorderBottomButton.accessKey "B">
+<!ENTITY reorderBottomButton.toolTip "පෙරහන නැවත සකසන්න එවිට එය සියල්ලටම පසු ක්‍රියාත්මක වනු ඇත">
+<!ENTITY filterHeader.label "පහත අනුපිළවෙළට බලැති (Enabled) පෙරහන් ස්වයංක්‍රීයව යොදවනු.">
+<!ENTITY filtersForPrefix.label "(සඳහා) පෙරහන්:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "පෙරහන් ලොග් සටහන">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "දැන් යොදවන්න">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "නවතන්න">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "තෝරාගත් පෙරහන් මේ මත යොදවන්න:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "උදව්">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "නම අනුව පෙරහන් සොයන්න…">

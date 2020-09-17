@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Cuntais Firefox">
+<!ENTITY aboutAccounts.connected.description "Tá tú ceangailte mar">
+<!ENTITY aboutAccounts.syncPreferences.label "Tapáil anseo chun na socruithe Sync a sheiceáil">
+
+<!ENTITY aboutAccounts.noConnection.title "Gan ceangal Idirlín">
+<!ENTITY aboutAccounts.retry.label "Bain triail eile as">
+
+<!ENTITY aboutAccounts.restrictedError.title "Teoranta">
+<!ENTITY aboutAccounts.restrictedError.description "Ní féidir leat Cuntais Fhirefox a bhainistiú ón bpróifíl seo.">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.history.title "Geçmiş">
+
+<!ENTITY pref.history.caption "Tarayıcı geçmişi">
+<!ENTITY historyPages.label "Geçmiş, daha önce ziyaret edilen sayfaların listesidir.">
+<!ENTITY enableHistory.label "Remember visited pages">
+<!ENTITY enableHistory.accesskey "R">
+<!ENTITY clearHistory.label "Geçmişi sil">
+<!ENTITY clearHistory.accesskey "e">
+
+<!ENTITY locationBarHistory.caption "Konum çubuğu geçmişi">
+<!ENTITY clearLocationBar.label "Konum çubuğundaki kaydedilen site listesini sil.">
+<!ENTITY clearLocationBarButton.label "Konum çubuğunu temizle">
+<!ENTITY clearLocationBarButton.accesskey "b">
+<!ENTITY formfillHistory.caption "Form ve arama geçmişi">
+<!ENTITY enableFormfill.label "Form ve arama geçmişini etkinleştir">
+<!ENTITY enableFormfill.accesskey "t">
+<!ENTITY formfillExpire.label "En fazla">
+<!ENTITY formfillExpire.accesskey "n">
+<!ENTITY formfillDays.label "days">

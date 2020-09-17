@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Параметри нової сторінки">
+
+<!ENTITY  authorName.label          "Автор:">
+<!ENTITY  authorName.accesskey      "А">
+<!ENTITY  pageColorHeader           "Зовнішність сторінки за замовчанням">
+
+<!ENTITY defaultColors.label        "Стандартні для читача кольори (Не встановлювати кольори в сторінці)">
+<!ENTITY defaultColors.accesskey    "С">
+<!ENTITY customColors.label         "Власні кольори:">
+<!ENTITY customColors.accesskey     "В">
+
+<!ENTITY normalText.label           "Нормальний текст">
+<!ENTITY normalText.accesskey       "Н">
+<!ENTITY linkText.label             "Посилання">
+<!ENTITY linkText.accesskey         "П">
+<!ENTITY activeLinkText.label       "Активне посилання">
+<!ENTITY activeLinkText.accesskey   "А">
+<!ENTITY visitedLinkText.label      "Відвідане посилання">
+<!ENTITY visitedLinkText.accesskey  "В">
+<!ENTITY background.label           "Тло:">
+<!ENTITY background.accesskey       "Т">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Зображення на тлі:">
+<!ENTITY backgroundImage.accesskey  "З">
+<!ENTITY chooseFile.label           "Оберіть файл…">
+<!ENTITY chooseFile.accesskey       "О">
+

@@ -1,0 +1,8 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Seleicionar editar cambeos">
+<!ENTITY conflictWarning.label "Esta páxina modificóse por otru programa, pero tamién tien cambeos ensin guardar en Composer.">
+<!ENTITY conflictResolve.label "Seleicionar qué versión caltener:">
+<!ENTITY keepCurrentPageButton.label "Caltener los cambeos actuales de la páxina">
+<!ENTITY useOtherPageButton.label "Sustituyir la páxina actual con otros cambeos">

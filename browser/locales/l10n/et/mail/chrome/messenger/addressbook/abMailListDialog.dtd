@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Uus meililist">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Aadressiraamat:">
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "Listi nimi:">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "Listi hüüdnimi:">
+<!ENTITY ListNickName.accesskey         "H">
+<!ENTITY ListDescription.label          "Kirjeldus:">
+<!ENTITY ListDescription.accesskey      "k">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Meililisti lisatavad e-posti aadressid:">
+<!ENTITY AddressTitle.accesskey         "M">
+<!ENTITY UpButton.label                 "Liiguta üles">
+<!ENTITY DownButton.label               "Liiguta alla">
+

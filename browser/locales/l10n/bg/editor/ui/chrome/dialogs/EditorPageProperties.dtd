@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Свойства на страница">
+<!ENTITY location.label "Местоположение:">
+<!ENTITY lastModified.label "Последна промяна:">
+<!ENTITY titleInput.label "Заглавие:">
+<!ENTITY titleInput.accessKey "З">
+<!ENTITY authorInput.label "Автор:">
+<!ENTITY authorInput.accessKey "А">
+<!ENTITY descriptionInput.label "Описание:">
+<!ENTITY descriptionInput.accessKey "О">
+<!ENTITY locationNewPage.label "[Нова страница, незапазена]">
+<!ENTITY EditHEADSource1.label "Напреднали потребители:">
+<!ENTITY EditHEADSource2.label "За да редактирате друго съдържание от областта &lt;head&gt;, използвайте &quot;Изходен HTML код&quot; от меню Изглед или лента с инструменти за режим редактиране.">

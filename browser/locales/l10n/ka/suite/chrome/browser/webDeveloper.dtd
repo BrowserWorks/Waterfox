@@ -1,0 +1,72 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY validatePage.label            "ამ გვერდის შემოწმება">
+<!ENTITY validatePage.accesskey        "V">
+<!ENTITY allowRemoteDebugging.label     "გარედან გამართვის დაშვება">
+<!ENTITY allowRemoteDebugging.accesskey "გ">
+
+<!ENTITY devToolsCmd.keycode             "VK_F12">
+<!ENTITY devToolsCmd.keytext             "F12">
+
+<!ENTITY devtoolsConnect.label           "დაკავშირება…">
+<!ENTITY devtoolsConnect.accesskey       "დ">
+
+<!ENTITY browserConsoleCmd.label         "ბრაუზერის კონსოლი">
+<!ENTITY browserConsoleCmd.commandkey    "Ζ">
+<!ENTITY browserConsoleCmd.accesskey     "B">
+
+<!ENTITY responsiveDesignTool.label      "თავსებადი იერსახის ხედი">
+<!ENTITY responsiveDesignTool.accesskey  "თ">
+
+<!ENTITY eyedropper.label                "საწვეთური">
+<!ENTITY eyedropper.accesskey            "წ">
+
+<!-- LOCALIZATION NOTE (scratchpad.label): This menu item label appears
+  -  in the Tools menu. See bug 653093.
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+<!ENTITY scratchpad.label                "სამუშაო დაფა">
+<!ENTITY scratchpad.accesskey            "ს">
+<!ENTITY scratchpad.keycode              "VK_F4">
+<!ENTITY scratchpad.keytext              "F4">
+
+<!-- LOCALIZATION NOTE (browserToolboxMenu.label): This is the label for the
+  -  application menu item that opens the browser toolbox UI in the Tools menu. -->
+<!ENTITY browserToolboxMenu.label        "ბრაუზერის ხელსაწყოები">
+<!ENTITY browserToolboxMenu.accesskey    "ხ">
+<!ENTITY browserToolboxCmd.commandkey    "I">
+
+<!-- LOCALIZATION NOTE (browserContentToolboxMenu.label): This is the label for the
+  -  application menu item that opens the browser content toolbox UI in the Tools menu.
+  -  This toolbox allows to debug the chrome of the content process in multiprocess builds.  -->
+<!ENTITY browserContentToolboxMenu.label     "ბრაუზერის შიგთავსის ხელსაწყოები">
+<!ENTITY browserContentToolboxMenu.accesskey "შ">
+
+<!ENTITY devToolbarCloseButton.tooltiptext   "შემმუშავებლის ხელსაწყოთა ზოლის დახურვა">
+<!ENTITY devToolbarMenu.label                "შემმუშავებლის ხელსაწყოთა ზოლი">
+<!ENTITY devToolbarMenu.accesskey            "შ">
+
+<!ENTITY webide.label                        "WebIDE">
+<!ENTITY webide.accesskey                    "W">
+<!ENTITY webide.keycode                      "VK_F8">
+<!ENTITY webide.keytext                      "F8">
+
+<!ENTITY devToolbar.keycode                  "VK_F2">
+<!ENTITY devToolbar.keytext                  "F2">
+
+<!ENTITY devToolboxMenuItem.label            "ხელსაწყოების გადართვა">
+<!ENTITY devToolboxMenuItem.accesskey        "გ">
+<!ENTITY devToolboxMenuItem.keytext          "I">
+
+<!ENTITY devToolbarToolsButton.tooltip       "შემმუშავებლის ხელსაწყოების გადართვა">
+
+<!ENTITY getMoreDevtoolsCmd.label            "სხვა ხელსაწყოები">
+<!ENTITY getMoreDevtoolsCmd.accesskey        "ს">

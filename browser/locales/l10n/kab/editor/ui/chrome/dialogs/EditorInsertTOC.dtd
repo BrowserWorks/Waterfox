@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Tafelwit n igburen">
+<!ENTITY buildToc.label      "Sali-d agbur si:">
+<!ENTITY tag.label           "Tabzimt:">
+<!ENTITY class.label         "Taneɣrit:">
+<!ENTITY header1.label       "Aswir 1">
+<!ENTITY header2.label       "Aswir 2">
+<!ENTITY header3.label       "Aswir 3">
+<!ENTITY header4.label       "Aswir 4">
+<!ENTITY header5.label       "Aswir 5">
+<!ENTITY header6.label       "Aswir 6">
+<!ENTITY makeReadOnly.label  "Err agbur n tfelwit i tɣuṛi kan">
+<!ENTITY orderedList.label   "Uṭṭun n inekcam di tfelwit n igburen">

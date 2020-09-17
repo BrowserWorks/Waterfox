@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
+
+<!ENTITY pref.appearance.title "Erscheinungsbild">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY onStartLegend.label                    "Öffne beim Start von &brandShortName;:">
+<!ENTITY navCheck.label                         "Browser">
+<!ENTITY navCheck.accesskey                     "B">
+<!ENTITY showToolsLegend.label                  "Symbolleisten anzeigen als">
+<!ENTITY picsNtextRadio.label                   "Bilder und Text">
+<!ENTITY picsNtextRadio.accesskey               "b">
+<!ENTITY picsOnlyRadio.label                    "Nur Bilder">
+<!ENTITY picsOnlyRadio.accesskey                "n">
+<!ENTITY textonlyRadio.label                    "Nur Text">
+<!ENTITY textonlyRadio.accesskey                "x">
+<!ENTITY showHideTooltips.label                 "Kurztipps anzeigen">
+<!ENTITY showHideTooltips.accesskey             "t">
+
+<!ENTITY pref.locales.title                     "Sprache der Benutzeroberfläche">
+<!ENTITY selectLocale.label                     "Wählen Sie die Sprache, in der Text in Dialogboxen, Menüs, Symbolleisten und Schaltflächenbeschriftungen erscheint:">
+
+<!--LOCALIZATION NOTE (dateTimeFormatting.label): labels/accesskeys for
+     radiobuttons are set dynamically from prefutilities.properties
+-->
+<!ENTITY dateTimeFormatting.label               "Datums- und Zeitformatierung">
+
+<!--LOCALIZATION NOTE (restartOnLocaleChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLocaleChange.label            "Sprach- und Formatierungseinstellungen werden angewendet, wenn Sie &brandShortName; neu starten.">

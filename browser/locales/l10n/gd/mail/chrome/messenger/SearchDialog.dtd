@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Lorg teachdaireachdan ann an:">
+<!ENTITY searchHeading.accesskey     "h">
+<!ENTITY searchSubfolders.label      "Rannsaich na fo-phasgain">
+<!ENTITY searchSubfolders.accesskey  "R">
+<!ENTITY searchOnServer.label        "Ruith an lorg air an fhrithealaiche">
+<!ENTITY searchOnServer.accesskey    "u">
+<!ENTITY resetButton.label           "Falamhaich">
+<!ENTITY resetButton.accesskey       "c">
+<!ENTITY openButton.label            "Fosgail">
+<!ENTITY openButton.accesskey        "F">
+<!ENTITY deleteButton.label          "Sguab às">
+<!ENTITY deleteButton.accesskey      "S">
+<!ENTITY searchDialogTitle.label     "Rannsaich na teachdaireachdan">
+<!ENTITY results.label               "Toraidhean">
+<!ENTITY moveButton.label            "Gluais gu">
+<!ENTITY moveButton.accesskey        "u">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Fosgail sa phasgan">
+<!ENTITY openInFolder.accesskey      "F">
+<!ENTITY saveAsVFButton.label        "Sàbhail mar phasgan luirg">
+<!ENTITY saveAsVFButton.accesskey    "S">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Lorg ann an:">
+<!ENTITY abSearchHeading.accesskey   "L">
+<!ENTITY propertiesButton.label      "Roghainnean">
+<!ENTITY propertiesButton.accesskey  "R">
+<!ENTITY composeButton.label         "Sgrìobh">
+<!ENTITY composeButton.accesskey     "S">
+<!ENTITY deleteCardButton.label      "Sguab às">
+<!ENTITY deleteCardButton.accesskey  "S">
+<!ENTITY abSearchDialogTitle.label   "Rannsachadh adhartach leabhar nan seòladh">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

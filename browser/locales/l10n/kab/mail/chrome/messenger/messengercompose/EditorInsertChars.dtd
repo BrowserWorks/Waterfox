@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Ger asekkil">
+<!ENTITY category.label "Taggayt">
+<!ENTITY letter.label "Asekkil:">
+<!ENTITY letter.accessKey "A">
+<!ENTITY character.label "Asekkil:">
+<!ENTITY character.accessKey "A">
+<!ENTITY accentUpper.label "Isekkilen Meqqren s ufeskil">
+<!ENTITY accentLower.label "Isekkilen meẓẓiyen s ufeskil">
+<!ENTITY otherUpper.label "Isekkilen  nniḍen meqqren">
+<!ENTITY otherLower.label "meẓẓiyen">
+<!ENTITY commonSymbols.label "Izamulen yettwasnen">
+<!ENTITY insertButton.label "Ger">
+<!ENTITY closeButton.label "Mdel">

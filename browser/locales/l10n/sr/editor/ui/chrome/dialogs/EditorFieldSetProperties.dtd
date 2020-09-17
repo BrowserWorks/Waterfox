@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Својства каталога поља">
+
+<!ENTITY Legend.label "Легенда">
+<!ENTITY Legend.accesskey "Л">
+
+<!ENTITY EditLegendText.label "Уреди легенду:">
+<!ENTITY EditLegendText.accesskey "и">
+<!ENTITY LegendAlign.label "Поравнај легенду:">
+<!ENTITY LegendAlign.accesskey "П">
+<!ENTITY AlignDefault.label "Подразумевано">
+<!ENTITY AlignLeft.label "Лево">
+<!ENTITY AlignCenter.label "По средини">
+<!ENTITY AlignRight.label "Десно">
+
+<!ENTITY RemoveFieldSet.label "Уклони каталог поља">
+<!ENTITY RemoveFieldSet.accesskey "У">

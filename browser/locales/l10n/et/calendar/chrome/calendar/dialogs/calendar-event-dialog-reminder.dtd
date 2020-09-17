@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Meeldetuletuste seadistamine">
+<!ENTITY reminder.add.label                                "Lisa">
+<!ENTITY reminder.add.accesskey                            "L">
+<!ENTITY reminder.remove.label                             "Eemalda">
+<!ENTITY reminder.remove.accesskey                         "E">
+
+<!ENTITY reminder.reminderDetails.label                    "Meeldetuletuse üksikasjad">
+<!ENTITY reminder.action.label                             "Meeldetuletuse tegevus">
+
+<!ENTITY reminder.action.alert.label                       "Teate kuvamine">
+<!ENTITY reminder.action.email.label                       "Kirja saatmine">
+
+<!ENTITY alarm.units.minutes                               "minutit" >
+<!ENTITY alarm.units.hours                                 "tundi" >
+<!ENTITY alarm.units.days                                  "päeva" >

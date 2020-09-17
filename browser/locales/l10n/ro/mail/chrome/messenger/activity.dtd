@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+<!ENTITY window.width2                    "485">
+<!ENTITY window.height                    "300">
+
+<!ENTITY activity.title                  "Manager de activități">
+
+<!ENTITY cmd.pause.label                  "Pauză">
+<!ENTITY cmd.pause.accesskey              "P">
+<!ENTITY cmd.resume.label                 "Continuă">
+<!ENTITY cmd.resume.accesskey             "C">
+<!ENTITY cmd.cancel.label                 "Renunță">
+<!ENTITY cmd.cancel.accesskey             "C">
+<!ENTITY cmd.undo.label                   "Anulează">
+<!ENTITY cmd.undo.accesskey               "u">
+<!ENTITY cmd.recover.label                "Recuperează">
+<!ENTITY cmd.recover.accesskey            "R">
+<!ENTITY cmd.retry.label                  "Reîncearcă">
+<!ENTITY cmd.retry.accesskey              "R">
+<!ENTITY cmd.removeFromList.label         "Elimină din listă">
+<!ENTITY cmd.removeFromList.accesskey     "E">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "Curăță lista">
+<!ENTITY cmd.clearList.tooltip            "Elimină din listă elementele finalizate, anulate și eșuate">
+<!ENTITY cmd.clearList.accesskey          "C">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "Caută…">

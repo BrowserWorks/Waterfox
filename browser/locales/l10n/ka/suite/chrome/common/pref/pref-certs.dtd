@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "სერტიფიკატების მართვა">
+<!ENTITY  managecerts.text         "პირადი და ასევე სხვების, მათ შორის სერტიფიკატების გამცემების სერტიფიკატების სამართავად გამოიყენეთ სერტიფიკატების მმართველი.">
+<!ENTITY  managecerts.button       "სერტიფიკატების მართვა…">
+<!ENTITY  managecerts.accesskey    "M">
+<!ENTITY  managedevices.caption    "უსაფრთხოების მოწყობილობათა მართვა">
+<!ENTITY  managedevices.text       "ისარგებლეთ ამ ღილაკით თქვენი უსაფრთხოების მოწყობილობათა (მაგ., სხარტი ბარათების) სამართავად.">
+<!ENTITY  managedevices.button     "უსაფრთხოების მოწყობილობათა მართვა…">
+<!ENTITY  managedevices.accesskey  "S">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "სერტიფიკატები">
+<!ENTITY  certs.label              "სერტიფიკატები">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "სერტიფიკატების მიმდინარე ქმდითობის სტატუსის შესამოწმებლად სერტიფიკატის სტატუსის ოქმის (OCSP) გამოყენება">
+<!ENTITY enableOCSP.accesskey                     "U">
+<!ENTITY validation.requireOCSP.description       "როცა OCSP სერვერთან დაკავშირება ვერ ხერხდება, სერტიფიკატის ჩათვლა უმართებლოდ">
+<!ENTITY validation.requireOCSP.accesskey         "W">

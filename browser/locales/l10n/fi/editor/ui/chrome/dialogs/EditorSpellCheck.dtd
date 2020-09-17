@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label  "Oikolue">
+
+<!ENTITY misspelledWord.label  "Väärin kirjoitettu sana:">
+<!ENTITY wordEditField.label  "Korvaa sanalla:">
+<!ENTITY wordEditField.accessKey  "K">
+<!ENTITY checkwordButton.label  "Tarkista sana">
+<!ENTITY checkwordButton.accessKey  "a">
+<!ENTITY suggestions.label  "Ehdotukset:">
+<!ENTITY suggestions.accessKey  "E">
+<!ENTITY ignoreButton.label  "Ohita">
+<!ENTITY ignoreButton.accessKey  "O">
+<!ENTITY ignoreAllButton.label  "Ohita kaikki">
+<!ENTITY ignoreAllButton.accessKey  "h">
+<!ENTITY replaceButton.label  "Korvaa">
+<!ENTITY replaceButton.accessKey  "o">
+<!ENTITY replaceAllButton.label  "Korvaa kaikki">
+<!ENTITY replaceAllButton.accessKey  "r">
+<!ENTITY stopButton.label  "Pysäytä">
+<!ENTITY stopButton.accessKey  "y">
+<!ENTITY userDictionary.label  "Käyttäjän sanasto:">
+<!ENTITY moreDictionaries.label  "Hae sanastoja…">
+<!ENTITY addToUserDictionaryButton.label  "Lisää sana">
+<!ENTITY addToUserDictionaryButton.accessKey  "L">
+<!ENTITY editUserDictionaryButton.label  "Muokkaa…">
+<!ENTITY editUserDictionaryButton.accessKey  "M">
+<!ENTITY recheckButton2.label "Tarkista teksti uudelleen">
+<!ENTITY recheckButton2.accessKey  "T">
+<!ENTITY closeButton.label  "Sulje">
+<!ENTITY closeButton.accessKey  "S">
+<!ENTITY sendButton.label  "Lähetä">
+<!ENTITY sendButton.accessKey  "ä">
+<!ENTITY languagePopup.label  "Kieli:">
+<!ENTITY languagePopup.accessKey  "K">

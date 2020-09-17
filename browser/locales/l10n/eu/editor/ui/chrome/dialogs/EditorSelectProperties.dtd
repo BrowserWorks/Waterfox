@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Hautapen-zerrendaren propietateak">
+
+<!ENTITY Select.label "Hautapen-zerrenda">
+<!ENTITY SelectName.label "Zerrendaren izena:">
+<!ENTITY SelectName.accesskey "n">
+<!ENTITY SelectSize.label "Altuera:">
+<!ENTITY SelectSize.accesskey "A">
+<!ENTITY SelectMultiple.label "Aukera anitza">
+<!ENTITY SelectMultiple.accesskey "A">
+<!ENTITY SelectDisabled.label "Desgaituta">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "Tabulazio-indizea:">
+<!ENTITY SelectTabIndex.accesskey "i">
+
+<!ENTITY OptGroup.label "Aukera taldea">
+<!ENTITY OptGroupLabel.label "Etiketa:">
+<!ENTITY OptGroupLabel.accesskey "E">
+<!ENTITY OptGroupDisabled.label "Desgaituta">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "Aukera">
+<!ENTITY OptionText.label "Testua:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Balioa:">
+<!ENTITY OptionValue.accesskey "B">
+<!ENTITY OptionSelected.label "Hasieran hautatua">
+<!ENTITY OptionSelected.accesskey "s">
+<!ENTITY OptionDisabled.label "Desgaituta">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "Testua">
+<!ENTITY ValueHeader.label "Balioa">
+<!ENTITY SelectedHeader.label "Hautatuta">
+
+<!ENTITY AddOption.label "Aukera gehitu">
+<!ENTITY AddOption.accesskey "A">
+<!ENTITY AddOptGroup.label "Taldea gehitu">
+<!ENTITY AddOptGroup.accesskey "T">
+<!ENTITY RemoveElement.label "Ezabatu">
+<!ENTITY RemoveElement.accesskey "E">
+<!ENTITY MoveElementUp.label "Eraman gorantz">
+<!ENTITY MoveElementUp.accesskey "g">
+<!ENTITY MoveElementDown.label "Eraman beherantz">
+<!ENTITY MoveElementDown.accesskey "b">

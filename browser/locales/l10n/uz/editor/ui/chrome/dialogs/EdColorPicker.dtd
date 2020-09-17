@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Rangi">
+<!ENTITY lastPickedColor.label "So‘nggi tanlangan rang">
+<!ENTITY lastPickedColor.accessKey "S">
+<!ENTITY setColor1.label "Rang ustiga bosing yoki">
+<!ENTITY setColor2.label "HTML rang kodlarini kiriting">
+<!ENTITY setColor2.accessKey "H">
+<!ENTITY setColorExample.label "(masalan: &quot;#0000ff&quot; yoki &quot;blue&quot;):">
+<!ENTITY default.label "Standart">
+<!ENTITY default.accessKey "S">
+<!ENTITY palette.label "To‘yinganligi:">
+<!ENTITY standardPalette.label "&amp;Standard">
+<!ENTITY webPalette.label "Barcha veb ranglar">
+<!ENTITY background.label "Orqa foni:">
+<!ENTITY background.accessKey "O">
+<!ENTITY table.label "Jadval">
+<!ENTITY table.accessKey "J">
+<!ENTITY cell.label "Katak(lar)">
+<!ENTITY cell.accessKey "K">

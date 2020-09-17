@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label		"メッセージのセキュリティ">
+<!ENTITY signatureCert.label	"署名証明書を表示">
+<!ENTITY encryptionCert.label	"暗号化証明書を表示">
+
+<!ENTITY signer.name		"署名者:">
+<!ENTITY recipient.name		"次の受信者用に暗号化:">
+<!ENTITY email.address		"メールアドレス:">
+<!ENTITY issuer.name		"証明書の発行者:">
+
+<!-- LOCALIZATION NOTE(SMIME.label): This a name for a technical standard. You should not translate it, but if applicable, you may write it using localized characters. -->
+<!ENTITY SMIME.label		"S/MIME">

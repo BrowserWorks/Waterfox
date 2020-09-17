@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "ანგარიშის პარამეტრები">
+<!ENTITY accountName.label "ანგარიშის სახელი:">
+<!ENTITY accountName.accesskey "ნ">
+<!ENTITY identityTitle.label "ნაგულისხმევი მოწმობა">
+<!ENTITY identityDesc.label "თითოეულ ანგარიშს გააჩნია საკუთარი მონაცემები, რომელსაც მიმღები ხედავს, თქვენი წერილების ნახვისას.">
+<!ENTITY name.label "თქვენი სახელი:">
+<!ENTITY name.accesskey "ს">
+<!ENTITY email.label "ელფოსტის მისამართი:">
+<!ENTITY email.accesskey "ე">
+<!ENTITY catchAll.label "პასუხი ამ მოწმობით, როცა მიწოდების თავსართები დაემთხვევა:">
+<!ENTITY catchAll.accesskey "წ">
+<!ENTITY replyTo.label "მისამართი პასუხისათვის:">
+<!ENTITY replyTo.accesskey "მ">
+<!ENTITY replyTo.placeholder "მიმღებები ამას უპასუხებენ სხვა მისამართზე">
+<!ENTITY organization.label "დაწესებულება:">
+<!ENTITY organization.accesskey "წ">
+<!ENTITY signatureText.label "ხელმოწერის ტექსტი:">
+<!ENTITY signatureText.accesskey "ქ">
+<!ENTITY signatureHtml.label "HTML კოდის გამოყენება (მაგ., &lt;b&gt;მუქი&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "ხელმოწერის თანდართვა ფაილიდან (ტექსტი, HTML ან გამოსახულება):">
+<!ENTITY signatureFile.accesskey "თ">
+<!ENTITY edit.label "ჩასწორება…">
+<!ENTITY choose.label "არჩევა…">
+<!ENTITY choose.accesskey "რ">
+<!ENTITY editVCard.label "ბარათის ჩასწორება…">
+<!ENTITY editVCard.accesskey "ბ">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "წერილებზე სავიზიტოს მიმაგრება">
+<!ENTITY attachVCard.accesskey "მ">
+
+<!ENTITY manageIdentities.label "მოწმობის პარამეტრები…">
+<!ENTITY manageIdentities.accesskey "წ">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "გამავალი სერვერი (SMTP):">
+<!ENTITY smtpName.accesskey "ვ">
+<!ENTITY smtpDefaultServer.label "ძირითადი სერვერის გამოყენება">
+
+<!ENTITY smtpServerEdit.label "SMTP სერვერის ჩასწორება…">
+<!ENTITY smtpServerEdit.accesskey "P">

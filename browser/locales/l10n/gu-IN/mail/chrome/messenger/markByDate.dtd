@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "સંદેશાઓને તારીખ પ્રમાણે વાંચ્યા એમ ચિહ્નિત કરો">
+<!ENTITY markByDateLower.label "સંદેશાઓને આમાંથી વાંચ્યા એમ ચિહ્નિત કરો:">
+<!ENTITY markByDateLower.accesskey "F">
+<!ENTITY markByDateUpper.label "પ્રતિ:">
+<!ENTITY markByDateUpper.accesskey "T">

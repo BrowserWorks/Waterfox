@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Parametros de posta indesirate">
+<!ENTITY trainingDescription.label "Si es activate, tu debe primo inseniar a &brandShortName; a recognoscer le posta indesirate usante le button Indesirate in le barra de instrumentos pro marcar o dismarcar messages como indesirate. Tu debe identificar tanto le messages desirate como le messages indesirate. Post isto, &brandShortName; potera marcar automaticamente le posta indesirate.">
+<!ENTITY level.label "Activar le controlos adaptive de posta indesirate pro iste conto">
+<!ENTITY level.accesskey "A">
+
+<!ENTITY move.label "Displaciar nove messages indesirate a:">
+<!ENTITY move.accesskey "D">
+<!ENTITY junkFolderOn.label "Dossier &quot;Indesirate&quot; sur:">
+<!ENTITY junkFolderOn.accesskey "I">
+<!ENTITY otherFolder.label "Altere:">
+<!ENTITY otherFolder.accesskey "A">
+<!ENTITY purge1.label "Deler automaticamente le posta indesirate plus ancian de">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "dies">
+
+<!ENTITY whitelistHeader.label "Non marcar automaticamente como indesirate si le expeditor es in: ">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "Si es activate, &brandShortName; considera automaticamente le messages marcate per iste classificator externe como indesirate.">
+<!ENTITY ispHeaders.label "Confider in le capites de posta indesirate inserite per: ">
+<!ENTITY ispHeaders.accesskey "C">
+
+<!ENTITY junkClassification.label "Selection">
+<!ENTITY junkActions.label "Destination e retention">
+
+<!ENTITY globalJunkPrefs.label "Preferentias global de posta indesirate…">
+<!ENTITY globalJunkPrefs.accesskey "g">

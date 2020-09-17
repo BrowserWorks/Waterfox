@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "תיקייה חדשה">
+<!ENTITY name.label                 "שם:">
+<!ENTITY name.accesskey             "ש">
+<!ENTITY description.label          "צור כתת־תיקייה של:">
+<!ENTITY description.accesskey      "ת">
+<!ENTITY folderRestriction1.label   "שרת זה מגביל תיקיות לשני סוגים מיוחדים.">
+<!ENTITY folderRestriction2.label   "הרשה לתיקייה החדשה שלך להכיל:">
+<!ENTITY foldersOnly.label          "תיקיות בלבד">
+<!ENTITY messagesOnly.label         "הודעות בלבד">
+<!ENTITY accept.label               "צור תיקייה">
+<!ENTITY accept.accesskey           "ת">
+
+

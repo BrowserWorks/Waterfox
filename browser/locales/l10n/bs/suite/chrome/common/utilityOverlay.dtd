@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+<!ENTITY  offlineGoOfflineCmd.label                 "Rad van mreže">
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items --> 
+
+<!ENTITY fileMenu.label                   "Datoteka">
+<!ENTITY newMenu.label                    "Novi">
+<!ENTITY newBlankPageCmd.label            "Stranica sastavljača">
+<!ENTITY newPageFromTemplateCmd.label "Stranica pomoću šablona">
+<!ENTITY newPageFromDraftCmd.label "Stranica pomoću nacrta">
+<!ENTITY newNavigatorCmd.label "Prozor browsera">
+<!ENTITY newPrivateWindowCmd.label "Privatni prozor">
+<!ENTITY printSetupCmd.label "Podešavanje stranice…">
+<!ENTITY printPreviewCmd.label "Pregled prije štampanja">
+<!ENTITY printCmd.label "Štampaj…">
+
+<!ENTITY editMenu.label                   "Uredi">
+<!ENTITY undoCmd.label                    "Poništi">
+<!ENTITY redoCmd.label                    "Ponovi">
+<!ENTITY cutCmd.label                     "Isjeci">
+<!ENTITY copyCmd.label                    "Kopiraj">
+<!ENTITY pasteCmd.label                   "Zalijepi">
+<!ENTITY pasteGoCmd.label                 "Zalijepi i idi">
+
+<!-- LOCALIZATION NOTE (pasteSearchCmd): "Search" is a verb, this is the
+     search bar equivalent to the url bar's "Paste & Go"  -->
+<!ENTITY pasteSearchCmd.label             "Zalijepi i traži">
+<!ENTITY deleteCmd.label                  "Izbriši">
+<!ENTITY selectAllCmd.label               "Označi sve">
+<!ENTITY clearHistoryCmd.label				"Očisti historiju pretrage">  
+ 
+<!ENTITY showSuggestionsCmd.label			"Prikaži prijedloge">  
+ 
+<!ENTITY preferencesCmd.label				"Postavke…">
+  
+ 
+<!-- LOCALIZATION NOTE (findBarCmd.accesskey): This accesskey should be within
+     findBarCmd.label found in editorOverlay.dtd, findCmd.label in messenger.dtd
+     and messengercompose.dtd and findOnCmd.label found in navigatorOverlay.dtd -->
+<!ENTITY findAgainCmd.label "Pronađi ponovo">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Pronađi prethodno">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY findTypeTextCmd.label "Pronađite tekst dok kucate">
+<!ENTITY findTypeLinksCmd.label "Pronađite linkove dok kucate">
+
+<!ENTITY viewMenu.label					"Prikaz"> 
+<!ENTITY viewToolbarsMenu.label				"Prikaži/sakrij"> 
+ 
+<!ENTITY showTaskbarCmd.label					"Statusna traka">  
+ 
+
+<!ENTITY helpMenu.label					"Pomoć"> 
+ 
+
+<!ENTITY helpTroubleshootingInfo.label      "Informacije za rješavanje problema">
+<!ENTITY releaseCmd.label                   "Napomene o izdanju">
+<!ENTITY helpSafeMode.label                 "Restartuj sa onemogućenim dodacima">
+<!ENTITY updateCmd.label                    "Provjera ažuriranja…">
+<!ENTITY aboutCmd.label					"O &brandShortName;">
+<!ENTITY aboutCommPluginsCmd.label			"O priključcima">
+
+<!ENTITY direct.label                                   "Na mreži (Proxy: Nijedan)">
+<!ENTITY manual.label                                   "Na mreži (Proxy: Ručno)">
+<!ENTITY pac.label                                      "Na mreži (Proxy: Automatski URL)">
+<!ENTITY wpad.label                                     "Na mreži (Proxy: Automatsko otkrivanje)">
+<!ENTITY system.label                                   "Na mreži (Proxy: Sistemski proxy)">
+
+<!ENTITY proxy.label                                    "Proxy konfiguracija…">
+
+<!ENTITY bidiSwitchTextDirectionItem.label        "Promijeni smjer teksta">
+
+<!ENTITY customizeToolbarContext.label            "Prilagodi…">
+
+<!ENTITY customizeToolbar.toolbarmode.label       "Postavke za ovu alatnu traku">
+<!ENTITY customizeToolbar.iconsAndText.label      "Ikone i tekst">
+<!ENTITY customizeToolbar.icons.label             "Ikone">
+<!ENTITY customizeToolbar.text.label              "Tekst">
+<!ENTITY customizeToolbar.useSmallIcons.label     "Koristi male ikone">
+<!ENTITY customizeToolbar.labelAlignEnd.label     "Prikaži tekst pored ikone">
+<!ENTITY customizeToolbar.useDefault.label        "Vrati početne postavke">
+
+<!-- Popup Blocked notification menu -->
+<!ENTITY showPopupManager.label       "Upravljanje iskočnim prozorima">
+<!ENTITY dontShowMessage.label        "Ne prikazuj ovu poruku kada su iskočni prozori blokirani">
+
+<!ENTITY syncToolbarButton.label "Sync">

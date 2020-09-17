@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Asistent pentru contul de chat">
+
+<!ENTITY accountProtocolTitle.label   "Rețea de chat">
+<!ENTITY accountProtocolInfo.label    "Te rugăm să îți alegi rețeaua contului de chat.">
+<!ENTITY accountProtocolField.label   "Rețea:">
+<!ENTITY accountProtocolGetMore.label "Mai multe…">
+
+<!ENTITY accountUsernameTitle.label   "Nume de utilizator">
+<!ENTITY accountUsernameDuplicate.label "Acest cont este deja configurat!">
+
+<!ENTITY accountPasswordTitle.label   "Parola">
+<!ENTITY accountPasswordInfo.label    "Te rugăm să îți introduci parola în căsuța de mai jos.">
+<!ENTITY accountPasswordField.label   "Parola:">
+<!ENTITY accountPasswordManager.label "Parola introdusă aici va fi stocată în managerul de parole. Lasă căsuța goală dacă vrei să ți se ceară parola de fiecare dată când te conectezi la acest cont.">
+
+<!ENTITY accountAdvancedTitle.label   "Opțiuni avansate">
+<!ENTITY accountAdvancedInfo.label    "Dacă vrei, poți omite acest pas.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Anunță-mă la un e-mail nou">
+<!ENTITY accountAliasGroupbox.caption "Alias local">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Acesta va apărea numai în conversațiile tale atunci când vorbești, contactele de la distanță nu îl vor vedea.">
+<!ENTITY accountProxySettings.caption "Setări proxy">
+<!ENTITY accountProxySettings.change.label     "Schimbă…">
+<!ENTITY accountProxySettings.change.accessKey "c">
+
+<!ENTITY accountSummaryTitle.label   "Rezumatul">
+<!ENTITY accountSummaryInfo.label    "Mai jos poți vedea un rezumat al informațiilor introduse. Te rugăm să le verifici înainte de a crea contul.">
+<!ENTITY accountSummary.connectNow.label "Conectează acest cont acum.">

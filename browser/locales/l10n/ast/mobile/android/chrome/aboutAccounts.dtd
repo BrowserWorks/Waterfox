@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Cuentes de Firefox">
+<!ENTITY aboutAccounts.connected.description "Tas coneutáu como">
+<!ENTITY aboutAccounts.syncPreferences.label "Calca equí pa comprobar los axustes de Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "Ensin conexón a internet">
+<!ENTITY aboutAccounts.retry.label "Tentar de nueves">
+
+<!ENTITY aboutAccounts.restrictedError.title "Restrinxíu">
+<!ENTITY aboutAccounts.restrictedError.description "Nun pues xestionar cuentes de Firefox dende esti perfil.">

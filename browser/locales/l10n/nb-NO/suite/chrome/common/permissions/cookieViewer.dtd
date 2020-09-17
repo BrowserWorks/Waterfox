@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Lagrede infokapsler">
+<!ENTITY     tab.bannedservers.label        "Nettsted for infokapsler">
+<!ENTITY     div.bannedservers.label        "Behandle nettsted som kan og ikke kan lagre infokapsler på datamaskinen din.">
+<!ENTITY     div.cookiesonsystem.label      "Vis og fjern infokapsler som er lagret på datamaskinen din.">
+<!ENTITY     treehead.cookiename.label      "Infokapselnavn">
+<!ENTITY     treehead.cookiedomain.label    "Nettsted">
+<!ENTITY     treehead.cookieexpires.label   "Utløper">
+<!ENTITY     treehead.infoselected.label    "Informasjon om valgt infokapsel">
+<!ENTITY     button.removecookie.label      "Slett infokapsel">
+<!ENTITY     button.removecookie.accesskey  "S">
+<!ENTITY     button.removeallcookies.label  "Slett alle infokapsler">
+<!ENTITY     button.removeallcookies.accesskey "e">
+
+<!ENTITY     search.placeholder             "Søk i infokapsler">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Navn:">
+<!ENTITY     props.value.label              "Innhold:">
+<!ENTITY     props.domain.label             "Server:">
+<!ENTITY     props.path.label               "Sti:">
+<!ENTITY     props.secure.label             "Sendt for:">
+<!ENTITY     props.expires.label            "Utløper:">
+
+<!ENTITY     treehead.sitename.label        "Nettsted">
+<!ENTITY     treehead.scheme.label          "Skjema">
+<!ENTITY     treehead.status.label          "Status">
+<!ENTITY     windowtitle.label              "Infokapselhåndterer">
+
+<!ENTITY     blockSite.label                "Blokker">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "Tillat">
+<!ENTITY     allowSite.accesskey            "T">
+<!ENTITY     allowSiteSession.label         "Programøkt">
+<!ENTITY     allowSiteSession.accesskey     "P">
+<!ENTITY     removepermission.label         "Slett nettsted">
+<!ENTITY     removepermission.accesskey     "n">
+<!ENTITY     removeallpermissions.label     "Slett alle nettsted">
+<!ENTITY     removeallpermissions.accesskey "a">
+
+<!ENTITY     futureCookies.label            "Ikke tillat nettsted som eide slettede infokapsler å sette infokapsler i fremtiden">
+<!ENTITY     futureCookies.accesskey        "k">

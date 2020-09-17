@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName; အကြောင်း">
+<!ENTITY aboutProduct2.accesskey  "A">
+
+<!ENTITY preferencesCmdMac.label        "နှစ်သက်ရာအပြင်အဆင်များ…">
+
+<!ENTITY servicesMenuMac.label          "၀န်ဆောင်မှုများ">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; ကို ဖျောက်ထားပါ">
+
+<!ENTITY hideOtherAppsCmdMac.label      "အခြားအရာများကို ဖျောက်ထားပါ">
+
+<!ENTITY showAllAppsCmdMac.label        "အားလုံးကို ပြပါ">
+

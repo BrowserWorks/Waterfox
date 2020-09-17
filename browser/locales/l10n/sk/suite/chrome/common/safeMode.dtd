@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Núdzový režim aplikácie &brandShortName;">
+<!ENTITY window.width                 "37em">
+
+<!ENTITY safeModeDescription.label    "&brandShortName; je spustený v núdzovom režime, ktorý dočasne zakáže vaše nastavenia, rozšírenia a témy.">
+<!ENTITY safeModeDescription2.label   "Vyberte zmeny, ktoré chcete natrvalo vykonať:">
+
+<!ENTITY disableAddons.label          "Zakázať všetky doplnky">
+<!ENTITY disableAddons.accesskey      "Z">
+
+<!ENTITY resetToolbars.label          "Nastaviť panely a veľkosti okien na predvolené hodnoty">
+<!ENTITY resetToolbars.accesskey      "N">
+
+<!ENTITY deleteBookmarks.label        "Odstrániť všetky záložky okrem záloh">
+<!ENTITY deleteBookmarks.accesskey    "O">
+
+<!ENTITY resetUserPrefs.label         "Obnoviť všetky nastavenia aplikácie &brandShortName; na predvolené hodnoty">
+<!ENTITY resetUserPrefs.accesskey     "v">
+
+<!ENTITY restoreSearch.label          "Obnoviť predvolené vyhľadávacie moduly">
+<!ENTITY restoreSearch.accesskey      "m">
+
+<!ENTITY changeAndRestartButton.label "Vykonať zmeny a reštartovať">
+<!ENTITY continueButton.label         "Pokračovať v núdzovom režime">

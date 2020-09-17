@@ -1,0 +1,170 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label     "ამ საიტიდან ამომხტომი ფანჯრების აკრძალვა">
+<!ENTITY popupWindowRejectCmd.accesskey "ა">
+<!ENTITY popupWindowAllowCmd.label      "ამ საიტიდან ამომხტომი ფანჯრების დაშვება">
+<!ENTITY popupWindowAllowCmd.accesskey  "დ">
+<!ENTITY openLinkCmdInTab.label       "ბმულის ახალ ჩანართზე გახსნა">
+<!ENTITY openLinkCmdInTab.accesskey   "გ">
+<!ENTITY openLinkCmd.label            "ბმულის ახალ სარკმლეში გახსნა">
+<!ENTITY openLinkCmd.accesskey        "რ">
+<!ENTITY openLinkCmdInPrivateWindow.label     "ბმულის პირად სარკმელში გახსნა">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey "პ">
+<!ENTITY openLinkInWindowCmd.label    "გახსნა">
+<!ENTITY openLinkInWindowCmd.accesskey "ხ">
+<!ENTITY openFrameCmd.label           "ჩარჩოს ახალ სარკმელში გახსნა">
+<!ENTITY openFrameCmd.accesskey       "ჩ">
+<!ENTITY openFrameCmdInTab.label      "ჩარჩოს ახალ ჩანართზე გახსნა">
+<!ENTITY openFrameCmdInTab.accesskey  "რ">
+<!ENTITY keywordfield.label           "საკვანძო სიტყვის დამატება ამ ძიებაში…">
+<!ENTITY keywordfield.accesskey       "კ">
+<!ENTITY showOnlyThisFrameCmd.label     "მხოლოდ ამ ჩარჩოს ჩვენება">
+<!ENTITY showOnlyThisFrameCmd.accesskey "ო">
+<!ENTITY goBackCmd.label              "წინა">
+<!ENTITY goBackCmd.accesskey          "წ">
+<!ENTITY goForwardCmd.label           "მომდევნო">
+<!ENTITY goForwardCmd.accesskey       "მ">
+<!ENTITY goUpCmd.label                "ზემოთ">
+<!ENTITY goUpCmd.accesskey            "ზ">
+<!ENTITY reloadCmd.label              "განახლება">
+<!ENTITY reloadCmd.accesskey          "ლ">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY stopCmd.label                "შეჩერება">
+<!ENTITY stopCmd.accesskey            "ე">
+<!ENTITY reloadFrameCmd.label         "ჩარჩოს განახლება">
+<!ENTITY reloadFrameCmd.accesskey     "ლ">
+<!ENTITY viewPartialSourceForSelectionCmd.label "მონიშნულის წყაროს ჩვენება">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "MathML წყაროს ჩვენება">
+<!ENTITY viewPartialSourceCmd.accesskey "ყ">
+<!ENTITY viewPageSourceCmd.label      "გვერდის წყაროს ჩვენება">
+<!ENTITY viewPageSourceCmd.accesskey  "წ">
+<!ENTITY viewFrameSourceCmd.label     "ჩარჩოს წყაროს ჩევენება">
+<!ENTITY viewFrameSourceCmd.accesskey "წ">
+<!ENTITY viewPageInfoCmd.label        "გვერდის მონაცემების ჩვენება">
+<!ENTITY viewPageInfoCmd.accesskey    "ვ">
+<!ENTITY viewFrameInfoCmd.label       "ჩარჩოს მონაცემების ჩვენება">
+<!ENTITY viewFrameInfoCmd.accesskey   "ვ">
+<!ENTITY fitImageCmd.label            "გამოსახულების მორგება ფანჯრის ზომაზე">
+<!ENTITY fitImageCmd.accesskey        "მ">
+<!ENTITY reloadImageCmd.label         "სურათის განახლება">
+<!ENTITY reloadImageCmd.accesskey     "გ">
+<!ENTITY viewImageCmd.label           "სურათის ნახვა">
+<!ENTITY viewImageCmd.accesskey       "ვ">
+<!ENTITY viewImageInfoCmd.label       "გამოსახულების მონაცემთა ჩვენება">
+<!ENTITY viewImageInfoCmd.accesskey   "ც">
+<!ENTITY viewVideoCmd.label           "ვიდეოს ნახვა">
+<!ENTITY viewVideoCmd.accesskey       "ვ">
+<!ENTITY viewBGImageCmd.label         "ფონური სურათის ნახვა">
+<!ENTITY viewBGImageCmd.accesskey     "ფ">
+<!ENTITY setDesktopBackgroundCmd.label     "სამუშაო მაგიდის ფონად დაყენება…">
+<!ENTITY setDesktopBackgroundCmd.accesskey "ა">
+<!ENTITY bookmarkPageCmd.label        "გვერდის ჩანიშვნა…">
+<!ENTITY bookmarkPageCmd.accesskey    "შ">
+<!ENTITY bookmarkLinkCmd.label        "ბმულის ჩანიშვნა…">
+<!ENTITY bookmarkLinkCmd.accesskey    "მ">
+<!ENTITY bookmarkFrameCmd.label       "ჩარჩოს ჩანიშვნა…">
+<!ENTITY bookmarkFrameCmd.accesskey   "მ">
+<!ENTITY savePageAsCmd.label          "გვერდის შენახვა როგორც…">
+<!ENTITY savePageCmd.label            "გვერდის შენახვა…">
+<!ENTITY savePageCmd.accesskey        "ე">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameAsCmd.label         "ჩარჩოს შენახვა როგორც…">
+<!ENTITY saveFrameCmd.label           "ჩარჩოს შენახვა">
+<!ENTITY saveFrameCmd.accesskey       "ჩ">
+<!ENTITY printFrameCmd.label          "ჩარჩოს ამობეჭდვა…">
+<!ENTITY printFrameCmd.accesskey      "ჭ">
+<!ENTITY saveLinkAsCmd.label          "ბმულის შენახვა როგორც…">
+<!ENTITY saveLinkCmd.label            "ბმულის შენახვა…">
+<!ENTITY saveLinkCmd.accesskey        "ნ">
+<!ENTITY saveImageAsCmd.label         "სურათის შენახვა, როგორც…">
+<!ENTITY saveImageCmd.label           "სურათის შენახვა">
+<!ENTITY saveImageCmd.accesskey       "ნ">
+<!ENTITY saveVideoCmd.label           "ვიდეოს შენახვა როგორც…">
+<!ENTITY saveVideoCmd.accesskey       "ნ">
+<!ENTITY saveAudioCmd.label           "ხმოვანი ფაილის შენახვა როგორც…">
+<!ENTITY saveAudioCmd.accesskey       "ო">
+<!ENTITY copyLinkCmd.label            "ბმულის მისამართის ასლი">
+<!ENTITY copyLinkCmd.accesskey        "უ">
+<!ENTITY copyImageCmd.label           "სურათის ასლი">
+<!ENTITY copyImageCmd.accesskey       "რ">
+<!ENTITY copyVideoURLCmd.label        "ვიდეოს მისამართის ასლი">
+<!ENTITY copyVideoURLCmd.accesskey    "ვ">
+<!ENTITY copyAudioURLCmd.label        "ხმოვანი ფაილის მისამართის ასლი">
+<!ENTITY copyAudioURLCmd.accesskey    "მ">
+<!ENTITY metadataCmd.label            "პარამეტრები">
+<!ENTITY metadataCmd.accesskey        "პ">
+<!ENTITY copyEmailCmd.label           "ელფოსტის მისამართის ასლი">
+<!ENTITY copyEmailCmd.accesskey       "ე">
+<!ENTITY thisFrameMenu.label          "ჩარჩო">
+<!ENTITY thisFrameMenu.accesskey      "ჩ">
+<!ENTITY mediaPlay.label              "გაშვება">
+<!ENTITY mediaPlay.accesskey          "გ">
+<!ENTITY mediaPause.label             "შეჩერება">
+<!ENTITY mediaPause.accesskey         "შ">
+<!ENTITY mediaMute.label              "დადუმება">
+<!ENTITY mediaMute.accesskey          "უ">
+<!ENTITY mediaUnmute.label            "ხმის ჩართვა">
+<!ENTITY mediaUnmute.accesskey        "ხ">
+<!ENTITY mediaPlaybackRate.label        "დაკვრის სიჩქარე">
+<!ENTITY mediaPlaybackRate.accesskey    "ჩ">
+<!ENTITY mediaPlaybackRate050.label     "შენელებული (½×)">
+<!ENTITY mediaPlaybackRate050.accesskey "შ">
+<!ENTITY mediaPlaybackRate100.label     "ჩვეულებრივი">
+<!ENTITY mediaPlaybackRate100.accesskey "ჩ">
+<!ENTITY mediaPlaybackRate125.label     "სწრაფი (1¼×)">
+<!ENTITY mediaPlaybackRate125.accesskey "წ">
+<!ENTITY mediaPlaybackRate150.label     "უფრო სწრაფი (1½×)">
+<!ENTITY mediaPlaybackRate150.accesskey "უ">
+<!ENTITY mediaPlaybackRate200.label     "ორმაგი სიჩქარის">
+<!ENTITY mediaPlaybackRate200.accesskey "ო">
+<!ENTITY mediaLoop.label              "გამეორება დაუსრულებლად">
+<!ENTITY mediaLoop.accesskey          "გ">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label      "სამართავი ზოლის გამოჩენა">
+<!ENTITY mediaShowControls.accesskey  "ზ">
+<!ENTITY mediaHideControls.label      "სამართავი ზოლის დამალვა">
+<!ENTITY mediaHideControls.accesskey  "ზ">
+<!ENTITY videoFullScreen.label        "სრულ ეკრანზე">
+<!ENTITY videoFullScreen.accesskey    "ს">
+<!ENTITY videoSaveImage.label         "კადრის შენახვა როგორც…">
+<!ENTITY videoSaveImage.accesskey     "ა">
+<!ENTITY videoShowStats.label         "სტატისტიკის ჩვენება">
+<!ENTITY videoShowStats.accesskey     "ჩ">
+<!ENTITY videoHideStats.label         "სტატისტიკის დამალვა">
+<!ENTITY videoHideStats.accesskey     "დ">
+<!ENTITY search.accesskey             "W">
+<!ENTITY bidiSwitchPageDirectionItem.label        "გვერდის მიმართულების გადართვა">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "ვ">
+<!ENTITY bidiSwitchTextDirectionItem.label        "ტექსტის მიმართულების გადართვა">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "ქ">
+<!ENTITY spellAddToDictionary.label     "ლექსიკონში ჩამატება">
+<!ENTITY spellAddToDictionary.accesskey "ლ">
+<!ENTITY spellUndoAddToDictionary.label      "ლექსიკონში ჩამატების გაუქმება">
+<!ENTITY spellUndoAddToDictionary.accesskey  "კ">
+<!ENTITY spellIgnoreWord.label          "სიტყვის გამოტოვება">
+<!ENTITY spellIgnoreWord.accesskey      "ტ">
+<!ENTITY spellCheckEnable.label         "მართლწერის შემოწმება">
+<!ENTITY spellCheckEnable.accesskey     "წ">
+<!ENTITY spellNoSuggestions.label       "(შემოთავაზებების გარეშე)">
+<!ENTITY spellDictionaries.label        "ენები">
+<!ENTITY spellDictionaries.accesskey    "ე">
+<!ENTITY spellAddDictionaries.label     "სხვა ლექსიკონების ჩამოტვირთვა…">
+<!ENTITY spellAddDictionaries.accesskey "ხ">
+
+<!ENTITY fillLoginMenu.label          "შესვლის მონაცემების შევსება">
+<!ENTITY fillLoginMenu.accesskey      "შ">
+<!ENTITY fillPasswordMenu.label       "პაროლის შევსება">
+<!ENTITY fillPasswordMenu.accesskey   "შ">
+<!ENTITY fillUsernameMenu.label       "მომხმარებლის სახელის შევსება">
+<!ENTITY fillUsernameMenu.accesskey   "შ">
+<!ENTITY noLoginSuggestions.label     "(შესვლის შემოთავაზებები არაა)">
+<!ENTITY viewSavedLogins.label        "შენახული შესვლების ნახვა">
+
+<!-- Developer Tools -->
+<!ENTITY devtoolsInspect.label          "ელემენტზე დაკვირვება">
+<!ENTITY devtoolsInspect.accesskey      "ე">

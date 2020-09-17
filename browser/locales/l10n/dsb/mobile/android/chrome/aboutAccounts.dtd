@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Konta Firefox">
+<!ENTITY aboutAccounts.connected.description "Sćo zwězany ako">
+<!ENTITY aboutAccounts.syncPreferences.label "Pótusniśo, aby synchronizěrowańske nastajenja pśeglědował">
+
+<!ENTITY aboutAccounts.noConnection.title "Žeden internetny zwisk">
+<!ENTITY aboutAccounts.retry.label "Hyšći raz wopytaś">
+
+<!ENTITY aboutAccounts.restrictedError.title "Wobgranicowany">
+<!ENTITY aboutAccounts.restrictedError.description "Njamóžośo konta Firefox z toś togo profila zastojaś.">

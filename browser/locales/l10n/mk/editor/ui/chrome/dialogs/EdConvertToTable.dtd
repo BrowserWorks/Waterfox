@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Конвертирање во табела">
+<!ENTITY instructions1.label "Composer создава нова редица во табелата за секој параграф од изборот.">
+<!ENTITY instructions2.label "Изберете го знакот кој ќе се користи за делење на  изборот во колони:">
+<!ENTITY commaRadio.label "Запирка">
+<!ENTITY spaceRadio.label "Празно место">
+<!ENTITY otherRadio.label "Друг знаци:">
+<!ENTITY deleteCharCheck.label "Избриши го одделувачот">
+<!ENTITY collapseSpaces.label "Игнорирај го дополнителниот празен простор">
+<!ENTITY collapseSpaces.tooltip "Ги конвертира соседните празни места во еден одделувач">

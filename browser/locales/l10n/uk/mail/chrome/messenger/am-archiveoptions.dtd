@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Налаштування архіву">
+<!ENTITY archiveGranularityPrefix.label "Зберігати архівовані повідомлення в:">
+<!ENTITY archiveFlat.label "Єдиній теці">
+<!ENTITY archiveFlat.accesskey "Є">
+<!ENTITY archiveYearly.label "Теках по роках">
+<!ENTITY archiveYearly.accesskey "р">
+<!ENTITY archiveMonthly.label "Теках по місяцях">
+<!ENTITY archiveMonthly.accesskey "м">
+<!ENTITY keepFolderStructure.label "Зберігати наявну структуру архівованих повідомлень">
+<!ENTITY keepFolderStructure.accesskey "с">
+<!ENTITY archiveExample.label "Приклад">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Архіви">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Вхідні">

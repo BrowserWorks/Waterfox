@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Wobtwarźenja dostaśa">
+<!ENTITY useGlobalPrefs.label         "Globalne nastajenja wobtwarźenjow dostaśa za toś to konto wužywaś">
+<!ENTITY useGlobalPrefs.accesskey     "G">
+<!ENTITY globalReceipts.label         "Globalne nastajenja…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "Wobtwarźenja dostaśa za toś to konto pśiměriś">
+<!ENTITY useCustomPrefs.accesskey     "W">
+<!ENTITY requestReceipt.label         "Pśi słanju powěsćow sebje pśecej wobtwarźenje dostaśa pominaś">
+<!ENTITY requestReceipt.accesskey     "P">
+<!ENTITY receiptArrive.label          "Gaž wobtwarźenje pśiźo:">
+<!ENTITY leaveIt.label                "Jo w postowem kašćiku wóstajiś">
+<!ENTITY leaveIt.accesskey            "J">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Jo do mójogo zarědnika &quot;Pósłany&quot; pśesunuś">
+<!ENTITY moveToSent.accesskey         "m">
+<!ENTITY requestMDN.label             "Gaž dostanjom pominanje za wobtwarźenim dostaśa:">
+<!ENTITY returnSome.label             "Wobtwarźenja dostaśa za někotare powěsći dowóliś">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Nigdy wobtwarźenje dostaśa njesłaś">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Jolic njejsom w pólu Komu abo Kopija powěsći:">
+<!ENTITY notInToCc.accesskey          "K">
+<!ENTITY outsideDomain.label          "Jolic wotpósłaŕ jo zwenka mójeje domeny:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "W drugich wšych padach:">
+<!ENTITY otherCases.accesskey         "d">
+<!ENTITY askMe.label                  "Mě se pšašaś">
+<!ENTITY alwaysSend.label             "Pśecej słaś">
+<!ENTITY neverSend.label              "Nigdy njesłaś">

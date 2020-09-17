@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Contos da Firefox">
+<!ENTITY aboutAccounts.connected.description "Ti es connectà sco">
+<!ENTITY aboutAccounts.syncPreferences.label "Tutgar qua per controllar la configuraziun da la sincronisaziun">
+
+<!ENTITY aboutAccounts.noConnection.title "Nagina connexiun cun l'internet">
+<!ENTITY aboutAccounts.retry.label "Empruvar anc ina giada">
+
+<!ENTITY aboutAccounts.restrictedError.title "Restrenschì">
+<!ENTITY aboutAccounts.restrictedError.description "Ti na pos betg administrar contos da Firefox cun quest profil.">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Tik hier om de plug-in te activeren.">
+<!ENTITY clickToActivatePlugin                               "Plug-in activeren">
+<!ENTITY checkForUpdates                                     "Controleren op updates…">
+<!ENTITY blockedPlugin.label                                 "Deze plug-in is geblokkeerd voor uw bescherming.">
+<!ENTITY hidePluginBtn.label                                 "Plug-in verbergen">
+<!ENTITY managePlugins                                       "Plug-ins beheren…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "Laad de ">
+<!ENTITY reloadPlugin.middle                                 "pagina opnieuw">
+<!ENTITY reloadPlugin.post                                   " om het nogmaals te proberen.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Crashrapport verzenden">
+<!ENTITY report.submitting                                   "Rapport verzenden…">
+<!ENTITY report.submitted                                    "Crashrapport verzonden.">
+<!ENTITY report.disabled                                     "Crashrapportage uitgeschakeld.">
+<!ENTITY report.failed                                       "Verzending mislukt.">
+<!ENTITY report.unavailable                                  "Geen rapport beschikbaar.">
+<!ENTITY report.comment                                      "Voeg een opmerking toe (opmerkingen zijn publiekelijk zichtbaar)">
+<!ENTITY report.pageURL                                      "De pagina-URL bijvoegen">
+
+<!ENTITY plugin.file                                         "Bestand">
+<!ENTITY plugin.mimeTypes                                    "MIME-typen">
+<!ENTITY plugin.flashProtectedMode.label                     "Beveiligde modus van Adobe Flash inschakelen">
+<!ENTITY plugin.enableBlocklists.label                       "Gevaarlijke en opdringerige Flash-inhoud blokkeren">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Orri berriaren ezarpenak">
+
+<!ENTITY  authorName.label          "Egilea:">
+<!ENTITY  authorName.accesskey      "g">
+<!ENTITY  pageColorHeader           "Orri lehenetsiaren itxura">
+
+<!ENTITY defaultColors.label        "Irakurlearen kolore lehenetsiak (ez ezarri kolorerik orrian)">
+<!ENTITY defaultColors.accesskey    "z">
+<!ENTITY customColors.label         "Erabili kolore pertsonalizatuak:">
+<!ENTITY customColors.accesskey     "p">
+
+<!ENTITY normalText.label           "Testu arrunta">
+<!ENTITY normalText.accesskey       "a">
+<!ENTITY linkText.label             "Loturadun testua">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "Lotura aktiboen testua">
+<!ENTITY activeLinkText.accesskey   "L">
+<!ENTITY visitedLinkText.label      "Bisitatutako loturen testua">
+<!ENTITY visitedLinkText.accesskey  "B">
+<!ENTITY background.label           "Atzeko planoa:">
+<!ENTITY background.accesskey       "A">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Atzeko planoko irudia:">
+<!ENTITY backgroundImage.accesskey  "r">
+<!ENTITY chooseFile.label           "Hautatu fitxategia...">
+<!ENTITY chooseFile.accesskey       "u">
+

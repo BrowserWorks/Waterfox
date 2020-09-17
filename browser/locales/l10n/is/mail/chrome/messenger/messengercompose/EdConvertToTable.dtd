@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Breyta í töflu">
+<!ENTITY instructions1.label "Composer býr til nýja töflu fyrir hverja málsgrein fyrir núverandi val.">
+<!ENTITY instructions2.label "Veldu staf sem er notaður í að aðgreina val í dálka:">
+<!ENTITY commaRadio.label "Komma">
+<!ENTITY spaceRadio.label "Bil">
+<!ENTITY otherRadio.label "Annar stafur:">
+<!ENTITY deleteCharCheck.label "Eyða staf fyrir aðgreinir">
+<!ENTITY collapseSpaces.label "Hunsa auka bil">
+<!ENTITY collapseSpaces.tooltip "Breyta samliggjandi bilum í einn aðgreinistaf">

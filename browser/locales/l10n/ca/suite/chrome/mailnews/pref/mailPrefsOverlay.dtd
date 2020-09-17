@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+
+<!ENTITY enbPluginCheckMailNews.label     "Missatgeria">
+<!ENTITY enbPluginCheckMailNews.accesskey "i">
+<!-- These are added to the Window menu -->
+
+<!ENTITY mail.label                       "Missatgeria">
+<!ENTITY mail.accesskey                   "M">
+<!ENTITY addressbook.label                "Llibreta d'adreces">
+<!ENTITY addressbook.accesskey            "a">
+<!-- These are added to Preferences dialog -->
+
+<!ENTITY viewingMessages.label            "Visualització">
+<!ENTITY notifications.label              "Avisos">
+<!ENTITY address.label                    "Adreçament">
+<!ENTITY composingMessages.label          "Redacció">
+<!ENTITY format.label                     "Format d'enviament">
+<!ENTITY return.label                     "Confirmacions de recepció">
+<!ENTITY junk.label                       "Correu brossa i sospitós">
+<!ENTITY tags.label                       "Etiquetes">
+<!ENTITY characterEncoding.label          "Codificació de caràcters">
+<!ENTITY networkStorage.label             "Xarxa i emmagatzematge">

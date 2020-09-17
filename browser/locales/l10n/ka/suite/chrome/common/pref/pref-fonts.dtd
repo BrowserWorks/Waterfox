@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "შრიფტები">
+
+<!ENTITY  language.label                          "შრიფტები:">
+<!ENTITY  language.accesskey                      "t">
+
+<!ENTITY  typefaces.label                         "გარნიტურა">
+<!ENTITY  sizes.label                             "ზომა (პიქსელი)">
+
+<!ENTITY  proportional.label                      "პროპორციული:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "ნაჭდევებიანი:">
+<!ENTITY  serif.accesskey                         "ნ">
+<!ENTITY  sans-serif.label                        "უნაჭდევო:">
+<!ENTITY  sans-serif.accesskey                    "უ">
+<!ENTITY  monospace.label                         "მონოსიგანის:">
+<!ENTITY  monospace.accesskey                     "m">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "დეკორატიული:">
+<!ENTITY  fantasy.accesskey                       "f">
+<!ENTITY  cursive.label                           "კურსივი:">
+<!ENTITY  cursive.accesskey                       "c">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "ლათინური">
+<!ENTITY  font.langGroup.japanese                 "იაპონური">
+<!ENTITY  font.langGroup.trad-chinese             "ტრადიციული ჩინური(ტაივანი)">
+<!ENTITY  font.langGroup.simpl-chinese            "გამარტივებული ჩინური">
+<!ENTITY  font.langGroup.trad-chinese-hk          "ტრადიციული ჩინური(ჰონგ-კონგი)">
+<!ENTITY  font.langGroup.korean                   "კორეული">
+<!ENTITY  font.langGroup.cyrillic                 "კირილიცა">
+<!ENTITY  font.langGroup.el                       "ბერძნული">
+<!ENTITY  font.langGroup.thai                     "ტაილანდური">
+<!ENTITY  font.langGroup.hebrew                   "ებრაული">
+<!ENTITY  font.langGroup.arabic                   "არაბული">
+<!ENTITY  font.langGroup.devanagari               "დევანაგირი">
+<!ENTITY  font.langGroup.tamil                    "თამილური">
+<!ENTITY  font.langGroup.armenian                 "სომხური">
+<!ENTITY  font.langGroup.bengali                  "ბენგალი">
+<!ENTITY  font.langGroup.canadian                 "საერთეკანადური მარცვლოვანი">
+<!ENTITY  font.langGroup.ethiopic                 "ეთიოპური">
+<!ENTITY  font.langGroup.georgian                 "ქართული">
+<!ENTITY  font.langGroup.gujarati                 "გუჯარათი">
+<!ENTITY  font.langGroup.gurmukhi                 "გურმუხი">
+<!ENTITY  font.langGroup.khmer                    "ქჰმერული">
+<!ENTITY  font.langGroup.malayalam                "მალაური">
+<!ENTITY  font.langGroup.math                     "მათემატიკური">
+<!ENTITY  font.langGroup.odia                     "ორია">
+<!ENTITY  font.langGroup.telugu                   "ტელუგუ">
+<!ENTITY  font.langGroup.kannada                  "კანადა">
+<!ENTITY  font.langGroup.sinhala                  "სინჰალური">
+<!ENTITY  font.langGroup.tibetan                  "ტიბეტური">
+<!ENTITY  font.langGroup.other                    "სხვა დამწერლობები">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "შრიფტის უმცირესი ზომა:">
+<!ENTITY minSize.accesskey                        "z">
+<!ENTITY minSize.none                             "არა">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "ნაჭდევებიანი">
+<!ENTITY  useDefaultFontSansSerif.label           "უნაჭდევო">
+
+<!ENTITY  useDocumentFonts.label                  "დოკუმენტებში ახალი შრიფტების ნებართვა">
+<!ENTITY  useDocumentFonts.accesskey              "o">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "როცა ვებგვერდი საკუთარ შრიფტებს უთითებს">
+<!ENTITY  useDefaultFont.label                    "მათ ნაცვლად ჩემი ძირითადი შრიფტების გამოყენება">
+<!ENTITY  useDefaultFont.accesskey                "u">

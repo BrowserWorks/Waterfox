@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "HTML xat savoli">
+
+<!ENTITY recipient.label "Ba’zi qabul qiluvchilar HTML xatlarni qabul qiluvchilar ro‘yxatida keltirilmagan.">
+
+<!ENTITY question.label "Xabarni oddiy matnga o‘girishni xohlaysizmi yoki HTML formatda jo‘nataverasizmi?">
+
+<!ENTITY plainTextAndHtml.label "Oddiy matn va HTML formatda jo‘natish">
+<!ENTITY plainTextAndHtml.accesskey "O">
+<!ENTITY plainTextOnly.label "Faqat Oddiy matnda jo‘natis">
+<!ENTITY plainTextOnly.accesskey "O">
+<!ENTITY htmlOnly.label "Faqat HTML formatda jo‘natish">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Jo‘natish">
+<!ENTITY send.accesskey "J">

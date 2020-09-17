@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox  ගිණුම්">
+<!ENTITY aboutAccounts.connected.description "ඔබ සබඳව ඇත්තේ මෙලෙසයි">
+<!ENTITY aboutAccounts.syncPreferences.label "සම්මුහු සැකසුම් පිරික්සීමට මෙහි ටැප් කරන්න">
+
+<!ENTITY aboutAccounts.noConnection.title "අන්තර්ජාල සබඳතාවයක් නැත">
+<!ENTITY aboutAccounts.retry.label "නැවත උත්සාහ කරන්න">
+
+<!ENTITY aboutAccounts.restrictedError.title "සීමාකර ඇත">
+<!ENTITY aboutAccounts.restrictedError.description "ඔබට මෙම පැතිකඩේ සිට Firefox ගිණුම් පාලනය කළ නොහැක.">

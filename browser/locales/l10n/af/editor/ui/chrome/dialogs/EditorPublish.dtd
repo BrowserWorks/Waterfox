@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Publiseer bladsy">
+<!ENTITY windowTitleSettings.label    "Publiseer-opstelling">
+<!ENTITY publishTab.label             "Publiseer">
+<!ENTITY settingsTab.label            "Opstelling">
+<!ENTITY publishButton.label          "Publiseer">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Werfnaam:">
+<!ENTITY siteList.accesskey           "W">
+<!ENTITY siteList.tooltip             "Kies die werf waarheen u wil publiseer">
+<!ENTITY newSiteButton.label          "Nuwe werf">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Werfsubgids vir hierdie bladsy:">
+<!ENTITY docDirList.accesskey         "W">
+<!ENTITY docDirList.tooltip           "Kies of tik naam van afgeleë subgids vir hierdie bladsy">
+<!ENTITY publishImgCheckbox.label     "Sluit prent en ander lêers in">
+<!ENTITY publishImgCheckbox.accesskey "a">
+<!ENTITY publishImgCheckbox.tooltip   "Publiseer prente en ander lêers waarna hierdie bladsy verwys">
+<!ENTITY sameLocationRadio.label      "Gebruik dieselfde ligging as bladsy">
+<!ENTITY sameLocationRadio.accesskey  "G">
+<!ENTITY sameLocationRadio.tooltip    "Publiseer lêers na dieselfde ligging as die bladsy">
+<!ENTITY useSubdirRadio.label         "Gebruik hierdie werfsubgids:">
+<!ENTITY useSubdirRadio.accesskey     "s">
+<!ENTITY useSubdirRadio.tooltip       "Publiseer lêers na die gemerkte afgeleë subgids">
+<!ENTITY otherDirList.tooltip         "Kies of tik naam van afgeleë subgids in waarin lêers gepubliseer gaan word">
+<!ENTITY pageTitle.label              "Bladsytitel:">
+<!ENTITY pageTitle.accesskey          "t">
+<!ENTITY pageTitle.tooltip            "Tik 'n titel in om die bladsy te identifiseer in die venstertitel en boekmerke">
+
+<!ENTITY filename.label               "Lêernaam:">
+<!ENTITY filename.accesskey           "L">
+<!ENTITY filename.tooltip             "Tik 'n naam vir hierdie lêer in, insluitend '.html' vir 'n webwerf">
+
+<!ENTITY setDefaultButton.label       "Stel as verstek">
+<!ENTITY setDefaultButton.accesskey   "v">
+<!ENTITY removeButton.label           "Verwyder werf">
+<!ENTITY removeButton.accesskey       "V">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Publiseer werwe">
+<!ENTITY serverInfo.label             "Bedienerinligting">
+<!ENTITY loginInfo.label              "Aanmeldinligting">
+<!ENTITY siteName.label               "Werfnaam:">
+<!ENTITY siteName.accesskey           "W">
+<!ENTITY siteName.tooltip             "'n Kennaam wat hierdie publiseerwerf identifiseer (bv: 'MyWerf')">
+<!ENTITY siteUrl.label                "Publiseeradres (bv: 'ftp://ftp.myisp.com/mygebruikernaam'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "Die FTP://- of HTTP://-adres wat deur u ISP of webgasheer verskaf is">
+<!ENTITY browseUrl.label              "HTTP-adres van u tuisblad (bv: 'http://www.myisp.com/mygebruikernaam'):">
+<!ENTITY browseUrl.accesskey          "H">
+<!ENTITY browseUrl.tooltip            "Die HTTP://-adres van u tuissubgids (moenie lêernaam insluit nie)">
+<!ENTITY username.label               "Gebruikernaam:">
+<!ENTITY username.accesskey           "G">
+<!ENTITY username.tooltip             "Die gebruikernaam waarmee u by u ISP of webgasheer aanmeld">
+<!ENTITY password.label               "Wagwoord:">
+<!ENTITY password.accesskey           "w">
+<!ENTITY password.tooltip             "Die wagwoord wat by u gebruikernaam pas">
+<!ENTITY savePassword.label           "Stoor wagwoord">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Selekteer dit om u wagwoord beveilig met die wagwoordbestuurder te stoor">

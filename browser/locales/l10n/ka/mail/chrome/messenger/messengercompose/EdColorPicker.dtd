@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ფერი">
+<!ENTITY lastPickedColor.label "ბოლო შერჩეული ფერი">
+<!ENTITY lastPickedColor.accessKey "L">
+<!ENTITY chooseColor1.label "ფერის არჩევა:">
+<!ENTITY chooseColor2.label "HTML-ის ფერის სტრიქონის შეყვანა">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(მაგ.: &quot;#0000ff&quot; ან &quot;blue&quot;):">
+<!ENTITY default.label "ძირითადი">
+<!ENTITY default.accessKey "D">
+<!ENTITY palette.label "პალიტრა:">
+<!ENTITY standardPalette.label "სტანდარტული">
+<!ENTITY webPalette.label "ყველა ფერი">
+<!ENTITY background.label "ფონი:">
+<!ENTITY background.accessKey "B">
+<!ENTITY table.label "ცხრილი">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "უჯრა(ები)">
+<!ENTITY cell.accessKey "C">

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Du er i et privat nettlesing-vindu">
+<!ENTITY privatebrowsingpage.title.normal        "Vil du starte privat nettlesing?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; vil ikke huske historikk for dette vinduet.">
+<!ENTITY privatebrowsingpage.status.normal       "Du er ikke i et privat vindu.">
+
+<!ENTITY privatebrowsingpage.common.description  "I et privat nettleservindu vil &brandShortName; ikke ta vare på nettleserhistorikk, søkehistorikk, nedlastingshistorikk, skjemahistorikk, infokapsler eller midlertidige Internett-filer.  Bokmerker du lager, og filer som lastes ned, vil likevel beholdes.">
+<!ENTITY privatebrowsingpage.track.warn          "Selv om denne datamaskinen ikke vil lagre historikken over det du er innom, kan arbeidsgiveren eller Internett-tilbyderen likevel være i stand til å spore hvilke sider du er innom.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Les mer">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "L">
+
+<!ENTITY privatebrowsingpage.close.info          "Når du er ferdig, lukk vinduet for å avslutte privat nettlesing.">
+<!ENTITY privatebrowsingpage.close.label         "Lukk dette vinduet nå">
+<!ENTITY privatebrowsingpage.close.accesskey     "u">
+
+<!ENTITY privatebrowsingpage.start.info          "For å starte privat nettlesing, trykk på knappen nedenfor, eller velg i menyen Fil ▶ Ny ▶ Privat vindu.">
+<!ENTITY privatebrowsingpage.private.label       "Åpne et nytt privat vindu">
+<!ENTITY privatebrowsingpage.private.accesskey   "Å">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importa la llibreta d'adreces">
+<!ENTITY fieldMapImport.size "width: 45em; height: 35em;">
+<!ENTITY fieldMapImport.recordNumber "Registre:">
+<!ENTITY fieldMapImport.next.label "Següent">
+<!ENTITY fieldMapImport.next.accesskey "n">
+<!ENTITY fieldMapImport.previous.label "Anterior">
+<!ENTITY fieldMapImport.previous.accesskey "e">
+<!ENTITY fieldMapImport.text "Utilitza Mou cap amunt i Mou cap avall per emparellar els camps de la llibreta d'adreces a l'esquerra de les dades correctes per importar-les a la dreta. No marqueu els ítems que no voleu importar.  ">
+<!ENTITY fieldMapImport.up.label "Mou cap amunt">
+<!ENTITY fieldMapImport.up.accesskey "u">
+<!ENTITY fieldMapImport.down.label "Mou cap avall">
+<!ENTITY fieldMapImport.down.accesskey "v">
+<!ENTITY fieldMapImport.fieldListTitle "Camps de la llibreta d'adreces:">
+<!ENTITY fieldMapImport.dataTitle "Registres de dades per importar:">
+<!ENTITY fieldMapImport.skipFirstRecord.label "La primera entrada conté els noms dels camps">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "L">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Acusats de recepcion">
+<!ENTITY useGlobalPrefs.label         "Utilizar mas preferéncias globalas d'acusats de recepcion per aqueste compte">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY useCustomPrefs.label         "Personalizar los acusats de recepcion per aqueste compte">
+<!ENTITY useCustomPrefs.accesskey     "P">
+<!ENTITY requestReceipt.label         "Al moment del mandadís d'un messatge, demandar totjorn un acusat de recepcion">
+<!ENTITY requestReceipt.accesskey     "L">
+<!ENTITY receiptArrive.label          "Quand un acusat de recepcion arriba :">
+<!ENTITY leaveIt.label                "O daissar dins lo dorsièr « Corrièr entrant »">
+<!ENTITY leaveIt.accesskey            "i">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "O desplaçar dins lo dorsièr « Mandats »">
+<!ENTITY moveToSent.accesskey         "e">
+<!ENTITY requestMDN.label             "Al moment de la recepcion d'una demanda d'acusat de recepcion :">
+<!ENTITY returnSome.label             "Autorizar los acusats de recepcion per d'unes messatges">
+<!ENTITY returnSome.accesskey         "r">
+<!ENTITY never.label                  "Mandar pas jamai d'acusat de recepcion">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Se soi ni lo destinatari ni en còpia del messatge :">
+<!ENTITY notInToCc.accesskey          "S">
+<!ENTITY outsideDomain.label          "Se l'expeditor es en defòra de mon domeni :">
+<!ENTITY outsideDomain.accesskey      "x">
+<!ENTITY otherCases.label             "Dins totes los autres cases :">
+<!ENTITY otherCases.accesskey         "D">
+<!ENTITY askMe.label                  "Me demandar">
+<!ENTITY alwaysSend.label             "Mandar totjorn">
+<!ENTITY neverSend.label              "Mandar pas jamai">

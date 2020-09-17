@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Yaron <sh.yaron@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# hatul <amiadb@gmail.com>
+#
+-->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "אפשרויות ארכיון">
+<!ENTITY archiveGranularityPrefix.label "כאשר מעבירים הודעות לארכיון, מקם אותן בתוך:">
+<!ENTITY archiveFlat.label "תיקייה בודדת">
+<!ENTITY archiveFlat.accesskey "ב">
+<!ENTITY archiveYearly.label "תיקיות ארכיון שנתי">
+<!ENTITY archiveYearly.accesskey "ש">
+<!ENTITY archiveMonthly.label "תיקיות ארכיון חודשי">
+<!ENTITY archiveMonthly.accesskey "ח">
+<!ENTITY keepFolderStructure.label "שמירת מבנה תיקיות נוכחי להודעות בארכיון">
+<!ENTITY keepFolderStructure.accesskey "נ">
+<!ENTITY archiveExample.label "דוגמה">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "ארכיון">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "תיבת דואר נכנס">
+

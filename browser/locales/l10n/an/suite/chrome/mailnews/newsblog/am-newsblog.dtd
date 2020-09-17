@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffStart.label "Buscar mensaches nuevos cada ">
+<!ENTITY biffStart.accesskey "B">
+<!ENTITY biffEnd.label "menutos">
+
+<!ENTITY loginAtStartup.label "Comprobar si i hai mensaches nuevos en encetar"> 
+<!ENTITY loginAtStartup.accesskey "C">
+
+<!ENTITY useQuickMode.label "Amostrar de forma predeterminada o resumen d'articlos en cuenta de cargar a pachina web"> 
+<!ENTITY useQuickMode.accesskey "A">
+
+<!ENTITY manageSubscriptions.label "Administrar suscripciones…"> 
+<!ENTITY manageSubscriptions.accesskey "A">
+<!-- entities from rss.rdf -->
+
+<!ENTITY feeds.accountName "Blogs &amp; News Feeds">
+<!ENTITY feeds.wizardShortName "Canales">
+<!ENTITY feeds.wizardLongName "Blogs &amp; News Feeds">
+<!ENTITY feeds.wizardLongName.accesskey "F">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "Keselamatan Mesej">
+<!ENTITY subject.plaintextWarning "Sila ambil perhatian: Baris subjek mesej e-mel tidak akan dienkrip.">
+<!ENTITY status.heading "Kandungan mesej anda akan dihantar seperti berikut:">
+<!ENTITY status.signed "Ditandatangani secara digital:">
+<!ENTITY status.encrypted "Dienkrip:">
+<!ENTITY status.certificates "Sijil:">
+<!ENTITY view.label "Papar">
+<!ENTITY view.accesskey "P">
+<!ENTITY tree.recipient "Penerima">
+<!ENTITY tree.status "Status">
+<!ENTITY tree.issuedDate "Dikeluarkan">
+<!ENTITY tree.expiresDate "Luput">

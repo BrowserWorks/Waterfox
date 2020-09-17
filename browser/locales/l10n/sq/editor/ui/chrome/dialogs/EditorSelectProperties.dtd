@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Veti Liste Përzgjedhjesh">
+
+<!ENTITY Select.label "Listë Përzgjedhjesh">
+<!ENTITY SelectName.label "Emër Liste:">
+<!ENTITY SelectName.accesskey "E">
+<!ENTITY SelectSize.label "Lartësi:">
+<!ENTITY SelectSize.accesskey "L">
+<!ENTITY SelectMultiple.label "Përzgjedhje e Shumëfishtë">
+<!ENTITY SelectMultiple.accesskey "P">
+<!ENTITY SelectDisabled.label "E çaktivizuar">
+<!ENTITY SelectDisabled.accesskey "Ç">
+<!ENTITY SelectTabIndex.label "Vlerë Tabulacioni:">
+<!ENTITY SelectTabIndex.accesskey "T">
+
+<!ENTITY OptGroup.label "Grup Mundësish">
+<!ENTITY OptGroupLabel.label "Etiketë:">
+<!ENTITY OptGroupLabel.accesskey "E">
+<!ENTITY OptGroupDisabled.label "E çaktivizuar">
+<!ENTITY OptGroupDisabled.accesskey "Ç">
+
+<!ENTITY Option.label "Mundësi">
+<!ENTITY OptionText.label "Tekst:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Vlerë:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "Përzgjedhur Paraprakisht">
+<!ENTITY OptionSelected.accesskey "P">
+<!ENTITY OptionDisabled.label "E çaktivizuar">
+<!ENTITY OptionDisabled.accesskey "Ç">
+
+<!ENTITY TextHeader.label "Tekst">
+<!ENTITY ValueHeader.label "Vlerë">
+<!ENTITY SelectedHeader.label "E përzgjedhur">
+
+<!ENTITY AddOption.label "Shto Mundësi">
+<!ENTITY AddOption.accesskey "M">
+<!ENTITY AddOptGroup.label "Shto Grup">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "Hiqe">
+<!ENTITY RemoveElement.accesskey "H">
+<!ENTITY MoveElementUp.label "Ngrije">
+<!ENTITY MoveElementUp.accesskey "i">
+<!ENTITY MoveElementDown.label "Ule">
+<!ENTITY MoveElementDown.accesskey "U">

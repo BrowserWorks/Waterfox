@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "პირი">
+<!ENTITY Contact.accesskey               "პ">
+<!ENTITY Name.box                        "სახელი">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "სახელი:">
+<!ENTITY NameField1.accesskey           "ს">
+<!ENTITY NameField2.label               "გვარი:">
+<!ENTITY NameField2.accesskey           "გ">
+<!ENTITY PhoneticField1.label           "გამოითქმის:">
+<!ENTITY PhoneticField2.label           "გამოითქმის:">
+<!ENTITY DisplayName.label              "გამოსაჩენი:">
+<!ENTITY DisplayName.accesskey          "ჩ">
+<!ENTITY preferDisplayName.label        "ყოველთვის გამოსაჩენი სახელის გამოყენება წერილის თავსართში">
+<!ENTITY preferDisplayName.accesskey    "ნ">
+<!ENTITY NickName.label                 "მეტსახელი:">
+<!ENTITY NickName.accesskey             "მ">
+
+<!ENTITY PrimaryEmail.label             "ელფოსტა:">
+<!ENTITY PrimaryEmail.accesskey         "ე">
+<!ENTITY SecondEmail.label              "დამატებითი ელფოსტა:">
+<!ENTITY SecondEmail.accesskey          "დ">
+<!ENTITY PreferMailFormat.label         "წერილების მიღებას ამჯობინებს შემდეგი სახით:">
+<!ENTITY PreferMailFormat.accesskey     "ჯ">
+<!ENTITY PlainText.label                "ტექსტური">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "უცნობი">
+<!ENTITY chatName.label                 "სახელი სასაუბროსთვის:">
+
+<!ENTITY WorkPhone.label                "სამსახური:">
+<!ENTITY WorkPhone.accesskey            "მ">
+<!ENTITY HomePhone.label                "ბინა:">
+<!ENTITY HomePhone.accesskey            "ბ">
+<!ENTITY FaxNumber.label                "ფაქსი:">
+<!ENTITY FaxNumber.accesskey            "ქ">
+<!ENTITY PagerNumber.label              "პეიჯერი:">
+<!ENTITY PagerNumber.accesskey          "პ">
+<!ENTITY CellularNumber.label           "მობილური:">
+<!ENTITY CellularNumber.accesskey       "ო">
+
+<!ENTITY Home.tab                       "პირადი">
+<!ENTITY Home.accesskey                 "რ">
+<!ENTITY HomeAddress.label              "მისამართი:">
+<!ENTITY HomeAddress.accesskey          "თ">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "ქალაქი:">
+<!ENTITY HomeCity.accesskey             "ლ">
+<!ENTITY HomeState.label                "რეგიონი/რაიონი:">
+<!ENTITY HomeState.accesskey            "ნ">
+<!ENTITY HomeZipCode.label              "ZIP/საფოსტო კოდი:">
+<!ENTITY HomeZipCode.accesskey          "Z">
+<!ENTITY HomeCountry.label              "ქვეყანა:">
+<!ENTITY HomeCountry.accesskey          "ყ">
+<!ENTITY HomeWebPage.label              "ვებგვერდი:">
+<!ENTITY HomeWebPage.accesskey          "ვ">
+<!ENTITY Birthday.label                 "დაბადების დღე:">
+<!ENTITY Birthday.accesskey             "ბ">
+<!ENTITY Month.placeholder              "თვე">
+<!ENTITY Day.placeholder                "დღე">
+<!ENTITY Year.placeholder               "წელი">
+<!ENTITY Age.label                      "ასაკი:">
+<!ENTITY Age.placeholder                "ასაკი">
+
+<!ENTITY Work.tab                       "სამუშაო">
+<!ENTITY Work.accesskey                 "ს">
+<!ENTITY JobTitle.label                 "თანამდებობა:">
+<!ENTITY JobTitle.accesskey             "ნ">
+<!ENTITY Department.label               "განყოფილება:">
+<!ENTITY Department.accesskey           "ფ">
+<!ENTITY Company.label                  "დაწესებულება:">
+<!ENTITY Company.accesskey              "უ">
+<!ENTITY WorkAddress.label              "მისამართი:">
+<!ENTITY WorkAddress.accesskey          "მ">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "ქალაქი:">
+<!ENTITY WorkCity.accesskey             "ლ">
+<!ENTITY WorkState.label                "რეგიონი/რაიონი:">
+<!ENTITY WorkState.accesskey            "რ">
+<!ENTITY WorkZipCode.label              "ZIP/საფოსტო კოდი:">
+<!ENTITY WorkZipCode.accesskey          "Z">
+<!ENTITY WorkCountry.label              "ქვეყანა:">
+<!ENTITY WorkCountry.accesskey          "ყ">
+<!ENTITY WorkWebPage.label              "ვებგვერდი:">
+<!ENTITY WorkWebPage.accesskey          "ვ">
+
+<!ENTITY Other.tab                      "სხვა">
+<!ENTITY Other.accesskey                "ხ">
+<!ENTITY Custom1.label                  "დამატებითი 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "დამატებითი 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "დამატებითი 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "დამატებითი 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "შენიშვნები:">
+<!ENTITY Notes.accesskey                "შ">
+
+<!ENTITY Chat.tab                       "სასაუბრო">
+<!ENTITY Chat.accesskey                 "ა">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "Jabber ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "IRC მეტსახელი:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "ფოტო">
+<!ENTITY Photo.accesskey                "ტ">
+<!ENTITY GenericPhoto.label             "საერთო ფოტო">
+<!ENTITY GenericPhoto.accesskey         "თ">
+<!ENTITY DefaultPhoto.label             "ნაგულისხმევი">
+<!ENTITY PhotoFile.label                "ამ კომპიუტერიდან">
+<!ENTITY PhotoFile.accesskey            "კ">
+<!ENTITY BrowsePhoto.label              "ამორჩევა">
+<!ENTITY BrowsePhoto.accesskey          "ჩ">
+<!ENTITY PhotoURL.label                 "ინტერნეტიდან">
+<!ENTITY PhotoURL.accesskey             "ნ">
+<!ENTITY PhotoURL.placeholder           "ჩასვით ან აკრიფეთ ფოტოს ვებმისამართი">
+<!ENTITY UpdatePhoto.label              "განახლება">
+<!ENTITY UpdatePhoto.accesskey          "ხ">
+<!ENTITY PhotoDropTarget.label          "გადმოიტანეთ ახალი ფოტო აქ">

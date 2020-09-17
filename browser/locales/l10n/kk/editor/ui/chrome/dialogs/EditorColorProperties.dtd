@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Бет түстері және фоны">
+<!ENTITY pageColors.label "Бет түстері">
+<!ENTITY defaultColorsRadio.label "Пайдаланушының бастапқы түстері (Парақта түстерді орнатпау)">
+<!ENTITY defaultColorsRadio.accessKey "п">
+<!ENTITY defaultColorsRadio.tooltip "Пайдаланушы браузерінде көрсетілген бастапқы түстерді қолдану">
+<!ENTITY customColorsRadio.label "Таңдауыңызша түстерді қолдану:">
+<!ENTITY customColorsRadio.accessKey "Т">
+<!ENTITY customColorsRadio.tooltip "Бұл түс баптаулары пайдаланушы браузері баптауларын алмастырады">
+
+<!ENTITY normalText.label "Кәдімгі мәтін">
+<!ENTITY normalText.accessKey "К">
+<!ENTITY linkText.label "Сілтеме мәтіні">
+<!ENTITY linkText.accessKey "С">
+<!ENTITY activeLinkText.label "Белсенді сілтеме мәтіні">
+<!ENTITY activeLinkText.accessKey "Б">
+<!ENTITY visitedLinkText.label "Қаралған сілтеме мәтіні">
+<!ENTITY visitedLinkText.accessKey "а">
+<!ENTITY background.label "Фон:">
+<!ENTITY background.accessKey "Ф">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Фон суреті:">
+<!ENTITY backgroundImage.accessKey "у">
+<!ENTITY backgroundImage.tooltip "Парағыңыздың фоны ретінде суретті орнату">
+<!ENTITY backgroundImage.shortenedDataURI "Деректердің қысқартылған URI-і (көшіру толық URI-ді алмасу буферіне орналастырады)">

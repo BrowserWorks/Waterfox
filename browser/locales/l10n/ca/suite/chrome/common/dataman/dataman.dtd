@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Gestor de dades">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "Tots els tipus de dades">
+<!ENTITY select.cookies.label "Només galetes">
+<!ENTITY select.permissions.label "Només permisos">
+<!ENTITY select.preferences.label "Només preferències">
+<!ENTITY select.passwords.label "Només contrasenyes">
+<!ENTITY select.storage.label "Només emmagatzematge">
+
+<!ENTITY domain.search.placeholder "Cerca de dominis">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Domini">
+
+<!ENTITY domain.ctx.forgetdomain.label "Oblida aquest domini">
+<!ENTITY domain.ctx.forgetdomain.accesskey "b">
+<!ENTITY domain.ctx.forgetglobal.label "Oblida les dades globals">
+<!ENTITY domain.ctx.forgetglobal.accesskey "b">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Galetes">
+<!ENTITY tab.permissions.label "Permisos">
+<!ENTITY tab.preferences.label "Preferències">
+<!ENTITY tab.passwords.label "Contrasenyes">
+<!ENTITY tab.storage.label "Emmagatzematge">
+<!ENTITY tab.formdata.label "Dades de formulari">
+<!ENTITY tab.forget.label "Oblida-ho">
+<!-- cookies -->
+
+<!ENTITY cookies.description "Aquest domini ha emmagatzemat les galetes següent al vostre ordinador:">
+
+<!ENTITY cookies.tree.host.label "Lloc web">
+<!ENTITY cookies.tree.name.label "Nom de la galeta">
+<!ENTITY cookies.tree.expires.label "Venciment">
+
+<!ENTITY cookies.infobox.label "Informació de la galeta seleccionada">
+
+<!ENTITY cookies.info.name.label "Nom:">
+<!ENTITY cookies.info.value.label "Contingut:">
+<!ENTITY cookies.info.host.label "Servidor central:">
+<!ENTITY cookies.info.domain.label "Domini:">
+<!ENTITY cookies.info.path.label "Camí:">
+<!ENTITY cookies.info.sendtype.label "S'envia per:">
+<!ENTITY cookies.info.expires.label "Venç:">
+
+<!ENTITY cookies.ctx.remove.label "Suprimeix">
+<!ENTITY cookies.ctx.remove.accesskey "r">
+<!ENTITY cookies.ctx.selectAll.label "Selecciona-ho tot">
+<!ENTITY cookies.ctx.selectAll.accesskey "a">
+
+<!ENTITY cookies.button.remove.label "Suprimeix">
+<!ENTITY cookies.button.remove.accesskey "r">
+
+<!ENTITY cookies.blockOnRemove.label "En suprimir, impedeix als llocs web llistats deixar galetes en un futur">
+<!ENTITY cookies.blockOnRemove.accesskey "w">
+<!-- permissions -->
+
+<!ENTITY perm.UseDefault "Utilitza el valor per defecte">
+<!ENTITY perm.AskAlways "Demana-m'ho sempre">
+<!ENTITY perm.NeverSave "Mai ho desis">
+<!ENTITY perm.Allow "Permet">
+<!ENTITY perm.AllowSameDomain "Permet per al mateix domini">
+<!ENTITY perm.AllowSession "Permet durant la sessió">
+<!ENTITY perm.Block "Bloca">
+
+<!ENTITY perm.host.placeholder "Introduïu un nom de servidor central">
+<!ENTITY perm.button.add.label "Afegeix">
+<!ENTITY perm.button.add.accesskey "A">
+<!-- preferences -->
+
+<!ENTITY prefs.description "Les preferències de contingut són un mecanisme del &brandShortName; per desar paràmetres específics per a un lloc web, com ara els nivells de zoom.">
+
+<!ENTITY prefs.tree.host.label "Lloc web">
+<!ENTITY prefs.tree.name.label "Nom de la preferència">
+<!ENTITY prefs.tree.value.label "Valor">
+
+<!ENTITY prefs.ctx.remove.label "Suprimeix">
+<!ENTITY prefs.ctx.remove.accesskey "r">
+<!ENTITY prefs.ctx.selectAll.label "Selecciona-ho tot">
+<!ENTITY prefs.ctx.selectAll.accesskey "a">
+
+<!ENTITY prefs.button.remove.label "Suprimeix">
+<!ENTITY prefs.button.remove.accesskey "r">
+<!-- passwords -->
+
+<!ENTITY pwd.description "Hi ha emmagatzemades les contrasenyes següents per a aquest domini:">
+
+<!ENTITY pwd.tree.host.label "Lloc web">
+<!ENTITY pwd.tree.username.label "Nom d'usuari">
+<!ENTITY pwd.tree.password.label "Contrasenya">
+
+<!ENTITY pwd.ctx.remove.label "Suprimeix">
+<!ENTITY pwd.ctx.remove.accesskey "r">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Copia la contrasenya">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "C">
+<!ENTITY pwd.ctx.selectAll.label "Selecciona-ho tot">
+<!ENTITY pwd.ctx.selectAll.accesskey "a">
+
+<!ENTITY pwd.button.remove.label "Suprimeix">
+<!ENTITY pwd.button.remove.accesskey "r">
+<!-- storage -->
+
+<!ENTITY storage.description "Aquest domini utilitza els següents emmagatzematges web en el vostre ordinador:">
+
+<!ENTITY storage.tree.host.label "Lloc web">
+<!ENTITY storage.tree.type.label "Tipus">
+<!ENTITY storage.tree.size.label "Mida">
+
+<!ENTITY storage.ctx.remove.label "Suprimeix">
+<!ENTITY storage.ctx.remove.accesskey "r">
+<!ENTITY storage.ctx.selectAll.label "Selecciona-ho tot">
+<!ENTITY storage.ctx.selectAll.accesskey "a">
+
+<!ENTITY storage.button.remove.label "Suprimeix">
+<!ENTITY storage.button.remove.accesskey "r">
+<!-- form data -->
+
+<!ENTITY fdata.search.placeholder "Cerca de les dades dels camps">
+
+<!ENTITY fdata.tree.fieldname.label "Nom del camp">
+<!ENTITY fdata.tree.value.label "Valor introduït">
+<!ENTITY fdata.tree.usecount.label "Recompte d'ús">
+<!ENTITY fdata.tree.firstused.label "Primer ús">
+<!ENTITY fdata.tree.lastused.label "Darrer ús">
+
+<!ENTITY fdata.ctx.remove.label "Suprimeix">
+<!ENTITY fdata.ctx.remove.accesskey "r">
+<!ENTITY fdata.ctx.selectAll.label "Selecciona-ho tot">
+<!ENTITY fdata.ctx.selectAll.accesskey "a">
+
+<!ENTITY fdata.button.remove.label "Suprimeix">
+<!ENTITY fdata.button.remove.accesskey "r">
+<!-- forget -->
+
+<!ENTITY forget.cookies.label "Galetes">
+<!ENTITY forget.cookies.accesskey "G">
+<!ENTITY forget.permissions.label "Permisos">
+<!ENTITY forget.permissions.accesskey "P">
+<!ENTITY forget.preferences.label "Preferències de contingut">
+<!ENTITY forget.preferences.accesskey "o">
+<!ENTITY forget.passwords.label "Contrasenyes">
+<!ENTITY forget.passwords.accesskey "a">
+<!ENTITY forget.storage.label "Emmagatzematge">
+<!ENTITY forget.storage.accesskey "E">
+<!ENTITY forget.formdata.label "Dades de formularis">
+<!ENTITY forget.formdata.accesskey "D">
+
+<!ENTITY forget.button.label "Oblida aquestes dades">
+<!ENTITY forget.button.accesskey "b">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "Baixada en curs…">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "Pausa">
+<!ENTITY cmd.resume.tooltip              "Reprèn">
+<!ENTITY cmd.retry.tooltip               "Reintenta">
+<!ENTITY cmd.cancel.tooltip              "Cancel·la">
+<!ENTITY cmd.open.label                  "Obre">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "Obre la carpeta">
+<!ENTITY cmd.show.accesskey              "c">
+<!ENTITY cmd.goToDownloadPage.label      "Vés a la pàgina de la baixada">
+<!ENTITY cmd.goToDownloadPage.accesskey  "V">
+<!ENTITY cmd.copyDownloadLink.label      "Copia l'enllaç de la baixada">
+<!ENTITY cmd.copyDownloadLink.accesskey  "l">
+<!ENTITY closeWhenDone.label             "Tanca la finestra quan la baixada hagi acabat.">
+<!ENTITY closeWhenDone.accesskey         "f">

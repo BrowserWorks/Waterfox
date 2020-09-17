@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "โฟลเดอร์การค้นหาที่บันทึกไว้ใหม่">
+<!ENTITY name.label                 "ชื่อ:">
+<!ENTITY name.accesskey             "ช">
+<!ENTITY description.label          "สร้างเป็นโฟลเดอร์ย่อยของ:">
+<!ENTITY description.accesskey      "ส">
+
+<!ENTITY searchTermCaption.label "กำหนดค่าเกณฑ์การค้นหาที่ใช้สำหรับโฟลเดอร์การค้นหาที่บันทึกไว้นี้: ">
+
+<!ENTITY folderSelectionCaption.label "เลือกโฟลเดอร์ที่จะค้นหา: ">
+<!ENTITY chooseFoldersButton.label "เลือก…">
+<!ENTITY chooseFoldersButton.accesskey "ล">
+
+<!ENTITY searchOnline.label "ค้นหาออนไลน์ (ให้ผลลัพธ์ล่าสุดสำหรับโฟลเดอร์ IMAP และข่าว แต่จะใช้เวลาในการเปิดโฟลเดอร์นานขึ้น)">
+<!ENTITY searchOnline.accesskey "ค">
+<!ENTITY newFolderButton.label       "สร้าง">
+<!ENTITY newFolderButton.accesskey   "ส">
+<!ENTITY editFolderButton.label      "อัปเดต">
+<!ENTITY editFolderButton.accesskey  "อ">

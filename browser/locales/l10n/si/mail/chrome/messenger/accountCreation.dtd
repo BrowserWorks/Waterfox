@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "ඔබේ නම:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY name.text                       "ඔබේ නම, අන් අයට පෙන්වන අයුරු">
+<!ENTITY email.label                     "විද්‍යුත් තැපැල් ලිපිනය:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY password.label                  "රහස්පදය:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder "රහස්පදය">
+<!ENTITY password.text                   "Optional, will only be used to validate the username">
+
+<!ENTITY rememberPassword.label          "රහස්පදය මතක තබාගන්න">
+<!ENTITY rememberPassword.accesskey      "m">
+
+<!ENTITY imapLong.label "IMAP (දුරස්ථ බහාලුම්)">
+<!ENTITY pop3Long.label "POP3 (ලිපි මගේ පරිගණකයේ තබන්න)">
+
+<!ENTITY incoming.label                  "එවුම් :">
+<!ENTITY outgoing.label                  "යැවුම්:">
+<!ENTITY username.label "පරිශීලක නම:">
+<!ENTITY auth.label "සත්‍යාපනය">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label "POP3">
+<!ENTITY smtp.label                      "SMTP">
+
+<!ENTITY autodetect.label "ස්ව-හැඳුනුම">
+<!ENTITY noEncryption.label              "කිසිවක් නැත">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!ENTITY advancedSetup.label "වැඩිමනත් මානකිරීම්">
+<!ENTITY advancedSetup.accesskey "A">
+<!ENTITY cancel.label                    "එපා">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "දිගටම කරන්න">
+<!ENTITY continue.accesskey              "C">
+<!ENTITY stop.label                      "නවතන්න">
+<!ENTITY stop.accesskey                  "S">
+
+<!-- LOCALIZATION NOTE (retest.label): This is the text that is
+     displayed on the button which will re-guess the account configuration,
+     taking into account the settings the user has changed. -->
+
+<!ENTITY half-manual-test.label "යළි-පරීක්ෂා කරන්න">
+<!ENTITY half-manual-test.accesskey "t">
+
+
+<!ENTITY warning.label                   "අවවාදයයි!">
+<!ENTITY incomingSettings.label          "යැවීම් සැකසුම්:">
+<!ENTITY outgoingSettings.label          "ලැබීම් සැකසුම්:">
+<!ENTITY technicaldetails.label          "තාක්ෂණික විස්තර">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "මම අනතුර තේරුම් ගතිමි.">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "කළා">
+<!ENTITY doneAccount.accesskey           "D">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "සැකසුම් වෙනස්කිරීම">
+<!ENTITY changeSettings.accesskey        "S">
+
+<!ENTITY contactYourProvider.description "&brandShortName; can allow you to get to your mail using the provided configurations. However, you should contact your administrator or email provider regarding these improper connections. See the Thunderbird FAQ for more information.">
+
+<!ENTITY insecureServer.tooltip.title    "අවවාදයයි! මෙය අනාරක්ෂිත සේවාදායකයකි.">
+<!ENTITY insecureServer.tooltip.details  "වැඩි විස්තර සඳහා වෘත්තය ත්ලිත් තරන්න.">
+
+<!ENTITY insecureUnencrypted.description "Your email and authentication are sent unencrypted, so your password (and your message) could easily be read by other people. &brandShortName; will let you get to your mail, but you should contact your email provider about configuring the server with a secure connection.">
+<!ENTITY insecureSelfSigned.description  "The server uses a certificate that we can't trust, so we can't be sure that someone isn't intercepting the traffic between &brandShortName; and your server. &brandShortName; will let you get to your mail, but you should really get your email provider to configure the server with a trusted certificate.">
+<!ENTITY secureServer.description        "සුභපැතුම්! මෙය ආරක්ෂිත සේවාදායකයකි.">
+
+
+<!--
+Entities below were automatically added by compare-locales,
+ based on en-US entities.
+-->
+

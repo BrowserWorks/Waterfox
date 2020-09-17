@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+
+<!ENTITY messageStorage.label "Съхранение на съобщения">
+<!ENTITY securitySettings.label "Настройки за защита">
+<!ENTITY serverSettings.label "Настройки на сървъра">
+<!ENTITY serverType.label "Вид сървър:">
+<!ENTITY serverName.label "Име на сървъра:">
+<!ENTITY serverName.accesskey "И">
+<!ENTITY userName.label "Потребителско име:">
+<!ENTITY userName.accesskey "м">
+<!ENTITY port.label "Порт:">
+<!ENTITY port.accesskey "П">
+<!ENTITY serverPortDefault.label "По подразбиране:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Проверка за нови писма на всеки ">
+<!ENTITY biffStart.accesskey "к">
+<!ENTITY biffEnd.label "минути">
+<!ENTITY useIdleNotifications.label "Позволява незабавно известие от сървъра при ново писмо">
+<!ENTITY useIdleNotifications.accesskey "в">
+<!ENTITY connectionSecurity.label "Сигурност на връзката:">
+<!ENTITY connectionSecurity.accesskey "у">
+<!ENTITY connectionSecurityType-0.label "Без">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ако е налична">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Метод на удостоверяване:">
+<!ENTITY authMethod.accesskey "т">
+<!ENTITY leaveOnServer.label "Оставяне на копие от писмата на сървъра">
+<!ENTITY leaveOnServer.accesskey "О">
+<!ENTITY headersOnly.label "Извличане само на заглавките">
+<!ENTITY headersOnly.accesskey "ч">
+<!ENTITY deleteByAgeFromServer.label "За най-много">
+<!ENTITY deleteByAgeFromServer.accesskey "й">
+<!ENTITY daysEnd.label "дни">
+<!ENTITY deleteOnServer2.label "Докато ги изтрия">
+<!ENTITY deleteOnServer2.accesskey "з">
+<!ENTITY downloadOnBiff.label "Автоматично изтегляне на новите писма">
+<!ENTITY downloadOnBiff.accesskey "А">
+<!ENTITY deleteMessagePrefix.label "При изтриване на писмо:">
+<!ENTITY modelMoveToTrash.label "се премества в тази папка:">
+<!ENTITY modelMoveToTrash.accesskey "п">
+<!ENTITY modelMarkDeleted.label "просто се отбелязва като изтрито">
+<!ENTITY modelMarkDeleted.accesskey "б">
+<!ENTITY modelDeleteImmediately.label "премахва се веднага">
+<!ENTITY modelDeleteImmediately.accesskey "е">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Изчистване (&quot;Заличаване&quot;) на пощенската кутия при изход">
+<!ENTITY expungeOnExit.accesskey "З">
+<!ENTITY emptyTrashOnExit.label "Изпразване на кошчето при изход">
+<!ENTITY emptyTrashOnExit.accesskey "х">
+<!ENTITY loginAtStartup.label "Проверка за нови писма при стартиране">
+<!ENTITY loginAtStartup.accesskey "П">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Запитване преди изтеглянето на повече от">
+<!ENTITY maxMessagesStart.accesskey "З">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "писма">
+<!ENTITY alwaysAuthenticate.label "При свързване с този сървър винаги се изисква идентификация">
+<!ENTITY alwaysAuthenticate.accesskey "ъ">
+<!ENTITY abbreviate.label "Имената на дискусионните групи се показват с:">
+<!ENTITY abbreviateOn.label "Пълни имена (напр. 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Съкратени имена (напр. 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Разширени…">
+<!ENTITY advancedButton.accesskey "ш">
+<!ENTITY serverDefaultCharset2.label "Стандартно кодиране:">
+<!ENTITY localFolderPicker.label "Изберете директория">
+<!ENTITY browseFolder.label "Избор…">
+<!ENTITY browseFolder.accesskey "б">
+<!ENTITY browseNewsrc.label "Избор…">
+<!ENTITY browseNewsrc.accesskey "о">
+
+<!ENTITY accountTitle.label "Настройки на регистрация">
+<!ENTITY accountSettingsDesc.label "Това е специална регистрация. Няма идентичности, свързани с нея.">
+<!ENTITY storeType.label "Вид съхранение на писмата:">
+<!ENTITY storeType.accesskey "В">
+<!ENTITY mboxStore2.label "Файл за всяка папка (mbox)">
+<!ENTITY maildirStore.label "Файл за всяко писмо (maildir)">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY managecerts.caption "Кіраванне пасведчаннямі">
+<!ENTITY managecerts.text "Скарыстайце кіраўнік пасведчаннямі, каб кіраваць як вашымі асабовымі пасведчаннямі, так і пасведчаннямі іншых людзей і крыніцамі пасведчанняў.">
+<!ENTITY managecerts.button "Кіраваць пасведчаннямі…">
+<!ENTITY managecerts.accesskey "К">
+<!ENTITY managedevices.caption "Кіраванне збудовамі бяспекі">
+<!ENTITY managedevices.text "Скарыстайце гэтую кнопку, каб кіраваць вашымі збудовамі бяспекі, такімі як кемныя карткі.">
+<!ENTITY managedevices.button "Кіраваць збудовамі бяспекі…">
+<!ENTITY managedevices.accesskey "Б">
+<!ENTITY ssl.label "SSL">
+<!ENTITY pref.certs.title "Пасведчанні">
+<!ENTITY certs.label "Пасведчанні">
+<!ENTITY validation.ocsp.caption "СПСП">
+<!ENTITY enableOCSP.label "Ужываць Сеткавы Пратакол Стану Пасведчанняў (СПСП), каб пацвярджаць гэтачасовую сапраўднасць пасведчанняў">
+<!ENTITY enableOCSP.accesskey "У">
+<!ENTITY validation.requireOCSP.description "Калі злучэнне з паслугачом СПСП не ўдалося, абходзіцца з пасведчаннем як з несапраўдным">
+<!ENTITY validation.requireOCSP.accesskey "К">

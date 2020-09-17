@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Bokowe barwy a slězyna">
+<!ENTITY pageColors.label "Bokowe barwy">
+<!ENTITY defaultColorsRadio.label "Standardne barwy cytarja (Barwy w boku njenastajiś)">
+<!ENTITY defaultColorsRadio.accessKey "S">
+<!ENTITY defaultColorsRadio.tooltip "Jano barwowe nastajenja z wobglědowaka wobglědowarja (cytarja) wužywaś">
+<!ENTITY customColorsRadio.label "Swójske barwy wužywaś:">
+<!ENTITY customColorsRadio.accessKey "b">
+<!ENTITY customColorsRadio.tooltip "Toś te barwowe nastajenja pśepišu nastajenja wobglědowaka wobglědowarja">
+
+<!ENTITY normalText.label "Normalny tekst">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Wótkazowy tekst">
+<!ENTITY linkText.accessKey "W">
+<!ENTITY activeLinkText.label "Tekst aktiwnego wótkaza">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Tekst woglědowanego wótkaza">
+<!ENTITY visitedLinkText.accessKey "l">
+<!ENTITY background.label "Slězyna:">
+<!ENTITY background.accessKey "S">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Slězynowy wobraz:">
+<!ENTITY backgroundImage.accessKey "z">
+<!ENTITY backgroundImage.tooltip "Wobrazowu dataju ako slězynu za waš bok wužywaś">
+<!ENTITY backgroundImage.shortenedDataURI "Skrotcony datowy URI (kopija placěrujo dopołny URI w mjazywótkłaźe)">

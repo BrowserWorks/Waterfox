@@ -1,0 +1,104 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Sahifani yuklashda muammo yuz berdi">
+<!ENTITY retry.label "Qaytadan urinib ko‘ring">
+
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Ulana olmadi">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Bu manzil uchun cheklovlar o‘rnatilgan">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Server topilmadi">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Manzilni yozishda quyidagicha xatolarga yo‘q qo‘ymang: <strong>www</strong>.example.com o‘rniga <strong>ww</strong>.example.com yozilgan bo‘lishi mumkin</li> <li>Agar birorta ham sahifa yuklanmasa, kompyuteringizning tarmoqqa ulanishini tekshirib ko‘ring.</li> <li>Agar kompyuter va tarmog‘ingiz fayervol yoki proksi bilan himoyalangan bo‘lsa, &brandShortName; dasturini internetga ulanishiga cheklov qo‘yilmaganligini tekshirib ko‘ring.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Fayl topilmadi">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Fayl nomlarini katta va kichik harflar bilan yozishda va shu kabi boshqa xatolarga ehtiyot bo‘ling.</li> <li>Faylning boshqa joyga ko‘chirilgan, nomi o‘zgartirilgan yoki o‘chirilgan bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Fayldan foydalanishga ruxsat berilmadi">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>O‘chirib tashlangan, ko‘chirilgan yoki foydalanishga ruxsat berilmagan bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY generic.title "Obbo.">
+<!ENTITY generic.longDesc "<p>&brandShortName; dasturi ba’zi sabablarga ko‘ra ushbu sahifani yuklay olmaydi.</p>">
+
+<!ENTITY malformedURI.title "Manzil to‘g‘ri emas">
+<!ENTITY malformedURI.longDesc "<ul> <li>Veb manzillar odatda quyidagicha yoziladi: <strong>http://www.example.com/</strong></li> <li>Qiya chiziqdan to‘g‘ri foydalaning (masalan: <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Ulanish to‘sib qo‘yilgan">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Hujjat eskirgan">
+<!ENTITY notCached.longDesc "<p>So‘ralgan hujjat keshda mavjud emas.</p><ul><li>Xavfsizlik choralariga ko‘ra  &brandShortName; nozik hujjatlarga avtomatik tarzda qayta so‘rov jo‘natmaydi.</li><li>Hujjatni veb saytdan olish uchun &quot;Yana urinib ko‘rish&quot; tugmasiga bosing.</li></ul>">
+
+<!ENTITY netOffline.title "Oflayn rejimi">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Onlayn rejimiga o‘tish va sahifani qayta yuklash uchun &quot;Qaytadan urinbi ko‘rish&quot; tugmasiga bosing.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Sayt tarkibini kodashda xatolik yuz berdi">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Ushbu muammo haqida xabar berish uchun sayt egasi bilan bog‘laning.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Xavfli fayl turi">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Muammo haqida xabar berish uchun sayt egasi bilan bog‘laning.</li> </ul>">
+
+<!ENTITY netReset.title "Ulanish qayta o‘rnatildi">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Ulanish vaqti o‘tib ketdi">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Manzil tushunarsiz edi">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Ushbu manzilni ochish uchun boshqa dasturni o‘rnatishingiz mumkin bo‘ladi.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proksi server ulanishlarni rad qilmoqda">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Proksi sozlamalari to‘g‘ri ekanligini tekshirib ko‘ring.</li> <li>Proksi server ishlayotganligiga ishonch hosil qilish uchun tarmoq administratori bilan  bog‘laning.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Proksi serverni topa olmadi">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Proksi sozlamalari to‘g‘ri ekanligini tekshirib ko‘ring.</li> <li>Kompyuteringizning ishlayotgan tarmoqqa ulanganligini tekshirib ko‘ring.</li> <li>Kompyuteringiz yoki tarmoq fayervol va proksi bilan himoyalangan bo‘lsa, &brandShortName; dasturini internetga ulanishini to‘sib qo‘yilmaganligini tekshirib ko‘ring.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Sahifa to‘g‘ri yo‘naltirilmayapti">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Bu muammo ba’zida kukilarni o‘chirib qo‘yilishiga yoki ularni qabul qilishni rad qilinishiga sabab  bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Serverdan kutilmagan javob keldi">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Tizimingizga &quot;Shaxsiy xavfsizlik menejeri&quot; (Personal Security Manager) o‘rnatilgan bo‘lishi kerak.</li> <li>Serverning nostandart sozlanishi bunga sabab  bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Xavfsiz ulanish amalga oshmadi">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Siz ko‘rmoqchi bo‘lgan sahifani ko‘rsatib bo‘lmaydi, chunki qabul qilingan tasdiqdan o‘tkazish ma’lumotlari tasdiqdan o‘tadi.</li> <li>Bu muammo haqida xabar berish uchun veb sayt egasi bilan bog‘laning.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Xavfsiz ulanish amalga oshmadi">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Bunga sabab serverdagi noto‘g‘ri sozlanishi bilan bog‘liq muammo bo‘lishi mumkin yoki kimdir  server ma’lumotlarini qalbakilashtirishga urinib ko‘ryapti.</li> <li>Agar siz ushbu serverga oldinroq muvaffaqiyatli ulangan bo‘lsangiz, xato vaqtinchalik bo‘lishi va keyinroq urinib ko‘rishingiz mumkin.</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Ushbu sayt vaqtincha ishlamayotgan yoki juda ham band bo‘lishi mumkin. Birozdan so‘ng yana urinib ko‘ring. moments.</li> <li>Agar birorta ham sahifa yuklanmasa, kompyuteringizning internetga ulanishini tekshirib ko‘ring.</li> <li>Agar kompyuteringiz yoki tarmoq fayervol, proksi bilan himoyalangan bo‘lsa,&brandShortName; brauzerini internetga kirishidan to‘silmaganligiga ishonch hosil qiling.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Sayt xavfsizlik siyosati tomonidan bloklandi">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ushbu sahifani yuklanishini to‘xtatib qo‘ydi, chunki sahifadagi tarkib xavfsizlik siyosati bunga ruxsat bermaydi.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Sayt tarkibi buzilgan">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Siz ko‘rmoqchi bo‘lgan sayt ko‘rsatilmaydi, chunki ma’lumotlarni uzatishda xatolik aniqlandi.</p><ul><li>Muammo haqida xabar berish uchun sayt egasi bilan bog‘laning.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Yoki istisno qo‘shishingiz mumkin…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Men bu yerdan ketaman!">
+<!ENTITY securityOverride.exceptionButtonLabel "Istisno qo‘shish">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+
+<!ENTITY securityOverride.warningContent "<p>To‘li ishonchli bo‘lmagan internetga ulanishdan foydalanayotgan bo‘lsangiz yoki ushbu server uchun ogohlantirishni ko‘rishdan foydalanmayotgan bo‘lsangiz, estisno qo‘shmasligingiz kerak.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Masofadagi XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Muammo haqida xabar berish uchun veb sayt egasi bilan bog‘laning.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Ulanish xavfsiz emas">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> hujumlarga chidamsiz va eskirgan xavfsizlik texnonolgiyasidan foydalanadi. Xakker siz xavfsiz deb o‘ylaydigan ma’lumotlarni osongina ochib ko‘rishi mumkin. Siz saytga kira olishingiz uchun avvalo sayt administratori serverni to‘g‘rilashi kerak.</p><p>Xatolik kodi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+

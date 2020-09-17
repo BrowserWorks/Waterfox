@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# strainu <crangasi2001@yahoo.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY defaultClient.title  "Client implicit">
+<!ENTITY defaultClient.intro  "Folosește &brandShortName; ca și client implicit pentru:">
+
+<!ENTITY browser.label "Navigator">
+<!ENTITY email.label "Email">
+<!ENTITY newsgroups.label "Newsgroups">
+<!ENTITY feeds.label "Feeds">
+
+<!ENTITY checkOnStartup.label "Întotdeauna efectuează această verificare la pornirea &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "a">

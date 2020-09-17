@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Imenik">
+<!ENTITY blankResultsPaneMessage.label                  "Ta imenik bo prikazal stike samo po iskanju">
+<!ENTITY localResultsOnlyMessage.label                  "Stiki iz oddaljenih imenikov ne bodo prikazani, dokler jih ne iščete">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Datoteka">
+<!ENTITY fileMenu.accesskey                             "D">
+<!ENTITY newMenu.label                                  "Novo">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newContact.label                               "Stik iz imenika …">
+<!ENTITY newContact.accesskey                           "k">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Dopisni seznam …">
+<!ENTITY newListCmd.accesskey                           "D">
+<!ENTITY newAddressBookCmd.label                        "Imenik …">
+<!ENTITY newAddressBookCmd.accesskey                    "m">
+<!ENTITY newCardDAVBookCmd.label                        "Imenik CardDAV …">
+<!ENTITY newCardDAVBookCmd.accesskey                    "V">
+<!ENTITY newLDAPDirectoryCmd.label                      "Imenik LDAP …">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "L">
+<!ENTITY newMessageCmd.label                            "Sporočilo">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "S">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Uporabi Imenik Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "M">
+<!ENTITY closeCmd.label                                 "Zapri">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "Z">
+<!ENTITY printSetupCmd.label                            "Nastavitve strani …">
+<!ENTITY printSetupCmd.accesskey                        "N">
+<!ENTITY printPreviewContactCmd.label                   "Predogled tiskanja stika">
+<!ENTITY printPreviewContactCmd.accesskey               "P">
+<!ENTITY printPreviewAddressBook.label                  "Predogled tiskanja imenika">
+<!ENTITY printPreviewAddressBook.accesskey              "r">
+<!ENTITY printContactCmd.label                          "Natisni stik …">
+<!ENTITY printContactCmd.accesskey                      "k">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Natisni imenik …">
+<!ENTITY printAddressBook.accesskey                     "m">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Uredi">
+<!ENTITY editMenu.accesskey                             "U">
+<!ENTITY deleteCmd.label                                "Izbriši">
+<!ENTITY deleteAbCmd.label                              "Izbriši imenik">
+<!ENTITY deleteContactCmd.label                         "Izbriši stik">
+<!ENTITY deleteContactsCmd.label                        "Izbriši stike">
+<!ENTITY deleteListCmd.label                            "Izbriši seznam">
+<!ENTITY deleteListsCmd.label                           "Izbriši sezname">
+<!ENTITY deleteItemsCmd.label                           "Izbriši predmete">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!ENTITY propertiesMenu.label                           "Lastnosti">
+<!ENTITY propertiesMenu.accesskey                       "L">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Lastnosti imenika">
+<!ENTITY abPropertiesMenu.accesskey                     "m">
+<!ENTITY contactPropertiesMenu.label                    "Lastnosti stika">
+<!ENTITY contactPropertiesMenu.accesskey                "s">
+<!ENTITY mailingListPropertiesMenu.label                "Lastnosti dopisnega seznama">
+<!ENTITY mailingListPropertiesMenu.accesskey            "d">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Pogled">
+<!ENTITY viewMenu.accesskey                             "P">
+<!ENTITY viewToolbarsMenu.label                         "Orodne vrstice">
+<!ENTITY viewToolbarsMenu.accesskey                     "O">
+<!ENTITY menubarCmd.label                               "Vrstica z menijem">
+<!ENTITY menubarCmd.accesskey                           "m">
+<!ENTITY showAbToolbarCmd.label                         "Orodna vrstica imenika">
+<!ENTITY showAbToolbarCmd.accesskey                     "O">
+<!ENTITY showTaskbarCmd.label                           "Vrstica stanja">
+<!ENTITY showTaskbarCmd.accesskey                       "a">
+<!ENTITY customizeToolbar.label                         "Prilagodi …">
+<!ENTITY customizeToolbar.accesskey                     "P">
+<!ENTITY layoutMenu.label                               "Razporeditev">
+<!ENTITY layoutMenu.accesskey                           "R">
+<!ENTITY showDirectoryPane.label                        "Podokno za kazalo">
+<!ENTITY showDirectoryPane.accesskey                    "z">
+<!ENTITY showContactPane2.label                         "Podokno za stike">
+<!ENTITY showContactPane2.accesskey                     "s">
+<!ENTITY menu_ShowNameAs.label                          "Prikaži ime kot">
+<!ENTITY menu_ShowNameAs.accesskey                      "P">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Ime Priimek">
+<!ENTITY firstLastCmd2.accesskey                        "m">
+<!ENTITY lastFirstCmd.label                             "Priimek, ime">
+<!ENTITY lastFirstCmd.accesskey                         "P">
+<!ENTITY displayNameCmd.label                           "Prikazano ime">
+<!ENTITY displayNameCmd.accesskey                       "r">
+<!ENTITY sortMenu.label                                 "Razvrsti po">
+<!ENTITY sortMenu.accesskey                             "s">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Orodja">
+<!ENTITY tasksMenu.accesskey                            "r">
+<!ENTITY messengerCmd.label                             "Pošta in novičarske skupine">
+<!ENTITY messengerCmd.accesskey                         "P">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Išči po naslovih …">
+<!ENTITY searchAddressesCmd.accesskey                   "š">
+<!ENTITY importCmd.label                                "Uvozi …">
+<!ENTITY importCmd.accesskey                            "U">
+<!ENTITY exportCmd.label                                "Izvozi …">
+<!ENTITY exportCmd.accesskey                            "z">
+<!ENTITY preferencesCmd2.label                          "Možnosti">
+<!ENTITY preferencesCmd2.accesskey                      "M">
+<!ENTITY preferencesCmdUnix.label                       "Nastavitve">
+<!ENTITY preferencesCmdUnix.accesskey                   "N">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Nov stik">
+<!ENTITY newContactButton.accesskey                     "s">
+<!ENTITY newlistButton.label                            "Nov seznam">
+<!ENTITY newlistButton.accesskey                        "e">
+<!ENTITY showAsDefault.label                            "Privzeta zagonska mapa">
+<!ENTITY showAsDefault.accesskey                        "P">
+<!ENTITY editPropertiesButton.label                     "Uredi">
+<!ENTITY propertiesContext.label                        "Lastnosti">
+<!ENTITY propertiesContext.accesskey                    "L">
+<!ENTITY abPropertiesContext.label                      "Lastnosti">
+<!ENTITY abPropertiesContext.accesskey                  "L">
+<!ENTITY syncContext.label                              "Sinhroniziraj">
+<!ENTITY syncContext.accesskey                          "h">
+<!ENTITY editContactContext.label                       "Uredi stik">
+<!ENTITY editContactContext.accesskey                   "s">
+<!ENTITY editMailingListContext.label                   "Uredi seznam">
+<!ENTITY editMailingListContext.accesskey               "e">
+<!ENTITY newmsgButton.label                             "Sestavi">
+<!ENTITY newmsgButton.accesskey                         "S">
+<!ENTITY newIM.label                                    "Neposredno sporočilo">
+<!ENTITY newIM.accesskey                                "N">
+<!ENTITY printButton.label                              "Natisni …">
+<!ENTITY printButton.accesskey                          "a">
+<!ENTITY deleteButton2.label                            "Izbriši">
+<!ENTITY deleteButton2.accesskey                        "b">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Izberite stolpce za prikaz">
+<!ENTITY newContactButton.tooltip                       "Ustvari nov stik v imeniku">
+<!ENTITY newlistButton.tooltip                          "Ustvari nov seznam">
+<!ENTITY editPropertiesButton.tooltip                   "Uredi izbrani predmet">
+<!ENTITY editAbPropertiesButton.tooltip                 "Uredi lastnosti izbranega imenika">
+<!ENTITY editContactPropertiesButton.tooltip            "Uredi izbrani stik">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Uredi izbrani dopisni seznam">
+<!ENTITY newmsgButton.tooltip                           "Pošlji poštno sporočilo">
+<!ENTITY newIM.tooltip                                  "Pošlji neposredno sporočilo ali klepetaj">
+<!ENTITY deleteButton2.tooltip                          "Izbriši izbrani predmet">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Ime ali e-pošta">
+<!ENTITY SearchNameOrEmail.accesskey                    "m">
+<!ENTITY advancedButton.tooltip                         "Napredno iskanje naslovov">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Hitro Iskanje">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Imenik">
+<!ENTITY Addrbook.accesskey                             "m">
+<!ENTITY GeneratedName.label                            "Ime">
+<!ENTITY GeneratedName.accesskey                        "m">
+<!ENTITY PrimaryEmail.label                             "E-pošta">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "Ime za klepet">
+<!ENTITY ChatName.accesskey                             "k">
+<!ENTITY Company.label                                  "Organizacija">
+<!ENTITY Company.accesskey                              "O">
+<!ENTITY NickName.label                                 "Vzdevek">
+<!ENTITY NickName.accesskey                             "V">
+<!ENTITY SecondEmail.label                              "Dodatna e-pošta">
+<!ENTITY SecondEmail.accesskey                          "D">
+<!ENTITY Department.label                               "Oddelek">
+<!ENTITY Department.accesskey                           "e">
+<!ENTITY JobTitle.label                                 "Naziv">
+<!ENTITY JobTitle.accesskey                             "N">
+<!ENTITY CellularNumber.label                           "Mobilnik">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "Pozivnik">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "Faks">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Telefon doma">
+<!ENTITY HomePhone.accesskey                            "a">
+<!ENTITY WorkPhone.label                                "Telefon v službi">
+<!ENTITY WorkPhone.accesskey                            "s">
+<!ENTITY sortAscending.label                            "Naraščajoče">
+<!ENTITY sortAscending.accesskey                        "N">
+<!ENTITY sortDescending.label                           "Padajoče">
+<!ENTITY sortDescending.accesskey                       "č">
+<!ENTITY _PhoneticName.label                            "Fonetično ime">
+<!ENTITY _PhoneticName.accesskey                        "F">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Stik">
+<!ENTITY home.heading                                   "Doma">
+<!ENTITY other.heading                                  "Drugo">
+<!ENTITY chat.heading                                   "Klepet">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Služba">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Opis">
+<!ENTITY addresses.heading                              "Naslovi">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Prikaži zemljevid">
+<!ENTITY mapIt.tooltip                                  "Prikaži zemljevid za ta naslov s spleta">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Okno">
+<!ENTITY minimizeWindow.label                           "Pomanjšaj">
+<!ENTITY minimizeWindow.key                             "P">
+<!ENTITY bringAllToFront.label                          "Vse v ospredje">
+<!ENTITY zoomWindow.label                               "Povečava">

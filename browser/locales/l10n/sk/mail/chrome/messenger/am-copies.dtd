@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Kópie a priečinky">
+<!ENTITY sendingPrefix.label "Pri odosielaní správ automaticky:">
+<!ENTITY fccMailFolder.label "Uložiť kópiu do:">
+<!ENTITY fccMailFolder.accesskey "U">
+<!ENTITY fccReplyFollowsParent.label "Umiestniť odpovede v priečinku, v ktorom sa nachádza pôvodná správa">
+<!ENTITY fccReplyFollowsParent.accesskey "t">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Odoslať kópiu (CC) na tieto adresy:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Adresy oddelené čiarkami">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Odoslať Skrytú kópiu (BCC) na tieto adresy:">
+<!ENTITY bccAddress.accesskey "S">
+<!ENTITY bccAddressList.placeholder "Adresy oddelené čiarkami">
+<!ENTITY saveMessageDlg.label "Pri ukladaní správ zobraziť dialógové okno s potvrdením">
+<!ENTITY saveMessageDlg.accesskey "b">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "priečinok &quot;Odoslaná pošta&quot; v účte:">
+<!ENTITY sentFolderOn.accesskey "d">
+<!ENTITY sentInOtherFolder.label "iný priečinok:">
+<!ENTITY sentInOtherFolder.accesskey "n">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Archivovanie správ">
+<!ENTITY keepArchives.label "Archívne správy ukladať do:">
+<!ENTITY keepArchives.accesskey "h">
+<!ENTITY archiveHierarchyButton.label "Možnosti archivácie…">
+<!ENTITY archiveHierarchyButton.accesskey "M">
+<!ENTITY archivesFolderOn.label "priečinok &quot;Archívy&quot; v účte:">
+<!ENTITY archivesFolderOn.accesskey "o">
+<!ENTITY archiveInOtherFolder.label "iný priečinok:">
+<!ENTITY archiveInOtherFolder.accesskey "r">
+<!ENTITY specialFolders.label "Koncepty a šablóny">
+<!ENTITY keepDrafts2.label "Uchovávať koncepty v:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "priečinok &quot;Koncepty&quot; v účte:">
+<!ENTITY draftsFolderOn.accesskey "v">
+<!ENTITY draftInOtherFolder.label "iný priečinok:">
+<!ENTITY draftInOtherFolder.accesskey "k">
+<!ENTITY keepTemplates.label "Šablóny správ ukladať do:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "priečinok &quot;Šablóny&quot; v účte:">
+<!ENTITY templatesFolderOn.accesskey "a">
+<!ENTITY templateInOtherFolder.label "iný priečinok:">
+<!ENTITY templateInOtherFolder.accesskey "e">

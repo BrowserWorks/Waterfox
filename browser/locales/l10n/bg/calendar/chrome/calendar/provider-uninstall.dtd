@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Премахване на доставчик на календар">
+<!ENTITY providerUninstall.accept.label                    "Отписване на избраните">
+<!ENTITY providerUninstall.accept.accesskey                "О">
+<!ENTITY providerUninstall.cancel.label                    "Запазване на добавката">
+<!ENTITY providerUninstall.cancel.accesskey                "З">
+<!ENTITY providerUninstall.preName.label                   "Заявихте премахване или изключване на:">
+<!ENTITY providerUninstall.postName.label                  "Тази опция ще изключи календарите по-долу.">
+<!ENTITY providerUninstall.reinstallNote.label             "Ако не планирате преинсталация на този доставчик на календар, можете да се отпишете от него.">

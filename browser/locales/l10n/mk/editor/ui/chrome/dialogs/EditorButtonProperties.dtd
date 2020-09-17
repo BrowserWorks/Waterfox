@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Својства на копчето">
+
+<!ENTITY Settings.label "Поставки">
+
+<!ENTITY ButtonType.label "Тип">
+<!ENTITY ButtonType.accesskey "Т">
+<!ENTITY submit.value "Испрати">
+<!ENTITY reset.value "Ресетирај">
+<!ENTITY button.value "Копче">
+
+<!ENTITY ButtonName.label "Име:">
+<!ENTITY ButtonName.accesskey "И">
+<!ENTITY ButtonValue.label "Вредност:">
+<!ENTITY ButtonValue.accesskey "В">
+<!ENTITY tabIndex.label "Индекс на табот:">
+<!ENTITY tabIndex.accesskey "И">
+<!ENTITY ButtonDisabled.label "Оневозможено">
+<!ENTITY ButtonDisabled.accesskey "н">
+<!ENTITY AccessKey.label "Клуч за пристап:">
+<!ENTITY AccessKey.accesskey "К">
+
+<!ENTITY RemoveButton.label "Отстрани го копчето">
+<!ENTITY RemoveButton.accesskey "р">

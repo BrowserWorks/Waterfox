@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Сохранённые куки">
+<!ENTITY     tab.bannedservers.label        "Веб-сайты с куками">
+<!ENTITY     div.bannedservers.label        "Веб-сайты, которые могут и не могут сохранять куки на вашем компьютере.">
+<!ENTITY     div.cookiesonsystem.label      "Просмотр и удаление кук, хранящихся на вашем компьютере.">
+<!ENTITY     treehead.cookiename.label      "Имя куки">
+<!ENTITY     treehead.cookiedomain.label    "Веб-сайт">
+<!ENTITY     treehead.cookieexpires.label   "Срок действия">
+<!ENTITY     treehead.infoselected.label    "Информация о выбранной куке">
+<!ENTITY     button.removecookie.label      "Удалить куку">
+<!ENTITY     button.removecookie.accesskey  "д">
+<!ENTITY     button.removeallcookies.label  "Удалить все куки">
+<!ENTITY     button.removeallcookies.accesskey "с">
+
+<!ENTITY     search.placeholder             "Поиск кук">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Имя:">
+<!ENTITY     props.value.label              "Информация:">
+<!ENTITY     props.domain.label             "Узел:">
+<!ENTITY     props.path.label               "Путь:">
+<!ENTITY     props.secure.label             "Отправить для:">
+<!ENTITY     props.expires.label            "Срок действия:">
+
+<!ENTITY     treehead.sitename.label        "Веб-сайт">
+<!ENTITY     treehead.scheme.label          "Схема">
+<!ENTITY     treehead.status.label          "Статус">
+<!ENTITY     windowtitle.label              "Управление куками">
+
+<!ENTITY     blockSite.label                "Блокировать">
+<!ENTITY     blockSite.accesskey            "л">
+<!ENTITY     allowSite.label                "Разрешить">
+<!ENTITY     allowSite.accesskey            "а">
+<!ENTITY     allowSiteSession.label         "На сеанс">
+<!ENTITY     allowSiteSession.accesskey     "е">
+<!ENTITY     removepermission.label         "Удалить веб-сайт">
+<!ENTITY     removepermission.accesskey     "а">
+<!ENTITY     removeallpermissions.label     "Удалить все веб-сайты">
+<!ENTITY     removeallpermissions.accesskey "с">
+
+<!ENTITY     futureCookies.label            "Не принимать удалённые куки снова">
+<!ENTITY     futureCookies.accesskey        "р">

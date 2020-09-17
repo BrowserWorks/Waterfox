@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Tiada tajuk)">
+<!ENTITY  newTab.label           "Tab Baru">
+<!ENTITY  newTab.accesskey       "B">
+<!ENTITY  closeTab.label         "Tutup Tab">
+<!ENTITY  closeTab.accesskey         "T">
+<!ENTITY  closeOtherTabs.label   "Tutup Tab Lain">
+<!ENTITY  closeOtherTabs.accesskey         "L">
+<!ENTITY  reloadAllTabs.label    "Muat semula Semua Tab">
+<!ENTITY  reloadAllTabs.accesskey         "S">
+<!ENTITY  reloadTab.label        "Muat Semula Tab">
+<!ENTITY  reloadTab.accesskey         "M">
+<!ENTITY  bookmarkGroup.label    "Tandabuku Kumpulan Tab Ini">
+<!ENTITY  bookmarkGroup.accesskey  "K">
+<!ENTITY  closeTabButton.tooltip   "Tutup tab semasa">
+<!ENTITY  newTabButton.tooltip   "Buka tab baru">
+<!ENTITY  listAllTabs.tooltip    "Senarai semua tab">
+<!ENTITY  undoCloseTab.label    "Batal Tutup Tab">
+<!ENTITY  undoCloseTab.accesskey  "B">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Cuntegn">
+<!ENTITY buildToc.label      "Crear ina tavla da cuntegn ord:">
+<!ENTITY tag.label           "Tag:">
+<!ENTITY class.label         "Classa:">
+<!ENTITY header1.label       "Livel 1">
+<!ENTITY header2.label       "Livel 2">
+<!ENTITY header3.label       "Livel 3">
+<!ENTITY header4.label       "Livel 4">
+<!ENTITY header5.label       "Livel 5">
+<!ENTITY header6.label       "Livel 6">
+<!ENTITY makeReadOnly.label  "Definir la tavla da cuntegn «mo per lectura»">
+<!ENTITY orderedList.label   "Numerar tut las endataziuns da la tavla da cuntegn">

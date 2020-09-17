@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Middernacht" >
+<!ENTITY time.noon "Middei" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "sne" >
+<!ENTITY day.1.Ddd.accesskey "s">
+<!ENTITY day.2.Ddd "moa" >
+<!ENTITY day.2.Ddd.accesskey "m">
+<!ENTITY day.3.Ddd "tii" >
+<!ENTITY day.3.Ddd.accesskey "t">
+<!ENTITY day.4.Ddd "woa" >
+<!ENTITY day.4.Ddd.accesskey "w">
+<!ENTITY day.5.Ddd "ton" >
+<!ENTITY day.5.Ddd.accesskey "o">
+<!ENTITY day.6.Ddd "fre" >
+<!ENTITY day.6.Ddd.accesskey "f">
+<!ENTITY day.7.Ddd "sne" >
+<!ENTITY day.7.Ddd.accesskey "n">
+
+<!ENTITY day.1.name "snein" >
+<!ENTITY day.2.name "moandei" >
+<!ENTITY day.3.name "tiisdei" >
+<!ENTITY day.4.name "woansdei" >
+<!ENTITY day.5.name "tongersdei" >
+<!ENTITY day.6.name "freed" >
+<!ENTITY day.7.name "sneon" >
+
+<!ENTITY month.1.name "jannewaris" >
+<!ENTITY month.2.name "febrewaris" >
+<!ENTITY month.3.name "maart" >
+<!ENTITY month.4.name "april" >
+<!ENTITY month.5.name "maaie" >
+<!ENTITY month.6.name "juny" >
+<!ENTITY month.7.name "july" >
+<!ENTITY month.8.name "augustus" >
+<!ENTITY month.9.name "septimber" >
+<!ENTITY month.10.name "oktober" >
+<!ENTITY month.11.name "novimber" >
+<!ENTITY month.12.name "desimber" >
+
+<!ENTITY onemonthbackward.tooltip "Ien moanne tebek" >
+<!ENTITY onemonthforward.tooltip "Ien moanne foarút" >
+<!ENTITY oneyearbackward.tooltip "Ien jier tebek" >
+<!ENTITY oneyearforward.tooltip "Ien jier foarút" >
+<!ENTITY showToday.tooltip "Nei hjoed gean">
+<!ENTITY onedayforward.tooltip "Ien dei foarút">
+<!ENTITY onedaybackward.tooltip "Ien dei tebek">
+<!ENTITY showselectedday.tooltip "Barren fan selektearre dei toane">

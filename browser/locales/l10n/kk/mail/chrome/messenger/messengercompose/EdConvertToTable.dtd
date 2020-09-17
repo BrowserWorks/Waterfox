@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Кестеге айналдыру">
+<!ENTITY instructions1.label   "Құрастырушы санаттағы әр абзац үшін жаңа кесте жолын жасайды.">
+<!ENTITY instructions2.label   "Таңдауды бағандарға бөлу үшін қолданылатын таңбаны таңдаңыз:">
+<!ENTITY commaRadio.label      "Үтір">
+<!ENTITY spaceRadio.label      "Space">
+<!ENTITY otherRadio.label      "Басқа таңба:">
+<!ENTITY deleteCharCheck.label "Ажыратқыш таңбасын өшіру">
+<!ENTITY collapseSpaces.label  "Артық бос аралықтарды елемеу">
+<!ENTITY collapseSpaces.tooltip "Сыбайлас бос аралықтарды бір ажыратқышқа түрлендіру">

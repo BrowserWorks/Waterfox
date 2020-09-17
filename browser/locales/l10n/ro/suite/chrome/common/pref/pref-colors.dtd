@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "CUlori">
+<!ENTITY color                             "Text și fundal">
+<!ENTITY textColor.label                   "Text:">
+<!ENTITY textColor.accesskey               "T">
+<!ENTITY backgroundColor.label             "Fundal:">
+<!ENTITY backgroundColor.accesskey         "F">
+<!ENTITY useSystemColors.label             "Folosește culorile sistemului">
+<!ENTITY useSystemColors.accesskey         "s">
+
+<!ENTITY underlineLinks.label              "Subliniază legăturile">
+<!ENTITY underlineLinks.accesskey          "u">
+<!ENTITY links                             "Culori legături">
+<!ENTITY linkColor.label                   "Legături nevizitate:">
+<!ENTITY linkColor.accesskey               "L">
+<!ENTITY activeLinkColor.label             "Active Links:">
+<!ENTITY activeLinkColor.accesskey         "c">
+<!ENTITY visitedLinkColor.label            "Legături vizitate:">
+<!ENTITY visitedLinkColor.accesskey        "v">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "When a web page provides its own colors and background">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Always use the colors and background specified by the web page">
+<!ENTITY alwaysUseDocumentColors.accesskey "A">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Use my chosen colors, ignoring the colors and background image specified">
+<!ENTITY useMyColors.accesskey             "m">

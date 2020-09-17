@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Tetapkan Peringatan">
+<!ENTITY reminder.add.label                                "Tambah">
+<!ENTITY reminder.add.accesskey                            "T">
+<!ENTITY reminder.remove.label                             "Buang">
+<!ENTITY reminder.remove.accesskey                         "B">
+
+<!ENTITY reminder.reminderDetails.label                    "Butiran Peringatan">
+<!ENTITY reminder.action.label                             "Pilih Tindakan Peringatan">
+
+<!ENTITY reminder.action.alert.label                       "Papar Amaran">
+<!ENTITY reminder.action.email.label                       "Hantar E-mel">
+
+<!ENTITY alarm.units.minutes                               "minit" >
+<!ENTITY alarm.units.hours                                 "jam" >
+<!ENTITY alarm.units.days                                  "hari" >

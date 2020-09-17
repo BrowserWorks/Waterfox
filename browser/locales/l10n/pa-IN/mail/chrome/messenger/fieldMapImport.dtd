@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "ਐਡਰੈੱਸ ਬੁੱਕ ਇੰਪੋਰਟ">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "ਰਿਕਾਰਡ ਲਈ ਇੰਪੋਰਟ ਕੀਤਾ ਡਾਟਾ: ">
+<!ENTITY fieldMapImport.next.label "ਅੱਗੇ">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "ਪਿੱਛੇ">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "Use Move Up and Move Down to match the address book fields on the left to the correct data for import on the right. Uncheck items you do not want to import.">
+<!ENTITY fieldMapImport.up.label "ਉੱਤੇ ਭੇਜੋ">
+<!ENTITY fieldMapImport.up.accesskey "U">
+<!ENTITY fieldMapImport.down.label "ਹੇਠਾਂ ਭੇਜੋ">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "ਐਡਰੈੱਸ ਬੁੱਕ ਖੇਤਰ">
+<!ENTITY fieldMapImport.dataTitle "ਇੰਪੋਰਟ ਲਈ ਰਿਕਾਰਡ ਡਾਟਾ">
+<!ENTITY fieldMapImport.skipFirstRecord.label "ਪਹਿਲਾਂ ਰਿਕਾਰਡ ਖੇਤਰ ਨਾਂ ਰੱਖਦਾ ਹੈ">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">

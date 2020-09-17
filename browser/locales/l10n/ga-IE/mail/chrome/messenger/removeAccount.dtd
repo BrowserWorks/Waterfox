@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Bain an cuntas agus sonraí a bhaineann leis">
+<!ENTITY removeButton.label           "Bain">
+<!ENTITY removeButton.accesskey       "B">
+<!ENTITY removeAccount.label          "Bain faisnéis an chuntais">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "Bainfear an cuntas ó &brandShortName; amháin. Ní dhéanfar rud ar bith don chuntas ar an bhfreastalaí.">
+<!ENTITY removeData.label             "Bain sonraí teachtaireachta">
+<!ENTITY removeData.accesskey         "s">
+<!ENTITY removeDataChat.label         "Scrios na sonraí comhrá">
+<!ENTITY removeDataChat.accesskey     "c">
+<!ENTITY removeDataLocalAccount.desc  "Scriosann an rogha seo na teachtaireachtaí, na fillteáin, agus na scagairí go léir a bhaineann leis an gcuntas seo ar do dhiosca áitiúil. Ní rachaidh sé i bhfeidhm ar na teachtaireachtaí atá fós ar an bhfreastalaí. Ná húsáid an rogha seo má tá tú ag iarraidh na sonraí áitiúla a chur i gcartlann nó iad a úsáid in &brandShortName; ar ball.">
+<!ENTITY removeDataServerAccount.desc "Scriosann an rogha seo na teachtaireachtaí, na fillteáin, agus na scagairí go léir a bhaineann leis an gcuntas seo ar do dhiosca áitiúil. Ní scriosfar na teachtaireachtaí agus na fillteáin atá agat ar an bhfreastalaí.">
+<!ENTITY removeDataChatAccount.desc   "Scriosann seo gach taifead ar chomhrá a bhaineann leis an gcuntas seo ón diosca áitiúil.">
+<!ENTITY showData.label               "Taispeáin suíomh na sonraí">
+<!ENTITY showData.accesskey           "s">
+<!ENTITY progressPending              "Sonraí roghnaithe á mbaint…">
+<!ENTITY progressSuccess              "D'éirigh leis an mbaint.">
+<!ENTITY progressFailure              "Theip ar an mbaint.">

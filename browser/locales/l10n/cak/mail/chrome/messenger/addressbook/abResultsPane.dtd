@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Kiwujil Ochochib'äl">
+<!ENTITY Addrbook.accesskey                    "K">
+<!ENTITY GeneratedName.label                   "B'i'aj">
+<!ENTITY GeneratedName.accesskey               "B">
+<!ENTITY PrimaryEmail.label                    "Taqoya'l">
+<!ENTITY PrimaryEmail.accesskey                "T">
+<!ENTITY Company.label                         "Moloj">
+<!ENTITY Company.accesskey                     "j">
+<!ENTITY _PhoneticName.label                   "Q'ajatz'ib' B'i'aj">
+<!ENTITY _PhoneticName.accesskey               "a">
+<!ENTITY NickName.label                        "Tz'ukun b'i'aj">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "Ruka'n Taqoya'l">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "Tinamital">
+<!ENTITY Department.accesskey                  "n">
+<!ENTITY JobTitle.label                        "B'i'aj">
+<!ENTITY JobTitle.accesskey                    "B">
+<!ENTITY CellularNumber.label                  "Oyonib'äl">
+<!ENTITY CellularNumber.accesskey              "O">
+<!ENTITY PagerNumber.label                     "Kanöy winäq">
+<!ENTITY PagerNumber.accesskey                 "K">
+<!ENTITY FaxNumber.label                       "Taqowuj">
+<!ENTITY FaxNumber.accesskey                   "T">
+<!ENTITY HomePhone.label                       "Royonib'al Jay">
+<!ENTITY HomePhone.accesskey                   "J">
+<!ENTITY WorkPhone.label                       "Royonib'al Samaj">
+<!ENTITY WorkPhone.accesskey                   "S">
+<!ENTITY ChatName.label                        "Chat B'i'aj">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "Nijote'">
+<!ENTITY sortAscending.accesskey               "N">
+<!ENTITY sortDescending.label                  "Niqa">
+<!ENTITY sortDescending.accesskey              "N">

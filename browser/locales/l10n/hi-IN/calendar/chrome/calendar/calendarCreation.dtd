@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "नया कैलेंडर बनायें" >
+<!ENTITY wizard.label             "एक नया कैलेंडर बनायें" >
+<!ENTITY wizard.description       "अपने कैलेंडर को स्थित करे" >
+
+<!ENTITY initialpage.description    "आपका कैलेंडर आपके कंप्यूटर पर या किसी सर्वर पर संग्रहीत किया जा सकता है ताकि इसे दूरस्थ रूप से एक्सेस किया जा सके या इसे अपने दोस्तों या सहकर्मियों के साथ साझा कर सके." >
+<!ENTITY initialpage.computer.label  "मेरे कंप्यूटर पर">
+<!ENTITY initialpage.network.label  "नेटवर्क पर">
+
+<!ENTITY locationpage.description         "अपने दूरस्थ कैलेंडर तक पहुंचने के लिए क्या आवश्यक है इसके बारे में जानकारी प्रदान करें." >
+<!ENTITY locationpage.login.description   "वैकल्पिक: उपयोगकर्ता नाम और पासवर्ड दर्ज करें" >
+<!ENTITY locationpage.username.label      "उपयोक्ता नाम:" >
+<!ENTITY locationpage.password.label      "कूटशब्द:" >
+
+<!ENTITY custompage.shortdescription  "अपना कैलेंडर अनुकूलित करें" >
+
+
+<!ENTITY finishpage.shortdescription  "कैलेंडर बनाया गया" >
+<!ENTITY finishpage.longdescription   "आपका कैलेंडर बनाया गया है।" >

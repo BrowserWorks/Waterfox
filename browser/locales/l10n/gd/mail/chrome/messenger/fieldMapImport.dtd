@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Ion-phortaich leabhar nan seòladh">
+<!ENTITY fieldMapImport.size "width: 45em; height: 35em;">
+<!ENTITY fieldMapImport.recordNumber "Dàta a chaidh ion-phortadh airson an reacoird: ">
+<!ENTITY fieldMapImport.next.label "Air adhart">
+<!ENTITY fieldMapImport.next.accesskey "A">
+<!ENTITY fieldMapImport.previous.label "Air ais">
+<!ENTITY fieldMapImport.previous.accesskey "A">
+<!ENTITY fieldMapImport.text "Cleachd &quot;Gluais suas&quot; is &quot;Gluais sìos&quot; gus am bi raointean leabhar nan seòladh air an taobh chlì a&apos; fhreagairt ris an dàta cheart air an taobh dheis a tha ri ion-phortadh. Thoir air falbh a&apos; chromag o gach rud nach eil thu airson ion-phortadh.">
+<!ENTITY fieldMapImport.up.label "Gluais suas">
+<!ENTITY fieldMapImport.up.accesskey "u">
+<!ENTITY fieldMapImport.down.label "Gluais sìos">
+<!ENTITY fieldMapImport.down.accesskey "G">
+<!ENTITY fieldMapImport.fieldListTitle "Raointean leabhar nan seòladh">
+<!ENTITY fieldMapImport.dataTitle "Dàta nan reacord a tha ri ion-phortadh">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Tha ainmean nan raointean sa chiad reacord">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "r">

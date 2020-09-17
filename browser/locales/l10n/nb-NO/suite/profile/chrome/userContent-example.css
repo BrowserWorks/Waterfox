@@ -1,0 +1,47 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Rediger denne filen og kopier den til userContent.css i din
+ * profilmappe/chrome/
+ */
+
+/*
+ * Denne filen kan brukes til å legge på stiler til alle nettsteder
+ * du viser i Mozilla. Stilregler uten !important kan overstyres av
+ * nettstedsansvarlig.
+ */
+
+/*
+ * eks.: skrur av "blink"-elementets blinking
+ *
+ * blink { text-decoration: none ! important; }
+ *
+ */
+
+/*
+ * eks.: gir alle tabeller en 2px synlig ramme
+ *
+ * table { border: 2px solid; }
+ */
+
+/*
+ * eks.: skrur av "marquee"-elementet
+ *
+ * marquee { -moz-binding: none; }
+ *
+ */
+
+/*
+ * eks.: gjør søkefeltene på www.mozilla.org til svart-på-hvit
+ *
+ * @-moz-document url-prefix(http://www.mozilla.org/) {
+ *   #q { background: white ! important; color: black ! important; }
+ * }
+ */
+ 
+/* 
+ * Gå til http://www.mozilla.org/unix/customizing.html (Engelsk) for flere eksempler
+ */
+

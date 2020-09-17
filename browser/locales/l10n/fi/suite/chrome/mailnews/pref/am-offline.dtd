@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Levytilan säästämiseksi älä lataa:">
+<!ENTITY doNotDownloadNntp.label "Levytilan säästämiseksi älä lataa yhteydettömässä tilassa käytettäväksi:">
+<!ENTITY doNotDownloadImap.label "Viestien noutoa palvelimelta ja paikallisten kopioiden pitämistä yhteydettömässä tilassa käyttämistä varten voi rajoittaa niiden iän tai koon mukaan levytilan säästämiseksi.">
+<!ENTITY allFoldersOffline2.label "Säilytä tämän tilin kaikkien kansioiden viestejä tällä tietokoneella">
+<!ENTITY allFoldersOffline2.accesskey "S">
+<!ENTITY allFoldersOfflineNote.label "Huomaa: Tämän asetuksen muuttaminen vaikuttaa kaikkiin tämän tilin kansioihin. Jos haluat muuttaa yksittäisen kansion asetuksia, valitse Lisäasetukset… -painike.">
+<!ENTITY offlineNotDownload.label "Viestejä, joiden koko on yli">
+<!ENTITY offlineNotDownload.accesskey "V">
+<!ENTITY autosyncNotDownload.label "Älä lataa viestejä, joiden koko on yli">
+<!ENTITY autosyncNotDownload.accesskey "Ä">
+<!ENTITY kb.label "kt">
+<!ENTITY daysOld.label "päivää vanhoja">
+<!ENTITY message.label "viestiä">
+<!ENTITY nntpNotDownloadRead.label "Luettuja viestejä">
+<!ENTITY nntpNotDownloadRead.accesskey "L">
+<!ENTITY nntpDownloadMsg.label "Viestejä, jotka ovat yli">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Kiintolevytilaa voi vapauttaa poistamalla vanhat viestit lopullisesti.">
+<!ENTITY retentionCleanupImap.label "Kiintolevytilaa voi vapauttaa poistamalla vanhat viestit lopullisesti sekä omalta koneelta että palvelimelta.">
+<!ENTITY retentionCleanupPop.label "Kiintolevytilaa voi vapauttaa poistamalla vanhat viestit lopullisesti myös palvelimelta.">
+<!ENTITY retentionKeepMsg.label "Poista viestit, jotka ovat yli">
+<!ENTITY retentionKeepMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "Älä poista viestejä">
+<!ENTITY retentionKeepAll.accesskey "Ä">
+<!ENTITY retentionKeepRecent.label "Poista kaikki paitsi tuoreimmat">
+<!ENTITY retentionKeepRecent.accesskey "P">
+<!ENTITY retentionApplyToFlagged.label "Älä koskaan poista lipulla merkittyjä viestejä">
+<!ENTITY retentionApplyToFlagged.accesskey "s">
+<!ENTITY nntpRemoveMsgBody.label "Poista viestirungot viesteistä, jotka ovat yli">
+<!ENTITY nntpRemoveMsgBody.accesskey "o">
+<!ENTITY offlineSelectNntp.label "Valitse yhteydettömässä tilassa käytettävät keskusteluryhmät…">
+<!ENTITY offlineSelectNntp.accesskey "s">
+<!ENTITY offlineImapAdvancedOffline.label "Lisäasetukset…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "L">
+<!ENTITY syncGroupTitle.label "Viestien synkronointi">
+<!ENTITY diskspaceGroupTitle.label "Levytilan käyttö">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Synkronoi kaikki viestit iästä riippumatta">
+<!ENTITY allAutosync.accesskey           "S">
+<!ENTITY ageAutosyncBefore.label         "Synkronoi viestit viimeiseltä">
+<!ENTITY ageAutosync.accesskey           "S">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "päivältä">
+<!ENTITY weekAgeInterval.label           "viikolta">
+<!ENTITY monthAgeInterval.label          "kuukaudelta">
+<!ENTITY yearAgeInterval.label           "vuodelta">
+<!ENTITY ageAutosyncAfter.label          "">

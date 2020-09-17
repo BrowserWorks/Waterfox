@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Propiedaes del campu del formulariu">
+<!ENTITY windowTitleImage.label "Propiedaes de la imaxe del formulariu">
+<!ENTITY InputType.label "Triba del campu">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Tesrtu">
+<!ENTITY password.value "Contraseña">
+<!ENTITY checkbox.value "Caxella de verificación">
+<!ENTITY radio.value "Botón radial">
+<!ENTITY submit.value "Botón d'unviu">
+<!ENTITY reset.value "Botón de restablecimiento">
+<!ENTITY file.value "Ficheru">
+<!ENTITY hidden.value "Anubríu">
+<!ENTITY image.value "Imaxe">
+<!ENTITY button.value "Botón">
+<!ENTITY InputSettings.label "Configuración del campu">
+<!ENTITY InputName.label "Nome del campu:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Nome del grupu:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Valor del campu:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "Valor inicial:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "Seleicionáu inicialmente">
+<!ENTITY InputChecked.accesskey "S">
+<!ENTITY InputSelected.label "Seleicionáu inicialmente">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "Namái llectura">
+<!ENTITY InputReadOnly.accesskey "N">
+<!ENTITY InputDisabled.label "Desactiváu">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Índiz de tabulación:">
+<!ENTITY tabIndex.accesskey "z">
+<!ENTITY TextSize.label "Tamañu del campu:">
+<!ENTITY TextSize.accesskey "m">
+<!ENTITY TextLength.label "Llonxitú máxima:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "Tecla d'accesu rápidu:">
+<!ENTITY AccessKey.accesskey "r">
+<!ENTITY Accept.label "Aceutar tribes:">
+<!ENTITY Accept.accesskey "A">
+<!ENTITY ImageProperties.label "Propiedaes de la imaxe…">
+<!ENTITY ImageProperties.accesskey "e">

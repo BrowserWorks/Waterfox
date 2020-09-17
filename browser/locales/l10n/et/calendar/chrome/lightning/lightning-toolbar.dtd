@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Kalendririba">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "K">
+<!ENTITY lightning.toolbar.task.name "Ülesanderiba">
+<!ENTITY lightning.toolbar.task.name.accesskey "Ü">
+
+<!ENTITY lightning.toolbar.sync.label "Sünkroniseeri">
+<!ENTITY lightning.toolbar.sync.tooltip "Laadi kalendrid uuesti ja sünkroniseeri muudatused">
+<!ENTITY lightning.toolbar.delete.label "Kustuta">
+<!ENTITY lightning.toolbar.delete.tooltip "Kustuta valitud sündmused või ülesanded">
+<!ENTITY lightning.toolbar.edit.label "Muuda">
+<!ENTITY lightning.toolbar.edit.tooltip "Muuda valitud sündmust või ülesannet">
+<!ENTITY lightning.toolbar.gototoday.label "Täna">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Liigu tänasele päevale">
+<!ENTITY lightning.toolbar.print.label "Prindi">
+<!ENTITY lightning.toolbar.print.tooltip "Prindi sündmused või ülesanded">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Kalender">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Lülitu kalendri kaardile">
+<!ENTITY lightning.toolbar.calendar.accesskey "K">
+<!ENTITY lightning.toolbar.task.label         "Ülesanded">
+<!ENTITY lightning.toolbar.task.tooltip       "Lülitu ülesannete kaardile">
+<!ENTITY lightning.toolbar.task.accesskey     "Ü">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Sündmus">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Lisa uus sündmus">
+<!ENTITY lightning.toolbar.newtask.label      "Ülesanne">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Lisa uus ülesanne">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Päev">
+<!ENTITY lightning.toolbar.day.accesskey             "P">
+<!ENTITY lightning.toolbar.week.label                "Nädal">
+<!ENTITY lightning.toolbar.week.accesskey            "N">
+<!ENTITY lightning.toolbar.multiweek.label           "Nädalad">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "ä">
+<!ENTITY lightning.toolbar.month.label               "Kuu">
+<!ENTITY lightning.toolbar.month.accesskey           "K">
+
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Rakenduse menüü">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Kuva &brandShortName;i menüüd">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Kalendrite paneel">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "l">
+<!ENTITY lightning.toolbar.calendarpane.label        "Kuvatakse kalendrite paneeli">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "p">

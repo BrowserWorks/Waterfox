@@ -1,0 +1,445 @@
+# Copyright (c) 2001-2012 Korvigelloù An Drouizig
+#
+# Kit e darempred ganeomp : drouizig@drouizig.org - http://www.drouizig.org	
+#
+# PEP GWIR MIRET STRIZH - KORVIGELLOÙ AN DROUIZIG
+
+# po (part of speech) :
+# g : anv gourel
+# b : anv benel
+# v : verb
+# aa : adanv
+
+SET UTF-8
+TRY esiaùnñrtolcdugmphbyfvkwzESIAÙNÑRTOLCDUGMPHBYFVKWZ'
+
+WORDCHARS '
+
+FLAG long
+
+PFX a0 Y 10
+PFX a0 0 m' [aehiou]
+PFX a0 0 t' [aehiou]
+PFX a0 0 n' [aehiou]
+PFX a0 0 d' [aehiou]
+PFX a0 0 p' [aehiou]
+PFX a0 0 M' [aehiou]
+PFX a0 0 T' [aehiou]
+PFX a0 0 N' [aehiou]
+PFX a0 0 D' [aehiou]
+PFX a0 0 P' [aehiou]
+
+# Kemmadurioù
+PFX m0 Y 15
+PFX m0 k g k
+PFX m0 k c'h k
+PFX m0 t d t
+PFX m0 t z t
+PFX m0 p b p
+PFX m0 p f p
+PFX m0 g c'h g[^w]
+PFX m0 g k g g[^w]
+PFX m0 gw w gw
+PFX m0 gw kw gw
+PFX m0 b v b
+PFX m0 b p b
+PFX m0 m v m
+PFX m0 d z d
+PFX m0 d t d
+
+# Adanv
+SFX n1 Y 12
+SFX n1 0 añ [^hz]
+SFX n1 0 at [^hz]
+SFX n1 0 oc'h [^hz]
+SFX n1 0 añ [^z]h
+SFX n1 0 at [^z]h
+SFX n1 0 oc'h [^z]h
+SFX n1 z sañ z
+SFX n1 z sat z
+SFX n1 z soc'h z
+SFX n1 zh shañ zh
+SFX n1 zh shat zh
+SFX n1 zh shoc'h zh
+
+# Liesterioù
+SFX p1 Y 1
+SFX p1 0 ed .
+
+SFX p2 Y 1
+SFX p2 0 i .
+
+SFX p3 Y 1
+SFX p3 0 ion .
+
+SFX p4 Y 1
+SFX p4 0 ioù .
+
+SFX p5 Y 1
+SFX p5 0 où .
+
+SFX p6 Y 1
+SFX p6 0 ien .
+
+SFX p7 Y 1
+SFX p7 où eier .
+
+# Lostgerioù all
+SFX l4 Y 2
+SFX l4 0 ig .
+SFX l4 0 ioùigoù .
+
+SFX l5 Y 2
+SFX l5 0 ig .
+SFX l5 0 oùigoù .
+
+# Displegadurioù
+SFX a1 Y 42
+SFX a1 0 an .
+SFX a1 0 as .
+SFX a1 0 e .
+SFX a1 0 ec'h .
+SFX a1 0 ed .
+SFX a1 0 emp .
+SFX a1 0 en .
+SFX a1 0 ent .
+SFX a1 0 er .
+SFX a1 0 es .
+SFX a1 0 et .
+SFX a1 0 ez .
+SFX a1 0 fe .
+SFX a1 0 fec'h .
+SFX a1 0 fed .
+SFX a1 0 femp .
+SFX a1 0 fen .
+SFX a1 0 fent .
+SFX a1 0 fes .
+SFX a1 0 i .
+SFX a1 0 imp .
+SFX a1 0 in .
+SFX a1 0 int .
+SFX a1 0 is .
+SFX a1 0 it .
+SFX a1 0 je .
+SFX a1 0 jec'h .
+SFX a1 0 jed .
+SFX a1 0 jemp .
+SFX a1 0 jen .
+SFX a1 0 jent .
+SFX a1 0 jes .
+SFX a1 0 joc'h .
+SFX a1 0 jod .
+SFX a1 0 jomp .
+SFX a1 0 jont .
+SFX a1 0 jout .
+SFX a1 0 o .
+SFX a1 0 omp .
+SFX a1 0 ont .
+SFX a1 0 or .
+SFX a1 0 ot .
+
+# Displegadurioù : verboù reizh
+SFX d1 Y 46
+SFX d1 0 an .
+SFX d1 0 as .
+SFX d1 0 e .
+SFX d1 0 ec'h .
+SFX d1 0 ed .
+SFX d1 0 emp .
+SFX d1 0 en .
+SFX d1 0 ent .
+SFX d1 0 er .
+SFX d1 0 es .
+SFX d1 0 et .
+SFX d1 0 etañ .
+SFX d1 0 etoc'h .
+SFX d1 0 ez .
+SFX d1 0 fe .
+SFX d1 0 fec'h .
+SFX d1 0 fed .
+SFX d1 0 femp .
+SFX d1 0 fen .
+SFX d1 0 fent .
+SFX d1 0 fes .
+SFX d1 0 i .
+SFX d1 0 imp .
+SFX d1 0 in .
+SFX d1 0 int .
+SFX d1 0 is .
+SFX d1 0 it .
+SFX d1 0 je .
+SFX d1 0 jec'h .
+SFX d1 0 jed .
+SFX d1 0 jemp .
+SFX d1 0 jen .
+SFX d1 0 jent .
+SFX d1 0 jes .
+SFX d1 0 joc'h .
+SFX d1 0 jod .
+SFX d1 0 jomp .
+SFX d1 0 jon .
+SFX d1 0 jont .
+SFX d1 0 jout .
+SFX d1 0 o .
+SFX d1 0 oc'h .
+SFX d1 0 omp .
+SFX d1 0 ont .
+SFX d1 0 or .
+SFX d1 0 ot .
+
+# Displegadurioù : verboù reizh gant ur bennrann dre -a, -o et -eu
+# kuitaat : kuita-
+# pesketa : pesketa-
+SFX d2 Y 45
+SFX d2 0 an .
+SFX d2 0 as .
+SFX d2 0 e .
+SFX d2 0 ec'h .
+SFX d2 0 ed .
+SFX d2 0 emp .
+SFX d2 0 en .
+SFX d2 0 ent .
+SFX d2 0 er .
+SFX d2 0 es .
+SFX d2 0 et .
+SFX d2 0 etañ .
+SFX d2 0 etoc'h .
+SFX d2 0 ez .
+SFX d2 0 fe .
+SFX d2 0 fec'h .
+SFX d2 0 fed .
+SFX d2 0 femp .
+SFX d2 0 fen .
+SFX d2 0 fent .
+SFX d2 0 fes .
+SFX d2 0 i .
+SFX d2 0 imp .
+SFX d2 0 in .
+SFX d2 0 int .
+SFX d2 0 is .
+SFX d2 0 it .
+SFX d2 0 je .
+SFX d2 0 jec'h .
+SFX d2 0 jed .
+SFX d2 0 jemp .
+SFX d2 0 jen .
+SFX d2 0 jent .
+SFX d2 0 jes .
+SFX d2 0 joc'h .
+SFX d2 0 jod .
+SFX d2 0 jomp .
+SFX d2 0 jont .
+SFX d2 0 jout .
+SFX d2 0 io .
+SFX d2 0 omp .
+SFX d2 0 ont .
+SFX d2 0 or .
+SFX d2 0 ot .
+SFX d2 0 y .
+
+# Displegadurioù : displegadur dazeilel ar verboù dre -a (pesketa, boueta, ...)
+# pesketa : pesketa-
+SFX d3 Y 46
+SFX d3 0 n .
+SFX d3 0 s .
+SFX d3 a e .
+SFX d3 a ec'h .
+SFX d3 a ed .
+SFX d3 a emp .
+SFX d3 a en .
+SFX d3 a ent .
+SFX d3 a er .
+SFX d3 a es .
+SFX d3 a et .
+SFX d3 a etañ .
+SFX d3 a etoc'h .
+SFX d3 a ez .
+SFX d3 a fe .
+SFX d3 a fec'h .
+SFX d3 a fed .
+SFX d3 a femp .
+SFX d3 a fen .
+SFX d3 a fent .
+SFX d3 a fes .
+SFX d3 a i .
+SFX d3 a imp .
+SFX d3 a in .
+SFX d3 a int .
+SFX d3 a is .
+SFX d3 a it .
+SFX d3 a je .
+SFX d3 a jec'h .
+SFX d3 a jed .
+SFX d3 a jemp .
+SFX d3 a jen .
+SFX d3 a jent .
+SFX d3 a jes .
+SFX d3 a joc'h .
+SFX d3 a jod .
+SFX d3 a jomp .
+SFX d3 a jon .
+SFX d3 a jont .
+SFX d3 a jout .
+SFX d3 a o .
+SFX d3 a oc'h .
+SFX d3 a omp .
+SFX d3 a ont .
+SFX d3 a or .
+SFX d3 a ot .
+
+# Verboù dre -iañ
+# glebiañ : gleb-
+SFX d4 Y 46
+SFX d4 0 fe .
+SFX d4 0 fec'h .
+SFX d4 0 fed .
+SFX d4 0 femp .
+SFX d4 0 fen .
+SFX d4 0 fent .
+SFX d4 0 fes .
+SFX d4 0 i .
+SFX d4 0 ian .
+SFX d4 0 ias .
+SFX d4 0 ie .
+SFX d4 0 iec'h .
+SFX d4 0 ied .
+SFX d4 0 iemp .
+SFX d4 0 ien .
+SFX d4 0 ient .
+SFX d4 0 ier .
+SFX d4 0 ies .
+SFX d4 0 iet .
+SFX d4 0 ietañ .
+SFX d4 0 ietoc'h .
+SFX d4 0 iez .
+SFX d4 0 imp .
+SFX d4 0 in .
+SFX d4 0 int .
+SFX d4 0 io .
+SFX d4 0 ioc'h .
+SFX d4 0 iomp .
+SFX d4 0 iont .
+SFX d4 0 ior .
+SFX d4 0 iot .
+SFX d4 0 is .
+SFX d4 0 it .
+SFX d4 0 je .
+SFX d4 0 jec'h .
+SFX d4 0 jed .
+SFX d4 0 jemp .
+SFX d4 0 jen .
+SFX d4 0 jent .
+SFX d4 0 jes .
+SFX d4 0 joc'h .
+SFX d4 0 jod .
+SFX d4 0 jomp .
+SFX d4 0 jon .
+SFX d4 0 jont .
+SFX d4 0 jout .
+
+# Verboù dre -liañ
+# kuzuliañ : kuzuilh-
+SFX d5 Y 46
+SFX d5 0 fe .
+SFX d5 0 fec'h .
+SFX d5 0 fed .
+SFX d5 0 femp .
+SFX d5 0 fen .
+SFX d5 0 fent .
+SFX d5 0 fes .
+SFX d5 0 i .
+SFX d5 0 imp .
+SFX d5 0 in .
+SFX d5 0 int .
+SFX d5 0 is .
+SFX d5 0 it .
+SFX d5 0 je .
+SFX d5 0 jec'h .
+SFX d5 0 jed .
+SFX d5 0 jemp .
+SFX d5 0 jen .
+SFX d5 0 jent .
+SFX d5 0 jes .
+SFX d5 0 joc'h .
+SFX d5 0 jod .
+SFX d5 0 jomp .
+SFX d5 0 jon .
+SFX d5 0 jont .
+SFX d5 0 jout .
+SFX d5 ilh lian .
+SFX d5 ilh lias .
+SFX d5 ilh lie .
+SFX d5 ilh liec'h .
+SFX d5 ilh lied .
+SFX d5 ilh liemp .
+SFX d5 ilh lien .
+SFX d5 ilh lient .
+SFX d5 ilh lier .
+SFX d5 ilh lies .
+SFX d5 ilh liet .
+SFX d5 ilh lietañ .
+SFX d5 ilh lietoc'h .
+SFX d5 ilh liez .
+SFX d5 ilh lio .
+SFX d5 ilh lioc'h .
+SFX d5 ilh liomp .
+SFX d5 ilh liont .
+SFX d5 ilh lior .
+SFX d5 ilh liot .
+
+# Verboù dre -niañ
+# koaniañ : koagn-
+SFX d6 Y 52
+SFX d6 0 0 . is:imp_p2_sg
+SFX d6 0 0 . is:pri_p3_sg
+SFX d6 0 fe . is:cni_p3_sg
+SFX d6 0 fec'h . is:cni_p2_pl
+SFX d6 0 fed . is:cni_impers_sp
+SFX d6 0 femp . is:cni_p1_pl
+SFX d6 0 fen . is:cni_p1_sg
+SFX d6 0 fent . is:cni_p3_pl
+SFX d6 0 fes . is:cni_p2_sg
+SFX d6 0 i . is:fti_p2_sg
+SFX d6 0 imp . is:fti_p1_pl
+SFX d6 0 in . is:fti_p1_sg
+SFX d6 0 int . is:fti_p3_pl
+SFX d6 0 is . is:past_p1_sg
+SFX d6 0 it . is:imp_p2_pl
+SFX d6 0 it . is:pri_p2_pl
+SFX d6 0 je . is:cip_p3_sg
+SFX d6 0 jec'h . is:cip_p2_pl
+SFX d6 0 jed . is:cip_impers_sp
+SFX d6 0 jemp . is:cip_p1_pl
+SFX d6 0 jen . is:cip_p1_sg
+SFX d6 0 jent . is:cip_p3_pl
+SFX d6 0 jes . is:cip_p2_sg
+SFX d6 0 joc'h . is:past_p2_pl
+SFX d6 0 jod . is:past_impers_sp
+SFX d6 0 jomp . is:past_p1_pl
+SFX d6 0 jon . is:past_p1_sg
+SFX d6 0 jont . is:past_p3_pl
+SFX d6 0 jout . is:past_p2_sg
+SFX d6 gn nian . is:pri p1 sg
+SFX d6 gn nias . is:past_p3_sg
+SFX d6 gn nie . is:pii_p3_sg
+SFX d6 gn niec'h . is:pii_p2_pl
+SFX d6 gn nied . is:pii_impers_sp
+SFX d6 gn niemp . is:pii_p1_pl
+SFX d6 gn nien . is:pii_p1_sg
+SFX d6 gn nient . is:imp_p3_pl
+SFX d6 gn nient . is:pii_p3_pl
+SFX d6 gn nier . is:pri_impers_sp
+SFX d6 gn nies . is:pii_p2_sg
+SFX d6 gn niet . is:imp_p3_sg
+SFX d6 gn niet . is:pp
+SFX d6 gn nietañ . is:sup
+SFX d6 gn nietoc'h . is:comp
+SFX d6 gn niez . is:pri_p2_sg
+SFX d6 gn nio . is:fti_p3_sg
+SFX d6 gn nioc'h . is:fti_p2_pl
+SFX d6 gn niomp . is:imp_p1_pl
+SFX d6 gn niomp . is:pri_p1_pl
+SFX d6 gn niont . is:pri_p3_pl
+SFX d6 gn nior . is:fti_impers_sp
+SFX d6 gn niot . is:fti_p2_pl
+

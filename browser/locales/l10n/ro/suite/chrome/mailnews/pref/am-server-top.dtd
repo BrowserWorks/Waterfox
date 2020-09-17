@@ -1,0 +1,98 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# nicubunu <nicubunu@gmail.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# Laudatti <Laudatti@gmail.com>
+# janimo <jani@ubuntu.com>
+# toffee <daniel@toffee.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from am-server-top.xul -->
+
+<!ENTITY securitySettings.label "Setări de securitate">
+<!ENTITY serverSettings.label "Setările serverului">
+<!ENTITY serverType.label "Tip server:">
+<!ENTITY serverName.label "Nume server:">
+<!ENTITY serverName.accesskey "s">
+<!ENTITY userName.label "Nume Utilizator:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "Port:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Implicit:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Verifică mesaje noi la fiecare">
+<!ENTITY biffStart.accesskey "V">
+<!ENTITY biffEnd.label "minute">
+<!ENTITY connectionSecurity.label "Securitatea conexiunii:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "Nespecificat">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, dacă e disponibil">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Authentication method:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Păstrează mesajele pe server">
+<!ENTITY leaveOnServer.accesskey "P">
+<!ENTITY headersOnly.label "Descarcă doar antetele">
+<!ENTITY headersOnly.accesskey "D">
+<!ENTITY deleteByAgeFromServer.label "Pentru cel mult">
+<!ENTITY deleteByAgeFromServer.accesskey "P">
+<!ENTITY daysEnd.label "zile">
+<!ENTITY deleteOnServer2.label "Până le șterg eu">
+<!ENTITY deleteOnServer2.accesskey "P">
+<!ENTITY downloadOnBiff.label "Descarcă automat mesajele noi">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY username.label "Numele dumneavoastră de login">
+<!ENTITY deleteMessagePrefix.label "Când șterg un mesaj:">
+<!ENTITY modelMoveToTrash.label "Mută-l în coșul de gunoi">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "Marchează-l ca șters">
+<!ENTITY modelMarkDeleted.accesskey "M">
+<!ENTITY modelDeleteImmediately.label "Șterge-l imediat">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Golește dosarul Inbox la ieșire">
+<!ENTITY expungeOnExit.accesskey "e">
+<!ENTITY emptyTrashOnExit.label "Golește coșul de gunoi la ieșire">
+<!ENTITY emptyTrashOnExit.accesskey "G">
+<!ENTITY loginAtStartup.label "Verifică mesaje noi la pornire"> 
+<!ENTITY loginAtStartup.accesskey "c">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency 
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+	 of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Întreabă-mă înainte de a descărca mai mult de">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "mesaj">
+<!ENTITY alwaysAuthenticate.label "Solicită întotdeauna autentificare la conectarea la acest server">
+<!ENTITY alwaysAuthenticate.accesskey "S">
+<!ENTITY newsrcFilePath.label "Fișier newsrc:">
+<!ENTITY localPath.label "Director local:">
+<!ENTITY abbreviate.label "Arată numele grupurilor de discuții în panoul cu dosare ca:">
+<!ENTITY abbreviateOn.label "Nume complete (ex: „netscape.public.mozilla.mail-news”)">
+<!ENTITY abbreviateOff.label "Nume abreviate (ex: „n.p.m.mail-news”)">
+<!ENTITY advancedButton.label "Avansat…">
+<!ENTITY serverDefaultCharset.label "Codare caractere implicită:">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY localFolderPicker.label "Alegeți directorul local">
+<!ENTITY browseFolder.label "Răsfoiește...">
+<!ENTITY browseFolder.accesskey "R">
+<!ENTITY newsrcPicker.label "Selectați fișierul newsrc">
+<!ENTITY browseNewsrc.label "Răsfoiește...">
+<!ENTITY browseNewsrc.accesskey "e">

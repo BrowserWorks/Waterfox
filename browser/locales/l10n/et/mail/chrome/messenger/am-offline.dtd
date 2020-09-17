@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Kettaruumi säästmiseks ei tõmmata:">
+<!ENTITY doNotDownloadNntp.label "Kettaruumi säästmiseks ei tõmmata võrguta režiimis kasutamiseks:">
+<!ENTITY doNotDownloadImap.label "Kettaruumi säästmiseks saab kirjade tõmbamist serverist ja nende säilitamist kohalike koopiatena võrguta režiimis kasutamiseks piirata aja või suuruse järgi.">
+<!ENTITY allFoldersOffline2.label "Antud konto kõigis kaustades olevad kirjad säilitatakse selles arvutis">
+<!ENTITY allFoldersOffline2.accesskey "õ">
+<!ENTITY allFoldersOfflineNote.label "Märkus: selle muudatusega muudetakse kõiki selle konto kaustu. Määrangute sättimiseks kausthaaval klõpsa nupul Edasijõudnuile….">
+<!ENTITY offlineNotDownload.label "suuremaid kirju kui">
+<!ENTITY offlineNotDownload.accesskey "r">
+<!ENTITY autosyncNotDownload.label "Kirju ei tõmmata, kui need on suuremad kui">
+<!ENTITY autosyncNotDownload.accesskey "K">
+<!ENTITY kb.label "KiB">
+<!ENTITY daysOld.label "päeva vanad">
+<!ENTITY message.label "kirja">
+<!ENTITY nntpNotDownloadRead.label "loetud sõnumeid">
+<!ENTITY nntpNotDownloadRead.accesskey "l">
+<!ENTITY nntpDownloadMsg.label "Kirjad, mis on uuemad kui">
+<!ENTITY nntpDownloadMsg.accesskey "u">
+<!ENTITY retentionCleanup.label "Kettaruumi säästmiseks on võimalik vanad kirjad jäädavalt kustutada">
+<!ENTITY retentionCleanupImap.label "Kettaruumi säästmiseks on võimalik vanad kirjad jäädavalt kustutada; nii kohalikud koopiad kui ka originaalid kaugserverist.">
+<!ENTITY retentionCleanupPop.label "Kettaruumi säästmiseks on võimalik vanad kirjad jäädavalt kustutada; kaasa arvatud originaalid kaugserverist.">
+<!ENTITY retentionKeepMsg.label "kustutatakse kirjad, mis on rohkem kui">
+<!ENTITY retentionKeepMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "ei kustutata ühtegi kirja">
+<!ENTITY retentionKeepAll.accesskey "h">
+<!ENTITY retentionKeepRecent.label "kustutatakse kõik peale hiljutiste">
+<!ENTITY retentionKeepRecent.accesskey "j">
+<!ENTITY retentionApplyToFlagged.label "Alati säilitatakse tähistatud kirjad">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+<!ENTITY nntpRemoveMsgBody.label "Sisu kustutatakse kirjadel, mis on vanemad kui">
+<!ENTITY nntpRemoveMsgBody.accesskey "d">
+<!ENTITY offlineSelectNntp.label "Vali võrguta režiimis kasutatavad uudistegrupid...">
+<!ENTITY offlineSelectNntp.accesskey "V">
+<!ENTITY offlineImapAdvancedOffline.label "Edasijõudnuile...">
+<!ENTITY offlineImapAdvancedOffline.accesskey "E">
+<!ENTITY syncGroupTitle.label "Kirjade sünkroniseerimine">
+<!ENTITY diskspaceGroupTitle.label "Kettaruum">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Olenemata vanusest sünkroniseeritakse kõik kirjad">
+<!ENTITY allAutosync.accesskey           "O">
+<!ENTITY ageAutosyncBefore.label         "Sünkroniseeritakse viimase">
+<!ENTITY ageAutosync.accesskey           "S">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "päeva">
+<!ENTITY weekAgeInterval.label           "nädala">
+<!ENTITY monthAgeInterval.label          "kuu">
+<!ENTITY yearAgeInterval.label           "aasta">
+<!ENTITY ageAutosyncAfter.label          "kirjad">

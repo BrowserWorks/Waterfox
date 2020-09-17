@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "Penetapan &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey      "P">
+<!ENTITY weaveDesc.label            "&syncBrand.fullName.label; membolehkan anda mengakses sejarah, tandabuku, kata laluan dan tab terbuka dalam semua peranti.">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "Akaun &syncBrand.fullName.label;">
+<!ENTITY accountName.label            "Nama Akaun:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "Kemaskini">
+<!ENTITY updatePass.accesskey         "K">
+<!ENTITY resetPass.label              "Set semula">
+<!ENTITY resetPass.accesskey          "M">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "Urus Akaun">
+<!ENTITY manageAccount.accesskey      "U">
+<!ENTITY viewQuota.label              "Papar Kuota">
+<!ENTITY viewQuota.accesskey          "P">
+<!ENTITY changePassword.label         "Tukar Kata laluan">
+<!ENTITY changePassword.accesskey     "K">
+<!ENTITY myRecoveryKey.label          "Kekunci Pemulihan Saya">
+<!ENTITY myRecoveryKey.accesskey      "S">
+<!ENTITY resetSync.label              "Mengeset semula Sync">
+<!ENTITY resetSync.accesskey          "M">
+<!ENTITY unlinkDevice.label           "Putuskan sambungan Peranti Ini">
+<!ENTITY unlinkDevice.accesskey       "P">
+<!ENTITY addDevice.label              "Tambah Peranti">
+<!ENTITY addDevice.accesskey          "T">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "Nama Komputer:">
+<!ENTITY syncComputerName.accesskey   "N">
+
+<!ENTITY syncMy2.label              "Sync:">
+<!ENTITY engine.addons.label        "Add-ons">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.bookmarks.label     "Tandabuku">
+<!ENTITY engine.bookmarks.accesskey "T">
+<!ENTITY engine.tabs.label          "Tab">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "Sejarah">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.passwords.label     "Kata laluan">
+<!ENTITY engine.passwords.accesskey "l">
+<!ENTITY engine.prefs.label         "Keutamaan">
+<!ENTITY engine.prefs.accesskey     "K">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Terma Perkhidmatan">
+<!ENTITY prefs.ppLink.label         "Polisi Privasi">

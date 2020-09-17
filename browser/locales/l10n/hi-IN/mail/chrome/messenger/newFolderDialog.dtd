@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "नया फोल्डर">
+<!ENTITY name.label                 "नाम:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "इसके उपफोल्डर के रूप में बनायें:">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "यह फोल्डर को दो विशेष रूप में प्रतिबंधित करता है.">
+<!ENTITY folderRestriction2.label   "इसे शामिल करने के लिये अपने नये फोल्डर को अनुमति दें:">
+<!ENTITY foldersOnly.label          "सिर्फ फोल्डर">
+<!ENTITY messagesOnly.label         "सिर्फ संदेश">

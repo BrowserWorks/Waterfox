@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "Virhekonsoli">
+
+<!ENTITY errFile.label        "Lähdetiedosto:">
+<!ENTITY errLine.label        "Rivi:">
+<!ENTITY errColumn.label      "Sarake:">
+
+<!ENTITY all.label            "Kaikki">
+<!ENTITY all.accesskey        "a">
+<!ENTITY errors.label         "Virheet">
+<!ENTITY errors.accesskey     "r">
+<!ENTITY warnings.label       "Varoitukset">
+<!ENTITY warnings.accesskey   "o">
+<!ENTITY messages.label       "Viestit">
+<!ENTITY messages.accesskey   "V">
+<!ENTITY clear.label          "Tyhjennä">
+<!ENTITY clear.accesskey      "T">
+<!ENTITY codeEval.label       "Koodi:">
+<!ENTITY codeEval.accesskey   "d">
+<!ENTITY evaluate.label       "Suorita">
+<!ENTITY evaluate.accesskey   "S">
+<!ENTITY filter2.label        "Suodata:">
+<!ENTITY filter2.accesskey    "u">
+
+<!ENTITY copyCmd.label         "Kopioi">
+<!ENTITY copyCmd.accesskey     "K">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "Järjestetty ensimmäisestä viimeiseen">
+<!ENTITY sortFirst.accesskey   "e">
+<!ENTITY sortLast.label        "Järjestetty viimeisestä ensimmäiseen">
+<!ENTITY sortLast.accesskey    "m">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "Valikkopalkki">
+<!ENTITY modeToolbar.tooltip   "Tilatyökalurivi">
+<!ENTITY entryToolbar.tooltip  "Javascript-työkalurivi">
+<!ENTITY toolbarsCmd.label     "Näytä/piilota">
+<!ENTITY toolbarsCmd.accesskey "N">
+<!ENTITY toolbarMode.label     "Tila">
+<!ENTITY toolbarMode.accesskey "T">
+<!ENTITY toolbarEval.label     "JavaScript-syöte">
+<!ENTITY toolbarEval.accesskey "J">

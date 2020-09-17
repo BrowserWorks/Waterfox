@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Editor proprietăți avansate">
+<!ENTITY AttName.label                  "Atribut: ">
+<!ENTITY AttValue.label                 "Valoare: ">
+<!ENTITY PropertyName.label             "Proprietate: ">
+<!ENTITY currentattributesfor.label     "Atribute actuale pentru: ">
+<!ENTITY tree.attributeHeader.label     "Atribut">
+<!ENTITY tree.propertyHeader.label      "Proprietate">
+<!ENTITY tree.valueHeader.label         "Valoare">
+<!ENTITY tabHTML.label                  "Atribute HTML">
+<!ENTITY tabCSS.label                   "Stil inline">
+<!ENTITY tabJSE.label                   "Evenimente JavaScript">
+
+<!ENTITY editAttribute.label    "Dă clic pe un element de mai sus pentru a-i edita valoarea">
+<!ENTITY removeAttribute.label  "Elimină">

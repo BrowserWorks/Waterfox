@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Тражи поруке у:">
+<!ENTITY searchHeading.accesskey     "и">
+<!ENTITY searchSubfolders.label      "Претражи подфасцикле">
+<!ENTITY searchSubfolders.accesskey  "е">
+<!ENTITY searchOnServer.label        "Изврши претрагу на серверу">
+<!ENTITY searchOnServer.accesskey    "у">
+<!ENTITY resetButton.label           "Очисти">
+<!ENTITY resetButton.accesskey       "с">
+<!ENTITY openButton.label            "Отвори">
+<!ENTITY openButton.accesskey        "и">
+<!ENTITY deleteButton.label          "Обриши">
+<!ENTITY deleteButton.accesskey      "б">
+<!ENTITY searchDialogTitle.label     "Претражи поруке">
+<!ENTITY results.label               "Резултати">
+<!ENTITY moveButton.label            "Помери у">
+<!ENTITY moveButton.accesskey        "м">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Отвори у фасцикли">
+<!ENTITY openInFolder.accesskey      "л">
+<!ENTITY saveAsVFButton.label        "Сачувај као претраживачку фасциклу">
+<!ENTITY saveAsVFButton.accesskey    "ц">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Тражи у:">
+<!ENTITY abSearchHeading.accesskey   "и">
+<!ENTITY propertiesButton.label      "Својства">
+<!ENTITY propertiesButton.accesskey  "С">
+<!ENTITY composeButton.label         "Пиши">
+<!ENTITY composeButton.accesskey     "П">
+<!ENTITY deleteCardButton.label      "Обриши">
+<!ENTITY deleteCardButton.accesskey  "б">
+<!ENTITY abSearchDialogTitle.label   "Напредна претрага именика">
+

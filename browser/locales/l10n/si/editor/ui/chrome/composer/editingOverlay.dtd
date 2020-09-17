@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "ගොනුවක් විවෘත කරන්න...">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "වෙබ් පිටුවක් විවෘත කරන්න...">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "මෑතකාලීන පිටු">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "සුරකින්න">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "සුරකින අයුර…">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsChangeEncodingCmd.label "අක්ෂර කේතනය වෙනස් කර සුරකින්න">
+<!ENTITY saveAsChangeEncodingCmd.accesskey "E">
+<!ENTITY publishCmd.label "ප්‍රකාශනය කරන්න">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "මෙලෙස ප්‍රකාශනය කරන්න…">
+<!ENTITY publishAsCmd.accesskey "h">
+<!ENTITY fileRevert.label "ප්‍රතිවර්තනය කරන්න">
+<!ENTITY fileRevert.accesskey "t">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "අඩවි සැකසුම් ප්‍රකාශනය…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "නව">
+<!ENTITY newToolbarCmd.tooltip "Create a new Composer page">
+<!ENTITY openToolbarCmd.label "විවෘත කරන්න">
+<!ENTITY openToolbarCmd.tooltip "පෙදෙසි (local) ගොනුවක් විවෘත කරන්න">
+<!ENTITY saveToolbarCmd.tooltip "පෙදෙසි (local) ස්ථානයකට ගොනුව සුරකින්න">
+<!ENTITY publishToolbarCmd.tooltip "දුරස්ථ ස්ථානයකට අප්ලෝඩ් කරන්න">

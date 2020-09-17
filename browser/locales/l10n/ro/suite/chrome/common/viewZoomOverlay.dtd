@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# janimo <jani@ubuntu.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- LOCALIZATION NOTE: do not use digits "0"-"9" as accesskeys -->
+<!ENTITY zoomEnlargeCmd.label       "Mai mare">
+<!ENTITY zoomEnlargeCmd.accesskey   "M">
+<!ENTITY zoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards --><!ENTITY zoomEnlargeCmd.commandkey2 "="> 
+
+<!ENTITY zoomReduceCmd.label        "Mai mic">
+<!ENTITY zoomReduceCmd.accesskey    "M">
+<!ENTITY zoomReduceCmd.commandkey   "-">
+
+<!ENTITY zoomResetCmd.commandkey    "0">

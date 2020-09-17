@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+<!ENTITY  pref.proxies.advanced.title "პროქსის დეტალური პარამეტრები">
+<!ENTITY  protocols.caption           "ოქმისადმი სპეციფიური პროქსი">
+<!ENTITY  protocols.description       "ჩვეულებრივ, იგივე პროქსის შეუძლია ჩამოთვლილი ოქმების დამუშავება.">
+<!ENTITY  http.label                  "HTTP პროქსი:">
+<!ENTITY  http.accesskey              "x">
+<!ENTITY  ssl.label                   "SSL პროქსი:">
+<!ENTITY  ssl.accesskey               "L">
+<!ENTITY  ftp.label                   "FTP პროქსი:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "ყველა ოქმისთვის HTTP პროქსის პარამეტრების გამოყენება">
+<!ENTITY  reuseProxy.accesskey        "U">
+<!ENTITY  port.label                  "პორტი:">
+<!ENTITY  HTTPPort.accesskey          "P">
+<!ENTITY  SSLPort.accesskey           "o">
+<!ENTITY  FTPPort.accesskey           "r">
+
+<!ENTITY  socks.caption               "საზოგადო პროქსი">
+<!ENTITY  socks.description           "SOCKS პროქსის ნაირსახეობაა, რომელიც ზოგჯერ კორპორაციულ ან მსგავს ქსელებში გამოიყენება.">
+<!ENTITY  socks.label                 "SOCKS პროქსი:">
+<!ENTITY  socks.accesskey             "S">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "C">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "K">
+<!ENTITY  socksRemoteDNS.label        "გამოიყენება ჰოსტის სახელების გადასაწყვეტად (რეკომენდებულია SOCKS v5-ისთვის)">
+<!ENTITY  socksRemoteDNS.accesskey    "e">
+<!ENTITY  SOCKSport.accesskey         "t">

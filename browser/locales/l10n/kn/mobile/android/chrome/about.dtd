@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName;ನ ಬಗ್ಗೆ">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; ಪ್ರಾಯೋಗಿಕವಾಗಿದೆ ಆದ್ದರಿಂದ ಅಸ್ಥಿರವಾಗಿರಬಹುದು.">
+<!ENTITY aboutPage.checkForUpdates.link         "ಅಪ್‌ಡೇಟ್‌ಗಳಿಗಾಗಿ ಪರಿಶೀಲಿಸು»">
+<!ENTITY aboutPage.checkForUpdates.checking     "ಪರಿಷ್ಕರಣೆಗಳಿಗಾಗಿ ಹುಡುಕಲಾಗುತ್ತಿದೆ…">
+<!ENTITY aboutPage.checkForUpdates.none         "ಯಾವುದೇ ಅಪ್‌ಡೇಟುಗಳು ಇಲ್ಲ">
+<!ENTITY aboutPage.checkForUpdates.available2   "ಅಪ್‌ಡೇಟ್‌ ಡೌನ್‌ಲೋಡ್ ಮಾಡು">
+<!ENTITY aboutPage.checkForUpdates.downloading  "ಅಪ್‌ಡೇಟ್‌ ಡೌನ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "ಅಪ್‌ಡೇಟ್‌ಗಳನ್ನು ಅನುಸ್ಥಾಪಿಸು">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "ಬೆಂಬಲ">
+<!ENTITY aboutPage.privacyPolicy.label          "ಗೌಪ್ಯತಾ ನಿಯಮ">
+<!ENTITY aboutPage.rights.label                 "ನಿಮ್ಮ ಹಕ್ಕುಗಳನ್ನು ತಿಳಿದುಕೊಳ್ಳಿ">
+<!ENTITY aboutPage.relNotes.label               "ಬಿಡುಗಡೆ ಟಿಪ್ಪಣಿಗಳು">
+<!ENTITY aboutPage.credits.label                "ಮನ್ನಣೆಗಳು">
+<!ENTITY aboutPage.license.label                "ಪರವಾನಗಿ ಮಾಹಿತಿ">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox ಮತ್ತು Firefoxನ ಲೋಗೋಗಳು Mozilla ಫೌಂಡೇಷನ್‌ನ ಟ್ರೇಡ್‌ಮಾರ್ಕ್‌ಗಳಾಗಿರುತ್ತವೆ.">

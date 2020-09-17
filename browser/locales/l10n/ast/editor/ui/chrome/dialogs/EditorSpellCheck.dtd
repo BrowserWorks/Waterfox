@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Revisar ortografía">
+
+<!ENTITY misspelledWord.label "Pallabra mal escrita:">
+<!ENTITY wordEditField.label "Trocar con:">
+<!ENTITY wordEditField.accessKey "c">
+<!ENTITY checkwordButton.label "Revisar pallabra">
+<!ENTITY checkwordButton.accessKey "s">
+<!ENTITY suggestions.label "Suxerencies:">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "Inorar">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "Inorar too">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "Trocar">
+<!ENTITY replaceButton.accessKey "T">
+<!ENTITY replaceAllButton.label "Trocar too">
+<!ENTITY replaceAllButton.accessKey "t">
+<!ENTITY stopButton.label "Detener">
+<!ENTITY stopButton.accessKey "t">
+<!ENTITY userDictionary.label "Diccionariu personal:">
+<!ENTITY moreDictionaries.label "Descargar más diccionarios…">
+<!ENTITY addToUserDictionaryButton.label "Amestar pallabra">
+<!ENTITY addToUserDictionaryButton.accessKey "m">
+<!ENTITY editUserDictionaryButton.label "Editar…">
+<!ENTITY editUserDictionaryButton.accessKey "E">
+<!ENTITY recheckButton2.label "Recomprobar testu">
+<!ENTITY recheckButton2.accessKey "t">
+<!ENTITY closeButton.label "Zarrar">
+<!ENTITY closeButton.accessKey "Z">
+<!ENTITY sendButton.label "Unviar">
+<!ENTITY sendButton.accessKey "v">
+<!ENTITY languagePopup.label "Llingua:">
+<!ENTITY languagePopup.accessKey "n">

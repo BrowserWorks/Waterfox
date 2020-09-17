@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Parametros de pagina nove">
+
+<!ENTITY  authorName.label          "Autor:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "Apparentia predefinite del pagina">
+
+<!ENTITY defaultColors.label        "Colores predefinite del lector (non definir le colores del pagina)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "Usar colores personalisate:">
+<!ENTITY customColors.accesskey     "p">
+
+<!ENTITY normalText.label           "Texto normal">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "Texto del ligamine">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "Texto de ligamine active">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "Texto de ligamine visitate">
+<!ENTITY visitedLinkText.accesskey  "V">
+<!ENTITY background.label           "Fundo:">
+<!ENTITY background.accesskey       "F">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Imagine de fundo:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "Eliger file…">
+<!ENTITY chooseFile.accesskey       "i">

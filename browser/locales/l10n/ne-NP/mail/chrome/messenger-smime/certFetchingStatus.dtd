@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE shown while obtaining certificates from a directory -->
+
+<!ENTITY title.label "प्रमाणपत्र डाउनलोड गर्दै">
+<!ENTITY info.message "प्रापकको प्रमाणपत्रका लागि डाइरेक्टरी खोजी गर्दै । यसले केही मिनेट लिन सक्छ ।">
+<!ENTITY stop.label "खोजी बन्द गर्नुहोस्">

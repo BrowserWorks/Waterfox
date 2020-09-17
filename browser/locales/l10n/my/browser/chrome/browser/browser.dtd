@@ -1,0 +1,270 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "မီနူးကို ဖွင့်ရန်">
+<!ENTITY navbarOverflow.label                "အခြားတန်ဆာပလာများ…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "တပ်ဗ်ကို တွယ်ချိတ်ရန်">
+<!ENTITY  unpinTab.label                     "တပ်ဗ်ကို တွယ်ထားခြင်းမှ ဖြုတ်ရန်">
+
+<!ENTITY  listAllTabs.label      "တပ်ဗ်များအားလုံး၏ စာရင်းကို ပြပါ">
+<!-- LOCALIZATION NOTE (allTabsMenu.searchTabs.label): "Search" is a verb, as
+in "Search through tabs". -->
+
+<!ENTITY tabCmd.label "တပ်ဗ်အသစ်">
+<!ENTITY openFileCmd.label "ဖိုင်ကိုဖွင့်ရန်...">
+<!ENTITY printCmd.label "ပုံနှိပ်ရန်...">
+
+
+
+<!ENTITY menubarCmd.label "မီနူးအတန်း">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY personalbarCmd.label "စာမှတ်များကိရိယာအတန်း">
+<!ENTITY personalbarCmd.accesskey "B">
+<!ENTITY bookmarksToolbarItem.label "စာမှတ်များကိရိယာအတန်းရှိ အရာများ">
+
+<!ENTITY fullScreenCmd.label "အပြည့်ကြည့်ရန်">
+
+
+<!-- LOCALIZATION NOTE (fxa.signin) Used to define the different labels
+     for the Firefox Account toolbar signin menu screen. -->
+
+<!-- LOCALIZATION NOTE (fxa.unverified) Used to define the different labels
+     for the Firefox Account toolbar unverified menu screen. -->
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbart menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+
+ <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "ယခု မြင်ကွင်းအပြည့် ဖြစ်သွားပါပြီ">
+<!ENTITY fullscreenWarning.generic.label "ဒီစာတမ်းသည် မြင်ကွင်းအပြည့် ဖြစ်သွားပါပြီ">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "မြင်ကွင်းအပြည့် ကြည့်ရှုခြင်းမှ ထွက်ရန် (ESC) ခလုတ် ကိုနိုပ်ပါ။">
+<!ENTITY exitDOMFullscreenMac.button "မြင်ကွင်းအပြည့် ကြည့်ရှုခြင်းမှ ထွက်ရန် (ESC) ခလုတ် ကိုနိုပ်ပါ။">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "သင့်ပွိုင်တာကို ထိန်းချုပ်ထားသည်။ ပြန်လည်ရယူရန် Esc ကို နှိပ်ပါ။">
+<!ENTITY pointerlockWarning.generic.label "ဒီစာတမ်းသည် သင့်ပွိုင်တာကို ထိန်းချုပ်ထားသည်။ ပြန်လည်ရယူရန် Esc ကို နှိပ်ပါ။">
+
+<!ENTITY showAllBookmarks2.label "မှတ်သားချက်များအားလုံးကို ပြသပါ">
+<!ENTITY recentBookmarks.label "မကြာသေးမီက မှတ်သားထားသောဝဘ်စာမျက်နှာများ">
+<!ENTITY bookmarksToolbarChevron.tooltip "မှတ်သားချက်များကို ပိုမို ဖေါ်ပြသပါ">
+
+<!ENTITY printButton.label            "ပုံနှိပ်ရန်">
+<!ENTITY printButton.tooltip          "ဒီစာမျက်နှာကို ပုံနှိပ်ရန်">
+
+
+<!ENTITY searchItem.title             "ရှာဖွေပါ">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "အဖွင့်စာမျက်နှာ">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; အဖွင့်စာမျက်နှာ">
+
+<!ENTITY bookmarksButton.label          "မှတ်သားချက်များ">
+
+<!ENTITY bookmarksSubview.label             "စာမှတ်များ">
+<!ENTITY bookmarksMenuButton2.label         "စာမှတ်များစာရင်း">
+<!ENTITY bookmarksMenuButton.other.label    "အခြား စာမှတ်များ">
+<!ENTITY bookmarksMenuButton.mobile.label   "မိုဘိုင်းလ် စာအမှတ်များ">
+<!ENTITY viewBookmarksSidebar2.label        "စာမှတ်များ ဘေးတန်းကို ပြပါ">
+<!ENTITY hideBookmarksSidebar.label         "စာမှတ်များဘေးတန်းကို ပိတ်ရန်">
+<!ENTITY viewBookmarksToolbar.label         "စာမှတ်များ ကိရိယာအတန်းကို ပြပါ">
+<!ENTITY hideBookmarksToolbar.label         "စာမှတ်များအတန်းကို ပိတ်ရန်">
+<!ENTITY searchBookmarks.label              "စာမှတ်များကို ရှာရန်">
+<!ENTITY bookmarkingTools.label             "စာမှတ်ဆိုင်ရာ တန်ဆာပလာများ">
+<!ENTITY addBookmarksMenu.label             "စာမှတ်များစာရင်းကို တန်ဆာပလာအတန်းတွင် ပြပါ">
+<!ENTITY removeBookmarksMenu.label          "စာမှတ်များစာရင်းကို တန်ဆာပလာအတန်းမှ ဖယ်ရှားပါ">
+
+<!ENTITY historyButton.label            "မှတ်တမ်း">
+
+<!ENTITY downloads.label              "ဆွဲချချက်များ">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "ဆွဲချချက်များ">
+<!ENTITY addons.label                 "အတ်အွန်များ">
+
+<!ENTITY webDeveloperMenu.label       "ဝဘ်ဆိုက် ဖန်တီးသူ">
+
+
+<!ENTITY newNavigatorCmd.label        "ဝင်းဒိုးအသစ်">
+<!ENTITY newPrivateWindow.label     "သီးသန့်ဝင်းဒိုးအသစ်">
+
+<!ENTITY editMenu.label         "တည်းဖြတ်">
+<!ENTITY preferencesCmd2.label       "ရွေးစရာများ">
+<!ENTITY preferencesCmdUnix.label       "နှစ်သက်ရာအပြင်အဆင်များ">
+
+
+<!ENTITY overflowCustomizeToolbar.label       "တန်ဆာပလာအတန်းကို မွမ်းမံရန်…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY historyMenu.label "မှတ်တမ်း">
+<!ENTITY historyUndoMenu.label "လတ်တလော ပိတ်ထားသည့် တပ်ဗ်များ">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "လတ်​တလော ပိတ်ထားသည့် ၀င်းဒိုးများ">
+
+<!ENTITY appMenuHistory.showAll.label "မှတ်တမ်းအားလုံးကို ပြပါ">
+<!ENTITY appMenuHistory.clearRecent.label "လတ်တလော အသုံးပြုထားသည့် မှတ်တမ်းကို ရှင်းပါ…">
+<!ENTITY appMenuHistory.restoreSession.label "အရင်သုံးခဲ့သည့်အတိုင်း ပြန်ဖွင့်ရန်">
+<!ENTITY appMenuHistory.viewSidebar.label "အသုံးပြုမှတ်တမ်း ဘေးတန်းကို ဖွင့်ပါ">
+<!ENTITY appMenuHistory.recentHistory.label "လတ်တလော မှတ်တမ်း">
+<!ENTITY appMenuHelp.label "အကူအညီ">
+
+<!ENTITY appMenuRemoteTabs.label "ချိတ်ဆက်ထားသော တပ်ဗ်များ">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "ဖွင့်ထားသည့်တပ်ဗ်များ မရှိပါ">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "ထပ်ပြပါ">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "ယခု ပစ္စည်းများ တပ်ဗ်များထပ်ပြပါ">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "အားလုံးပြပါ">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "ယခုပစ္စည်းမှ တပ်ဗ်များအားလုံးပြပါ">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "သင့်အခြား ကိရိယာများမှ တပ်ဗ်စာရင်းကို ကြည့်ရန် တပ်ဗ်ထပ်တူပြုအသုံးပြုခြင်းကို ဖွင့်ပါ။">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "အခြားကိရိယာများမှ တပ်ဗ်များကို ဒီမှာ ကြည့်ရှုချင်ပါသလား။">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Sync အပြင်အဆင်ကို ဖွင့်ပါ">
+<!ENTITY appMenuRemoteTabs.unverified.label "အကောင့်ကို အတည်ပြုရန် လိုအပ်သည်။">
+<!ENTITY appMenuRemoteTabs.managedevices.label "စက်ကရိယာများကို ထိန်းသိမ်းမည်…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "ထပ်တူပြုပြီးသောတပ်ဗ်များ ဘေးတန်းကို ကြည့်ရန်">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "အခြားကိရိယာကို ချိတ်ဆက်ရန်">
+
+<!ENTITY appMenuRecentHighlights.label "လတ်တလော ဦးစားပေးအကြောင်းအရာများ">
+
+<!ENTITY customizeMenu.addToToolbar.label "ကိရိယာအတန်းသို့ ထည့်ပါ">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "ပိုလျှံမီနူးသို့ ထည့်ပါ">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "ပိုလျှံမီနူးတွင် တွယ်ထားခြင်းမှ ဖြုတ်ပါ">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "ကိရိယာအတန်းမှ ဖယ်ရှားပါ">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "နောက်ထပ်ခလုတ်များ ထည့်မည်…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "ပို၍">
+
+<!ENTITY contentSearchSubmit.tooltip  "ရှာဖွေမှု ဆောင်ရွက်ပါ">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "ရှာဖွေရန်">
+<!ENTITY searchIcon.tooltip           "ရှာဖွေပါ">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "လင့်ခ်ကို ကူးယူရန်">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+
+<!ENTITY emailPageCmd.label           "လင့်ခ်ကို အီးမေးလ်ပို့ရန်…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "ချုံ့/ချဲ့ပါ">
+
+<!ENTITY sidebarCloseButton.tooltip     "ဘေးတန်းကို ပိတ်ပါ">
+
+<!ENTITY quitApplicationCmdWin2.label       "ထွက်ရန်">
+<!ENTITY quitApplicationCmdWin2.accesskey   "x">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName; မှ ထွက်ရန်">
+<!ENTITY quitApplicationCmd.label       "ထွက်ရန်">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName; မှ ထွက်ရန်">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Pop-pu တားဆီးမှု အပြင်အဆင်များကို ပြင်ဆင်ရန်…">
+<!ENTITY editPopupSettings.label "Pop-up တားဆီးမှု ရွေးစရာများကို ပြောင်းလဲရန်…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "ဒီစာမျက်နှာတွင် ရှာပါ…">
+
+<!ENTITY spellAddDictionaries.label "အဘိဓာန်ထဲသို့ ထည့်ပါ…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "ဘရောက်ဆာတပ်ဗ်များ">
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "အလိုအလျောက်ပိတ်ရန်">
+
+
+
+
+<!ENTITY uiTour.infoPanel.close "ပိတ်ပါ">
+
+<!ENTITY panicButton.thankyou.msg1                "သင့် လတ်တလောမှတ်တမ်းကို ရှင်းလင်းထားသည်။">
+<!ENTITY panicButton.thankyou.msg2                "လုံခြုံစိတ်ချရသော ရှာဖွေကြည့်ရှုခြင်း။">
+<!ENTITY panicButton.thankyou.buttonlabel         "ကျေးဇူးတင်ပါသည်။">
+
+<!ENTITY updateAvailable.panelUI.label "နောက်ဆုံးပေါ် &brandShorterName; ကို ဆွဲယူပါ">
+
+<!ENTITY updateManual.panelUI.label "အသစ်စက်စက် &brandShorterName; ကို ဆွဲယူပါ">
+
+<!ENTITY updateRestart.panelUI.label2 "&brandShorterName; ကို အဆင့်မြှင့်ရန် ပြန်ဖွင့်ပါ">
+
+<!ENTITY sendToDevice.syncNotReady.label "ကိရိယာများကို ထပ်တူပြုနေသည်…">
+
+<!ENTITY pageAction.shareUrl.label "မျှဝေ">
+<!ENTITY pageAction.shareMore.label "ပိုမို၍…">
+
+<!ENTITY libraryButton.tooltip "မှတ်တမ်း၊ သိမ်းထားသည့် စာမှတ်များနှင့် အခြားစသည်တို့ကို ကြည့်ရှုရန်">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "သုံးစွဲနိုင်စွမ်းလုပ်ဆောင်ချက်များကို ဖွင့်ထားသည်">
+

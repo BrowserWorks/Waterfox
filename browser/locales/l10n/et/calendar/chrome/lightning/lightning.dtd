@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Kalender">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Sündmus…">
+<!ENTITY lightning.menupopup.new.event.accesskey "S">
+<!ENTITY lightning.menupopup.new.task.label     "Ülesanne…">
+<!ENTITY lightning.menupopup.new.task.accesskey "Ü">
+<!ENTITY lightning.menupopup.new.calendar.label "Kalender…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "K">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Ava">
+<!ENTITY lightning.menupopup.open.accesskey           "A">
+<!ENTITY lightning.menupopup.open.message.label       "Salvestatud kiri…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "S">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Kalender…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "K">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Kalender">
+<!ENTITY lightning.menu.view.calendar.accesskey        "K">
+<!ENTITY lightning.menu.view.tasks.label               "Ülesanded">
+<!ENTITY lightning.menu.view.tasks.accesskey           "Ü">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Sündmused ja ülesanded">
+<!ENTITY lightning.menu.eventtask.accesskey            "n">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-post:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Eelistatakse kliendipoolset e-postiga ajastamist">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Hetkel saab seda lubada vaid peale kalendri seadistamist selle omaduste dialoogis, kui kalendriserver haldab ajastamist.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Valik on saadaval vaid juhul, kui kalendriserver haldab ajastamist. Lubamisel kasutatakse varuvariandina standardil põhinevat e-postiga ajastamist serveripoolse halduse asemel.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Osalen">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Võta kutse vastu">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Võta kõik vastu">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Võta kõik kutse sündmuse kordumised vastu">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Lisa">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Lisa sündmus kalendrisse">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Keeldu">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Keeldu sündmuse kutsest">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Keeldu kõigist">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Keeldu kõigist kutse sündmuse kordumistest">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Keeldu">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Keeldu vastuettepanekust">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Kustuta">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Kustuta kalendrist">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Üksikasjad…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Kuva sündmuse üksikasjad">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Ära näita neid teavitusi">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Kalender">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Lülitu kalendri kaardile">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Rohkem">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Klõpsa teiste valikute nägemiseks">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Kinnita uuesti">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Saadab korraldajale kinnituse uuesti">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Muuda aega">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Muuda sündmuse toimumisaega">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Salvesta koopia">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Salvestab kalendrisse koopia korraldajale vastamata. Osalejate nimekiri tühjendatakse.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Kahtlev">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Nõustu kahtlevalt">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Kõigi osas kahtlev">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Nõustu kutse sündmuse kõigi kordumistega kahtlevalt">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Värskenda">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Värskenda sündmust kalendris">
+<!ENTITY lightning.imipbar.description                                      "See kiri sisaldab kutset sündmusele.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Saada vastus kohe">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Saada vastus korraldajale">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Saada korraldajale vastus korduva sündmuse kohta">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Ära saada vastust">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Muuda enda osalemist korraldajale vastust saatmata">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Muuda enda osalemist korduval sündmusel korraldajale vastust saatmata">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Loo uus kalender">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Näita minikalendrit">
+<!ENTITY todaypane.showMinimonth.accesskey "m">
+<!ENTITY todaypane.showMiniday.label "Näita minipäeva">
+<!ENTITY todaypane.showMiniday.accesskey  "p">
+<!ENTITY todaypane.showNone.label "Ära näita ühtegi">
+<!ENTITY todaypane.showNone.accesskey "Ä">
+<!ENTITY todaypane.showTodayPane.label "Näita tänaste tegemiste paneeli">
+<!ENTITY todaypane.showTodayPane.accesskey "t">
+<!ENTITY todaypane.statusButton.label "Tänaste tegemiste paneel">

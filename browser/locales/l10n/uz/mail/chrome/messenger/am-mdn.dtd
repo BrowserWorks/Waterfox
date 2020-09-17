@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Qabul qilinganligi haqida xabar berish">
+<!ENTITY useGlobalPrefs.label         "Bu hisob uchun menga tegishli global qabul qilinganligi haqida xabar berish parametrlaridan foydalanilsin">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY globalReceipts.label         "Global parametrlar…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "Bu hisob uchun qabul qilganlik haqida xabar jo‘natishni moslash">
+<!ENTITY useCustomPrefs.accesskey     "m">
+<!ENTITY requestReceipt.label         "Xabarlar jo‘natilganda, doimo qabul qilinganligi haqida xabar berish so‘ralsin">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "Qabul qilganlik haqidagi xabar yetib borganda:">
+<!ENTITY leaveIt.label                "U kiruvchi xabarlarda qolsin">
+<!ENTITY leaveIt.accesskey            "U">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "U mening &quot;Jo‘natilganlar&quot; jildimga ko‘chirilsin">
+<!ENTITY moveToSent.accesskey         "m">
+<!ENTITY requestMDN.label             "Qabul qilganligim haqidagi so‘rovni olganimda:">
+<!ENTITY returnSome.label             "Ba’zi xabarlar uchun qabul qilganlik haqida xabar berishga ruxsat berilsin">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Qabul qilganligim haqidagi xabar hech qachon jo‘natilmasin">
+<!ENTITY never.accesskey              "j">
+<!ENTITY notInToCc.label              "Agar men xabarni qabul qiluvchi yoki nusxasini oluvchi ichida bo‘lmasam:">
+<!ENTITY notInToCc.accesskey          "T">
+<!ENTITY outsideDomain.label          "Agar jo‘natuvchi domenimdan tashqarida bo‘lsa:">
+<!ENTITY outsideDomain.accesskey      "j">
+<!ENTITY otherCases.label             "Boshqa barcha hollarda:">
+<!ENTITY otherCases.accesskey         "a">
+<!ENTITY askMe.label                  "Mendan so‘ralsin">
+<!ENTITY alwaysSend.label             "Doimo jo‘natilsin">
+<!ENTITY neverSend.label              "Hech qachon jo‘natilmasin">

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "পৃষ্ঠার রং এবং পটভূমি">
+<!ENTITY pageColors.label "পৃষ্ঠার রং">
+<!ENTITY defaultColorsRadio.label "পাঠকের পূর্বনির্ধারিত রং (পৃষ্ঠায় রং সেট করা হবে না (D))">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "শুধুমাত্র পাঠকের ব্রাউজারের রং-এর সেটিং ব্যবহার করা হবে">
+<!ENTITY customColorsRadio.label "স্বনির্বাচিত রং ব্যবহার (c):">
+<!ENTITY customColorsRadio.accessKey "c">
+<!ENTITY customColorsRadio.tooltip "এই রঙের সেটিং পাঠকের ব্রাউজারের সেটিং উপেক্ষা করে">
+
+<!ENTITY normalText.label "সাধারণ টেক্সট (N)">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "লিংক টেক্সট (L)">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "সক্রিয় লিংক টেক্সট (A)">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "প্রদর্শিত লিংক টেক্সট (V)">
+<!ENTITY visitedLinkText.accessKey "V">
+<!ENTITY background.label "পটভূমি (B):">
+<!ENTITY background.accessKey "B">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "পটভূমির ছবি (m):">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "আপনার পৃষ্ঠার জন্য একটি ছবির ফাইলকে পটভূমি হিসেবে ব্যবহার করা হবে">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Agordoj de eliraj serviloj (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Dum administri identigojn, vi povas uzi servilon el tiu ĉi listo per elekti ĝin kiel eliran servilon (SMTP), aŭ uzi implicitan servilon el tiu ĉi listo per elekti “uzi implicitan servilon”.">
+
+<!ENTITY smtpListAdd.label  "Aldoni…">
+<!ENTITY smtpListAdd.accesskey  "A">
+<!ENTITY smtpListEdit.label "Redakti…">
+<!ENTITY smtpListEdit.accesskey "R">
+<!ENTITY smtpListDelete.label "Forigi">
+<!ENTITY smtpListDelete.accesskey "F">
+<!ENTITY smtpListSetDefault.label "Implicita">
+<!ENTITY smtpListSetDefault.accesskey "I">
+
+<!ENTITY serverDetails.label "Detaloj pri elektita servilo:">
+<!ENTITY serverDescription.label "Priskribo: ">
+<!ENTITY serverName.label "Servila nomo: ">
+<!ENTITY serverPort.label "Pordo: ">
+<!ENTITY userName.label   "Nomo de uzanto: ">
+<!ENTITY connectionSecurity.label "Sekureco de konekto: ">
+<!ENTITY authMethod.label   "Aŭtentigo: ">

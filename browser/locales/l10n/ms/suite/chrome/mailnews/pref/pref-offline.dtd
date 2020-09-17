@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Rangkaian &amp; Storan">
+<!ENTITY pref.offline.caption             "Luar talian">
+<!ENTITY textStartUp                      "Apabila memulakan:">
+<!ENTITY textStartUp.accesskey            "A">
+<!ENTITY menuitemRememberPrevState        "Ingati keadaan atas talian terdahulu">
+<!ENTITY menuitemAskMe                    "Tanya saya untuk keadaan atas talian semasa permulaan">
+<!ENTITY menuitemAlwaysOnline             "Sentiasa memulakan atas talian">
+<!ENTITY menuitemAlwaysOffline            "Sentiasa memulakan luar talian">
+<!ENTITY menuitemAutomatic                "Dikesan secara automatik (jika ada)">
+<!ENTITY textGoingOnline                  "Hantar mesej yang tidak dihantar apabila atas talian?">
+<!ENTITY radioAutoSend                    "Ya">
+<!ENTITY radioAutoSend.accesskey          "Y">
+<!ENTITY radioNotSend                     "Tidak">
+<!ENTITY radioNotSend.accesskey           "T">
+<!ENTITY radioAskUnsent                   "Tanya saya">
+<!ENTITY radioAskUnsent.accesskey         "s">
+<!ENTITY textGoingOffline                 "Muat turun mesej untuk kegunaan luar talian apabila ke luar talian?">
+<!ENTITY radioAutoDownload                "Ya">
+<!ENTITY radioAutoDownload.accesskey      "a">
+<!ENTITY radioNotDownload                 "Tidak">
+<!ENTITY radioNotDownload.accesskey       "k">
+<!ENTITY radioAskDownload                 "Tanya saya">
+<!ENTITY radioAskDownload.accesskey       "y">
+<!ENTITY mailConnections.caption          "Sambungan Mel">
+<!ENTITY mailnewsTimeout.label            "Tempoh sambungan:">
+<!ENTITY mailnewsTimeout.accesskey        "m">
+<!ENTITY mailnewsTimeoutSeconds.label     "saat">
+<!ENTITY Diskspace                        "Ruang Cakera">
+<!ENTITY offlineCompactFolders.label      "Padatkan semua folder apabila dapat menjimatkan">
+<!ENTITY offlineCompactFolders.accesskey  "P">
+<!ENTITY offlineCompactFoldersMB.label    "MB secara keseluruhan">

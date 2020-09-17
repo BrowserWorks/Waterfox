@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Hesap özellikleri">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Genel">
+<!ENTITY account.advanced              "Gelişmiş Seçenekler">
+<!ENTITY account.name                  "Kullanıcı adı:">
+<!ENTITY account.password              "Parola:">
+<!ENTITY account.alias                 "Takma ad:">
+<!ENTITY account.newMailNotification   "Yeni posta gelince haber ver">
+<!ENTITY account.autojoin              "Otomatik girilecek kanallar:">
+<!ENTITY account.proxySettings.caption "Vekil sunucu ayarları:">
+<!ENTITY account.proxySettings.change.label     "Değiştir…">
+<!ENTITY account.proxySettings.change.accessKey "D">

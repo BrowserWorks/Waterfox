@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY feedSubscriptions.label "Падпіскі на жывільнік">
+<!ENTITY subscriptionDesc.label "Заўвага: выдаленне або змяненне папкі для жывільніка не закране папярэдне загружаныя артыкулы.">
+<!ENTITY feedTitle.label "Загаловак:">
+<!ENTITY feedTitle.accesskey "З">
+<!ENTITY feedLocation.label "URL жывільніка:">
+<!ENTITY feedLocation.accesskey "U">
+<!ENTITY feedLocation.placeholder "Увядзіце спраўны URL жывільніка для дадання">
+<!ENTITY feedFolder.label "Захоўваць артыкулы ў:">
+<!ENTITY feedFolder.accesskey "ў">
+<!ENTITY quickMode.label "Паказваць зводку артыкула замест сцягвання сеціўнай старонкі">
+<!ENTITY quickMode.accesskey "к">
+<!ENTITY autotagEnable.label "Самастварэнне мецінаў з назваў &lt;category&gt; жывільніка">
+<!ENTITY autotagEnable.accesskey "С">
+<!ENTITY autotagUsePrefix.label "Прыстаўка мецінаў:">
+<!ENTITY autotagUsePrefix.accesskey "П">
+<!ENTITY autoTagPrefix.placeholder "Увядзіце прыстаўку для мецінаў">
+<!ENTITY locationValidate.label "Праверыць">
+<!ENTITY validateText.label "Правяраць і атрымліваць спраўны URL.">
+<!ENTITY button.addFeed.label "Дадаць">
+<!ENTITY button.addFeed.accesskey "Д">
+<!ENTITY button.editFeed.label "Абнавіць">
+<!ENTITY button.editFeed.accesskey "А">
+<!ENTITY button.removeFeed.label "Выдаліць">
+<!ENTITY button.removeFeed.accesskey "В">
+<!ENTITY button.importOPML.label "Імпартаваць">
+<!ENTITY button.importOPML.accesskey "І">
+<!ENTITY button.exportOPML.label "Экспартаваць">
+<!ENTITY button.exportOPML.accesskey "Э">
+<!ENTITY button.exportOPML.tooltip "Экспарт жывільнікаў у папках; ctrl-пстрык або ctrl-увод экспартуюць жывільнікі як спіс">
+<!ENTITY cmd.close.commandKey "w">
+<!ENTITY button.close.label "Зачыніць">

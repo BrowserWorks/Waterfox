@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Keyuj Rub'i' Taqoya'l chuqa' Tzij">
+<!ENTITY removeButton.label           "Tiyuj">
+<!ENTITY removeButton.accesskey       "y">
+<!ENTITY removeAccount.label          "Tiyuj retamab'al rub'i' taqoya'l">
+<!ENTITY removeAccount.accesskey      "t">
+<!ENTITY removeAccount.desc           "Tiyuj xa xe ri retamaxik &brandShortName;'s re rub'i' taqoya'l re'. Man nutz'ila' ta ri rub'i' taqoya'l pa ri k'uxasamaj.">
+<!ENTITY removeData.label             "Tiyuj rutzij tzijol">
+<!ENTITY removeData.accesskey         "r">
+<!ENTITY removeDataChat.label         "Tiyuj rutzij tzijonem">
+<!ENTITY removeDataChat.accesskey     "r">
+<!ENTITY removeDataLocalAccount.desc  "Keyuj el ri taq tzijol, taq yakwuj chuqa' taq chayub'äl kiximon ki' rik'in re rub'i' rutaqoya'l chupam ri nimayakb'äl. Re re' man nutz'ila' ta jujun taq rutzijol, ri k'a yek'oje' kan pa ri k'uxasamaj. Man ticha' we nina'ojïx yeyak ri taq tzij k'o chupam o ye'okisäx chik pa &brandShortName; jub'a' chik na.">
+<!ENTITY removeDataServerAccount.desc "Keyuj el ri taq tzijol, taq yakwuj chuqa' taq chayub'äl kiximon ki' rik'in re rub'i' rutaqoya'l chupam ri nimayakb'äl. Ri taq rutzijol chuqa' taq yakwuj k'a e k'o pa ri k'uxasamaj.">
+<!ENTITY removeDataChatAccount.desc   "Keyuj ri taq kitz'ib'anik rutzijonem re rub'i' taqoya'l re', ri eyakon chupam ri nimayakb'äl.">
+<!ENTITY showData.label               "Tik'ut pe ruk'ojlem tzij">
+<!ENTITY showData.accesskey           "T">
+<!ENTITY progressPending              "Tajin niyuj ri tzij cha'on…">
+<!ENTITY progressSuccess              "Ütz xyuj el.">
+<!ENTITY progressFailure              "Man ütz ta xyuj el.">

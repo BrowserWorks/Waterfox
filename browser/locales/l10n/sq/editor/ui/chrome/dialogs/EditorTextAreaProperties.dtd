@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Veti Zone Tekstesh">
+
+<!ENTITY Settings.label "Rregullime">
+
+<!ENTITY TextAreaName.label "Emër Fushe:">
+<!ENTITY TextAreaName.accessKey "E">
+<!ENTITY TextAreaRows.label "Rreshta:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Shtylla:">
+<!ENTITY TextAreaCols.accessKey "S">
+<!ENTITY TextAreaReadOnly.label "Vetëm Lexim">
+<!ENTITY TextAreaReadOnly.accessKey "L">
+<!ENTITY TextAreaDisabled.label "E çaktivizuar">
+<!ENTITY TextAreaDisabled.accessKey "Ç">
+<!ENTITY TextAreaTabIndex.label "Vlerë Tabulacioni:">
+<!ENTITY TextAreaTabIndex.accessKey "T">
+<!ENTITY TextAreaAccessKey.label "Tast Përdorimi:">
+<!ENTITY TextAreaAccessKey.accessKey "H">
+<!ENTITY InitialText.label "Tekst Fillestar:">
+<!ENTITY InitialText.accessKey "F">
+
+<!ENTITY TextAreaWrap.label "Mënyrë Mbështill:">
+<!ENTITY TextAreaWrap.accessKey "M">
+<!ENTITY WrapDefault.value "Parazgjedhje">
+<!ENTITY WrapOff.value "Off">
+<!ENTITY WrapHard.value "Hard">
+<!ENTITY WrapSoft.value "Soft">
+<!ENTITY WrapPhysical.value "Fizike">
+<!ENTITY WrapVirtual.value "Virtuale">

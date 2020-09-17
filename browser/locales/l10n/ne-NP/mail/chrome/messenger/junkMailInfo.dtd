@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "जङ्क मेलका बारेमा">
+<!ENTITY window.width "450">
+<!ENTITY info1a.label "&brandShortName; स्वचालित रूपमा आगमन सन्देश पत्ता लगाउँदछ जुन जङ्क मेलको रूपमा देखापर्दछ (जसलाई स्प्याम पनि भनिन्छ) । सन्देश &brandShortName; जसलाई जङ्क सोचिन्छ, त्यसले जङ्क प्रतिमा प्रदर्शन गर्नेछ">
+<!ENTITY info1b.label ".">
+<!ENTITY info2.label "सुरुमा, तपाईँले जङ्क हो वा होइन भन्ने सन्देशहरू चिनो लगाउन जङ्क उपकरण बटन प्रयोग गरेर जङ्क मेल चिन्न &brandShortName; लाइ प्रशिक्षण गर्नुपर्छ ।">
+<!ENTITY info3.label "एकपटक &brandShortName; ले सही रूपमा जङ्क मेल पिचान गरिरहेको छ, तपाईँले स्वचालित रूपमा जङ्क फोल्डरमा आगमन जङ्क मेललाई सार्न जङ्क मेल नियन्त्रण प्रयोग गर्न सक्नुहुन्छ ।">
+<!ENTITY info4.label "अरू धेरै जानकारीका लागि, 'मद्दत' बटन क्लिक गर्नुहोस् ।">

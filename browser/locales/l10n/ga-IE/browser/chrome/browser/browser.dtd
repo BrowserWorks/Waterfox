@@ -1,0 +1,296 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Oscail roghchlár">
+<!ENTITY navbarOverflow.label                "Tuilleadh uirlisí…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Pionnáil an Cluaisín">
+<!ENTITY  unpinTab.label                     "Díphionnáil an Cluaisín">
+
+<!ENTITY  listAllTabs.label      "Liostaigh gach cluaisín">
+
+<!ENTITY tabCmd.label "Cluaisín Nua">
+<!ENTITY openFileCmd.label "Oscail Comhad…">
+<!ENTITY printCmd.label "Priontáil…">
+
+<!ENTITY taskManagerCmd.label "Bainisteoir Tascanna">
+
+<!ENTITY menubarCmd.label "Barra Roghchláir">
+<!ENTITY menubarCmd.accesskey "B">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Nascleanúint">
+<!ENTITY personalbarCmd.label "Barra Leabharmharc">
+<!ENTITY personalbarCmd.accesskey "B">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Leabharmharcanna">
+<!ENTITY bookmarksToolbarItem.label "Rudaí ar an Bharra Leabharmharc">
+
+<!ENTITY fullScreenCmd.label "Lánscáileán">
+
+
+<!-- } is above this key on many keyboards -->
+
+
+<!ENTITY pictureInPictureHideToggle.label "Folaigh an Scoránú Pictiúr-i-bPictiúr">
+<!ENTITY pictureInPictureHideToggle.accesskey "F">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "Socruithe &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Ceangail Gléas Eile…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Logáil isteach i &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Cuir &syncBrand.shortName.label; ar siúl">
+<!ENTITY fxa.menu.firefoxServices.label "Seirbhísí &brandProductName;">
+<!ENTITY fxa.menu.account.label "Cuntas">
+<!ENTITY fxa.menu.settings.label "Socruithe">
+<!ENTITY fxa.menu.accountSettings.label "Socruithe Cuntais">
+<!ENTITY fxa.menu.manageAccount2.label "Bainistigh mo Chuntas">
+<!ENTITY fxa.menu.signOut.label "Logáil Amach…">
+<!ENTITY fxa.menu.setupSync.label "Socraigh &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "Tá">
+<!ENTITY fullscreenWarning.afterDomain.label "ar lánscáileán anois">
+<!ENTITY fullscreenWarning.generic.label "Tá an cháipéis seo ar lánscáileán anois">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Fág Mód Lánscáileáin (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Fág Mód Lánscáileáin (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "Tá">
+<!ENTITY pointerlockWarning.afterDomain.label "i gceannas ar do chúrsóir faoi láthair. Brúigh Esc chun dul i gceannas air arís.">
+<!ENTITY pointerlockWarning.generic.label "Tá an cháipéis seo i gceannas ar do chúrsóir faoi láthair. Brúigh Esc chun dul i gceannas air arís.">
+
+<!ENTITY showAllBookmarks2.label "Taispeáin Gach Leabharmharc">
+<!ENTITY recentBookmarks.label "Leabharmharc leo le déanaí">
+<!ENTITY bookmarksToolbarChevron.tooltip "Tuilleadh leabharmharcanna">
+
+<!ENTITY printButton.label            "Priontáil">
+<!ENTITY printButton.tooltip          "Priontáil an leathanach seo">
+
+
+
+<!ENTITY searchItem.title             "Cuardaigh">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Baile">
+<!ENTITY homeButton.defaultPage.tooltip "Leathanach Baile &brandShortName;">
+
+<!ENTITY bookmarksButton.label          "Leabharmharcanna">
+
+<!ENTITY bookmarksSubview.label             "Leabharmharcanna">
+<!ENTITY bookmarksMenuButton2.label         "Roghchlár na Leabharmharcanna">
+<!ENTITY bookmarksMenuButton.other.label    "Leabharmharcanna Eile">
+<!ENTITY bookmarksMenuButton.mobile.label   "Leabharmharcanna Soghluaiste">
+<!ENTITY viewBookmarksSidebar2.label        "Féach ar Bharra na Leabharmharcanna">
+<!ENTITY viewBookmarksToolbar.label         "Féach ar Bharra Leabharmharc">
+<!ENTITY searchBookmarks.label              "Cuardaigh Leabharmharcanna">
+<!ENTITY bookmarkingTools.label             "Uirlisí Leabharmharcála">
+
+<!ENTITY historyButton.label            "Stair">
+
+<!ENTITY downloads.label              "Íoslódálacha">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Íoslódálacha">
+<!ENTITY addons.label                 "Breiseáin">
+
+<!ENTITY webDeveloperMenu.label       "Forbróir Gréasáin">
+
+<!ENTITY newNavigatorCmd.label        "Fuinneog Nua">
+<!ENTITY newPrivateWindow.label     "Fuinneog Nua Phríobháideach">
+
+<!ENTITY editMenu.label         "Eagar">
+<!ENTITY preferencesCmd2.label       "Roghanna">
+<!ENTITY preferencesCmdUnix.label       "Sainroghanna">
+<!ENTITY logins.label                           "Focail Fhaire">
+
+<!ENTITY overflowCustomizeToolbar.label       "Saincheap an Barra Uirlisí…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "c">
+
+<!ENTITY historyMenu.label "Stair">
+<!ENTITY historyUndoMenu.label "Cluaisíní a Dúnadh Le Déanaí">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Fuinneoga a Dúnadh Le Déanaí">
+
+<!ENTITY appMenuHistory.showAll.label "Taispeáin an Stair Iomlán">
+<!ENTITY appMenuHistory.clearRecent.label "Glan an Stair Is Déanaí…">
+<!ENTITY appMenuHistory.restoreSession.label "Athchóirigh an Seisiún Roimhe Seo">
+<!ENTITY appMenuHistory.viewSidebar.label "Taispeáin Stair sa Bharra Taoibh">
+<!ENTITY appMenuHistory.hideSidebar.label "Ná Taispeáin Stair sa Bharra Taoibh">
+<!ENTITY appMenuHistory.recentHistory.label "Stair is Déanaí">
+<!ENTITY appMenuHelp.label "Cabhair">
+
+<!ENTITY appMenuRemoteTabs.label "Cluaisíní Sioncronaithe">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Níl aon chluaisín ar oscailt">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Tuilleadh">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Taispeáin tuilleadh cluaisíní ón ghléas seo">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Taispeáin Uile">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Taispeáin gach cluaisín ón ghléas seo">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Las sioncronú cluaisíní chun liosta cluaisíní ó do ghléasanna eile a fheiceáil.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Ar mhaith leat cluaisíní ó ghléasanna eile a fheiceáil anseo?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Oscail Sainroghanna Sync">
+<!ENTITY appMenuRemoteTabs.welcome.label "Amharc ar liosta cluaisíní ó do ghléasanna eile.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Ní mór duit do chuntas a dheimhniú.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Logáil isteach i &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Cuir &syncBrand.shortName.label; ar siúl…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Bainistigh Gléasanna…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Féach ar Chluaisíní Sioncronaithe i mBarra Taoibh">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Ceangail Gléas Eile">
+
+
+<!ENTITY customizeMenu.addToToolbar.label "Cuir leis an mBarra Uirlisí">
+<!ENTITY customizeMenu.addToToolbar.accesskey "C">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Cuir leis an Roghchlár Fuílligh">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "R">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Díphionnáil ón Roghchlár Fuílligh">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "D">
+<!ENTITY customizeMenu.removeFromToolbar.label "Bain amach ón Bharra Uirlisí">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "B">
+<!ENTITY customizeMenu.addMoreItems.label "Cuir Tuilleadh Leis…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "T">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Tuilleadh">
+
+<!ENTITY contentSearchSubmit.tooltip  "Aighnigh iarratas">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Cuardaigh">
+<!ENTITY searchIcon.tooltip           "Cuardaigh">
+
+<!ENTITY openLinkCmdInTab.accesskey   "C">
+
+<!ENTITY pageAction.copyLink.label    "Cóipeáil an Nasc">
+
+<!ENTITY saveToPocketCmd.label        "Sábháil an Leathanach i bPocket">
+<!ENTITY pocketMenuitem.label         "Féach ar an Liosta Pocket">
+
+<!ENTITY emailPageCmd.label           "Seol an Nasc trí Ríomhphost…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Súmáil">
+
+<!ENTITY sidebarCloseButton.tooltip     "Dún an barra taoibh">
+
+<!ENTITY quitApplicationCmdWin2.label       "Scoir">
+<!ENTITY quitApplicationCmdWin2.accesskey   "S">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Scoir &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Scoir">
+<!ENTITY quitApplicationCmd.accesskey   "S">
+<!ENTITY quitApplicationCmdMac2.label   "Scoir &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Eagraigh Sainroghanna do Bhacadh na bPreabfhuinneog…">
+<!ENTITY editPopupSettings.label "Eagraigh Roghanna do Bhacadh na bPreabfhuinneog…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Aimsigh sa Leathanach Seo…">
+
+<!ENTITY spellAddDictionaries.label "Cuir Foclóirí Leis…">
+<!ENTITY spellAddDictionaries.accesskey "C">
+
+
+<!-- LOCALIZATION NOTE:
+     protections.siteNotWorking.label: The link to be clicked to open the sub-panel view
+     protections.siteNotWorkingView.title: The heading/title of the sub-panel view -->
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Cluaisíní brabhsálaí">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Uathfholaigh">
+
+
+<!-- LOCALIZATION NOTE (trackingProtection.unblock5.label, trackingProtection.unblock5.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+
+
+<!ENTITY uiTour.infoPanel.close "Dún">
+
+<!ENTITY panicButton.thankyou.msg1                "Scriosadh an stair is déanaí.">
+<!ENTITY panicButton.thankyou.msg2                "Slán leat!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Go raibh maith agat!">
+
+<!ENTITY updateAvailable.panelUI.label "Íoslódáil an nuashonrú &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "Íoslódáil cóip nua de &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Ní féidir leat nuashonruithe breise a dhéanamh">
+<!ENTITY updateRestart.panelUI.label2 "Atosaigh chun &brandShorterName; a nuashonrú">
+
+
+<!ENTITY sendToDevice.syncNotReady.label "Gléasanna á Sioncronú…">
+
+<!ENTITY pageAction.shareUrl.label "Comhroinn">
+<!ENTITY pageAction.shareMore.label "Tuilleadh…">
+
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+

@@ -1,0 +1,4 @@
+<!ENTITY options.title "Opciones de ferramientes pa desendolcadores">
+<!ENTITY options.status.label "Estáu:">
+<!ENTITY options.port.label "Puertu:">
+<!ENTITY options.forcelocal.label "Permitir conexones d'otros equipos">

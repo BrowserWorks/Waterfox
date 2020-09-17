@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Rregullime Të mëtejshme Llogarie">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Drejtori shërbyesi IMAP:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Shfaq vetëm dosje pajtimesh">
+<!ENTITY usingSubscription.accesskey "v">
+<!ENTITY dualUseFolders.label "Shërbyesi mbulon dosje që përmbajnë nëndosje dhe mesazhe">
+<!ENTITY dualUseFolders.accesskey "S">
+<!ENTITY maximumConnectionsNumber.label "Numër më i madh ndërlidhjesh shërbyesi për t&apos;u ruajtur në fshehtinë">
+<!ENTITY maximumConnectionsNumber.accesskey "N">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Këta parapëlqime përcaktojnë emërhapësirat te shërbyesi juaj IMAP">
+<!ENTITY personalNamespace.label "Emërhapësirë vetjake:">
+<!ENTITY personalNamespace.accesskey "E">
+<!ENTITY publicNamespace.label "Publike (e përbashkët):">
+<!ENTITY publicNamespace.accesskey "P">
+<!ENTITY otherUsersNamespace.label "Përdorues Të tjerë:">
+<!ENTITY otherUsersNamespace.accesskey "T">
+<!ENTITY overrideNamespaces.label "Lejo shërbyesin të anashkalojë këto emërhapësira">
+<!ENTITY overrideNamespaces.accesskey "L">
+<!ENTITY pop3DeferringDesc.label "Kur shkarkohet postë nga shërbyesi i kësaj llogarie, për depozitimin e mesazheve të rinj përdor dosjen vijuese:" >
+<!ENTITY accountInbox.label "Të marrë për këtë llogari">
+<!ENTITY accountInbox.accesskey "k">
+<!ENTITY deferToServer.label "Të marrë për tjetër llogari">
+<!ENTITY deferToServer.accesskey "o">
+<!ENTITY deferGetNewMail.label "Përfshije këtë shërbyes kur merret postë e re">
+<!ENTITY deferGetNewMail.accesskey "f">

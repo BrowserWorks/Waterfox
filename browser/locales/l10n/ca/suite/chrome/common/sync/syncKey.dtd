@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "La vostra clau del &syncBrand.fullName.label;">
+<!ENTITY syncKey.page.description         "S'utilitza aquesta clau per desxifrar les dades del compte del &syncBrand.fullName.label;. Us caldrà introduir la clau cada vegada que configureu el &syncBrand.fullName.label; en un ordinador o dispositiu nou.">
+<!ENTITY syncKey.keepItSecret.heading     "Conserveu-la secreta">
+<!ENTITY syncKey.keepItSecret.description "El vostre compte del &syncBrand.fullName.label; està xifrat per protegir la vostra privadesa. Sense aquesta clau, caldrien anys perquè algú pogués desxifrar la vostra informació personal. Sou l'única persona qui té aquesta clau. Això vol dir que sou l'únic que pot accedir a les dades del &syncBrand.fullName.label;.">
+<!ENTITY syncKey.keepItSafe.heading       "Conserveu-la segura">
+<!ENTITY syncKey.keepItSafe1.description  "No perdeu la clau.">
+<!ENTITY syncKey.keepItSafe2.description  " No conserveu cap còpia de la clau (llavors deixaria de ser secreta!) i, per tant ">
+<!ENTITY syncKey.keepItSafe3.description  "no podem ajudar-vos a recuperar-la">
+<!ENTITY syncKey.keepItSafe4.description  " si es perd. Caldrà que feu servir aquesta clau cada vegada que connecteu un nou ordinador o dispositiu al &syncBrand.fullName.label;.">
+<!ENTITY syncKey.findOutMore1.label       "Teniu més informació del &syncBrand.fullName.label; i de la vostra privadesa a ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "Les condicions del servei del &syncBrand.fullName.label; són disponibles a ">
+<!ENTITY syncKey.footer2.label            ". La política de privadesa és disponible a ">
+<!ENTITY syncKey.footer3.label            ".">

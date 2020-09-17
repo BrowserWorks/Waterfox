@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "Прашање за HTML пошта">
+
+<!ENTITY recipient.label "Некои од примачите не се заведени дека можат да примаат HTML пошта.">
+
+<!ENTITY question.label "Дали сакате да ја конвертирате пораката во обичен текст или сепак сакате да ја пратите како HTML?">
+
+<!ENTITY plainTextAndHtml.label "Праќај како обичен текст и како HTML">
+<!ENTITY plainTextOnly.label "Праќај само како обичен текст">
+<!ENTITY htmlOnly.label "Праќај само во HTML формат">
+
+<!ENTITY send.label "Испрати">

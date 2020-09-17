@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Паводзіны спасылак">
+<!ENTITY newWindow.label "Паводзіны пры адкрыцці спасылак">
+<!ENTITY newWindowDescription.label "Адкрыццё спасылак мае на ўвазе адкрыццё новага акна">
+<!ENTITY newWindowRestriction.label "Калі сцэнар хоча адкрыць новае акно:">
+<!ENTITY external.label "Спасылкі з іншых прыстасаванняў">
+<!ENTITY externalDescription.label "Адкрываць спасылкі, якія перадаюцца іншымі прыстасаваннямі">
+<!ENTITY openCurrent.label "У цяперашніх устаўцы/акне">
+<!ENTITY newWindowGroupCurrent.accesskey "ц">
+<!ENTITY externalGroupCurrent.accesskey "я">
+<!ENTITY openTab.label "У новай устаўцы ў цяперашнім акне">
+<!ENTITY newWindowGroupTab.accesskey "у">
+<!ENTITY externalGroupTab.accesskey "с">
+<!ENTITY openWindow.label "У новым акне">
+<!ENTITY newWindowGroupWindow.accesskey "а">
+<!ENTITY externalGroupWindow.accesskey "к">
+<!ENTITY divertAll.label "Заўсёды заварочваць вокны ў устаўкі">
+<!ENTITY divertAll.accesskey "з">
+<!ENTITY divertNoFeatures.label "Не заварочваць такія вокны ў устаўкі">
+<!ENTITY divertNoFeatures.accesskey "н">
+<!ENTITY dontDivert.label "Заўсёды адкрываць новыя вокны">
+<!ENTITY dontDivert.accesskey "н">

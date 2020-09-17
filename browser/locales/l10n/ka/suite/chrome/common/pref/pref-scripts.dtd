@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "სკრიპტები და მოდულები">
+
+<!ENTITY navigator.label                 "ბრაუზერი">
+<!ENTITY navigator.accesskey             "ბ">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "JavaScript-ის ჩართვა">
+<!ENTITY allowScripts.label              "სკრიპტების დაშვება:">
+<!ENTITY allowScripts.accesskey          "ს">
+<!ENTITY allowWindowMoveResize.label     "სარკმლების გადატანა ან ზომის შეცვლა">
+<!ENTITY allowWindowFlip.label           "სარკმლების აწევ-დაწევა">
+<!ENTITY allowWindowStatusChange.label   "მდგომარეობის ამსახველი ზოლის ტექსტის შეცვლა">
+<!ENTITY allowContextmenuDisable.label   "კონტექსტური მენიუს გამორთვა ან შეცვლა">
+<!ENTITY allowHideStatusBar.label        "მდგომარეობის ამსახველი ზოლის დამალვა">
+
+<!ENTITY enableDrmMedia.label            "ციფრული უფლებების მართვის (DRM) ჩართვა">
+<!ENTITY enableEmeForSuite.label         "მესამე მხარის შიგთავსის გამშიფრავი მოდულები">
+<!ENTITY enableEmeForSuite.accesskey     "გ">
+
+<!ENTITY enablePlugins.label             "მოდულების ჩართვა">
+<!ENTITY enablePluginForSuite.label      "სრული კრებული">
+<!ENTITY enablePluginForSuite.accesskey  "კ">
+
+<!ENTITY whenPageRequiresPlugins.label   "გვერდისთვის მოდულების საჭიროებისას">
+<!ENTITY activateAllPlugins.label        "ყველა მოდულის ნაგულისხმევად ამოქმედება">
+<!ENTITY activateAllPlugins.accesskey    "ნ">
+<!ENTITY warnPluginsRequired.label       "გაფრთხილება, ახალი მოდულის ჩადგმის საჭიროებისას">
+<!ENTITY warnPluginsRequired.accesskey   "ფ">

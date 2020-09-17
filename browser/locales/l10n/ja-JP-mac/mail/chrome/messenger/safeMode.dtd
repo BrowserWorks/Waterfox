@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- (^m^) /browser/chrome/browser/safemode.dtd とほぼ同じ -->
+<!ENTITY safeModeDialog.title		"&brandShortName; セーフモード">
+<!ENTITY window.width			"37em">
+
+<!ENTITY safeModeDescription.label	"&brandShortName; はセーフモードで実行されており、ユーザー設定、テーマ、拡張機能はすべて一時的に無効化されています。">
+<!ENTITY safeModeDescription2.label	"以下の項目については恒久的に変更できます:">
+
+<!ENTITY disableAddons.label		"すべてのアドオンを無効化する">
+<!ENTITY disableAddons.accesskey	"D">
+
+<!ENTITY resetToolbars.label		"ツールバーとコントロールをリセットする"><!-- Reset toolbars and controls -->
+<!ENTITY resetToolbars.accesskey	"R">
+
+<!ENTITY changeAndRestartButton.label	"変更を実行して再起動">
+<!ENTITY changeAndRestartButton.accesskey	"M">
+
+<!ENTITY continueButton.label		"セーフモードを続ける">
+<!ENTITY continueButton.accesskey	"C">

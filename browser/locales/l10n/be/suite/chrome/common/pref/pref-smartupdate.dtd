@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.smartUpdate.title "Усталяванне праграмнага забеспячэння">
+<!ENTITY addOnsTitle.label "Дадаткі">
+<!ENTITY addOnsAllow.label "Дазволіць пляцоўкам Сеціва ўсталёўваць дадаткі і абнаўленні">
+<!ENTITY addOnsAllow.accesskey "ў">
+<!ENTITY allowedSitesLink.label "Дазволеныя пляцоўкі Сеціва">
+<!ENTITY autoAddOnsUpdates.label "Самастойна правяраць, ці існуюць абнаўленні">
+<!ENTITY autoAddOnsUpdates.accesskey "С">
+<!ENTITY daily.label "штодзённа">
+<!ENTITY addOnsDaily.accesskey "д">
+<!ENTITY weekly.label "штотыдзень">
+<!ENTITY addOnsWeekly.accesskey "т">
+<!ENTITY addOnsModeAutomatic.label "Самастойна сцягваць і ўсталёўваць абнаўленні">
+<!ENTITY addOnsModeAutomatic.accesskey "л">
+<!ENTITY enablePersonalized.label "Прыасобіць парады дадаткаў">
+<!ENTITY enablePersonalized.accesskey "р">
+<!ENTITY addonManagerLink.label "Кіраваць дадаткамі">
+<!ENTITY appUpdates.caption "&brandShortName;">
+<!ENTITY autoAppUpdates.label "Самастойна правяраць, ці існуюць абнаўленні">
+<!ENTITY autoAppUpdates.accesskey "в">
+<!ENTITY appDaily.accesskey "д">
+<!ENTITY appWeekly.accesskey "т">
+<!ENTITY appModeAutomatic.label "Самастойна сцягваць і ўсталёўваць абнаўленне">
+<!ENTITY appModeAutomatic.accesskey "ц">
+<!ENTITY appModeAutoAddonWarn.label "Папярэджваць мяне, калі ў выніку забараняцца мае дадаткі">
+<!ENTITY appModeAutoAddonWarn.accesskey "я">
+<!ENTITY updateHistoryButton.label "Паказаць гісторыю абнаўленняў…">
+<!ENTITY updateHistoryButton.accesskey "г">

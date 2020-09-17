@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Olet tietosuojaikkunassa">
+<!ENTITY privatebrowsingpage.title.normal        "Aloitetaanko tietosuojattu selaus?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; ei tallenna mitään historiatietoja tähän ikkunaan liittyen.">
+<!ENTITY privatebrowsingpage.status.normal       "Et ole tällä hetkellä tietosuojaikkunassa.">
+
+<!ENTITY privatebrowsingpage.common.description  "Tietosuojaikkunassa &brandShortName; ei pidä mitään sivu-, haku-, lataus- tai lomakehistoriaa, evästeitä tai väliaikaustiedostoja. Kirjanmerkit ja ladatut tiedostot kuitenkin pidetään.">
+<!ENTITY privatebrowsingpage.track.warn          "Vaikka tälle tietokoneelle ei jää jälkiä avaamistasi sivuista, työnantajasi tai operaattorisi voi silti seurata, mitä teet verkossa.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Lue lisää">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "L">
+
+<!ENTITY privatebrowsingpage.close.info          "Kun olet valmis, voit lopettaa tietosuojatun selauksen sulkemalla ikkunan.">
+<!ENTITY privatebrowsingpage.close.label         "Sulje ikkuna">
+<!ENTITY privatebrowsingpage.close.accesskey     "S">
+
+<!ENTITY privatebrowsingpage.start.info          "Voit aloittaa tietosuojatun selauksen napsauttamalla allaolevaa painiketta tai valitsemalla Tiedosto – Uusi – Tietosuojaikkuna.">
+<!ENTITY privatebrowsingpage.private.label       "Avaa uusi tietosuojaikkuna">
+<!ENTITY privatebrowsingpage.private.accesskey   "A">

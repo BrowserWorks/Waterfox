@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Cymorth">
+<!ENTITY helpMenu.accesskey "C">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Cymorth">
+<!ENTITY helpMenuWin.accesskey "y">
+<!ENTITY aboutProduct2.label "Ynghylch &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "Y">
+<!ENTITY helpTroubleshootingInfo.label     "Gwybodaeth am Ddatrys Problemau">
+<!ENTITY helpTroubleshootingInfo.accesskey "G">
+<!ENTITY helpSafeMode.label     "Ailgychwyn gydag Ychwanegion wedi'u Hanalluogi…">
+<!ENTITY helpSafeMode.accesskey "A">
+
+<!ENTITY helpSafeMode.stop.label     "Ailgychwyn gydag Ychwanegion wedi eu Galluogi">
+<!ENTITY helpSafeMode.stop.accesskey "A">
+<!ENTITY productHelp.label "Cymorth &brandShortName;">
+<!ENTITY productHelp.accesskey "C">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Llwybrau Byr Bysellfwrdd">
+<!ENTITY helpKeyboardShortcuts.accesskey "L">
+
+<!ENTITY helpFeedbackPage.label "Cyflwyno Adborth…">
+<!ENTITY helpFeedbackPage.accesskey "A">
+
+<!ENTITY helpShowTour2.label "Cyflwyno &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey "C">
+
+<!ENTITY helpGetInvolvedPage.label "Ymunwch">
+<!ENTITY helpGetInvolvedPage.accesskey "Y">
+
+<!ENTITY helpDonationsPage.label "Gwnewch Rodd">
+<!ENTITY helpDonationsPage.accesskey "R">

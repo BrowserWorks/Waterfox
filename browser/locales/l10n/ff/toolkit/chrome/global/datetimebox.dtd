@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Placeholders for input type=time -->
+
+<!ENTITY time.hour.placeholder "--">
+<!ENTITY time.minute.placeholder "--">
+<!ENTITY time.second.placeholder "--">
+<!ENTITY time.millisecond.placeholder "--">
+<!ENTITY time.dayperiod.placeholder "--">
+
+<!-- Field labels for input type=time -->
+
+<!ENTITY time.hour.label "Waktuuji">
+<!ENTITY time.minute.label "Hojomeeji">
+<!ENTITY time.second.label "Leƴƴanɗe">
+<!ENTITY time.millisecond.label "Ujjunaaje leƴƴanɗe">
+<!ENTITY time.dayperiod.label "AM/PM">
+
+<!-- Placeholders for input type=date -->
+
+<!ENTITY date.year.placeholder "hhhh">
+<!ENTITY date.month.placeholder "ll">
+<!ENTITY date.day.placeholder "ññ">
+
+<!-- Field labels for input type=date -->
+
+<!ENTITY date.year.label "Hitaande">
+<!ENTITY date.month.label "Lewru">
+<!ENTITY date.day.label "Ñalawma">
+
+<!-- Date/time clear button -->
+
+<!ENTITY datetime.reset.label "Momtu">

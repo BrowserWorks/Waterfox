@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Subscriptions Dialog -->
+
+<!ENTITY calendar.subscriptions.dialog.title                            "Күнтізбелерге жазылу">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Құрамында келесісі бар күнтізбелерді көрсету:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Іздеу">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Жазылу үшін күнтізбелерді таңдаңыз:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Жазылу">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Жазылудан бас тарту">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Іздеу…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Сәйкестіктер табылмады.">

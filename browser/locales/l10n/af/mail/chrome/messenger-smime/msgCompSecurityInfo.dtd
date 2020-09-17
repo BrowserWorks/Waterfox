@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Boodskapsekuriteit">
+<!ENTITY subject.plaintextWarning "Let wel: E-posse se onderwerpreëls word nooit geënkripteer nie.">
+<!ENTITY status.heading "Die inhoud van u boodskap sal as volg versend word:">
+<!ENTITY status.signed "Digitaal onderteken:">
+<!ENTITY status.encrypted "Geënkripteer:">
+<!ENTITY status.certificates "Sertifikate:">
+<!ENTITY view.label "Bekyk">
+<!ENTITY view.accesskey "B">
+<!ENTITY tree.recipient "Ontvanger">
+<!ENTITY tree.status "Status">
+<!ENTITY tree.issuedDate "Uitgereik">
+<!ENTITY tree.expiresDate "Verval">

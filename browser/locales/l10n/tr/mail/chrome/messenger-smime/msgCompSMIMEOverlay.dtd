@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Şifreleme yapma">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "m">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Şifreleme zorunlu">
+<!ENTITY menu_securityEncryptRequire.accesskey "r">
+
+<!ENTITY menu_securitySign.label "Bu iletiye sayısal imza ekle">
+<!ENTITY menu_securitySign.accesskey "u">
+
+<!ENTITY menu_securityAttachMyKey.label "Ortak anahtarımı ekle">
+<!ENTITY menu_securityAttachMyKey.accesskey "O">
+
+<!ENTITY menu_securityTech.label "Şifreleme teknolojisi">
+<!ENTITY menu_securityTech.accesskey "T">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Güvenlik bilgilerini göster">
+<!ENTITY menu_securityStatus.accesskey "G">
+
+<!ENTITY securityButton.label "Güvenlik">
+<!ENTITY securityButton.tooltip "Güvenlik ayarlarını göster veya değiştir">
+
+<!ENTITY menu_viewSecurityStatus.label "İleti güvenlik bilgisi">
+<!ENTITY menu_viewSecurityStatus.accesskey "b">

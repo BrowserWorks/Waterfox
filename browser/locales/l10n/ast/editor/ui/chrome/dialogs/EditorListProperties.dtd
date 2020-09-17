@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Propiedaes de la llista">
+<!ENTITY ListType.label "Triba de llista">
+<!ENTITY bulletStyle.label "Estilu de viñeta:">
+<!ENTITY startingNumber.label "Entamar en:">
+<!ENTITY startingNumber.accessKey "E">
+<!ENTITY none.value "Dengún">
+<!ENTITY bulletList.value "Llista (non numberada) de viñetes:">
+<!ENTITY numberList.value "Llista numberada">
+<!ENTITY definitionList.value "Llista de definiciones">
+<!ENTITY changeEntireListRadio.label "Camudar la llista entera">
+<!ENTITY changeEntireListRadio.accessKey "C">
+<!ENTITY changeSelectedRadio.label "Camudar namái los elementos seleicionaos">
+<!ENTITY changeSelectedRadio.accessKey "I">

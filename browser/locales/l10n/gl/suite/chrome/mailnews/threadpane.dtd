@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Fío">
+<!ENTITY fromColumn.label "De">
+<!ENTITY recipientColumn.label "Destinatario">
+<!ENTITY attachmentColumn.label "Anexos">
+<!ENTITY subjectColumn.label "Asunto">
+<!ENTITY dateColumn.label "Data">
+<!ENTITY priorityColumn.label "Prioridade">
+<!ENTITY tagsColumn.label "Etiquetas">
+<!ENTITY accountColumn.label "Conta">
+<!ENTITY statusColumn.label "Estado">
+<!ENTITY sizeColumn.label "Tamaño">
+<!ENTITY junkStatusColumn.label "Estado do correo lixo">
+<!ENTITY unreadColumn.label "Sen ler no fío">
+<!ENTITY totalColumn.label "Total no fío">
+<!ENTITY readColumn.label "Lida">
+<!ENTITY receivedColumn.label "Recibido">
+<!ENTITY flagColumn.label "Bandeira">
+<!ENTITY locationColumn.label "Localización">
+<!ENTITY idColumn.label "Aviso de recepción">
+
+<!--Tooltips-->
+<!ENTITY columnChooser.tooltip "Prema para seleccionar as columnas a mostrar">
+<!ENTITY threadColumn.tooltip "Prema para mostrar as mensaxes agrupadas por fíos"> 
+<!ENTITY fromColumn.tooltip "Premer para ordenar por De">
+<!ENTITY recipientColumn.tooltip "Prema para ordenar por destinatario">
+<!ENTITY attachmentColumn.tooltip "Ordenar por anexos">
+<!ENTITY subjectColumn.tooltip "Prema para ordenar por asunto">
+<!ENTITY dateColumn.tooltip "Prema para ordenar por data">
+<!ENTITY priorityColumn.tooltip "Prema para ordenar por prioridade">
+<!ENTITY tagsColumn.tooltip "Prema para ordenar por etiquetas">
+<!ENTITY accountColumn.tooltip "Prema para ordenar por conta">
+<!ENTITY statusColumn.tooltip "Prema para ordenar por estado">
+<!ENTITY sizeColumn.tooltip "Prema para ordenar por tamaño">
+<!ENTITY junkStatusColumn.tooltip "Prema para ordenar por estado de correo lixo">
+<!ENTITY unreadColumn.tooltip "Número de mensaxes non lidas no fío">
+<!ENTITY totalColumn.tooltip "Número total de mensaxes no fío">
+<!ENTITY readColumn.tooltip "Prema para ordenar as mensaxes por lidas">
+<!ENTITY receivedColumn.tooltip "Prema para ordenar por data de recepción">
+<!ENTITY flagColumn.tooltip "Prema para ordenar por sinaladas">
+<!ENTITY locationColumn.tooltip "Prema para ordenar por enderezo">
+<!ENTITY idColumn.tooltip "Prema para ordenar por aviso de recepción">

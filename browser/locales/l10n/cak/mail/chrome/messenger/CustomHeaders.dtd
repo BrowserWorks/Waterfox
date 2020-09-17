@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Ke'ichinäx taq Jub'i'aj">
+<!ENTITY addButton.label "Titz'aqatisäx">
+<!ENTITY addButton.accesskey "t">
+<!ENTITY removeButton.label "Tiyuj">
+<!ENTITY removeButton.accesskey "y">
+<!ENTITY newMsgHeader.label "K'ak'a' rujub'i'aj rutzijol:">
+<!ENTITY newMsgHeader.accesskey "K">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Auxiliar de comptes de xat">
+
+<!ENTITY accountProtocolTitle.label   "Xarxa de xat">
+<!ENTITY accountProtocolInfo.label    "Trieu la xarxa del vostre compte de xat.">
+<!ENTITY accountProtocolField.label   "Xarxa:">
+<!ENTITY accountProtocolGetMore.label "Aconseguiu-ne més…">
+
+<!ENTITY accountUsernameTitle.label   "Nom d'usuari">
+<!ENTITY accountUsernameDuplicate.label "El compte ja està configurat!">
+
+<!ENTITY accountPasswordTitle.label   "Contrasenya">
+<!ENTITY accountPasswordInfo.label    "Introduïu la contrasenya en el quadre següent.">
+<!ENTITY accountPasswordField.label   "Contrasenya:">
+<!ENTITY accountPasswordManager.label "La contrasenya que introduïu s'emmagatzemarà en el gestor de contrasenyes. Deixeu el quadre en blanc si voleu que se us demani la contrasenya cada vegada que us connecteu amb aquest compte.">
+
+<!ENTITY accountAdvancedTitle.label   "Opcions avançades">
+<!ENTITY accountAdvancedInfo.label    "Podeu ometre aquest pas, si ho preferiu.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Notifica'm si hi ha correu nou">
+<!ENTITY accountAliasGroupbox.caption "Àlies local">
+<!ENTITY accountAliasField.label      "Àlies:">
+<!ENTITY accountAliasInfo.label       "Només es mostrarà en les vostres converses quan sigueu el que parleu. Els contactes remots no ho veuran.">
+<!ENTITY accountProxySettings.caption "Paràmetres del servidor intermediari">
+<!ENTITY accountProxySettings.change.label     "Canvia…">
+<!ENTITY accountProxySettings.change.accessKey "C">
+
+<!ENTITY accountSummaryTitle.label   "Resum">
+<!ENTITY accountSummaryInfo.label    "A continuació es mostra el resum de la informació que heu introduït. Comproveu-la abans de crear el compte.">
+<!ENTITY accountSummary.connectNow.label "Connecteu-vos al compte ara mateix.">

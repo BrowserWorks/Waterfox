@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+<!-- Toolbar-only items -->
+
+
+<!ENTITY compositionToolbar.tooltip "نوار ابزار &amp;ترکیبی">
+<!ENTITY previewToolbarCmd.label "Browse">
+<!ENTITY previewToolbarCmd.tooltip "بازگذاری این صفحه در یک مرورگر">
+<!-- File menu items -->
+
+<!ENTITY exportToTextCmd.label "صادر کردن به متن...">
+<!ENTITY exportToTextCmd.accesskey "م">
+<!ENTITY previewCmd.label "مرور صفحه">
+<!ENTITY previewCmd.accesskey "ص">
+<!ENTITY sendPageCmd.label "ارسال صفحه...">
+<!ENTITY sendPageCmd.accesskey "ر">
+<!-- View menu items -->
+
+<!ENTITY compositionToolbarCmd.label "Composition Toolbar">
+<!ENTITY compositionToolbarCmd.accesskey "C">
+<!ENTITY formattingToolbarCmd.label "Format Toolbar">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Edit Mode Toolbar">
+<!ENTITY editmodeToolbarCmd.accesskey "E">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "قالب">
+<!ENTITY formatMenu.accesskey "ق">
+<!ENTITY grid.label "توری مکان یابی">
+<!ENTITY grid.accesskey "ک">
+<!ENTITY pageProperties.label "ویژگی‌ها و عنوان صفحه...">
+<!ENTITY pageProperties.accesskey "ف">
+<!-- Tools menu items -->
+
+<!ENTITY validateCmd.label "اعتبار سنجی HTML">
+<!ENTITY validateCmd.accesskey "ع">
+<!-- Display Mode toolbar and View menu items -->
+
+<!ENTITY NormalModeTab.label "عادی">
+<!ENTITY NormalMode.label "حالت ویرایش عادی">
+<!ENTITY NormalMode.accesskey "ع">
+<!ENTITY NormalMode.tooltip "نمایش کادرهای جدول و گوشه‌های نام گذاری شده">
+<!ENTITY AllTagsModeTab.label "برچسب‌های HTML">
+<!ENTITY AllTagsMode.label "برچسب‌های HTML">
+<!ENTITY AllTagsMode.accesskey "چ">
+<!ENTITY AllTagsMode.tooltip "نمایش آیکن‌ها برای همه‌ی برچسب‌های HTML">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "rtl">
+<!ENTITY HTMLSourceModeTab.label "منبع">
+<!ENTITY HTMLSourceMode.label "منبع HTML">
+<!ENTITY HTMLSourceMode.accesskey "م">
+<!ENTITY HTMLSourceMode.tooltip "ویرایش منبع HTML">
+<!ENTITY PreviewModeTab.label "پیش‌نمایش">
+<!ENTITY PreviewMode.label "پیش‌نمایش">
+<!ENTITY PreviewMode.accesskey "پ">
+<!ENTITY PreviewMode.tooltip "نمایش به عنوان WYSIWYG (همانند داخل مرورگر)">

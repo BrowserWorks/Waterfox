@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Убаци математички израз">
+
+<!ENTITY sourceEditField.label "Унеси LaTeX изворни код:">
+
+<!ENTITY options.label "Опције">
+<!ENTITY optionInline.label "Угнежђени режим">
+<!ENTITY optionInline.accesskey "н">
+<!ENTITY optionDisplay.label "Режим приказа">
+<!ENTITY optionDisplay.accesskey "п">
+<!ENTITY optionLTR.label "Правац слева надесно">
+<!ENTITY optionLTR.accesskey "л">
+<!ENTITY optionRTL.label "Правац здесна налево">
+<!ENTITY optionRTL.accesskey "з">
+
+<!ENTITY insertButton.label "Убаци">
+<!ENTITY insertButton.accesskey "У">

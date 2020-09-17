@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Message Store Type Converter">
+<!ENTITY converterDialog.continueButton "Pokročować">
+<!ENTITY converterDialog.cancelButton "Přetorhnyć">
+<!ENTITY converterDialog.finishButton "Dokónčić">
+<!ENTITY converterDialog.complete "Konwersija je dokónčena. &brandShortName; budźe so nětko znowa startować.">
+<!ENTITY converterDialog.error "Konwersija je so nimokuliło.">
+

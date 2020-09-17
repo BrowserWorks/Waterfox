@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "ලිපි ලිවීම සහ ලිපිනයන්">
+<!ENTITY addressingGroupTitle.label "ලිපිනයන්">
+<!ENTITY addressingText.label      "ලිපිනයන් සෙවීමේදී:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Use my global LDAP server preferences for this account">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "ඩිරෙක්ටරි සැකසුම්...">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "වෙනත් LDAP සේවාදායකයක් භාවිතා කරන්න:">
+<!ENTITY directories.accesskey     "d">
+<!ENTITY directoriesNone.label     "කිසිවක් නැත">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label "ලිපි ලිවීම">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "HTML ආකාරයෙන් (in HTML format) ලිපි ලියන්න">
+<!ENTITY useHtml.accesskey                    "C">
+<!ENTITY autoQuote.label                      "පිළිතුරු ලිවීමේදී ස්වයංක්‍රීයව මුල් ලිපිය උපුටා දක්වන්න">
+<!ENTITY autoQuote.accesskey                  "q">
+<!ENTITY aboveQuote.label                     "උපුටා දැක්වීමට ඉහළින් පිළිතුර ආරම්භ කරන්න">
+<!ENTITY belowQuote.label                     "උපුටා දැක්වීමට පහළින් පිළිතුර ආරම්භ කරන්න">
+<!ENTITY selectAndQuote.label                 "උපුටා දැක්වීම තෝරන්න">
+<!ENTITY place.label                          "සහ මගේ අත්සන (signature) තබන්න">
+<!ENTITY place.accesskey                      "p">
+<!ENTITY belowText.label                      "උපුටා දැක්වීමට පහළින් (නිර්දේශිත)">
+<!ENTITY aboveText.label                      "මගේ පිළිතුර පහළින් (උපුටා දැක්වීමට ඉහළින්)">
+<!ENTITY includeSigOnReply.label              "පිළිතුරු සඳහා අත්සන ඇතුලත් කරන්න">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "යොමුකිරීම් සඳහා අත්සන ඇතුලත් කරන්න">
+<!ENTITY includeSigOnForward.accesskey        "w">
+
+<!ENTITY globalComposingPrefs.label           "Global Composing Preferences…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Global Addressing Preferences…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

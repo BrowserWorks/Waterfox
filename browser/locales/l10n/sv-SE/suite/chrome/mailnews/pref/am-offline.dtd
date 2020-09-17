@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "För att spara diskutrymme, hämta inte:">
+<!ENTITY doNotDownloadNntp.label "För att spara diskutrymme, hämta inte meddelande för användning nedkopplad:">
+<!ENTITY doNotDownloadImap.label "För att spara diskutrymme kan hämtningen av meddelanden från servern och bevarandet av lokala kopior för användning nedkopplad begränsas med ålder eller storlek.">
+<!ENTITY allFoldersOffline.label "Behåll det här kontots meddelanden på den här datorn">
+<!ENTITY allFoldersOffline.accesskey "å">
+<!ENTITY allFoldersOffline2.label "Behåll meddelanden i alla mappar för det här kontot på den här datorn.">
+<!ENTITY allFoldersOffline2.accesskey "p">
+<!ENTITY allFoldersOfflineNote.label "Obs: Om du ändrar detta påverkas alla mappar i detta konto. För att ställa in enskilda mappar, använd knappen Avancerat….">
+<!ENTITY offlineNotDownload.label "Meddelanden större än">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY autosyncNotDownload.label "Hämta inte meddelanden större än">
+<!ENTITY autosyncNotDownload.accesskey "H">
+<!ENTITY kb.label "kB">
+<!ENTITY daysOld.label "dagar">
+<!ENTITY message.label "meddelandena">
+<!ENTITY nntpNotDownloadRead.label "Lästa meddelanden">
+<!ENTITY nntpNotDownloadRead.accesskey "s">
+<!ENTITY nntpDownloadMsg.label "Meddelanden äldre än">
+<!ENTITY nntpDownloadMsg.accesskey "ä">
+<!ENTITY retentionCleanup.label "För att spara diskutrymme kan gamla meddelanden tas bort">
+<!ENTITY retentionCleanupImap.label "För att spara diskutrymme kan gamla meddelanden tas bort, både den lokala kopian och deras original på servern.">
+<!ENTITY retentionCleanupPop.label "För att spara diskutrymme kan gamla meddelanden tas bort, inklusive deras original på servern.">
+<!ENTITY retentionKeepMsg.label "Ta bort meddelanden äldre än">
+<!ENTITY retentionKeepMsg.accesskey "e">
+<!ENTITY retentionKeepAll.label "Ta inte bort några meddelanden">
+<!ENTITY retentionKeepAll.accesskey "b">
+<!ENTITY retentionKeepRecent.label "Ta bort alla utom de senaste">
+<!ENTITY retentionKeepRecent.accesskey "a">
+<!ENTITY retentionApplyToFlagged.label "Behåll alltid flaggade meddelanden">
+<!ENTITY retentionApplyToFlagged.accesskey "B">
+<!ENTITY nntpRemoveMsgBody.label "Ta bort innehållet i meddelanden äldre än">
+<!ENTITY nntpRemoveMsgBody.accesskey "o">
+<!ENTITY offlineSelectNntp.label "Välj diskussionsgrupper för användning nedkopplad…">
+<!ENTITY offlineSelectNntp.accesskey "V">
+<!ENTITY offlineImapAdvancedOffline.label "Avancerat…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "c">
+<!ENTITY syncGroupTitle.label "Synkronisering av meddelanden">
+<!ENTITY diskspaceGroupTitle.label "Diskutrymme">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Synkronisera alla meddelanden lokalt oberoende av ålder">
+<!ENTITY allAutosync.accesskey           "l">
+<!ENTITY ageAutosyncBefore.label         "Synkronisera de senaste">
+<!ENTITY ageAutosync.accesskey           "y">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "dagarna">
+<!ENTITY weekAgeInterval.label           "veckorna">
+<!ENTITY monthAgeInterval.label          "månaderna">
+<!ENTITY yearAgeInterval.label           "åren">
+<!ENTITY ageAutosyncAfter.label          "">

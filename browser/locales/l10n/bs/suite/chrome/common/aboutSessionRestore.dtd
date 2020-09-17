@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Obnovi sesiju">
+<!ENTITY restorepage.pagetitle      "Želite li obnoviti vašu sesiju?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Vaša prethodna &brandShortName; sesija je zatvorena neočekivano. Iskreno se ispričavamo zbog neugodnosti. Možete vratiti tabove i prozore za prethodnu sesiju ili započeti novu sesiju ako prethodnu više ne trebate.">
+<!ENTITY restorepage.remedies       "Ako se &brandShortName; zatvara uzastopno:">
+<!ENTITY restorepage.dueToChrome    "Pokušajte onemogućiti neka nedavno dodana proširenja u Menadžeru dodataka.">
+<!ENTITY restorepage.dueToContent   "Pokušajte da obnovite svoju sesiju bez bilo koje web stranice za koju sumnjate da je izazvala grešku:">
+
+<!ENTITY restorepage.restoreButton  "Obnovite prethodnu sesiju">
+<!ENTITY restorepage.restore.access "O">
+<!ENTITY restorepage.cancelButton   "Započnite novu sesiju">
+<!ENTITY restorepage.cancel.access  "Z">
+
+<!ENTITY restorepage.restoreHeader  "Obnovi">
+<!ENTITY restorepage.listHeader     "Prozori i tabovi">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Prozor &#37;S">

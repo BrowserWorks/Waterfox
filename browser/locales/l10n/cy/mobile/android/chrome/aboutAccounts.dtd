@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Cyfrifon Firefox">
+<!ENTITY aboutAccounts.connected.description "Rydych wedi cysylltu fel">
+<!ENTITY aboutAccounts.syncPreferences.label "Tapio yma i wirio eich gosodiadau Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "Dim cysylltiad gwe">
+<!ENTITY aboutAccounts.retry.label "Ceisio eto">
+
+<!ENTITY aboutAccounts.restrictedError.title "Cyfyngedig">
+<!ENTITY aboutAccounts.restrictedError.description "Nid oes modd i chi reoli Cyfrifon Firefox o'r proffil hwn.">

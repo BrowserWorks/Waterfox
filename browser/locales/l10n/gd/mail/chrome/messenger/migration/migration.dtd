@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Draoidh an ion-phortaidh">
+
+<!ENTITY importFromWin.label            "Ion-phortaich roghainnean, roghainnean cunntais, leabhar nan seòlaidh, criathragan is dàta eile o:">
+<!ENTITY importFromNonWin.label         "Ion-phortaich roghainnean, roghainnean cunntais, leabhar nan seòlaidh, criathragan is dàta eile o:">
+<!ENTITY importSourceNotFound.label     "Cha deach aplacaid a lorg as urrainn dhuinn dàta ion-phortadh uaithe.">
+
+<!ENTITY importFromNothing.label        "Na ion-phortaich rud sam bith">
+<!ENTITY importFromNothing.accesskey    "d">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 no nas ùire">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Ion-phortaich na roghainnean is pasgain puist">
+<!ENTITY importItems.title              "Rudan ri an ion-phortadh">
+<!ENTITY importItems.label              "Tagh na rudan a thèid ion-phortadh:">
+
+<!ENTITY migrating.title                "Ag ion-phortadh…">
+<!ENTITY migrating.label                "Tha na rudan a leanas 'gan ion-phortadh an-dràsta…">
+
+<!ENTITY selectProfile.title            "Tagh pròifil">
+<!ENTITY selectProfile.label            "'S urrainn dhut ion-phortadh o na pròifilean a leanas:">
+
+<!ENTITY done.title                     "Ion-phortadh deiseil">
+<!ENTITY done.label                     "Chaidh na nithean seo ion-phortadh:">

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Napravi novi kalendar" >
+<!ENTITY wizard.label             "Napravi novi kalendar" >
+<!ENTITY wizard.description       "Pronađite svoj kalendar" >
+
+<!ENTITY initialpage.description    "Kalendar može biti spremljen na vaš računar ili na server kako biste mu mogli pristupiti od bilo kuda ili ga dijeliti sa svojim prijateljima ili saradnicima." >
+<!ENTITY initialpage.computer.label  "Na mom računaru">
+<!ENTITY initialpage.network.label  "Na mreži">
+
+<!ENTITY locationpage.description         "Navedite potrebne informacije za pristup vašem udaljenom kalendaru" >
+<!ENTITY locationpage.login.description   "Neobavezno: unesite korisničko ime i lozinku" >
+<!ENTITY locationpage.username.label      "Korisničko ime:" >
+<!ENTITY locationpage.password.label      "Lozinka:" >
+
+<!ENTITY custompage.shortdescription  "Prilagodite svoj kalendar" >
+<!ENTITY custompage.longdescription   "Svom kalendaru možete dati nadimak i obojiti događaje ovog kalendara." >
+
+<!ENTITY finishpage.shortdescription  "Kalendar je napravljen" >
+<!ENTITY finishpage.longdescription   "Vaš kalendar je napravljen." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Ostalo">
+
+<!ENTITY buttons.create.label "Napravi kalendar">
+
+<!ENTITY buttons.find.label "Pronađi kalendare">
+
+<!ENTITY buttons.back.label "Nazad">
+
+<!ENTITY buttons.subscribe.label "Preplati se">
+
+<!ENTITY calendartype.label "Tip kalendara:">
+<!ENTITY location.label "Lokacija:">
+<!ENTITY location.placeholder "URL ili ime hosta servera kalendara">
+
+<!ENTITY network.nocredentials.label "Ova lokacija ne zahtijeva uvjerenja">
+<!ENTITY network.loading.description "Molimo sačekajte dok vaši kalendari ne budu otkriveni.">
+<!ENTITY network.notfound.description "Ne mogu pronaći kalendare na ovoj lokaciji. Molimo provjerite vaše postavke.">
+<!ENTITY network.authfail.description "Uvjerenja koja ste unijeli nisu prihvaćena. Molimo provjerite vaše postavke.">
+
+<!ENTITY network.subscribe.single.description "Molimo odaberite kalendare na koje se želite pretplatiti.">
+<!ENTITY network.subscribe.multiple.description "Višestruki tipovi kalendara su dostupni za ovu lokaciju. Molimo odaberite tip kalendara, zatim označite kalendare na koje se želite pretplatiti.">

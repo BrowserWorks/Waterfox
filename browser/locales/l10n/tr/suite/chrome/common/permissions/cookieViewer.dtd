@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tab.cookiesonsystem.label "Kaydedilmiş çerezler">
+<!ENTITY tab.bannedservers.label "Çerez siteleri">
+<!ENTITY div.bannedservers.label "Manage sites that can and cannot store cookies on your computer.">
+<!ENTITY div.cookiesonsystem.label "View and remove cookies that are stored on your computer.">
+<!ENTITY treehead.cookiename.label "Çerez ismi">
+<!ENTITY treehead.cookiedomain.label "Site">
+<!ENTITY treehead.cookieexpires.label "Geçerlilik tarihi:">
+<!ENTITY treehead.infoselected.label "Information about the selected Cookie">
+<!ENTITY button.removecookie.label "Çerezi sil">
+<!ENTITY button.removecookie.accesskey "r">
+<!ENTITY button.removeallcookies.label "Tüm çerezleri sil">
+<!ENTITY button.removeallcookies.accesskey "T">
+
+<!ENTITY search.placeholder "Çerezlerde ara">
+<!ENTITY focusSearch.key "f">
+<!ENTITY windowClose.key "w">
+<!ENTITY selectAll.key "a">
+
+<!ENTITY props.name.label "isim:">
+<!ENTITY props.value.label "İçerik:">
+<!ENTITY props.domain.label "Makine:">
+<!ENTITY props.path.label "Yolu:">
+<!ENTITY props.secure.label "Gönderen:">
+<!ENTITY props.expires.label "Bitiş tarihi:">
+
+<!ENTITY treehead.sitename.label "Site">
+<!ENTITY treehead.status.label "Durum">
+<!ENTITY windowtitle.label "Çerez yöneticisi">
+<!ENTITY buttonaccept.label "Kapat">
+<!ENTITY buttonaccept.accesskey "K">
+
+<!ENTITY blockSite.label "Engelle">
+<!ENTITY blockSite.accesskey "g">
+<!ENTITY allowSite.label "İzin ver">
+<!ENTITY allowSite.accesskey "e">
+<!ENTITY allowSiteSession.label "Oturum">
+<!ENTITY allowSiteSession.accesskey "O">
+<!ENTITY removepermission.label "Siteyi sil">
+<!ENTITY removepermission.accesskey "S">
+<!ENTITY removeallpermissions.label "Tüm siteleri sil">
+<!ENTITY removeallpermissions.accesskey "e">
+
+<!ENTITY futureCookies.label "Don't allow sites that set removed cookies to set future cookies">
+<!ENTITY futureCookies.accesskey "D">

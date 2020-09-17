@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "Farben">
+<!ENTITY color                             "Text und Hintergrund">
+<!ENTITY textColor.label                   "Text:">
+<!ENTITY textColor.accesskey               "t">
+<!ENTITY backgroundColor.label             "Hintergrund:">
+<!ENTITY backgroundColor.accesskey         "h">
+<!ENTITY useSystemColors.label             "Systemfarben verwenden">
+<!ENTITY useSystemColors.accesskey         "S">
+
+<!ENTITY underlineLinks.label              "Links unterstreichen">
+<!ENTITY underlineLinks.accesskey          "u">
+<!ENTITY links                             "Link-Farben">
+<!ENTITY linkColor.label                   "Unbesuchte Links">
+<!ENTITY linkColor.accesskey               "n">
+<!ENTITY activeLinkColor.label             "Aktive Links:">
+<!ENTITY activeLinkColor.accesskey         "k">
+<!ENTITY visitedLinkColor.label            "Besuchte Links:">
+<!ENTITY visitedLinkColor.accesskey        "b">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Wenn eine Webseite eigene Farben bzw. Hintergrund angibt:">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Immer von der Webseite angegebene Farben und Hintergrund verwenden">
+<!ENTITY alwaysUseDocumentColors.accesskey "i">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Selbst definierte Farben verwenden, Webseiten-Farben und -Hintergrundbild ignorieren">
+<!ENTITY useMyColors.accesskey             "d">
+<!ENTITY automaticColors.label             "Seitenfarben nur ignorieren, wenn ein Theme mit starken Kontrasten verwendet wird.">
+<!ENTITY automaticColors.accesskey         "e">

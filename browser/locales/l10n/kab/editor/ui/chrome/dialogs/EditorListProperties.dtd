@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Timezliyin n tebdart">
+
+<!ENTITY ListType.label "Anaw n tebdart">
+<!ENTITY bulletStyle.label "Aɣanib n ukured:">
+<!ENTITY startingNumber.label "Bdu si:">
+<!ENTITY startingNumber.accessKey "B">
+<!ENTITY none.value "Ula yiwen">
+<!ENTITY bulletList.value "Tabdart s tneqqidin (s war uṭṭunen)">
+<!ENTITY numberList.value "Tabdart tumḍint">
+<!ENTITY definitionList.value "Tabdart n tbadut">
+<!ENTITY changeEntireListRadio.label "Snifel akk tabdart">
+<!ENTITY changeEntireListRadio.accessKey "n">
+<!ENTITY changeSelectedRadio.label "Snifel kan iferdisen ifernen">
+<!ENTITY changeSelectedRadio.accessKey "f">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ફોર્મના ગુણધર્મો">
+
+<!ENTITY Settings.label "સેટીંગ">
+
+<!ENTITY FormName.label "ફોર્મનું નામ:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "ક્રિયા URL:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "પદ્ધતિ:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "સંગ્રહપદ્ધતિ:">
+<!ENTITY FormEncType.accesskey "c">
+<!ENTITY FormTarget.label "લક્ષ્ય ફ્રેમ:">
+<!ENTITY FormTarget.accesskey "T">
+
+<!ENTITY RemoveForm.label "ફોર્મ દૂર કરો">
+<!ENTITY RemoveForm.accesskey "R">

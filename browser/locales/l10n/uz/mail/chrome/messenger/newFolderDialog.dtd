@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Yangi jild">
+<!ENTITY name.label                 "Nomi:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Ichki jild kabi yaratish">
+<!ENTITY description.accesskey      "y">
+<!ENTITY folderRestriction1.label   "Server aynan ikki xil jildlarga cheklov o‘rnatgan.">
+<!ENTITY folderRestriction2.label   "Tarkibida quyidagi bo‘lgan jildga ruxsat berish:">
+<!ENTITY foldersOnly.label          "Faqat jildlar">
+<!ENTITY messagesOnly.label         "Faqat xabarlar">
+<!ENTITY accept.label               "Jild yaratish">
+<!ENTITY accept.accesskey           "y">

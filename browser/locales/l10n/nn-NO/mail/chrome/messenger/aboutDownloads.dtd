@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Lagre filer">
+<!ENTITY aboutDownloads.empty                      "Ingen lagra filer">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Opne mappa med fila">
+<!ENTITY cmd.show.accesskey                        "O">
+<!ENTITY cmd.showMac.label                         "Vis i Finder">
+<!ENTITY cmd.showMac.accesskey                     "V">
+<!ENTITY cmd.open.label                            "Opne">
+<!ENTITY cmd.open.accesskey                        "O">
+<!ENTITY cmd.removeFromHistory.label               "Fjern frå historikk">
+<!ENTITY cmd.removeFromHistory.accesskey           "e">
+<!ENTITY cmd.clearList.label                       "Tøm liste">
+<!ENTITY cmd.clearList.accesskey                   "T">
+<!ENTITY cmd.clearList.tooltip                     "Fjern alle val frå lista av lagra filer, med unntak av nedlastingar i framdrift.">
+<!ENTITY cmd.searchDownloads.label                 "Søk …">
+<!ENTITY cmd.searchDownloads.key                   "F">

@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "Hesaplar - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Anlık mesajlaşma durumu">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Yeni hesap">
+<!ENTITY accountManager.newAccount.accesskey "Y">
+<!ENTITY accountManager.close.label          "Kapat">
+<!ENTITY accountManager.close.accesskey      "K">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Henüz hiç hesap yapılandırılmamış">
+<!ENTITY accountManager.noAccount.description "Yapılandırma sürecinde &brandShortName; tarafından yönlendirilmek için &accountManager.newAccount.label; düğmesine tıklayın.">
+<!ENTITY account.autoSignOn.label     "Başlangıçta oturum aç">
+<!ENTITY account.autoSignOn.accesskey "o">
+<!ENTITY account.connect.label        "Bağlan">
+<!ENTITY account.connect.accesskey    "B">
+<!ENTITY account.disconnect.label     "Bağlantıyı kes">
+<!ENTITY account.disconnect.accesskey "k">
+<!ENTITY account.delete.label         "Sil">
+<!ENTITY account.delete.accesskey     "S">
+<!ENTITY account.edit.label           "Özellikler">
+<!ENTITY account.edit.accesskey       "Ö">
+<!ENTITY account.moveup.label         "Yukarı taşı">
+<!ENTITY account.movedown.label       "Aşağı taşı">
+<!ENTITY account.cancelReconnection.label         "Tekrar bağlanmadan vazgeç">
+<!ENTITY account.cancelReconnection.accesskey     "v">
+<!ENTITY account.copyDebugLog.label     "Hata ayıklama kaydını kopyala">
+<!ENTITY account.copyDebugLog.accesskey "k">
+<!ENTITY account.showDebugLog.label     "Hata ayıklama kaydını göster">
+<!ENTITY account.showDebugLog.accesskey "k">
+<!ENTITY account.connecting           "Bağlanıyor…">
+<!ENTITY account.disconnecting        "Bağlantı kesiliyor…">
+<!ENTITY account.disconnected         "Bağlı değil">

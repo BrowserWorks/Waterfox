@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: andmete import">
+<!ENTITY migration.welcome "Tere tulemast">
+<!ENTITY migration.importing "Importimine on pooleli">
+<!ENTITY migration.list.description "&brandShortName; oskab importida kalendri andmeid paljudest populaarsetest rakendustest. Sinu arvutist leiti järgmiste rakenduste andmed. Palun vali, millisest neist soovid andmeid importida.">
+<!ENTITY migration.progress.description "Imporditakse valitud andmeid">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Luo uusi kalenteri" >
+<!ENTITY wizard.label             "Luo uusi kalenteri" >
+<!ENTITY wizard.description       "Määritä kalenterin sijainti" >
+
+<!ENTITY initialpage.description    "Kalenterin voi tallentaa joko tälle tietokoneelle tai palvelimelle, jolloin sitä voi lukea verkon yli. Voit myös jakaa jonkin kalenterin ystäviesi tai työtovereidesi kanssa." >
+<!ENTITY initialpage.computer.label  "Tällä tietokoneella">
+<!ENTITY initialpage.network.label  "Verkossa">
+
+<!ENTITY locationpage.description         "Määritä tiedot, jotka tarvitaan kalenterin avaamiseen" >
+<!ENTITY locationpage.login.description   "Valinnainen: kirjoita käyttäjätunnus ja salasana" >
+<!ENTITY locationpage.username.label      "Käyttäjätunnus:" >
+<!ENTITY locationpage.password.label      "Salasana:" >
+
+<!ENTITY custompage.shortdescription  "Kustomoi kalenteri" >
+<!ENTITY custompage.longdescription   "Voit antaa tälle kalenterille lempinimen sekä määrittää tämän kalenterin tapahtumat tietyn värisiksi." >
+
+<!ENTITY finishpage.shortdescription  "Kalenteri on luotu" >
+<!ENTITY finishpage.longdescription   "Kalenteri on luotu." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Muu">
+
+<!ENTITY buttons.create.label "Luo kalenteri">
+<!ENTITY buttons.create.accesskey "L">
+
+<!ENTITY buttons.find.label "Etsi kalentereita">
+<!ENTITY buttons.find.accesskey "E">
+
+<!ENTITY buttons.back.label "Takaisin">
+<!ENTITY buttons.back.accesskey "T">
+
+<!ENTITY buttons.subscribe.label "Tilaa">
+<!ENTITY buttons.subscribe.accesskey "i">
+
+<!ENTITY calendartype.label "Kalenterin tyyppi:">
+<!ENTITY location.label "Sijainti:">
+<!ENTITY location.placeholder "Kalenteripalvelimen URL tai palvelinnimi">
+
+<!ENTITY network.nocredentials.label "Tämä sijainti ei vaadi kirjautumistietoja">
+<!ENTITY network.loading.description "Odota hetki, kalentereitasi etsitään.">
+<!ENTITY network.notfound.description "Tästä sijainnista ei löytynyt kalentereita. Tarkista asetukset.">
+<!ENTITY network.authfail.description "Syöttämiäsi kirjautumistietoja ei hyväksytty. Tarkista asetukset.">
+
+<!ENTITY network.subscribe.single.description "Valitse kalenterit, jotka haluat tilata.">
+<!ENTITY network.subscribe.multiple.description "Tässä sijainnissa on monen tyyppisiä kalentereita. Valitse ensin kalenterin tyyppi ja valitse sitten kalenterit, jotka haluat tilata.">

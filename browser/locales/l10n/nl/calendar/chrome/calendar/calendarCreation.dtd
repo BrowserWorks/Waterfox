@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Nieuwe agenda maken" >
+<!ENTITY wizard.label             "Een nieuwe agenda maken" >
+<!ENTITY wizard.description       "Uw agenda lokaliseren" >
+
+<!ENTITY initialpage.description    "Uw agenda kan op uw computer of op een server worden opgeslagen, zodat deze op afstand is te benaderen door vrienden of collega’s." >
+<!ENTITY initialpage.computer.label  "Op mijn computer">
+<!ENTITY initialpage.network.label  "Op het netwerk">
+
+<!ENTITY locationpage.description         "Informatie opgeven om toegang te krijgen tot uw externe agenda" >
+<!ENTITY locationpage.login.description   "Optioneel: gebruikersnaam en wachtwoord invoeren" >
+<!ENTITY locationpage.username.label      "Gebruikersnaam:" >
+<!ENTITY locationpage.password.label      "Wachtwoord:" >
+
+<!ENTITY custompage.shortdescription  "Uw agenda aanpassen" >
+<!ENTITY custompage.longdescription   "U kunt uw agenda een eigen naam geven, en de gebeurtenissen in deze agenda een eigen kleur." >
+
+<!ENTITY finishpage.shortdescription  "Agenda gemaakt" >
+<!ENTITY finishpage.longdescription   "Uw agenda is gemaakt." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Anders">
+
+<!ENTITY buttons.create.label "Agenda maken">
+<!ENTITY buttons.create.accesskey "m">
+
+<!ENTITY buttons.find.label "Agenda’s zoeken">
+<!ENTITY buttons.find.accesskey "z">
+
+<!ENTITY buttons.back.label "Terug">
+<!ENTITY buttons.back.accesskey "T">
+
+<!ENTITY buttons.subscribe.label "Abonneren">
+<!ENTITY buttons.subscribe.accesskey "A">
+
+<!ENTITY calendartype.label "Agendatype:">
+<!ENTITY location.label "Locatie:">
+<!ENTITY location.placeholder "URL of hostnaam van de agendaserver">
+
+<!ENTITY network.nocredentials.label "Deze locatie vereist geen referenties">
+<!ENTITY network.loading.description "Even geduld, uw agenda’s worden gedetecteerd.">
+<!ENTITY network.notfound.description "Er zijn geen agenda’s op deze locatie gevonden. Controleer uw instellingen.">
+<!ENTITY network.authfail.description "De ingevoerde referenties werden niet geaccepteerd. Controleer uw instellingen.">
+
+<!ENTITY network.subscribe.single.description "Selecteer de agenda’s waarop u zich wilt abonneren.">
+<!ENTITY network.subscribe.multiple.description "Voor deze locatie zijn meerdere agendatypen beschikbaar. Selecteer het agendatype, en markeer daarna de agenda’s waarop u zich wilt abonneren.">

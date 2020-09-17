@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  global/languageNames.properties file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+<!ENTITY translation.thisPageIsIn.label         "Ñuna nu pajina na">
+<!ENTITY translation.translateThisPage.label    "Naduno' nânj ginù riña pagina na anj?">
+<!ENTITY translation.translate.button           "Nachrun nanj nï'ïn">
+<!ENTITY translation.notNow.button              "Si ga'ue akuan'ni">
+
+<!ENTITY translation.translatingContent.label   "Naduno' nânj ginù riña pajina...">
+
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  global/languageNames.properties file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+<!ENTITY translation.translatedFrom.label       "Nuguan' na nahuin riña pajina na">
+<!ENTITY translation.translatedTo.label         "aj">
+<!ENTITY translation.translatedToSuffix.label   "">
+
+<!ENTITY translation.showOriginal.button        "Digun' sa hia">
+<!ENTITY translation.showTranslation.button     "Digun' nânj nachrun'">
+
+<!ENTITY translation.errorTranslating.label     "Hua 'ngo sa gire' riña pajina na.">
+<!ENTITY translation.tryAgain.button            "A'ngô ñû">
+
+<!ENTITY translation.serviceUnavailable.label   "Nitaj si huaj nachrun't a'ngo nânj. Garahue a'ngò ñu.">
+
+<!ENTITY translation.options.menu               "Sa huā gi'iát">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "Si nachrun' a'ngò nuguan' riña sitio na">
+<!ENTITY translation.options.neverForSite.accesskey "e">
+<!ENTITY translation.options.preferences.label  "Daj ga nânj nachrun'">
+<!ENTITY translation.options.preferences.accesskey "T">
+

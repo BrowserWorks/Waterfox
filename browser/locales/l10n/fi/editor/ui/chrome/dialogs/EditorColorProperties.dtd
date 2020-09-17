@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Sivun värit ja tausta">
+<!ENTITY pageColors.label "Sivun värit">
+<!ENTITY defaultColorsRadio.label "Lukijan oletusvärit (Älä aseta värejä sivuille)">
+<!ENTITY defaultColorsRadio.accessKey "o">
+<!ENTITY defaultColorsRadio.tooltip "Käytä vain sivun tarkastelijan selaimen väriasetuksia">
+<!ENTITY customColorsRadio.label "Käytä järjestelmän värejä:">
+<!ENTITY customColorsRadio.accessKey "K">
+<!ENTITY customColorsRadio.tooltip "Nämä väriasetukset ohittavat lukijan selaimen asetukset">
+
+<!ENTITY normalText.label "Normaali teksti">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Linkin teksti">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "Aktiivisen linkin teksti">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "Avatun linkin teksti">
+<!ENTITY visitedLinkText.accessKey "u">
+<!ENTITY background.label "Tausta:">
+<!ENTITY background.accessKey "T">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Taustakuva:">
+<!ENTITY backgroundImage.accessKey "s">
+<!ENTITY backgroundImage.tooltip "Käytä kuvaa verkkosivusi taustana">
+<!ENTITY backgroundImage.shortenedDataURI "Lyhennetty datan URI (kopioiminen sijoittaa täydellisen URIn leikepöydälle)">

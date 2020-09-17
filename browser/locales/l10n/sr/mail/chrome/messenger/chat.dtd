@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Контакти на мрежи">
+<!ENTITY offlineContactsHeader.label   "Контакти ван мреже">
+<!ENTITY conversationsHeader.label     "Разговори">
+<!ENTITY searchResultConversation.label "Резултат претраге">
+<!ENTITY chat.noConv.title             "Разговори ће бити приказани овде.">
+<!ENTITY chat.noConv.description       "Користите списак са контактима на левој страни за започињање разговора.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; тренутно нема ниједан сачуван прошли разговор са овим контактом.">
+<!ENTITY chat.noAccount.title             "Још нисте подесили налог за ћаскање.">
+<!ENTITY chat.noAccount.description       "Допустите да вас &brandShortName; спроведе кроз поступак подешавања вашег налога за ћаскање.">
+<!ENTITY chat.accountWizard.button       "Започни">
+<!ENTITY chat.noConnectedAccount.title             "Ваши налози за ћаскање нису повезани.">
+<!ENTITY chat.noConnectedAccount.description       "Можете их повезати из дијалога „Стање ћаскања“:">
+<!ENTITY chat.showAccountManager.button       "Прикажи стање ћаскања">
+
+<!ENTITY chat.participants             "Учесници:">
+<!ENTITY chat.previousConversations    "Претходни разговори:">
+<!ENTITY chat.ongoingConversation      "Тренутни разговор">
+
+<!ENTITY openConversationCmd.label     "Започни разговор">
+<!ENTITY openConversationCmd.accesskey "р">
+<!ENTITY closeConversationCmd.label    "Затвори разговор">
+<!ENTITY closeConversationCmd.accesskey "З">
+<!ENTITY aliasCmd.label                "Преименуј">
+<!ENTITY aliasCmd.accesskey            "П">
+<!ENTITY deleteCmd.label               "Уклони контакт">
+<!ENTITY deleteCmd.accesskey           "н">
+
+<!ENTITY openConversationButton.tooltip  "Започни разговор">
+<!ENTITY closeConversationButton.tooltip "Затвори разговор">
+
+<!ENTITY addBuddyButton.label          "Додај контакт">
+<!ENTITY joinChatButton.label          "Приступи ћаскању">
+<!ENTITY chatAccountsButton.label      "Прикажи налоге">
+
+<!ENTITY status.available          "Доступан/на">
+<!ENTITY status.unavailable        "Недоступан/на">
+<!ENTITY status.offline            "Ван мреже">
+
+<!ENTITY openLinkCmd.label            "Отвори везу…">
+<!ENTITY openLinkCmd.accesskey        "О">

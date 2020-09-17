@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Настройте своя съществуваща пощенска кутия">
+<!ENTITY emailWizard.caption             "Използвайте текущия си адрес на ел. поща">
+<!ENTITY name.label                      "Имена:">
+<!ENTITY name.accesskey                  "и">
+<!ENTITY fullname.placeholder            "Вашите две имена">
+<!ENTITY name.text                       "Вашите имена, както ще ги виждат другите">
+<!ENTITY name.error                      "Моля, въведете имената си">
+<!ENTITY email.label                     "Електронен адрес:">
+<!ENTITY email.accesskey                 "Е">
+<!ENTITY email3.placeholder              "Вашият адрес на ел. поща">
+<!ENTITY email.text                      "Вашият съществуващ адрес на ел. поща">
+<!ENTITY email.error                     "Недействителен адрес на ел. поща">
+<!ENTITY password.label                  "Парола:">
+<!ENTITY password.accesskey              "П">
+<!ENTITY password.placeholder            "Парола">
+<!ENTITY password.text                   "По избор, ще се използва само за проверка на името">
+<!ENTITY password.toggle                 "Показва или скрива паролата">
+<!ENTITY rememberPassword.label          "Запомняне на паролата">
+<!ENTITY rememberPassword.accesskey      "а">
+<!ENTITY usernameEx.label                "Потребителско име:">
+<!ENTITY usernameEx.accesskey            "и">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "YOURDOMAIN\yourusername">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Вход в домейн">
+
+<!ENTITY protocol.label                  "Протокол:">
+<!ENTITY imapLong.label                  "IMAP (отдалечени папки)">
+<!ENTITY pop3Long.label                  "POP3 (съхраняване пощата на компютъра)">
+
+<!ENTITY manualConfigTable.summary       "Настройки на сървъра">
+<!ENTITY incoming.label                  "Входяща:">
+<!ENTITY incomingColumn.label            "Входяща">
+<!ENTITY outgoing.label                  "Изходяща:">
+<!ENTITY outgoingColumn.label            "Изходяща">
+<!ENTITY username.label                  "Потребителско име:">
+<!ENTITY serverRow.label                 "Сървър:">
+<!ENTITY portRow.label                   "Порт:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Удостоверяване">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Автоматично разпознаване">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Без">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Сървър на Exchange">
+
+<!ENTITY advancedSetup.label             "Разширени настройки">
+<!ENTITY advancedSetup.accesskey         "О">
+<!ENTITY cancel.label                    "Отказ">
+<!ENTITY cancel.accesskey                "з">
+<!ENTITY continue.label                  "Продължаване">
+<!ENTITY continue.accesskey              "П">
+<!ENTITY stop.label                      "Стоп">
+<!ENTITY stop.accesskey                  "С">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Тест отново">
+<!ENTITY half-manual-test.accesskey      "Т">
+<!ENTITY manual-config.label             "Ръчни настройки…">
+<!ENTITY manual-config.accesskey         "р">
+<!ENTITY open-provisioner.label          "Получете нов електронен адрес…">
+<!ENTITY open-provisioner.accesskey      "а">
+
+
+<!ENTITY get-help.label                  "Получете помощ">
+<!ENTITY get-help.accesskey              "п">
+
+
+<!ENTITY warning.label                   "Внимание!">
+<!ENTITY incomingSettings.label          "Входящи настройки:">
+<!ENTITY outgoingSettings.label          "Изходящи настройки:">
+<!ENTITY technicaldetails.label          "Технически подробности">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Разбирам риска.">
+<!ENTITY confirmWarning.accesskey        "з">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Готово">
+<!ENTITY doneAccount.accesskey           "Г">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Промяна на настройките">
+<!ENTITY changeSettings.accesskey        "н">
+
+<!ENTITY contactYourProvider.description "&brandShortName; ви дава възможност да получавате пощата си с помощта на дадените настройки. Въпреки това се свържете с вашия администратор или доставчик относно тези неправилни връзки. За повече информация вижте ЧЗВ на Thunderbird.">
+
+<!ENTITY insecureServer.tooltip.title    "Внимание! Това е незащитен сървър.">
+<!ENTITY insecureServer.tooltip.details  "Щракнете на кръгчето за подробности.">
+
+<!ENTITY insecureUnencrypted.description "Писмото и удостоверяването се изпращат нешифровани, поради което паролата и съдържанието на писмото могат лесно да бъдат прочетени от други хора. &brandShortName; ще ви отвори пощата, но трябва да се свържете с доставчика на пощенска услуга, за да настрои защита на връзката.">
+<!ENTITY insecureSelfSigned.description  "Сървърът използва недоверен сертификат и поради това не можете да бъдете сигурни за връзка между &brandShortName; и вашия сървър. &brandShortName; ще ви позволи да си получите пощата, но вие наистина трябва да поискате от вашия доставчик да конфигурира сървъра с доверен сертификат.">
+<!ENTITY secureServer.description        "Поздравления! Това е защитен сървър.">

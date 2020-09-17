@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Form Alanı Özellikleri">
+<!ENTITY windowTitleImage.label "Form Resmi Özellikleri">
+
+<!ENTITY InputType.label "Alan türü">
+<!ENTITY InputType.accesskey "l">
+<!ENTITY text.value "Metin">
+<!ENTITY password.value "Parola">
+<!ENTITY checkbox.value "Onay kutusu">
+<!ENTITY radio.value "Radyo Düğmesi">
+<!ENTITY submit.value "Gönderme Düğmesi">
+<!ENTITY reset.value "Sıfırlama Düğmesi">
+<!ENTITY file.value "Dosya">
+<!ENTITY hidden.value "Gizli">
+<!ENTITY image.value "Resim">
+<!ENTITY button.value "Düğme">
+
+<!ENTITY InputSettings.label "Alan ayarları">
+<!ENTITY InputName.label "Alan adı:">
+<!ENTITY InputName.accesskey "n">
+<!ENTITY GroupName.label "Grup adı:">
+<!ENTITY GroupName.accesskey "G">
+<!ENTITY InputValue.label "Alan değeri:">
+<!ENTITY InputValue.accesskey "D">
+<!ENTITY InitialValue.label "Başlangıç Değeri:">
+<!ENTITY InitialValue.accesskey "B">
+<!ENTITY InputChecked.label "Başlangıçta Seçili">
+<!ENTITY InputChecked.accesskey "g">
+<!ENTITY InputSelected.label "Başlangıçta Seçili">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "Salt Okunur">
+<!ENTITY InputReadOnly.accesskey "S">
+<!ENTITY InputDisabled.label "Kullanılamaz">
+<!ENTITY InputDisabled.accesskey "K">
+<!ENTITY tabIndex.label "Sekme Endeksi:">
+<!ENTITY tabIndex.accesskey "e">
+<!ENTITY TextSize.label "Alan boyutu:">
+<!ENTITY TextSize.accesskey "A">
+<!ENTITY TextLength.label "Asgari Uzunluk:">
+<!ENTITY TextLength.accesskey "s">
+<!ENTITY AccessKey.label "Erişim Tuşu:">
+<!ENTITY AccessKey.accesskey "E">
+<!ENTITY Accept.label "Kabul Etme Tipleri:">
+<!ENTITY Accept.accesskey "b">
+
+<!ENTITY ImageProperties.label "Resim Özellikleri…">
+<!ENTITY ImageProperties.accesskey "e">

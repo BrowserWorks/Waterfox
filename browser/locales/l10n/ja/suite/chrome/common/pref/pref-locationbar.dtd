@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "アドレスバー"><!-- en-US: "Location Bar" -->
+
+<!ENTITY autoComplete.label                    "自動補完">
+<!ENTITY autoCompleteMatchHistory.label        "履歴からウェブサイトの候補を自動的に提案する">
+<!ENTITY autoCompleteMatchHistory.accesskey    "A">
+<!ENTITY autoCompleteMatchBookmarks.label      "ブックマークからウェブサイトの候補を自動的に提案する">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "B">
+<!ENTITY autoCompleteAutoFill.label            "入力に最も一致する項目を自動補完">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "一致する項目のリストを表示">
+<!ENTITY autoCompleteShowPopup.accesskey       "S">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "以前入力したウェブサイトのみに一致する項目を表示">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "o">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "一致条件:">
+<!ENTITY autoCompleteMatch.accesskey           "M">
+<!ENTITY autoCompleteMatchAnywhere             "アドレス (URL) またはタイトルに一致">
+<!ENTITY autoCompleteMatchWordsFirst           "単語の先頭または末尾の一致を優先"><!-- en-US: "Anywhere but preferring word boundaries" -->
+<!ENTITY autoCompleteMatchWords                "単語の先頭または末尾のみに一致"><!-- en-US: "Only on word boundaries"-->
+<!ENTITY autoCompleteMatchStart                "アドレス (URL) またはタイトルの先頭に一致">
+<!ENTITY showInternetSearch.label              "既定のインターネット検索エンジンを表示">
+<!ENTITY showInternetSearch.accesskey          "e">
+
+<!ENTITY formatting.label                      "表示形式">
+<!ENTITY domainFormatting.label                "ウェブサイトや FTP サーバーのドメインを強調する"><!--en-US: "Highlight the effective domain for websites and FTP servers" -->
+<!ENTITY domainFormatting.accesskey            "d">
+
+<!ENTITY highlightSecure.label                 "接続のセキュリティレベルが高いウェブページを強調する">
+<!ENTITY highlightSecure.accesskey             "c">
+
+<!ENTITY unknownLocations.label                "アドレス入力"><!-- en-US: "Unknown Locations" -->
+<!ENTITY domainGuessing.label                  "ウェブページが見つからないときは &quot;www.&quot; と &quot;.com&quot;を補完する">
+<!ENTITY domainGuessing.accesskey              "w">
+<!ENTITY keywords.label                        "入力されたテキストがウェブアドレス (URL) でないときはウェブを検索する">
+<!ENTITY keywords.accesskey                    "P">

@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Assistant d’importation">
+
+<!ENTITY importFrom.label               "Importer les options, marque-pages, historique, mots de passe et autres données depuis :">
+<!ENTITY importFromUnix.label           "Importer les préférences, marque-pages, historique, mots de passe et autres données depuis :">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromEdgeLegacy.label     "Microsoft Edge (anciennes versions)">
+<!ENTITY importFromEdgeLegacy.accesskey "a">
+<!ENTITY importFromEdgeBeta.label       "Microsoft Edge Beta">
+<!ENTITY importFromEdgeBeta.accesskey   "d">
+<!ENTITY importFromNothing.label        "Ne rien importer">
+<!ENTITY importFromNothing.accesskey    "r">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromeBeta.label     "Chrome Beta">
+<!ENTITY importFromChromeBeta.accesskey "B">
+<!ENTITY importFromChromeDev.label      "Chrome Dev">
+<!ENTITY importFromChromeDev.accesskey  "D">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Aucun logiciel contenant des marque-pages, un historique ou des mots de passe enregistrés n’a été trouvé.">
+
+<!ENTITY importSource.title             "Importation des paramètres et des données">
+<!ENTITY importItems.title              "Éléments à importer">
+<!ENTITY importItems.label              "Sélectionnez les éléments à importer :">
+
+<!ENTITY migrating.title                "Importation…">
+<!ENTITY migrating.label                "Les éléments suivants sont en cours d’importation…">
+
+<!ENTITY selectProfile.title            "Sélectionner un profil">
+<!ENTITY selectProfile.label            "Les profils suivants sont disponibles à l’importation :">
+
+<!ENTITY done.title                     "Importation terminée">
+<!ENTITY done.label                     "Les éléments suivants ont été importés avec succès :">
+
+<!ENTITY closeSourceBrowser.label       "Veuillez vous assurer que le navigateur sélectionné soit fermé avant de continuer.">

@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Biblioteka">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizěrowaś">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Waše cytańske znamjenja organizěrowaś">
+
+<!ENTITY file.close.label               "Zacyniś">
+<!ENTITY file.close.accesskey           "Z">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Naglědy">
+<!ENTITY views.accesskey                "N">
+<!ENTITY views.tooltip                  "Waš naglěd wuměniś">
+<!ENTITY view.columns.label             "Słupy pokazaś">
+<!ENTITY view.columns.accesskey         "u">
+<!ENTITY view.sort.label                "Sortěrowaś">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Njesortěrowany">
+<!ENTITY view.unsorted.accesskey        "N">
+<!ENTITY view.sortAscending.label       "Sortěrowański pórěd A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Sortěrowański pórěd Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Cytańske znamjenja z HTML importěrowaś…">
+<!ENTITY importBookmarksFromHTML.accesskey "C">
+<!ENTITY exportBookmarksToHTML.label       "Cytańske znamjenja do HTML eksportěrowaś…">
+<!ENTITY exportBookmarksToHTML.accesskey   "z">
+<!ENTITY importOtherBrowser.label          "Daty z drugego wobglědowaka importěrowaś…">
+<!ENTITY importOtherBrowser.accesskey      "D">
+
+<!ENTITY cmd.backup.label               "Zawěsćiś…">
+<!ENTITY cmd.backup.accesskey           "Z">
+<!ENTITY cmd.restore2.label             "Wótnowiś">
+<!ENTITY cmd.restore2.accesskey         "n">
+<!ENTITY cmd.restoreFromFile.label      "Dataju wubraś…">
+<!ENTITY cmd.restoreFromFile.accesskey  "D">
+
+<!ENTITY col.name.label          "Mě">
+<!ENTITY col.tags.label          "Wobznamjenja">
+<!ENTITY col.url.label           "Městno">
+<!ENTITY col.mostrecentvisit.label "Nejnowšy woglěd">
+<!ENTITY col.visitcount.label    "Licba woglědow">
+<!ENTITY col.dateadded.label     "Pśidany">
+<!ENTITY col.lastmodified.label  "Slědna změna">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importěrowaś a zawěsćiś">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Waše cytańske znamjenja importěrowaś a zawěsćiś">
+
+<!ENTITY backButton.tooltip  "Slědk hyś">
+
+<!ENTITY forwardButton.tooltip  "Doprědka hyś">
+
+<!ENTITY detailsPane.selectAnItemText.description "Zapisk wubraś, aby se jogo kakosći woglědali a wobźěłali">
+

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "អំពី &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; ជា​ការ​ធ្វើ​ពិសោធន៍ និង​មិនមាន​ស្ថេរភាព​ទេ ។">
+<!ENTITY aboutPage.checkForUpdates.link         "ពិនិត្យមើល​បច្ចុប្បន្នភាព»">
+<!ENTITY aboutPage.checkForUpdates.checking     "កំពុង​រក​មើល​បច្ចុប្បន្នភាព...">
+<!ENTITY aboutPage.checkForUpdates.none         "មិន​មាន​បច្ចុប្បន្នភាព">
+<!ENTITY aboutPage.checkForUpdates.available2   "ទាញ​យក​បច្ចុប្បន្នភាព">
+<!ENTITY aboutPage.checkForUpdates.downloading  "កំពុង​ទាញ​យក​បច្ចុប្បន្នភាព...">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "ដំឡើង​បច្ចុប្បន្នភាព">
+<!ENTITY aboutPage.faq.label                    "សំណួរ​ដែល​សួរ​រឿយៗ">
+<!ENTITY aboutPage.support.label                "ជំនួយ">
+<!ENTITY aboutPage.privacyPolicy.label          "គោលនយោបាយ​ឯកជន">
+<!ENTITY aboutPage.rights.label                 "ដឹង​ពី​សិទ្ធិ​របស់​អ្នក">
+<!ENTITY aboutPage.relNotes.label               "ឯកសារ​ចេញផ្សាយ">
+<!ENTITY aboutPage.credits.label                "អ្នក​ចូលរួម">
+<!ENTITY aboutPage.license.label                "ព័ត៌មាន​អាជ្ញាប័ណ្ណ">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox និង​រូប​សញ្ញា Firefox គឺជា​និក្ខិត្កសញ្ញា​របស់​មូលនិធិ Mozilla ។">

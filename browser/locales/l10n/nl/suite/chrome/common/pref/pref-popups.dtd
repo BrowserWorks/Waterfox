@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Pop-upvensters">
+
+<!ENTITY pref.popups.caption            "Pop-upvensters">
+
+<!ENTITY popupBlock.label               "Ongewenste pop-upvensters blokkeren">
+<!ENTITY popupBlock.accesskey           "b">
+
+<!ENTITY viewPermissions.label          "Toestemmingen beheren">
+<!ENTITY viewPermissions.accesskey      "T">
+
+<!ENTITY whenBlock.description          "Wanneer een pop-upvenster is geblokkeerd:">
+<!ENTITY playSound.label                "Een geluid afspelen:">
+<!ENTITY playSound.accesskey            "u">
+<!ENTITY systemSound.label              "Systeemgeluid">
+<!ENTITY systemSound.accesskey          "S">
+<!ENTITY customSound.label              "Het volgende geluidsbestand gebruiken">
+<!ENTITY customSound.accesskey          "e">
+
+<!ENTITY selectSound.label              "Bladeren…">
+<!ENTITY selectSound.accesskey          "a">
+<!ENTITY playSoundButton.label          "Afspelen">
+<!ENTITY playSoundButton.accesskey      "l">
+
+<!ENTITY displayIcon.label              "Een pictogram weergeven in de browserstatusbalk">
+<!ENTITY displayIcon.accesskey          "p">
+
+<!ENTITY displayNotification.label      "Een notificatiebalk boven in het inhoudsvenster weergeven">
+<!ENTITY displayNotification.accesskey  "n">
+
+<!ENTITY popupNote.description          "Noot: blokkeren van alle pop-ups kan ervoor zorgen dat belangrijke functionaliteiten van sommige websites niet meer werken, zoals aanmeldingsvensters voor banken en winkelsites. Klik op Help voor details over hoe u specifieke websites toestemming voor het gebruiken van pop-ups kunt geven terwijl alle andere worden geblokkeerd. Ondanks pop-upblokkering kunnen websites andere methoden gebruiken om pop-ups te tonen.">

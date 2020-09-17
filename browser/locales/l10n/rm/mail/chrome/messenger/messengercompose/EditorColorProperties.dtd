@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Fund davos e colurs da la pagina">
+<!ENTITY pageColors.label "Colurs da la pagina">
+<!ENTITY defaultColorsRadio.label "Colurs predefinidas dal lectur (betg fixar las colurs en la pagina)">
+<!ENTITY defaultColorsRadio.accessKey "i">
+<!ENTITY defaultColorsRadio.tooltip "Utilisar sulettamain ils parameters da colur dal navigatur dal lectur">
+<!ENTITY customColorsRadio.label "Utilisar questas colurs:">
+<!ENTITY customColorsRadio.accessKey "U">
+<!ENTITY customColorsRadio.tooltip "Quests parameters da colur valan, ils parameters dal navigatur dal visitader vegnan ignorads">
+
+<!ENTITY normalText.label "Text normal">
+<!ENTITY normalText.accessKey "n">
+<!ENTITY linkText.label "Text da la colliaziun">
+<!ENTITY linkText.accessKey "c">
+<!ENTITY activeLinkText.label "Text activ da la colliaziun">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Text da colliaziun visità">
+<!ENTITY visitedLinkText.accessKey "v">
+<!ENTITY background.label "Fund davos:">
+<!ENTITY background.accessKey "F">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Maletg dal fund davos:">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "Utilisar ina datoteca da grafica sco fund davos per tia pagina">
+<!ENTITY backgroundImage.shortenedDataURI "Datas URI scursanidas (cun copiar vegn l'entir URI plazzà en l'archiv provisoric)">

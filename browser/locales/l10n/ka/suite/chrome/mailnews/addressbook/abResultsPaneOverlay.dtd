@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "მისამართების წიგნაკი">
+<!ENTITY Addrbook.accesskey                    "წ">
+<!ENTITY GeneratedName.label                   "სახელი">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "ელფოსტა">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "დაწესებულება">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "წარმოითქმება">
+<!ENTITY _PhoneticName.accesskey               "ო">
+<!ENTITY NickName.label                        "მეტსახელი">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "დამატებითი ელფოსტა">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "განყოფილება">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "თანამდებობა">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "მობილური">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "პეიჯერი">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "ფაქსი">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "ბინის ტელეფონი">
+<!ENTITY HomePhone.accesskey                   "H">
+<!ENTITY WorkPhone.label                       "სამსახურის ტელეფონი">
+<!ENTITY WorkPhone.accesskey                   "W">
+<!ENTITY ScreenName.label                      "ეკრანული სახელი">
+<!ENTITY ScreenName.accesskey                  "S">
+<!ENTITY ChatName.label                        "სახელი სასაუბროსთვის">
+<!ENTITY ChatName.accesskey                    "ბ">
+<!ENTITY sortAscending.label                   "აღმავალი">
+<!ENTITY sortAscending.accesskey               "A">
+<!ENTITY sortDescending.label                  "დაღმავალი">
+<!ENTITY sortDescending.accesskey              "D">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "მიწერა მისამართზე">
+<!ENTITY composeEmail.accesskey                "წ">
+<!ENTITY copyAddress.label                     "ელფოსტის მისამართის ასლი">
+<!ENTITY copyAddress.accesskey                 "მ">
+<!ENTITY deleteAddrBookCard.label              "წაშლა">
+<!ENTITY deleteAddrBookCard.accesskey          "D">
+<!ENTITY newAddrBookCard.label                 "ახალი ბარათი…">
+<!ENTITY newAddrBookCard.accesskey             "N">
+<!ENTITY newAddrBookMailingList.label          "ახალი დაგზავნის ნუსხა…">
+<!ENTITY newAddrBookMailingList.accesskey      "M">
+<!ENTITY addrBookCardProperties.label          "პარამეტრები">
+<!ENTITY addrBookCardProperties.accesskey      "P">

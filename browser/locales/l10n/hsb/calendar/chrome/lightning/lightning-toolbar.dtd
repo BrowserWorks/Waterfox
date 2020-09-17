@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Protyka - symbolowa lajsta">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "P">
+<!ENTITY lightning.toolbar.task.name "Nadawkowa symbolowa lajsta">
+<!ENTITY lightning.toolbar.task.name.accesskey "N">
+
+<!ENTITY lightning.toolbar.sync.label "Synchronizować">
+<!ENTITY lightning.toolbar.sync.tooltip "Protyki znowa začitać a změny synchronizować">
+<!ENTITY lightning.toolbar.delete.label "Zhašeć">
+<!ENTITY lightning.toolbar.delete.tooltip "Wubrane podawki abo nadawki zhašeć">
+<!ENTITY lightning.toolbar.edit.label "Wobdźěłać">
+<!ENTITY lightning.toolbar.edit.tooltip "Wubrany podawk abo nadawk wobdźěłać">
+<!ENTITY lightning.toolbar.gototoday.label "K dźensnišemu">
+<!ENTITY lightning.toolbar.gototoday.tooltip "K dźensnišemu">
+<!ENTITY lightning.toolbar.print.label "Ćišćeć">
+<!ENTITY lightning.toolbar.print.tooltip "Podawki abo nadawki ćišćeć">
+<!-- Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.calendar.label     "Protyka">
+<!ENTITY lightning.toolbar.calendar.tooltip   "K protykowemu rajtarkej přepinać">
+<!ENTITY lightning.toolbar.calendar.accesskey "P">
+<!ENTITY lightning.toolbar.task.label         "Nadawki">
+<!ENTITY lightning.toolbar.task.tooltip       "K nadawkowemu rajtarkej přepinać">
+<!ENTITY lightning.toolbar.task.accesskey     "N">
+<!-- Toolbar write button -->
+
+<!ENTITY lightning.toolbar.newevent.label     "Podawk">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Nowy podawk wutworić">
+<!ENTITY lightning.toolbar.newtask.label      "Nadawk">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Nowy nadawk wutworić">
+<!-- Calendar and Task Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.day.label                 "Dźeń">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Tydźeń">
+<!ENTITY lightning.toolbar.week.accesskey            "T">
+<!ENTITY lightning.toolbar.multiweek.label           "Multitydźeń">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "u">
+<!ENTITY lightning.toolbar.month.label               "Měsac">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "AppMenu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Meni &brandShortName; zwobraznić">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Protykowy wobłuk">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "w">
+<!ENTITY lightning.toolbar.calendarpane.label        "Protykowy wobłuk pokazać">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "w">

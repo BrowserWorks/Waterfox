@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Ar mhaithe le spás diosca a spáráil, ná híoslódáil:">
+<!ENTITY doNotDownloadNntp.label "Ar mhaithe spás diosca a spáráil, ná híoslódáil le haghaidh úsáide as líne:">
+<!ENTITY doNotDownloadImap.label "Le spás diosca a choigilt, is féidir íoslódáil teachtaireachtaí ón bhfreastalaí agus coimeád de chóipeanna logánta le haghaidh úsáide as líne a shrianadh de réir aoise nó de réir méide.">
+<!ENTITY offlineNotDownload.label "Teachtaireachtaí níos mó ná">
+<!ENTITY offlineNotDownload.accesskey "m">
+<!ENTITY autosyncNotDownload.label "Ná híoslódáil teachtaireachtaí níos mó ná">
+<!ENTITY autosyncNotDownload.accesskey "m">
+<!ENTITY kb.label "kB">
+<!ENTITY daysOld.label "lá d'aois">
+<!ENTITY message.label "teachtaireacht is déanaí">
+<!ENTITY nntpNotDownloadRead.label "Teachtaireachtaí léite">
+<!ENTITY nntpNotDownloadRead.accesskey "c">
+<!ENTITY nntpDownloadMsg.label "Teachtaireachtaí níos mó ná">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Chun spás diosca a shaoradh, is féidir seanteachtaireachtaí a scriosadh go buan.">
+<!ENTITY retentionCleanupImap.label "Chun spás diosca a shaoradh, is féidir seanteachtaireachtaí a scriosadh go buan, cóipeanna logánta agus bunchóipeanna ar an gcianfhreastalaí araon.">
+<!ENTITY retentionCleanupPop.label "Chun spás diosca a shaoradh, is féidir seanteachtaireachtaí a scriosadh go buan, na bunchóipeanna ar an gcianfhreastalaí ina measc.">
+<!ENTITY retentionKeepMsg.label "Scrios teachtaireachtaí níos sine ná">
+<!ENTITY retentionKeepMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "Ná scrios teachtaireacht ar bith">
+<!ENTITY retentionKeepAll.accesskey "N">
+<!ENTITY retentionKeepRecent.label "Scrios gach ceann ach an ceann is déanaí">
+<!ENTITY retentionKeepRecent.accesskey "g">
+<!ENTITY retentionApplyToFlagged.label "Coimeád teachtaireachtaí marcáilte i gcónaí">
+<!ENTITY retentionApplyToFlagged.accesskey "C">
+<!ENTITY nntpRemoveMsgBody.label "Bain na coirp de theachtaireachtaí atá níos mó ná">
+<!ENTITY nntpRemoveMsgBody.accesskey "o">
+<!ENTITY offlineSelectNntp.label "Roghnaigh grúpaí nuachta le haghaidh úsáide as líne…">
+<!ENTITY offlineSelectNntp.accesskey "s">
+<!ENTITY offlineImapAdvancedOffline.label "Ardroghanna…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "A">
+<!ENTITY syncGroupTitle.label "Sioncronú Teachtaireachtaí">
+<!ENTITY diskspaceGroupTitle.label "Spás Diosca">
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+
+<!ENTITY allAutosync.label               "Sioncronaigh na teachtaireachtaí go léir go logánta gan cuimhneamh ar aois">
+<!ENTITY allAutosync.accesskey           "c">
+<!ENTITY ageAutosyncBefore.label         "Sioncronaigh teachtaireachtaí ó na">
+<!ENTITY ageAutosync.accesskey           "z">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Lá">
+<!ENTITY weekAgeInterval.label           "Seachtain">
+<!ENTITY monthAgeInterval.label          "Mí">
+<!ENTITY yearAgeInterval.label           "Bliain">
+<!ENTITY ageAutosyncAfter.label          "">

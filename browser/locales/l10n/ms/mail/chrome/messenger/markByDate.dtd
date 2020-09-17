@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "Tandakan Mesej sebagai sudah Dibaca mengikut Tarikh">
+<!ENTITY markByDateLower.label "Tandakan mesej sebagai dibaca daripada:">
+<!ENTITY markByDateLower.accesskey "d">
+<!ENTITY markByDateUpper.label "Hingga:">
+<!ENTITY markByDateUpper.accesskey "H">

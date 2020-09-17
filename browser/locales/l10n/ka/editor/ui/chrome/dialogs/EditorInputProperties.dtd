@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ველების პარამეტრები">
+<!ENTITY windowTitleImage.label "ფორმის სურათის პარამეტრები">
+
+<!ENTITY InputType.label "ველის სახეობა">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "ტექსტი">
+<!ENTITY password.value "პაროლი">
+<!ENTITY checkbox.value "ჩართვის ღილაკი">
+<!ENTITY radio.value "შერჩევის ღილაკი">
+<!ENTITY submit.value "გაგზავნის ღილაკი">
+<!ENTITY reset.value "გაუქმების ღილაკი">
+<!ENTITY file.value "ფაილი">
+<!ENTITY hidden.value "დამალული">
+<!ENTITY image.value "სურათი">
+<!ENTITY button.value "ღილაკი">
+
+<!ENTITY InputSettings.label "ველის პარამეტრები">
+<!ENTITY InputName.label "ველის სახელი:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "ჯგუფის სახელი:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "ველის მნიშვნელობა:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "საწყისი მნიშვნელობა:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "თავიდანვე ჩართული">
+<!ENTITY InputChecked.accesskey "C">
+<!ENTITY InputSelected.label "თავიდანვე შერჩეული">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "მხოლოდ წასაკითხი">
+<!ENTITY InputReadOnly.accesskey "კ">
+<!ENTITY InputDisabled.label "გაუქმებული">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "ინდექსი:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "ველის ზომა:">
+<!ENTITY TextSize.accesskey "F">
+<!ENTITY TextLength.label "მაქსიმალური სიგრძე:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "კლავიში:">
+<!ENTITY AccessKey.accesskey "კ">
+<!ENTITY Accept.label "დასაშვები სახეობები:">
+<!ENTITY Accept.accesskey "დ">
+
+<!ENTITY ImageProperties.label "სურათის პარამეტრები…">
+<!ENTITY ImageProperties.accesskey "E">

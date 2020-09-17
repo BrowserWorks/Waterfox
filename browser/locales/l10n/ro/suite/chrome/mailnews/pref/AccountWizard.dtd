@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# janimo <jani@ubuntu.com>
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Asistent de creat conturi">
+<!ENTITY accountWizard.size "width: 45em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "In order to receive messages, you first need to set up an account.">
+<!ENTITY accountTypeTitle.label "Creare cont nou">
+<!ENTITY accountTypeDesc2.label "This Wizard will collect the information necessary to set up an account. If you do not know the information requested, please contact your System Administrator or Internet Service Provider.">
+<!ENTITY accountTypeDirections.label "Alegeți tipul de cont pe care doriți să-l creați:">
+<!ENTITY accountTypeMail.label "Cont de email">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "Cont pentru grupuri de discuții">
+<!ENTITY accountTypeNews.accesskey "C">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identitate">
+<!ENTITY identityDesc.label "Fiecare cont are propria identitate, adică datele prin care vă identificați față de ceilalți care primesc mesaje de la dumneavoastră">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Introduceți numele care doriți să apară în câmpul „From” („De la”) al mesajelor pe care le trimiteți">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(de exemplu, „Mihai Georgescu”).">
+<!ENTITY fullnameLabel.label "Numele dumneavoastră:">
+<!ENTITY fullnameLabel.accesskey "N">
+
+<!ENTITY emailLabel.label "Adresa de email:">
+<!ENTITY emailLabel.accesskey "e">
+
+<!-- Entities for Server page -->
+
+<!ENTITY serverTitle.label "Informații despre server">
+<!ENTITY incomingServerTypeDesc.label "Alegeți tipul serverului de primire pe care îl folosiți.">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServerNameDesc.label "Introduceți numele serverului de primire (de exemplu, „mail.example.net”).">
+<!ENTITY incomingServerLabel.label "Server de primire:">
+<!ENTITY incomingServerLabel.accesskey "S">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Introduceți numele serverului NNTP (de exemplu, „news.example.net”).">
+<!-- LOCALIZATION NOTE (smtpServerDesc.label) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY smtpServerDesc.label "Introduceți numele serverului de trimitere (SMTP) (de exemplu, „smtp.example.net”).">
+<!ENTITY smtpServerLabel.label "Server de trimitere:">
+<!ENTITY smtpServerLabel.accesskey "S">
+<!ENTITY newsServerLabel.label "Server de news:">
+<!ENTITY newsServerLabel.accesskey "w">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Leave messages on server">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix2) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix2 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix2, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Va fi folosit serverul de trimitere (SMTP) deja existent, „">
+<!ENTITY haveSmtp1.suffix2 "&quot;, will be used. You can modify outgoing server settings by choosing Mail &amp; Newsgroups Account Settings from the Edit menu.">
+
+<!-- Entities for Login page -->
+
+<!ENTITY loginTitle.label "Nume utilizator">
+<!ENTITY usernameDesc.label "Introduceți numele de utilizator pentru primit mesaje, dat de de furnizorul dumneavoastră de email">
+<!-- LOCALIZATION NOTE (usernameExample.label) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY usernameExample.label "(de exemplu, „jsmith”).">
+<!ENTITY usernameLabel.label "Nume utilizator pt primire:">
+<!ENTITY usernameLabel.accesskey "i">
+<!ENTITY usernameSmtpDesc.label "Introduceți numele de utilizator pentru trimitere, dat de furnizorul dumneavoastră de email (de obicei este același cu numele de utilizator pentru primire).">
+<!ENTITY usernameSmtpLabel.label "Nume utilizator pt trimitere:">
+<!ENTITY usernameSmtpLabel.accesskey "o">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix2) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix2 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix2, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Va fi folosit numele de utilizator pentru trimitere (SMTP) deja existent, „">
+<!ENTITY haveSmtp2.suffix2 "&quot;, will be used. You can modify outgoing server settings by choosing Mail &amp; Newsgroups Account Settings from the Edit menu.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix2) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix2 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix2, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Serverul dumneavoastră de trimitere (SMTP), „">
+<!ENTITY haveSmtp3.suffix2 "&quot;, is identical to your incoming server, your incoming user name will be used to access it. You can modify outgoing server settings by choosing Mail &amp; Newsgroups Account Settings from the Edit menu.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Nume cont">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Introduceți un nume pe care doriți să-l acordați acestui cont (de exemplu, &quot;Cont Serviciu&quot;, &quot;Cont Acasă&quot; sau &quot;Cont News&quot;).">
+<!ENTITY accnameLabel.label "Nume cont:">
+<!ENTITY accnameLabel.accesskey "N">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Felicitări!">
+<!ENTITY completionText.label "Vă rog verificați ca datele de mai jos să fie corecte.">
+<!ENTITY serverTypePrefix.label "Tip server de primire:">
+<!ENTITY serverNamePrefix.label "Nume server de primire:">
+<!ENTITY smtpServerNamePrefix.label "Nume server de trimitere (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Nume server de news (NNTP):">
+<!ENTITY downloadOnLogin.label "Descarcă mesajele acum">
+<!ENTITY downloadOnLogin.accesskey "D">
+<!ENTITY deferStorageDesc.label "Check this checkbox to store mail for this account in the Local Folders Global Inbox. Otherwise the account appears as a top-level account and its mail is stored in its own directory.">
+<!ENTITY deferStorage.label "Folosește căsuța de intrare globală (stochează mesajele în Dosare locale)">
+<!ENTITY deferStorage.accesskey "g">
+<!ENTITY clickFinish.label "Apăsați Încheiere pentru a salva setările și a părăsi asistentul de creat conturi.">
+<!ENTITY clickFinish.labelMac "Clic pe „Încheiere” pentru a salva acești parametri și a părăsi asistentul de creat conturi.">

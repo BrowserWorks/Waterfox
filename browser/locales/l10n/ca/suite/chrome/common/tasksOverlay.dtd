@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from tasksOverlay.xul -->
+
+<!ENTITY navigatorCmd.label "Navegador">
+<!ENTITY navigatorCmd.accesskey "v">
+<!ENTITY navigatorCmd.commandkey "1">
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label     "Composer">
+<!ENTITY editorCmd.accesskey    "c">
+<!ENTITY editorCmd.commandkey    "4">
+
+<!ENTITY errorConsoleCmd.label                                  "Consola d'errors">
+<!ENTITY errorConsoleCmd.accesskey    "C">
+<!ENTITY errorConsoleCmd.commandkey    "j">
+
+<!ENTITY taskNavigator.tooltip  "Navegador">
+<!ENTITY taskComposer.tooltip  "Redactor">
+
+<!ENTITY webDevelopment.label "Desenvolupament web">
+<!ENTITY webDevelopment.accesskey "w">
+
+<!ENTITY windowMenu.label "Finestra">
+<!ENTITY windowMenu.accesskey "n">
+
+<!ENTITY tasksMenu.label "Eines">
+<!ENTITY tasksMenu.accesskey "n"> 
+
+<!ENTITY datamanCmd.label "Gestor de dades">
+<!ENTITY datamanCmd.accesskey "G">
+
+<!ENTITY passwordManagerCmd.label "Gestor de contrasenyes">
+<!ENTITY passwordManagerCmd.accesskey "c">
+
+<!ENTITY passwordDisplayCmd.label "Gestiona les contrasenyes desades">
+<!ENTITY passwordDisplayCmd.accesskey "G">
+
+<!ENTITY passwordExpireCmd.label "Desconnecta">
+<!ENTITY passwordExpireCmd.accesskey "D">
+
+<!ENTITY downloadManagerCmd.label "Gestor de baixades">
+<!ENTITY downloadManagerCmd.accesskey "b">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Gestor de complements">
+<!ENTITY addOnsManagerCmd.accesskey "G">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Canvia de perfil…">
+<!ENTITY switchProfileCmd.accesskey "p">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label           "Configura el Sync…">
+<!ENTITY syncSetup.accesskey       "S">
+<!ENTITY syncSyncNowItem.label     "Sincronitza ara">
+<!ENTITY syncSyncNowItem.accesskey "S">

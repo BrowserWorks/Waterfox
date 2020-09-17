@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Akaram n unadi amaynut yettwakelsen">
+<!ENTITY name.label                 "Isem:">
+<!ENTITY name.accesskey             "I">
+<!ENTITY description.label          "Rnu-t d adakaram n:">
+<!ENTITY description.accesskey      "R">
+
+<!ENTITY searchTermCaption.label "Swel asebdad n unadi ara yettusqedcen i wekaram n unadi ikelsen. ">
+
+<!ENTITY folderSelectionCaption.label "Fren ikaramen ara d-nadiḍ: ">
+<!ENTITY chooseFoldersButton.label "Fren…">
+<!ENTITY chooseFoldersButton.accesskey "F">
+
+<!ENTITY searchOnline.label "Anadi s srid (Ad d-imudd igmaḍ imaynuten n  IMAP akked ikaramen imaynuten acu kan ad yawi akud akken ad d-yeldi akaram)">
+<!ENTITY searchOnline.accesskey "A">
+<!ENTITY newFolderButton.label       "Rnu">
+<!ENTITY newFolderButton.accesskey   "R">
+<!ENTITY editFolderButton.label      "Leqqem">
+<!ENTITY editFolderButton.accesskey  "L">

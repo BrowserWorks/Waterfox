@@ -1,0 +1,158 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "పేజీని లోడుచేయడంలో సమస్య">
+<!ENTITY retry.label "మళ్ళీ ప్రయత్నించు">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "సంధానం సాధ్యం కావడంలేదు">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "ఈచిరునామా నిషిద్దం">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "సేవిక కనబడలేదు">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul>
+  <li>టైప్ లోపాల కోసం చిరునామా తనిఖీ చేయండి
+    <strong>ww</strong>.example.com బదులుగా
+    <strong>www</strong>.example.com</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>శోధన</button>
+    </div>
+  <li>మీరు ఏ పేజీలు లోడ్ కాకపోతే, మీ పరికర డేటా లేదా Wi-Fi కనెక్షన్ తనిఖీ.
+    <button id='wifi'>Wi-Fi ప్రారంభించండి</button>
+  </li>
+</ul>">
+
+<!ENTITY fileNotFound.title "ఫైల్  కనబడ లేదు">
+<!ENTITY fileNotFound.longDesc "<ul> <li>ఫైల్  యొక్క కేపిటలైజేషన్ లేదా ఇతర టైపింగ్ తప్పును పరిశీలించండి.</li> <li>ఒకవేళ ఫైల్  కదల్చబడిందో,పునఃనామకరణ చేయబడిందో లేక తొలిగించబడిందో  పరిశీలించి చూడండి.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "ఫైలు యొక్క ఆక్సెస్ తిరస్కరించబడింది">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>అది తీసివేసి ఉండవచ్చు, తరలించి లేదా ఫైల్ అనుమతులు ప్రాప్యతను నిరోధిస్తుండవచ్చు.</li>
+</ul>
+">
+
+<!ENTITY generic.title "అయ్యో.">
+<!ENTITY generic.longDesc "<p>&brandShortName; ఏదోఒక కారణం వలన ఈ పేజీని లోడు చేయలేకపోతోంది.</p>">
+
+<!ENTITY malformedURI.title "ఈ చిరునామా సరైనది కాదు">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>వెబ్ చిరునామాలు సాధారణంగా రాసిన
+    <strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Search</button>
+    </div>
+  <li>Make sure that you’re using forward slashes (i.e.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "అనుసంధానంకు  భంగంకలిగింది">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "పత్రం కాలంచెల్లింది">
+<!ENTITY notCached.longDesc "<p>కాష్ యొక్క అభ్యర్థించిన పత్రంలో &brandShortName; అందుబాటులో లేదు.</p><ul><li>భద్రతా జాగ్రత్తగా, &brandShortName; స్వయంచాలకంగా తిరిగి అభ్యర్థన సున్నితమైన పత్రాలు లేదు.</li><li>వెబ్సైట్ నుండి తిరిగి అభ్యర్థన పత్రం మళ్ళీ ప్రయత్నించడానికి క్లిక్ చేయండి.</li></ul>">
+
+<!ENTITY netOffline.title "ఆఫ్‌లైన్ రీతి">
+
+<!ENTITY contentEncodingError.title "కాంటెంట్ ఎన్కోడింగ్ దోషము">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>దయచేసి వెబ్‌సైటు యజమానులను సంప్రదించి వారికి ఈ సమస్యగురించి తెలియజెప్పండి.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "సురక్షితం కాని దస్త్రపు రకం">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>ఈ సమస్యను తెలియజేయడానికి దయచేసి వెబ్‌సైటు యజమానులను సంప్రదించండి.</li> </ul>">
+
+<!ENTITY netReset.title "అనుసంధానం గతంలోవలె వుంచబడింది">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "అనుసంధానం సమయం అయిపోయింది.">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "ఆ చిరునామా అర్థం కాలేదు">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>ఈచిరునామాను తెరువుటకు మీరు వేరే సాఫ్టువేరు సంస్థాపించవలిసిన అవసరం వుండవచ్చు.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "ఆప్రోక్సీ సేవిక అనుసంధానాలను తిరస్కరిస్తోంది.">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>ప్రోక్సీ అమరికలు ఖచ్చితంగా సరైనవిగా వుంచుటకు పరిశీలించండి.</li> <li>ప్రోక్సీ సేవిక ఖచ్చితంగా  పనిచేయునట్లు చేయుటకు మీనెట్వర్క్  నిర్వహణాధికారిని సంప్రదించండి.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "ప్రోక్సీ సేవికను కనుగొనలేక పోయింది.">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>ప్రోక్సీ అమరికలు సరిగా ఉన్నాయో లేదో పరిశీలించండి.</li> <li>మీ పరికరపు డేటా లేదా వై-ఫై అనుసంధానం పనిచేస్తూందో లేదో చూడండి. <button id='wifi'>వై-ఫై చేతనించు</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "పేజీ సరిగా తిరిగిపంప బడుటలేదు">
+<!ENTITY redirectLoop.longDesc "<ul> <li>ఈ సమస్యకు కారణం కొన్ని సమయాల్లో కుకీల ఆమోదింపును అచేతనం చేయుటంకాని లేక తిరస్కరించుటకాని కావచ్చు.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "సేవికనుండి అనుకోని స్పందన">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>మీ సిస్టము నందు ఖచ్చితంగా వ్యక్తిగత రక్షణ నిర్వాహకి సంస్థాపించి వుండునట్లు చేయుటకు పరిశీలించండి.</li> <li>ఇది సేవికనందుగల ప్రామాణికం-కాని ఆకృతీకరణ వలన కావచ్చు.</li> </ul>">
+
+<!ENTITY nssFailure2.title "రక్షిత అనుసంధానం విఫలమైంది">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li> మీరు దర్శించుటకు ప్రయత్నిస్తున్న పేజీ చూపబడబడదు ఎంచేతంటే అందినటువంటి సమాచారంయొక్క ధృవీకరణం నిర్ధారించబడిలేదు.</li> <li>దయచేసి వెబ్‌సైటు యజమానులను సంప్రదించి ఈ సమస్యగురించి తెలియజెప్పండి.</li> </ul>">
+
+<!ENTITY nssBadCert.title "రక్షిత అనుసంధానం విఫలమైంది">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>ఈ సర్వర్ యొక్క ఆకృతీకరణ ఒక సమస్య కావచ్చు, లేదా అది ఎవరైనా సర్వర్ అనుకరించడానికి ప్రయత్నిస్తుండవచ్చు.</li>
+  <li>మీరు గతంలో విజయవంతంగా ఈ సర్వర్కు కనెక్ట్ చేయబడి ఉంటే, లోపం మారవచ్చు
+తాత్కాలికమేనని, మరియు మీరు తర్వాత మళ్ళీ ప్రయత్నించవచ్చు.</li>
+</ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>సైట్ తాత్కాలికంగా అందుబాటులో ఉండకపోవచ్చు లేదా చాలా బిజీగా ఉంటుంది. కొన్ని క్షణాల్లో మళ్ళీ ప్రయత్నించండి.</li>
+  <li>మీరు ఏ పేజీలు లోడ్ చేయకపోతే, మీ మొబైల్ పరికరం యొక్క డేటా లేదా Wi-Fi కనెక్షన్ తనిఖీ చేయండి.
+    <button id='wifi'>Wi-Fi ప్రారంభించండి</button>
+  </li>
+</ul>">
+
+<!ENTITY cspBlocked.title "విషయపు భద్రతా విధానం చేత నిరోధించబడింది">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; యీ పేజీను యీ మార్గములో లోడగుటనుండి నిరోధిస్తోంది యెంచేతంటే యీ పేజీ కాంటెంట్ రక్షణ విధానమును కలిగివుంది అది దీనిని అనుమతించుటలేదు.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "పాడైన కాంటెంట్ దోషం">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>మీరు దర్శించుటకు ప్రయత్నిస్తున్న పేజీ చూపబడలేదు యెంచేతంటే దాని యందు దత్తాంశ బదలాయింపులో దోషం గుర్తించబడెను.</p><ul><li>దయచేసి వెబ్‌సైట్ యజమానులను సంప్రదించి వారికి యీ సమస్య గురించి తెలుపండి.</li></ul>">
+
+<!ENTITY securityOverride.linkText "లేదా మీరు ఒక ఆక్షేపణను జతచేయగలరు…">
+<!ENTITY securityOverride.getMeOutOfHereButton "ఇక్కడినుండి నన్ను బయటపడెయ్యి!">
+<!ENTITY securityOverride.exceptionButtonLabel "మినహాయింపుని చేర్చు…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>మీరు పూర్తిగా నమ్మని అంతర్జాలము  అనుసంధానంను ఉపయోగిస్తున్నా లేదా ఈ సేవికగురించి హెచ్చరికను చూడకపోయినా మీరు ఆక్షేపనను జతచేయకూడదు.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "రిమోట్ XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>ఈ సమస్య గురించి వారికి తెలుపుటకు దయచేసి వెబ్‌సైట్ స్వంతదారులను సంప్రదించండి.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "సురక్షితంగా అనుసంధానం కాలేదు">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "ఉన్నత సమాచారం: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "మీ కనెక్షన్ సురక్షితమైనది కాదు">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "ఉన్నత సమాచారం: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "మీ కనెక్షన్ సురక్షితమైనది కాదు">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> లం చెల్లిన మరియు దాడికి దుర్భలంగా అని భద్రతా సాంకేతికత ఉపయోగిస్తుంది. దాడి చేసినవారు సులభంగా మీరు సురక్షితంగా భావించిన సమాచారాన్ని బహిర్గతం కాలేదు. వెబ్సైట్ నిర్వాహకుడు మీరు సైట్ సందర్శించండి ముందు మొదటి సర్వర్ పరిష్కరించడానికి అవసరం.</p><p>లోపం కోడ్: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "నెట్‌వర్క్ ప్రోటోకాల్ దోషం">
+<!ENTITY networkProtocolError.longDesc "<p>మీరు చూడటానికి ప్రయత్నిస్తున్న పేజీని చూపించలేము ఎందుకంటే నెట్‌వర్క్ ప్రొటోకాల్‌లో దోషం గుర్తించబడింది.</p><ul><li>దయచేసి వెబ్‌సైటు యజమానులను సంప్రదించి ఈ సమస్యను వారి దృష్టికి తీసుకువెళ్ళండి.</li></ul>">

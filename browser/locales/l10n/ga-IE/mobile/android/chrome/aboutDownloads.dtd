@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Íoslódálacha">
+<!ENTITY aboutDownloads.header                     "Do Chuid Íoslódálacha">
+<!ENTITY aboutDownloads.empty                      "Níl aon íoslódáil ann">
+
+<!ENTITY aboutDownloads.open                       "Oscail">
+<!ENTITY aboutDownloads.remove                     "Scrios">
+<!ENTITY aboutDownloads.removeAll                  "Scrios Uile">
+<!ENTITY aboutDownloads.pause                      "Cuir ar Shos">
+<!ENTITY aboutDownloads.resume                     "Lean">
+<!ENTITY aboutDownloads.cancel                     "Cealaigh">
+<!ENTITY aboutDownloads.retry                      "Atriail">

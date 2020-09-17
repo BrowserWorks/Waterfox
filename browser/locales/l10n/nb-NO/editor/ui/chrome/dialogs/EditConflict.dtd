@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Velg redigeringsendringer">
+<!ENTITY conflictWarning.label "Denne siden er endret av et annet program, men du har også ulagrede endringer i nettsideutvikleren.">
+<!ENTITY conflictResolve.label "Velg hvilken versjon du vil beholde:">
+<!ENTITY keepCurrentPageButton.label "Behold gjeldende sideendringer">
+<!ENTITY useOtherPageButton.label "Bytt gjeldende side med de andre endringene">

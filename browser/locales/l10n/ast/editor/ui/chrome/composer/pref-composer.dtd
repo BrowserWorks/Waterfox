@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composer.title "Composer">
+<!ENTITY recentFiles.title "Menú de páxines recientes">
+<!ENTITY documentsInMenu.label "Númberu máximu de páxines llistaes:">
+<!ENTITY documentsInMenu.accesskey "n">
+<!ENTITY savingFiles.title "Al guardar o espublizar páxinas">
+<!ENTITY preserveExisting.label "Caltener el formatu fonte orixinal">
+<!ENTITY preserveExisting.accesskey "C">
+<!ENTITY preserveExisting.tooltip "Caltener el formatu orixinal de los retornos de carru y la páxina">
+<!ENTITY saveAssociatedFiles.label "Guardar imáxenes y otros ficheros asociaos al guardar les páxines">
+<!ENTITY saveAssociatedFiles.accesskey "S">
+<!ENTITY showPublishDialog.label "Amosar siempre'l diálogu Espublizar al espublizar les páxines">
+<!ENTITY showPublishDialog.accesskey "A">
+<!ENTITY composerEditing.label "Edición">
+<!ENTITY maintainStructure.label "Caltener el formatu de la tabla al inxertar o desaniciar caxelles">
+<!ENTITY maintainStructure.tooltip "Caltién la forma rectangular de la tabla amestando caxelles automáticamente dempués d'inxertar o desaniciar caxelles.">
+<!ENTITY maintainStructure.accesskey "M">
+<!ENTITY useCSS.label "Usar estilos CSS en cuenta d'elementos y atributos HTML.">
+<!ENTITY useCSS.accesskey "U">
+<!ENTITY crInPCreatesNewP.label "Enter nun párrafu siempre crea un párrafu nuevu">
+<!ENTITY crInPCreatesNewP.accesskey "R">

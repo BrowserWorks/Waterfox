@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Cache">
+<!ENTITY pref.cache.caption              "Tetapkan Pilihan Cache">
+<!ENTITY cachePara                       "Cache menyimpan salinan halaman web yang kerap dilawati dalam cakera keras anda. (Klik Muat semula akan memaparkan versi terbaru halaman.)">
+<!ENTITY cacheCheck.label                "Biar &brandShortName; menguruskan saiz cache">
+<!ENTITY cacheCheck.accesskey            "B">
+<!ENTITY diskCacheUpTo.label             "Guna sehingga">
+<!ENTITY diskCacheUpTo.accesskey         "G">
+<!ENTITY spaceMbytes                     "MB ruang cakera untuk cache">
+<!ENTITY diskCacheFolder.label           "Lokasi Folder Cache:">
+<!ENTITY clearDiskCache.label            "Buang Cache">
+<!ENTITY clearDiskCache.accesskey        "C">
+<!ENTITY chooseDiskCacheFolder.label     "Pilih Folder…">
+<!ENTITY chooseDiskCacheFolder.accesskey "F">
+<!ENTITY diskCacheFolderExplanation      "Fail cache akan disimpan dalam sub-folder yang dinamakan &quot;Cache&quot; dalam direktori yang anda tentukan. Mulakan semula &brandShortName; supaya perubahan dapat dilaksanakan.">
+<!ENTITY docCache.label                  "Bandingkan halaman dalam cache dengan laman dalam rangkaian:">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "Sekali setiap sesi">
+<!ENTITY checkEveryTime.label            "Setiap kali saya papar halaman">
+<!ENTITY checkNever.label                "Jangan sesekali">
+<!ENTITY checkAutomatically.label        "Apabila halaman sudah lapuk">
+
+<!ENTITY prefetchTitle.label             "Pra-ambilan Pautan">
+<!ENTITY enablePrefetch.label            "Pra-ambil halaman web apabila melahu, supaya pautan dalam halaman web yang direka untuk pra-ambilan boleh dimuatkan lebih cepat">
+<!ENTITY enablePrefetch.accesskey        "P">

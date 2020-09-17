@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                    "Vastaanottokuittaukset">
+<!ENTITY useGlobalPrefs.label          "Käytä yleisiä vastaanottokuittausasetuksia">
+<!ENTITY useGlobalPrefs.accesskey      "K">
+<!ENTITY globalReceipts.label         "Yleiset asetukset…">
+<!ENTITY globalReceipts.accesskey     "Y">
+<!ENTITY useCustomPrefs.label          "Määritä tilille omat vastaanottokuittausasetukset">
+<!ENTITY useCustomPrefs.accesskey      "M">
+<!ENTITY requestReceipt.label          "Lähetettäessä viestiä, pyydä aina vastaanottokuittaus">
+<!ENTITY requestReceipt.accesskey      "L">
+<!ENTITY receiptArrive.label           "Kuittauksen saapuessa:">
+<!ENTITY leaveIt.label                 "Jätä se saapuneet-kansioon">
+<!ENTITY leaveIt.accesskey             "J">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label              "Siirrä se lähetetyt-kansioon">
+<!ENTITY moveToSent.accesskey          "S">
+<!ENTITY requestMDN.label              "Vastaanottaessani vastaanottokuittauspyynnön:">
+<!ENTITY returnSome.label              "Lähetä kuittaus seuraavasti:">
+<!ENTITY returnSome.accesskey          "h">
+<!ENTITY never.label                   "Älä koskaan lähetä vastaanottokuittausta">
+<!ENTITY never.accesskey               "Ä">
+<!ENTITY notInToCc.label               "Kun en ole viestin vastaanottaja- tai kopio-kentässä:">
+<!ENTITY notInToCc.accesskey           "K">
+<!ENTITY outsideDomain.label           "Kun lähettäjä on verkkoalueeni ulkopuolelta:">
+<!ENTITY outsideDomain.accesskey       "u">
+<!ENTITY otherCases.label              "Muissa tapauksissa:">
+<!ENTITY otherCases.accesskey          "M">
+<!ENTITY askMe.label                   "Kysy">
+<!ENTITY alwaysSend.label              "Lähetä">
+<!ENTITY neverSend.label               "Älä lähetä">

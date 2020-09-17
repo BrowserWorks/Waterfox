@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY WindowTitle.label "Editor avanzáu de propiedaes">
+<!ENTITY AttName.label "Atributu: ">
+<!ENTITY AttValue.label "Valor: ">
+<!ENTITY PropertyName.label "Propiedá: ">
+<!ENTITY currentattributesfor.label "Atributos actuales pa: ">
+<!ENTITY tree.attributeHeader.label "Atributu">
+<!ENTITY tree.propertyHeader.label "Propiedá">
+<!ENTITY tree.valueHeader.label "Valor">
+<!ENTITY tabHTML.label "Atributos HTML">
+<!ENTITY tabCSS.label "Estilu del elementu">
+<!ENTITY tabJSE.label "Eventos JavaScript">
+<!ENTITY editAttribute.label "Fai clic encima d'un elementu pa editar el so valor">
+<!ENTITY removeAttribute.label "Desaniciar">

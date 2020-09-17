@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Pop-up-Fenster">
+
+<!ENTITY pref.popups.caption            "Pop-up-Fenster">
+
+<!ENTITY popupBlock.label               "Unerwünschte Pop-up-Fenster blockieren">
+<!ENTITY popupBlock.accesskey           "U">
+
+<!ENTITY viewPermissions.label          "Berechtigungen verwalten">
+<!ENTITY viewPermissions.accesskey      "h">
+
+<!ENTITY whenBlock.description          "Wenn ein Pop-up-Fenster blockiert wurde:">
+<!ENTITY playSound.label                "Einen Klang abspielen:">
+<!ENTITY playSound.accesskey            "K">
+<!ENTITY systemSound.label              "System-Piepton">
+<!ENTITY systemSound.accesskey          "S">
+<!ENTITY customSound.label              "Benutzerdefinierte Klang-Datei">
+<!ENTITY customSound.accesskey          "B">
+
+<!ENTITY selectSound.label              "Durchsuchen…">
+<!ENTITY selectSound.accesskey          "D">
+<!ENTITY playSoundButton.label          "Wiedergabe">
+<!ENTITY playSoundButton.accesskey      "W">
+
+<!ENTITY displayIcon.label              "Ein Symbol in der Browser-Statusleiste anzeigen">
+<!ENTITY displayIcon.accesskey          "E">
+
+<!ENTITY displayNotification.label      "Eine Benachrichtigungsleiste am oberen Rand des Inhaltsbereichs anzeigen">
+<!ENTITY displayNotification.accesskey  "n">
+
+<!ENTITY popupNote.description          "Anmerkung: Das Blockieren aller Pop-ups kann wichtige Funktionen mancher Websites unterbinden, wie Anmeldefenster bei Bank- und Einkauf-Websites. Weitere Hinweise, wie Sie trotz einer allgemeinen Blockade bei speziellen Websites Pop-ups erlauben können, erhalten Sie per Klick auf 'Hilfe'. Selbst wenn Websites blockiert werden, können sie noch andere Methoden verwenden, um Pop-ups anzuzeigen.">
+

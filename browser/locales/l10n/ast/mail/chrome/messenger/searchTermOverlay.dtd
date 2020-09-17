@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY matchAll.label "Toes estes regles">
+<!ENTITY matchAll.accesskey "e">
+<!ENTITY matchAny.label "Cualquiera d'estas regles">
+<!ENTITY matchAny.accesskey "q">
+<!ENTITY matchAllMsgs.label "Incluyir tolos mensaxes">
+<!ENTITY matchAllMsgs.accesskey "m">
+
+<!ENTITY searchTermListAttributesFlexValue "4">
+<!ENTITY searchTermListOperatorsFlexValue "4">
+<!ENTITY searchTermListValueFlexValue "4">

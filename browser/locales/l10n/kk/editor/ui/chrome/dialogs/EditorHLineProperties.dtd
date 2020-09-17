@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Горизонталды сызық қасиеттері">
+
+<!ENTITY dimensionsBox.label "Өлшемдері">
+<!ENTITY heightEditField.label "Биіктігі:">
+<!ENTITY heightEditField.accessKey "и">
+<!ENTITY widthEditField.label "Ені:">
+<!ENTITY widthEditField.accessKey "Е">
+<!ENTITY pixelsPopup.value "пиксель">
+<!ENTITY alignmentBox.label "Туралануы">
+<!ENTITY leftRadio.label "Сол жақ">
+<!ENTITY leftRadio.accessKey "С">
+<!ENTITY centerRadio.label "Ортасы">
+<!ENTITY centerRadio.accessKey "т">
+<!ENTITY rightRadio.label "Оң жақ">
+<!ENTITY rightRadio.accessKey "О">
+
+<!ENTITY threeDShading.label "3D көлеңке">
+<!ENTITY threeDShading.accessKey "е">
+<!ENTITY saveSettings.label "Бастапқы ретінде қолдану">
+<!ENTITY saveSettings.accessKey "т">
+<!ENTITY saveSettings.tooltip "Жаңа горизонталды сызықтарды кірістіру кезінде қолдану үшін бұл баптауларды сақтау">

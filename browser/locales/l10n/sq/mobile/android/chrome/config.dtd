@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Kërkim">
+
+<!ENTITY newPref.namePlaceholder       "Emër">
+
+<!ENTITY newPref.valueBoolean          "Vlerë buleane">
+<!ENTITY newPref.valueString           "Varg">
+<!ENTITY newPref.valueInteger          "Numër i plotë">
+
+<!ENTITY newPref.stringPlaceholder     "Jepni një varg">
+<!ENTITY newPref.numberPlaceholder     "Jepni një numër">
+
+<!ENTITY newPref.toggleButton          "Këmbeje">
+<!ENTITY newPref.cancelButton          "Anuloje">
+
+<!ENTITY contextMenu.copyPrefName      "Kopjoji Emrin">
+<!ENTITY contextMenu.copyPrefValue     "Kopjoji Vlerën">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Pikaviestitilin ohjattu asennus">
+
+<!ENTITY accountProtocolTitle.label   "Pikaviestipalvelu">
+<!ENTITY accountProtocolInfo.label    "Valitse pikaviestipalveluntarjoaja.">
+<!ENTITY accountProtocolField.label   "Palvelu:">
+<!ENTITY accountProtocolGetMore.label "Hae lisää…">
+
+<!ENTITY accountUsernameTitle.label   "Käyttäjätunnus">
+<!ENTITY accountUsernameDuplicate.label "Tämä tili on jo asetettu.">
+
+<!ENTITY accountPasswordTitle.label   "Salasana">
+<!ENTITY accountPasswordInfo.label    "Kirjoita salasanasi alla olevaan kenttään.">
+<!ENTITY accountPasswordField.label   "Salasana:">
+<!ENTITY accountPasswordManager.label "Salasana tallennetaan salasanojen hallintaan. Jos haluat, että salasana kysytään aina yhdistettäessä, jätä kenttä tyhjäksi.">
+
+<!ENTITY accountAdvancedTitle.label   "Lisäasetukset">
+<!ENTITY accountAdvancedInfo.label    "Voit ohittaa nämä asetukset, jos haluat.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Ilmoita uuden sähköpostin yhteydessä">
+<!ENTITY accountAliasGroupbox.caption "Paikallinen alias">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Tämä näkyy omissa keskusteluikkunoissasi keskustellessasi, muut eivät näe tätä.">
+<!ENTITY accountProxySettings.caption "Välityspalvelinasetukset">
+<!ENTITY accountProxySettings.change.label     "Muokkaa…">
+<!ENTITY accountProxySettings.change.accessKey "M">
+
+<!ENTITY accountSummaryTitle.label   "Yhteenveto">
+<!ENTITY accountSummaryInfo.label    "Yhteenveto annetuista tiedoista on alla. Tarkista tiedot ennen kuin luot tilin.">
+<!ENTITY accountSummary.connectNow.label "Yhdistä tili.">

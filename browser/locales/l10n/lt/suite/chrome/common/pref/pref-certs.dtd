@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Liudijimų tvarkymas">
+<!ENTITY  managecerts.text         "Paspaudę šį mygtuką, pateksite į liudijimų tvarkytuvės langą, kuriame galima tvarkyti turimus liudijimus.">
+<!ENTITY  managecerts.button       "Tvarkyti liudijimus…">
+<!ENTITY  managecerts.accesskey    "T">
+<!ENTITY  managedevices.caption    "Saugumo priemonių tvarkymas">
+<!ENTITY  managedevices.text       "Spustelėjus šį mygtuką, galima tvarkyti saugumo priemones, pavyzdžiui, lustines korteles.">
+<!ENTITY  managedevices.button     "Tvarkyti saugumo priemones…">
+<!ENTITY  managedevices.accesskey  "v">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Liudijimai">
+<!ENTITY  certs.label              "Liudijimai">
+
+<!ENTITY validation.ocsp.caption                  "Būsenos paliudijimo tinklu protokolas (OCSP)">
+<!ENTITY enableOCSP.label                         "Tikrinti liudijimų galiojimą OCSP protokolu">
+<!ENTITY enableOCSP.accesskey                     "T">
+<!ENTITY validation.requireOCSP.description       "Nepavykus užmegzti ryšio su OCSP serveriu, laikyti liudijimą negaliojančiu">
+<!ENTITY validation.requireOCSP.accesskey         "N">

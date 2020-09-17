@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "Kotačić miša">
+<!ENTITY mouseWheelPanel.label           "Odredite ponašanje koračića miša kada se koristi sa ovom tipkom za mijenjanje: ">
+<!ENTITY usingJustTheWheel.label         "Bez modifikatora ključa">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!ENTITY mouseWheelGroup.label           "Vertikalnim skrolanjem">
+<!ENTITY mouseWheelHorizGroup.label      "Horizontalnim skrolanjem">
+<!ENTITY sameAsVertical.label            "Isto kao s vertikalnim skrolanjem">
+<!ENTITY doNothing.label                 "Ne radi ništa">
+<!ENTITY scrollDocument.label            "Skroluj dokument">
+<!ENTITY history.label                   "Pomakni nazad i naprijed u historiji pretraživanja">
+<!ENTITY zoom.label                      "Uvećajte ili smanjite stranicu">
+<!ENTITY wheelSpeed.label                "Przina kotačića miša:">
+<!ENTITY reverseDirection.label          "Obrnuti smjer">

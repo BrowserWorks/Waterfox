@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Ongi etorri &brandShortName;(e)ra">
+<!ENTITY header2.label "Helbide elektroniko berria nahi duzu?">
+<!ENTITY other.languages "Zure inguruan helbideak eskaintzen dituzten hornitzaileak bistaratzen ditugu soilik. Egin klik hemen hornitzaile guztiak erakusteko.">
+<!ENTITY error.line1 "Sentitzen dugu, ezin izan dugu gomendatutako helbide elektronikorik aurkitu.">
+<!ENTITY error.line2 "Goitizenak edo bestelako terminoak ere bilatzen saia zaitezke helbide elektroniko gehiago aurkitzeko.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Aldi berean ">
+<!ENTITY error.suggest.middle "doako posta-kontu alternatiboak">
+<!ENTITY error.suggest.after " ere proba ditzakezu.">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Kaixo ">
+<!ENTITY success.title.after ", ondorengo helbide elektronikoak daude eskuragarri zuretzat:">
+<!ENTITY success.tip "(Goitizenak edo bestelako terminoak ere bilatzen saia zaitezke helbide elektroniko gehiago aurkitzeko)">
+<!ENTITY partnership.description "Hainbat hornitzailerekin lankidetzan, &brandShortName;(e)k posta-kontu berria eskain diezazuke. Hasteko, idatzi zure izen-abizenak edo nahi dituzun hitzak goiko eremuetan.">
+<!ENTITY existing.header "Erabili nahi duzun helbidea badaukazu?">
+<!ENTITY tinyheader.title "Helbidea lortu duzu?">
+<!ENTITY tinyheader.existing "Saltatu hau eta erabili nire helbide elektronikoa">
+<!ENTITY content.close "Uste dut nire kontua geroago konfiguratuko dudala.">
+<!ENTITY successful.title "Zorionak!">
+<!ENTITY successful.successMessage "Zure kontua ondo konfiguratu duzu.">
+<!ENTITY successful.write "Idatzi mezu elektronikoren bat">
+<!ENTITY successful.write.desc "Emaiezu zure helbide elektroniko berriaren berri lagunei eta familiari.<br/>Horregatik eskuratu duzu kontu berri hau, ezta?">
+<!ENTITY successful.customize "Pertsonalizatu &brandShortName; gehigarri mundial batzuekin">
+<!ENTITY successful.customize.desc "Milaka gehigarri daude &brandShortName; pertsonalizatu eta zure beharretara egokitzeko.">
+<!ENTITY successful.attach "Erantsi sinadura pertsonala nire posta elektronikoari">
+<!ENTITY successful.attach.desc "Aipamen bat edo zuri buruzko informazioa erants diezaiekezu bidaltzen dituzun mezu guztiei automatikoki.">
+<!ENTITY successful.close "Itxi leiho hau.">
+<!ENTITY input.namePlaceholder "Zure izen edo goitizena">
+<!ENTITY input.search "Bilatu">
+<!ENTITY search_engine.title "Pertsonalizatu bilaketa-motorra">
+<!ENTITY search_engine.message "Zure posta-hornitzaileak web bilaketak burutzeko gaitasuna eman diezazuke.">
+<!ENTITY search_engine.button "Amaitu">

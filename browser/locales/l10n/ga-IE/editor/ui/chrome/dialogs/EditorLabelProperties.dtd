@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Airíonna an Lipéid">
+
+<!ENTITY Settings.label "Socruithe">
+<!ENTITY Settings.accesskey "r">
+
+<!ENTITY EditLabelText.label "Cuir Téacs in Eagar:">
+<!ENTITY EditLabelText.accesskey "T">
+<!ENTITY LabelFor.label "Le haghaidh Rialtáin:">
+<!ENTITY LabelFor.accesskey "L">
+<!ENTITY AccessKey.label "Eochair Rochtana:">
+<!ENTITY AccessKey.accesskey "c">
+
+<!ENTITY RemoveLabel.label "Bain Lipéad">
+<!ENTITY RemoveLabel.accesskey "B">

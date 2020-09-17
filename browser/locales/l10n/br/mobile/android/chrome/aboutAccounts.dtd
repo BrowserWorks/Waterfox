@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Kontoù Firefox">
+<!ENTITY aboutAccounts.connected.description "Kennasket oc'h ouzh">
+<!ENTITY aboutAccounts.syncPreferences.label "Stokit amañ evit gwiriañ arventennoù Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "Kennask ebet ouzh ar genrouedad">
+<!ENTITY aboutAccounts.retry.label "Klaskit en-dro">
+
+<!ENTITY aboutAccounts.restrictedError.title "Bevennet">
+<!ENTITY aboutAccounts.restrictedError.description "N'hallit ket ardeiñ Kontoù Firefox adalek an aelad-mañ.">

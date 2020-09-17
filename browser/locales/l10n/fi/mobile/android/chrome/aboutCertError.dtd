@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!-- These strings are used by Firefox's custom about:certerror page,
+a replacement for the standard security certificate errors produced
+by NSS/PSM via netError.xhtml. -->
+
+<!ENTITY certerror.pagetitle  "Yhteys ei ole luotettu">
+<!ENTITY certerror.longpagetitle "Tämä yhteys ei ole luotettu">
+
+<!-- Localization note (certerror.introPara1) - The string "#1" will
+be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara1 "Olet pyytänyt &brandShortName;ia muodostamaan
+suojatun yhteyden sivustoon <b>#1</b>, mutta yhteyden turvallisuutta ei pystytä 
+varmistamaan.">
+
+<!ENTITY certerror.whatShouldIDo.heading "Mitä minun pitäisi tehdä?">
+<!ENTITY certerror.whatShouldIDo.content "Jos olet aikaisemmin saanut
+ongelmitta muodostettua suojatun yhteyden tähän sivustoon, tämä virhe voi 
+olla merkkinä siitä, että jokin taho yrittää vilpillisesti tekeytyä täksi 
+sivustoksi, jolloin sinun ei pitäisi jatkaa sivustolle.">
+<!ENTITY certerror.getMeOutOfHere.label "Siirry pois sivulta">
+
+<!ENTITY certerror.expert.heading "Ymmärrän riskit">
+<!ENTITY certerror.expert.content "Jos ymmärrät tilanteen, voit asettaa
+sivuston identiteetin &brandShortName;in luottamien sivustojen listalle.
+<b>Vaikka luotatkin sivustoon, tämä virhe voi olla merkkinä siitä, että jokin 
+taho häiritsee verkkoyhteyttäsi.</b>">
+<!ENTITY certerror.expert.contentPara2 "Älä lisää poikkeusta ellet 
+tiedä hyvää syytä, miksi tällä sivustolla ei ole luotettuja identiteettitietoja.">
+<!ENTITY certerror.addTemporaryException.label "Vieraile sivulla">
+<!ENTITY certerror.addPermanentException.label "Lisää pysyvä poikkeus">
+
+<!ENTITY certerror.technical.heading "Tekniset yksityiskohdat">

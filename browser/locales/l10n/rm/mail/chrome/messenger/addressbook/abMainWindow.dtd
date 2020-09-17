@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Cudeschet d'adressas">
+<!ENTITY blankResultsPaneMessage.label                  "Quest cudeschet d'adressas mussa mo contacts suenter ina tschertga">
+<!ENTITY localResultsOnlyMessage.label                  "Contacts da cudeschets d'adressas lontans vegnan mo mussads sche ti als tschertgas">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Datoteca">
+<!ENTITY fileMenu.accesskey                             "D">
+<!ENTITY newMenu.label                                  "Nov">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newContact.label                               "Contact…">
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Glista d'e-mail…">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "Cudeschet d'adressas…">
+<!ENTITY newAddressBookCmd.accesskey                    "a">
+<!ENTITY newCardDAVBookCmd.label                        "Cudeschet d'adressas CardDAV…">
+<!ENTITY newCardDAVBookCmd.accesskey                    "V">
+<!ENTITY newLDAPDirectoryCmd.label                      "Ordinatur LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "Messadi">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "M">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Utilisar il cudeschet d'adressas da Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Serrar">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "S">
+<!ENTITY printSetupCmd.label                            "Organisar la pagina…">
+<!ENTITY printSetupCmd.accesskey                        "O">
+<!ENTITY printPreviewContactCmd.label                   "Prevista da stampa: Contact">
+<!ENTITY printPreviewContactCmd.accesskey               "P">
+<!ENTITY printPreviewAddressBook.label                  "Prevista da stampa: Cudeschet d'adressas">
+<!ENTITY printPreviewAddressBook.accesskey              "P">
+<!ENTITY printContactCmd.label                          "Stampar il contact…">
+<!ENTITY printContactCmd.accesskey                      "A">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Stampar il cudeschet d'adressas…">
+<!ENTITY printAddressBook.accesskey                     "A">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Modifitgar">
+<!ENTITY editMenu.accesskey                             "M">
+<!ENTITY deleteCmd.label                                "Stizzar">
+<!ENTITY deleteAbCmd.label                              "Stizzar il cudeschet d'adressas">
+<!ENTITY deleteContactCmd.label                         "Stizzar il contact">
+<!ENTITY deleteContactsCmd.label                        "Stizzar ils contacts">
+<!ENTITY deleteListCmd.label                            "Stizzar la glista">
+<!ENTITY deleteListsCmd.label                           "Stizzar las glistas">
+<!ENTITY deleteItemsCmd.label                           "Stizzar elements">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!ENTITY propertiesMenu.label                           "Caracteristicas">
+<!ENTITY propertiesMenu.accesskey                       "i">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Caracteristicas dal cudeschet d'adressas">
+<!ENTITY abPropertiesMenu.accesskey                     "i">
+<!ENTITY contactPropertiesMenu.label                    "Caracteristicas dal contact">
+<!ENTITY contactPropertiesMenu.accesskey                "i">
+<!ENTITY mailingListPropertiesMenu.label                "Caracteristicas da la glista d'e-mail">
+<!ENTITY mailingListPropertiesMenu.accesskey            "i">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Vista">
+<!ENTITY viewMenu.accesskey                             "V">
+<!ENTITY viewToolbarsMenu.label                         "Travs d'utensils">
+<!ENTITY viewToolbarsMenu.accesskey                     "T">
+<!ENTITY menubarCmd.label                               "Trav da menu">
+<!ENTITY menubarCmd.accesskey                           "M">
+<!ENTITY showAbToolbarCmd.label                         "Trav d'utensils dal cudeschet d'adressas">
+<!ENTITY showAbToolbarCmd.accesskey                     "c">
+<!ENTITY showTaskbarCmd.label                           "Trav da status">
+<!ENTITY showTaskbarCmd.accesskey                       "S">
+<!ENTITY customizeToolbar.label                         "Modifitgar…">
+<!ENTITY customizeToolbar.accesskey                     "M">
+<!ENTITY layoutMenu.label                               "Disposiziun">
+<!ENTITY layoutMenu.accesskey                           "D">
+<!ENTITY showDirectoryPane.label                        "Trav dad ordinaturs">
+<!ENTITY showDirectoryPane.accesskey                    "T">
+<!ENTITY showContactPane2.label                         "Prevista dal contact">
+<!ENTITY showContactPane2.accesskey                     "C">
+<!ENTITY menu_ShowNameAs.label                          "Mussar suandantamain il num">
+<!ENTITY menu_ShowNameAs.accesskey                      "N">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Prenum num">
+<!ENTITY firstLastCmd2.accesskey                        "P">
+<!ENTITY lastFirstCmd.label                             "Num, prenum">
+<!ENTITY lastFirstCmd.accesskey                         "N">
+<!ENTITY displayNameCmd.label                           "Num per mussar">
+<!ENTITY displayNameCmd.accesskey                       "m">
+<!ENTITY sortMenu.label                                 "Zavrar tenor">
+<!ENTITY sortMenu.accesskey                             "Z">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Utensils">
+<!ENTITY tasksMenu.accesskey                            "U">
+<!ENTITY messengerCmd.label                             "E-mail &amp; gruppas da discussiun">
+<!ENTITY messengerCmd.accesskey                         "M">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Tschertgar adressas…">
+<!ENTITY searchAddressesCmd.accesskey                   "T">
+<!ENTITY importCmd.label                                "Importar…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Exportar…">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmd2.label                          "Preferenzas">
+<!ENTITY preferencesCmd2.accesskey                      "p">
+<!ENTITY preferencesCmdUnix.label                       "Preferenzas">
+<!ENTITY preferencesCmdUnix.accesskey                   "p">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Nov contact">
+<!ENTITY newContactButton.accesskey                     "C">
+<!ENTITY newlistButton.label                            "Nova glista">
+<!ENTITY newlistButton.accesskey                        "L">
+<!ENTITY showAsDefault.label                            "Ordinatur da standard suenter aviar">
+<!ENTITY showAsDefault.accesskey                        "s">
+<!ENTITY editPropertiesButton.label                     "Modifitgar">
+<!ENTITY propertiesContext.label                        "Caracteristicas">
+<!ENTITY propertiesContext.accesskey                    "i">
+<!ENTITY abPropertiesContext.label                      "Caracteristicas">
+<!ENTITY abPropertiesContext.accesskey                  "i">
+<!ENTITY syncContext.label                              "Sincronisar">
+<!ENTITY syncContext.accesskey                          "i">
+<!ENTITY editContactContext.label                       "Modifitgar il contact">
+<!ENTITY editContactContext.accesskey                   "M">
+<!ENTITY editMailingListContext.label                   "Modifitgar la glista">
+<!ENTITY editMailingListContext.accesskey               "M">
+<!ENTITY newmsgButton.label                             "Scriver">
+<!ENTITY newmsgButton.accesskey                         "S">
+<!ENTITY newIM.label                                    "Messadi immediat">
+<!ENTITY newIM.accesskey                                "I">
+<!ENTITY printButton.label                              "Stampar…">
+<!ENTITY printButton.accesskey                          "r">
+<!ENTITY deleteButton2.label                            "Stizzar">
+<!ENTITY deleteButton2.accesskey                        "z">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Tscherner las colonnas per mussar">
+<!ENTITY newContactButton.tooltip                       "Crear in nov contact">
+<!ENTITY newlistButton.tooltip                          "Crear ina nova glista da distribuziun">
+<!ENTITY editPropertiesButton.tooltip                   "Modifitgar l'element tschernì">
+<!ENTITY editAbPropertiesButton.tooltip                 "Modifitgar las caracteristicas dal cudeschet d'adressas tschernì">
+<!ENTITY editContactPropertiesButton.tooltip            "Modifitgar il contact tschernì">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Modifitgar la glista d'e-mail tschernida">
+<!ENTITY newmsgButton.tooltip                           "Scriver in nov e-mail">
+<!ENTITY newIM.tooltip                                  "Scriver in nov messadi immediat (instant message) u in nov chat">
+<!ENTITY deleteButton2.tooltip                          "Stizzar l'element tschernì">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Num u e-mail">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "Tschertga d'adressas avanzada">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Tschertga svelta">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Cudeschet d'adressas">
+<!ENTITY Addrbook.accesskey                             "C">
+<!ENTITY GeneratedName.label                            "Num">
+<!ENTITY GeneratedName.accesskey                        "N">
+<!ENTITY PrimaryEmail.label                             "E-mail">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "Num da chat">
+<!ENTITY ChatName.accesskey                             "C">
+<!ENTITY Company.label                                  "Organisaziun">
+<!ENTITY Company.accesskey                              "z">
+<!ENTITY NickName.label                                 "Surnum">
+<!ENTITY NickName.accesskey                             "s">
+<!ENTITY SecondEmail.label                              "Adressa d'e-mail supplementara">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "Partiziun">
+<!ENTITY Department.accesskey                           "r">
+<!ENTITY JobTitle.label                                 "Titel">
+<!ENTITY JobTitle.accesskey                             "T">
+<!ENTITY CellularNumber.label                           "Mobil">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "Pager">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "Fax">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Telefon privat">
+<!ENTITY HomePhone.accesskey                            "p">
+<!ENTITY WorkPhone.label                                "Telefon lavur">
+<!ENTITY WorkPhone.accesskey                            "l">
+<!ENTITY sortAscending.label                            "Ascendent">
+<!ENTITY sortAscending.accesskey                        "A">
+<!ENTITY sortDescending.label                           "Descendent">
+<!ENTITY sortDescending.accesskey                       "D">
+<!ENTITY _PhoneticName.label                            "Num fonetic">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Contact">
+<!ENTITY home.heading                                   "Privat">
+<!ENTITY other.heading                                  "Auter">
+<!ENTITY chat.heading                                   "Chat">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Lavur">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Descripziun">
+<!ENTITY addresses.heading                              "Adressas">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Mussar ina charta">
+<!ENTITY mapIt.tooltip                                  "Mussar questa adressa sin ina charta en il web">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Fanestra">
+<!ENTITY minimizeWindow.label                           "Minimar">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Prender tuts enavant">
+<!ENTITY zoomWindow.label                               "Zoom">

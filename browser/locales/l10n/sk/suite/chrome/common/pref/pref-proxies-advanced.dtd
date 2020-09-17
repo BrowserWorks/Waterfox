@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+<!ENTITY  pref.proxies.advanced.title "Rozšírené nastavenia pre servery proxy">
+<!ENTITY  protocols.caption           "Servery proxy pre jednotlivé protokoly">
+<!ENTITY  protocols.description       "Štandardne je používaný jeden server proxy pre všetky protokoly.">
+<!ENTITY  http.label                  "Server proxy HTTP:">
+<!ENTITY  http.accesskey              "H">
+<!ENTITY  ssl.label                   "Server proxy SSL:">
+<!ENTITY  ssl.accesskey               "S">
+<!ENTITY  ftp.label                   "Server proxy pre FTP:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "Použiť tento server proxy pre všetky protokoly">
+<!ENTITY  reuseProxy.accesskey        "x">
+<!ENTITY  port.label                  "Port:">
+<!ENTITY  HTTPPort.accesskey          "o">
+<!ENTITY  SSLPort.accesskey           "r">
+<!ENTITY  FTPPort.accesskey           "t">
+
+<!ENTITY  socks.caption               "Všeobecný server proxy">
+<!ENTITY  socks.description           "SOCKS je všeobecný server proxy používaný vo firemnom alebo podobných prostrediach.">
+<!ENTITY  socks.label                 "Server SOCKS:">
+<!ENTITY  socks.accesskey             "C">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "K">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "v">
+<!ENTITY  socksRemoteDNS.label        "Použiť na získavanie mien počítačov (odporúčané pre SOCKS v5)">
+<!ENTITY  socksRemoteDNS.accesskey    "u">
+<!ENTITY  SOCKSport.accesskey         "t">

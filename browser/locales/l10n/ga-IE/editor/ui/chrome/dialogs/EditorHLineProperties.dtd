@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Airíonna Líne Cothrománaí">
+
+<!ENTITY dimensionsBox.label "Toisí">
+<!ENTITY heightEditField.label "Airde:">
+<!ENTITY heightEditField.accessKey "d">
+<!ENTITY widthEditField.label "Leithead:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY pixelsPopup.value "picteilíní">
+<!ENTITY alignmentBox.label "Ailíniú">
+<!ENTITY leftRadio.label "Ar Chlé">
+<!ENTITY leftRadio.accessKey "C">
+<!ENTITY centerRadio.label "Lár">
+<!ENTITY centerRadio.accessKey "L">
+<!ENTITY rightRadio.label "Ar Dheis">
+<!ENTITY rightRadio.accessKey "D">
+
+<!ENTITY threeDShading.label "Scáthú 3T">
+<!ENTITY threeDShading.accessKey "S">
+<!ENTITY saveSettings.label "Úsáid mar Réamhshocrú">
+<!ENTITY saveSettings.accessKey "R">
+<!ENTITY saveSettings.tooltip "Sábháil na socruithe seo le húsáid agus línte cothrománacha nua á n-ionsá">

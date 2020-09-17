@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Priodweddau cyfrif">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Cyffredinol">
+<!ENTITY account.advanced              "Dewisiadau Uwch">
+<!ENTITY account.name                  "Enw Defnyddiwr:">
+<!ENTITY account.password              "Cyfrinair:">
+<!ENTITY account.alias                 "Enw arall:">
+<!ENTITY account.newMailNotification   "Hysbysu ar E-bost newydd">
+<!ENTITY account.autojoin              "Sianeli Awto-Gyfuno:">
+<!ENTITY account.proxySettings.caption "Gosodiadau Dirprwyol:">
+<!ENTITY account.proxySettings.change.label     "Newid…">
+<!ENTITY account.proxySettings.change.accessKey "N">

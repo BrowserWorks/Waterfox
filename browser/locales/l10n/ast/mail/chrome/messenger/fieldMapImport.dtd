@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--null-->
+<!ENTITY fieldMapImport.title "Importar llibreta de direiciones">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Datos importaos pal rexistru: ">
+<!ENTITY fieldMapImport.next.label "Siguiente">
+<!ENTITY fieldMapImport.next.accesskey "S">
+<!ENTITY fieldMapImport.previous.label "Anterior">
+<!ENTITY fieldMapImport.previous.accesskey "a">
+<!ENTITY fieldMapImport.text "Usa xubir y baxar pa elexir l'orde de los campos de la llibreta de direiciones de la izquierda pa importar na parte derecha. Desmarca los elementos que non quieras importar.">
+<!ENTITY fieldMapImport.up.label "Xubir">
+<!ENTITY fieldMapImport.up.accesskey "U">
+<!ENTITY fieldMapImport.down.label "Mover abaxo">
+<!ENTITY fieldMapImport.down.accesskey "o">
+<!ENTITY fieldMapImport.fieldListTitle "Campos de la llibreta de direiciones">
+<!ENTITY fieldMapImport.dataTitle "Rexistros de datos a importar:">
+<!ENTITY fieldMapImport.skipFirstRecord.label "El primer rexistru contién nomes de campu">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "p">

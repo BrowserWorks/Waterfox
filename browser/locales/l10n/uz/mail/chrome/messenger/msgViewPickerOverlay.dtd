@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY viewPicker.label "Ko‘rinishi:">
+<!ENTITY viewPicker.accesskey "K">
+<!ENTITY viewAll.label "Barchasi">
+<!ENTITY viewAll.accesskey "B">
+<!ENTITY viewUnread.label "O‘qilmagan">
+<!ENTITY viewUnread.accesskey "O">
+<!ENTITY viewNotDeleted.label "O‘chirilmagan">
+<!ENTITY viewNotDeleted.accesskey "O">
+<!ENTITY viewTags.label "Teglar">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "Boshqa koʻrishlar">
+<!ENTITY viewCustomViews.accesskey "k">
+<!ENTITY viewVirtualFolder.label "Ko‘rinishni jild kabi saqlash…">
+<!ENTITY viewVirtualFolder.accesskey "s">
+<!ENTITY viewCustomizeView.label "Moslash…">
+<!ENTITY viewCustomizeView.accesskey "M">

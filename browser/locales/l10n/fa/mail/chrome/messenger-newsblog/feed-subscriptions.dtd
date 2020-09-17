@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Subscription Dialog -->
+
+<!ENTITY feedSubscriptions.label     "اشتراک‌های خوراک">
+<!ENTITY learnMore.label             "درباره‌ی خوارک‌ها بیشتر بدانید">
+
+<!ENTITY feedTitle.label             "عنوان:">
+<!ENTITY feedTitle.accesskey         "ع">
+
+
+<!ENTITY locationValidate.label      "اعتبار سنجی">
+<!ENTITY validateText.label          "بررسی اعتبار سنجی و بازیابی یک آدرس اینترنتی معتبر.">
+
+<!ENTITY feedFolder.label            "ذخیره مقالات در:">
+<!ENTITY feedFolder.accesskey        "ذ">
+<!-- Account Settings and Subscription Dialog -->
+
+
+
+
+
+
+
+<!ENTITY quickMode.label             "نمایش خلاصه‌ی مقاله بجای بارگذاری صفحه‌ی وب">
+<!ENTITY quickMode.accesskey         "ن">
+
+
+<!ENTITY autotagUsePrefix.label      "برچسب‌های پیشوند با:">
+<!ENTITY autotagUsePrefix.accesskey  "پ">
+<!ENTITY autoTagPrefix.placeholder   "یک پیشوند برچسب وارد کنید">
+<!-- Subscription Dialog -->
+
+<!ENTITY button.addFeed.label        "افزودن">
+<!ENTITY button.addFeed.accesskey    "ا">
+<!ENTITY button.updateFeed.label     "ویرایش">
+<!ENTITY button.updateFeed.accesskey "و">
+<!ENTITY button.removeFeed.label     "حذف">
+<!ENTITY button.removeFeed.accesskey "ح">
+<!ENTITY button.importOPML.label     "Import">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Export">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "صادر کردن خوراک‌ها با ساختار پوشه؛ کنترل و کلیک یا کنترل اینتر برای صادر کردن خوارک‌ها به عنوان یک لیست">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "بستن">

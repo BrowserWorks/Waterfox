@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "标签">
+<!ENTITY pref.tags.caption          "自定义标签">
+<!ENTITY pref.tags.description      "标签可用于信息的分类. 您可以使用以下设置来改变标签的外形和重要性. 标签的重要性由上往下递减.">
+<!ENTITY tagColumn.label            "标记符">
+<!ENTITY colorColumn.label          "颜色">
+<!ENTITY defaultTagName.label       "无标题标签">
+<!ENTITY addTagButton.label         "添加">
+<!ENTITY addTagButton.accesskey     "A">
+<!ENTITY deleteTagButton.label      "删除">
+<!ENTITY deleteTagButton.accesskey  "D">
+<!ENTITY raiseTagButton.label       "增加重要性">
+<!ENTITY raiseTagButton.accesskey   "R">
+<!ENTITY lowerTagButton.label       "降低重要性">
+<!ENTITY lowerTagButton.accesskey   "L">
+<!ENTITY restoreButton.label        "恢复默认值">
+<!ENTITY restoreButton.accesskey    "s">

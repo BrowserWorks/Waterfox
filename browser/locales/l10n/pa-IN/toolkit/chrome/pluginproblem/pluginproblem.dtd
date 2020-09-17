@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "ਪਲੱਗਇਨ ਨੂੰ ਸਰਗਰਮ ਕਰਨ ਲਈ ਇੱਥੇ ਟੈਪ ਕਰੋ।">
+<!ENTITY clickToActivatePlugin                               "ਪਲੱਗਇਨ ਨੂੰ ਸਰਗਰਮ ਕਰੋ">
+<!ENTITY checkForUpdates                                     "…ਅੱਪਡੇਟ ਲਈ ਚੈੱਕ ਕਰੋ">
+<!ENTITY blockedPlugin.label                                 "ਤੁਹਾਡੀ ਸੁਰੱਖਿਆ ਲਈ ਇਹ ਪਲੱਗਇਨ ਉੱਤੇ ਪਾਬੰਦੀ ਲਗਾਈ ਗਈ ਹੈ।">
+<!ENTITY hidePluginBtn.label                                 "ਪਲੱਗਇਨ ਨੂੰ ਛੁਪਾਓ">
+<!ENTITY managePlugins                                       "…ਪਲੱਗਇਨਾਂ ਦਾ ਪਰਬੰਧ ਕਰੋ">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "ਮੁੜ ਕੋਸ਼ਸ਼ ਕਰਨ ਲਈ">
+<!ENTITY reloadPlugin.post                                   " ਸਫ਼ੇ ਨੂੰ ਮੁੜ-ਲੋਡ ਕਰੋ।">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "ਕਰੈਸ਼ ਰਿਪੋਰਟ ਭੇਜੋ">
+<!ENTITY report.submitting                                   "…ਰਿਪੋਰਟ ਭੇਜੀ ਜਾ ਰਹੀ ਹੈ">
+<!ENTITY report.submitted                                    "ਕਰੈਸ਼ ਰਿਪੋਰਟ ਭੇਜੀ ਗਈ">
+<!ENTITY report.disabled                                     "ਕਰੈਸ਼ ਰਿਪੋਰਟ ਭੇਜਣਾ ਅਸਮਰੱਥ ਹੈ।">
+<!ENTITY report.failed                                       "ਭੇਜਣ ਲਈ ਫੇਲ੍ਹ ਹੈ।">
+<!ENTITY report.unavailable                                  "ਕੋਈ ਰਿਪੋਰਟ ਮੌਜੂਦ ਨਹੀਂ ਹੈ।">
+<!ENTITY report.comment                                      "ਟਿੱਪਣੀ ਨੂੰ ਜੋੜੋ (ਟਿੱਪਣੀਆਂ ਪਬਲਿਕ ਰੂਪ ਵਿੱਚ ਦਿਖਾਈ ਦਿੰਦੀਆਂ ਹਨ)">
+<!ENTITY report.pageURL                                      "ਸਫ਼ੇ ਦੇ URL ਨੂੰ ਸ਼ਾਮਿਲ ਕਰੋ">
+
+<!ENTITY plugin.file                                         "ਫਾਈਲ">
+<!ENTITY plugin.mimeTypes                                    "MIME ਕਿਸਮਾਂ">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash ਸੁਰੱਖਿਅਤ ਮੋਡ ਨੂੰ ਚਾਲੂ ਕਰੋ">
+<!ENTITY plugin.enableBlocklists.label                       "ਖ਼ਤਰਨਾਕ ਅਤੇ ਅੜੰਗਾ ਪਾਉਣ ਵਾਲੀ ਫਲੈਸ਼ ਸਮੱਗਰੀ 'ਤੇ ਪਾਬੰਦੀ ਲਗਾਓ">

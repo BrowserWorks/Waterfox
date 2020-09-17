@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from am-server-top.xul -->
+
+
+<!ENTITY messageStorage.label "Message Storage">
+<!ENTITY securitySettings.label "Imimiselo Yokhuseleko">
+<!ENTITY serverSettings.label "Imimiselo Yeseva">
+<!ENTITY serverType.label "Uhlobo Lweseva:">
+<!ENTITY serverName.label "Igama Leseva:">
+<!ENTITY serverName.accesskey "I">
+<!ENTITY userName.label "Igama Lomsebenzisi:">
+<!ENTITY userName.accesskey "L">
+<!ENTITY port.label "Isiqhagamshelisi:">
+<!ENTITY port.accesskey "I">
+<!ENTITY serverPortDefault.label "Okuhlala kukho:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Qwalasela imiyalezo emitsha qho ">
+<!ENTITY biffStart.accesskey "s">
+<!ENTITY biffEnd.label "imizuzu">
+<!ENTITY connectionSecurity.label "Connection security:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "None">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, if available">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Authentication method:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Shiya imiyalezo kwiseva">
+<!ENTITY leaveOnServer.accesskey "l">
+<!ENTITY headersOnly.label "Landa okubhalwe ngasentla kwephepha kuphela">
+<!ENTITY headersOnly.accesskey "L">
+<!ENTITY deleteByAgeFromServer.label "Ukwenzela ubukhulu becala">
+<!ENTITY deleteByAgeFromServer.accesskey "n">
+<!ENTITY daysEnd.label "iintsuku">
+<!ENTITY deleteOnServer2.label "Until I delete them">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "Thoba umthwalo wemiyalezo emitsha ngokuzenzekela">
+<!ENTITY downloadOnBiff.accesskey "n">
+<!ENTITY deleteMessagePrefix.label "Xa ndicima imiyalezo:">
+<!ENTITY modelMoveToTrash.label "Shenxisela kwisiqulathi Senkunkuma">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "Phawula njengokucinyiweyo">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "Yisuse kwangoko">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Coca konke (&quot;Expunge&quot;) Ngaphakathi ebhokisini ku-Phuma">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "Lahla Inkunkuma xa Uphuma">
+<!ENTITY emptyTrashOnExit.accesskey "p">
+<!ENTITY loginAtStartup.label "Qwalasela imiyalezo emitsha xa kuqaliswa">
+<!ENTITY loginAtStartup.accesskey "Q">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+   of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Ndibuze phambi kokuthoba umthwalo wokuthe chatha">
+<!ENTITY maxMessagesStart.accesskey "z">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "imiyalezo">
+<!ENTITY alwaysAuthenticate.label "Yiba soloko ucela unyanisekiso xa udibanisa kule seva">
+<!ENTITY alwaysAuthenticate.accesskey "l">
+<!ENTITY abbreviate.label "Bonisa amagama eqela leendaba kwisahlulo sefestile Sesiqulathi Seefayili Zeemeyile kanje:">
+<!ENTITY abbreviateOn.label "Amagama apheleleyo (Umzekelo, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Shunqulela amagama (Umzekelo, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Kwinqanaba Eseliphambili...">
+<!ENTITY advancedButton.accesskey "p">
+<!ENTITY serverDefaultCharset2.label "Default Text Encoding:">
+<!ENTITY localFolderPicker.label "Khetha Uvimba Weefayili Zendawo Leyo">
+<!ENTITY browseFolder.label "Khangela...">
+<!ENTITY browseFolder.accesskey "K">
+<!ENTITY browseNewsrc.label "Khangela...">
+<!ENTITY browseNewsrc.accesskey "a">
+
+<!ENTITY accountTitle.label "Account Settings">
+<!ENTITY accountSettingsDesc.label "The following is a special account.  There are no identities associated with it.">
+<!ENTITY storeType.label "Message Store Type:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "File per folder (mbox)">
+<!ENTITY maildirStore.label "File per message (maildir)">

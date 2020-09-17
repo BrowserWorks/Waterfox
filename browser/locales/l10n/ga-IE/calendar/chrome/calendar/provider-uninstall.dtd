@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Díshuiteáil Soláthraí">
+<!ENTITY providerUninstall.accept.label                    "Díliostáil na Cinn Roghnaithe">
+<!ENTITY providerUninstall.accept.accesskey                "D">
+<!ENTITY providerUninstall.cancel.label                    "Coinnigh Breiseán">
+<!ENTITY providerUninstall.cancel.accesskey                "C">
+<!ENTITY providerUninstall.preName.label                   "Tá tú ag iarraidh díshuiteáil nó díchumasú:">
+<!ENTITY providerUninstall.postName.label                  "Beidh ná féilirí thíos díchumasaithe mar thoradh ar seo.">
+<!ENTITY providerUninstall.reinstallNote.label             "Mura bhfuil sé ar intinn agat an soláthraí seo a athshuiteáil, is féidir leat díshuiteáil ó féilirí an tsoláthraí seo.">

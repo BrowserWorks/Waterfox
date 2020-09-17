@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label			"すべてのフィードの更新を有効にする">
+<!ENTITY biffAll.accesskey		"E">
+
+<!ENTITY newFeedSettings.label		"新着フィードの既定の設定">
+
+<!ENTITY manageSubscriptions.label	"フィード購読の管理...">
+<!ENTITY manageSubscriptions.accesskey	"M">
+
+<!-- entities from rss.rdf -->
+<!ENTITY feeds.accountName		"ブログとニュース">
+<!ENTITY feeds.wizardShortName		"フィード">
+<!ENTITY feeds.wizardLongName		"ブログとニュースのフィード">
+<!ENTITY feeds.wizardLongName.accesskey	"F">

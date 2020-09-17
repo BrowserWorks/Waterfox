@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "সারণি">
+
+<!ENTITY size.label "আকার">
+<!ENTITY numRowsEditField.label "সারি (R):">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "কলাম (C):">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "প্রস্থ (W):">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY borderEditField.label "সীমানা (B):">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "সারণির সীমানা দিতে একটি সংখ্যা টাইপ করুন, বা কোনো সীমানা না দিতে শূন্য (0) টাইপ করুন">
+<!ENTITY pixels.label "পিক্সেল">

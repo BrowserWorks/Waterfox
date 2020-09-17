@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Opstelling vir uitgaande bediener (SMTP)">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpListAdd.label  "Voeg by…">
+<!ENTITY smtpListAdd.accesskey  "V">
+<!ENTITY smtpListEdit.label "Redigeer…">
+<!ENTITY smtpListEdit.accesskey "e">
+<!ENTITY smtpListDelete.label "Verwyder">
+<!ENTITY smtpListDelete.accesskey "w">
+<!ENTITY smtpListSetDefault.label "Stel verstek op">
+<!ENTITY smtpListSetDefault.accesskey "e">
+
+<!ENTITY serverDescription.label "Beskrywing: ">
+<!ENTITY serverName.label "Bedienernaam: ">
+<!ENTITY serverPort.label "Poort: ">
+<!ENTITY userName.label   "Gebruikernaam: ">
+<!ENTITY connectionSecurity.label "Verbindingsekuriteit: ">
+<!ENTITY authMethod.label   "Magtigingmetode: ">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Timeẓliyin n tqeffalt">
+
+<!ENTITY Settings.label "Iɣewwaṛen">
+
+<!ENTITY ButtonType.label "Anaw">
+<!ENTITY ButtonType.accesskey "n">
+<!ENTITY submit.value "Azen">
+<!ENTITY reset.value "Wennez">
+<!ENTITY button.value "Taqeffalt">
+
+<!ENTITY ButtonName.label "Isem:">
+<!ENTITY ButtonName.accesskey "m">
+<!ENTITY ButtonValue.label "Azal:">
+<!ENTITY ButtonValue.accesskey "z">
+<!ENTITY tabIndex.label "Amatar n yiccer:">
+<!ENTITY tabIndex.accesskey "m">
+<!ENTITY ButtonDisabled.label "Yettwakkes urmad">
+<!ENTITY ButtonDisabled.accesskey "d">
+<!ENTITY AccessKey.label "Tasarutt n unekcum:">
+<!ENTITY AccessKey.accesskey "s">
+
+<!ENTITY RemoveButton.label "Kkes taqeffalt">
+<!ENTITY RemoveButton.accesskey "q">

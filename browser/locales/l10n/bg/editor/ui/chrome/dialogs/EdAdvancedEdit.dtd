@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Редактор на свойства">
+<!ENTITY AttName.label                  "Атрибут:">
+<!ENTITY AttValue.label                 "Стойност:">
+<!ENTITY PropertyName.label             "Свойство:">
+<!ENTITY currentattributesfor.label     "Текущи атрибути за:">
+<!ENTITY tree.attributeHeader.label     "Атрибут">
+<!ENTITY tree.propertyHeader.label      "Свойство">
+<!ENTITY tree.valueHeader.label         "Стойност">
+<!ENTITY tabHTML.label                  "HTML Атрибути">
+<!ENTITY tabCSS.label                   "Вложен стил">
+<!ENTITY tabJSE.label                   "JavaScript събития">
+
+<!ENTITY editAttribute.label    "Щракнете на елемент, за да промените стойността му">
+<!ENTITY removeAttribute.label  "Премахване">

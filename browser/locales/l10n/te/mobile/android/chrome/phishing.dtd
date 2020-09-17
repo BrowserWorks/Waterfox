@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "ఇక్కడినుండి నన్ను బయటపడవేయి!">
+<!ENTITY safeb.palm.decline.label "ఈ హెచ్చరికను పట్టించుకోకండి">
+<!ENTITY safeb.palm.reportPage.label "ఎందుకు ఈ పేజీ నిరోధించబడింది?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "<a id='advisory_provider'/> చేత సలహా సేవలు అందించబడినవి">
+
+<!ENTITY safeb.blocked.malwarePage.title "మోసపూరిత సైటుగా నివేదించబడింది!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "<span id='malware_sitename'/> వద్ద ఉన్న వెబ్‌సైటు మోసపూరితమైనదిగా నివేదించబడింది అందువల్ల మీ బధ్రత అభీష్టాల ఆధారంగా నిరోధించబడింది.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>దాడి సైటులు మీవ్యక్తిగత సమాచారాన్ని దొంగిలించు ప్రోగ్రామ్‌లను సంస్థాపించుటకు ప్రయత్నిస్తాయి, మీకంప్యూటర్ ఇతరులను దాడిచేయుటకు వుపయోగిస్తాయి, లేదా మీసిస్టమ్‌ను పాడుచేస్తాయి.</p><p>కొన్ని దాడిసైటులు కావాలని హానికారక సాఫ్ట్‌వేరును పంపిణిచేస్తాయి,కాని చాలావరకు వాటియజమానుల అనుమతిగాని లేదా సంబంధంగాని లేకుండానే రాజీకి వస్తాయి.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "మోసపూరిత సైట్!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "<span id='phishing_sitename'/> వద్ద ఉన్న వెబ్ పేజీ మోసపూరితమైనదిగా నివేదించబడింది; మీ భద్రత అభిరుచుల మేరకు నిరోధించబడింది.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>మోసపూరిత సైట్లు పాస్వర్డ్లు, ఫోన్ నంబర్లు లేదా క్రెడిట్ కార్డుల వలే సాఫ్ట్వేర్ ఇన్స్టాల్, లేదా మీ వ్యక్తిగత సమాచారాన్ని బహిర్గతం చేయడం వంటి ప్రమాదకరమైన పనులు చేయమని మోసపూరిత రూపొందించబడ్డాయి.</p><p>ఈ వెబ్ పేజీలో ఏ సమాచారాన్ని ఎంటర్ దారితీయవచ్చు గుర్తింపు అపహరణ లేదా ఇతర మోసం.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "అవసరంలేని సాఫ్ట్‌వేర్ సైట్ నివేదించెను!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/> వద్ద ఉన్న వెబ్‌సైటు మోసపూరితమైనదిగా నివేదించబడింది అందువల్ల మీ బధ్రత అభీష్టాల మేరకు నిరోధించబడింది.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "అవాంఛిత సాఫ్ట్‌వేర్ పేజీలు మోసపూరితమైన సాఫ్ట్‌వేర్‌ను సంస్థాపించుటకు ప్రయత్నించును మరియు ఊహించనిరీతిలో మీ సిస్టమ్‌పై ప్రభావంచూపును.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "ముందు రాబోయే సైట్ మాల్వేర్ను కలిగి ఉండవచ్చు">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; ఈ పేజీని బ్లాక్ చేసింది ఎందుకంటే మీ సమాచారాన్ని దొంగిలించే లేదా తొలగించే (ఉదాహరణకు, ఫోటోలు, సంకేతపదాలు, సందేశాలు మరియు క్రెడిట్ కార్డ్లు) ప్రమాదకరమైన అనువర్తనాలను స్థాపించడానికి ప్రయత్నించవచ్చు.">

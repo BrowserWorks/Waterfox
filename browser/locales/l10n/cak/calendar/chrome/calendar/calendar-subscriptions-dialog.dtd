@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Subscriptions Dialog -->
+<!ENTITY calendar.subscriptions.dialog.title                            "Tatz'ib'aj awi' pa ri taq cholq'ij">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Kek'ut pe ri taq cholq'ij ruk'wan:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Tikanöx">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Ke'acha' ri taq cholq'ij achoq ik'in xtatz'ib'aj ab'i':">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Tz'ib'anïk b'i'aj">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Tiq'at rutz'ib'axik b'i'aj">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Tikanöx…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Majun taq rujunamil ye'ilitäj.">

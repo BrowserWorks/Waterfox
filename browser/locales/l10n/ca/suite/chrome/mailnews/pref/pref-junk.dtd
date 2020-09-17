@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Correu brossa i sospitós">
+<!ENTITY junkSettings.caption "Paràmetres globals del correu brossa">
+<!ENTITY junkMail.intro "Aneu als paràmetres dels comptes per configurar els paràmetres de correu brossa específics de cada compte.">
+<!-- Junk Mail Controls -->
+
+<!ENTITY manualMark.label               "Quan marqui els missatges com a correu brossa:">
+<!ENTITY manualMark.accesskey           "Q">
+<!ENTITY manualMarkModeMove.label       "Mou-los a la carpeta «Correu brossa» del compte">
+<!ENTITY manualMarkModeMove.accesskey   "M">
+<!ENTITY manualMarkModeDelete.label     "Suprimeix-los">
+<!ENTITY manualMarkModeDelete.accesskey "u">
+
+<!ENTITY markAsRead.intro               "Marca els missatges com a llegits:">
+<!ENTITY autoMarkAsRead.label           "Quan el &brandShortName; determina que són correu brossa">
+<!ENTITY autoMarkAsRead.accesskey       "u">
+<!ENTITY manualMarkAsRead.label         "En marcar-los manualment com a correu brossa">
+<!ENTITY manualMarkAsRead.accesskey     "m">
+
+<!ENTITY enableJunkLogging.label        "Habilita el registre del filtre de correu brossa">
+<!ENTITY enableJunkLogging.accesskey    "e">
+<!ENTITY openJunkLog.label              "Mostra el registre">
+<!ENTITY openJunkLog.accesskey          "s">
+<!ENTITY resetTrainingData.label        "Reinicia les dades d'entrenament">
+<!ENTITY resetTrainingData.accesskey    "t">
+
+<!ENTITY pref.suspectMail.caption       "Correu sospitós">
+<!-- Phishing Detector -->
+
+<!ENTITY pref.phishing.caption            "Correu fraudulent">
+<!ENTITY enablePhishingDetector.label     "Avisa'm si el missatge que estic llegint és sospitós de ser fraudulent">
+<!ENTITY enablePhishingDetector.accesskey "A">
+<!-- Anti Virus -->
+
+<!ENTITY pref.antivirus.caption           "AntiVirus">
+<!ENTITY antiVirus.label                  "Permet que els clients antivirus analitzin els missatges entrants més fàcilment">
+<!ENTITY antiVirus.accesskey              "P">

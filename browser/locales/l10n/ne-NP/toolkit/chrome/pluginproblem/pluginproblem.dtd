@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tapToPlayPlugin                                     "प्लगइन सक्रिय यहाँ ट्याप गर्नुहोस्।">
+<!ENTITY clickToActivatePlugin                               "प्लगइन सक्रिय गर्नुहोस्।">
+<!ENTITY checkForUpdates                                     "अद्यावधिकहरू जाँच गर्नुहोस्…">
+<!ENTITY blockedPlugin.label                                 "यो प्लगइन तपाईँको सुरक्षाका लागि बन्द गरिएको छ।">
+<!ENTITY hidePluginBtn.label                                 "प्लगइन लुकाउनुहोस्">
+<!ENTITY managePlugins                                       "प्लगइन व्यवस्थापन गर्नुहोस् ...">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "पृष्ठ पुन: लोड गर्नुहोस्">
+<!ENTITY reloadPlugin.post                                   " पुन: प्रयास गर्नका लागि।">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "क्र्यास प्रतिवेदन पठाउनुहोस्">
+<!ENTITY report.submitting                                   "प्रतिवेदन पठाउँदै ...">
+<!ENTITY report.submitted                                    "क्र्यास प्रतिवेदन पठाइयो।">
+<!ENTITY report.disabled                                     "क्र्यास प्रतिवेदन निस्क्रिय गरिएको छ।">
+<!ENTITY report.failed                                       "पेश गर्न असफल भयो।">
+<!ENTITY report.unavailable                                  "कुनै प्रतिवेदन उपलब्ध छैन।">
+<!ENTITY report.comment                                      "टिप्पणी थप्नुहोस (टिप्पणी सार्वजनिक रूपमा देखिने छन्)">
+<!ENTITY report.pageURL                                      "पृष्ठको यूआरएल समावेश गर्नुहोस्">
+
+<!ENTITY plugin.file                                         "फाइल">
+<!ENTITY plugin.mimeTypes                                    "माइम प्रकारहरू">
+<!ENTITY plugin.flashProtectedMode.label                     "एडोब फ्यास सुरक्षित मोड सक्षम गर्नुहोस्">
+<!ENTITY plugin.enableBlocklists.label                       "खतरनाक र भ्रामक सामग्री अबरुद्द गर्नुहोस">

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "Shënoji mesazhet si të Lexuar më Datë">
+<!ENTITY markByDateLower.label "Shënoji mesazhet si të lexuar prej:">
+<!ENTITY markByDateLower.accesskey "R">
+<!ENTITY markByDateUpper.label "Për:">
+<!ENTITY markByDateUpper.accesskey "P">

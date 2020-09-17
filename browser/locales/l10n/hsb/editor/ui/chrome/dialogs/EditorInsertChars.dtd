@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Znamješka zasadźić">
+<!ENTITY category.label "Kategorija">
+<!ENTITY letter.label "Pismik:">
+<!ENTITY letter.accessKey "P">
+<!ENTITY character.label "Znamješko:">
+<!ENTITY character.accessKey "Z">
+<!ENTITY accentUpper.label "Akcent wulki">
+<!ENTITY accentLower.label "Akcent mały">
+<!ENTITY otherUpper.label "druhi wulki">
+<!ENTITY otherLower.label "druhi mały">
+<!ENTITY commonSymbols.label "Zwučene symbole">
+<!ENTITY insertButton.label "Zasadźić">
+<!ENTITY closeButton.label "Začinić">

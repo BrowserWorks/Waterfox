@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Predmemorija">
+<!ENTITY pref.cache.caption              "Podešavanja predmemorije">
+<!ENTITY cachePara                       "Keš čuva kopije od nedavno posjećenih web stranica na vaš disk. (Klikanjem Učitaj ponovo pokazuje vam najnoviju verziju stranice.)">
+<!ENTITY cacheCheck.label                "Neka &brandShortName; upravlja veličinom moje predmemorije">
+<!ENTITY diskCacheUpTo.label             "Koristi do">
+<!ENTITY spaceMbytes                     "MB prostora za predmemoriju">
+<!ENTITY diskCacheFolder.label           "Lokacija direktorija predmemorije:">
+<!ENTITY clearDiskCache.label            "Očisti predmemoriju">
+<!ENTITY chooseDiskCacheFolder.label     "Izaberite direktorij…">
+<!ENTITY diskCacheFolderExplanation      "Fajlovi predmemorije će biti spremljeni u poddirektorij nazvan &quot;Predmemorija&quot; direktorija kojeg vi navedete. Pokrenite ponovo &brandShortName; da promjene imaju efekta.">
+<!ENTITY docCache.label                  "Uporedite stranicu u predmemoriji sa stranicom na mreži:">
+<!ENTITY checkOncePerSession.label       "Jednom po sesiji">
+<!ENTITY checkEveryTime.label            "Svaki put kad pogledam stranicu">
+<!ENTITY checkNever.label                "Nikad">
+<!ENTITY checkAutomatically.label        "Kada je stranica istekla">
+
+<!ENTITY prefetchTitle.label             "Prihvatite veze unaprijed">
+<!ENTITY enablePrefetch.label            "Učitajte web stranice kada su na čekanju, tako da se veze na unaprijed učitanim web stranicama mogu brže učitati">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Invitations Dialog -->
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Запрошення">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Оновлення переліку запрошень.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Не знайдено непідтверджених запрошень.">
+
+<!-- Calendar Invitations List -->
+<!ENTITY calendar.invitations.list.accept.button.label                  "Прийняти">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Відхилити">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Повторювана подія">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Подія на увесь день">
+<!ENTITY calendar.invitations.list.location.text                        "Місце: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Організатор: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Учасник: ">
+<!ENTITY calendar.invitations.list.none.text                            "Жоден">

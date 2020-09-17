@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "დეტალები">
+
+<!ENTITY systemPref.caption               "სისტემური პარამეტრები">
+<!ENTITY systemPrefCheck.label            "სისტემური პარამეტრების გამოყენება">
+<!ENTITY systemPrefCheck.accesskey        "ბ">
+<!ENTITY systemPref.desc                  "ამ კომპონენტით სისტემური პარამეტრების გამოყენებაა შესაძლებელი.  ამ შემთხვევაში &brandShortName; პარამეტრები სისტემური პარამეტრებით ჩანაცვლდება.">
+
+<!ENTITY prefCheckDefault.caption         "სისტემური ინტეგრაცია">
+<!ENTITY prefCheckDefaultClient.label     "პროგრამის ნაგულისხმები პარამეტრების შემოწმება სეანსის დაწყებისას">
+<!ENTITY prefCheckDefaultClient.accesskey "წ">
+
+<!ENTITY crashReports.caption             "უეცარი გათიშვების მომხსენებელი">
+<!ENTITY submitCrashes.label              "უეცარი გათიშვების მოხსენების გადაგზავნა">
+<!ENTITY submitCrashes.accesskey          "ხ">
+
+<!ENTITY devTools.caption                 "შემმუშავებლის ხელსაწყოები">
+<!ENTITY allowDebugger.label              "გამმართველისთვის, &brandShortName;-თან დაკავშირების ნების დართვა">
+<!ENTITY allowDebugger.accesskey          "ნ">
+<!ENTITY allowRemoteConnections.label     "სხვა კომპიუტერებიდან კავშირის დაშვება">
+<!ENTITY allowRemoteConnections.accesskey "ხ">
+<!ENTITY connectionPrompt.label           "შეტყობინება, შემომავალი კავშირისას">
+<!ENTITY connectionPrompt.accesskey       "ყ">
+<!ENTITY remoteDebuggerPort.label         "პორტის ნომერი, დაკავშირებისას:">
+<!ENTITY remoteDebuggerPort.accesskey     "პ">

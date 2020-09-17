@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY replaceDialog.title "Guetar y trocar">
+<!ENTITY findField.label "Guetar testu:">
+<!ENTITY findField.accesskey "t">
+<!ENTITY replaceField.label "Trocar con:">
+<!ENTITY replaceField.accesskey "o">
+<!ENTITY caseSensitiveCheckbox.label "Conc. mayús./minús.">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "Guetar en tol documentu">
+<!ENTITY wrapCheckbox.accesskey "t">
+<!ENTITY backwardsCheckbox.label "Guetar hacia atrás">
+<!ENTITY backwardsCheckbox.accesskey "u">
+<!ENTITY findNextButton.label "Guetar siguiente">
+<!ENTITY findNextButton.accesskey "g">
+<!ENTITY replaceButton.label "Trocar">
+<!ENTITY replaceButton.accesskey "r">
+<!ENTITY replaceAndFindButton.label "Guetar y trocar">
+<!ENTITY replaceAndFindButton.accesskey "y">
+<!ENTITY replaceAllButton.label "Trocar too">
+<!ENTITY replaceAllButton.accesskey "t">
+<!ENTITY closeButton.label "Zarrar">

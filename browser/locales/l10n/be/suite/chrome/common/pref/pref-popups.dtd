@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title "Вокны-вынырцы">
+<!ENTITY pref.popups.caption "Вокны-вынырцы">
+<!ENTITY popupBlock.label "Затрымліваць незапатрабаваныя вокны-вынырцы">
+<!ENTITY popupBlock.accesskey "т">
+<!ENTITY viewPermissions.label "Кіраваць дазволамі">
+<!ENTITY viewPermissions.accesskey "д">
+<!ENTITY whenBlock.description "Калі было затрымана акно-вынырац:">
+<!ENTITY playSound.label "Граць гук:">
+<!ENTITY playSound.accesskey "г">
+<!ENTITY systemSound.label "Сістэмны сігнал">
+<!ENTITY systemSound.accesskey "С">
+<!ENTITY customSound.label "Выбарачны файл .wav">
+<!ENTITY customSound.accesskey "В">
+<!ENTITY selectSound.label "Агляд…">
+<!ENTITY selectSound.accesskey "А">
+<!ENTITY playSoundButton.label "Граць">
+<!ENTITY playSoundButton.accesskey "Г">
+<!ENTITY displayIcon.label "Адлюстроўваць значок на паліцы статусу азіральніка">
+<!ENTITY displayIcon.accesskey "з">
+<!ENTITY displayNotification.label "Паказваць паліцу апавяшчэння зверху абсягу змесціва">
+<!ENTITY displayNotification.accesskey "к">
+<!ENTITY popupNote.description "Заўвага: Затрымка ўсіх вынырцаў можа перашкаджаць працы істотных асаблівасцяў асобных пляцовак сеціва, такіх як уваходных вокнаў банкаўскіх і гандлёвых пляцовак. Каб даведацца, якім чынам дазволіць пэўным пляцоўкам ужываць вынырцы, калі астатнія затрымліваюцца, пстрыкніце Даведка. Нават калі вынырцы затрымліваюцца, пляцоўкі могуць ужываць іншыя метады, каб іх паказваць.">

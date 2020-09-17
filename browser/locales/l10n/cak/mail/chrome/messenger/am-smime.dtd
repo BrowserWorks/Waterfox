@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eLearnMore.label "Tetamäx ch'aqa' chik">
+
+
+
+<!ENTITY digitalSign.certificate.button "Ticha'…">
+<!ENTITY digitalSign.certificate.accesskey "c">
+<!ENTITY digitalSign.certificate_clear.button "Tijosq'ïx">
+<!ENTITY digitalSign.certificate_clear.accesskey "j">
+<!ENTITY encryption.certificate.button "Ticha'…">
+<!ENTITY encryption.certificate.accesskey "c">
+<!ENTITY encryption.certificate_clear.button "Tijosq'ïx">
+<!ENTITY encryption.certificate_clear.accesskey "o">
+<!ENTITY signingGroupTitle.label "Kematz'ib'il Juch'un B'i'aj">
+<!ENTITY signMessage.accesskey "K">
+
+
+
+
+
+
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Ticha' Ruwujil B'i'aj">
+<!ENTITY certPicker.info  "Ruwujil rub'i':">
+<!ENTITY certPicker.detailsLabel "Cha'on kib'anikil ruwujil b'i'aj:">
+

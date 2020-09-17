@@ -1,0 +1,149 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "સરનામા પુસ્તિકા">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "ફાઈલ">
+<!ENTITY fileMenu.accesskey                             "f">
+<!ENTITY newMenu.label                                  "નવો">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newListCmd.label                               "મેલની યાદી...">
+<!-- LOCALIZATION NOTE (newListCmd.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "સરનામા પુસ્તિકા...">
+<!ENTITY newAddressBookCmd.accesskey                    "B">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP શબ્દકોષ...">
+<!-- LOCALIZATION NOTE (newLDAPDirectoryCmd.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "સંદેશો">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "m">
+<!ENTITY closeCmd.label                                 "બંધ કરો">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "c">
+<!ENTITY printSetupCmd.label                            "પાનાનું સુયોજન...">
+<!ENTITY printSetupCmd.accesskey                        "u">
+<!ENTITY printPreviewAddressBook.label                  "છાપણી પૂર્વદર્શન સરનામા પુસ્તિકા">
+<!ENTITY printPreviewAddressBook.accesskey              "B">
+<!ENTITY printAddressBook.label                         "સરનામા પુસ્તિકા છાપો...">
+<!ENTITY printAddressBook.accesskey                     "A">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "ફેરફાર કરો">
+<!ENTITY editMenu.accesskey                             "e">
+<!ENTITY deleteCmd.label                                "કાઢી નાંખો">
+<!ENTITY deleteAbCmd.label                              "સરનામા પુસ્તિકા કાઢી નાંખો">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "જુઓ">
+<!ENTITY viewMenu.accesskey                             "v">
+<!ENTITY viewToolbarsMenu.label                         "સાધનપટ્ટીઓ">
+<!ENTITY viewToolbarsMenu.accesskey                     "T"> 
+<!ENTITY showAbToolbarCmd.label                         "સરનામા પુસ્તિકા સાધનપટ્ટી">
+<!ENTITY showAbToolbarCmd.accesskey                     "o">
+<!ENTITY showTaskbarCmd.label                           "પરિસ્થિતિદર્શક પટ્ટી">
+<!ENTITY showTaskbarCmd.accesskey                       "S">
+<!ENTITY customizeToolbar.label                         "કસ્ટમાઈઝ...">
+<!ENTITY customizeToolbar.accesskey                     "C">
+<!ENTITY menu_ShowNameAs.label                          "નામ આ રીતે બતાવો">
+<!ENTITY menu_ShowNameAs.accesskey                      "n"> 
+<!ENTITY lastFirstCmd.label                             "પ્રથમ, છેલ્લું">
+<!ENTITY lastFirstCmd.accesskey                         "l">
+<!ENTITY displayNameCmd.label                           "નામ પ્રદર્શિત કરો">
+<!ENTITY displayNameCmd.accesskey                       "d">
+<!ENTITY sortMenu.label                                 "દ્વારા ક્રમમાં ગોઠવો">
+<!ENTITY sortMenu.accesskey                             "S">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "સાધનો">
+<!ENTITY tasksMenu.accesskey                            "T">
+<!ENTITY messengerCmd.label                             "મેલ &amp; સમાચાર જૂથો">
+<!ENTITY messengerCmd.accesskey                         "m">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "શોધ સરનામાઓ...">
+<!ENTITY searchAddressesCmd.accesskey                   "S">
+<!ENTITY importCmd.label                                "આયાત કરો...">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "નિકાસ કરો...">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmdUnix.label                       "પસંદગીઓ">
+<!ENTITY preferencesCmdUnix.accesskey                   "n"> 
+
+<!ENTITY newlistButton.label                            "નવી યાદી">
+<!ENTITY newlistButton.accesskey                        "L">
+<!ENTITY newmsgButton.label                             "લખો">
+<!ENTITY newmsgButton.accesskey                         "W">
+<!ENTITY newIM.label                                    "તુરંત સંદેશો">
+<!ENTITY newIM.accesskey                                "I">
+
+<!ENTITY newlistButton.tooltip                          "નવી યાદી બનાવો">
+<!ENTITY newmsgButton.tooltip                           "મેલ સંદેશો મોકલો">
+<!ENTITY newIM.tooltip                                  "તુરંત સંદેશો મોકલો અથવા સંવાદ કરો">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "નામ અથવા ઈમેલ સમાવે છે:">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "ઉન્નત સરનામા શોધ">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "ઝડપી શોધ">
+
+<!-- Results Pane -->
+<!ENTITY GeneratedName.label                            "નામ">
+<!ENTITY GeneratedName.accesskey                        "N">
+<!ENTITY PrimaryEmail.label                             "ઈમેલ">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY Company.label                                  "સંસ્થા">
+<!ENTITY Company.accesskey                              "z">
+<!ENTITY NickName.label                                 "લાડકું નામ">
+<!ENTITY NickName.accesskey                             "i">
+<!ENTITY SecondEmail.label                              "વધારાના ઈમેલ">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "વિભાગ">
+<!ENTITY Department.accesskey                           "r">
+<!ENTITY JobTitle.label                                 "શીર્ષક">
+<!ENTITY JobTitle.accesskey                             "T">
+<!ENTITY CellularNumber.label                           "મોબાઈલ">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "પેજર">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "ફેક્સ">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "ઘરનો ફોન">
+<!ENTITY HomePhone.accesskey                            "H">
+<!ENTITY WorkPhone.label                                "કામનો ફોન">
+<!ENTITY WorkPhone.accesskey                            "W">
+<!ENTITY sortAscending.label                            "ચઢતા ક્રમમાં">
+<!ENTITY sortAscending.accesskey                        "A">
+<!ENTITY sortDescending.label                           "ઉતરતા ક્રમમાં">
+<!ENTITY sortDescending.accesskey                       "D">
+<!ENTITY _PhoneticName.label                            "ઉચ્ચારાત્મક નામ">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "સંપર્ક કરો">
+<!ENTITY home.heading                                   "ઘર">
+<!ENTITY other.heading                                  "અન્ય">
+<!ENTITY phone.heading                                  "ફોન">
+<!ENTITY work.heading                                   "કામ">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "વર્ણન">
+<!ENTITY addresses.heading                              "સરનામાઓ">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "નક્શો મેળવો">
+<!ENTITY mapIt.tooltip                                  "આ સરાનામાનો નક્શો વેબમાંથી પ્રદર્શિત કરો">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label "વિન્ડો">
+<!ENTITY minimizeWindow.label "ન્યુનતમ કરો">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "બધું અગ્ર ભાગમાં લાવો">
+<!ENTITY zoomWindow.label "નાનુમોટુ">

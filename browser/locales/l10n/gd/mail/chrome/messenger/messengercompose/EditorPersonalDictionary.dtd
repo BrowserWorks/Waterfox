@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Am faclair pearsanta">
+
+<!ENTITY wordEditField.label "Facal ùr:">
+<!ENTITY wordEditField.accessKey "F">
+<!ENTITY AddButton.label "Cuir ris">
+<!ENTITY AddButton.accessKey "C">
+<!ENTITY DictionaryList.label "Faclan san fhaclair:">
+<!ENTITY DictionaryList.accessKey "a">
+<!ENTITY RemoveButton.label "Thoir air falbh">
+<!ENTITY RemoveButton.accessKey "o">
+
+<!ENTITY CloseButton.label "Dùin">
+<!ENTITY CloseButton.accessKey "D">

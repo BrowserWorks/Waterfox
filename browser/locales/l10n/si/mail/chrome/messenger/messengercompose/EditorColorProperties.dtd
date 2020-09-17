@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "පිටු වර්ණ සහ පසුතලය">
+<!ENTITY pageColors.label "පිටු වර්ණ">
+<!ENTITY defaultColorsRadio.label "කියවන්නාගේ පෙරනිමි වර්ණ(පිටුවේ වර්ණ භාවිතා නොකරන්න)">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "නරඹන්නාගේ (කියවන්නාගේ ) ගවේශක වර්ණ සැකසුම් පමණක් භාවිතා කරන්න">
+<!ENTITY customColorsRadio.label "රිසිකරණ වර්ණ භාවිතා කරන්න:">
+<!ENTITY customColorsRadio.accessKey "c">
+<!ENTITY customColorsRadio.tooltip "මෙම වර්ණ සැකසුම් නරඹන්නාගේ ගවේශක සැකසුම් ඉක්මවා යනු ඇත">
+
+<!ENTITY normalText.label "සාමාන්‍ය පාඨ">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "සබැඳියේ පාඨ">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "සක්‍රීය සබැඳියේ පාඨ">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "ප්‍රවේශ වූ සබැඳියේ පාඨ">
+<!ENTITY visitedLinkText.accessKey "V">
+<!ENTITY background.label "පසුතලය:">
+<!ENTITY background.accessKey "B">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "පසුතල රූපය:">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "රූපයක් ඔබගේ පිටුවේ පසුතලය ලෙස භාවිතා කරන්න">

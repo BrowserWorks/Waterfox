@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Teuliad klask nevez enrollet">
+<!ENTITY name.label                 "Anv :">
+<!ENTITY name.accesskey             "A">
+<!ENTITY description.label          "Krouiñ evel isteuliad unan all :">
+<!ENTITY description.accesskey      "s">
+
+<!ENTITY searchTermCaption.label "Kefluniañ an dezverkoù enklask implijet evit an teuliad enklask enrollet-se :">
+
+<!ENTITY folderSelectionCaption.label "Diuzañ an teuliadoù da glask :">
+<!ENTITY chooseFoldersButton.label "Diuzañ…">
+<!ENTITY chooseFoldersButton.accesskey "D">
+
+<!ENTITY searchOnline.label "Klask enlinenn (Reiñ a ra disoc'hoù eus ar gwellañ evit IMAP ha teuliadoù ar c'heleier met brasaet e vo an amzer da zigeriñ an teuliad)">
+<!ENTITY searchOnline.accesskey "e">
+<!ENTITY newFolderButton.label       "Krouiñ">
+<!ENTITY newFolderButton.accesskey   "K">
+<!ENTITY editFolderButton.label      "Hizivaat">
+<!ENTITY editFolderButton.accesskey  "H">

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Berichtenweergave">
+<!ENTITY style.label                      "Stijl:">
+<!ENTITY style.accesskey                  "S">
+<!ENTITY regular.label                    "Normaal">
+<!ENTITY bold.label                       "Vet">
+<!ENTITY italic.label                     "Cursief">
+<!ENTITY boldItalic.label                 "Vet en cursief">
+<!ENTITY size.label                       "Grootte:">
+<!ENTITY size.accesskey                   "G">
+<!ENTITY bigger.label                     "Groter">
+<!ENTITY smaller.label                    "Kleiner">
+<!ENTITY color.label                      "Kleur:">
+<!ENTITY color.accesskey                  "K">
+<!ENTITY displayPlainText.caption         "Plattetekstberichten">
+<!ENTITY fontPlainText.label              "Lettertype:">
+<!ENTITY fontPlainText.accesskey          "L">
+<!ENTITY displayQuoted.label              "Instellingen voor geciteerde berichten:">
+<!ENTITY wrapInMsg.label                  "Regellengte aanpassen aan vensterbreedte">
+<!ENTITY wrapInMsg.accesskey              "R">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Emoticons weergeven als afbeeldingen">
+<!ENTITY convertEmoticons.accesskey       "E">
+<!ENTITY generalMessageDisplay.caption    "Algemeen">
+<!ENTITY autoMarkAsRead.label             "Berichten automatisch als gelezen markeren">
+<!ENTITY autoMarkAsRead.accesskey         "m">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Alleen na">
+<!ENTITY markAsReadAfter.accesskey        "n">
+<!ENTITY secondsLabel.label               "seconden weergeven">
+
+<!ENTITY openingMessages.label            "Bij het openen van berichten, deze weergeven in:">
+<!ENTITY newWindowRadio.label             "Een nieuw berichtvenster">
+<!ENTITY newWindowRadio.accesskey         "w">
+<!ENTITY existingWindowRadio.label        "Een bestaand berichtvenster">
+<!ENTITY existingWindowRadio.accesskey    "t">
+<!ENTITY disableContent.label             "Afbeeldingen en andere inhoud van bronnen op afstand blokkeren">
+<!ENTITY disableContent.accesskey         "A">
+<!ENTITY showCondensedAddresses.label     "Van personen in mijn adresboek alleen weergavenaam tonen">
+<!ENTITY showCondensedAddresses.accesskey "o">
+<!ENTITY closeMsgWindowOnDelete.label     "Berichtvenster sluiten bij verwijderen van het bericht">
+<!ENTITY closeMsgWindowOnDelete.accesskey "u">

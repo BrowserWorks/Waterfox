@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  global/languageNames.properties file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+<!ENTITY translation.thisPageIsIn.label         "Esta página está en">
+<!ENTITY translation.translateThisPage.label    "¿Traducir esta página?">
+<!ENTITY translation.translate.button           "Traducir">
+<!ENTITY translation.notNow.button              "Ahora no">
+
+<!ENTITY translation.translatingContent.label   "Traducir contenido de la página…">
+
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  global/languageNames.properties file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+<!ENTITY translation.translatedFrom.label       "Esta página ha sido traducida del">
+<!ENTITY translation.translatedTo.label         "para">
+<!ENTITY translation.translatedToSuffix.label   "">
+
+<!ENTITY translation.showOriginal.button        "Mostrar original">
+<!ENTITY translation.showTranslation.button     "Mostrar traducción">
+
+<!ENTITY translation.errorTranslating.label     "Ha habido un error al traducir esta página.">
+<!ENTITY translation.tryAgain.button            "Intentar de nuevo">
+
+<!ENTITY translation.serviceUnavailable.label   "La traducción no está disponible por el momento. Por favor intenta de nuevo más tarde.">
+
+<!ENTITY translation.options.menu               "Opciones">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "Nunca traducir este sitio">
+<!ENTITY translation.options.neverForSite.accesskey "e">
+<!ENTITY translation.options.preferences.label  "Preferencias de Traducción">
+<!ENTITY translation.options.preferences.accesskey "T">
+

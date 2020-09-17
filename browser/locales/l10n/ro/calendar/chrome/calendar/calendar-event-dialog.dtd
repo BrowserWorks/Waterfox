@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Editează elementul" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Păstrează durata la schimbarea datei de sfârșit">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "De la" >
+<!ENTITY newevent.to.label                  "Până la" >
+
+<!ENTITY newevent.status.label                    "Stare" >
+<!ENTITY newevent.status.accesskey                "S" >
+<!ENTITY newevent.eventStatus.none.label          "Nespecificată" >
+<!ENTITY newevent.eventStatus.none.accesskey      "N" >
+<!ENTITY newevent.todoStatus.none.label           "Nespecificată" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Anulat" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "n" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Anulată" >
+<!ENTITY newevent.status.tentative.label          "Provizoriu" >
+<!ENTITY newevent.status.tentative.accesskey      "P" >
+<!ENTITY newevent.status.confirmed.label          "Confirmat" >
+<!ENTITY newevent.status.confirmed.accesskey      "C" >
+<!ENTITY newevent.status.needsaction.label        "Necesită acțiune" >
+<!ENTITY newevent.status.inprogress.label         "În desfășurare" >
+<!ENTITY newevent.status.completed.label          "Finalizat la data de" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#037; realizată">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Anunță participanții">
+<!ENTITY event.attendees.notify.accesskey            "u">
+<!ENTITY event.attendees.notifyundisclosed.label     "Invitație separată pe fiecare participant">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "x">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Această opțiune trimite o invitație pe e-mail fiecărui participant. Fiecare invitație conține doar participantul destinatar, astfel încât nu sunt dezvăluite identitățile altor participanți.">
+<!ENTITY event.attendees.disallowcounter.label       "Nu permite contrapropuneri">
+<!ENTITY event.attendees.disallowcounter.accesskey   "c">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Indică faptul că nu vei accepta contrapropuneri">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Nou">
+<!ENTITY  event.menu.item.new.accesskey                   "N">
+<!ENTITY  event.menu.item.new.event.label                 "Eveniment">
+<!ENTITY  event.menu.item.new.event.accesskey             "E">
+<!ENTITY  event.menu.item.new.task.label                  "Sarcină">
+<!ENTITY  event.menu.item.new.task.accesskey              "r">
+<!ENTITY  event.menu.item.new.message.label               "Mesaj">
+<!ENTITY  event.menu.item.new.message.accesskey           "M">
+<!ENTITY  event.menu.item.new.contact.label               "Contact din agendă">
+<!ENTITY  event.menu.item.new.contact.accesskey           "C">
+<!ENTITY  event.menu.item.close.label                     "Închide">
+<!ENTITY  event.menu.item.close.accesskey                 "c">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Salvează">
+<!ENTITY  event.menu.item.save.accesskey                  "S">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Salvează și închide">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "l">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "Șterge…">
+<!ENTITY  event.menu.item.delete.accesskey                "g">
+<!ENTITY  event.menu.item.page.setup.label                "Aranjare în pagină">
+<!ENTITY  event.menu.item.page.setup.accesskey            "A">
+<!ENTITY  event.menu.item.print.label                     "Tipărește">
+<!ENTITY  event.menu.item.print.accesskey                 "p">
+
+<!ENTITY  event.menu.edit.label                           "Editare">
+<!ENTITY  event.menu.edit.accesskey                       "E">
+<!ENTITY  event.menu.edit.undo.label                      "Anulează">
+<!ENTITY  event.menu.edit.undo.accesskey                  "u">
+<!ENTITY  event.menu.edit.redo.label                      "Refă">
+<!ENTITY  event.menu.edit.redo.accesskey                  "R">
+<!ENTITY  event.menu.edit.cut.label                       "Taie">
+<!ENTITY  event.menu.edit.cut.accesskey                   "T">
+<!ENTITY  event.menu.edit.copy.label                      "Copiază">
+<!ENTITY  event.menu.edit.copy.accesskey                  "C">
+<!ENTITY  event.menu.edit.paste.label                     "Lipește">
+<!ENTITY  event.menu.edit.paste.accesskey                 "p">
+<!ENTITY  event.menu.edit.select.all.label                "Selectează tot">
+<!ENTITY  event.menu.edit.select.all.accesskey            "a">
+
+<!ENTITY  event.menu.view.label                           "Vizualizare">
+<!ENTITY  event.menu.view.accesskey                       "V">
+<!ENTITY  event.menu.view.toolbars.label                  "Bare de unelte">
+<!ENTITY  event.menu.view.toolbars.accesskey              "t">
+<!ENTITY  event.menu.view.toolbars.event.label            "Bară de evenimente">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "e">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Personalizează…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "P">
+<!ENTITY  event.menu.view.showlink.label                  "Afișează linkul asociat">
+<!ENTITY  event.menu.view.showlink.accesskey              "r">
+
+<!ENTITY  event.menu.options.label                            "Opțiuni">
+<!ENTITY  event.menu.options.accesskey                        "O">
+<!ENTITY  event.menu.options.attendees.label                  "Invită participanți…">
+<!ENTITY  event.menu.options.attendees.accesskey              "I">
+<!ENTITY  event.menu.options.timezone2.label                  "Afișează fusuri orare">
+<!ENTITY  event.menu.options.timezone2.accesskey              "f">
+<!ENTITY  event.menu.options.priority2.label                  "Prioritate">
+<!ENTITY  event.menu.options.priority2.accesskey              "P">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Nespecificată">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "N">
+<!ENTITY  event.menu.options.priority.low.label               "Scăzută">
+<!ENTITY  event.menu.options.priority.low.accesskey           "M">
+<!ENTITY  event.menu.options.priority.normal.label            "Normală">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "Ridicată">
+<!ENTITY  event.menu.options.priority.high.accesskey          "M">
+<!ENTITY  event.menu.options.privacy.label                    "Confidențialitate">
+<!ENTITY  event.menu.options.privacy.accesskey                "i">
+<!ENTITY  event.menu.options.privacy.public.label             "Eveniment public">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "u">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Afișează numai data și ora">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "A">
+<!ENTITY  event.menu.options.privacy.private.label            "Eveniment privat">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "r">
+<!ENTITY  event.menu.options.show.time.label                  "Disponibilitate">
+<!ENTITY  event.menu.options.show.time.accesskey              "t">
+<!ENTITY  event.menu.options.show.time.busy.label             "Ocupat">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "O">
+<!ENTITY  event.menu.options.show.time.free.label             "Liber">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "L">
+
+<!ENTITY event.invite.attendees.label                     "Invită participanți…">
+<!ENTITY event.invite.attendees.accesskey                 "I">
+<!ENTITY event.email.attendees.label                      "Scrie un mesaj de e-mail către toți participanții…">
+<!ENTITY event.email.attendees.accesskey                  "a">
+<!ENTITY event.email.tentative.attendees.label            "Scrie un mesaj de e-mail către participanții indeciși…">
+<!ENTITY event.email.tentative.attendees.accesskey        "u">
+<!ENTITY event.remove.attendees.label2                    "Elimină toți participanții">
+<!ENTITY event.remove.attendees.accesskey                 "r">
+<!ENTITY event.remove.attendee.label                      "Elimină participant">
+<!ENTITY event.remove.attendee.accesskey                  "E">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Salvează">
+<!ENTITY  event.toolbar.saveandclose.label                "Salvează și închide">
+<!ENTITY  event.toolbar.delete.label                      "Șterge">
+<!ENTITY  event.toolbar.attendees.label                   "Invită participanți">
+<!ENTITY  event.toolbar.privacy.label                     "Confidențialitate">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Salvează">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Salvează și închide">
+<!ENTITY  event.toolbar.delete.tooltip                    "Șterge">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Invită participanți">
+<!ENTITY  event.toolbar.attachments.tooltip               "Adaugă atașamente">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Schimbă confidențialitatea">
+<!ENTITY  event.toolbar.priority.tooltip                  "Schimbă prioritatea">
+<!ENTITY  event.toolbar.status.tooltip                    "Schimbă starea">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Schimbă disponibilitate (liber/ocupat)">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Aplică propunerea">
+<!ENTITY counter.button.proposal.accesskey                "p">
+<!ENTITY counter.button.proposal.tooltip2                 "Câmpurile evenimentului vor fi populate folosind valorile din contrapropunere; doar salvarea cu sau fără modificări suplimentare va notifica toți participanții în consecință">
+<!ENTITY counter.button.original.label                    "Aplică datele inițiale">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "Câmpurile vor fi setate la valorile din forma inițială a evenimentului, de dinaintea contrapropunerii">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Titlu:" >
+<!ENTITY event.title.textbox.accesskey                    "T">
+<!ENTITY event.location.label                             "Locație:" >
+<!ENTITY event.location.accesskey                         "l">
+<!ENTITY event.categories.label                           "Categorie:">
+<!ENTITY event.categories.accesskey                       "C">
+<!ENTITY event.categories.textbox.label                   "Adaugă o categorie nouă" >
+<!ENTITY event.calendar.label                             "Calendar:" >
+<!ENTITY event.calendar.accesskey                         "C">
+<!ENTITY event.attendees.label                            "Participanți:" >
+<!ENTITY event.attendees.accesskey                        "n">
+<!ENTITY event.alldayevent.label                          "Evenimentul durează toată ziua" >
+<!ENTITY event.alldayevent.accesskey                      "d">
+<!ENTITY event.from.label                                 "Început:" >
+<!ENTITY event.from.accesskey                             "s">
+<!ENTITY task.from.label                                  "Început:" >
+<!ENTITY task.from.accesskey                              "s">
+<!ENTITY event.to.label                                   "Sfârșit:" >
+<!ENTITY event.to.accesskey                               "u">
+<!ENTITY task.to.label                                    "Termen-limită:" >
+<!ENTITY task.to.accesskey                                "D">
+<!ENTITY task.status.label                                "Stare:" >
+<!ENTITY task.status.accesskey                            "a">
+<!ENTITY event.repeat.label                               "Repetare:" >
+<!ENTITY event.repeat.accesskey                           "R">
+<!ENTITY event.until.label                                "Până la:">
+<!ENTITY event.until.accesskey                            "B">
+<!ENTITY event.reminder.label                             "Memento:" >
+<!ENTITY event.reminder.accesskey                         "M">
+<!ENTITY event.description.label                          "Descriere:" >
+<!ENTITY event.description.accesskey                      "D">
+<!ENTITY event.attachments.label                          "Atașamente:" >
+<!ENTITY event.attachments.accesskey                      "A" >
+<!ENTITY event.attachments.menubutton.label               "Atașează">
+<!ENTITY event.attachments.menubutton.accesskey           "x">
+<!ENTITY event.attachments.url.label                      "Pagină web…">
+<!ENTITY event.attachments.url.accesskey                  "w">
+<!ENTITY event.attachments.popup.remove.label             "Elimină" >
+<!ENTITY event.attachments.popup.remove.accesskey         "R" >
+<!ENTITY event.attachments.popup.open.label               "Deschide" >
+<!ENTITY event.attachments.popup.open.accesskey           "D" >
+<!ENTITY event.attachments.popup.removeAll.label          "Elimină tot" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "a" >
+<!ENTITY event.attachments.popup.attachPage.label         "Atașează o pagină web…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "p" >
+<!ENTITY event.url.label                                  "Link asociat:" >
+<!ENTITY event.priority2.label                            "Prioritate:">
+
+<!ENTITY event.reminder.none.label                        "Fără memento " >
+<!ENTITY event.reminder.0minutes.before.label             "cu 0 minute înainte" >
+<!ENTITY event.reminder.5minutes.before.label             "cu 5 minute înainte" >
+<!ENTITY event.reminder.15minutes.before.label            "cu 15 minute înainte" >
+<!ENTITY event.reminder.30minutes.before.label            "cu 30 de minute înainte" >
+<!ENTITY event.reminder.1hour.before.label                "cu 1 oră înainte" >
+<!ENTITY event.reminder.2hours.before.label               "cu 2 ore înainte" >
+<!ENTITY event.reminder.12hours.before.label              "cu 12 ore înainte" >
+<!ENTITY event.reminder.1day.before.label                 "cu 1 zi înainte" >
+<!ENTITY event.reminder.2days.before.label                "cu 2 zile înainte" >
+<!ENTITY event.reminder.1week.before.label                "cu 1 săptămână înainte" >
+<!ENTITY event.reminder.custom.label                      "Personalizat…" >
+
+<!ENTITY event.reminder.multiple.label                    "Mementouri multiple…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Disponibilitate:">
+<!ENTITY event.statusbarpanel.privacy.label               "Confidențialitate:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Editare frecvență">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Nu se repetă">
+<!ENTITY event.repeat.daily.label                       "Zilnic">
+<!ENTITY event.repeat.weekly.label                      "Săptămânal">
+<!ENTITY event.repeat.every.weekday.label               "În fiecare zi a săptămânii">
+<!ENTITY event.repeat.bi.weekly.label                   "O dată la două săptămâni">
+<!ENTITY event.repeat.monthly.label                     "Lunar">
+<!ENTITY event.repeat.yearly.label                      "Anual">
+<!ENTITY event.repeat.custom.label                      "Personalizat…">
+
+<!ENTITY event.recurrence.pattern.label                 "Model de repetiție">
+<!ENTITY event.recurrence.occurs.label                  "Repetă" >
+<!ENTITY event.recurrence.day.label                     "zilnic" >
+<!ENTITY event.recurrence.week.label                    "săptămânal" >
+<!ENTITY event.recurrence.month.label                   "lunar" >
+<!ENTITY event.recurrence.year.label                    "anual" >
+
+<!ENTITY event.recurrence.pattern.every.label           "La fiecare" >
+<!ENTITY repeat.units.days.both                         "zi(le)" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "În fiecare zi a săptămânii" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "La fiecare" >
+<!ENTITY repeat.units.weeks.both                        "săptămână(i)" >
+<!ENTITY event.recurrence.on.label                      "Pe:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "La fiecare" >
+<!ENTITY repeat.units.months.both                       "lună(i)" >
+<!ENTITY event.recurrence.monthly.every.label           "La fiecare" >
+<!ENTITY event.recurrence.monthly.first.label           "Prima">
+<!ENTITY event.recurrence.monthly.second.label          "A doua">
+<!ENTITY event.recurrence.monthly.third.label           "A treia">
+<!ENTITY event.recurrence.monthly.fourth.label          "A patra">
+<!ENTITY event.recurrence.monthly.fifth.label           "A cincea">
+<!ENTITY event.recurrence.monthly.last.label            "Ultima">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "duminică" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "luni" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "marți" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "miercuri" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "joi" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "vineri" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "sâmbătă" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "zi a lunii">
+<!ENTITY event.recurrence.repeat.recur.label            "Repetă în zilele">
+
+<!ENTITY event.recurrence.every.label                        "La fiecare:" >
+<!ENTITY repeat.units.years.both                             "an(i)" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "La fiecare" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "ianuarie" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "februarie" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "martie" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "aprilie" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "mai" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "iunie" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "iulie" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "august" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "septembrie" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "octombrie" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "noiembrie" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "decembrie" >
+<!ENTITY event.recurrence.yearly.every.label                 "La fiecare">
+<!ENTITY event.recurrence.yearly.first.label                 "Prima">
+<!ENTITY event.recurrence.yearly.second.label                "A doua">
+<!ENTITY event.recurrence.yearly.third.label                 "A treia">
+<!ENTITY event.recurrence.yearly.fourth.label                "A patra">
+<!ENTITY event.recurrence.yearly.fifth.label                 "A cincea">
+<!ENTITY event.recurrence.yearly.last.label                  "Ultima">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "duminică" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "luni" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "marți" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "miercuri" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "joi" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "vineri" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "sâmbătă" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "zi" >
+<!ENTITY event.recurrence.of.label                           "din" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "ianuarie" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "februarie" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "martie" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "aprilie" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "mai" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "iunie" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "iulie" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "august" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "septembrie" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "octombrie" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "noiembrie" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "decembrie" >
+
+<!ENTITY event.recurrence.range.label                   "Interval de repetare">
+<!ENTITY event.recurrence.forever.label                 "Fără dată de sfârșit" >
+<!ENTITY event.recurrence.repeat.for.label              "Creează" >
+<!ENTITY event.recurrence.appointments.label            "Întâlnire(i)" >
+<!ENTITY event.repeat.until.label                       "Repetă până la/în" >
+<!ENTITY event.recurrence.preview.label                 "Previzualizează">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Invitare participanți">
+<!ENTITY event.organizer.label                  "Organizator">
+<!ENTITY event.freebusy.suggest.slot            "Sugerează interval orar:">
+<!ENTITY event.freebusy.button.next.slot        "Intervalul următor">
+<!ENTITY event.freebusy.button.previous.slot    "Interval anterior">
+<!ENTITY event.freebusy.zoom                    "Zoom:">
+<!ENTITY event.freebusy.legend.free             "Liber" >
+<!ENTITY event.freebusy.legend.busy             "Ocupat" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Provizoriu" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Plecat de la birou" >
+<!ENTITY event.freebusy.legend.unknown          "Fără informații" >
+<!ENTITY event.attendee.role.required           "Participant necesar">
+<!ENTITY event.attendee.role.optional           "Participant opțional">
+<!ENTITY event.attendee.role.chair              "Președinte">
+<!ENTITY event.attendee.role.nonparticipant     "Nu participă">
+<!ENTITY event.attendee.usertype.individual     "Persoană">
+<!ENTITY event.attendee.usertype.group          "Grup">
+<!ENTITY event.attendee.usertype.resource       "Resursă">
+<!ENTITY event.attendee.usertype.room           "Sală">
+<!ENTITY event.attendee.usertype.unknown        "Necunoscut">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Te rugăm să specifici fusul orar">
+<!ENTITY event.timezone.custom.label     "Mai multe fusuri orare…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "General">
+<!ENTITY read.only.title.label           "Titlu:">
+<!ENTITY read.only.calendar.label        "Calendar:">
+<!ENTITY read.only.event.start.label     "Dată de început:">
+<!ENTITY read.only.task.start.label      "Dată de început:">
+<!ENTITY read.only.event.end.label       "Dată de sfârșit:">
+<!ENTITY read.only.task.due.label        "Termen-limită:">
+<!ENTITY read.only.repeat.label          "Repetă:">
+<!ENTITY read.only.location.label        "Locație:">
+<!ENTITY read.only.category.label        "Categorie:">
+<!ENTITY read.only.organizer.label       "Organizator:">
+<!ENTITY read.only.reminder.label        "Memento:">
+<!ENTITY read.only.attachments.label     "Atașamente:">
+<!ENTITY read.only.attendees.label       "Participanți">
+<!ENTITY read.only.description.label     "Descriere">
+<!ENTITY read.only.link.label            "Link asociat">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Salvează și închide">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Salvează schimbările și închide fereastra fără a modifica starea participării și fără a trimite un răspuns">
+<!ENTITY summary.dialog.accept.label            "Acceptă">
+<!ENTITY summary.dialog.accept.tooltiptext      "Acceptă invitația">
+<!ENTITY summary.dialog.tentative.label         "Provizorie">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Acceptă provizoriu invitația">
+<!ENTITY summary.dialog.decline.label           "Refuză">
+<!ENTITY summary.dialog.decline.tooltiptext     "Refuză invitația">
+<!ENTITY summary.dialog.dontsend.label          "Nu trimite răspuns">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Schimbă starea de participare fără a trimite un răspuns organizatorului și închide fereastra">
+<!ENTITY summary.dialog.send.label              "Trimite un răspuns acum">
+<!ENTITY summary.dialog.send.tooltiptext        "Trimite un răspuns organizatorului  și închide fereastra">

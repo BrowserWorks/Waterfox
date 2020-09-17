@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Објавување на страница">
+<!ENTITY windowTitleSettings.label "Објавување на поставки">
+
+<!ENTITY publishTab.label "Објави">
+<!ENTITY settingsTab.label "Поставки">
+
+<!ENTITY publishButton.label "Објави">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label "Име на место:">
+<!ENTITY siteList.tooltip "Изберете го местото на кое сакате да објавувате">
+<!ENTITY newSiteButton.label "Нова место">
+<!ENTITY siteDirList.label "Изберете или внесете име на директориум во Вашето место за објавување:">
+<!ENTITY siteDirList.tooltip "Изберете го или внесете го името на поддриректориумот во кој сакате да објавувате">
+<!ENTITY docDirList.label "Поддиректориум на местото за оваа страница:">
+<!ENTITY publishImgCheckbox.label "Вклучи слики и други датотеки">
+<!ENTITY publishImgCheckbox.tooltip "Објавете слики и други датотеки реферирани од оваа страница">
+<!ENTITY sameLocationRadio.label "Користи ја истата локација како страницата">
+<!ENTITY sameLocationRadio.tooltip "Објавете ги датотеките на иста локација како и страницата">
+<!ENTITY useSubdirRadio.label "Користи го овој поддиректориум:">
+<!ENTITY useSubdir.tooltip "Изберете или внесете име на директориум во кој ќе бидат објавени датотеките">
+<!ENTITY chooseDirButton.label "Избери…">
+<!ENTITY pageTitle.label "Наслов на страницата:">
+<!ENTITY pageTitle.tooltip "Внесете наслов кој ќе ја идентификува страницата во прозорецот и обележувачите">
+<!ENTITY pageTitleExample.label "пр.: &quot;Мојата мрежна страница&quot;">
+<!ENTITY filename.label "Име на датотека:">
+<!ENTITY filename.tooltip "Внесете име за оваа датотека, вклучувајќи и „.html“ за мрежни страници">
+<!ENTITY filenameExample.label "пр.: &quot;mypage.html&quot;">
+<!ENTITY relatedDocs.label "Други датотеки за објавување">
+<!ENTITY setDefaultButton.label "Постави како основно">
+<!ENTITY setDefSiteAndDir.label "Постави како основно место и директориум">
+<!ENTITY removeButton.label "Отстрани го местото">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label "Места за објавување">
+<!ENTITY serverInfo.label "Информации за серверот">
+<!ENTITY loginInfo.label "Информации за пријавување">
+<!ENTITY siteName.label "Име на место:">
+<!ENTITY siteName.tooltip "Прекар кој го идентификува ова место за објавување (пр.: „МоеМесто“)">
+<!ENTITY siteUrl.label "Адреса за објавување (пр.: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.tooltip "FTP:// или HTTP:// адресата која ви ја дал Вашиот Интернет провајдер">
+<!ENTITY browseUrl.label "HTTP на Вашата домашна страница (пр.: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.tooltip "HTTP:// адресата на Вашиот домашен директориум (не вклучувајте имиња на датотеки)">
+<!ENTITY username.label "Корисничко име:">
+<!ENTITY username.tooltip "Корисничкото име кое ви служи да се пријавите кај Вашиот Интернет провајдер">
+<!ENTITY password.label "Лозинка:">
+<!ENTITY password.tooltip "Лозинката што е поврзана со Вашето име">
+<!ENTITY savePassword.label "Сними ја лозинката">
+<!ENTITY savePassword.tooltip "Одберете го ова за безбедно да ја снимите Вашата лозинка со помош на менаџерот на лозинки">

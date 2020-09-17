@@ -1,0 +1,27 @@
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "מאפייני רשימה">
+
+<!ENTITY ListType.label "סוג רשימה">
+<!ENTITY bulletStyle.label "סגנון הבלטה:">
+<!ENTITY startingNumber.label "התחל במספר:">
+<!ENTITY startingNumber.accessKey "ת">
+<!ENTITY none.value "ללא">
+<!ENTITY bulletList.value "רשימה מובלטת (לא ממוספרת)">
+<!ENTITY numberList.value "רשימה ממוספרת">
+<!ENTITY definitionList.value "רשימת הגדרות">
+<!ENTITY changeEntireListRadio.label "שנה את כל הרשימה">
+<!ENTITY changeEntireListRadio.accessKey "כ">
+<!ENTITY changeSelectedRadio.label "שנה רק פריטים נבחרים">
+<!ENTITY changeSelectedRadio.accessKey "ר">
+

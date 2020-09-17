@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Pri kontraŭtrudmesaĝa filtrilo">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; aŭtomate rekonas alvenantaj mesaĝoj, kiuj aspektas esti nedezirataj (reklamoj, spamo). Ĉiu mesaĝo suspektata pri esti trudmesaĝo estos markita per speciala emblemo">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Unue vi devas instrui al la filtrilo rekoni nedeziratajn mesaĝojn per la butono “nedezirata mesaĝo” sur la ilarstrio; ankaŭ necesas marki ĉiujn deziratajn mesaĝojn kiel deziratajn.">
+<!ENTITY info3.label   "Kiam la kontraŭtrudmesaĝa filtrilo ĝuste rekonas nedeziratajn mesaĝojn, vi povas agordi la programon por aŭtomate movi alvenantajn nedeziratajn mesaĝojn al la “trudmesaĝujo”.">
+<!ENTITY info4.label   "Pliaj informoj troviĝas en la helpo de &brandShortName;.">

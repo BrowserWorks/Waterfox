@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Աղյուսակի հատկությունը">
+<!ENTITY applyButton.label                "Կիրառել">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "Փակել">
+<!ENTITY tableTab.label                   "Աղյուսակ">
+<!ENTITY cellTab.label                    "Վանդակներ">
+<!ENTITY tableRows.label                  "Գծեր.">
+<!ENTITY tableRows.accessKey              "Գ">
+<!ENTITY tableColumns.label               "Սյուներ.">
+<!ENTITY tableColumns.accessKey           "Ս">
+<!ENTITY tableHeight.label                "Բարձր-ը.">
+<!ENTITY tableHeight.accessKey            "Բ">
+<!ENTITY tableWidth.label                 "Լայն-ը.">
+<!ENTITY tableWidth.accessKey             "Լ">
+<!ENTITY tableBorderSpacing.label         "Եզրագծերը և բացատները">
+<!ENTITY tableBorderWidth.label           "Եզրագիծը.">
+<!ENTITY tableBorderWidth.accessKey       "Ե">
+<!ENTITY tableSpacing.label               "Բացատում.">
+<!ENTITY tableSpacing.accessKey           "Բ">
+<!ENTITY tablePadding.label               "Լրացում.">
+<!ENTITY tablePadding.accessKey           "Լ">
+<!ENTITY tablePxBetwCells.label           "վանդակների միջև փիքսել">
+<!ENTITY tablePxBetwBrdrCellContent.label "վանդակների եզրագծերի միջև փիքսել">
+<!ENTITY tableAlignment.label             "Աղյուսակի հավասարեցումը.">
+<!ENTITY tableAlignment.accessKey         "Ա">
+<!ENTITY tableCaption.label               "Գլխագիրը.">
+<!ENTITY tableCaption.accessKey           "Գ">
+<!ENTITY tableCaptionAbove.label          "Աղյուսակից վեր">
+<!ENTITY tableCaptionBelow.label          "Աղյուսակից վար">
+<!ENTITY tableCaptionLeft.label           "Աղյուսակից ձախ">
+<!ENTITY tableCaptionRight.label          "Աղյուսակից աջ">
+<!ENTITY tableCaptionNone.label           "Չկա">
+<!ENTITY tableInheritColor.label           "(Ցուցադրել էջի գույնը միջով)">
+
+<!ENTITY cellSelection.label              "Ընտրություն">
+<!ENTITY cellSelectCell.label             "Վանդակ">
+<!ENTITY cellSelectRow.label              "Գիծ">
+<!ENTITY cellSelectColumn.label           "Սյուն">
+<!ENTITY cellSelectNext.label             "Հաջորդը">
+<!ENTITY cellSelectNext.accessKey         "Հ">
+<!ENTITY cellSelectPrevious.label         "Նախորդը">
+<!ENTITY cellSelectPrevious.accessKey     "Ն">
+<!ENTITY applyBeforeChange.label          "Ընթացիկ փոփոխությունները կկիրառվեն ընտրությունը փոխելուց հետո։">
+<!ENTITY cellContentAlignment.label       "Հավասարեցումը">
+<!ENTITY cellHorizontal.label             "Հրիզոնական.">
+<!ENTITY cellHorizontal.accessKey         "Հ">
+<!ENTITY cellVertical.label               "Ուղղահայաց.">
+<!ENTITY cellVertical.accessKey           "Ո">
+<!ENTITY cellStyle.label                  "Վանդակի ոճը.">
+<!ENTITY cellStyle.accessKey              "Վ">
+<!ENTITY cellNormal.label                 "Նորմալ">
+<!ENTITY cellHeader.label                 "Վերնագիր">
+<!ENTITY cellTextWrap.label               "Տեքստի պտտում.">
+<!ENTITY cellTextWrap.accessKey           "Տ">
+<!ENTITY cellWrap.label                   "Պտտում">
+<!ENTITY cellNoWrap.label                 "Չպտտել">
+<!ENTITY cellAlignTop.label               "Վերևում">
+<!ENTITY cellAlignMiddle.label            "Մեջտեղում">
+<!ENTITY cellAlignBottom.label            "Ներքևում">
+<!ENTITY cellAlignJustify.label           "Հավասարեցում">
+<!ENTITY cellInheritColor.label           "(Աղյուսակի գույնը ցուցադրել միջով)">
+<!ENTITY cellUseCheckboxHelp.label        "Օգտագործել ընտրադաշտերը՝ որոշելու համար հատկությունների կիրառումը ընտրված վանդակներին">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label                       "Չափը">
+<!ENTITY pixels.label                     "փիքսել">
+<!ENTITY backgroundColor.label            "Խորապատկերի գույնը.">
+<!ENTITY backgroundColor.accessKey        "Խ">
+<!ENTITY AlignLeft.label                  "Ձախից">
+<!ENTITY AlignCenter.label                "Կենտրոնում">
+<!ENTITY AlignRight.label                 "Աջից">

@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label "আপনার নাম (n)">
+<!ENTITY name.accesskey "n">
+<!ENTITY name.text "আপনার নাম, অন্যরা আপনার যে নামটি দেখবে">
+<!ENTITY email.label "ইমেইল ঠিকানা (l):">
+<!ENTITY email.accesskey "l">
+<!ENTITY password.label "পাসওয়ার্ড (P):">
+<!ENTITY password.accesskey "P">
+<!ENTITY password.placeholder "পাসওয়ার্ড">
+<!ENTITY password.text "ঐচ্ছিক, শুধু ব্যবহারকারীর নামের বৈধতা যাচাই এর জন্য ব্যবহার করা হবে">
+
+<!ENTITY rememberPassword.label "পাসওয়ার্ড মনে রাখুন (m)">
+<!ENTITY rememberPassword.accesskey "m">
+
+<!ENTITY incoming.label "আগত:">
+<!ENTITY outgoing.label "বহির্গামী:">
+<!ENTITY imap.label "IMAP">
+<!ENTITY smtp.label "SMTP">
+
+<!ENTITY noEncryption.label "কোনটি না">
+<!ENTITY starttls.label "STARTTLS">
+<!ENTITY sslTls.label "SSL/TLS">
+
+<!ENTITY cancel.label "বাতিল (a)">
+<!ENTITY cancel.accesskey "a">
+<!ENTITY continue.label "পরবর্তী (C)">
+<!ENTITY continue.accesskey "C">
+<!ENTITY stop.label "বন্ধ করুন (S)">
+<!ENTITY stop.accesskey "S">
+
+
+<!ENTITY warning.label "সতর্কীকরণ!">
+<!ENTITY incomingSettings.label "আগত সেটিংসমূহ:">
+<!ENTITY outgoingSettings.label "বহির্গামী সেটিংসমূহ:">
+<!ENTITY technicaldetails.label "প্রযুক্তিগত বর্ণনা">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label "আমি ঝুঁকি বুঝি (u)">
+<!ENTITY confirmWarning.accesskey "u">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label "সেটিং পরিবর্তন (S)">
+<!ENTITY changeSettings.accesskey "S">
+
+<!ENTITY contactYourProvider.description "&brandShortName; যে কনফিগারেশন দেয়া আছে তা ব্যবহার করে আপনার ইমেইল গ্রহণ করতে পারবেন। উপরন্তু, আপনি এই ঝামেলাযুক্ত সংযোগের সাথে সংশ্লিষ্ট প্রশাসক বা ইমেইল সরবরাহকারীর সাথে যোগাযোগ করুন। আরও তথ্যের জন্য থান্ডারবার্ড FAQ দেখুন।">
+
+<!ENTITY insecureServer.tooltip.title "সতর্কীকরণ! এটি একটি নিরাপত্তাহীন সার্ভার।">
+<!ENTITY insecureServer.tooltip.details "আরও বিস্তারিত তথ্যের জন্য বৃত্তে ক্লিক করুন।">
+
+<!ENTITY insecureUnencrypted.description "আপনার ইমেইল ও প্রমাণীকরণ আনএনক্রিপ্ট করে পাঠানো হয়েছে, সুতরাং আপনার পাসওয়ার্ড (এবং বার্তা) অন্য যে কেউ সহজেই পড়তে পারবে। &brandShortName; আপনাকে আপনার ইমেইল গ্রহণ করতে দিবে, কিন্তু আপনি নিরাপদ সংযোগসহ সার্ভারকে কনফিগার করার ব্যাপারে আপনার ইমেইল সরবরাহকারীর সাথে যোগাযোগ করুন।">
+<!ENTITY insecureSelfSigned.description "সার্ভার যে সার্টিফিকেট ব্যবহার করে তা আমরা বিশ্বাস করতে পারিনা, সুতরাং আপনার সার্ভার ও &brandShortName; এর মাঝে অন্য কেউ আসছে কিনা তার ব্যাপারে আমারা নিশ্চিত না। &brandShortName; আপনাকে আপনার ইমেইল গ্রহণ করতে দিবে কিন্তু ইমেইল সরবরাহকারীকে বিশ্বাসযোগ্য সার্টিফিকেট দ্বারা সার্ভার কনফিগার করতে হবে।">
+<!ENTITY secureServer.description "অভিনন্দন! এটি একটি নিরাপদ সার্ভার।">

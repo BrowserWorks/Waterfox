@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "პარამეტრები არ მითითებულა.">
+
+<!ENTITY caption.label         "ელემენტის პარამეტრები">
+<!ENTITY image-sec.label       "სურათის პარამეტრები">
+<!ENTITY image-url.label       "მისამართი:">
+<!ENTITY image-desc.label      "აღწერა:">
+<!ENTITY image-alt.label       "ალტერნატული ტექსტი:">
+<!ENTITY image-width.label     "სიგანე">
+<!ENTITY image-height.label    "სიმაღლე:">
+<!ENTITY image-filesize.label  "ფაილის ზომა:">
+<!ENTITY image-filesize.value  "უცნობია">
+<!ENTITY insdel-sec.label      "პარამეტრების დამატება/ამოშლაs">
+<!ENTITY insdel-cite.label     "ინფო:">
+<!ENTITY insdel-date.label     "თარიღი:">
+<!ENTITY link-sec.label        "ბმულის პარამეტრები">
+<!ENTITY link-url.label        "მისამართი:">
+<!ENTITY link-target.label     "გაიხსნება:">
+<!ENTITY link-type.label       "სასურველი სახეობა:">
+<!ENTITY link-lang.label       "სასურველი ენა:">
+<!ENTITY link-rel.label        "მიმართება:">
+<!ENTITY link-rev.label        "უკუმიმართება:">
+<!ENTITY misc-sec.label        "სხვადასხვა პარამეტრი">
+<!ENTITY misc-lang.label       "ტექსტის ენა:">
+<!ENTITY misc-title.label      "სათაური:">
+<!ENTITY misc-tblsummary.label "ცხრილი:">
+<!ENTITY quote-sec.label       "ციტირების პარამეტრები">
+<!ENTITY quote-cite.label      "ინფორმაცია:">

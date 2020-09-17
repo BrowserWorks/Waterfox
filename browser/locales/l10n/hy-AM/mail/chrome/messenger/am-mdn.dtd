@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Պահանջել ստացական">
+<!ENTITY useGlobalPrefs.label         "Օգտ. ստացականի ուղարկման հիմնական նախապատվությունները">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY globalReceipts.label         "Հիմնական նախապատվություններ…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "Ստացականի կարգավորումներ այս փոստարկղի համար">
+<!ENTITY useCustomPrefs.accesskey     "C">
+<!ENTITY requestReceipt.label         "Նամակներ ուղարկելիս պահանջել ստացական">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "Ստացականը ստանալիս՝">
+<!ENTITY leaveIt.label                "Թողնել Մուտքայինում">
+<!ENTITY leaveIt.accesskey            "I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Տեղափոխել &quot;Ուղարկված&quot; թղթապանակ">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "Ստացականի հարցում ստանալիս.">
+<!ENTITY returnSome.label             "Թույլատրել ստացականներ որոշ նամակների համար">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Երբեք չուղարկել ստացական">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Եթե իմ հասցեն չկա Ում և Cc տողում.">
+<!ENTITY notInToCc.accesskey          "T">
+<!ENTITY outsideDomain.label          "Եթե ուղարկողը իմ տիրույթից դուրս է.">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "Բոլոր այլ դեպքերում.">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "Հարցնել">
+<!ENTITY alwaysSend.label             "Միշտ ուղարկել">
+<!ENTITY neverSend.label              "Երբեք չուղարկել">

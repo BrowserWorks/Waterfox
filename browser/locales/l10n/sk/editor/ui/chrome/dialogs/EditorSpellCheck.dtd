@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Kontrola pravopisu">
+
+<!ENTITY misspelledWord.label "Chybné slovo:">
+<!ENTITY wordEditField.label "Čím nahradiť:">
+<!ENTITY wordEditField.accessKey "m">
+<!ENTITY checkwordButton.label "Otestovať slovo">
+<!ENTITY checkwordButton.accessKey "t">
+<!ENTITY suggestions.label "Návrhy:">
+<!ENTITY suggestions.accessKey "h">
+<!ENTITY ignoreButton.label "Ignorovať">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "Ignorovať všetky">
+<!ENTITY ignoreAllButton.accessKey "v">
+<!ENTITY replaceButton.label "Nahradiť">
+<!ENTITY replaceButton.accessKey "N">
+<!ENTITY replaceAllButton.label "Nahradiť každé">
+<!ENTITY replaceAllButton.accessKey "k">
+<!ENTITY stopButton.label "Zastaviť">
+<!ENTITY stopButton.accessKey "s">
+<!ENTITY userDictionary.label "Osobný slovník:">
+<!ENTITY moreDictionaries.label "Prevziať ďalšie slovníky…">
+<!ENTITY addToUserDictionaryButton.label "Pridať slovo">
+<!ENTITY addToUserDictionaryButton.accessKey "P">
+<!ENTITY editUserDictionaryButton.label "Upraviť slovník…">
+<!ENTITY editUserDictionaryButton.accessKey "U">
+<!ENTITY recheckButton2.label "Opäť skontrolovať text…">
+<!ENTITY recheckButton2.accessKey "r">
+<!ENTITY closeButton.label "Zavrieť">
+<!ENTITY closeButton.accessKey "Z">
+<!ENTITY sendButton.label "Odoslať">
+<!ENTITY sendButton.accessKey "O">
+<!ENTITY languagePopup.label "Jazyk:">
+<!ENTITY languagePopup.accessKey "J">

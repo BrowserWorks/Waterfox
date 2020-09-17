@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "წერილის ფილტრები">
+<!ENTITY nameColumn.label "ფილტრის სახელი">
+<!ENTITY activeColumn.label "ჩართვა">
+<!ENTITY newButton.label "ახალი…">
+<!ENTITY newButton.accesskey "ა">
+<!ENTITY editButton.label "ჩასწორება…">
+<!ENTITY editButton.accesskey "ჩ">
+<!ENTITY deleteButton.label "წაშლა">
+<!ENTITY deleteButton.accesskey "შ">
+<!ENTITY reorderUpButton.label "აწევა">
+<!ENTITY reorderUpButton.accesskey "წ">
+<!ENTITY reorderDownButton.label "ჩამოწევა">
+<!ENTITY reorderDownButton.accesskey "მ">
+<!ENTITY filterHeader.label "ჩართული ფილტრები ავტომატურად იმოქმედებენ შემდეგი რიგით.">
+<!ENTITY filtersForPrefix.label "ფილტრები:">
+<!ENTITY filtersForPrefix.accesskey "ფ">
+<!ENTITY viewLogButton.label "ჟურნალი">
+<!ENTITY viewLogButton.accesskey "ჟ">
+<!ENTITY runFilters.label "გაშვება ახლავე">
+<!ENTITY runFilters.accesskey "ვ">
+<!ENTITY stopFilters.label "შეჩერება">
+<!ENTITY stopFilters.accesskey "რ">
+<!ENTITY folderPickerPrefix.label "არჩეული ფილტრ(ებ)ის გამოყენება:">
+<!ENTITY folderPickerPrefix.accesskey "ყ">
+<!ENTITY choosethis.label "ამ საქაღალდის არჩევა">
+<!ENTITY choosethisnewsserver.label "ჯგუფების ამ სერვერის არჩევა">

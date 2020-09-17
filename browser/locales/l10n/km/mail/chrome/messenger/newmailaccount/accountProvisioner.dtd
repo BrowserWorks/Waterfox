@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "សូម​ស្វាគមន៍​មកកាន់ &brandShortName;">
+<!ENTITY header2.label "តើ​អ្នក​ចង់​បាន​អាសយដ្ឋាន​អ៊ីមែល​ថ្មី​ឬ?">
+<!ENTITY other.languages "យើង​បង្ហាញ​តែ​ក្រុមហ៊ុន​ផ្ដល់​ណា​ដែល​មាន​អាសយដ្ឋាន​នៅ​ក្នុង​តំបន់​របស់​អ្នក​ប៉ុណ្ណោះ។  ចុច​ទីនេះ​ដើម្បី​បង្ហាញ​ក្រុមហ៊ុន​ផ្ដល់​ទាំងអស់។">
+<!ENTITY error.line1 "សុំទោស! យើង​មិន​អាច​រក​ឃើញ​អាសយដ្ឋាន​អ៊ីមែល​ដែល​បាន​ស្នើ​ទេ។">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "អ្នក​អាច​សាកល្បង​មួយ​ក្នុង​ចំណោម ">
+<!ENTITY error.suggest.middle "គណនី​អ៊ីមែល​ឥតគិតថ្លៃ​ឆ្លាស់គ្នា">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "សួស្ដី">
+<!ENTITY success.title.after " អ្នក​អាច​ប្រើ​អាសយដ្ឋាន​អ៊ីមែល​ដូច​ខាងក្រោម​បាន៖">
+<!ENTITY success.tip "(អ្នក​ក៏​អាច​ប្រើ​សម្មតិនាម ឬ​លក្ខខណ្ឌ​ផ្សេង​ដើម្បី​រក​មើល​អ៊ីមែល​ច្រើន​ទៀត)">
+<!ENTITY partnership.description "ដោយសារ​មាន​ដៃគូ​ជាមួយ​ក្រុមហ៊ុន​ផ្ដល់​មួយ​ចំនួន &brandShortName; អាច​ផ្ដល់​ឲ្យ​អ្នក​នូវ​គណនី​អ៊ីមែល​ថ្មី​មួយ។ អ្នក​គ្រាន់តែ​បំពេញ​នាមត្រកូល និង​នាម​ខ្លួន ឬ​ពាក្យ​ផ្សេងទៀត​ដែល​អ្នក​ចង់​បាន​នៅ​ក្នុង​វាល​ខាងលើ​ដើម្បី​ចាប់ផ្ដើម។">
+<!ENTITY existing.header "អាសយដ្ឋាន​ដែល​ចង់​ប្រើ​មាន​រួចហើយ?">
+<!ENTITY tinyheader.title "យក​អាសយដ្ឋាន?">
+<!ENTITY tinyheader.existing "រំលង​វា រួច​ប្រើ​អាសយដ្ឋាន​ដែល​មាន​ស្រាប់​របស់​ខ្ញុំ">
+<!ENTITY content.close "ខ្ញុំ​គិតថា​ខ្ញុំ​នឹង​កំណត់​រចនាសម្ព័ន្ធ​គណនី​របស់​ខ្ញុំ​នៅ​ពេល​ក្រោយ។">
+<!ENTITY successful.title "Շնորհավորում ենք!">
+<!ENTITY successful.successMessage "អ្នក​បាន​រៀបចំ​គណនី​របស់​អ្នក​ដោយ​ជោគជ័យ។">
+<!ENTITY successful.write "សរសេរ​អ៊ីមែល​ខ្លះ">
+<!ENTITY successful.write.desc "ប្រាប់​មិត្តភ័ក្ដិ និង​គ្រួសារ​របស់​អ្នក​អំពី​អាសយដ្ឋាន​ថ្មី​របស់​អ្នក។<br/> មូលហេតុ​ដែល​អ្នក​ទទួល​បាន​គណនី​ថ្មី​នេះ មិន​ថា​អញ្ចឹង?">
+<!ENTITY successful.customize "ប្ដូរ &brandShortName; តាម​តម្រូវ​ការ​ដោយ​ប្រើ​កម្មវិធី​បន្ថែម​ល្អៗ">
+<!ENTITY successful.customize.desc "មាន​កម្មវិធី​បន្ថែម​រាប់​ពាន់​ដែល​អនុញ្ញាត​ឲ្យ​អ្នក​ប្ដូរ &brandShortName; តាម​តម្រូវ​ការ ដើម្បីឲ្យ​វា​ត្រូវ​តាម​ការ​បញ្ជាក់​តម្រូវ​ការ​របស់​អ្នក។">
+<!ENTITY successful.attach "ភ្ជាប់​ហត្ថលេខា​ផ្ទាល់ខ្លួន​ទៅ​អ៊ីមែល​របស់​ខ្ញុំ">
+<!ENTITY successful.attach.desc "អ្នក​អាច​ភ្ជាប់​សម្រង់ ឬ​ព័ត៌មាន​មួយ​ចំនួន​អំពី​ខ្លួន​អ្នក​ដោយ​ស្វ័យប្រវត្តិ​នៅ​ចុង​សារ​នីមួយៗ​ដែល​អ្នក​ផ្ញើ។">
+<!ENTITY successful.close "បិទ​បង្អួច​នេះ។">
+<!ENTITY input.namePlaceholder "ឈ្មោះ ឬ​សម្មតិនាម​របស់​អ្នក">
+<!ENTITY input.search "Փնտրել">
+<!ENTITY search_engine.title "ប្ដូរ​ម៉ាស៊ីន​ស្វែងរក​របស់​អ្នក​តាម​តម្រូវ​ការ">
+<!ENTITY search_engine.message "ក្រុមហ៊ុន​ផ្ដល់​សេវា​អ៊ីមែល​របស់​អ្នក​អាច​ផ្ដល់​ឲ្យ​អ្នក​នូវ​សមត្ថភាព​ស្វែងរក​បណ្ដាញ។">
+<!ENTITY search_engine.button "Finish">

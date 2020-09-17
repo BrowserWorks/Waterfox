@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Titalüx Rutzijol Ruxaq">
+<!ENTITY windowTitleSettings.label    "Titalüx Kitzijol taq Nuk'ulem">
+<!ENTITY publishTab.label             "Titalüx rutzijol">
+<!ENTITY settingsTab.label            "Taq nuk'ulem">
+<!ENTITY publishButton.label          "Titalüx rutzijol">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Rub'i' Ruxaq:">
+<!ENTITY siteList.accesskey           "u">
+<!ENTITY siteList.tooltip             "Tacha' ri ruxaq k'amaya'l nawajo' nataluj rutzijol">
+<!ENTITY newSiteButton.label          "K'ak'a' Ruxaq">
+<!ENTITY newSiteButton.accesskey      "K">
+<!ENTITY docDirList.label             "Rachcholb'al ruxaq k'amaya'l richin re ruxaq re':">
+<!ENTITY docDirList.accesskey         "R">
+<!ENTITY docDirList.tooltip           "Ticha' o tiz'ib'äx rub'i' ri näj achcholb'äl richin re ruxaq re'">
+<!ENTITY publishImgCheckbox.label     "Ketz'aqatisäx taq wachib'äl chuqa' ch'aqa' chik taq yakb'äl">
+<!ENTITY publishImgCheckbox.accesskey "h">
+<!ENTITY publishImgCheckbox.tooltip   "Titalüx kitzijol taq wachib'äl chuqa' ch'aqa' chik taq yakb'äl ya'on ketal ruma re ruxaq re'">
+<!ENTITY sameLocationRadio.label      "Tokisäx ri k'ojlib'äl achi'el richin ri ruxaq">
+<!ENTITY sameLocationRadio.accesskey  "o">
+<!ENTITY sameLocationRadio.tooltip    "Titalüx kitzijol taq yakb'äl pa ri junam ruk'ojlib'al rik'in ri ruxaq">
+<!ENTITY useSubdirRadio.label         "Tokisäx ri rachcholb'al re ruxaq k'amaya'l re':">
+<!ENTITY useSubdirRadio.accesskey     "c">
+<!ENTITY useSubdirRadio.tooltip       "Titalüx kitzijol ri taq yakb'äl richin ri näj achcholb'äl cha'on">
+<!ENTITY otherDirList.tooltip         "Ticha' chuqa' titz'ib'äx rub'i' ri näj achcholb'äl, akuchi' xtitalüx kitzijol ri taq yakb'äl">
+<!ENTITY pageTitle.label              "Rub'i' Ruxaq:">
+<!ENTITY pageTitle.accesskey          "b">
+<!ENTITY pageTitle.tooltip            "Titz'ib'äx jun b'i'aj richin niya' retal ri ruxaq pa ri tzuwäch chuqa' pa taq yaketal">
+<!ENTITY pageTitleExample.label       "achi'el: &quot;Ruxaq Ajk'amaya'l Wichinan&quot;">
+<!ENTITY filename.label               "Rub'i' yakb'äl:">
+<!ENTITY filename.accesskey           "y">
+<!ENTITY filename.tooltip             "Titz'ib'äx jun rub'i' re yakb'äl re', chuqa' '.html' richin jun ruxaq ajk'amaya'l">
+<!ENTITY filenameExample.label        "achi'el: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label       "Tichap achi'el ri K'o wi">
+<!ENTITY setDefaultButton.accesskey   "K">
+<!ENTITY removeButton.label           "Tiyuj Ruxaq K'amaya'l">
+<!ENTITY removeButton.accesskey       "y">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Tajin Niya' Kitzijol ri taq Ruxaq">
+<!ENTITY serverInfo.label             "Retamab'al K'uxasamaj">
+<!ENTITY loginInfo.label              "Retamab'al Okem">
+<!ENTITY siteName.label               "Rub'i' Ruxaq:">
+<!ENTITY siteName.accesskey           "i">
+<!ENTITY siteName.tooltip             "Jun tzukun b'i'aj, ri nuya' retal re ruxaq k'amaya'l talun rutzijol (achi'el: 'MySite')">
+<!ENTITY siteUrl.label                "Rochochib'al talun rutzijol (achi'el: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "Ri FTP:// o HTTP:// taq ochochib'äl eya'on ruma ri ISP awichin o samaj pa ruwi' ruwarab'al ajk'amaya'l">
+<!ENTITY browseUrl.label              "HTTP taq ochochib'äl richin ri nab'ey ruxaq (achi'el: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "Ri HTTP:// taq ochochib'äl richin ri rucholb'al atikirib'al (man nitz'aqatisäx ta ri rub'i' yakb'äl)">
+<!ENTITY username.label               "Rub'i' winäq:">
+<!ENTITY username.accesskey           "w">
+<!ENTITY username.tooltip             "Ri rub'i' winäq nawokisaj richin yatok pa ri ISP o rusamaj ruwarab'al ajk'amaya'l">
+<!ENTITY password.label               "Ewan tzij:">
+<!ENTITY password.accesskey           "t">
+<!ENTITY password.tooltip             "Ri ewan tzij ruximon ri' rik'in ri rub'i' awinaqil">
+<!ENTITY savePassword.label           "Tiyak Ewan taq Tzij">
+<!ENTITY savePassword.accesskey       "y">
+<!ENTITY savePassword.tooltip         "Ticha' re re' richin niyak ri ewan atzij rik'in rujikomal ri Runuk'samajel Ewan Tzij">

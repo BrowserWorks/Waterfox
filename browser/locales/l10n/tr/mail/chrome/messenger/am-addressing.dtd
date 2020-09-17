@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Düzenleme ve Adresler">
+<!ENTITY addressingGroupTitle.label "Adresler">
+<!ENTITY addressingText.label      "Adreslere bakılırken:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Bu hesap için küresel LDAP sunucu tercihlerimi kullan">
+<!ENTITY useGlobal.accesskey       "L">
+<!ENTITY editDirectories.label     "Dizinleri düzenle…">
+<!ENTITY editDirectories.accesskey "e">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Farklı bir LDAP sunucusu kullan:">
+<!ENTITY directories.accesskey     "F">
+<!ENTITY directoriesNone.label     "Hiçbiri">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Düzenleme">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "İletileri HTML biçiminde yaz">
+<!ENTITY useHtml.accesskey                    "H">
+<!ENTITY autoQuote.label                      "Yanıt yazarken özgün metni otomatik olarak alıntıla">
+<!ENTITY autoQuote.accesskey                  "a">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Alıntı yaparken">
+<!ENTITY quoting.accesskey                    "t">
+<!ENTITY aboveQuote.label                     "yanıtıma alıntının üstünden başla">
+<!ENTITY belowQuote.label                     "yanıtıma alıntının altından başla">
+<!ENTITY selectAndQuote.label                 "alıntıyı seç">
+<!ENTITY place.label                          "ve imzamı şuraya ekle:">
+<!ENTITY place.accesskey                      "v">
+<!ENTITY belowText.label                      "alıntı metnin altına (önerilir)">
+<!ENTITY aboveText.label                      "yanıtımın altına (alıntının üstüne)">
+<!ENTITY includeSigOnReply.label              "Yanıtlara imza ekle">
+<!ENTITY includeSigOnReply.accesskey          "i">
+<!ENTITY includeSigOnForward.label            "İletilenlere imza ekle">
+<!ENTITY includeSigOnForward.accesskey        "z">
+
+<!ENTITY globalComposingPrefs.label           "Genel düzenleme tercihleri…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Genel adres tercihleri…">
+<!ENTITY globalAddressingPrefs.accesskey      "d">

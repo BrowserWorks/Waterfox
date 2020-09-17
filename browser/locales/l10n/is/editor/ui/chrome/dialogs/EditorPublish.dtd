@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Gefa út síðu">
+<!ENTITY windowTitleSettings.label "Útgáfustillingar">
+<!ENTITY publishTab.label "Gefa út">
+<!ENTITY settingsTab.label "Stillingar">
+<!ENTITY publishButton.label "Gefa út">
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label "Nafn vefsins:">
+<!ENTITY siteList.accesskey "e">
+<!ENTITY siteList.tooltip "Veldu það svæði sem þú vilt gefa út á">
+<!ENTITY newSiteButton.label "Nýtt vefsvæði">
+<!ENTITY newSiteButton.accesskey "N">
+<!ENTITY docDirList.label "Undirmappa vefsvæðis fyrir þessa síðu:">
+<!ENTITY docDirList.accesskey "s">
+<!ENTITY docDirList.tooltip "Veldu eða sláðu inn nafn fjarlægrar undirmöppu fyrir þessa síðu">
+<!ENTITY publishImgCheckbox.label "Láta myndir og aðrar skrár fylgja með">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip "Gefa út myndir eða aðrar skrár sem vísað er í af þessari síðu">
+<!ENTITY sameLocationRadio.label "Nota sömu staðsetningu og er á síðu">
+<!ENTITY sameLocationRadio.accesskey "u">
+<!ENTITY sameLocationRadio.tooltip "Gefa skrár út á sömu staðsetningu og síðan er á">
+<!ENTITY useSubdirRadio.label "Nota þessa undirmöppu fyrir svæðið:">
+<!ENTITY useSubdirRadio.accesskey "d">
+<!ENTITY useSubdirRadio.tooltip "Gefa út skrár á valda fjarlægja undirmöppu">
+<!ENTITY otherDirList.tooltip "Veldu eða sláðu inn nafn fjarlægrar undirmöppu þar sem gefa á út skráarnar">
+<!ENTITY pageTitle.label "Titill síðu:">
+<!ENTITY pageTitle.accesskey "T">
+<!ENTITY pageTitle.tooltip "Sláðu inn titil til þess að geta borið kennsl á síðuna í glugga og í bókamerkjum">
+<!ENTITY pageTitleExample.label "t.d.: &quot;Síðan mín&quot;">
+<!ENTITY filename.label "Skráarnafn:">
+<!ENTITY filename.accesskey "f">
+<!ENTITY filename.tooltip "Sláðu inn nafn fyrir þessa skrá, láttu fylgja með '.html' fyrir vefsíðu">
+<!ENTITY filenameExample.label "t.d.,: &quot;mínsíða.html&quot;">
+<!ENTITY setDefaultButton.label "Gera sjálfgefið">
+<!ENTITY setDefaultButton.accesskey "G">
+<!ENTITY removeButton.label "Fjarlægja vefsvæði">
+<!ENTITY removeButton.accesskey "r">
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label "Vefsvæði til að gefa út">
+<!ENTITY serverInfo.label "Upplýsingar um netþjón">
+<!ENTITY loginInfo.label "Auðkenni">
+<!ENTITY siteName.label "Nafn vefsins:">
+<!ENTITY siteName.accesskey "e">
+<!ENTITY siteName.tooltip "Auðkenni sem gefur til kynna hvaða útgáfusvæði þetta er (t.d.: 'MittSvæði')">
+<!ENTITY siteUrl.label "Útgáfu staðsetning (t.d.: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey "a">
+<!ENTITY siteUrl.tooltip "FTP:// eða HTTP:// tengil sem er gefinn upp af netþjónustuaðila eða vefsvæðishýsingu">
+<!ENTITY browseUrl.label "HTTP slóðin fyrir heimasíðuna þína (t.d.: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey "T">
+<!ENTITY browseUrl.tooltip "HTTP:// slóðin fyrir heimamöppuna þína (ekki bæta við skráarnafni)">
+<!ENTITY username.label "Notandanafn:">
+<!ENTITY username.accesskey "N">
+<!ENTITY username.tooltip "Notandanafnið sem þú notar til að skrá þig inn til netþjónustuaðila eða vefsvæðishýsingu">
+<!ENTITY password.label "Lykilorð:">
+<!ENTITY password.accesskey "L">
+<!ENTITY password.tooltip "Lykilorðið sem er tengt við notandanafnið">
+<!ENTITY savePassword.label "Vista lykilorð">
+<!ENTITY savePassword.accesskey "s">
+<!ENTITY savePassword.tooltip "Veldu þetta til að vista lykilorðið þitt á öruggan hátt með því að nota lykilorðageymslu">

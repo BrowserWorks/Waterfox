@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Отваряне…">
+<!ENTITY openFileCmd.accesskey "О">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Отваряне на уеб адрес…">
+<!ENTITY openRemoteCmd.accesskey "а">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Скорошни страници">
+<!ENTITY fileRecentMenu.accesskey "С">
+<!ENTITY saveCmd.label "Запазване">
+<!ENTITY saveCmd.accesskey "З">
+<!ENTITY saveAsCmd.label "Запазване като…">
+<!ENTITY saveAsCmd.accesskey "к">
+<!ENTITY saveAsChangeEncodingCmd2.label "Запазване и промяна на кодирането">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "к">
+<!ENTITY publishCmd.label "Публикуване">
+<!ENTITY publishCmd.accesskey "б">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Публикуване като…">
+<!ENTITY publishAsCmd.accesskey "у">
+<!ENTITY fileRevert.label "Възстановяване">
+<!ENTITY fileRevert.accesskey "в">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Настройки на сайта за публикуване…">
+<!ENTITY publishSettings.accesskey "л">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Нов">
+<!ENTITY newToolbarCmd.tooltip "Създаване на нова страница в композитора">
+<!ENTITY openToolbarCmd.label "Отваряне">
+<!ENTITY openToolbarCmd.tooltip "Отваряне на файл от твърдия диск">
+<!ENTITY saveToolbarCmd.tooltip "Запазване на файла на твърдия диск">
+<!ENTITY publishToolbarCmd.tooltip "Качаване на файл на отдалечен адрес">
+<!ENTITY printToolbarCmd.label "Отпечатване">
+<!ENTITY printToolbarCmd.tooltip "Отпечатване на страницата">

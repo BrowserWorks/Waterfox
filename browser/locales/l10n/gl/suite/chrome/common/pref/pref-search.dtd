@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "Buscar en Internet">
+<!ENTITY legendHeader                     "Buscador predeterminado">
+<!ENTITY defaultSearchEngine.label        "Buscar usando:">
+<!ENTITY defaultSearchEngine.accesskey    "s">
+
+<!ENTITY engineManager.label              "Xestionar os buscadores…">
+
+<!ENTITY searchResults.label              "Resultados da busca">
+
+<!ENTITY openInTab.label                  "Abrir novas lapelas cos resultados da busca na barra lateral">
+<!ENTITY openInTab.accesskey              "n">
+<!ENTITY openContextSearchTab.label       "Abrir unha lapela no lugar dunha xanela para o menú contextual buscar na web">
+<!ENTITY openContextSearchTab.accesskey   "t">
+<!ENTITY openSidebarSearchPanel.label     "Abra a lapela Buscar na barra laterla cando realice unha busca">
+<!ENTITY openSidebarSearchPanel.accesskey "o">

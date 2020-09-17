@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Dezinstalare a unui furnizor">
+<!ENTITY providerUninstall.accept.label                    "Dezabonare de la cel selectat">
+<!ENTITY providerUninstall.accept.accesskey                "D">
+<!ENTITY providerUninstall.cancel.label                    "Păstrează suplimentul">
+<!ENTITY providerUninstall.cancel.accesskey                "P">
+<!ENTITY providerUninstall.preName.label                   "Ai cerut să dezinstalezi sau să dezactivezi:">
+<!ENTITY providerUninstall.postName.label                  "Acest lucru va dezactiva calendarele de mai jos.">
+<!ENTITY providerUninstall.reinstallNote.label             "Dacă nu plănuiți să reinstalați acest furnizor, ați putea dori să vă dezabonați de la calendarele acestui furnizor.">

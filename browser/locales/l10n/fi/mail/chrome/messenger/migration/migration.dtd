@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Ohjattu profiilin tuonti">
+
+<!ENTITY importFromWin.label            "Tuo asetukset, tilien asetukset, osoitteisto, viestisuodattimet ja muut tiedot ohjelmasta:">
+<!ENTITY importFromNonWin.label         "Tuo asetukset, tilien asetukset, osoitteisto, viestisuodattimet ja muut tiedot ohjelmasta:">
+<!ENTITY importSourceNotFound.label     "Ei löydetty sovellusta, josta olisi voitu tuoda tietoja.">
+
+<!ENTITY importFromNothing.label        "Älä tuo mitään">
+<!ENTITY importFromNothing.accesskey    "Ä">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 tai uudempi">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Tuo asetukset ja postikansiot ohjelmasta">
+<!ENTITY importItems.title              "Tuotavat tiedot">
+<!ENTITY importItems.label              "Valitse tuotavat tiedot:">
+
+<!ENTITY migrating.title                "Tuodaan…">
+<!ENTITY migrating.label                "Seuraavia tietoja tuodaan…">
+
+<!ENTITY selectProfile.title            "Valitse profiili">
+<!ENTITY selectProfile.label            "Seuraavat profiilit voidaan tuoda ohjelmista:">
+
+<!ENTITY done.title                     "Tuonti valmis">
+<!ENTITY done.label                     "Seuraavat tiedot tuotiin:">

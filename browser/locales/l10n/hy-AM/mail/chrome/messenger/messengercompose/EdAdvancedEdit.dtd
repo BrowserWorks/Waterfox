@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Հատկության ընդլայնված խմբագիր">
+<!ENTITY AttName.label                  "Հատկությունը.">
+<!ENTITY AttValue.label                 "Նշանակությունը.">
+<!ENTITY PropertyName.label             "Հատկությունը.">
+<!ENTITY currentattributesfor.label     "Ընթացիկ հատկությունները՝">
+<!ENTITY tree.attributeHeader.label     "Հատկանիշը">
+<!ENTITY tree.propertyHeader.label      "Հատկությունը">
+<!ENTITY tree.valueHeader.label         "Նշանակություն">
+<!ENTITY tabHTML.label                  "HTML հատկություններ">
+<!ENTITY tabCSS.label                   "Ներտող ոճ">
+<!ENTITY tabJSE.label                   "JavaScript դեպքեր">
+
+<!ENTITY editAttribute.label    "Սեղմեք այստեղ՝ խմբագրելու համար">
+<!ENTITY removeAttribute.label  "Հեռացնել">

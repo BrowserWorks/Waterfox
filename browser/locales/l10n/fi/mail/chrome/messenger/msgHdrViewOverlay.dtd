@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Vastaanottaja ">
+<!ENTITY fromField4.label "Lähettäjä ">
+<!ENTITY senderField4.label "Lähettäjä ">
+<!ENTITY author.label "Tekijä">
+<!ENTITY organizationField4.label "Organisaatio ">
+<!ENTITY replyToField4.label "Vastausosoite ">
+
+<!ENTITY subjectField4.label "Aihe ">
+<!ENTITY ccField4.label "Kopio ">
+<!ENTITY bccField4.label "Piilokopio ">
+<!ENTITY newsgroupsField4.label "Ryhmät ">
+<!ENTITY followupToField4.label "Vastausryhmä ">
+<!ENTITY tagsHdr4.label "Avainsanat ">
+<!ENTITY dateField4.label "Päiväys ">
+<!ENTITY userAgentField4.label "Asiakasohjelma ">
+<!ENTITY referencesField4.label "Viittaukset ">
+<!ENTITY messageIdField4.label "Viestitunnus ">
+<!ENTITY inReplyToField4.label "Vastauksena viestiin ">
+<!ENTITY originalWebsite4.label "Verkkosivu ">
+
+<!ENTITY hdrArchiveButton1.label "Arkistoi">
+<!ENTITY hdrArchiveButton1.tooltip "Arkistoi viesti">
+<!ENTITY hdrSmartReplyButton1.label "Älyvastaus">
+<!ENTITY hdrReplyButton1.label "Vastaa">
+<!ENTITY hdrReplyButton2.tooltip "Vastaa viestin lähettäjälle">
+<!ENTITY hdrReplyAllButton1.label "Vastaa kaikille">
+<!ENTITY hdrReplyAllButton1.tooltip "Vastaa lähettäjälle ja muille vastaanottajille">
+<!ENTITY hdrReplyListButton1.label "Vastaa listalle">
+<!ENTITY hdrReplyListButton1.tooltip "Vastaa postituslistalle">
+<!ENTITY hdrFollowupButton1.label "Vastaa ryhmään">
+<!ENTITY hdrFollowupButton1.tooltip "Lähetä vastaus tähän keskusteluryhmään">
+<!ENTITY hdrForwardButton1.label "Välitä">
+<!ENTITY hdrForwardButton1.tooltip "Välitä viesti">
+<!ENTITY hdrJunkButton1.label "Roskapostia">
+<!ENTITY hdrJunkButton1.tooltip "Merkitse viesti roskapostiksi">
+<!ENTITY hdrTrashButton1.label "Poista">
+<!ENTITY hdrTrashButton1.tooltip "Poista viesti">
+
+<!ENTITY hdrViewToolbarShowFull.label "Kuvakkeet ja teksti">
+<!ENTITY hdrViewToolbarShowFull.accesskey "j">
+<!ENTITY hdrViewToolbarShowIcons.label "Vain kuvakkeet">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "k">
+<!ENTITY hdrViewToolbarShowText.label "Vain teksti">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Näytä aina vastaa lähettäjälle">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "N">
+
+<!ENTITY otherActionsButton2.label "Lisää">
+<!ENTITY otherActionsButton.tooltip "Lisää toimintoja">
+<!ENTITY otherActionsOpenConversation1.label "Avaa keskusteluna">
+<!ENTITY otherActionsOpenConversation1.accesskey "k">
+<!ENTITY otherActionsOpenInNewWindow1.label "Avaa uuteen ikkunaan">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "a">
+<!ENTITY otherActionsOpenInNewTab1.label "Avaa uuteen välilehteen">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "v">
+<!ENTITY markAsReadMenuItem1.label "Merkitse luetuksi">
+<!ENTITY markAsReadMenuItem1.accesskey "l">
+<!ENTITY markAsUnreadMenuItem1.label "Merkitse ei luetuksi">
+<!ENTITY markAsUnreadMenuItem1.accesskey "e">
+<!ENTITY saveAsMenuItem1.label "Tallenna nimellä…">
+<!ENTITY saveAsMenuItem1.accesskey "t">
+<!ENTITY viewSourceMenuItem1.label "Näytä lähdekoodi…">
+<!ENTITY viewSourceMenuItem1.accesskey "n">
+<!ENTITY otherActionsPrint1.label "Tulosta…">
+<!ENTITY otherActionsPrint1.accesskey "u">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Liitepaneeli näkyvissä oletuksena">
+<!ENTITY startExpandedCmd.accesskey    "L">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Avaa">
+<!ENTITY openAttachmentCmd.accesskey    "A">
+<!ENTITY saveAsAttachmentCmd.label    "Tallenna nimellä…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "n">
+<!ENTITY detachAttachmentCmd.label    "Irrota…">
+<!ENTITY detachAttachmentCmd.accesskey    "I">
+<!ENTITY deleteAttachmentCmd.label    "Poista">
+<!ENTITY deleteAttachmentCmd.accesskey    "P">
+<!ENTITY openAllAttachmentsCmd.label    "Avaa kaikki…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "v">
+<!ENTITY saveAllAttachmentsCmd.label    "Tallenna kaikki…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "k">
+<!ENTITY detachAllAttachmentsCmd.label    "Irrota kaikki…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "I">
+<!ENTITY deleteAllAttachmentsCmd.label    "Poista kaikki…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "K">
+
+<!ENTITY openAttachment.tooltip "Avaa liitetty tiedosto">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Avaa sisältävä kansio">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "s">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Näytä Finderissa">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Tallenna">
+<!ENTITY saveAttachmentButton1.tooltip     "Tallenna liitetty tiedosto">
+<!ENTITY saveAllAttachmentsButton1.label   "Tallenna kaikki">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Tallenna kaikki liitetyt tiedostot">
+
+<!ENTITY copyLinkCmd.label        "Kopioi linkin osoite">
+<!ENTITY copyLinkCmd.accesskey    "K">
+
+<!ENTITY CopyMessageId.label "Kopioi viestitunnus">
+<!ENTITY CopyMessageId.accesskey "K">
+<!ENTITY OpenMessageForMsgId.label "Avaa viesti tunnukselle">
+<!ENTITY OpenMessageForMsgId.accesskey "A">
+<!ENTITY OpenBrowserWithMsgId.label "Avaa selaimeen viestitunnuksella">
+<!ENTITY OpenBrowserWithMsgId.accesskey "s">

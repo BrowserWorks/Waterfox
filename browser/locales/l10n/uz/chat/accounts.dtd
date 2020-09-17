@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "Hisoblar - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Xabar almashish holati">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Yangi hisob">
+<!ENTITY accountManager.newAccount.accesskey "Y">
+<!ENTITY accountManager.close.label          "Yopish">
+<!ENTITY accountManager.close.accesskey      "Y">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Hozirgacha birorta hisob sozlanmagan">
+<!ENTITY accountManager.noAccount.description "&brandShortName; sizga hisobni sozlashda yordam berishi uchun &accountManager.newAccount.label; tugmasiga bosing.">
+<!ENTITY account.autoSignOn.label     "Tizim yuklanganda avtomatik kirsin">
+<!ENTITY account.autoSignOn.accesskey "k">
+<!ENTITY account.connect.label        "Ulanish">
+<!ENTITY account.connect.accesskey    "l">
+<!ENTITY account.disconnect.label     "Uzish">
+<!ENTITY account.disconnect.accesskey "U">
+<!ENTITY account.delete.label         "O‘chirish">
+<!ENTITY account.delete.accesskey     "O">
+<!ENTITY account.edit.label           "Xossalari">
+<!ENTITY account.edit.accesskey       "X">
+<!ENTITY account.moveup.label         "Yuqoriga">
+<!ENTITY account.movedown.label       "Pastga">
+<!ENTITY account.cancelReconnection.label         "Qayta ulanishni bekor qilish">
+<!ENTITY account.cancelReconnection.accesskey     "b">
+<!ENTITY account.copyDebugLog.label     "Tuzatish jurnalidan nusxa ko‘chirish">
+<!ENTITY account.copyDebugLog.accesskey "n">
+<!ENTITY account.showDebugLog.label     "Tuzatish jurnalini ko‘rsatish">
+<!ENTITY account.showDebugLog.accesskey "k">
+<!ENTITY account.connecting           "Ulanmoqda…">
+<!ENTITY account.disconnecting        "Uzilmoqda…">
+<!ENTITY account.disconnected         "Ulanmagan">

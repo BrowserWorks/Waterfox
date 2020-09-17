@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!ENTITY replaceDialog.title "Vind en vervang">
+<!ENTITY findField.label "Vind teks:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY replaceField.label "Vervang met:">
+<!ENTITY replaceField.accesskey "v">
+
+
+<!ENTITY wrapCheckbox.label "Vou om">
+<!ENTITY wrapCheckbox.accesskey "V">
+<!ENTITY backwardsCheckbox.label "Deursoek terugwaarts">
+<!ENTITY backwardsCheckbox.accesskey "t">
+<!ENTITY findNextButton.label "Vind volgende">
+<!ENTITY findNextButton.accesskey "V">
+<!ENTITY replaceButton.label "Vervang">
+<!ENTITY replaceButton.accesskey "V">
+<!ENTITY replaceAndFindButton.label "Vervang en vind">
+<!ENTITY replaceAndFindButton.accesskey "n">
+<!ENTITY replaceAllButton.label "Vervang alles">
+<!ENTITY replaceAllButton.accesskey "a">
+
+

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Espublizar páxina">
+<!ENTITY windowTitleSettings.label "Configuración de publicación">
+<!ENTITY publishTab.label "Espublizar">
+<!ENTITY settingsTab.label "Configuración">
+<!ENTITY publishButton.label "Espublizar">
+<!ENTITY siteList.label "Nome del sitiu:">
+<!ENTITY siteList.accesskey "e">
+<!ENTITY siteList.tooltip "Escueyi'l sitiu nel que quies espublizar">
+<!ENTITY newSiteButton.label "Sitiu nuevu">
+<!ENTITY newSiteButton.accesskey "N">
+<!ENTITY docDirList.label "Subdireutoriu del sitiu pa esta páxina:">
+<!ENTITY docDirList.accesskey "S">
+<!ENTITY docDirList.tooltip "Escueyi o introduz el nome del subdireutoriu remotu pa esta páxina">
+<!ENTITY publishImgCheckbox.label "Incluyir imáxenes y otros ficheros">
+<!ENTITY publishImgCheckbox.accesskey "I">
+<!ENTITY publishImgCheckbox.tooltip "Espublizar imáxenes y otros ficheros referenciaos por esta páxina">
+<!ENTITY sameLocationRadio.label "Usar la mesma direición como páxina">
+<!ENTITY sameLocationRadio.accesskey "U">
+<!ENTITY sameLocationRadio.tooltip "Espublizar ficheros na mesma direición que la páxina">
+<!ENTITY useSubdirRadio.label "Usar esti subdireutoriu del sitiu:">
+<!ENTITY useSubdirRadio.accesskey "d">
+<!ENTITY useSubdirRadio.tooltip "Espublizar archivos al subdireutoriu remotu esbilláu">
+<!ENTITY otherDirList.tooltip "Escueyi o introduz el nome del subdireutoriu remotu au se van espublizar los ficheros">
+<!ENTITY pageTitle.label "Títulu de la páxina:">
+<!ENTITY pageTitle.accesskey "T">
+<!ENTITY pageTitle.tooltip "Introduz un títulu pa identificar la páxina na ventana y nos marcadores">
+<!ENTITY pageTitleExample.label "ex.: &quot;La mio páxina web&quot;">
+<!ENTITY filename.label "Nome de ficheru:">
+<!ENTITY filename.accesskey "a">
+<!ENTITY filename.tooltip "Introduz un nome pa esti ficheru, incluyendo '.html' si ye una páxina web">
+<!ENTITY filenameExample.label "ex.: &quot;lamiopaxina.html&quot;">
+<!ENTITY setDefaultButton.label "Esbillar como valor predetermináu">
+<!ENTITY setDefaultButton.accesskey "S">
+<!ENTITY removeButton.label "Desaniciar sitiu">
+<!ENTITY removeButton.accesskey "r">
+<!ENTITY publishSites.label "Sitios d'espublización">
+<!ENTITY serverInfo.label "Información del sitiu web">
+<!ENTITY loginInfo.label "Sirvidor d'espublización">
+<!ENTITY siteName.label "Nome del sitiu:">
+<!ENTITY siteName.accesskey "e">
+<!ENTITY siteName.tooltip "Un nome qu'identifique esti sitiu d'espublización (e.x.: 'ElMioSitiu')">
+<!ENTITY siteUrl.label "Direición d'espublización (e.x.: 'ftp://ftp.mipsi.com/elmionomedusuariu'):">
+<!ENTITY siteUrl.accesskey "p">
+<!ENTITY siteUrl.tooltip "La direición FTP:// o HTTP:// proporcionada pol PSI o serviciu d'agospiamientu web">
+<!ENTITY browseUrl.label "Direición HTTP de la páxina inicial (e.x.: 'http://www.mipsi.com/elmionomedusuariu'):">
+<!ENTITY browseUrl.accesskey "H">
+<!ENTITY browseUrl.tooltip "La direición HTTP:// del to direutoriu personal (nun incluyas el nome de ficheru)">
+<!ENTITY username.label "Nome d'usuariu:">
+<!ENTITY username.accesskey "U">
+<!ENTITY username.tooltip "El nome d'usuariu qu'uses p'aniciar sesión nel PSI o serviciu d'agospiamientu web">
+<!ENTITY password.label "Contraseña:">
+<!ENTITY password.accesskey "o">
+<!ENTITY password.tooltip "La contraseña asociada al to nome d'usuariu">
+<!ENTITY savePassword.label "Guardar contraseña">
+<!ENTITY savePassword.accesskey "G">
+<!ENTITY savePassword.tooltip "Seleiciona esta caxella pa guardar la contraseña de mou seguru usando'l xestor de contraseñes">

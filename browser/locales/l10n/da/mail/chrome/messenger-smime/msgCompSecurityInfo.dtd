@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "Meddelelsessikkerhed">
+<!ENTITY subject.plaintextWarning "Bemærk: Emnelinjerne i meddelelser er aldrig krypteret.">
+<!ENTITY status.heading "Indeholdet af din meddelelse vil blive sendt som følgende:">
+<!ENTITY status.signed "Underskrevet digitalt:">
+<!ENTITY status.encrypted "Krypteret:">
+<!ENTITY status.certificates "Certifikater:">
+<!ENTITY view.label "Vis">
+<!ENTITY view.accesskey "V">
+<!ENTITY tree.recipient "Modtager:">
+<!ENTITY tree.status "Status:">
+<!ENTITY tree.issuedDate "Udstedt:">
+<!ENTITY tree.expiresDate "Udløber:">

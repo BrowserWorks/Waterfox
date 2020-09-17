@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "編輯設定">
+
+<!ENTITY  authorName.label          "作者:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "預設頁面設定">
+
+<!ENTITY defaultColors.label        "使用瀏覽器的色彩設定(本網頁不指定色彩)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "使用者自訂色彩:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "一般文字">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "未瀏覽過的鏈結文字:">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "被點選的鏈結文字色彩:">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "已瀏覽過的鏈結文字:">
+<!ENTITY visitedLinkText.accesskey  "V">
+<!ENTITY background.label           "背景:">
+<!ENTITY background.accesskey       "B">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "背景圖片檔:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "選擇檔案…">
+<!ENTITY chooseFile.accesskey       "o">
+
+

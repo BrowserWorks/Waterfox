@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!ENTITY replaceDialog.title "Sök och ersätt">
+<!ENTITY findField.label "Sök:">
+<!ENTITY findField.accesskey "S">
+<!ENTITY replaceField.label "Ersätt med:">
+<!ENTITY replaceField.accesskey "m">
+<!ENTITY caseSensitiveCheckbox.label "Matcha gemener/versaler">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "Hela dokumentet">
+<!ENTITY wrapCheckbox.accesskey "d">
+<!ENTITY backwardsCheckbox.label "Sök bakåt">
+<!ENTITY backwardsCheckbox.accesskey "b">
+<!ENTITY findNextButton.label "Sök nästa">
+<!ENTITY findNextButton.accesskey "n">
+<!ENTITY replaceButton.label "Ersätt">
+<!ENTITY replaceButton.accesskey "E">
+<!ENTITY replaceAndFindButton.label "Ersätt och sök">
+<!ENTITY replaceAndFindButton.accesskey "o">
+<!ENTITY replaceAllButton.label "Ersätt alla">
+<!ENTITY replaceAllButton.accesskey "a">
+<!ENTITY closeButton.label "Stäng">
+<!ENTITY closeButton.accesskey "S">

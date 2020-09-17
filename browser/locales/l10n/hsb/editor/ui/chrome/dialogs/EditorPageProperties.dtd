@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Kajkosće strony">
+<!ENTITY location.label "Městno:">
+<!ENTITY lastModified.label "Posledni raz změnjeny:">
+<!ENTITY titleInput.label "Titul:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Awtor:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "Wopisanje:">
+<!ENTITY descriptionInput.accessKey "W">
+<!ENTITY locationNewPage.label "[Nowa strona, hišće njeskładowana]">
+<!ENTITY EditHEADSource1.label "Rozšěrjeni wužiwarjo:">
+<!ENTITY EditHEADSource2.label "Zo byšće druhi wobsah wotrězka &lt;head&gt; wobdźěłał, wužijće &quot;Žórłowy kod HTML&quot; w meniju Napohlad abo we wobdźěłowanskej lajsće.">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "නව ෆෝල්ඩරයක්">
+<!ENTITY name.label                 "නම:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "මෙතුළ උප ෆෝල්ඩරයක් සේ සාදන්න:">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "මෙම සේවාදායකය ෆෝල්ඩර ආකාර දෙකකට සීමා කරයි.">
+<!ENTITY folderRestriction2.label   "ඔබගේ නව ෆෝල්ඩරයට දැරිය හැක්කේ:">
+<!ENTITY foldersOnly.label          "ෆෝල්ඩර පමණි">
+<!ENTITY messagesOnly.label         "ලිපි පමණි">
+<!ENTITY accept.label               "ෆෝල්ඩරයක් සාදන්න">
+<!ENTITY accept.accesskey           "r">

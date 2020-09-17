@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Metin Alanı Özellikleri">
+
+<!ENTITY Settings.label "Ayarlar">
+
+<!ENTITY TextAreaName.label "Alan adı:">
+<!ENTITY TextAreaName.accessKey "n">
+<!ENTITY TextAreaRows.label "Satır:">
+<!ENTITY TextAreaRows.accessKey "r">
+<!ENTITY TextAreaCols.label "Sütun:">
+<!ENTITY TextAreaCols.accessKey "n">
+<!ENTITY TextAreaReadOnly.label "Salt Okunur">
+<!ENTITY TextAreaReadOnly.accessKey "O">
+<!ENTITY TextAreaDisabled.label "Kullanılamaz">
+<!ENTITY TextAreaDisabled.accessKey "m">
+<!ENTITY TextAreaTabIndex.label "Sekme Endeksi:">
+<!ENTITY TextAreaTabIndex.accessKey "S">
+<!ENTITY TextAreaAccessKey.label "Erişim Tuşu:">
+<!ENTITY TextAreaAccessKey.accessKey "r">
+<!ENTITY InitialText.label "Başlangıç Metni:">
+<!ENTITY InitialText.accessKey "t">
+
+<!ENTITY TextAreaWrap.label "Kaydırma Kipi:">
+<!ENTITY TextAreaWrap.accessKey "K">
+<!ENTITY WrapDefault.value "Varsayılan">
+<!ENTITY WrapOff.value "Kapalı">
+<!ENTITY WrapHard.value "Sert">
+<!ENTITY WrapSoft.value "Yumuşak">
+<!ENTITY WrapPhysical.value "Fiziksel">
+<!ENTITY WrapVirtual.value "Sanal">

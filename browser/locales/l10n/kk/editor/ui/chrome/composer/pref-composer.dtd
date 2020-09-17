@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Соңғы ашылған парақтар">
+<!ENTITY  documentsInMenu.label         "Тізімдегі максималды парақтар саны:">
+<!ENTITY  documentsInMenu.accesskey     "н">
+<!ENTITY  savingFiles.title             "Парақтарды сақтау немесе жариялау кезінде">
+<!ENTITY  preserveExisting.label        "Бастапқы пішімдеуді сақтап қалу">
+<!ENTITY  preserveExisting.accesskey    "а">
+<!ENTITY  preserveExisting.tooltip      "Жолдарды тасымалдауды және парақтың бастапқы пішімдеуін сақтап қалады">
+<!ENTITY  saveAssociatedFiles.label     "Парақтарды сақтау кезінде суреттер және басқа байланысқан файлдарды сақтау">
+<!ENTITY  saveAssociatedFiles.accesskey "с">
+<!ENTITY  showPublishDialog.label       "Парақтарды жариялау кезінде әрқашан &quot;Жариялау&quot; сұхбатын көрсету">
+<!ENTITY  showPublishDialog.accesskey   "а">
+<!ENTITY  composerEditing.label         "Түзету">
+<!ENTITY  maintainStructure.label       "Ұяшықтарды кірістіру не өшіру кезінде кесте құрылымын сақтап отыру">
+<!ENTITY  maintainStructure.tooltip     "Ұяшықтарды кірістіру немесе өшіруден кейін кестенің төртбұрышты пішінін ұяшықтарды автоматты түрде қосу арқылы сақтап отыру.">
+<!ENTITY  maintainStructure.accesskey   "ы">
+<!ENTITY  useCSS.label                  "HTML элементтері және атрибуттары орнына CSS стильдерін қолдану">
+<!ENTITY  useCSS.accesskey              "д">
+<!ENTITY  crInPCreatesNewP.label        "Абзацта &quot;Enter&quot; батырмасын басу әрқашан да жаңа абзацты жасайды">
+<!ENTITY  crInPCreatesNewP.accesskey    "р">

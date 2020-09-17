@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire.accesskey "Е">
+
+<!ENTITY menu_securitySign.label "Дигитално потпиши ја оваа порака">
+<!ENTITY menu_securitySign.accesskey "п">
+
+<!ENTITY menu_securityStatus.label "Прикажи ги информациите за безбедноста">
+<!ENTITY menu_securityStatus.accesskey "и">
+
+<!ENTITY securityButton.label "Безбедност">
+<!ENTITY securityButton.tooltip "Видете ги или променете ги безбедносните поставки">
+
+<!ENTITY menu_viewSecurityStatus.label "Информации за безбедноста на пораката">
+<!ENTITY menu_viewSecurityStatus.accesskey "И">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Davart &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; è experimental ed eventualmain instabel.">
+<!ENTITY aboutPage.checkForUpdates.link         "Tschertgar actualisaziuns »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Tschertgar actualisaziuns…">
+<!ENTITY aboutPage.checkForUpdates.none         "Naginas actualisaziuns disponiblas">
+<!ENTITY aboutPage.checkForUpdates.available2   "Telechargiar l'actualisaziun">
+<!ENTITY aboutPage.checkForUpdates.downloading  "L'actualisaziun vegn telechargiada…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Installar l'actualisaziun">
+<!ENTITY aboutPage.faq.label                    "Dumondas frequentas">
+<!ENTITY aboutPage.support.label                "Agid">
+<!ENTITY aboutPage.privacyPolicy.label          "Directivas per la protecziun da datas">
+<!ENTITY aboutPage.rights.label                 "Davart tes dretgs">
+<!ENTITY aboutPage.relNotes.label               "Remartgas davart la versiun">
+<!ENTITY aboutPage.credits.label                "Engraziaments">
+<!ENTITY aboutPage.license.label                "Infurmaziuns davart la licenza">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox ed ils logos da Firefox èn marcas da la Mozilla Foundation.">

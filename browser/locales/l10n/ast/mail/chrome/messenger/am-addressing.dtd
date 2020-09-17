@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label "Redaición y direiciones">
+<!ENTITY addressingGroupTitle.label "Direiciones">
+<!ENTITY addressingText.label "Cuando se busquen direiciones:">
+<!ENTITY useGlobal.label "Usar les mios preferencies de sirvidor LDAP globales pa esta cuenta">
+<!ENTITY useGlobal.accesskey "U">
+<!ENTITY editDirectories.label "Editar direutorios…">
+<!ENTITY editDirectories.accesskey "E">
+<!ENTITY directories.label "Utilizar un sirvidor LDAP distintu:">
+<!ENTITY directories.accesskey "d">
+<!ENTITY directoriesNone.label "Dengún">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label "Redaición">
+<!ENTITY useHtml.label "Redactar mensaxes en formatu HTML">
+<!ENTITY useHtml.accesskey "R">
+<!ENTITY autoQuote.label "Citar automáticamente el mensaxe orixinal al responder">
+<!ENTITY autoQuote.accesskey "C">
+<!ENTITY aboveQuote.label "entamar la mio rempuesta sobre'l testu citáu">
+<!ENTITY belowQuote.label "entamar la mio rempuesta baxo'l testu citáu">
+<!ENTITY selectAndQuote.label "seleicionar el testu citáu">
+<!ENTITY place.label "y poner la mio robla">
+<!ENTITY place.accesskey "r">
+<!ENTITY belowText.label "baxo'l testu citáu (recomiéndase)">
+<!ENTITY aboveText.label "Baxo la mio rempuesta (sobre'l testu citáu)">
+<!ENTITY includeSigOnReply.label "Incluyir robla nes rempuestes">
+<!ENTITY includeSigOnReply.accesskey "I">
+<!ENTITY includeSigOnForward.label "Incluyir robla en los re-unvios">
+<!ENTITY includeSigOnForward.accesskey "I">
+
+<!ENTITY globalComposingPrefs.label "Preferencies xenerales de redaición…">
+<!ENTITY globalComposingPrefs.accesskey "P">
+
+<!ENTITY globalAddressingPrefs.label "Preferencies xenerales de direiciones…">
+<!ENTITY globalAddressingPrefs.accesskey "a">

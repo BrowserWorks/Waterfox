@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "წერილის ჩვენება">
+<!ENTITY style.label                      "სტილი:">
+<!ENTITY style.accesskey                  "S">
+<!ENTITY regular.label                    "ჩვეულებრივი">
+<!ENTITY bold.label                       "მუქი">
+<!ENTITY italic.label                     "კურსივი">
+<!ENTITY boldItalic.label                 "მუქი კურსივი">
+<!ENTITY size.label                       "ზომა:">
+<!ENTITY size.accesskey                   "z">
+<!ENTITY bigger.label                     "გაზრდა">
+<!ENTITY smaller.label                    "შემცირება">
+<!ENTITY color.label                      "ფერი:">
+<!ENTITY color.accesskey                  "C">
+<!ENTITY displayPlainText.caption         "ჩვეულებრივი ტექსტური წერილები">
+<!ENTITY fontPlainText.label              "შრიფტი:">
+<!ENTITY fontPlainText.accesskey          "F">
+<!ENTITY displayQuoted.label              "ციტირებული წერილების პარამეტრები:">
+<!ENTITY wrapInMsg.label                  "სტრიქონების გადატანა სარკმლის სიგანეზე">
+<!ENTITY wrapInMsg.accesskey              "W">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "მიმიკების გრაფიკულად ჩვენება">
+<!ENTITY convertEmoticons.accesskey       "D">
+<!ENTITY generalMessageDisplay.caption    "ძირითადი">
+<!ENTITY autoMarkAsRead.label             "წერილების წაკითხულად ავტომატურად მონიშვნა">
+<!ENTITY autoMarkAsRead.accesskey         "A">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "ასახვიდან">
+<!ENTITY markAsReadAfter.accesskey        "t">
+<!ENTITY secondsLabel.label               "წამის შემდეგ">
+
+<!ENTITY openingMessages.label            "წერილების გახსნისას მათი ჩვენება:">
+<!ENTITY newWindowRadio.label             "ახალ სარკმელში">
+<!ENTITY newWindowRadio.accesskey         "n">
+<!ENTITY existingWindowRadio.label        "წერილის არსებულ სარკმელში">
+<!ENTITY existingWindowRadio.accesskey    "e">
+<!ENTITY disableContent.label             "სურათებისა და სხვა მასალის დაბლოკვა გარე წყაროდან,">
+<!ENTITY disableContent.accesskey         "B">
+<!ENTITY showCondensedAddresses.label     "ჩემს წიგნაკში ხალხის მხოლოდ ეკრანული სახელების ჩვენება">
+<!ENTITY showCondensedAddresses.accesskey "o">
+<!ENTITY closeMsgWindowOnDelete.label     "წერილის სარკმლის დახურვა წაშლისას">
+<!ENTITY closeMsgWindowOnDelete.accesskey "l">

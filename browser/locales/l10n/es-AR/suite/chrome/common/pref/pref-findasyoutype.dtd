@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Buscar al tipear">
+<!ENTITY findAsYouTypeBehavior.label "Buscar al tipear">
+<!ENTITY findAsYouTypeTip.label "Consejo: Para empezar a buscar al tipear manualmente, pulse / para buscar texto o ' para buscar enlaces, seguido del texto que desa encontrar.">
+<!ENTITY findAsYouTypeTimeout.label "Borrar la búsqueda actual después de unos segundos de inactividad">
+<!ENTITY findAsYouTypeTimeout.accesskey "c">
+<!ENTITY findAsYouTypeSound.label "Reproducir un sonido cuando el texto tipeado no se encuentre">
+<!ENTITY findAsYouTypeSound.accesskey "p">
+<!ENTITY findAsYouTypeEnableAuto.label "Buscar automáticamente en la página web cuando se escribe:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "u">
+<!ENTITY findAsYouTypeAutoText.label "Cualquier texto en la página">
+<!ENTITY findAsYouTypeAutoText.accesskey "a">
+<!ENTITY findAsYouTypeAutoLinks.label "Enlaces solamente">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "o">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Mostrar la barra de búsqueda cuando se busca al tipear">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "s">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Nota: Buscar al tipear sin mostrar la barra de búsqueda no permite el ingreso de texto internacional.">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox એકાઉન્ટ">
+<!ENTITY aboutAccounts.connected.description "તમે જોડાયેલ છે">
+<!ENTITY aboutAccounts.syncPreferences.label "સમન્વયન સેટિંગ્સ તપાસવા માટે અહીં ટેપ કરો">
+
+<!ENTITY aboutAccounts.noConnection.title "ઇન્ટરનેટ કનેક્શન નથી">
+<!ENTITY aboutAccounts.retry.label "ફરીથી પ્રયત્ન કરો">
+
+<!ENTITY aboutAccounts.restrictedError.title "પ્રતિબંધિત">
+<!ENTITY aboutAccounts.restrictedError.description "તમે આ રૂપરેખામાંથી Firefox ખાતું વ્યવસ્થા કરી શકતા નથી.">

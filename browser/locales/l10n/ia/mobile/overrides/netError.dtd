@@ -1,0 +1,186 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problema cargante le pagina">
+<!ENTITY retry.label "Retentar">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Non pote connecter se">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Iste adresse es restricte">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Servitor non trovate">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul>
+  <li>Controla al adresse le errores de dactylographia como:
+    <strong>ww</strong>.example.com pro
+    <strong>www</strong>.example.com</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Recercar</button>
+    </div>
+  <li>Si tu non pote cargar ulle paginas, controla tu connexion de datos o WiFi.
+    <button id='wifi'>Activar Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "File non trovate">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Verifica si le nomine del file ha errores de majusculas e minusculas o altere errores orthographic.</li> <li>Verifica si le file ha essite movite, renominate o delite.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Le accesso al file esseva negate">
+<!ENTITY fileAccessDenied.longDesc "<ul>
+  <li>Illo pote esser state removite, movite, o le permissiones del file pote prevenir le accesso.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Oops.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; non pote cargar iste pagina pro alcun ration.</p>
+">
+
+<!ENTITY malformedURI.title "Le adresse non es valide">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul>
+  <li>Le adresses Web es solitemente scribite como
+    <strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Recercar</button>
+    </div>
+  <li>Certifica que tu usa le barras diagonal avante (i.e.
+    <strong>/</strong>).</li>
+</ul>">
+
+<!ENTITY netInterrupt.title "La connexion esseva interrumpite">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Documento expirate">
+<!ENTITY notCached.longDesc "<p>Le documento requestate non es disponibile in le cache de &brandShortName;.</p><ul><li>Como precaution de securitate, &brandShortName; non pote peter automaticamente documentos delicate.</li><li>Clicca en Reprobar pro re-requestar le documento del sito web.</li></ul>">
+
+<!ENTITY netOffline.title "Modo disconnectite">
+
+<!ENTITY contentEncodingError.title "Error de codification del contento">
+<!ENTITY contentEncodingError.longDesc "<ul>
+  <li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Typo de file non secur">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Le connexion ha essite restabilite">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Le connexion ha expirate">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Le adresse non ha essite comprendite">
+<!ENTITY unknownProtocolFound.longDesc "<ul>
+  <li>Tu pote deber installar altere software pro aperir iste adresse.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Le servitor proxy recusa connexiones">
+<!ENTITY proxyConnectFailure.longDesc "<ul>
+  <li>Controla que le parametros del proxy es correcte.</li>
+  <li>Contacta tu administrator de rete pro saper si le servitor del proxy functiona.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Incapace de trovar le servitor proxy">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul>
+  <li>Controla le configurationes del servitor proxy pro certificar que illos son correcte.</li>
+  <li>Controla que tu apparato ha un connexion de datos o Wi-Fi functional.
+    <button id='wifi'>Habilitar Wi-Fi</button> </li>
+</ul>">
+
+<!ENTITY redirectLoop.title "Le pagina non redirige correctemente">
+<!ENTITY redirectLoop.longDesc "<ul>
+  <li>Le causa de iste problema pote ser le disactivation o le refusa
+    del cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Responsa del servitor inspectate">
+<!ENTITY unknownSocketType.longDesc "<ul>
+  <li>Verifica que tu systema ha le gestor de securitate personal installate.</li>
+  <li>Isto pote esser a causa de un configuration non standard del servitor.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Connexion secur fallite">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Le pagina que tu tenta vider non pote esser monstrate perque le authenticitate del datos recipite non poteva esser verificate.</li>
+  <li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Connexion secur fallite">
+<!ENTITY nssBadCert.longDesc2 "<ul>
+  <li>Iste pote ser un problema con la configuration del servitor, o il pote ser alcuno que tenta de simular le servitor.</li>
+  <li>Si tu te habeva connectite antea a iste servitor con successo, le error pote ser temporari, e tu pote lo reprobara depois.</li>
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul>
+  <li>Iste sito pote esser temporarimente indisponibile o troppo occupate. Reprobar depost alicun momentos.</li>
+  <li>Si tu es incapace cargar qualcunque paginas, controla le datos o le connexion Wi-Fi de tu apparato.
+    <button id='wifi'>Activar Wi-Fi</button>
+  </li></ul>">
+
+<!ENTITY cspBlocked.title "Blocate per le politica de securitate de contento">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; impediva iste pagina de cargar in iste maniera proque le pagina ha un politica de securitate de contento que non lo permitte.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Error de contento corrumpite">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Le pagina que tu tenta de vider non pote ser monstrate, proque un error in le transmission de datos era detegite.</p><ul><li>Per favor, contacta le proprietarios del sito pro les avisar re iste problema.</li></ul>">
+
+<!ENTITY securityOverride.linkText "O tu pote adder un exception…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Porta me foras de hic!">
+<!ENTITY securityOverride.exceptionButtonLabel "Adder un exception…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Tu non deberea adder un exception si tu usa un connexion a Internet que tu non fide completemente o si tu nonsole vider un advertimento pro iste servitor.</p> <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL remote">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Per favor contacta le domino del sito Web pro le informar de iste problema.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Incapace de connecter se securmente">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Informationes avantiate: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Tu connexion non es secur">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Information avantiate: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Tu connexion non es secur">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> usa technologia de securitate que es obsolete e es vulnerabile a attaccos. Un attaccator poterea revelar facilemente informationes que tu pensava esser secur. Le administrator del sito web besoniara corriger le servitor ante que tu pote visitar le sito.</p><p>Codice error: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Error de protocollo de rete">
+<!ENTITY networkProtocolError.longDesc "<p>Le pagina que tu tenta vider non pote esser monstrate per un error era divelate in le protocollo de rete.</p><ul><li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li></ul>">

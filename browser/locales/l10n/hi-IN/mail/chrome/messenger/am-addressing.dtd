@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Composition &amp; Addressing">
+<!ENTITY addressingGroupTitle.label "पता">
+<!ENTITY addressingText.label      "जब पता में देखा जा रहा हो:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "मेरा वैश्विक LDAP सर्वर क्षमता को इस खाते के लिये प्रयोग करें">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "निर्देशिका संपादित करें...">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "अलग LDAP सर्वर प्रयोग करें:">
+<!ENTITY directories.accesskey     "d">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label "संरचना">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "HTML प्रारूप में संदेश लिखें">
+<!ENTITY useHtml.accesskey                    "C">
+<!ENTITY autoQuote.label                      "जबाव के वक्त मूल संदेश को स्वतः उद्धृत करें">
+<!ENTITY autoQuote.accesskey                  "q">
+<!ENTITY aboveQuote.label                     "मेरे जबाव को उद्धरण के ऊपर शुरू करें">
+<!ENTITY belowQuote.label                     "मेरे जबाव को उद्धरण के नीचे शुरू करें">
+<!ENTITY selectAndQuote.label                 "उद्धरण चुनें">
+<!ENTITY place.label                          "मेरे हस्ताक्षर को रखें">
+<!ENTITY place.accesskey                      "p">
+<!ENTITY belowText.label                      "उद्धरण के नीचे (अनुशंसित)">
+<!ENTITY aboveText.label                      "जबाव के नीचे (उद्धरण के ऊपर)">
+

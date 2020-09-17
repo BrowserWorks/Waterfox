@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+ "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Prywatność w&nbsp;sieci Internet</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+
+<h1 id="using_privacy_features">Ustawienia dotyczące prywatności</h1>
+
+<p>&brandShortName; zawiera użyteczne funkcje poprawiające zachowanie prywatności i&nbsp;bezpieczeństwa danych użytkownika przesyłanych siecią Internet. Poniższe informacje odnoszą się do części pomocy objaśniających ustawienia przeglądarki w&nbsp;zakresie kontroli plików ciasteczek, haseł i&nbsp;obrazków przesyłanych podczas przeglądania zasobów Internetu.</p>
+
+<p>Informacje o&nbsp;zastosowanych w&nbsp;&brandShortName; funkcjach związanych z&nbsp;bezpieczeństwem znajdują się w&nbsp;rozdziałach: <a href="mailnews_security.xhtml">Podpisywanie i&nbsp;szyfrowanie wiadomości</a>, oraz <a href="using_certs_help.xhtml">Używanie certyfikatów</a>.</p>
+
+<div class="contentsBox">Tematy związane z&nbsp;zachowaniem prywatności w&nbsp;sieci Internet:
+  <ul>
+    <li><a href="#privacy_on_the_internet">Prywatność w&nbsp;sieci Internet</a></li>
+    <li><a href="using_priv_help.xhtml#using_the_cookie_manager">Zarządzanie ciasteczkami</a></li>
+    <li><a href="using_priv_help.xhtml#using_the_password_manager">Zarządzanie hasłami i&nbsp;nazwami użytkowników</a></li>
+    <!-- TODO: start localizing -->
+    <li><a href="using_priv_help.xhtml#clearing_private_data">Clearing Private
+      Data</a></li>
+    <li><a href="using_priv_help.xhtml#browsing_in_a_private_window">Browsing
+      in a Private Window</a></li>
+    <!-- TODO: stop localizing -->
+    <li><a href="using_priv_help.xhtml#encrypting_stored_sensitive_information">Szyfrowanie zachowanych poufnych danych</a></li>
+    <li><a href="using_priv_help.xhtml#managing_images">Zarządzanie obrazkami</a></li>
+    <li><a href="cs_priv_prefs_popup.xhtml#controlling_popups">Kontrola wyskakujących okien</a></li>
+    <li><a href="privsec_help.xhtml">Preferencje prywatności i&nbsp;zabezpieczeń</a></li>
+  </ul>
+</div>
+
+<h1 id="privacy_on_the_internet">Prywatność w&nbsp;sieci Internet</h1>
+
+<p>Ta część przedstawia krótkie podsumowanie informacji odnośnie zachowania prywatności podczas przeglądania zasobów sieci Internet. Opisuje również kilka czynności, które może wykonać użytkownik w&nbsp;celu poprawy swojej prywatności. Jednakowoż, opis ten nie wyczerpuje wszystkich możliwych zagadnień związanych z&nbsp;ochroną prywatności i&nbsp;bezpieczeństwem danych przesyłanych przy użyciu Internetu.</p>
+
+<div class="contentsBox">W&nbsp;tym rozdziale:
+  <ul>
+    <li><a href="#what_information_does_my_browser_give_to_a_website">Jakie informacje są przekazywane przez przeglądarkę do witryny internetowej?</a></li>
+    <li><a href="#what_are_cookies_and_how_do_they_work">Czym są ciasteczka i&nbsp;jak działają?</a></li>
+    <!-- TODO: start localizing -->
+    <li><a href="#why_and_how_are_websites_tracking_me">Why and How Are Websites Tracking Me?</a></li>
+    <!-- TODO: stop localizing -->
+    <li><a href="#how_can_i_control_web_pages_in_email_messages">Jak można kontrolować wyświetlanie i&nbsp;pobieranie stron WWW&nbsp;zawartych w&nbsp;wiadomościach poczty elektronicznej??</a></li>
+    <li><a href="#how_can_i_make_sure_unauthorized_people_dont_use_information_about_me">Jak upewnić się, że osoby trzecie nie będą używać informacji osobistych użytkownika?</a></li>
+    </ul>
+</div>
+
+<h2 id="what_information_does_my_browser_give_to_a_website">Jakie informacje są przekazywane przez przeglądarkę do witryny internetowej?</h2>
+
+<p>Podczas wyświetlania przez przeglądarkę zawartości strony WWW&nbsp;(niezależnie od sposobu wywołania strony: czy poprzez kliknięcie odnośnika lub wpisanie adresu, czy otwarcie wiadomości z&nbsp;poczty elektronicznej), do serwera strony są wysyłane określone rodzaje informacji. Te informacje mogą (ale wcale nie muszą) zawierać: wersję i&nbsp;rodzaj systemu operacyjnego, adres internetowy użytkownika, czy adres strony, z&nbsp;której nastąpiło wywołanie oglądanej właśnie strony.</p>
+
+<h3>Środowisko pracy</h3>
+
+<p>Witryna może pobierać informacje o&nbsp;wersji i&nbsp;nazwie przeglądarki, czy systemie operacyjnym zainstalowanym na komputerze. To pozwala na dopasowanie wyświetlania zawartości witryny w&nbsp;zależności od rodzaju przeglądarki, systemu operacyjnego, czy rozdzielczości ekranu. Przykładowo,  &brandShortName; 2.19 działająca w&nbsp;środowisku Windows XP będzie się przedstawiać jako Mozilla/5.0 (Windows; Windows NT 5.1; rv:22.0) Gecko/20100101 SeaMonkey/2.19.</p>
+
+<h3 id="internet_address">Adres internetowy</h3>
+
+<p>Przeglądarka musi przekazać witrynie adres internetowy (znany też jako adres IP) użytkownika. Na podstawie tego adresu witryna wie, gdzie ma wysłać żądaną stronę. Strona nie zostanie przesłana, jeśli przekazywanie adresu IP będzie zablokowane.</p>
+
+<p>Adres IP użytkownika może być zarówno tymczasowy, jak i&nbsp;stały.</p>
+
+<p>Przy połączeniu z&nbsp;Internetem przy użyciu tradycyjnego modemu przyłączonego do linii telefonicznej, adres IP użytkownika z&nbsp;reguły zmienia się przy każdym nowym połączeniu z&nbsp;siecią. Jest to adres tymczasowy, przydzielony użytkownikowi na czas trwania jego połączenia. Każdy dostawca usług internetowych umożliwiający połączenia wdzwaniane posiada w&nbsp;swojej puli wiele adresów IP. Są one w&nbsp;sposób losowy przydzielane użytkownikom.</p>
+
+<p>Przy połączeniu z&nbsp;Internetem przy użyciu modemu DSL, modemu kablowego czy połączenia światłowodowego, adres IP z&nbsp;reguły jest ustawiany na stałe i&nbsp;jest taki sam przy każdym połączeniu z&nbsp;siecią.</p>
+
+<p>Adres IP nie jest adresem poczty elektronicznej (e-mail).</p>
+
+<h3>Strona odsyłająca</h3>
+
+<p>Oglądana witryna może również przekazywać informacje o&nbsp;stronie, z&nbsp;której nastąpiło przejście do strony bieżącej (zwykle poprzez kliknięcie odnośnika i&nbsp;otwarcie w&nbsp;ten sposób strony bieżącej). Ta czynność pozwala na gromadzenie informacji o&nbsp;wzajemnych powiązaniach pomiędzy stronami WWW.</p>
+
+<p>[<a href="#privacy_on_the_internet">Na początek rozdziału</a>]</p>
+
+<h2 id="what_are_cookies_and_how_do_they_work">Czym są ciasteczka i&nbsp;jak działają?</h2>
+
+<p>Ciasteczko jest małą porcją informacji używaną przez niektóre witryny WWW. Witryna, która używa technologii ciasteczek, może zażądać od przeglądarki zezwolenia na umieszczenie jednego lub więcej ciasteczek na dysku twardym komputera.</p>
+  
+<p>Przy późniejszej wizycie na stronie, przeglądarka odsyła informacje o&nbsp;zawartości odpowiedniej do strony, która ustawiła ciasteczko.</p>
+  
+<p>Przy domyślnych ustawieniach dotyczących ciasteczek, użytkownik nie zauważy żadnych czynności związanych z&nbsp;obsługą ciasteczek podejmowanych przez przeglądarkę i&nbsp;nie będzie wiedział, kiedy i&nbsp;czy witryna WWW&nbsp;ustawiła ciasteczko lub zażądała jego przesłania. W&nbsp;każdej chwili istnieje możliwość zmiany ustawień domyślnych i&nbsp;wymuszenia żądania potwierdzania zapisu ciasteczek na dysku. Informacje o&nbsp;zmianie ustawień domyślnych są dostępne w&nbsp;rozdziale <a href="using_priv_help.xhtml#cookies">Prywatność i&nbsp;zabezpieczenia - Ciasteczka</a>.</p>
+  
+<h3>W&nbsp;jaki sposób witryny internetowe posługują się informacjami zawartymi w&nbsp;ciasteczkach?</h3>
+
+<p>Ciasteczka udostępniają witrynie WWW&nbsp;informacje o&nbsp;poprzednich wizytach użytkownika. Przykładowo, poszukiwanie informacji o&nbsp;stanie pogody lub kupno książki może spowodować ustawienie ciasteczka z&nbsp;informacją o&nbsp;miejscu zamieszkania lub nazwisku ulubionego autora i&nbsp;w&nbsp;ten sposób ułatwić oglądanie witryny przy następnej wizycie.</p>
+
+<p>Niektóre witryny internetowe publikują informacje na temat stosowanej przez nie polityki ochrony prywatności, w&nbsp;których zawarte są informacje o&nbsp;sposobie używania zbieranych informacji.</p>
+
+<h3 id="what_are_third-party_cookies">Czym są ciasteczka z&nbsp;innych serwerów?</h3>
+
+<p>Przeglądarka, zachowując ciasteczko pochodzące z&nbsp;danej witryny internetowej, zwraca jego zawartość tylko tej witrynie. Nie prześle zawartości ciasteczka jednej witryny witrynie innej (obcej). Ponieważ witryna może otrzymać zawartość tylko swojego ciasteczka, jej administratorzy posiadają informacje o&nbsp;aktywności użytkownika tylko na tej witrynie, nie zaś o&nbsp;jego całkowitej aktywności w&nbsp;Internecie.</p>
+
+<p>Jednak czasami zdarzają się sytuacje, kiedy strona internetowa wyświetla zawartość, która pochodzi z&nbsp;innej witryny internetowej. Może to być cokolwiek: obrazek, tekst, czy reklama. Ta inna witryna również posiada możliwość zapisywania na dysku twardym użytkownika swoich ciasteczek, nawet pomimo braku bezpośredniej styczności użytkownika z&nbsp;nią. Typowym przykładem takich witryn są serwery reklam, tzw. "ad-serwery".</p>
+
+<p>Ciasteczka, pochodzące z&nbsp;tych witryn internetowych, które nie są bezpośrednio oglądane przez użytkownika noszą nazwę <strong>ciasteczek innych serwerów</strong> lub <strong>obcych ciasteczek</strong>. Czasami witryny posługują się ciasteczkami obcymi w&nbsp;połączeniu z&nbsp;<strong>przezroczystymi plikami GIF</strong>. Przezroczyste pliki GIF są specjalnie skonstruowanymi obrazkami, które mogą pomagać administratorom w&nbsp;zliczaniu liczby użytkowników, śledzeniu odpowiedzi na wiadomości poczty elektronicznej, czy uzyskiwaniu dodatkowych informacji na temat zachowania się użytkowników odwiedzających witrynę.</p>
+
+<p>Użytkownik może tak ustawić <a href="using_priv_help.xhtml#cookies">preferencje przeglądarki dotyczące akceptacji ciasteczek</a>, aby nie przyjmowała ona żadnych ciasteczek pochodzących z&nbsp;obcych serwerów, <!-- TODO: start localizing -->or only for those sites that you have previously visited.<!-- TODO: stop localizing --></p>
+
+<p>[<a href="#privacy_on_the_internet">Na początek rozdziału</a>]</p>
+
+<!-- TODO: start localizing -->
+<h2 id="why_and_how_are_websites_tracking_me">Why and How Are Websites
+  Tracking Me?</h2>
+
+<p>Websites are frequently interested in how they are used and by whom.
+  Thus, they may perform analytics on your browsing behavior, either by
+  themselves, or by utilizing a third-party service.</p>
+
+<p>Motivations for such user tracking may be a more personalized browsing
+  experience, e.g., by offering you services or products corresponding to your
+  previous browsing pattern, thus making it more likely that you are interested
+  in those. Third-party services are mostly interested in placing advertisements
+  that match your interests, thus making it more likely that you would click on
+  those ads, which in turn generates revenue.</p>
+
+<p>Of course, this list isn&apos;t all inclusive, other reasons may exist to
+  track the user&apos;s browsing behavior. To summarize, the trade-off is:</p>
+
+<ul>
+  <li><strong>Pros</strong>: Tracking of the user&apos;s browsing activity
+    allows the website to provide a more specific browsing experience, by
+    analyzing and matching your interests. You may even get offers you
+    wouldn&apos;t receive without prior knowledge of your usage pattern.</li>
+  <li><strong>Cons</strong>: In most cases, especially with third-party
+    tracking services, the information is gathered without the user&apos;s
+    consent, and its usage is not transparent. Comprehensive user profiling
+    across websites and over long periods of time may be considered intrusive
+    and a questionable practice violating the user&apos;s privacy.</li>
+</ul>
+
+<h3>What Are the Mechanisms of User Tracking?</h3>
+
+<p>There isn&apos;t any single tracking mechanism, rather several methods
+  exist. For example, a website may employ one or more of these methods:</p>
+
+<ul>
+  <li><a href="#what_are_cookies_and_how_do_they_work">Cookies</a>: This is
+    the most direct form of user tracking. When visiting a website for the
+    first time, a random but unique identifier is created by that site and
+    stored as a cookie in &brandShortName;. When returning to the website,
+    this cookie associates you with any previous visit to that site. This is
+    especially effective for third-party tracking given that such a service
+    can collect data from multiple websites they have contracts with based on
+    just a single tracking cookie.</li>
+  <li><a href="#internet_address">Internet Address</a>: The IP address
+    identifies your location on your provider&apos;s network. It may also
+    serve as a reference to your geographical location. Even without cookies,
+    multiple accesses to one or more websites from the same location can be
+    associated with each other in this way.</li>
+  <li><a href="#what_information_does_my_browser_give_to_a_website">Browser
+    Fingerprinting</a>: This method attempts to identify specific users based
+    on the characteristics of the browser that they are using. Such
+    characteristics include browser type and version, platform used, language
+    preferences, and possibly installed plugins or add-ons.</li>
+</ul>
+
+<h3>What Can I Do to Prevent User Tracking?</h3>
+
+<p>In general, there is no complete protection against unwanted tracking of
+  one&apos;s browsing activities. However, there are a couple of ways to make
+  it harder to get tracked:</p>
+
+<ul>
+  <li><a href="privsec_help.xhtml#privacy_and_security">Do Not Track</a>:
+    This is a method that allows users to explicitly opt out of (or consent
+    to) their browsing behavior being tracked. &brandShortName; supports
+    sending <q>Do Not Track</q> requests to websites, but they are not
+    obligated to honor such requests.</li>
+  <!-- NOTE: link "Data Manager" below once bug 599097 has been fixed -->
+  <li><a href="using_priv_help.xhtml#cookies">Cookies</a>: The power of
+    tracking cookies is their persistence across sessions. Thus, when you
+    restart &brandShortName;, the identifying cookie will still be sent to
+    the website performing the analytics. One measure against third-party
+    tracking is to prohibit third-party cookies altogether; another option is
+    the restriction of cookies to the current session only. Some websites may
+    no longer function correctly, but you can add exceptions to such sites in
+    the Data Manager or with the Cookie Manager options in the Tools menu.</li>
+  <li><a href="nav_help.xhtml#plugins">Plugins</a>: Obscure plugins make
+    browser fingerprinting easier. Thus, if you need such plugins for some
+    websites but not in general, disable them in the Add-ons Manager until
+    you need them, to avoid that they are disclosed to tracking sites.</li>
+  <li><a href="customize_help.xhtml#add-ons">Add-ons</a>: There is a variety
+    of extensions available for privacy &amp; security support. Some of them
+    will block unwanted content from advertisers or tracking services, others
+    provide more control on private data collected by plugins (e.g., Flash
+    cookies), or when and how to run scripts or embedded content.</li>
+</ul>
+
+<p><strong>Note</strong>: The issues related to user tracking are complex.
+  This description is not intended to be complete but to provide you with some
+  basic information on this topic.</p>
+ 
+<p>[<a href="#privacy_on_the_internet">Return to beginning of section</a>]</p>
+<!-- TODO: start localizing -->
+
+<h2 id="how_can_i_control_web_pages_in_email_messages">Jak można kontrolować wyświetlanie i&nbsp;pobieranie stron WWW&nbsp;zawartych w&nbsp;wiadomościach poczty elektronicznej?</h2>
+
+<p>Istnieje możliwość całkowitego wyłączenia obsługi ciasteczek, obrazków i&nbsp;wtyczek (skrypty języka JavaScript są zawsze wyłączone) dla otrzymywanych w&nbsp;poczcie elektronicznej wiadomości w&nbsp;formacie HTML co może wydatnie zwiększyć bezpieczeństwo i&nbsp;zmniejszyć ryzyko zagrożenia spamem.</p>
+  
+<p>Podczas, gdy do normalnego przeglądania stron internetowych niezbędne może okazać się uaktywnienie niektórych lub wszystkich wyżej wymienionych możliwości, praca z&nbsp;pocztą elektroniczną nie powinna wymagać uaktywnienia żadnej z&nbsp;nich.</p>
+
+<p>Informacje na temat włączania i&nbsp;wyłączania obsługi ciasteczek, obrazków i&nbsp;wtyczek można znaleźć w&nbsp;następujących rozdziałach:</p>
+  
+<ul>
+  <li><a href="using_priv_help.xhtml#cookies">Preferencje prywatności i&nbsp;zabezpieczeń &mdash; Ciasteczka</a></li>
+  <li><a href="mailnews_preferences.xhtml#message_display">Preferencje &mdash; Prywatność i&nbsp;zabezpieczenia &mdash; Obrazki</a></li>
+  <li><a href="cs_nav_prefs_advanced.xhtml#scripts_and_plugins">Zaawansowane preferencje &mdash; Skrypty i&nbsp;wtyczki</a></li>
+</ul>
+
+<p>[<a href="#privacy_on_the_internet">Na początek rozdziału</a>]</p>
+
+<h2 id="how_can_i_make_sure_unauthorized_people_dont_use_information_about_me">Jak upewnić się, że osoby trzecie nie będą używać informacji osobistych użytkownika?</h2>
+
+<p>Najlepszą metodą zapewnienia sobie prywatności przy przeglądaniu stron internetowych jest dokładne przeczytanie zasad polityki ochrony prywatności stosowanych przez administratorów danej witryny i&nbsp;zwracanie szczególnej uwagi na wszelkie podawane informacje osobiste.</p>
+
+<p>Internet jest siecią publiczną i&nbsp;ogólnodostępną. Przesyłane informacje osobiste (dane osobowe, dane teleadresowe, czy inne) mogą potencjalnie zostać przechwycone przez osoby trzecie, nie upoważnione do odbioru tych informacji.</p>
+
+<p>Poniżej znajduje się kilka pytań o&nbsp;bezpieczeństwo danych prywatnych, które użytkownik może zadać administratorom witryny:</p>
+
+<ul>
+  <li>Jakiego rodzaju informacje są zbierane przez witrynę?</li>
+  <li>W&nbsp;jaki sposób witryna korzysta z&nbsp;tych informacji?</li>
+  <li>Czy informacje te są udostępniane innym witrynom i&nbsp;czy można zażądać zaprzestania udostępniania?</li>
+  <li>Czy istnieje możliwość dostępu do niektórych lub wszystkich informacji (np. w&nbsp;celu ich poprawienia lub usunięcia)?</li>
+  <li>W&nbsp;jaki sposób witryna chroni zebrane informacje?</li>
+  <li>W&nbsp;jaki sposób można skontaktować się z&nbsp;administratorami witryny w&nbsp;razie pytań i&nbsp;wątpliwości?</li>
+</ul>
+
+<p>[<a href="#privacy_on_the_internet">Na początek rozdziału</a>]</p>
+
+</body>
+</html>

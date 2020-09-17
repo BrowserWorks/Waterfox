@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Mewnforio Llyfr Cyfeiriadau">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Data wedi'i fewnforio ar gyfer Cofnod: ">
+<!ENTITY fieldMapImport.next.label "Nesaf">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "Blaenorol">
+<!ENTITY fieldMapImport.previous.accesskey "B">
+<!ENTITY fieldMapImport.text "Defnyddiwch Symud i Fyny a Symud i Lawr i gydweddu meysydd y llyfr cyfeiriadau ar y chwith gyda'r data cywir i'w fewnforio ar y dde. Dad-diciwch eitemau nad ydych am eu mewnforio.">
+<!ENTITY fieldMapImport.up.label "Symud i Fyny">
+<!ENTITY fieldMapImport.up.accesskey "F">
+<!ENTITY fieldMapImport.down.label "Symud i Lawr">
+<!ENTITY fieldMapImport.down.accesskey "L">
+<!ENTITY fieldMapImport.fieldListTitle "Meysydd Llyfr Cyfeiriadau">
+<!ENTITY fieldMapImport.dataTitle "Cofnodi data i'w fewnforio">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Mae'r cofnod cyntaf yn cynnwys enwau meysydd">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "c">

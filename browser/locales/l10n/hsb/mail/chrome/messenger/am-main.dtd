@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Kontowe nastajenja">
+<!ENTITY accountName.label "Mjeno konta:">
+<!ENTITY accountName.accesskey "M">
+<!ENTITY identityTitle.label "Standardna identita">
+<!ENTITY identityDesc.label "Kóžde konto ma identitu, kotraž wobsahuje informacije, kotrež druhe wosoby widźa, hdyž waše powěsće čitaja.">
+<!ENTITY name.label "Waše mjeno:">
+<!ENTITY name.accesskey "W">
+<!ENTITY email.label "E-mejlowa adresa:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Wotmołwće z tutej identitu, hdyž sej dodawanske hłowy wotpowěduja:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Wotmołwna adresa:">
+<!ENTITY replyTo.accesskey "d">
+<!ENTITY replyTo.placeholder "Přijimarjo na tutu druhu adresu wotmołwja">
+<!ENTITY organization.label "Organizacija:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Tekst signatury:">
+<!ENTITY signatureText.accesskey "T">
+<!ENTITY signatureHtml.label "HTML wužiwać (na př. &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Signaturu z dataje připowěsnyć (tekst, HTML abo wobraz):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Wobdźěłać…">
+<!ENTITY choose.label "Wubrać…">
+<!ENTITY choose.accesskey "b">
+<!ENTITY editVCard.label "Kartku wobdźěłać…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Moju wizitku k powěsćam připowěsnyć">
+<!ENTITY attachVCard.accesskey "z">
+
+<!ENTITY manageIdentities.label "Identity zrjadować…">
+<!ENTITY manageIdentities.accesskey "I">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Wuchadny serwer (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "Standardny serwer wužiwać">
+
+<!ENTITY smtpServerEdit.label "SMTP-serwer wobdźěłać…">
+<!ENTITY smtpServerEdit.accesskey "P">

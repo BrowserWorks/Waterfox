@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Address Book">
+<!ENTITY blankResultsPaneMessage.label                  "این دفترچه آدرس مخاطب‌ها را فقط پس از یک جستجو نمایش میدهد">
+<!ENTITY localResultsOnlyMessage.label                  "مخاطب‌ها از دفترچه‌های آدرس راه درو تا زمانی که شما جستجو نکرده باشید، نمایش داده نمی‌شوند">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "پرونده">
+<!ENTITY fileMenu.accesskey                             "پ">
+<!ENTITY newMenu.label                                  "جدید">
+<!ENTITY newMenu.accesskey                              "ج">
+<!ENTITY newContact.label                               "مخاطب دفترچه آدرس...">
+<!ENTITY newContact.accesskey                           "م">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Mailing List…">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "Address Book…">
+<!ENTITY newAddressBookCmd.accesskey                    "B">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP Directory…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "پیغام">
+<!ENTITY newMessageCmd.accesskey                        "پ">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Use Mac OS X Address Book">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "بستن">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "ب">
+<!ENTITY printSetupCmd.label                            "تنظیم صفحه…">
+<!ENTITY printSetupCmd.accesskey                        "ت">
+<!ENTITY printPreviewContactCmd.label                   "پیش‌نمایش چاپ مخاطب">
+<!ENTITY printPreviewContactCmd.accesskey               "پ">
+<!ENTITY printPreviewAddressBook.label                  "Print Preview Address Book">
+<!ENTITY printPreviewAddressBook.accesskey              "B">
+<!ENTITY printContactCmd.label                          "چاپ مخاطب...">
+<!ENTITY printContactCmd.accesskey                      "چ">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Print Address Book…">
+<!ENTITY printAddressBook.accesskey                     "A">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "ویرایش">
+<!ENTITY editMenu.accesskey                             "و">
+<!ENTITY deleteCmd.label                                "حذف">
+<!ENTITY deleteAbCmd.label                              "Delete Address Book">
+<!ENTITY deleteContactCmd.label                         "حذف مخاطب">
+<!ENTITY deleteContactsCmd.label                        "حذف مخاطبین">
+<!ENTITY deleteListCmd.label                            "Delete List">
+<!ENTITY deleteListsCmd.label                           "Delete Lists">
+<!ENTITY deleteItemsCmd.label                           "Delete Items">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "نما">
+<!ENTITY viewMenu.accesskey                             "ن">
+<!ENTITY viewToolbarsMenu.label                         "نوار ابزار">
+<!ENTITY viewToolbarsMenu.accesskey                     "ن">
+<!ENTITY menubarCmd.label                               "نوار منو">
+<!ENTITY menubarCmd.accesskey                           "م">
+<!ENTITY showAbToolbarCmd.label                         "Address Book Toolbar">
+<!ENTITY showAbToolbarCmd.accesskey                     "o">
+<!ENTITY showTaskbarCmd.label                           "نوار وضعیت">
+<!ENTITY showTaskbarCmd.accesskey                       "ن">
+<!ENTITY customizeToolbar.label                         "سفارشی‌سازی…">
+<!ENTITY customizeToolbar.accesskey                     "س">
+<!ENTITY layoutMenu.label                               "Layout">
+<!ENTITY layoutMenu.accesskey                           "L">
+<!ENTITY showDirectoryPane.label                        "چهارچوب پوشه">
+<!ENTITY showDirectoryPane.accesskey                    "پ">
+<!ENTITY showContactPane2.label                         "چهارچوب مخاطب">
+<!ENTITY showContactPane2.accesskey                     "م">
+<!ENTITY menu_ShowNameAs.label                          "Show Name As">
+<!ENTITY menu_ShowNameAs.accesskey                      "N">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "نام نام خانوادگی">
+<!ENTITY firstLastCmd2.accesskey                        "ن">
+<!ENTITY lastFirstCmd.label                             "Last, First">
+<!ENTITY lastFirstCmd.accesskey                         "L">
+<!ENTITY displayNameCmd.label                           "Display Name">
+<!ENTITY displayNameCmd.accesskey                       "D">
+<!ENTITY sortMenu.label                                 "Sort by">
+<!ENTITY sortMenu.accesskey                             "S">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "ابزارها">
+<!ENTITY tasksMenu.accesskey                            "ا">
+<!ENTITY messengerCmd.label                             "Mail &amp; Newsgroups">
+<!ENTITY messengerCmd.accesskey                         "M">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Search Addresses…">
+<!ENTITY searchAddressesCmd.accesskey                   "S">
+<!ENTITY importCmd.label                                "وارد کردن…">
+<!ENTITY importCmd.accesskey                            "و">
+<!ENTITY exportCmd.label                                "صادر کردن…">
+<!ENTITY exportCmd.accesskey                            "ص">
+<!ENTITY preferencesCmd2.label                          "گزینه‌ها">
+<!ENTITY preferencesCmd2.accesskey                      "گ">
+<!ENTITY preferencesCmdUnix.label                       "ترجیحات">
+<!ENTITY preferencesCmdUnix.accesskey                   "ت">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "مخاطب جدید">
+<!ENTITY newContactButton.accesskey                     "م">
+<!ENTITY newlistButton.label                            "New List">
+<!ENTITY newlistButton.accesskey                        "L">
+<!ENTITY newmsgButton.label                             "Write">
+<!ENTITY newmsgButton.accesskey                         "W">
+<!ENTITY newIM.label                                    "Instant Message">
+<!ENTITY newIM.accesskey                                "I">
+<!ENTITY printButton.label                              "چاپ...">
+<!ENTITY printButton.accesskey                          "چ">
+<!ENTITY deleteButton2.label                            "حذف">
+<!ENTITY deleteButton2.accesskey                        "ح">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY newContactButton.tooltip                       "ایجاد یک مخاطب دفترچه آدرس جدید">
+<!ENTITY newlistButton.tooltip                          "Create a new list">
+<!ENTITY editPropertiesButton.tooltip                   "Edit the selected item">
+<!ENTITY newmsgButton.tooltip                           "Send a mail message">
+<!ENTITY newIM.tooltip                                  "ارسال پیام فوری یا گفت‌وگو">
+<!ENTITY deleteButton2.tooltip                          "Delete selected item">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Name or Email">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "Advanced address search">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Quick Search">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "دفترچه آدرس">
+<!ENTITY Addrbook.accesskey                             "د">
+<!ENTITY GeneratedName.label                            "نام">
+<!ENTITY GeneratedName.accesskey                        "ن">
+<!ENTITY PrimaryEmail.label                             "پست الکترونیکی">
+<!ENTITY PrimaryEmail.accesskey                         "پ">
+<!ENTITY ChatName.label                                 "نام گفت‌وگو">
+<!ENTITY ChatName.accesskey                             "گ">
+<!ENTITY Company.label                                  "Organization">
+<!ENTITY Company.accesskey                              "z">
+<!ENTITY NickName.label                                 "نام مستعار">
+<!ENTITY NickName.accesskey                             "ن">
+<!ENTITY SecondEmail.label                              "Additional Email">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "Department">
+<!ENTITY Department.accesskey                           "r">
+<!ENTITY JobTitle.label                                 "عنوان">
+<!ENTITY JobTitle.accesskey                             "ع">
+<!ENTITY CellularNumber.label                           "Mobile">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "Pager">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "Fax">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Home Phone">
+<!ENTITY HomePhone.accesskey                            "H">
+<!ENTITY WorkPhone.label                                "Work Phone">
+<!ENTITY WorkPhone.accesskey                            "W">
+<!ENTITY sortAscending.label                            "Ascending">
+<!ENTITY sortAscending.accesskey                        "A">
+<!ENTITY sortDescending.label                           "Descending">
+<!ENTITY sortDescending.accesskey                       "D">
+<!ENTITY _PhoneticName.label                            "Phonetic Name">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "مخاطب">
+<!ENTITY home.heading                                   "Home">
+<!ENTITY other.heading                                  "Other">
+<!ENTITY chat.heading                                   "گفت‌وگو">
+<!ENTITY phone.heading                                  "شمارهٔ تلفن">
+<!ENTITY work.heading                                   "Work">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "شرح">
+<!ENTITY addresses.heading                              "Addresses">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Get Map">
+<!ENTITY mapIt.tooltip                                  "Display a map of this address from the Web">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "پنجره">
+<!ENTITY minimizeWindow.label                           "کمینه کردن">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "آوردن همه به جلو">
+<!ENTITY zoomWindow.label                               "زوم">

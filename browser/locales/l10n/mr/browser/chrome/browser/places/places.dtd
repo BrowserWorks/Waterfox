@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "लायब्ररी">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "आयोजन करा">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "वाचनखूणा संगठीत करा">
+
+<!ENTITY file.close.label               "बंद करा">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "दृश्य">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "दृश्य बदलवा">
+<!ENTITY view.columns.label             "स्तंभ दाखवा">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "क्रमवारीत लावा">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "विनाक्रम">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "A > Z क्रमवारी पध्दती">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A क्रमवारी पध्दती">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "HTML पासून वाचनखूणा आयात करा…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "HTML करिता वाचनखुणा एक्सपोर्ट करा…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "इतर ब्राउझरकडून डेटा आयात करा…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "बॅकअप…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "पूर्वस्थितीत आणा">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "फाइल निवडा…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "नाव">
+<!ENTITY col.tags.label          "टॅग">
+<!ENTITY col.url.label           "स्थान">
+<!ENTITY col.mostrecentvisit.label "सर्वात नुकतीच भेट">
+<!ENTITY col.visitcount.label    "भेट परिमाण">
+<!ENTITY col.dateadded.label     "जोडले">
+<!ENTITY col.lastmodified.label  "शेवटच्यावेळी केलेले संपादन">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "आयात व बॅकअप करा">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "वाचनखूणा आयात करा व बॅकअप करा">
+
+<!ENTITY backButton.tooltip  "मागे जा">
+
+<!ENTITY forwardButton.tooltip  "पुढे जा">
+
+<!ENTITY detailsPane.selectAnItemText.description "पहाण्याकरीता व गुणधर्म संपादीत करण्याकरीता घटक निवडा">
+

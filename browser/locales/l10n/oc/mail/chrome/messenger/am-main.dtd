@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Paramètres del compte">
+<!ENTITY accountName.label "Nom del compte :">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Identitat per defaut">
+<!ENTITY identityDesc.label "Cada compte dispausa d'informacions sus l'expeditor que son sistematicament transmesas amb los messatges. Vos identifican alprèp de vòstres correspondents.">
+<!ENTITY name.label "Nom :">
+<!ENTITY name.accesskey "N">
+<!ENTITY email.label "Adreça electronica :">
+<!ENTITY email.accesskey "A">
+<!ENTITY replyTo.label "Adreça per la responsa :">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY organization.label "Organizacion :">
+<!ENTITY organization.accesskey "O">
+<!ENTITY edit.label "Modificar…">
+<!ENTITY choose.label "Causir…">
+<!ENTITY choose.accesskey "C">
+<!-- LOCALIZATION NOTE (editVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY editVCard.label "Modificar la carta…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Jónher ma carta de visita als messatges">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Gerir las identitats…">
+<!ENTITY manageIdentities.accesskey "G">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Servidor sortissent (SMTP):">
+<!ENTITY smtpName.accesskey "s">
+<!ENTITY smtpDefaultServer.label "Utilizar lo servidor per defaut">
+

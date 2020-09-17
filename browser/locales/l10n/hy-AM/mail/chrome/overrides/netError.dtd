@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Էջի բացման խնդիր">
+<!ENTITY retry.label "Կրկին փորձեք">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Չհաջողվեց կապ հաստատել">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Այս հասցեն արգելափակված է">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Սպասարկիչը չի գտնվել">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Ստուգեք հասցեն մուտքագրման սխալի համար, օրինակ՝ <strong>ww</strong>.example.com՝ <strong>www</strong>.example.com-ի փոխարեն</li> <li>Եթե չի ստացվում բեռնել որևէ էջ, ապա ստուգեք համակարգչի ցանցային  կապակցումը:</li> <li>Եթե ձեր համակարգիչը կամ ցանցը պաշտպանված է firewall-ով կամ պրոքսիով, համոզվեք որ &brandShortName;-ին թույլատրված է կապակցել ցանցին:</li> </ul>">
+
+<!ENTITY fileNotFound.title "Ֆայլը չի գտնվել">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Ստուգել ֆայլի անունը մեծատառերի կամ այլ տպագրական սխալների համար:</li> <li>Ստուգել՝ տեսնելու համար, թե արդյոք ֆայլը չի տեղափոխվել, վերանվանվել կամ ջնջվել:</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Մատչումը ֆայլին մերժված է">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Հնարավոր է՝ այն հեռացվել է, տեղափոխվել կամ ֆայլի թույլտվությունները կանխել են մատչումը:</li></ul>">
+
+<!ENTITY generic.title "Վայ.">
+<!ENTITY generic.longDesc "<p>&brandShortName;ը ինչ որ պատճառով չի կարողանում բացել այս էջը</p>">
+
+<!ENTITY malformedURI.title "Հասցեն ճիշտ չէ">
+<!ENTITY malformedURI.longDesc "<ul> <li>Վեբ հասցեները սովորաբար գրվում են հետևյալ կերպ` <strong>http://www.haysoft.org/</strong></li> <li>Համոզվեք, որ օգտագործում էք հակադարձ սլեշ (այսինքն`  <strong>/</strong>):</li> </ul>">
+
+<!ENTITY netInterrupt.title "Կապը խզվեց">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Ավարտվել է">
+<!ENTITY notCached.longDesc "<p>Պահանջվող փաստաթուղթը չի գտնվել պահոցում։</p><ul><li>Անվտանգության համար &brandShortName;-ը միանգամից չի վերապահանջում փաստաթուղթը։</li><li>Սեղմեք Կրկին փորձել՝ վերապահանջելու համար փաստաթուղթը վեբ կայքից։</li></ul>">
+
+<!ENTITY netOffline.title "Ցանցից դուրս">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Սեղմեք&quot;Կրկին փորձել&quot;` անցնելու համար առցանց եղանակի և էջը վերաբացելու համար:</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Կոդավորման սխալ">
+<!ENTITY contentEncodingError.longDesc "<ul>  <li>Խնդրում ենք կապնվել այս կայքի սեփականատերերի հետ՝ այս խնդրի մասին տեղյակ պահելու համար:</li> </ul>         ">
+
+<!ENTITY unsafeContentType.title "Ֆայլի չպահպանված տեսակ">
+<!ENTITY unsafeContentType.longDesc "<ul>  <li>Խնդրում ենք կապնվել այս կայքի սեփականատերերի հետ՝ այս խնդրի մասին տեղյակ պահելու համար:</li> </ul>         ">
+
+<!ENTITY netReset.title "Կապը խզվեց">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Կապի հաստատման ժամանակը սպառվեց">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Հասցեն անհասկանալի էր">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Այս հասցեն բացելու համար ձեզ հավանաբար անհրաժեշտ է տեղակայել այլ ծրագիր:</li> </ul>         ">
+
+<!ENTITY proxyConnectFailure.title "Պրոքսի սպասարկիչը մերժում է ընդունել կապը">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Ստուգեք պրոքսի կարգավորումների իսկությունը:</li> <li>Կապվեք ձեր ցանցի ադմինիստրատորի հետ՝ համոզվելու, որ պրոքսի  սպասարկիչը աշխատում է:</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Չի ստացվում գտնել պրոքսի սպասարկիչ">
+<!ENTITY proxyResolveFailure.longDesc "<ul>  <li>Ստուգեք պրոքսի կարգավորումները՝ համոզվելու համար, որ դրանք ճիշտ են:</li> <li>Ստուգեք և համոզվեք, որ համակարգիչը ունի աշխատող ցանցային կապակցում:</li> <li>Եթե ձեր համակարգիչը կամ ցանցը պաշտպանված է firewall-ով կամ պրոքսիով,  ապա համոզվեք որ &brandShortName;-ը ունի ցանցին կապակցելու իրավունք:</li>  </ul>                             ">
+
+<!ENTITY redirectLoop.title "Էջը ճիշտ չէ վերահասցեավորվել">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Այս խնդիրը երբեմն կարող է պատահել cookie-ների անջատումից կամ  մերժումից:</li> </ul>                   ">
+
+<!ENTITY unknownSocketType.title "Անհասկանալի պատասխան սպասարկիչից">
+<!ENTITY unknownSocketType.longDesc "<ul>  <li>Ստուգեք և համոզվեք, որ ձեր համակարգը ունի Անձնական Անվտանգության  Կառավարիչ:</li>  <li>Սա կարող է լինել սպասարկիչի ոչ ստանդարտ կարգավորման արդյունք:</li>   </ul>                       ">
+
+<!ENTITY nssFailure2.title "Անվտանգ կապակցումը ձախողվեց">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Տվյալ էջը հնարավոր չէ ցուցադրել, քանզի ստացվող տվյալները հնարավոր չէ ստուգել:</li> <li>Կապնվեք կայքի հեղինակի հետ` այս խնդրի մասին նրան տեղյակ պահելու համար:</li> </ul>">
+
+<!ENTITY nssBadCert.title "Անվտանգ կապակցումը ձախողվեց">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Այս խնդիրը կարող է կապված լինել սպասարկիչի կարգավորման հետ կամ  հնարավոր է, որ որևէ մեկը փորձում է որպես սպասարկիչ հանդես գալ:</li> <li>Եթե դուք այս սպասարկիչին նախկինում հաջողությամբ եք միացել, ապա սխալը  կարող է ժամանակավոր բնույթ կրել և Դուք կարող եք ավելի ուշ կրկին փորձել:</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul>  <li>Հնարավոր է կայքը անհասանելի է կամ գերբեռնված է: Կրկին փորձեք մի քանի  րոպե անց:</li> <li>Եթե չի ստացվում բեռնել որևէ էջ, ապա ստուգեք ձեր համակարգչի ցանցային  կապակցումը:</li>  <li>Եթե ձեր համակարգիչը կամ ցանցը ապահովագրված է firewall-ով, ապա  համոզվեք որ &brandShortName;-ը ունի ցանցին կապակցելու արտոնություն:</li>  </ul>                                               ">
+
+<!ENTITY cspBlocked.title "Արգելափակվել է Բովանդակության Անվտանգության Քաղաքականության կողմից">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName;­­-ը խոչընդոտեց այս էջի բացումը, քանի որ էջի պարունակության անվտանգության կանոնակարգն արգելում է դա:</p>">
+
+<!ENTITY xfoBlocked.title "Արգելափկվել է X-Frame-Options քաղաքականության կողմից">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; արգելել է այս էջի բեռնումը այս համատեքստում, որովհետև էջը ունի X-Frame-Options քաղաքականություն, որը մերժում է այս։</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Բովանդակությունը վնասված է">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Էջը, որ փորձում եք դիտել՝ չի կարող ցուցադրվել, որովհետև սխալ է գրանցվել տվյալի փոխանցման ժամանակ:</p><ul><li>Կապնվեք սեփականատիրոջ հետ` այս խնդրի մասին հաղորդելու համար:</li></ul>">
+
+<!ENTITY securityOverride.linkText "Կամ դուք կարող էք ավելացնել բացառություն…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Դո՛ւրս բերեք ինձ այստեղից">
+<!ENTITY securityOverride.exceptionButtonLabel "Ավելացնել Բացառություն…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Դուք չպետք է ավելացնեք բացառություն, եթե դուք օգտվում եք մի ինտերնետ կապից, որին լիարժեք չեք վստահում, կամ եթե դուք սովոր չեք հետևել նախազգուշացմանը այս սպասարկիչի համար:</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Հեռակա XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Խնդրում ենք կապնվել վեբ կայքի սեփականատերերի հետ` այս խնդրի մասին տեղեկացնելու համար:</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Կապակցումն անվտանգ չէ">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> օգտագործում է անվտանգ տեխնոլոգիա, որը հնացած է և խոցելի՝ հարձակումների համար: Հարձակվողը կարող է հեշտությամբ հայտնաբերել տեղեկություններ, որոնք ձեր կարծիքով ապահով են: Կայքի վարիչը պետք է նախ ուղղի սպասարկիչը, որպեսզի կարողանաք այցելել կայքը:</p><p>Սխալի կոդը՝ NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Արգելափակված էջ">
+
+<!ENTITY networkProtocolError.title "Ցանցի հաղորդակարգի սխալ">
+<!ENTITY networkProtocolError.longDesc "<p>Ընթացիկ էջը չի կարող ցուցադրվել, քանզի տեղի է ունեցնել ցանցի հաղորդակարգի սխալ։</p><ul><li>Կապնվեք վեբ կայիք հեղինակների հետ՝ նրանց այս մասին հաղորդելու համար։</li></ul>">

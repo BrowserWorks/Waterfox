@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Зміст">
+<!ENTITY buildToc.label      "Створити зміст на основі:">
+<!ENTITY tag.label           "тега:">
+<!ENTITY class.label         "класу:">
+<!ENTITY header1.label       "Рівень 1">
+<!ENTITY header2.label       "Рівень 2">
+<!ENTITY header3.label       "Рівень 3">
+<!ENTITY header4.label       "Рівень 4">
+<!ENTITY header5.label       "Рівень 5">
+<!ENTITY header6.label       "Рівень 6">
+<!ENTITY makeReadOnly.label  "Заборонити зміну змісту">
+<!ENTITY orderedList.label   "Пронумерувати всі елементи в змісті">

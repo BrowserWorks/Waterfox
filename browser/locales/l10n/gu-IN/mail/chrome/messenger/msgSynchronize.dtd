@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "સંદેશાઓ ડાઉનલોડ અને સુમેળ કરો">
+<!ENTITY MsgSelect.label "ઓફલાઈન વપરાશ માટેની વસ્તુઓ">
+<!ENTITY MsgSyncDesc.label "જો તમારી પાસે પહેલાથી જ પસંદિત મેલ ફોલ્ડરો અથવા સમાચારજૂથો ઓફલાઈન વપરાશ માટે હોય, તો તમે તેમને ડાઉનલોડ અને/અથવા સુમેળ કરી શકો છો. નહિંતર, ઓફલાઈન વપરાશ માટે મેલ ફોલ્ડરો અને સમાચારજૂથો પસંદ કરવા માટે &quot;Select&quot; બટન વાપરો.">
+<!ENTITY MsgSyncDirections.label "નીચેનું ડાઉનલોડ કરો અને/અથવા સુમેળ કરો:">
+<!ENTITY syncTypeMail.label "મેલ સંદેશાઓ">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "સમાચારજૂથ સંદેશાઓ">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "નહિં મોકલાયેલ સંદેશાઓ મોકલો">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "એક વાર ડાઉનલોડ અને/અથવા સુમેળ પૂર્ણ થઈ જાય પછી ઓફલાઈન કામ કરો">
+<!ENTITY workOffline.accesskey "W">
+<!ENTITY selectButton.label "પસંદ કરો...">
+<!ENTITY selectButton.accesskey "E">
+<!ENTITY MsgSelectDesc.label "ઓફલાઈન વપરાશ માટે મેલ ફોલ્ડરો અને સમાચારજૂથો પસંદ કરો.">
+<!ENTITY MsgSelectInd.label "ડાઉનલોડ કરો">
+<!ENTITY MsgSelectItems.label "ફોલ્ડરો અને સમાચારજૂથો">

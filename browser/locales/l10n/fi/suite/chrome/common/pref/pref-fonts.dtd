@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Kirjasinlajit">
+
+<!ENTITY  language.label                          "Merkistö:">
+<!ENTITY  language.accesskey                      "M">
+
+<!ENTITY  typefaces.label                         "Kirjasintyyppi">
+<!ENTITY  sizes.label                             "Koko (kuvapistettä)">
+
+<!ENTITY  proportional.label                      "Suhteellinen:">
+<!ENTITY  proportional.accesskey                  "S">
+
+<!ENTITY  serif.label                             "Pääteviivallinen:">
+<!ENTITY  serif.accesskey                         "P">
+<!ENTITY  sans-serif.label                        "Pääteviivaton:">
+<!ENTITY  sans-serif.accesskey                    "ä">
+<!ENTITY  monospace.label                         "Tasavälinen:">
+<!ENTITY  monospace.accesskey                     "T">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Koristeellinen:">
+<!ENTITY  fantasy.accesskey                       "o">
+<!ENTITY  cursive.label                           "Kursiivi:">
+<!ENTITY  cursive.accesskey                       "K">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Latinalainen">
+<!ENTITY  font.langGroup.japanese                 "Japanilainen">
+<!ENTITY  font.langGroup.trad-chinese             "Perinteinen kiina (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Yksinkertaistettu kiina">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Perinteinen kiina (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Korealainen">
+<!ENTITY  font.langGroup.cyrillic                 "Kyrillinen">
+<!ENTITY  font.langGroup.el                       "Kreikkalainen">
+<!ENTITY  font.langGroup.thai                     "Thaimaalainen">
+<!ENTITY  font.langGroup.hebrew                   "Heprealainen">
+<!ENTITY  font.langGroup.arabic                   "Arabialainen">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamililainen">
+<!ENTITY  font.langGroup.armenian                 "Armenialainen">
+<!ENTITY  font.langGroup.bengali                  "Bengalilainen">
+<!ENTITY  font.langGroup.canadian                 "Kanadalainen tavumerkistö">
+<!ENTITY  font.langGroup.ethiopic                 "Etiopialainen">
+<!ENTITY  font.langGroup.georgian                 "Georgialainen">
+<!ENTITY  font.langGroup.gujarati                 "Gujaratilainen">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhilainen">
+<!ENTITY  font.langGroup.khmer                    "Khmeriläinen">
+<!ENTITY  font.langGroup.malayalam                "Malaijalamilainen">
+<!ENTITY  font.langGroup.math                     "Matematiikka">
+<!ENTITY  font.langGroup.odia                     "Orija">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Sinhali">
+<!ENTITY  font.langGroup.tibetan                  "Tiibetiläinen">
+<!ENTITY  font.langGroup.other                    "Muut kirjoitusjärjestelmät">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Pienin kirjasinkoko:">
+<!ENTITY minSize.accesskey                        "i">
+<!ENTITY minSize.none                             "Ei mitään">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Pääteviivallinen">
+<!ENTITY  useDefaultFontSansSerif.label           "Pääteviivaton">
+
+<!ENTITY  useDocumentFonts.label                  "Sivut saavat käyttää omia kirjasinlajejaan oletusten sijaan">
+<!ENTITY  useDocumentFonts.accesskey              "a">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Kun verkkosivu määrittää käytettävät kirjasinlajit">
+<!ENTITY  useDefaultFont.label                    "Älä anna sen käyttää niitä">
+<!ENTITY  useDefaultFont.accesskey                "n">

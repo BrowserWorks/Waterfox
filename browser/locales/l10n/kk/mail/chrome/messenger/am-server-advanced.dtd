@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Тіркелгінің кеңейтілген баптаулары">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP серверінің бумасы:">
+<!ENTITY serverDirectory.accesskey "б">
+<!ENTITY usingSubscription.label "Тек жазылған бумаларды көрсету">
+<!ENTITY usingSubscription.accesskey "р">
+<!ENTITY dualUseFolders.label "Сервер ішкі бумалары және хабарламалары бар бумаларды қолдайды">
+<!ENTITY dualUseFolders.accesskey "б">
+<!ENTITY maximumConnectionsNumber.label "Кэштеу үшін максималды сервер байланыстарының саны">
+<!ENTITY maximumConnectionsNumber.accesskey "м">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Бұл баптаулар IMAP серверіңіздегі атаулар кеңістіктерін сипаттайды">
+<!ENTITY personalNamespace.label "Жеке атаулар кеңістігі:">
+<!ENTITY personalNamespace.accesskey "Ж">
+<!ENTITY publicNamespace.label "Публикалық (ортақ):">
+<!ENTITY publicNamespace.accesskey "у">
+<!ENTITY otherUsersNamespace.label "Басқа пайдаланушылар:">
+<!ENTITY otherUsersNamespace.accesskey "Б">
+<!ENTITY overrideNamespaces.label "Серверге бұл атаулар кеңістіктерін үстінен жазуды рұқсат ету">
+<!ENTITY overrideNamespaces.accesskey "а">
+<!ENTITY pop3DeferringDesc.label "Бұл тіркелгінің серверінен поштаны жүктеп алу кезінде, жаңа хабарламаларды келесі бумаға сақтау:" >
+<!ENTITY accountInbox.label "Бұл тіркелгінің Кіріс бумасы">
+<!ENTITY accountInbox.accesskey "л">
+<!ENTITY deferToServer.label "Басқа тіркелгінің Кіріс бумасы">
+<!ENTITY deferToServer.accesskey "с">
+<!ENTITY deferGetNewMail.label "Жаңа поштаны алу кезінде бұл серверді де есепке алу">
+<!ENTITY deferGetNewMail.accesskey "е">

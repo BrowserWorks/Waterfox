@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Propietats">
+<!ENTITY propertiesMenu.accesskey           "P">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Propietats de la llibreta d'adreces">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Propietats del contacte">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Propietats de la llista de correu">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Mostra el menú contextual de la llibreta d'adreces">
+<!ENTITY addressbookPicker.label            "Llibreta d'adreces:">
+<!ENTITY addressbookPicker.accesskey        "b">
+<!ENTITY searchContacts.label               "Cerca contactes:">
+<!ENTITY searchContacts.accesskey           "n">
+<!ENTITY SearchNameOrEmail.label            "El nom o l'adreça electrònica">
+
+<!ENTITY addtoToFieldMenu.label             "Afegeix al camp A">
+<!ENTITY addtoToFieldMenu.accesskey         "A">
+<!ENTITY addtoCcFieldMenu.label             "Afegeix al camp Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Afegeix al camp Cco">
+<!ENTITY addtoBccFieldMenu.accesskey        "o">
+<!ENTITY deleteAddrBookCard.label           "Suprimeix">
+<!ENTITY deleteAddrBookCard.accesskey       "S">
+<!ENTITY propertiesContext.label            "Propietats">
+<!ENTITY propertiesContext.accesskey        "P">
+<!ENTITY abPropertiesContext.label          "Propietats">
+<!ENTITY abPropertiesContext.accesskey      "P">
+<!ENTITY editContactContext.label           "Edita contacte">
+<!ENTITY editContactContext.accesskey       "E">
+<!ENTITY editMailingListContext.label       "Edita la llista">
+<!ENTITY editMailingListContext.accesskey   "E">
+
+<!ENTITY newContactAbContext.label          "Crea un contacte">
+<!ENTITY newContactAbContext.accesskey      "c">
+<!ENTITY newListAbContext.label             "Crea una llista">
+<!ENTITY newListAbContext.accesskey         "l">
+
+<!ENTITY toButton.label                     "Afegeix a A:">
+<!ENTITY toButton.accesskey                 "A">
+<!ENTITY ccButton.label                     "Afegeix a Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Afegeix a Cco:">
+<!ENTITY bccButton.accesskey                "o">

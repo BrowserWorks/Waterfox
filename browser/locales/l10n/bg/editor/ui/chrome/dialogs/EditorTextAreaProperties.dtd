@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Свойства на текстово поле">
+
+<!ENTITY Settings.label "Настройки">
+
+<!ENTITY TextAreaName.label "Име на поле:">
+<!ENTITY TextAreaName.accessKey "И">
+<!ENTITY TextAreaRows.label "Редове:">
+<!ENTITY TextAreaRows.accessKey "Р">
+<!ENTITY TextAreaCols.label "Колони:">
+<!ENTITY TextAreaCols.accessKey "К">
+<!ENTITY TextAreaReadOnly.label "Само за четене">
+<!ENTITY TextAreaReadOnly.accessKey "ч">
+<!ENTITY TextAreaDisabled.label "Неактивен">
+<!ENTITY TextAreaDisabled.accessKey "Н">
+<!ENTITY TextAreaTabIndex.label "Отместване при табулиране:">
+<!ENTITY TextAreaTabIndex.accessKey "И">
+<!ENTITY TextAreaAccessKey.label "Клавиш за достъп:">
+<!ENTITY TextAreaAccessKey.accessKey "д">
+<!ENTITY InitialText.label "Първоначален текст:">
+<!ENTITY InitialText.accessKey "т">
+
+<!ENTITY TextAreaWrap.label "Режим пренасяне:">
+<!ENTITY TextAreaWrap.accessKey "п">
+<!ENTITY WrapDefault.value "Стандартно">
+<!ENTITY WrapOff.value "Изкл">
+<!ENTITY WrapHard.value "Твърдо">
+<!ENTITY WrapSoft.value "Меко">
+<!ENTITY WrapPhysical.value "Физическо">
+<!ENTITY WrapVirtual.value "Виртуално">

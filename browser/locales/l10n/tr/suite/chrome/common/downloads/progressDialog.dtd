@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title "İndirme işlemi…">
+<!ENTITY closeWindow.key "d">
+<!ENTITY cmd.pause.tooltip "Duraklat">
+<!ENTITY cmd.resume.tooltip "Devam et">
+<!ENTITY cmd.retry.tooltip "Yeniden dene">
+<!ENTITY cmd.cancel.tooltip "Vazgeç">
+<!ENTITY cmd.open.label "Aç">
+<!ENTITY cmd.open.accesskey "A">
+<!ENTITY cmd.show.label "Bulunduğu dizini aç">
+<!ENTITY cmd.show.accesskey "d">
+<!ENTITY cmd.goToDownloadPage.label "İndirme sayfasına git">
+<!ENTITY cmd.goToDownloadPage.accesskey "g">
+<!ENTITY cmd.copyDownloadLink.label "İndirme bağlantısını kopyala">
+<!ENTITY cmd.copyDownloadLink.accesskey "l">
+<!ENTITY closeWhenDone.label "İndirme bittiğinde pencereyi kapat.">
+<!ENTITY closeWhenDone.accesskey "n">

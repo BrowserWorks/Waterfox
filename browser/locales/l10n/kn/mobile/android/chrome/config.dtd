@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "ಹುಡುಕಿ">
+
+<!ENTITY newPref.namePlaceholder       "ಹೆಸರು">
+
+<!ENTITY newPref.valueBoolean          "ಬೂಲಿಯನ್">
+<!ENTITY newPref.valueString           "ಪದಸಮುಚ್ಚಯ">
+<!ENTITY newPref.valueInteger          "ಪೂರ್ಣಾಂಕ">
+
+<!ENTITY newPref.stringPlaceholder     "ಒಂದು ವಾಕ್ಯಾಂಶವನ್ನು ನಮೂದಿಸಿ">
+<!ENTITY newPref.numberPlaceholder     "ಒಂದು ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ">
+
+<!ENTITY newPref.toggleButton          "ಹೊರಳಿಸು">
+<!ENTITY newPref.cancelButton          "ರದ್ದುಗೊಳಿಸು">
+
+<!ENTITY contextMenu.copyPrefName      "ಹೆಸರನ್ನು ನಕಲಿಸು">
+<!ENTITY contextMenu.copyPrefValue     "ಮೌಲ್ಯವನ್ನು ನಕಲಿಸು">

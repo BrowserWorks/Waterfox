@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Ngjyra dhe Sfond Faqeje">
+<!ENTITY pageColors.label "Ngjyra Faqeje">
+<!ENTITY defaultColorsRadio.label "Ngjyrat parazgjedhje të lexuesit (Mos cakto ngjyra për faqen)">
+<!ENTITY defaultColorsRadio.accessKey "t">
+<!ENTITY defaultColorsRadio.tooltip "Përdorni rregullime ngjyrash vetëm prej shfletuesit të lexuesit">
+<!ENTITY customColorsRadio.label "Përdor ngjyra vetjake:">
+<!ENTITY customColorsRadio.accessKey "P">
+<!ENTITY customColorsRadio.tooltip "Këto ngjyra veprojnë tej rregullimeve të lexuesit për shfletuesin">
+
+<!ENTITY normalText.label "Tekst normal">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Tekst lidhjeje">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "Tekst lidhjeje vepruese">
+<!ENTITY activeLinkText.accessKey "V">
+<!ENTITY visitedLinkText.label "Tekst lidhjeje të vizituar">
+<!ENTITY visitedLinkText.accessKey "Z">
+<!ENTITY background.label "Sfond:">
+<!ENTITY background.accessKey "S">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Figurë Sfondi:">
+<!ENTITY backgroundImage.accessKey "a">
+<!ENTITY backgroundImage.tooltip "Përdorni kartelë figure si sfond për faqen tuaj">
+<!ENTITY backgroundImage.shortenedDataURI "URI i shkurtuar të dhënash (kopjimi do të hedhë në të papastër URI-n e plotë)">

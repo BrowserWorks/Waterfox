@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY menu_securityEncryptRequire.label "Зашыфраваць гэты ліст">
+<!ENTITY menu_securityEncryptRequire.accesskey "ш">
+<!ENTITY menu_securitySign.label "Лічбава падпісаць гэты ліст">
+<!ENTITY menu_securitySign.accesskey "П">
+<!ENTITY menu_securityStatus.label "Праглядзець звесткі пра бяспеку">
+<!ENTITY menu_securityStatus.accesskey "З">
+<!ENTITY securityButton.label "Бяспека">
+<!ENTITY securityButton.tooltip "Праглядзець ці змяніць наладжванні бяспекі">
+<!ENTITY menu_viewSecurityStatus.label "Звесткі пра бяспеку ліста">
+<!ENTITY menu_viewSecurityStatus.accesskey "З">

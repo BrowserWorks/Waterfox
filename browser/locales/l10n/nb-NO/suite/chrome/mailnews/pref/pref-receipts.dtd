@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "Mottakskvitteringer">
+<!ENTITY prefReceipts.caption         "Mottakskvitteringer">
+<!ENTITY requestReceipt.label         "Alltid be om kvittering når en melding sendes">
+<!ENTITY requestReceipt.accesskey     "A">
+<!ENTITY receiptArrive.label          "Når en kvittering kommer tilbake:">
+<!ENTITY leaveIt.label                "La den være i Innboks">
+<!ENTITY leaveIt.accesskey            "L">
+<!ENTITY moveToSent.label             "Flytt den til min «Sendt»-mappe">
+<!ENTITY moveToSent.accesskey         "F">
+<!ENTITY requestMDN.label             "Når jeg mottar en forespørsel for mottakskvittering:">
+<!ENTITY returnSome.label             "Tillat for noen meldinger">
+<!ENTITY returnSome.accesskey         "T">
+<!ENTITY never.label                  "Aldri send tilbake">
+<!ENTITY never.accesskey              "d">
+<!ENTITY notInToCc.label              "Dersom jeg ikke er i Til eller Kopi-feltet:">
+<!ENTITY notInToCc.accesskey          "k">
+<!ENTITY outsideDomain.label          "Dersom avsenderen er utenfor mitt domene:">
+<!ENTITY outsideDomain.accesskey      "v">
+<!ENTITY otherCases.label             "I andre tilfeller:">
+<!ENTITY otherCases.accesskey         "I">
+<!ENTITY askMe.label                  "Spør meg">
+<!ENTITY alwaysSend.label             "Alltid send">
+<!ENTITY neverSend.label              "Aldri send">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Format za slanje">
+<!ENTITY sendMaildesc.label           "Ako prilikom slanja formatirane (HTML) poruke jedan ili više primalaca nisu označeni da mogu primati HTML poruke:">
+<!ENTITY askMe.label                  "Pitaj me šta uraditi (Pošta traži da odaberete format)">
+<!ENTITY convertPlain2.label          "Pretvori poruku u običan tekst (oblikovanje može nestati)">
+<!ENTITY sendHTML2.label              "Pošalji poruku samo kao HTML (može uzrokovati probleme s prikazom)">
+<!ENTITY sendBoth2.label              "Pošalji poruku kao običan tekst i HTML (veća veličina)">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "Domene HTML-a i običnog teksta">
+<!ENTITY domaindesc.label             "Kada šaljete poruku na adresu koja sarži jednu od domena prikazanih ispod, Pošta automatski šalje poruku u preferiranom obliku (oblikovan tekst ili običan tekst).">
+<!ENTITY HTMLdomaintitle.label        "HTML domene">
+<!ENTITY PlainTexttitle.label         "Domene običnog teksta">
+<!ENTITY AddButton.label              "Dodaj…">
+<!ENTITY DeleteButton.label           "Izbriši">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "Dodaj naziv domene za HTML">
+<!ENTITY add.htmldomain               "Naziv domene za HTML:">
+<!ENTITY add.plaintexttitle           "Dodaj domenu za običan tekst">
+<!ENTITY add.plaintextdomain          "Naziv domene za običan tekst:">
+
+<!ENTITY domainnameError.title        "Greška u nazivu domene">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "Naziv domene @string@ je neispravan i biće ignorisan. Ispravni nazivi domene moraju uključivati barem jedan '.' i znakove s obije strane.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Automatski šalji poruku kao običan tekst ako nema prikazanih značajnih oblikovanja (poništava druge opcije)">

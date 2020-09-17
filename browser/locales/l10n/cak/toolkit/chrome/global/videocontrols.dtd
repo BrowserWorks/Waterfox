@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "Titzij">
+<!ENTITY playButton.pauseLabel "Titanab'äx">
+<!ENTITY muteButton.muteLabel "Timemür">
+<!ENTITY muteButton.unmuteLabel "Tak'axäx">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Chijun ruwa kematz'ib'">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Tel pa chijun ruwa kematz'ib'">
+<!ENTITY castingButton.castingLabel "Titaq el pa ruwäch">
+<!ENTITY closedCaption.off "Chupül">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Pajonel ch'ab'äl">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Picture-in-Picture">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "Titz'et pa Picture-in-Picture">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "Titzij silowäch pa nab'ey k'ojlib'äl toq nab'än ch'aqa' chik taq wachinäq pa &brandShortName;">
+
+<!ENTITY error.aborted "Xpa'e' ri rutzijik silowachib'äl.">
+<!ENTITY error.network "Xq'at rutzijik silowachib'äl ruma jun sachoj pa ruk'u'x samaj.">
+<!ENTITY error.decode "Man tikirel ta nitz'et ri silowachib'äl ruma chi itzel ri yakb'äl.">
+<!ENTITY error.srcNotSupported "Ri rub'anikil o ruwäch">
+<!ENTITY error.noSource2 "Majun silowachib'äl xelitäj, ri nikixïm ki' pa MIME rub'anikil chuqa' ruwäch.">
+<!ENTITY error.generic "Xpa'e' ri rutzijik silowachib'äl ruma jun sachoj ri man etaman ta.">
+
+<!ENTITY status.pictureInPicture "Re silowäch re' nitzij rik'in Picture-in-Picture rub'anikil.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

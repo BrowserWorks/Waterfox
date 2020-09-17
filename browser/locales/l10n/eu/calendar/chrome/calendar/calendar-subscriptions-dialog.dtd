@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Subscriptions Dialog -->
+
+<!ENTITY calendar.subscriptions.dialog.title                            "Egutegi harpidetza">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Ondorengoa duten egutegiak erakutsi:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Bilatu">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Aukeratu egutegiak harpidetzeko:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Harpidetu">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Harpidetza kendu">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Bilatu…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Ez da aurkitu bat datorrenik.">

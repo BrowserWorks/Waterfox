@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filtres de messatges">
+<!ENTITY nameColumn.label "Nom">
+<!ENTITY activeColumn.label "Actiu">
+<!ENTITY newButton.label "Novèl">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "Modificar">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "Suprimir">
+<!ENTITY deleteButton.accesskey "S">
+<!ENTITY reorderUpButton.label "Montar">
+<!ENTITY reorderUpButton.accesskey "M">
+<!ENTITY reorderDownButton.label "Davalar">
+<!ENTITY reorderDownButton.accesskey "D">
+<!ENTITY filterHeader.label "Los filtres seràn aplicats dins l'òrdre seguent :">
+<!ENTITY filtersForPrefix.label "Filtres per :">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Jornal de filtratge">
+<!ENTITY viewLogButton.accesskey "J">
+<!ENTITY runFilters.label "Executar">
+<!ENTITY runFilters.accesskey "x">
+<!ENTITY stopFilters.label "Interrompre">
+<!ENTITY stopFilters.accesskey "r">
+<!ENTITY folderPickerPrefix.label "Executar los filtres seleccionats sus :">
+<!ENTITY folderPickerPrefix.accesskey "l">
+<!ENTITY helpButton.label "Ajuda">
+<!ENTITY helpButton.accesskey "e">
+<!ENTITY closeCmd.key "W">

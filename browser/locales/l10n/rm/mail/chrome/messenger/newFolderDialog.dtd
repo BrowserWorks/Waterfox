@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Agiuntar in ordinatur">
+<!ENTITY name.label                 "Num:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Crear sco sutordinatur da:">
+<!ENTITY description.accesskey      "C">
+<!ENTITY folderRestriction1.label   "Quest server accepta mo dus tips spezials dad ordinaturs.">
+<!ENTITY folderRestriction2.label   "L'ordinatur nov dastga cuntegnair il suandant:">
+<!ENTITY foldersOnly.label          "Mo ordinaturs">
+<!ENTITY messagesOnly.label         "Mo messadis">
+<!ENTITY accept.label               "Crear in ordinatur">
+<!ENTITY accept.accesskey           "r">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName; کے متعلق">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; تجرباتی ہے اور غیر مستحکم ہو سکتا ہے۔">
+<!ENTITY aboutPage.checkForUpdates.link         "تازہ کاریوں کے لیے پڑتال کریں »">
+<!ENTITY aboutPage.checkForUpdates.checking     "تازہ کاریوں کے لیے پڑتال کر رہا ہے…">
+<!ENTITY aboutPage.checkForUpdates.none         " تازہ کاریاں دستیاب نہیں">
+<!ENTITY aboutPage.checkForUpdates.available2   "تازہ کاری ڈاؤن لوڈ کریں">
+<!ENTITY aboutPage.checkForUpdates.downloading  "تازہ کاری ڈاؤن لوڈ کر رہا ہے…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "تازہ کاری تنصیب کریں">
+<!ENTITY aboutPage.faq.label                    "عمومی سوالات">
+<!ENTITY aboutPage.support.label                "معاونت">
+<!ENTITY aboutPage.privacyPolicy.label          "پالیسی نجی نوعیت">
+<!ENTITY aboutPage.rights.label                 "اپنے حقوق جانیں">
+<!ENTITY aboutPage.relNotes.label               "اجرائی نوٹ">
+<!ENTITY aboutPage.credits.label                "معنونات">
+<!ENTITY aboutPage.license.label                "لائسنس معلومات">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox اور Firefox کی لوگو Mozilla فاونڈینشن کے تجارتی نشان ہیں۔">

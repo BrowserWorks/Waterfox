@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Roghainnean na liosta taghaidh">
+
+<!ENTITY Select.label "Liosta taghaidh">
+<!ENTITY SelectName.label "Ainm na liosta:">
+<!ENTITY SelectName.accesskey "n">
+<!ENTITY SelectSize.label "Àirde:">
+<!ENTITY SelectSize.accesskey "d">
+<!ENTITY SelectMultiple.label "Ioma-thaghadh">
+<!ENTITY SelectMultiple.accesskey "m">
+<!ENTITY SelectDisabled.label "Air a chur à comas">
+<!ENTITY SelectDisabled.accesskey "A">
+<!ENTITY SelectTabIndex.label "Clàr-innse tabaichte:">
+<!ENTITY SelectTabIndex.accesskey "i">
+
+<!ENTITY OptGroup.label "Buidheann roghainnean">
+<!ENTITY OptGroupLabel.label "Leubail:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "Air a chur à comas">
+<!ENTITY OptGroupDisabled.accesskey "A">
+
+<!ENTITY Option.label "Roghainn">
+<!ENTITY OptionText.label "Teacsa:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Luach:">
+<!ENTITY OptionValue.accesskey "L">
+<!ENTITY OptionSelected.label "Air a thaghadh o thùs">
+<!ENTITY OptionSelected.accesskey "s">
+<!ENTITY OptionDisabled.label "Air a chur à comas">
+<!ENTITY OptionDisabled.accesskey "A">
+
+<!ENTITY TextHeader.label "Teacsa">
+<!ENTITY ValueHeader.label "Luach">
+<!ENTITY SelectedHeader.label "Air a thaghadh">
+
+<!ENTITY AddOption.label "Cuir roghainn ris">
+<!ENTITY AddOption.accesskey "o">
+<!ENTITY AddOptGroup.label "Cuir buidheann ris">
+<!ENTITY AddOptGroup.accesskey "C">
+<!ENTITY RemoveElement.label "Thoir air falbh">
+<!ENTITY RemoveElement.accesskey "r">
+<!ENTITY MoveElementUp.label "Gluais suas">
+<!ENTITY MoveElementUp.accesskey "u">
+<!ENTITY MoveElementDown.label "Gluais sìos">
+<!ENTITY MoveElementDown.accesskey "G">

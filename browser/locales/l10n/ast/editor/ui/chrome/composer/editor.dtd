@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY editorWindow.titlemodifier "Composer">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!ENTITY compositionToolbar.tooltip "Barra de ferramientes de redaición">
+<!ENTITY previewToolbarCmd.label "Desaminar">
+<!ENTITY previewToolbarCmd.tooltip "Cargar esta páxina nel restolador">
+<!ENTITY exportToTextCmd.label "Esportar como testu…">
+<!ENTITY exportToTextCmd.accesskey "s">
+<!ENTITY previewCmd.label "Desaminar páxina">
+<!ENTITY previewCmd.accesskey "x">
+<!ENTITY sendPageCmd.label "Unviar páxina…">
+<!ENTITY sendPageCmd.accesskey "v">
+<!ENTITY compositionToolbarCmd.label "Barra de ferramientes de redaición">
+<!ENTITY compositionToolbarCmd.accesskey "B">
+<!ENTITY formattingToolbarCmd.label "Barra de formatu">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Barra d'edición">
+<!ENTITY editmodeToolbarCmd.accesskey "c">
+<!ENTITY formatMenu.label "Formatu">
+<!ENTITY formatMenu.accesskey "u">
+<!ENTITY grid.label "Rexella de posicionamientu">
+<!ENTITY grid.accesskey "R">
+<!ENTITY pageProperties.label "Títulu propiedaes de la páxina…">
+<!ENTITY pageProperties.accesskey "T">
+<!ENTITY validateCmd.label "Validar HTML">
+<!ENTITY validateCmd.accesskey "L">
+<!ENTITY NormalModeTab.label "Normal">
+<!ENTITY NormalMode.label "Mou d'edición normal">
+<!ENTITY NormalMode.accesskey "M">
+<!ENTITY NormalMode.tooltip "Amosar berbesos de les tables y enllaces internos">
+<!ENTITY AllTagsModeTab.label "Etiquetes HTML">
+<!ENTITY AllTagsMode.label "Etiquetes HTML">
+<!ENTITY AllTagsMode.accesskey "E">
+<!ENTITY AllTagsMode.tooltip "Amosar iconos pa toles etiquetes HTML">
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Orixe">
+<!ENTITY HTMLSourceMode.label "Fonte HTML">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Editar fonte HTML">
+<!ENTITY PreviewModeTab.label "Vista preliminar">
+<!ENTITY PreviewMode.label "Vista preliminar">
+<!ENTITY PreviewMode.accesskey "a">
+<!ENTITY PreviewMode.tooltip "Amosar como WYSIWYG (como nel restolador)">

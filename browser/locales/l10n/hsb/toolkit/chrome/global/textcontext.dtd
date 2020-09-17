@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "K słownikej přidać">
+<!ENTITY spellAddToDictionary.accesskey "K">
+<!ENTITY spellUndoAddToDictionary.label "Přidaće słownikej cofnyć">
+<!ENTITY spellUndoAddToDictionary.accesskey "d">
+<!ENTITY spellCheckToggle.label "Prawopis kontrolować">
+<!ENTITY spellCheckToggle.accesskey "P">
+<!ENTITY spellNoSuggestions.label "(Žane prawopisne namjety)">
+<!ENTITY spellDictionaries.label "Rěče">
+<!ENTITY spellDictionaries.accesskey "R">
+
+<!ENTITY searchTextBox.clear.label "Wuprózdnić">
+
+<!ENTITY fillLoginMenu.label          "Přizjewjenje wupjelnić">
+<!ENTITY fillLoginMenu.accesskey      "u">
+<!ENTITY fillPasswordMenu.label       "Hesło wupjelnić">
+<!ENTITY fillPasswordMenu.accesskey   "H">
+<!ENTITY fillUsernameMenu.label       "Wužiwarske mjeno wupjelnić">
+<!ENTITY fillUsernameMenu.accesskey   "m">
+<!ENTITY noLoginSuggestions.label     "(Žane přizjewjenske namjety)">
+<!ENTITY viewSavedLogins.label        "Składowane přizjewjenja pokazać">

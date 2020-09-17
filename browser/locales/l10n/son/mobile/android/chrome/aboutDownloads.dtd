@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Zumandiyaney">
+<!ENTITY aboutDownloads.header                     "War zumandiyaney">
+<!ENTITY aboutDownloads.empty                      "Zumandiyan kul šii">
+
+<!ENTITY aboutDownloads.open                       "Feeri">
+<!ENTITY aboutDownloads.remove                     "Tuusu">
+<!ENTITY aboutDownloads.removeAll                  "Ikul tuusu">
+<!ENTITY aboutDownloads.pause                      "Hunanzamay">
+<!ENTITY aboutDownloads.resume                     "Šintin taaga">
+<!ENTITY aboutDownloads.cancel                     "Naŋ">
+<!ENTITY aboutDownloads.retry                      "Šii taaga">

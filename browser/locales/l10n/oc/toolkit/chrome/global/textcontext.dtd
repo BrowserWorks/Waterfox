@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Apondre al diccionari">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "Anullar l'apondon al diccionari">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "Verificar l'ortografia">
+<!ENTITY spellCheckToggle.accesskey "V">
+<!ENTITY spellNoSuggestions.label "(cap de mot suggerit)">
+<!ENTITY spellDictionaries.label "Lengas">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "Voidar">
+
+<!ENTITY fillLoginMenu.label          "Garnir l’identificant">
+<!ENTITY fillLoginMenu.accesskey      "G">
+<!ENTITY fillPasswordMenu.label       "Emplenar lo senhal">
+<!ENTITY fillPasswordMenu.accesskey   "m">
+<!ENTITY fillUsernameMenu.label       "Emplenar lo nom d'utilizaire">
+<!ENTITY fillUsernameMenu.accesskey   "m">
+<!ENTITY noLoginSuggestions.label     "(pas d’identificant suggerit)">
+<!ENTITY viewSavedLogins.label        "Afichar los identificants enregistrats">

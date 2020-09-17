@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "තිරස් රේඛා ලක්ෂණ">
+
+<!ENTITY dimensionsBox.label "මාන">
+<!ENTITY heightEditField.label "උස:">
+<!ENTITY heightEditField.accessKey "G">
+<!ENTITY widthEditField.label "පළල:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY pixelsPopup.value "පික්සෙල්">
+<!ENTITY alignmentBox.label "පෙළගැසුම">
+<!ENTITY leftRadio.label "වම">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.label "මැද">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.label "දකුණ">
+<!ENTITY rightRadio.accessKey "R">
+
+<!ENTITY threeDShading.label "3-D ඡායාව">
+<!ENTITY threeDShading.accessKey "S">
+<!ENTITY saveSettings.label "පෙරනිමි ලෙස භාවිතා කරන්න">
+<!ENTITY saveSettings.accessKey "D">
+<!ENTITY saveSettings.tooltip "තිරස් රේඛාවක් ඇතුලත් කිරීමේදී භාවිතා කිරීමට මෙම සැකසුම් සුරකින්න">

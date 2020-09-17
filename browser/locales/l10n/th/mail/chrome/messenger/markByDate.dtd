@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "ทำเครื่องหมายข้อความว่าอ่านแล้วโดยวันที่">
+<!ENTITY markByDateLower.label "ทำเครื่องหมายข้อความว่าอ่านแล้วจาก:">
+<!ENTITY markByDateLower.accesskey "ท">
+<!ENTITY markByDateUpper.label "ถึง:">
+<!ENTITY markByDateUpper.accesskey "ถ">

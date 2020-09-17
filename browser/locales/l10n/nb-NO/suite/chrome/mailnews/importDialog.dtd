@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Import">
+<!ENTITY importAll.label          "Importer alt">
+<!ENTITY importAll.accesskey      "I">
+<!ENTITY importMail.label         "E-post">
+<!ENTITY importMail.accesskey     "E">
+<!ENTITY importFeeds.label        "Nyhetskildeabonnement">
+<!ENTITY importFeeds.accesskey    "h">
+<!ENTITY importAddressbook.label  "Adressebøker">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Innstillinger">
+<!ENTITY importSettings.accesskey "I">
+<!ENTITY importFilters.label      "Filtre">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; E-post importveiviser">
+<!ENTITY importShortDesc.label    "Importerer e-post, adressebøker og innstillinger fra andre programmer">
+
+<!ENTITY importDescription1.label "Denne veiviseren hjelper deg å importere e-post, adressebøker, filtre og/eller innstillinger fra andre e-postprogrammer for bruk i e-postdelen av &brandShortName;.">
+<!ENTITY importDescription2.label "Når de er importert vil du kunne bruke dem i &brandShortName; E-post og nyhetsgrupper og/eller adressebok.">
+
+<!ENTITY selectDescription.label  "Velg programmet du vil importere fra:">
+<!ENTITY selectDescriptionB.label "Velg en eksisterende konto, eller opprett en ny konto:">
+<!ENTITY selectDescription.accesskey "V">
+<!ENTITY acctName.label           "Navn:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Fant ingen program eller fil for å importere data fra.">
+
+<!ENTITY back.label               "&lt; Tilbake">
+<!ENTITY forward.label            "Neste &gt;">
+<!ENTITY finish.label             "Ferdig">
+<!ENTITY cancel.label             "Avbryt">
+
+<!ENTITY select.label             "Velg typen materiell du vil importere:">
+
+<!ENTITY title.label              "Tittel">
+<!ENTITY processing.label         "Importerer …">

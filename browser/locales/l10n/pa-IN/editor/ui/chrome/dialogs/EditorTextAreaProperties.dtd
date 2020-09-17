@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ਟੈਕਸਟ ਖੇਤਰ ਵਿਸ਼ੇਸ਼ਤਾ">
+
+<!ENTITY Settings.label "ਸੈਟਿੰਗ">
+
+<!ENTITY TextAreaName.label "ਖੇਤਰ ਨਾਂ:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "ਕਤਾਰਾਂ:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "ਕਾਲਮ:">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "ਪੜ੍ਹਨ ਲਈ">
+<!ENTITY TextAreaReadOnly.accessKey "O">
+<!ENTITY TextAreaDisabled.label "ਆਯੋਗ">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "ਟੈਬ ਇੰਡੈਕਸ:">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "ਪਹੁੰਚ ਕੁੰਜੀ:">
+<!ENTITY TextAreaAccessKey.accessKey "K">
+<!ENTITY InitialText.label "ਸ਼ੁਰੂਆਤੀ ਟੈਕਸਟ:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "ਸਮੇਟਣ ਢੰਗ:">
+<!ENTITY TextAreaWrap.accessKey "W">
+<!ENTITY WrapDefault.value "ਡਿਫਾਲਟ">
+<!ENTITY WrapOff.value "ਬੰਦ ਕਰੋ">
+<!ENTITY WrapHard.value "ਸਖਤ">
+<!ENTITY WrapSoft.value "ਨਰਮ">
+<!ENTITY WrapPhysical.value "ਭੌਤਿਕ">
+<!ENTITY WrapVirtual.value "ਫ਼ਰਜੀ">

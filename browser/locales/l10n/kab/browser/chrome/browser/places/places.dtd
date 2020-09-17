@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Tamkarḍit">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Suddes">
+<!ENTITY organize.accesskey    "S">
+<!ENTITY organize.tooltip      "Suddes ticraḍ n isebtar">
+
+<!ENTITY file.close.label               "Mdel">
+<!ENTITY file.close.accesskey           "M">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Askan">
+<!ENTITY views.accesskey                "A">
+<!ENTITY views.tooltip                  "Snifel askan-ik">
+<!ENTITY view.columns.label             "Sken tigejda">
+<!ENTITY view.columns.accesskey         "g">
+<!ENTITY view.sort.label                "Smizzwer s">
+<!ENTITY view.sort.accesskey            "z">
+<!ENTITY view.unsorted.label            "Ur ittusmizzwar ara">
+<!ENTITY view.unsorted.accesskey        "r">
+<!ENTITY view.sortAscending.label       "Amizzwer igemmen A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Amizzwer amnusruy Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Kter ticraḍ n isebtar s umasal HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "K">
+<!ENTITY exportBookmarksToHTML.label       "Sifeḍ ticraḍ n isebtar s umasal HTML…:">
+<!ENTITY exportBookmarksToHTML.accesskey   "S">
+<!ENTITY importOtherBrowser.label          "Kter isefka seg iminig-nniḍen...">
+<!ENTITY importOtherBrowser.accesskey      "i">
+
+<!ENTITY cmd.backup.label               "Kles…">
+<!ENTITY cmd.backup.accesskey           "l">
+<!ENTITY cmd.restore2.label             "Err-d">
+<!ENTITY cmd.restore2.accesskey         "E">
+<!ENTITY cmd.restoreFromFile.label      "Fren afaylu…">
+<!ENTITY cmd.restoreFromFile.accesskey  "F">
+
+<!ENTITY col.name.label          "Isem">
+<!ENTITY col.tags.label          "Tibzimin">
+<!ENTITY col.url.label           "Tansa">
+<!ENTITY col.mostrecentvisit.label "Tirza taneggarut">
+<!ENTITY col.visitcount.label    "Amḍan n tmerziwin">
+<!ENTITY col.dateadded.label     "Azem n tmerna">
+<!ENTITY col.lastmodified.label  "Asnifel aneggaru">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Kter u ḥrez">
+<!ENTITY maintenance.accesskey  "K">
+<!ENTITY maintenance.tooltip    "Kter u ḥrez ticraḍ-ik n isebtar">
+
+<!ENTITY backButton.tooltip  "Ɣer deffir">
+
+<!ENTITY forwardButton.tooltip  "Ddu ɣer zdat">
+
+<!ENTITY detailsPane.selectAnItemText.description "Fren aferdis akken ad twaliḍ udiɣ ad tesnifleḍ taɣaṛa-yines">
+

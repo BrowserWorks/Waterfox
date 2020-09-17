@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Колер">
+<!ENTITY lastPickedColor.label "Апошні выбраны колер">
+<!ENTITY lastPickedColor.accessKey "А">
+<!ENTITY chooseColor1.label "Выберыце колер:">
+<!ENTITY setColorExample.label "(напрыклад: &quot;#0000ff&quot; або &quot;blue&quot;):">
+<!ENTITY default.label "Змоўчны">
+<!ENTITY default.accessKey "З">
+<!ENTITY palette.label "Палітра:">
+<!ENTITY standardPalette.label "Стандартная">
+<!ENTITY webPalette.label "Усе сеціўныя колеры">
+<!ENTITY background.label "Фон для:">
+<!ENTITY background.accessKey "Ф">
+<!ENTITY table.label "Табліца">
+<!ENTITY table.accessKey "Т">
+<!ENTITY cell.label "Ячэйка(і)">
+<!ENTITY cell.accessKey "Я">

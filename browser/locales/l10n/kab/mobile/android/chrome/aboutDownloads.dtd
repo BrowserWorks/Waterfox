@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Isidar">
+<!ENTITY aboutDownloads.header                     "Isidar-ik">
+<!ENTITY aboutDownloads.empty                      "Ulac isidar">
+
+<!ENTITY aboutDownloads.open                       "Ldi">
+<!ENTITY aboutDownloads.remove                     "Kkes">
+<!ENTITY aboutDownloads.removeAll                  "Kkes akk">
+<!ENTITY aboutDownloads.pause                      "Sgunfu">
+<!ENTITY aboutDownloads.resume                     "Kemmel">
+<!ENTITY aboutDownloads.cancel                     "Sefsex">
+<!ENTITY aboutDownloads.retry                      "Ɛreḍ i tikelt-nniḍen">

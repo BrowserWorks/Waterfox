@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "බොත්තම් ලක්ෂණ">
+
+<!ENTITY Settings.label "සැකසුම්">
+
+<!ENTITY ButtonType.label "ආකාරය">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Submit">
+<!ENTITY reset.value "Reset">
+<!ENTITY button.value "බොත්තම">
+
+<!ENTITY ButtonName.label "නම:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "අගය:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "ටැබ් දර්ශකය:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "අබලැති">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "Access Key:">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveButton.label "බොත්තම ඉවත් කරන්න">
+<!ENTITY RemoveButton.accesskey "R">

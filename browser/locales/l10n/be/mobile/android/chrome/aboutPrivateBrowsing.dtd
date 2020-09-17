@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Прыватнае агляданне">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ Ахова ад сачэння">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Вы не ў рэжыме Прыватнага аглядання">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; блакуе часткі старонкі, якія могуць асочваць вашы паводзіны ў Інтэрнэце.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Мы не будзе запамінаць нічога з гісторыі, але сцягнутыя файлы і новыя закладкі будуць захаваны на вашай прыладзе.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "У рэжыме Прыватнага аглядання мы не будзем захоўваць гісторыю або кукі. Аднак сцягнутыя файлы і зробленыя закладкі будуць захаваны на вашай прыладзе.">
+
+<!ENTITY privatebrowsingpage.link.private "Жадаеце даведацца больш?">
+<!ENTITY privatebrowsingpage.link.normal "Адкрыць новую прыватную картку">

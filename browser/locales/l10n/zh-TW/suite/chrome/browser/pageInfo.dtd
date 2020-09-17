@@ -1,0 +1,128 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 30em;">
+
+<!ENTITY  copy.key               "C">
+<!ENTITY  copy.label             "複製">
+<!ENTITY  copy.accesskey         "C">
+<!ENTITY  selectall.key          "A">
+<!ENTITY  selectall.label        "全選">
+<!ENTITY  selectall.accesskey    "A">
+<!ENTITY  openHelpMac.key        "?">
+<!ENTITY  closeWindow.key        "w">
+<!ENTITY  copyLinks.label           "複製鏈結">
+<!ENTITY  copyLinks.accesskey       "L">
+<!ENTITY  openInNewTab.label        "用新分頁開啟">
+<!ENTITY  openInNewTab.accesskey    "T">
+<!ENTITY  openInNewWindow.label     "開啟至新視窗">
+<!ENTITY  openInNewWindow.accesskey "w">
+
+<!ENTITY  generalTab            "一般">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "標題:">
+<!ENTITY  generalURL            "網址:">
+<!ENTITY  generalType           "類型:">
+<!ENTITY  generalMode           "繪製模式:">
+<!ENTITY  generalSize           "大小:">
+<!ENTITY  generalReferrer       "參照網址:">
+<!ENTITY  generalSource         "快取來源:">
+<!ENTITY  generalModified       "上次修改:">
+<!ENTITY  generalEncoding2      "文字編碼:">
+<!ENTITY  generalMetaName       "名稱">
+<!ENTITY  generalMetaContent    "內容">
+<!ENTITY  generalSecurityDetails           "詳細資訊">
+<!ENTITY  generalSecurityDetails.accesskey "D">
+
+<!ENTITY  formsTab              "表單">
+<!ENTITY  formsTab.accesskey    "F">
+<!ENTITY  formAction            "表單動作">
+<!ENTITY  formMethod            "傳送編碼">
+<!ENTITY  formName              "名稱">
+<!ENTITY  formEncoding          "編碼:">
+<!ENTITY  formTarget            "目標:">
+<!ENTITY  formFields            "欄位:">
+<!ENTITY  formLabel             "標籤">
+<!ENTITY  formFName             "欄位名稱">
+<!ENTITY  formType              "類型">
+<!ENTITY  formCValue            "目前設定值">
+
+<!ENTITY  linksTab              "鏈結">
+<!ENTITY  linksTab.accesskey    "L">
+<!ENTITY  linkName              "名稱">
+<!ENTITY  linkAddress           "位置">
+<!ENTITY  linkType              "類型">
+<!ENTITY  linkTarget            "目標">
+<!ENTITY  linkAccessKey         "存取鍵">
+
+<!ENTITY  mediaTab              "媒體">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaURL              "網址:">
+<!ENTITY  mediaAlt              "替代文字:">
+<!ENTITY  mediaLocation         "位置:">
+<!ENTITY  mediaText             "關聯文字:">
+<!ENTITY  mediaAltHeader        "替代文字">
+<!ENTITY  mediaAddress          "位置">
+<!ENTITY  mediaType             "類型">
+<!ENTITY  mediaSize             "大小">
+<!ENTITY  mediaCount            "數量">
+<!ENTITY  mediaDimensions       "尺寸:">
+<!ENTITY  mediaPhysDimensions   "真實大小:">
+<!ENTITY  mediaTitle            "標題:">
+<!ENTITY  mediaDimension        "尺寸:">
+<!ENTITY  mediaLongdesc         "完整描述:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "另存新檔…">
+<!ENTITY  mediaSaveAs.accesskey "a">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "媒體預覽:">
+
+<!ENTITY  feedTab               "消息來源">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "訂閱">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "權限">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "使用預設值">
+<!ENTITY  permAskAlways         "總是詢問">
+<!ENTITY  permAllow             "允許">
+<!ENTITY  permAllowSession      "此次瀏覽階段允許">
+<!ENTITY  permBlock             "封鎖">
+<!ENTITY  permissionsFor        "此網站權限設定:">
+<!ENTITY  permImage             "載入圖片">
+<!ENTITY  permPopup             "開啟彈出式視窗">
+<!ENTITY  permCookie            "設定 Cookie">
+<!ENTITY  permNotifications     "顯示通知">
+<!ENTITY  permInstall           "安裝擴充套件或佈景主題">
+<!ENTITY  permGeo               "透露地理位置">
+
+<!ENTITY  securityTab           "安全性">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityHeader        "本頁面的安全資訊">
+<!ENTITY  securityView.certView "檢視憑證">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "未知">
+
+
+<!ENTITY  securityView.identity.header   "網站身份">
+<!ENTITY  securityView.identity.owner    "擁有者:">
+<!ENTITY  securityView.identity.domain   "網站:">
+<!ENTITY  securityView.identity.verifier "驗證機構:">
+
+<!ENTITY  securityView.identity.validity "到期於:">
+
+<!ENTITY  securityView.privacy.header                   "隱私權及上網記錄">
+<!ENTITY  securityView.privacy.history                  "我以前瀏覽過這個網站嗎？">
+<!ENTITY  securityView.privacy.cookies                  "此網站有在我的電腦中儲存資訊 (Cookie) 嗎？">
+<!ENTITY  securityView.privacy.viewCookies              "檢視 Cookie">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "我有在此網站儲存任何密碼嗎？">
+<!ENTITY  securityView.privacy.viewPasswords            "檢視已存密碼">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "技術細節">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importar libro del adresses">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Datos importate pro registration:">
+<!ENTITY fieldMapImport.next.label "Sequente">
+<!ENTITY fieldMapImport.next.accesskey "S">
+<!ENTITY fieldMapImport.previous.label "Previe">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "Usa Mover supra e Mover infra, pro concordar le campos del libro del adresses a sinistra con le datos correcte pro importar a dextera. Dismarca elementos que tu non vole importar.">
+<!ENTITY fieldMapImport.up.label "Mover supra">
+<!ENTITY fieldMapImport.up.accesskey "s">
+<!ENTITY fieldMapImport.down.label "Mover in basso">
+<!ENTITY fieldMapImport.down.accesskey "b">
+<!ENTITY fieldMapImport.fieldListTitle "Campos del libro de adresses">
+<!ENTITY fieldMapImport.dataTitle "Datos a importar">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Le prime registration contine le nomine de campos">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "P">

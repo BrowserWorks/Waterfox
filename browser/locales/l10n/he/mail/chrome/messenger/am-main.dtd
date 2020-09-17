@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "הגדרות חשבון">
+<!ENTITY accountName.label "שם החשבון:">
+<!ENTITY accountName.accesskey "ח">
+<!ENTITY identityTitle.label "זהות ברירת מחדל">
+<!ENTITY identityDesc.label "לכל חשבון יש זהות, שהיא המידע שאנשים אחרים יראו כאשר יקראו את ההודעות שלך.">
+<!ENTITY name.label "שמך:">
+<!ENTITY name.accesskey "ש">
+<!ENTITY email.label "כתובת דוא״ל:">
+<!ENTITY email.accesskey "ד">
+<!ENTITY replyTo.label "כתובת לתשובה:">
+<!ENTITY replyTo.accesskey "ת">
+<!ENTITY replyTo.placeholder "ממוענים יגיבו לכתובת חלופית זו">
+<!ENTITY organization.label "ארגון:">
+<!ENTITY organization.accesskey "א">
+<!ENTITY signatureText.label "טקסט לחתימה:">
+<!ENTITY signatureText.accesskey "ט">
+<!ENTITY signatureHtml.label "השתמש ב־HTML (כגון &lt;b&gt;הדגשה&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "ת">
+<!ENTITY signatureFile.label "צרף חתימה מקובץ (קובץ טקסט, HTML, או תמונה):">
+<!ENTITY signatureFile.accesskey "ק">
+<!ENTITY edit.label "עריכה…">
+<!ENTITY choose.label "בחירה…">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "עריכת כרטיס…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "הצמד כרטיס vCard שלי להודעות">
+<!ENTITY attachVCard.accesskey "כ">
+
+<!ENTITY manageIdentities.label "ניהול זהויות…">
+<!ENTITY manageIdentities.accesskey "נ">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "שרת דואר יוצא (SMTP):">
+<!ENTITY smtpName.accesskey "S">
+<!ENTITY smtpDefaultServer.label "השתמש בשרת ברירת המחדל">
+
+<!ENTITY smtpServerEdit.label "עריכת שרת SMTP…">
+<!ENTITY smtpServerEdit.accesskey "ש">

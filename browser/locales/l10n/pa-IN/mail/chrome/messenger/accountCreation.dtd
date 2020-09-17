@@ -1,0 +1,80 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "ਤੁਹਾਡਾ ਨਾਂ:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY name.text                       "ਤੁਹਾਡਾ ਨਾਂ, ਜੋ ਹੋਰਾਂ ਨੂੰ ਵੇਖਾਈ ਦੇਵੇਗਾ">
+<!ENTITY email.label                     "ਈਮੇਲ ਐਡਰੈਸ:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY password.label                  "ਪਾਸਵਰਡ:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "ਪਾਸਵਰਡ">
+<!ENTITY password.text                   "Optional, will only be used to validate the username">
+<!ENTITY rememberPassword.label          "ਪਾਸਵਰਡ ਯਾਦ ਰੱਖੋ">
+<!ENTITY rememberPassword.accesskey      "m">
+
+<!ENTITY imapLong.label                  "IMAP (ਰਿਮੋਟ ਫੋਲਡਰ)">
+<!ENTITY pop3Long.label                  "POP3 (ਮੇਲ ਆਪਣੇ ਫੋਲਡਰ ਉੱਤੇ ਰੱਖੋ)">
+
+<!ENTITY incoming.label                  "ਆਉਣ:">
+<!ENTITY outgoing.label                  "ਭੇਜਣ:">
+<!ENTITY username.label                  "ਯੂਜ਼ਰ ਨਾਂ:">
+<!ENTITY auth.label                      "ਪਰਮਾਣਕਿਤਾ">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                       "POP3">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "ਆਪੇ-ਖੋਜੋ">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "ਕੋਈ ਨਹੀਂ">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!ENTITY advancedSetup.label             "ਤਕਨੀਕੀ ਸੰਰਚਨਾ">
+<!ENTITY advancedSetup.accesskey         "A">
+<!ENTITY cancel.label                    "ਰੱਦ ਕਰੋ">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "ਜਾਰੀ ਰੱਖੋ">
+<!ENTITY continue.accesskey              "C">
+<!ENTITY stop.label                      "ਰੋਕੋ">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "ਮੁੜ-ਟੈਸਟ">
+<!ENTITY half-manual-test.accesskey      "t">
+
+
+<!ENTITY warning.label                   "ਸਾਵਧਾਨ!">
+<!ENTITY incomingSettings.label          "ਆਉਣ ਸੈਟਿੰਗ:">
+<!ENTITY outgoingSettings.label          "ਭੇਜਣ ਸੈਟਿੰਗ:">
+<!ENTITY technicaldetails.label          "ਤਕਨੀਕੀ ਵੇਰਵਾ">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "ਮੈਂ ਖਤਰਾ ਸਮਝਦਾ ਹਾਂ।">
+<!ENTITY confirmWarning.accesskey        "u">
+
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "ਮੁਕੰਮਲ">
+<!ENTITY doneAccount.accesskey           "D">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "ਸੈਟਿੰਗ ਬਦਲੋ">
+<!ENTITY changeSettings.accesskey        "S">
+
+<!ENTITY contactYourProvider.description "&brandShortName; can allow you to get to your mail using the provided configurations. However, you should contact your administrator or email provider regarding these improper connections. See the Thunderbird FAQ for more information.">
+
+<!ENTITY insecureServer.tooltip.title    "ਸਾਵਧਾਨ! ਇਹ ਅਸੁਰੱਖਿਅਤ ਸਰਵਰ ਹੈ।">
+<!ENTITY insecureServer.tooltip.details  "ਹੋਰ ਜਾਣਕਾਰੀ ਲਈ ਚੱਕਰ ਉੱਤੇ ਕਲਿੱਕ ਕਰੋ।">
+
+<!ENTITY insecureUnencrypted.description "Your email and authentication are sent unencrypted, so your password (and your message) could easily be read by other people. &brandShortName; will let you get to your mail, but you should contact your email provider about configuring the server with a secure connection.">
+<!ENTITY insecureSelfSigned.description  "The server uses a certificate that we can't trust, so we can't be sure that someone isn't intercepting the traffic between &brandShortName; and your server. &brandShortName; will let you get to your mail, but you should really get your email provider to configure the server with a trusted certificate.">
+<!ENTITY secureServer.description        "ਵਧਾਈਆਂ! ਇਹ ਸੁਰੱਖਿਅਤ ਸਰਵਰ ਹੈ।">
+

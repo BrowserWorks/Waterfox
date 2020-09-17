@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Bàr-inneal a' mhìosachain">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "B">
+<!ENTITY lightning.toolbar.task.name "Bàr-inneal nan saothraichean">
+<!ENTITY lightning.toolbar.task.name.accesskey "s">
+
+<!ENTITY lightning.toolbar.sync.label "Sioncronaich">
+<!ENTITY lightning.toolbar.sync.tooltip "Ath-luchdaich na mìosachain is sioncronaich na h-atharraichean">
+<!ENTITY lightning.toolbar.delete.label "Sguab às">
+<!ENTITY lightning.toolbar.delete.tooltip "Sguab às na tachartasan no saothraichean a thagh thu">
+<!ENTITY lightning.toolbar.edit.label "Deasaich">
+<!ENTITY lightning.toolbar.edit.tooltip "Deasaich an tachartas no saothair a thagh thu">
+<!ENTITY lightning.toolbar.gototoday.label "Rach gu an-diugh">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Rach gu an-diugh">
+<!ENTITY lightning.toolbar.print.label "Clò-bhuail">
+<!ENTITY lightning.toolbar.print.tooltip "Clò-bhuail na tachartasan no saothraichean">
+<!-- Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.calendar.label     "Mìosachan">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Leum gu taba a' mhìosachain">
+<!ENTITY lightning.toolbar.calendar.accesskey "M">
+<!ENTITY lightning.toolbar.task.label         "Saothraichean">
+<!ENTITY lightning.toolbar.task.tooltip       "Leum gu taba nan saothraichean">
+<!ENTITY lightning.toolbar.task.accesskey     "S">
+<!-- Toolbar write button -->
+
+<!ENTITY lightning.toolbar.newevent.label     "Tachartas">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Cruthaich tachartas ùr">
+<!ENTITY lightning.toolbar.newtask.label      "Saothair">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Cruthaich saothair ùr">
+<!-- Calendar and Task Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.day.label                 "Latha">
+<!ENTITY lightning.toolbar.day.accesskey             "L">
+<!ENTITY lightning.toolbar.week.label                "Seachdain">
+<!ENTITY lightning.toolbar.week.accesskey            "S">
+<!ENTITY lightning.toolbar.multiweek.label           "Iomadh s.">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "I">
+<!ENTITY lightning.toolbar.month.label               "Mìos">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Clàr-taice na h-aplacaid">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Seall clàr-taice &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Leòsan a' mhìosachain">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "m">
+<!ENTITY lightning.toolbar.calendarpane.label        "Seall leòsan a' mhìosachain">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "m">

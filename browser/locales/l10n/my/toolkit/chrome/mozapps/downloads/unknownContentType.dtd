@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "သင် ဖွင့်ဖို့ ရွေးချယ်ထားတယ်:">
+<!ENTITY  from.label                  "မှ -">
+<!ENTITY  actionQuestion.label        "ဒီဖိုင် &brandShortName;နဲ့ ဘာလုပ်မလဲ။">
+
+<!ENTITY  openWith.label              "ဖွင့်မဲ့အရာ">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "အခြား...">
+
+<!ENTITY  saveFile.label              "ဖိုင်ကို သိမ်းဆည်းပါ">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "ဖိုင်များအတွက် ဒီအရာကို အခုကစပြီး ဒီအတိုင်းပဲ အလိုအလျှောက် လုပ်ပေးပါ။">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "အရာတခုကတော့ -">
+
+<!ENTITY  chooseHandlerMac.label      "ရွေးပါ...">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "လှော်​လှန်ပါ...">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "ဒီဖိုင်ကို သင် သိမ်းဆည်းလိုသလား။">

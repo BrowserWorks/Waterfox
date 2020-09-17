@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Aktivizo përditësime për krejt prurjet">
+<!ENTITY biffAll.accesskey             "A">
+
+<!ENTITY newFeedSettings.label         "Rregullime Parazgjedhje për Prurje të Reja">
+
+<!ENTITY manageSubscriptions.label     "Administroni Regjistrime…">
+<!ENTITY manageSubscriptions.accesskey "A">
+
+<!ENTITY feedWindowTitle.label         "Ndihmës Llogarie Prurjesh">
+<!ENTITY feeds.accountName             "Prurje Blogjesh &amp; Lajmesh">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label  "Tekstikentän ominaisuudet">
+
+<!ENTITY Settings.label  "Asetukset">
+
+<!ENTITY TextAreaName.label  "Kentän nimi:">
+<!ENTITY TextAreaName.accessKey  "K">
+<!ENTITY TextAreaRows.label  "Rivejä:">
+<!ENTITY TextAreaRows.accessKey  "R">
+<!ENTITY TextAreaCols.label  "Sarakkeita:">
+<!ENTITY TextAreaCols.accessKey  "S">
+<!ENTITY TextAreaReadOnly.label  "Vain luku">
+<!ENTITY TextAreaReadOnly.accessKey  "V">
+<!ENTITY TextAreaDisabled.label  "Poista käytöstä">
+<!ENTITY TextAreaDisabled.accessKey  "P">
+<!ENTITY TextAreaTabIndex.label  "Sarkainindeksi:">
+<!ENTITY TextAreaTabIndex.accessKey  "a">
+<!ENTITY TextAreaAccessKey.label  "Valintanäppäin:">
+<!ENTITY TextAreaAccessKey.accessKey  "n">
+<!ENTITY InitialText.label  "Teksti aluksi:">
+<!ENTITY InitialText.accessKey  "a">
+
+<!ENTITY TextAreaWrap.label  "Rivitystila:">
+<!ENTITY TextAreaWrap.accessKey  "y">
+<!ENTITY WrapDefault.value  "Oletus">
+<!ENTITY WrapOff.value  "Pois päältä">
+<!ENTITY WrapHard.value  "Kova">
+<!ENTITY WrapSoft.value  "Pehmeä">
+<!ENTITY WrapPhysical.value  "Fyysinen">
+<!ENTITY WrapVirtual.value  "Virtuaalinen">

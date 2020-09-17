@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Lataukset">
+
+<!ENTITY menuBar.tooltip                 "Valikkopalkki">
+<!ENTITY searchBar.tooltip               "Hakupalkki">
+
+<!ENTITY search.placeholder              "Etsi latauksista">
+<!ENTITY search.label                    "Etsi latauksista">
+<!ENTITY search.accesskey                "E">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "Tyhjennä lista">
+<!ENTITY cmd.clearList.tooltip           "Poistaa listasta valmiit, keskeytetyt ja epäonnistuneet lataukset">
+<!ENTITY cmd.clearList.accesskey         "h">
+
+<!ENTITY col.name.label                  "Nimi">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "Tiedoston nimi">
+<!ENTITY col.status.label                "Tila">
+<!ENTITY col.status.accesskey            "T">
+<!ENTITY col.status.tooltip              "Tila">
+<!ENTITY col.actionPlay.label            "Pysäytä/jatka/yritä uudelleen">
+<!ENTITY col.actionPlay.accesskey        "y">
+<!ENTITY col.actionPlay.tooltip          "Pysäytä/jatka/yritä uudelleen">
+<!ENTITY col.actionStop.label            "Keskeytä/poista">
+<!ENTITY col.actionStop.accesskey        "e">
+<!ENTITY col.actionStop.tooltip          "Keskeytä/poista">
+<!ENTITY col.progress.label              "Edistyminen">
+<!ENTITY col.progress.accesskey          "d">
+<!ENTITY col.progress.tooltip            "Edistyminen">
+<!ENTITY col.timeremaining.label         "Aikaa jäljellä">
+<!ENTITY col.timeremaining.accesskey     "ä">
+<!ENTITY col.timeremaining.tooltip       "Aikaa jäljellä">
+<!ENTITY col.transferred.label           "Siirretty">
+<!ENTITY col.transferred.accesskey       "i">
+<!ENTITY col.transferred.tooltip         "Siirretty">
+<!ENTITY col.transferrate.label          "Nopeus">
+<!ENTITY col.transferrate.accesskey      "o">
+<!ENTITY col.transferrate.tooltip        "Nopeus">
+<!ENTITY col.timeelapsed.label           "Aikaa kulunut">
+<!ENTITY col.timeelapsed.accesskey       "u">
+<!ENTITY col.timeelapsed.tooltip         "Aikaa kulunut">
+<!ENTITY col.starttime.label             "Aloitusaika">
+<!ENTITY col.starttime.accesskey         "l">
+<!ENTITY col.starttime.tooltip           "Aloitusaika">
+<!ENTITY col.endtime.label               "Lopetusaika">
+<!ENTITY col.endtime.accesskey           "p">
+<!ENTITY col.endtime.tooltip             "Lopetusaika">
+<!ENTITY col.progresstext.label          "&#37;">
+<!ENTITY col.progresstext.accesskey      "&#37;">
+<!ENTITY col.progresstext.tooltip        "Edistyminen (&#37;)">
+<!ENTITY col.source.label                "Lähde">
+<!ENTITY col.source.accesskey            "h">
+<!ENTITY col.source.tooltip              "Lähde">
+
+<!ENTITY view.columns.label              "Sarakkeet">
+<!ENTITY view.columns.accesskey          "S">
+<!ENTITY view.sortBy.label               "Lajitteluperuste">
+<!ENTITY view.sortBy.accesskey           "L">
+
+<!ENTITY view.unsorted.label             "Ei lajiteltu">
+<!ENTITY view.unsorted.accesskey         "E">
+<!ENTITY view.sortAscending.label        "A > Z lajittelu">
+<!ENTITY view.sortAscending.accesskey    "A">
+<!ENTITY view.sortDescending.label       "Z > A lajittelu">
+<!ENTITY view.sortDescending.accesskey   "Z">
+
+<!ENTITY cmd.pause.label                 "Pysäytä">
+<!ENTITY cmd.pause.accesskey             "P">
+<!ENTITY cmd.resume.label                "Jatka">
+<!ENTITY cmd.resume.accesskey            "J">
+<!ENTITY cmd.retry.label                 "Yritä uudelleen">
+<!ENTITY cmd.retry.accesskey             "Y">
+<!ENTITY cmd.cancel.label                "Keskeytä">
+<!ENTITY cmd.cancel.accesskey            "e">
+<!ENTITY cmd.remove.label                "Poista listasta">
+<!ENTITY cmd.remove.accesskey            "o">
+<!ENTITY cmd.open.label                  "Avaa">
+<!ENTITY cmd.open.accesskey              "A">
+<!ENTITY cmd.show.label                  "Avaa tallennuskansio">
+<!ENTITY cmd.show.accesskey              "t">
+<!ENTITY cmd.goToDownloadPage.label      "Avaa lataussivu">
+<!ENTITY cmd.goToDownloadPage.accesskey  "l">
+<!ENTITY cmd.copyDownloadLink.label      "Kopioi latausosoite">
+<!ENTITY cmd.copyDownloadLink.accesskey  "K">
+<!ENTITY cmd.properties.label            "Ominaisuudet…">
+<!ENTITY cmd.properties.accesskey        "m">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Salli lataaminen">
+<!ENTITY cmd.unblock2.accesskey           "l">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Лични речник">
+
+<!ENTITY wordEditField.label "Нова реч:">
+<!ENTITY wordEditField.accessKey "Н">
+<!ENTITY AddButton.label "Додај">
+<!ENTITY AddButton.accessKey "а">
+<!ENTITY DictionaryList.label "Речи у речнику:">
+<!ENTITY DictionaryList.accessKey "Р">
+<!ENTITY RemoveButton.label "Уклони">
+<!ENTITY RemoveButton.accessKey "о">
+
+<!ENTITY CloseButton.label "Затвори">
+<!ENTITY CloseButton.accessKey "т">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "Захист повідомлення">
+<!ENTITY subject.plaintextWarning "Зверніть увагу: рядок теми повідомлення ніколи не шифрується.">
+<!ENTITY status.heading "Вміст вашого повідомлення буде надіслано:">
+<!ENTITY status.signed "З цифровим підписом:">
+<!ENTITY status.encrypted "Зашифроване:">
+<!ENTITY status.certificates "З сертифікатами:">
+<!ENTITY view.label "Перегляд">
+<!ENTITY view.accesskey "П">
+<!ENTITY tree.recipient "Адресат">
+<!ENTITY tree.status "Статус">
+<!ENTITY tree.issuedDate "Виданий">
+<!ENTITY tree.expiresDate "Термін дії">

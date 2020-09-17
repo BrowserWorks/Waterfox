@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+
+<!ENTITY importBookmarksFromHTML.label     "Uvozi zaznamke iz HTML …">
+<!ENTITY importBookmarksFromHTML.accesskey "U">
+<!ENTITY importOtherBrowser.label          "Uvozi podatke drugega brskalnika …">
+<!ENTITY importOtherBrowser.accesskey      "d">
+
+
+
+
+
+
+
+
+
+
+
+

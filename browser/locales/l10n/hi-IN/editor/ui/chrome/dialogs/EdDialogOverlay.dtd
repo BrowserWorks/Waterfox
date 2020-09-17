@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "उन्नत संपादन...">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "HTML विशेषता को जोड़े या बदलें, शैली विशेषता, और JavaScript">
+<!ENTITY chooseButton.label "फाइल चुनें...">
+<!ENTITY chooseFile.accessKey "F">
+<!ENTITY chooseFileLink.accessKey "o">
+<!ENTITY makeUrlRelative.label "URL पृष्ठ अवस्थिति के सापेक्ष है">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "सापेक्ष व निरपेक्ष URL के बीच बदलें. आप पहले इस पृष्ठ को बदलने के लिये पहले सहेजें.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField.label "एक वेब पृष्ठ अवस्थिति डालें, एक स्थानीय फाइल, या नामित एंकर या हेडिंग को पॉपअप सूची से चुनें:">
+<!ENTITY LinkURLEditField.accessKey "L">

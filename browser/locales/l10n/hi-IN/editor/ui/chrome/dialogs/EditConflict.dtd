@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "बदलाव संपादन चुनें">
+<!ENTITY conflictWarning.label "इस पृष्ठ को अन्य प्रोग्राम से बदला गया है, लेकिन आपने कंपोजर में बिना सहेजे बदलाव को रखा है.">
+<!ENTITY conflictResolve.label "चुनें कि किस संस्करण को रखना है:">
+<!ENTITY keepCurrentPageButton.label "मौजूदा पृष्ठ बदलाव को रखें">
+<!ENTITY useOtherPageButton.label "अन्य बदलाव से मौजूदा पृष्ठ को बदलें">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Embann kempleshoc'h…">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "Ouzhpennañ pe zaskemmañ an doareennoù mod HTML, an doareennoù stil ha JavaScript">
+<!ENTITY chooseFileButton.label "Diuzañ ur restr…">
+<!ENTITY chooseFileButton.accessKey "D">
+<!ENTITY chooseFileLinkButton.label "Diuzañ ur restr…">
+<!ENTITY chooseFileLinkButton.accessKey "D">
+<!ENTITY makeUrlRelative.label "Daveel eo an URL ouzh lec'hiadur ar bajennad">
+<!ENTITY makeUrlRelative.accessKey "R">
+<!ENTITY makeUrlRelative.tooltip "Eskemm etre an URL daveel ha dizave. Re eo deoc'h enrollañ ar bajennad a-raok kemm an dra-se.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label "Enankañ lec'hiadur ur bajennad Web, ur restr lec'hel, pe ziuzañ un eor anvet pe un talbenn diouzh al lañser kendestennel:">
+<!ENTITY LinkURLEditField2.accessKey "w">

@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "தரவகம்">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "ஒழுங்குப்படுத்து">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "உங்கள் புத்தகக்குறிகளை ஒழுங்குப்படுத்து">
+
+<!ENTITY file.close.label               "மூடுக">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "பார்வைகள்">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "உங்கள் பார்வையை மாற்றவும்">
+<!ENTITY view.columns.label             "நிரல்களை காட்டு">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "வரிசைப்படுத்தியது">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "வரிசைப்படுத்தப்படாதது">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "A > Z வரிசை">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A வரிசை">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "HTML இருந்து புத்தகக்குறிகளை இறக்குமதி செய்">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "புத்தகக்குறிகளை HTML ஆக ஏற்றுமதி செய்…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "மற்றொரு உலாவிலியிருந்து தரவை இறக்குமதி செய்…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "மறுபிரதி…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "மீட்டமை">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "கோப்பினை தேர்ந்தெடு…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "பெயர்">
+<!ENTITY col.tags.label          "கீற்றுகள்">
+<!ENTITY col.url.label           "இடம்">
+<!ENTITY col.mostrecentvisit.label "அண்மையில் பார்த்தவை">
+<!ENTITY col.visitcount.label    "பார்த்த எண்ணிக்கை">
+<!ENTITY col.dateadded.label     "சேர்க்கப்பட்டது">
+<!ENTITY col.lastmodified.label  "கடைசியாக திருத்தியமைக்கப்பட்டது">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "இறக்குமதியும் மறுபிரதியும்">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "உங்கள் புத்தகக்குறிகளை ஏற்றி பிரதியெடுக்கவும்">
+
+<!ENTITY backButton.tooltip  "பின்னால் செல்">
+
+<!ENTITY forwardButton.tooltip  "முன்னால் செல்">
+
+<!ENTITY detailsPane.selectAnItemText.description "ஒரு உருப்படியை அதன் தன்மைகளை பார்க்க மற்றும் திருத்த தேர்ந்தெடுக்கவும்">
+

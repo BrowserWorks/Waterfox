@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Protyka">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Podawk…">
+<!ENTITY lightning.menupopup.new.event.accesskey "P">
+<!ENTITY lightning.menupopup.new.task.label     "Nadawk…">
+<!ENTITY lightning.menupopup.new.task.accesskey "N">
+<!ENTITY lightning.menupopup.new.calendar.label "Protyka…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "t">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Wočinić">
+<!ENTITY lightning.menupopup.open.accesskey           "o">
+<!ENTITY lightning.menupopup.open.message.label       "Składowana powěsć…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "p">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Protykowa dataja…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "P">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Protyka">
+<!ENTITY lightning.menu.view.calendar.accesskey        "r">
+<!ENTITY lightning.menu.view.tasks.label               "Nadawki">
+<!ENTITY lightning.menu.view.tasks.accesskey           "k">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Podawki a nadawki">
+<!ENTITY lightning.menu.eventtask.accesskey            "d">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-mejl:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "E-mejlowe planowanje ze strony klienta preferować">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Mjeztym móžeće to jenož zmóžnić, po tym zo sće tutu protyku w dialogu kajkosćow konfigurował, jeli so protykowy serwer wo planowanje stara.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Tuta móžnosć je jenož k dispoziciji, jeli protykowy serwer planowanje přewjedźe. Hdyž ju zmóžnjeće, móžeće na planowanje na zakładźe standardneje e-mejle wróćo sahać, město toho zo byšće so na serwer spušćił.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Akceptować">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Přeprošenje k podawkej akceptować">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Wšě akceptować">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Přeprošenje k podawkej za wšě wustupowanja podawka akceptować">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Přidać">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Podawk protyce přidać">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Wotpokazać">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Přeprošenje na podawk wotpokazać">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Wšě wotpokazać">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Přeprošenje na podawk za wšě wustupowanja podawka wotpokazać">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Wotpokazać">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Přećiwonamjet wotpokazać">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Zhašeć">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Z protyki zhašeć">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Podrobnosće…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Podrobnosće podawka pokazać">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Tute zdźělenki njepokazać">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Protyka">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "K protykowemu rajtarkej">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Wjace">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Klikńće, zo byšće dalše nastajenja pokazał">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Znowa wobkrućić">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Sćele nowe wobkrućenje na organizatora">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Přeplanować">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Podawk přeplanować">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Kopiju składować">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Składujće kopiju podawka do protyki, njewotwisnje wot wotmołwy na organizatora. Lisćina wobdźělnikow so zhaša.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Nachwilu">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Přeprošenje na podawk nachwilu akceptować">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Wšě nachwilu">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Přeprošenje na podawk za wšě wustupowanja podawka nachwilu akceptować">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Aktualizować">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Podawk w protyce aktualizować">
+<!ENTITY lightning.imipbar.description                                      "Tuta powěsć přeprošenje na podawk wobsahuje.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Nětko wotmołwu pósłać">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Organizatorej wotmołwu pósłać">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Organizatorej wotmołwu za cyły rjad pósłać">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Wotmołwu njesłać">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Waš wobdźělenski status změnić, bjeztoho zo by so organizatorej wotmołwa pósłała">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Waš wobdźělenski status za rjad změnić, bjeztoho zo by so organizatorej wotmołwa pósłała">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Nowu protyku wutworić">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Měsačny přehlad pokazać">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Dnjowy přehlad pokazać">
+<!ENTITY todaypane.showMiniday.accesskey  "D">
+<!ENTITY todaypane.showNone.label "Ničo pokazać">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Dźensniši plan pokazać">
+<!ENTITY todaypane.showTodayPane.accesskey "e">
+<!ENTITY todaypane.statusButton.label "Dźensniši plan">

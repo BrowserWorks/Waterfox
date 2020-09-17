@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Eslatkichlarni o‘rnatish">
+<!ENTITY reminder.add.label                                "Qo‘shish">
+<!ENTITY reminder.add.accesskey                            "Q">
+<!ENTITY reminder.remove.label                             "Olib tashlash">
+<!ENTITY reminder.remove.accesskey                         "O">
+
+<!ENTITY reminder.reminderDetails.label                    "Eslatkich tafsilotlari">
+<!ENTITY reminder.action.label                             "Eslatkich amalini tanlash">
+
+<!ENTITY reminder.action.alert.label                       "Ogohlantirish signalini ko‘rsatish">
+<!ENTITY reminder.action.email.label                       "Xat jo‘natish">
+
+<!ENTITY alarm.units.minutes                               "daqiqa" >
+<!ENTITY alarm.units.hours                                 "soat" >
+<!ENTITY alarm.units.days                                  "kun" >

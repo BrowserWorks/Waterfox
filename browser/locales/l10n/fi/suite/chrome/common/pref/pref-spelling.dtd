@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Oikoluku">
+<!ENTITY generalSpelling.label                "Yleiset">
+<!ENTITY checkSpellingWhenTyping.label        "Oikolue käyttäjän kirjoitukset:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "i">
+<!ENTITY dontCheckSpelling.label              "Ei koskaan">
+<!ENTITY multilineCheckSpelling.label         "Monirivisissä tekstiruuduissa">
+<!ENTITY alwaysCheckSpelling.label            "Kaikissa tekstiruuduissa">
+<!ENTITY spellForMailAndNews.label            "Sähköposti ja keskusteluryhmät">
+<!ENTITY checkSpellingBeforeSend.label        "Oikolue viestit ennen lähettämistä">
+<!ENTITY checkSpellingBeforeSend.accesskey    "v">
+<!ENTITY spellCheckInline.label               "Oikolue viestit niitä kirjoitettaessa">
+<!ENTITY spellCheckInline.accesskey           "n">
+<!ENTITY languagePopup.label                  "Kieli:">
+<!ENTITY languagePopup.accessKey              "K">
+<!ENTITY moreDictionaries.label               "Lataa lisää oikolukusanastoja&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "Oikolukusanastoja ei ole saatavilla.">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "Ви запустили застарілу версію &brandProductName;">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "Ймовірно, новіша версія &brandProductName; внесла зміни до вашого профілю, зробивши його несумісним із цією старішою версією. Використовуйте цей профіль лише з тією новою версією, або створіть новий профіль для наявного &brandShortName;. Створення нового профілю потребує повторного налаштування облікових записів, календарів і додатків.">
+
+<!ENTITY window.moreinfo "Докладніше…">
+<!ENTITY window.create "Створити новий профіль">
+<!ENTITY window.quit-win "Вийти">
+<!ENTITY window.quit-nonwin "Вихід">

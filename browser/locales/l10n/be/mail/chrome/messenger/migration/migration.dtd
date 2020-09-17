@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Чараўнік імпарту">
+
+<!ENTITY importFromWin.label            "Імпартаваць наладжванні, наладжванні рахункаў, адрасную кнігу, сіты і іншыя здаткі з:">
+<!ENTITY importFromNonWin.label         "Імпартаваць перавагі, наладжванні рахункаў, адрасную кнігу, сіты і іншыя здаткі з:">
+<!ENTITY importSourceNotFound.label     "Не знойдзена праграма для імпарту дадзеных.">
+
+<!ENTITY importFromNothing.label        "Не імпартаваць нічога">
+<!ENTITY importFromNothing.accesskey    "н">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 або навейшы">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Імпарт наладжванняў і паштовых папак">
+<!ENTITY importItems.title              "Адзінкі для імпарту">
+<!ENTITY importItems.label              "Выберыце адзінкі для імпарту:">
+
+<!ENTITY migrating.title                "Імпарт…">
+<!ENTITY migrating.label                "Наступныя адзінкі зараз імпартуюцца…">
+
+<!ENTITY selectProfile.title            "Выбар профілю">
+<!ENTITY selectProfile.label            "Наступныя профілі даступны для імпарту з:">
+
+<!ENTITY done.title                     "Імпарт здзейснены">
+<!ENTITY done.label                     "Наступныя адзінкі паспяхова імпартаваны:">

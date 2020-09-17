@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "A-benn espern an egor kantenn, chom hep pellgargañ :">
+<!ENTITY doNotDownloadNntp.label "A-benn espern an egor kantenn, chom hep pellgargañ evit an arver ezlinenn :">
+<!ENTITY doNotDownloadImap.label "A-benn espern an egor kantenn, ar pellgargadur c'hemennadennoù diouzh an dafariad hag an eiladoù lec'hel evit an arver ezlinenn a c'hell bezañ strishaet dre oad pe ment.">
+<!ENTITY allFoldersOffline2.label "Mirout ar c'hemennadennoù e-barzh an holl deulioù evit ar gont-mañ war an urzhiataer-mañ">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "Notennig: Cheñch an dra-se a verko holl deulioù evit ar gont-mañ. Evit termeniñ an teuliadoù hiniennel, implijit ar bouton Araokaet…">
+<!ENTITY offlineNotDownload.label "Kemennadennoù brasoc'h eget">
+<!ENTITY offlineNotDownload.accesskey "m">
+<!ENTITY autosyncNotDownload.label "Na bellgargañ kemennadennoù brasoc'h eget">
+<!ENTITY autosyncNotDownload.accesskey "m">
+<!ENTITY kb.label "KE">
+<!ENTITY daysOld.label "a zeizioù zo">
+<!ENTITY message.label "a gemennadennoù">
+<!ENTITY nntpNotDownloadRead.label "Lenn ar c'hemennadennoù">
+<!ENTITY nntpNotDownloadRead.accesskey "L">
+<!ENTITY nntpDownloadMsg.label "Kemennadennoù a zo muioc'h a">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Evit adkavout egor kantenn ez eo posupl diverkañ kemennadennoù kozh da vat">
+<!ENTITY retentionCleanupImap.label "Evit adkavout egor kantenn ez eo posupl diverkañ kemennadennoù kozh da vat, an eiladoù lec'hel hag ar c'hemennadennoù orin war an dafariad.">
+<!ENTITY retentionCleanupPop.label "Evit adkavout egor kantenn ez eo posupl diverkañ kemennadennoù kozh da vat, hag ar c'hemennadennoù orin war an dafariad ivez.">
+<!ENTITY retentionKeepMsg.label "Lemel kuit kemennadennoù koshoc'h eget">
+<!ENTITY retentionKeepMsg.accesskey "L">
+<!ENTITY retentionKeepAll.label "Chom hep diverkañ kemennadennoù">
+<!ENTITY retentionKeepAll.accesskey "C">
+<!ENTITY retentionKeepRecent.label "Lemel kuit an holl anezho nemet ar re nevesañ">
+<!ENTITY retentionKeepRecent.accesskey "o">
+<!ENTITY retentionApplyToFlagged.label "Atav mirout ar c'hemennadennoù steredek">
+<!ENTITY retentionApplyToFlagged.accesskey "k">
+<!ENTITY nntpRemoveMsgBody.label "Lemel ar c'horfoù eus ar c'hemennadennoù gant brasoc'h eget">
+<!ENTITY nntpRemoveMsgBody.accesskey "o">
+<!ENTITY offlineSelectNntp.label "Diuzañ strolladoù-keleier evit un arver ezlinenn…">
+<!ENTITY offlineSelectNntp.accesskey "s">
+<!ENTITY offlineImapAdvancedOffline.label "Kempleshoc'h…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "e">
+<!ENTITY syncGroupTitle.label "Goubredañ ar c'hemennadennoù">
+<!ENTITY diskspaceGroupTitle.label "Egor kantenn">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Goubredañ an holl gemennadennoù ent lec'hel hep dezverk oad">
+<!ENTITY allAutosync.accesskey           "o">
+<!ENTITY ageAutosyncBefore.label         "Goubredañ ar c'hemennadennoù nevesañ">
+<!ENTITY ageAutosync.accesskey           "n">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Deizioù">
+<!ENTITY weekAgeInterval.label           "Sizhunioù">
+<!ENTITY monthAgeInterval.label          "Mizioù">
+<!ENTITY yearAgeInterval.label           "Bloavezhioù">
+<!ENTITY ageAutosyncAfter.label          "">

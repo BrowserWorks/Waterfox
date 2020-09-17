@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "O &brandShorterName;u">
+<!ENTITY aboutProduct2.accesskey  "O">
+
+<!ENTITY preferencesCmdMac.label        "Nastavitve …">
+
+<!ENTITY servicesMenuMac.label          "Storitve">
+
+<!ENTITY hideThisAppCmdMac2.label       "Skrij &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Skrij ostale">
+
+<!ENTITY showAllAppsCmdMac.label        "Prikaži vse">
+
+<!ENTITY touchBarCmdMac.label           "Prilagodi vrstico na dotik …">

@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "फिल्टर नियम">
+
+<!ENTITY filterName.label "फिल्टर नाम:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "जंक">
+<!ENTITY notJunk.label "जंक नहीं">
+
+<!ENTITY lowestPriorityCmd.label "न्यूनतम">
+<!ENTITY lowPriorityCmd.label "कम">
+<!ENTITY normalPriorityCmd.label "सामान्य">
+<!ENTITY highPriorityCmd.label "ऊंचा">
+<!ENTITY highestPriorityCmd.label "उच्चतम">
+
+<!ENTITY filterActionDesc.label "ये क्रिया करें:">
+<!ENTITY filterActionDesc.accesskey "P">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "संदेश इसमें भेजें">
+<!ENTITY copyMessage.label "इसमें संदेश कॉपी करें">
+<!ENTITY forwardTo.label "इसमें संदेश अग्रसारित करें">
+<!ENTITY replyWithTemplate.label "टेंपलेट के साथ जबाव दें">
+<!ENTITY markMessageRead.label "पठित के रूप में चिह्नित">
+<!ENTITY setPriority.label "इसमें प्राथमिकता सेट करें">
+<!ENTITY setJunkScore.label "जंक स्थिति सेट करें">
+<!ENTITY deleteMessage.label "संदेश मिटायें">
+<!ENTITY deleteFromPOP.label "POP सर्वर से मिटायें">
+<!ENTITY fetchFromPOP.label "POP सर्वर से लायें">
+<!ENTITY ignoreThread.label "थ्रेड अनदेखा करें">
+<!ENTITY watchThread.label "थ्रेड देखें">
+
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->

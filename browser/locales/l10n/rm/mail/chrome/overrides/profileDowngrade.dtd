@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "Ti has avià ina versiun pli veglia da &brandProductName;">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "Ina versiun pli nova da &brandProductName; ha probablamain midà tes profil uschia ch'el è ussa incumpatibel cun questa versiun pli veglia. Utilisescha quest profil mo cun la versiun pli nova u creescha in nov profil per questa installaziun da &brandShortName;. Crear in nov profil vul era dir configurar da nov ils contos, chalenders e supplements.">
+
+<!ENTITY window.moreinfo "Ulteriuras infurmaziuns…">
+<!ENTITY window.create "Crear in nov profil">
+<!ENTITY window.quit-win "Terminar">
+<!ENTITY window.quit-nonwin "Terminar">

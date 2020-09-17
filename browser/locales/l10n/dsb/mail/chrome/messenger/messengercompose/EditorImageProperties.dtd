@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Wobrazowe kakosći">
+
+<!ENTITY pixelsPopup.value "pikselow">
+<!-- These are in the Location tab panel -->
+
+<!ENTITY locationEditField.label "Městno wobraza:">
+<!ENTITY locationEditField.accessKey "M">
+<!ENTITY locationEditField.tooltip "Zapódajśo datajowe mě abo městno wobraza">
+<!ENTITY locationEditField.shortenedDataURI "Skrotcony datowy URI (kopija placěrujo dopołny URI w mjazywótkłaźe)">
+<!ENTITY title.label "Pomocny tekst:">
+<!ENTITY title.accessKey "P">
+<!ENTITY title.tooltip "Atribut html 'title', kótaryž pomocny tekst pokazujo">
+<!ENTITY altText.label "Alternatiwny tekst:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Zapódajśo tekst, aby jen město wobraza pokazał">
+<!ENTITY noAltText.label "Alternatiwny tekst njewužywaś">
+<!ENTITY noAltText.accessKey "l">
+
+<!ENTITY previewBox.label "Wobrazowy pśeglěd">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+
+<!ENTITY actualSize.label "Aktualna wjelikosć:">
+<!ENTITY actualSizeRadio.label "Aktualna wjelikosć">
+<!ENTITY actualSizeRadio.accessKey "A">
+<!ENTITY actualSizeRadio.tooltip "K aktualnej wjelikosći wobraza se wróśiś">
+<!ENTITY customSizeRadio.label "Swójska wjelikosć">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "Wjelikosć wobraza, ako se na boku pokazujo, změniś">
+<!ENTITY heightEditField.label "Wusokosć:">
+<!ENTITY heightEditField.accessKey "W">
+<!ENTITY widthEditField.label "Šyrokosć:">
+<!ENTITY widthEditField.accessKey "r">
+<!ENTITY constrainCheckbox.label "Zachowaś">
+<!ENTITY constrainCheckbox.accessKey "Z">
+<!ENTITY constrainCheckbox.tooltip "Poměr bokow zachowaś">
+<!-- These controls are in the Image Map box of the expanded area -->
+
+<!ENTITY imagemapBox.label "Wobrazowa kórta">
+<!ENTITY removeImageMapButton.label "Wótwónoźeś">
+<!ENTITY removeImageMapButton.accessKey "W">
+<!-- These are the options for image alignment -->
+
+<!ENTITY alignment.label "Tekst pó wobrazu wusměriś">
+<!ENTITY bottomPopup.value "Dołojce">
+<!ENTITY topPopup.value "Górjejce">
+<!ENTITY centerPopup.value "Wesrjejź">
+<!ENTITY wrapRightPopup.value "Napšawo łamaś">
+<!ENTITY wrapLeftPopup.value "Nalěwo łamaś">
+<!-- These controls are in the Spacing Box -->
+
+<!ENTITY spacingBox.label "Wótstawk">
+<!ENTITY leftRightEditField.label "Nalěwo a napšawo:">
+<!ENTITY leftRightEditField.accessKey "N">
+<!ENTITY topBottomEditField.label "Górjejce a dołojce:">
+<!ENTITY topBottomEditField.accessKey "G">
+<!ENTITY borderEditField.label "Pśeśěgnjona kšoma:">
+<!ENTITY borderEditField.accessKey "P">
+<!-- These controls are in the Link Box -->
+
+<!ENTITY showImageLinkBorder.label "Kšomu wokoło wótkazanego wobraza pokazaś">
+<!ENTITY showImageLinkBorder.accessKey "K">
+<!ENTITY LinkAdvancedEditButton.label "Rozšyrjone wobźěłanje wótkazow…">
+<!ENTITY LinkAdvancedEditButton.accessKey "R">
+<!ENTITY LinkAdvancedEditButton.tooltip "HTML-atributy, stilowe atributy a JavaScript pśidaś abo změniś">
+<!-- These tabs are currently used in the image input dialog -->
+
+<!ENTITY imageInputTab.label "Formular">
+<!ENTITY imageLocationTab.label "Městno">
+<!ENTITY imageDimensionsTab.label "Wótměry">
+<!ENTITY imageAppearanceTab.label "Naglěd">
+<!ENTITY imageLinkTab.label "Wótkaz">

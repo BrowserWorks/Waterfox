@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Txat-kontuaren morroia">
+
+<!ENTITY accountProtocolTitle.label   "Txat-sarea">
+<!ENTITY accountProtocolInfo.label    "Aukeratu zure txat-kontuaren sarea.">
+<!ENTITY accountProtocolField.label   "Sarea:">
+<!ENTITY accountProtocolGetMore.label "Eskuratu gehiago…">
+
+<!ENTITY accountUsernameTitle.label   "Erabiltzaile-izena:">
+<!ENTITY accountUsernameDuplicate.label "Kontu hau jadanik konfiguratuta dago!">
+
+<!ENTITY accountPasswordTitle.label   "Pasahitza">
+<!ENTITY accountPasswordInfo.label    "Sartu zure pasahitza beheko kutxan.">
+<!ENTITY accountPasswordField.label   "Pasahitza:">
+<!ENTITY accountPasswordManager.label "Hemen sartutako pasahitza, pasahitzen kudeatzailean gordeko da. Utzi kutxa hau hutsik kontura konektatzen den aldiro pasahitza galdetzeko.">
+
+<!ENTITY accountAdvancedTitle.label   "Aukera aurreratuak">
+<!ENTITY accountAdvancedInfo.label    "Nahi baduzu urrats hau salta dezakezu.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Jakinarazi posta berria jasotzean">
+<!ENTITY accountAliasGroupbox.caption "Alias lokala">
+<!ENTITY accountAliasField.label      "Aliasa:">
+<!ENTITY accountAliasInfo.label       "Zuk hitz egiten duzunean soilik bistaratuko da berriketetan, urruneko kontaktuek ez dute ikusiko.">
+<!ENTITY accountProxySettings.caption "Proxy-ezarpenak">
+<!ENTITY accountProxySettings.change.label     "Aldatu…">
+<!ENTITY accountProxySettings.change.accessKey "A">
+
+<!ENTITY accountSummaryTitle.label   "Laburpena">
+<!ENTITY accountSummaryInfo.label    "Sartutako informazioaren laburpena bistaratzen da azpian. Egiazta ezazu kontua sortu aurretik.">
+<!ENTITY accountSummary.connectNow.label "Konektatu orain kontu honetara.">

@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Donemat e-barzh &brandShortName;">
+<!ENTITY header2.label "Ha fellout a ra deoc'h kaout ur postel nevez">
+<!ENTITY other.languages "Skrammet eo ar bourchaserien a ginnig chomlec'hioù e-barzh ho rannvro nemetken. Klikit amañ a-benn diskouez an holl bourchaserien.">
+<!ENTITY error.line1 "Digarezit, n'hallomp kavout chomlec'h postel aliet ebet.">
+<!ENTITY error.line2 "Gallout a rit ivez klask lesanvioù pe dermenoù all a-benn kavout muioc'h a bosteloù.">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "Gallout a rit ivez esaeañ unan eus ">
+<!ENTITY error.suggest.middle "ar bourchaserien bosteloù digoust">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "Demat ">
+<!ENTITY success.title.after ", hegerz eo ar chomlec'hioù da heul evidoc'h :">
+<!ENTITY success.tip "(Gallout a rit ivez klask lesanvioù pe dermenoù all a-benn kavout muioc'h a bosteloù)">
+<!ENTITY partnership.description "&brandShortName; a c'hell kinnig deoc'h ur gont postel nevez e kevelerezh gant meur a bourchaser. Roit hoc'h anv-bihan hag hoc'h anv pe ne vern peseurt ger all e-barzh ar maeziennoù a-us a-benn deraouiñ.">
+<!ENTITY existing.header "Ur chomlec'h hoc'h eus endeo ha fellout a ra deoc'h arverañ anezhañ ?">
+<!ENTITY tinyheader.title "Ur chomlec'h hoc'h eus endeo ?">
+<!ENTITY tinyheader.existing "Leuskel an dra-mañ hag arverañ ma fostel a zo anezhañ">
+<!ENTITY content.close "Kefluniañ a rin ma c'hont diwezhatoc'h.">
+<!ENTITY successful.title "Gourc'hemennoù !">
+<!ENTITY successful.successMessage "Kefluniet hoc'h eus ho kont gant berzh.">
+<!ENTITY successful.write "Skrivañ kemennadennoù">
+<!ENTITY successful.write.desc "Kelaouit ho mignoned hag ho familh a-zivout ho chomlec'h nevez<br/> Setu perak hoc'h eus ar gont nevez-mañ, n'eo ket ?">
+<!ENTITY successful.customize "Personelait &brandShortName; gant askouezhioù plijus">
+<!ENTITY successful.customize.desc "Bez ez eus miliadoù a askouezhioù a ro tro deoc'h personelaat &brandShortName; a-benn lakaat anezhañ da genglotañ gant hoc'h ezhommoù.">
+<!ENTITY successful.attach "Stagañ ur sinadur personel ouzh ma fostel">
+<!ENTITY successful.attach.desc "Gallout a rit stagañ ent emgefreek ur meneg pe ditouroù diwar ho penn ouzh pep kemennadenn a zo kaset ganeoc'h.">
+<!ENTITY successful.close "Serriñ ar prenestr-mañ.">
+<!ENTITY input.namePlaceholder "Hoc'h anv, pe lesanv">
+<!ENTITY input.search "Klask">
+<!ENTITY search_engine.title "Personelaat ho keflusker klask">
+<!ENTITY search_engine.message "Gallout a ra ho pourchaser posteloù kinnig deoc'h keweriusterioù klask war ar web.">
+<!ENTITY search_engine.button "Echuiñ">

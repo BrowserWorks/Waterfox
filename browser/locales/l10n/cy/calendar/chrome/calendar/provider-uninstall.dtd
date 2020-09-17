@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Dadosod Darparwr">
+<!ENTITY providerUninstall.accept.label                    "Dad-danysgrifio o'r Dewis">
+<!ENTITY providerUninstall.accept.accesskey                "D">
+<!ENTITY providerUninstall.cancel.label                    "Cadw'r Ychwanegyn">
+<!ENTITY providerUninstall.cancel.accesskey                "Y">
+<!ENTITY providerUninstall.preName.label                   "Rydych wedi gofyn i ddadosod neu analluogi:">
+<!ENTITY providerUninstall.postName.label                  "Bydd hyn yn achosi i'r calendrau isod gael eu hanalluogi.">
+<!ENTITY providerUninstall.reinstallNote.label             "Oni bai eich bod yn cynllunio i ailosod y darparwr, gallwch ddewis i ddad-danysgrifio o galendrau'r darparwr.">

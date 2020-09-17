@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Էջի գույները և Խորապատկերը">
+<!ENTITY pageColors.label "Էջի գույները">
+<!ENTITY defaultColorsRadio.label "Հիմնական գույները (Չնշել գույները էջում)">
+<!ENTITY defaultColorsRadio.accessKey "Հ">
+<!ENTITY defaultColorsRadio.tooltip "Օգտագործել գույնային կարգավորումները միայն դիտարկիչում">
+<!ENTITY customColorsRadio.label "Օգտ. ընտրված գույներ.">
+<!ENTITY customColorsRadio.accessKey "Օ">
+<!ENTITY customColorsRadio.tooltip "Գույնային այս կարգավորումները դիտարկիչի կարգավորումներում">
+
+<!ENTITY normalText.label "Նորմալ տեքստ">
+<!ENTITY normalText.accessKey "Ն">
+<!ENTITY linkText.label "Հղման տեքստ">
+<!ENTITY linkText.accessKey "Հ">
+<!ENTITY activeLinkText.label "Ակտիվ հղման տեքստ">
+<!ENTITY activeLinkText.accessKey "Ա">
+<!ENTITY visitedLinkText.label "Այցելած հղման տեքստը">
+<!ENTITY visitedLinkText.accessKey "Ա">
+<!ENTITY background.label "Խորապատկերը.">
+<!ENTITY background.accessKey "Խ">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Խորապատկերի նկարը.">
+<!ENTITY backgroundImage.accessKey "Խ">
+<!ENTITY backgroundImage.tooltip "Օգտագործել նկարի ֆայլը խորապատկերի համար այս էջում">
+<!ENTITY backgroundImage.shortenedDataURI "Կրճատված URI-ի տվյալների (պատճենը ողջ URI-ը կտեղադրեն սեղմատախտակին)">

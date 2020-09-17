@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.privatedata.title "Dati personali">
+<!ENTITY clearPrivateData.label "Elimina dati personali">
+<!ENTITY alwaysClear.label "Elimina sempre i dati personali alla chiusura di &brandShortName;">
+<!ENTITY alwaysClear.accesskey "E">
+<!ENTITY askBeforeClear.label "Chiedi prima di eliminare i dati personali">
+<!ENTITY askBeforeClear.accesskey "r">
+<!ENTITY clearDataSettings.label "Quando si chiede a &brandShortName; di pulire i propri dati personali, devono essere eliminati:">
+<!ENTITY clearDataDialog.label "Elimina ora…">
+<!ENTITY clearDataSilent.label "Elimina ora">
+<!ENTITY clearDataDialog.accesskey "o">

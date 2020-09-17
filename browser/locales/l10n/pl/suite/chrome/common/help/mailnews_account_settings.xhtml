@@ -1,0 +1,590 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" > %brandDTD;]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Ustawienia kont pocztowych i grup dyskusyjnych</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css" type="text/css"/>
+</head>
+
+<body>
+
+<h1 id="mail_and_newsgroups_account_settings">Ustawienia kont pocztowych i grup dyskusyjnych</h1>
+
+<p>W tym rozdziale opisane są ustawienia w oknie dialogowym Konfiguracja kont Kuriera Poczty. W przeciwieństwie do okna dialogowego Preferencje, w którym ustawienia dotyczą wszystkich kont, okno dialogowe Ustawienia konta pozwala na określenie ustawień dla każdego z kont osobno.</p>
+
+<p>Aby wyświetlić okno dialogowe Ustawienia konta Kuriera Poczty należy wykonać poniższe kroki:</p>
+
+<ol>
+  <li>W oknie Kuriera Poczty z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać nazwę konta, którego ustawienia mają być przeglądane lub zmieniane.</li>
+</ol>
+
+<div class="contentsBox">W tym rozdziale:
+  <ul>
+    <li><a href="#account_settings">Konfiguracja kont</a></li>
+    <li><a href="#server_settings">Konfiguracja serwerów</a></li>
+    <li><a href="#copies_and_folders">Kopie i foldery</a></li>
+    <li><a href="#addressing">Tworzenie i adresowanie wiadomości</a></li>
+    <li><a href="#offline_and_disk_space">Tryb offline i miejsce na dysku</a></li>
+    <li><a href="#synchronization_and_storage">Synchronization &amp; Storage</a></li>
+    <li><a href="#junk_settings">Ustawienia niechcianej poczty</a></li>
+    <li><a href="#return_receipts">Potwierdzenia odbioru</a></li>
+    <li><a href="#security">Zabezpieczenia</a></li>
+    <li><a href="#local_folders">Lokalne foldery</a></li>
+    <li><a href="#outgoing_server">Serwer poczty wychodzącej (SMTP)</a></li>
+  </ul>
+</div>
+
+<h2 id="account_settings">Konfiguracja kont</h2>
+
+<p>W tym rozdziale opisane jest jak przeglądać lub zmieniać ustawienia konta, takie jak nazwa użytkownika, zwrotny adres e-mail i plik sygnaturki. Jeżeli okno Konfiguracja kont nie jest widoczne, należy wykonać następujące kroki w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać nazwę konta aby wyświetlić panel Konfiguracja konta.</li>
+</ol>
+
+<ul>
+  <li><strong>Nazwa konta</strong>: nazwa dla tego konta.</li>
+  <li><strong>Domyślna tożsamość</strong>: zawiera imię i nazwisko użytkownika, adres e-mail, zwrotny adres e-mail (podawany tylko gdy jest inny niż podstawowy adres e-mail oraz opcjonalnie nazwę firmy lub organizacji.</li>
+
+  <li><strong>Sygnaturka</strong>: jeżeli użytkownik chce to może dołączać sygnaturkę do wszystkich wychodzących wiadomości, należy wprowadzić jej treść w to pole. Zaznaczenie opcji <strong>Używaj HTML</strong> włącza możliwość użycia kodu HTML w jej treści, np.: &lt;b&gt;bold&lt;/b&gt;.</li>
+  <li><strong>Używaj sygnaturki z pliku</strong>: pozwala opcjonalnie dołączyć sygnaturkę z pliku (w postaci czystego tekstu, HTML lub obrazka) zamiast wprowadzania jej tekstu. Zaznaczenie tej opcji nadpisuje użycie tekstu wprowadzonego w polu sygnaturki. Naciśnięcie przycisku <q>Wybierz</q> pozwala wskazać plik sygnaturki.
+
+    <p>Więcej opcji dotyczących sygnaturki jest opisanych w rozdziale <a href="#addressing">Komponowanie</a>.</p>
+  </li>
+  <li><strong>Dołączaj sygnaturkę</strong>: pozwala wskazać plik zawierający sygnaturkę (w formacie tekstowym lub HTML), która ma być dołączana do wychodzących wiadomości. Należy nacisnąć przycisk Wybierz, aby wskazać plik sygnaturki. Dołączanie sygnaturki jest opcjonalne.</li>
+  <li><strong>Dołączaj wizytówkę do wysyłanych wiadomości</strong>: włącza i wyłącza dołączanie wizytówki (ang. vCard) do wychodzących wiadomości. Naciśnięcie przycisku Edytuj wizytówkę umożliwia redakcję informacji zawartych w wizytówce.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h2 id="server_settings">Konfiguracja serwerów</h2>
+
+<p>Kurier Poczty &brandShortName; może współpracować z dwoma typami serwerów pocztowych: IMAP i POP. Jeżeli użytkownik nie jest pewien, który typ serwera zapewnia dostawca usług internetowych, należy go o to zapytać. Jeżeli dostawca zapewnia obsługę obu typów serwerów, to poniższy opis może pomóc w wyborze tego, który ma być używany.</p>
+
+<div class="contentsBox">W tym rozdziale:
+  <ul>
+    <li><a href="#about_internet_message_access_protocol">IMAP - Internet Message Access Protocol</a></li>
+    <li><a href="#about_post_office_protocol">POP - Post Office Protocol</a></li>
+    <li><a href="#imap_server_settings">Konfiguracja serwera IMAP</a></li>
+    <li><a href="#advanced_imap_server_settings">Zaawansowana konfiguracja serwera IMAP</a></li>
+    <li><a href="#pop_server_settings">Konfiguracja serwera POP</a></li>
+    <li><a href="#news_server_settings">Konfiguracja serwera grup dyskusyjnych</a></li>
+  </ul>
+</div>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h3 id="about_internet_message_access_protocol">IMAP - Internet Message Access Protocol</h3>
+
+<p><strong>Zalety</strong>: wiadomości i zmiany w nich dokonywane są przechowywane na serwerze, dzięki temu nie zajmują miejsca na dysku lokalnego komputera. Równocześnie użytkownik ma zawsze zapewniony dostęp do aktualnej zawartości skrzynki pocztowej oraz może pobierać wiadomości w wielu miejscach. Połączenia przez modem telefoniczny są szybsze, ponieważ początkowo pobierane są tylko nagłówki.</p>
+
+<p><strong>Wady</strong>: nie wszyscy dostawcy usług zapewniają obsługę IMAP.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h3 id="about_post_office_protocol">POP - Post Office Protocol</h3>
+
+<p><strong>Zalety</strong>: wiadomości są pobierane od razu na dysk lokalnego komputera w całości, ale równocześnie można określić czy kopie wiadomości mają być przechowywane na serwerze i usuwane z niego po ich usunięciu na komputerze użytkownika. Większość dostawców usług internetowych zapewnia obsługę POP.</p>
+
+<p><strong>Wady</strong>: jeżeli użytkownik używa więcej niż jednego komputera, to wiadomości mogą być przechowywane na jednym lub drugim komputerze, ale nie na obu jednocześnie. Przy wolnym połączeniu POP nie działa równie wydajnie jak IMAP. Nie ma dostępu do wszystkich folderów pocztowych z wielu miejsc.</p>
+
+<p>Należy zauważyć, że większość współczesnych serwerów POP umożliwia pobieranie tylko nagłówków wiadomości zamiast całych wiadomości, podobnie jak IMAP. Praca z wykorzystaniem tego trybu zapewnia POP praktycznie taką samą wydajność jak IMAP.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h3 id="imap_server_settings">Konfiguracja serwera IMAP</h3>
+
+<p>Jeżeli ustawienia serwera IMAP nie są jeszcze widoczne, w oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać nazwę konta i kliknąć na kategorię Konfiguracja serwera. (Jeżeli wybrany zostanie serwer IMAP zdefiniowany w czasie tworzenia konta, to wyświetlone zostaną jego ustawienia.)</li>
+</ol>
+
+<ul>
+  <li><strong>Typ serwera</strong>: typ serwera (serwer poczty IMAP), który został określony podczas utworzenia konta poczty. Aby zmienić typ serwera związany z kontem, należy usunąć konto i utworzyć je na nowo.</li>
+  <li><strong>Nazwa serwera</strong>: nazwa serwera, która została określona podczas utworzenia konta poczty. Jeżeli występują problemy z otrzymywaniem wiadomości z tego konta, należy skontaktować się z dostawcą usług internetowych lub administratorem sieci, by potwierdzić że wpisana nazwa serwera jest poprawna.</li>
+  <li><strong>Użytkownik</strong>: nazwa użytkownika, która została wybrana podczas utworzenia konta poczty.</li>
+  <li><strong>Port</strong>: ustawienie należy zostawić niezmienione, jeśli dostawca usług internetowych lub administrator sieci nie zaleca innego ustawienia.</li>
+  <li><strong>Bezpieczeństwo połączenia</strong>: należy wybrać jedną z następujących opcji, aby ustanowić <a href="glossary.xhtml#secure_connection">bezpieczne połączenie</a> z serwerem poczty przychodzącej (IMAP):
+    <ul>
+      <li><strong>Bez szyfrowania</strong>: program &brandShortName; będzie używał połączeń nieszyfrowanych. Tę opcję należy wybrać <strong>wyłącznie</strong> w przypadku, gdy serwer poczty przychodzącej nie obsługuje jakiegokolwiek szyfrowania.</li>
+      <li><strong>STARTTLS</strong>: wymaga szyfrowanego połączenia używając metody <a href="glossary.xhtml#starttls">STARTTLS</a>. Ten sposób szyfrowania jest zazwyczaj dostępny na standardowym porcie IMAP, czyli 143.</li>
+      <li><strong>SSL/TLS</strong>: wymaga szyfrowanego połączenia używając metody IMAP-over-SSL. Ten sposób szyfrowania jest zazwyczaj dostępny na porcie 993.
+      </li>
+    </ul>
+  </li>
+  <li><strong>Używaj bezpiecznego uwierzytelniania</strong>: pozwala na użycie bezpiecznego uwierzytelniania podczas logowania, np. CRAM-MD5. W razie wątpliwości, czy serwer wspiera tę możliwość, należy skontaktować się z dostawcą usług internetowych lub administratorem sieci.</li>
+  <li><strong>Sprawdzaj podczas uruchamiania, czy są nowe wiadomości</strong>: wybór tego ustawienia spowoduje, że Kurier Poczty po uruchomieniu będzie automatycznie sprawdzał, czy na koncie znajdują się nowe wiadomości.</li>
+  <li><strong>Sprawdzaj, czy nadeszły nowe wiadomości co [__] minut</strong>: wybór tego ustawienia pozwala na automatyczne sprawdzanie co określony czas, czy są nowe wiadomości i ich automatyczne pobieranie. Jeśli to ustawienie nie zostanie wybrane to w dowolnym momencie można sprawdzić czy są nowe wiadomości naciskając przycisk Pobierz na pasku narzędzi w głównym oknie Kuriera Poczty.</li>
+  <li id="when_i_delete_a_message"><strong>Wiadomość usunięta lokalnie</strong>: należy wybrać zachowanie dotyczące usuniętych wiadomości. Opcja <q>Zostanie przeniesiona do folderu</q>, gdzie można wybrać folder, jest zalecana, jeśli administrator sieci lub dostawca usług internetowych nie zaleci innych ustawień. Wiadomości zaznaczone jako usunięte zostaną usunięte tylko w czasie porządkowania folderów.</li>
+  <li><strong>Przy wyjściu z programu porządkuj folder Odebrane</strong>: przy zamykaniu Kuriera Poczty usuwa wiadomości, które zostały oznaczone jako usunięte z folderu Odebrane. Należy zaznaczyć tę opcję, jeśli ustawienie: <q>Wiadomość usunięta lokalnie zostanie oznaczona jako usunięta</q> zostało wybrane.</li>
+  <li><strong>Przy wyjściu z programu opróżniaj Kosz</strong>: opróżnia folder Kosz za każdym razem, kiedy Kurier Poczty zostaje zamknięty.</li>
+  <li><strong>Zaawansowane</strong>: pozwala na wybranie innego serwera poczty wychodzącej (SMTP) dla wysłanych wiadomości z konta poczty. Więcej informacji w rozdziale <a href="#advanced_imap_server_settings">Zaawansowana konfiguracja serwera IMAP</a>.</li>
+  <li><strong>Katalog lokalny</strong>: lokalizacja na dysku twardym, w której znajdują się foldery i wiadomości tego konta.</li>
+</ul>
+
+<h3 id="advanced_imap_server_settings">Zaawansowana konfiguracja serwera IMAP</h3>
+
+<p>W większości przypadków zaawansowane ustawienia serwera IMAP są automatycznie dostarczane przez ten serwer. Jeżeli użytkownik nie jest pewien ustawień w tym oknie dialogowym należy skontaktować się z dostawcą usług internetowych lub administratorem sieci.</p>
+
+<p>Jeżeli okno zaawansowanych ustawień serwera IMAP nie jest widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać nazwę konta i kliknąć na kategorię Konfiguracja serwera.</li>
+  <li>Jeżeli serwer jest typu IMAP, to użytkownik może nacisnąć przycisk Zaawansowane, aby ustawić dodatkowe opcje, takie jak:
+    <ul>
+      <li>katalog serwera IMAP</li>
+      <li>pokazywanie tylko <q>subskrybowanych folderów</q></li>
+      <li>obsługę podfolderów</li>
+      <li>przestrzenie nazw osobistych, publicznych (współdzielonych) i innych użytkowników dla tego katalogu</li>
+    </ul>
+  </li>
+</ol>
+
+<p>Więcej informacji w rozdziale <a href="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories">Dodawanie i usuwanie katalogów LDAP</a>.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h3 id="pop_server_settings">Konfiguracja serwera POP</h3>
+
+<p>Jeżeli okno dialogowe ustawień serwera POP nie jest widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać nazwę konta i kliknąć na kategorię Konfiguracja serwera. (Jeżeli wybrany zostanie serwer POP zdefiniowany w czasie tworzenia konta, to wyświetlone zostaną jego ustawienia.)</li>
+</ol>
+
+<ul>
+  <li><strong>Typ serwera</strong>: typ serwera (serwer poczty POP), który został określony podczas utworzenia konta poczty. Aby zmienić typ serwera związany z kontem, należy usunąć konto i utworzyć je na nowo.</li>
+  <li><strong>Nazwa serwera</strong>: nazwa serwera, która została określona podczas utworzenia konta poczty. Jeżeli występują problemy z otrzymywaniem wiadomości z tego konta, należy skontaktować się z dostawcą usług internetowych lub administratorem sieci, by potwierdzić że wpisana nazwa serwera jest poprawna.</li>
+  <li><strong>Użytkownik</strong>: nazwa użytkownika, która została wybrana podczas utworzenia konta poczty.</li>
+  <li><strong>Port</strong>: ustawienie należy zostawić niezmienione, jeśli dostawca usług internetowych lub administrator sieci nie zaleca innego ustawienia.</li>
+  <li><strong>Bezpieczeństwo połączenia</strong>: należy wybrać jedną z następujących opcji, aby ustanowić <a href="glossary.xhtml#secure_connection">bezpieczne połączenie</a> z serwerem poczty przychodzącej (POP):
+    <ul>
+      <li><strong>Bez szyfrowania</strong>: program &brandShortName; będzie używał połączeń nieszyfrowanych. Tę opcję należy wybrać <strong>wyłącznie</strong> w przypadku, gdy serwer poczty przychodzącej nie obsługuje jakiegokolwiek szyfrowania.</li>
+      <li><strong>STARTTLS</strong>: wymaga szyfrowanego połączenia używając metody <a href="glossary.xhtml#starttls">STARTTLS</a>. Ten sposób szyfrowania jest zazwyczaj dostępny na standardowym porcie POP, czyli 110.</li>
+      <li><strong>SSL/TLS</strong>: wymaga szyfrowanego połączenia używając metody POP-over-SSL. Ten sposób szyfrowania jest zazwyczaj dostępny na porcie 995.
+      </li>
+    </ul>
+  </li>
+  <li><strong>Używaj bezpiecznego uwierzytelniania</strong>: pozwala na użycie bezpiecznego uwierzytelniania podczas logowania, np. CRAM-MD5 i APOP. W razie wątpliwości, czy serwer wspiera tę możliwość, należy skontaktować się z dostawcą usług internetowych lub administratorem sieci.</li>
+  <li><strong>Sprawdzaj podczas uruchamiania, czy są nowe wiadomości</strong>: wybór tego ustawienia spowoduje, że Kurier Poczty po uruchomieniu będzie automatycznie sprawdzał, czy na koncie znajdują się nowe wiadomości. Dla kont POP Kurier Poczty nie pobiera nowych wiadomości dopóki nie zostanie naciśnięty przycisk Pobierz na pasku narzędzi w głównym oknie Kuriera Poczty.</li>
+  <li><strong>Sprawdzaj, czy nadeszły nowe wiadomości co [__] minut</strong>: wybór tego ustawienia pozwala na automatyczne sprawdzanie co określony czas, czy są nowe wiadomości i ich automatyczne pobieranie. Jeśli to ustawienie nie zostanie wybrane, to w dowolnym momencie można sprawdzić czy są nowe wiadomości naciskając przycisk Pobierz na pasku narzędzi w głównym oknie Kuriera Poczty.</li>
+  <li><strong>Automatycznie pobieraj nowe wiadomości</strong>: wybór tego ustawienia spowoduje natychmiastowe pobieranie wiadomości z serwera po każdym nawiązaniu połączenia z nim.</li>
+  <li><strong>Pobieraj tylko nagłówki wiadomości</strong>: wybór tego ustawienia pozwala na pobieranie z serwera tylko nagłówków wiadomości zamiast całych wiadomości w czasie pobierania nowych wiadomości. Ta opcja będzie działała jeżeli serwer POP obsługuje polecenie <q>TOP</q>. Obsługuje ją większość współczesnych serwerów, ale jeśli użytkownik nie ma pewności powinien skontaktować się z dostawcą usług internetowych lub administratorem sieci.</li>
+  <li><strong>Pozostaw kopię wiadomości na serwerze</strong>: wybór tego ustawienia spowoduje, że na serwerze pozostaną kopie wiadomości, które zostaną pobrane na komputer użytkownika.
+    <ul>
+      <li><strong>Przez [__] dni</strong>: wybór tego ustawienia spowoduje, że po określonej ilości dni wiadomości będą usuwane z serwera automatycznie.</li>
+      <li><strong>Dopóki wiadomość nie zostanie usunięta</strong>: wybór tego ustawienia spowoduje, że wiadomości będą usuwane z serwera dopiero po ich usunięciu na komputerze użytkownika.</li>
+    </ul>
+  </li>
+  <li><strong>Przy wyjściu z programu opróżniaj Kosz</strong>: wybór tego ustawienia spowoduje automatyczne usunięcie zawartości folderu Kosz przy kończeniu pracy Kuriera Poczty.</li>
+  <li><strong>Zaawansowane</strong>: pozwala użytkownikowi wybrać miejsce przechowywania nowych wiadomości oraz serwer, na którym mają być poszukiwane nowe wiadomości.</li>
+  <li><strong>Katalog lokalny</strong>: umiejscowienie na dysku w komputerze użytkownika katalogu, w którym przechowywane są wiadomości tego konta.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h3 id="news_server_settings">Konfiguracja serwera grup dyskusyjnych</h3>
+
+<p>Ten rozdział opisuje jak zmienić ustawienie serwera grup dyskusyjnych. Jeżeli okno dialogowe ustawień serwera nie jest widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać nazwę konta i kliknąć na kategorię Konfiguracja serwera. (Jeżeli wybrany zostanie serwer grup dyskusyjnych zdefiniowany w czasie tworzenia konta, to wyświetlone zostaną jego ustawienia.)</li>
+</ol>
+
+<ul>
+  <li><strong>Typ serwera</strong>: typ serwera (serwer grup dyskusyjnych NNTP), który został określony podczas utworzenia konta poczty. Aby zmienić typ serwera związany z kontem, należy usunąć konto i utworzyć je na nowo.</li>
+  <li><strong>Nazwa serwera</strong>: nazwa serwera, która została określona podczas utworzenia konta poczty. Jeżeli występują problemy z otrzymywaniem wiadomości z tego konta, należy skontaktować się z dostawcą usług internetowych lub administratorem sieci, by potwierdzić że wpisana nazwa serwera jest poprawna.</li>
+  <li><strong>Port</strong>: ustawienie należy zostawić niezmienione, jeśli dostawca usług internetowych lub administrator sieci nie zaleca innego ustawienia.</li>
+  <li><strong>Bezpieczeństwo połączenia</strong>: należy wybrać, jeżeli serwer poczty jest skonfigurowany, aby wysyłać i odbierać zaszyfrowane wiadomości. W razie wątpliwości należy skontaktować się z dostawcą usług internetowych lub administratorem sieci.</li>
+  <li><strong>Sprawdzaj podczas uruchamiania, czy są nowe wiadomości</strong>: wybór tego ustawienia spowoduje, że Kurier Poczty po uruchomieniu będzie automatycznie sprawdzał, czy na koncie znajdują się nowe wiadomości. Dla kont POP Kurier Poczty nie pobiera nowych wiadomości dopóki nie zostanie naciśnięty przycisk Pobierz na pasku narzędzi w głównym oknie Kuriera Poczty.</li>
+  <li><strong>Sprawdzaj, czy nadeszły nowe wiadomości co [__] minut</strong>: wybór tego ustawienia pozwala na automatyczne sprawdzanie co określony czas, czy są nowe wiadomości i ich automatyczne pobieranie. Jeśli to ustawienie nie zostanie wybrane, to w dowolnym momencie można sprawdzić czy są nowe wiadomości naciskając przycisk Pobierz na pasku narzędzi w głównym oknie Kuriera Poczty.</li>
+  <li><strong>Pytaj przy pobieraniu więcej niż [__] wiadomości</strong>: wybór tego ustawienia pozwala zaoszczędzić miejsce na dysku i czas pobierania wiadomości przez zmniejszenie ilości wiadomości, które mogą być pobrane jednorazowo.</li>
+  <li><strong>Zawsze żądaj uwierzytelniania podczas łączenia z tym serwerem</strong>: niektóre serwery pozwalają na korzystanie z grup na nich dostępnych bez logowania się, ale w takim wypadku ukrywają przed użytkownikiem wszystkie <em>prywatne</em> grupy dyskusyjne i wiadomości do czasu jego zalogowania. Wybór tego ustawienia wymusza, aby &brandShortName; uwierzytelniało użytkownika na serwerze przy każdym połączeniu do serwera nawet jeśli serwer tego nie wymaga (nazywane również <q>Wymuszonym uwierzytelnianiem</q>).</li>
+  <li><strong>Plik newsrc</strong>: głównie służy do wyświetlania ścieżki dostępu do pliku newsrc. Plik newsrc przechowuje informacje o subskrybowanych przez użytkownika grupach dyskusyjnych i wiadomościach przeczytanych w każdej z grup.</li>
+  <li><strong>Katalog lokalny</strong>: umiejscowienie na dysku w komputerze użytkownika katalogu, w którym przechowywane są wiadomości tego konta.</li>
+  <li><strong>Domyślny zestaw znaków</strong>: kodowanie według którego wyświetlane będą znaki w wiadomościach, które nie zawierają definicji kodowania (MIME).</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h2 id="copies_and_folders">Kopie i foldery</h2>
+
+<p>W tym rozdziale opisane są ustawienia automatycznego wysyłania kopii oraz przechowywania kopii wysyłanych wiadomości, szkiców wiadomości i szablonów wiadomości oraz <!-- TODO: start localizing -->where to move archived messages.<!-- TODO: stop localizing --></p>
+
+<p>Domyślnie Kurier Poczty &brandShortName; przechowuje kopie wysyłanych przez użytkownika wiadomości w katalogu Wysłane bieżącego konta. Szkice wiadomości przechowywane są w katalogu Szkice, a szablony wiadomości w katalogu Szablony <!-- TODO: start localizing -->moves archived messages into the Archives folder for the <!-- TODO: stop localizing -->bieżącego konta.</p>
+
+<p>Jeżeli okno dialogowe z ustawieniami Kopie i foldery nie jest widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać konto i dla niego Kopie i foldery. Wyświetlony zostanie panel ustawień Kopie i foldery.</li>
+</ol>
+
+<ul>
+<!-- TODO: start localizing -->
+  <li><strong>Place a copy in</strong>: Select this option to store copies of
+    your outgoing mail and newsgroup messages after they have been sent. By
+    default, the copies are placed in the Sent folder of this account.
+    <ul>
+      <li><strong>&quot;Sent&quot; Folder on</strong>: Select the Sent folder
+        of an account or the Local Folders to place the copy in.</li>
+      <li><strong>Other Folder</strong>: Select any folder of any account or
+        the Local Folders to place the copy in.</li>
+      <li><strong>Place replies in the folder of the message replied
+        to</strong>: Select this option for a different handling of replies
+        in mail accounts. If the message sent is a reply to another message,
+        the copy is put into the folder of the original message rather than
+        following the selections made above.</li>
+    </ul>
+  </li>
+  <li><strong>Cc these email addresses</strong>: Select whether you want to
+    always send a carbon copy (cc) to another addressee, and enter the address.
+    If you want to always send a carbon copy to yourself, just add your address
+    to this list. Separate addresses with commas (,).</li>
+<!-- TODO: stop localizing -->
+  <li><strong>Wyślij ukrytą kopię do</strong>: należy wybrać czy zawsze ma być wysyłana ukryta kopia wiadomości (BCC) do innego adresata i wprowadzić jego adres. Jeżeli użytkownik chce wysyłać do siebie taką kopię, musi dodać do tej listy swój adres. Adresy oddziela się przecinkami (,).</li>
+  <li><strong>Szkice wiadomości przechowuj w</strong>: należy wybrać katalog, w którym mają być przechowywane szkice wiadomości. Jeżeli użytkownik nie chce, aby szkice były przechowywane w katalogu Szkice bieżącego konta, należy wybrać <!-- TODO: start localizing -->the Drafts folder of a different account or the Local Folders, or click Other Folder and then choose any account and folder<!-- TODO: stop localizing --> w celu przechowywania szkiców wiadomości.</li>
+  <!-- TODO: start localizing -->
+  <li><strong>Keep message archives in</strong>: Select where to move archived
+    messages to. If you don&apos;t want to use the default Archives folder for
+    the current account, select the Archives folder of a different account or
+    the Local Folders, or click Other Folder and then choose any account and
+    folder for archiving messages.</li>
+  <!-- TODO: stop localizing -->
+  <li><strong>Szablony wiadomości przechowuj w</strong>: należy wybrać katalog, w którym mają być przechowywane szablony wiadomości. Jeżeli użytkownik nie chce, aby szablony były przechowywane w katalogu Szablony bieżącego konta, należy wybrać <!-- TODO: start localizing -->the Templates folder of a different account or the Local Folders, or click Other Folder and then choose any account and folder<!-- TODO: stop localizing --> w celu przechowywania szablonów wiadomości.</li>
+  <li><strong>Wyświetl okno dialogowe potwierdzające zapisywanie wiadomości</strong>: należy wybrać tę opcję, jeżeli użytkownik chce, aby Kurier Poczty wyświetlał okno dialogowe z prośbą o potwierdzenie przy zapisywaniu szkiców wiadomości lub szablonów. Jeżeli opcja jest wybrana, to przy każdym zapisywaniu szkicu lub szablonu wiadomości wyświetlone zostanie okno dialogowe przypominające gdzie Kurier Poczty &brandShortName; zapisuje szkic lub szablon.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h2 id="addressing">Tworzenie i adresowanie wiadomości</h2>
+<!-- to w interfejsie nazywa się Tworzenie zamiast Komponowanie -->
+
+<p>Ustawienia Tworzenia pozwalają wybrać sposób formatowania tekstu, obsługi odpowiedzi i dołączania zdefiniowanej sygnaturki.</p>
+
+<p>Jeżeli okno dialogowe z ustawieniami tworzenia wiadomości nie jest widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać konto i dla niego Tworzenie. Wyświetlony zostanie panel ustawień Tworzenie i adresowanie wiadomości.</li>
+</ol>
+
+<ul>
+  <li><strong>Używaj edytora HTML do tworzenia wiadomości</strong>: do tworzenia wiadomości pocztowych i do grup dyskusyjnych używany jest edytor HTML jako domyślny. Opcja niezaznaczona powoduje używanie edytora tekstowego jako domyślnego. Wiadomości w formacie HTML mogą zawierać formatowany tekst, odnośniki, obrazki i tabele, tak jak strona www. Jednak niektórzy odbiorcy mogą nie być w stanie odebrać wiadomości w formacie HTML.
+
+    <p><strong>Wskazówka</strong>: jeżeli użytkownik chce używać tego edytora jedynie okazjonalnie, to w czasie klikania na przycisku Nowa lub Odpowiedz należy trzymać wciśnięty klawisz Shift, co w razie potrzeby pozwala zmienić tryb działania edytora tekstowego na inny niż domyślny, bez potrzeby zaznaczania tej opcji na stałe.</p>
+  </li>
+  <li><strong>Podczas komponowania odpowiedzi automatycznie cytuj oryginalną wiadomość a następnie</strong>: wybór tej opcji pozwala na dołączanie treści oryginalnej wiadomości, na którą użytkownik odpowiada, w treści tworzonej odpowiedzi. Z rozwijanej listy należy wybrać umiejscowienie kursora poniżej lub powyżej cytowanej wiadomości. Można również wybrać, aby cytowany teksty był automatycznie zaznaczany.
+    <ul>
+      <li><strong>Dołącz sygnaturkę</strong>: ta rozwijana lista pozwala wybrać miejsce umieszczenia sygnaturki. Opcja jest dostępna tylko, jeżeli użytkownik zdecydował o <a href="#account_settings">dołączaniu sygnaturki</a> i o rozpoczęciu odpowiedzi powyżej cytowanego tekstu.</li>
+    </ul>
+  </li>
+</ul>
+
+<ul>
+  <li><strong>Dołączaj sygnaturkę przy odpowiadaniu</strong>: jeżeli użytkownik ma utworzoną sygnaturkę, to wybór tej opcji powoduje automatyczne dodawanie jej do treści wiadomości przy odpowiadaniu na inną wiadomość. Sygnaturka jest dodawana w miejscu określonym w ustawieniach cytowania i umieszczania sygnaturki.</li>
+  <li><strong>Dołączaj sygnaturkę przy przekazywaniu</strong>: jeżeli użytkownik ma utworzoną sygnaturkę, to wybór tej opcji powoduje automatyczne dodawanie jej do treści wiadomości przy przekazywaniu innej wiadomości. Sygnaturka jest dodawana w miejsc określonym w ustawieniach cytowania i umieszczania sygnaturki przy przekazywaniu wiadomości <a href="#composition">w treści wiadomości</a>.</li>
+</ul>
+
+<p>Ustawienia Adresowanie nadpisują globalne ustawienia serwera LDAP określone globalnie dla wszystkich <a href="#addressing_preferences">książek adresowych</a> oknie dialogowym Preferencje. Ustawienia serwera LDAP zmieniają zachowanie <a href="#address_autocompletion">autouzupełniania adresu</a> i w razie potrzeby można zmienić te ustawienia dla każdego z kont.</p>
+
+<p>Autouzupełnianie adresu używa książek adresowych użytkownika do odnalezienia pasujących wpisów w trakcie wprowadzania adresów e-mail w obszarze adresowania okna Komponowanie nowej wiadomości.</p>
+
+<p>Jeżeli okno z ustawieniami Adresowanie nie jest widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać konto i dla niego Komponowanie.</li>
+</ol>
+
+<ul>
+  <li><strong>Automatycznie dodawaj moją domenę do adresu</strong>: należy wybrać tę opcję, jeżeli użytkownik chce, aby Kurier Poczty automatycznie uzupełniał wprowadzane adresy domeną z adresu tego konta.</li>
+  <li><strong>Użyj globalnych ustawień serwera LDAP dla tego konta</strong>: takie jest ustawienie domyślne. Powinno być wybrane, jeżeli użytkownik nie chce, aby dla tego konta były nadpisywane globalne ustawienia serwera LDAP.</li>
+  <li><strong>Użyj innego serwera LDAP</strong>: należy wybrać tę opcję i następnie inny serwer z listy, jeżeli użytkownik chce, używać katalogu z innego serwera LDAP do automatycznego uzupełniania adresów dla tego konta. Jeżeli zachodzi potrzeba przycisk Edytuj katalogi pozwala zmienić ustawienia pojedynczego serwera, dodanie lub usunięcie serwera usług katalogowych. Więcej informacji w rozdziale <a href="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories">Dodawanie i usuwanie katalogów LDAP</a>.</li>
+</ul>
+
+<p>Wybrany katalog również będzie przeszukiwany w celu odnalezienia pasujących certyfikatów, jeżeli użytkownik będzie próbował wysłać zaszyfrowaną wiadomość do jednego lub więcej adresatów, dla których użytkownik nie ma certyfikatów w pliku.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h2 id="synchronization_and_storage">Synchronizacja i miejsce na dysku</h2>
+
+<p>Ustawienia synchronizacji i miejsca na dysku pozwalają oszczędzać miejsce zajmowane przez wiadomości na dysku lub skonfigurować konto pocztowe tak, aby było możliwe używanie go w trybie offline po odłączeniu od sieci internet. To jakie ustawienia są dostępne zależy od tego jakiego typu (IMAP, POP, grup dyskusyjnych) konta one dotyczą.</p>
+  
+<div class="contentsBox">
+  <ul>
+    <li><a href="#synchronization_and_storage_settings_imap">Ustawienia dla konta IMAP</a></li>
+    <li><a href="#disk_space_settings">Ustawienia dla konta POP</a></li>
+    <li><a href="#synchronization_and_storage_settings_nntp">Ustawienia dla konta grup dyskusyjnych</a></li>
+  </ul>
+</div>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h3 id="offline_and_disk_space_settings_imap">Ustawienia dla konta IMAP</h3>
+
+<p>Jeżeli okno dialogowe z ustawieniami synchronizacji i miejsca na dysku nie są widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać konto typu IMAP i dla niego Synchronizacja i miejsce na dysku.</li>
+</ol>
+
+<ul>
+  <li><strong>Przechowuj wiadomości dla tego konta lokalnie na komputerze</strong>: wybór tej opcji umożliwia korzystanie z wiadomości w folderach konta w czasie pracy w trybie offline. To ustawienie dotyczy również wszystkich nowo utworzonych lub subskrybowanych folderów.</li>
+  <li><strong>Zaawansowane</strong>: naciśnięcie tego przycisku otwiera okno dialogowe, w którym wybiera się, które foldery mają być dostępne do pracy w trybie offline. Więcej informacji w rozdziale <a href="mailnews_offline.xhtml#selecting_items_for_offline_viewing">Wybór elementów dostępnych w trybie offline</a>.
+
+    <p><strong>Uwaga</strong>: domyślne ustawienia dla mogą być zmienione dla pojedynczych folderów, ale te ustawienia są <em>usuwane</em> przy każdej zmianie stanu ustawienia <q>Przechowuj wiadomości dla tego konta lokalnie na komputerze</q>.</p>
+  </li>
+   <li><strong>Synchronizuj wszystkie wiadomości niezależnie od wieku</strong>: wybór tej opcji powoduje synchronizowanie <em>wszystkich</em> wiadomości, z wyjątkiem sytuacji, gdzie zostały ustawione maksymalne wielkości pobierania.</li>
+   <li><strong>Synchronizuj tylko ostatnie wiadomości [__] [dni] </strong>: wybór tej opcji powoduje synchronizowanie tylko wiadomości nowszych, niż określony okres ostatnich dni, tygodni bądź miesięcy. Po tym okresie, wiadomości będą usuwane lokalnie i niedostępne w trybie offline. Usuwanie <em>nie</em> dotyczy kopii wiadomości przechowywanych na serwerze - te w dalszym ciągu będą tam dostępne.</li>
+   <li><strong>Nie pobieraj wiadomości większych niż [__] KB</strong>: wybór tej opcji pozwala na oszczędzanie miejsca na dysku i czasu połączenia z serwerem przez określenie maksymalnej wielkości wiadomości możliwych do pobrania z serwera. Zmiana tej opcji <em>nie</em> dotyczy wiadomości, które już zostały pobrane.</li>
+  <li><a href="#retention_policy">Ustawienia retencji</a> mogą zostać użyte do automatycznego usuwania starych wiadomości. Należy podkreślić, że te ustawienia dotyczą <em>zarówno</em> kopii wiadomości przechowywanych lokalnie jak i oryginałów wiadomości przechowywanych na serwerze.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h3 id="disk_space_settings">Ustawienia dla konta POP</h3>
+
+<p>Wiadomości z kont POP są w całości pobierane na komputer użytkownika jeżeli nie została włączona opcja <q>Pobieraj tylko nagłówki wiadomości</q>. Ten rozdział opisuje jak można zaoszczędzić miejsce na dysku komputera w czasie używania konta typu POP. Jeżeli opcja <q>Pobieraj tylko nagłówki wiadomości</q> jest wyłączona, to poniższe ustawienia synchronizacji i miejsca na dysku są ignorowane. Jeżeli okno dialogowe z ustawieniami miejsca na dysku dla konta POP nie są widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać konto typu POP i dla niego Synchronizacja i miejsce na dysku.</li>
+</ol>
+
+<ul>
+   <li><strong>Nie pobieraj wiadomości większych niż [__] KB</strong>: wybór tej opcji pozwala na oszczędzanie miejsca na dysku i czasu połączenia z serwerem przez określenie maksymalnej wielkości wiadomości możliwych do pobrania z serwera.</li>
+  <li><a href="#retention_policy">Ustawienia retencji</a> mogą zostać użyte do automatycznego usuwania starych wiadomości. Należy podkreślić, że te ustawienia dotyczą <em>zarówno</em> kopii wiadomości przechowywanych lokalnie jak i oryginałów wiadomości przechowywanych na serwerze.
+
+    <p><strong>Uwaga</strong>: jeżeli konto POP jest skonfigurowane do używania globalnej skrzynki odbiorczej to zastosowanie mają ustawienia dla  tego konta POP.</p>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h3 id="synchronization_and_storage_settings_nntp">Ustawienia dla konta grup dyskusyjnych</h3>
+
+<p>Jeżeli okno dialogowe z ustawieniami synchronizacji i miejsca na dysku dla konta grup dyskusyjnych nie są widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać konto grup dyskusyjnych i dla niego Synchronizacja i miejsce na dysku.</li>
+</ol>
+
+<ul>
+  <li><strong>Wybierz grupy dostępne w trybie offline</strong>: naciśnięcie przycisku pozwala wybrać grupy dyskusyjne, które mają być dostępne w czasie pracy w trybie offline. Więcej informacji w rozdziale <a href="mailnews_offline.xhtml#selecting_items_for_offline_viewing">Wybór elementów dostępnych w trybie offline</a>.</li>
+</ul>
+
+<p>Poniższe ustawienia pomagają zaoszczędzić miejsce na dysku i czas pobierania wiadomości. Należy określić, które wiadomości nie mają być pobierane:</p>
+
+<ul>
+  <li><strong>Nie pobieraj treści przeczytanych wiadomości</strong>: wybór tej opcji pozwala na pobieranie tylko treści nieprzeczytanych wcześniej wiadomości.</li>
+  <li><strong>Nie pobieraj wiadomości większych niż [__] KB</strong>: wybór tej opcji pozwala na oszczędzanie miejsca na dysku przez wyłączenie z pobierania treści wiadomości o dużych rozmiarach. Należy wprowadzić maksymalną wielkość wiadomości do pobrania.</li>
+  <li><strong>Nie pobieraj wiadomości starszych niż [__] dni</strong>: wybór tej opcji pozwala na pobieranie tylko wiadomości, które nie są starsze niż wprowadzona liczba dni.</li>
+</ul>
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h3 id="retention_policy">Wspólne ustawienia polityk retencji</h3>
+
+<p>&brandShortName; może automatycznie usuwać stare wiadomości. Można skonfigurować to działanie za za pomocą opcji wymienionych poniżej <strong>W celu zaoszczędzenia miejsca na dysku, stare wiadomości mogą być nieodwracalnie usuwane</strong>:</p>
+
+<ul>
+  <li><strong>Nie usuwaj żadnych wiadomości</strong>: przechowywane będą wszystkie wiadomości. Wiadomości nigdy nie będą usuwane automatycznie na podstawie swojego wieku.</li>
+  <li><strong>Usuwaj wszystko, pomijając ostatnie [__] wiadomości</strong>: należy wprowadzić liczbę wiadomości, które mają być przechowywane. Po wybraniu tej opcji tylko wiadomości starsze od określonych będą usuwane.</li>
+  <li><strong>Usuwaj wiadomości starsze niż [__] dni</strong>: przechowywane będą tylko wiadomości, które dotarły w czasie określonej tu ilości dni.</li>
+</ul>
+
+<p>Za pomocą poniższych ustawień użytkownik może określić dodatkowe ograniczenia automatycznego usuwania wiadomości. Są one szczególnie użyteczne w połączeniu z opcją nie usuwania żadnych wiadomości.</p> 
+
+<ul>
+  <li><strong>Zawsze przechowuj oznaczone wiadomości</strong>: wybór tej opcji pozwala na wyłączenie automatycznego usuwania przez &brandShortName; oznaczonych wiadomości.</li>
+  <li><strong>Usuwaj treść wiadomości starszych niż [__] dni</strong>: wybór tej opcji pozwala na pozostawienie nagłówków wszystkich wiadomości, ale powoduje usunięcie treści wiadomości starszych niż określona liczba dni (dotyczy tylko wiadomości z grup dyskusyjnych). Działają również wszystkie opcje usuwania całych wiadomości na podstawie ich wieku.</li>
+</ul>
+
+<p>Te ustawienia mogą być zmienione dla pojedynczych folderów w ich właściwościach na karcie Reguły przechowywania wiadomości.</p>
+
+<p><strong>Uwaga</strong>: jeżeli synchronizacja wiadomości jest włączona (dla kont IMAP) lub wiadomości są pozostawiane na serwerze (dla kont POP), to te ustawienia dotyczą <em>obu</em> miejsc &mdash; zarówno kopii lokalnych jak i ich oryginałów na serwerze.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h2 id="junk_settings">Ustawienia niechcianej poczty</h2>
+  
+<p>Ten rozdział opisuje jak zmienić ustawienia niechcianej poczty. Jeżeli okno dialogowe ustawień serwera nie jest widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać konto grup dyskusyjnych i dla niego Niechciana poczta.</li>
+</ol>
+
+<p>Ustawienia niechcianej poczty pozwalają określić w jaki sposób samouczący się filtr ma postępować z niepożądanymi wiadomościami dla wybranego konta. Ustawienia dotyczące wszystkich kont definiuje się w <a href="#junk_and_suspect_preferences">Preferencjach Kuriera Poczty &mdash; Niechciana i podejrzana poczta</a>.</p>
+  
+<ul>  
+  <li><strong>Włącz filtr niechcianej poczty dla bieżącego konta</strong>: wybór tej opcji włącza oznaczanie wiadomości jako niechcianych.</li>
+  <li><strong>Nie oznaczaj wiadomości jako niechcianej, jeżeli adres nadawcy znajduje się w [lista książek adresowych do wyboru]</strong>: wybór tej opcji powoduje, że wiadomości od nadawców, których adresy znajdują się na wybranych listach nie będą oznaczane jako niechciane.</li>
+  <li><strong>Ufaj nagłówkom niechcianej poczty dołączonym przez [zewnętrzny filtr niechcianej poczty Spam Assassin lub Spam Pal do wyboru]</strong>: wybór tej opcji powoduje, że &brandShortName; będzie ufała oznaczeniu wiadomości jako niechcianej przez wybrany program filtrujący.</li>
+  <li><strong>Przenoś otrzymane wiadomości, które zostały oznaczone jako niechciane, do</strong>: wybór tej opcji powoduje, że wiadomości oznaczone jako niechciane będą przenoszone do wskazanego folderu.
+    <ul>
+      <li><strong>Folderu <q>Niechciane</q> konta</strong>: wybór tej opcji powoduje przenoszenie wiadomości do domyślnego folderu <q>Niechciane</q> wybranego konta.</li>
+      <li><strong>Innego folderu [wybrany folder w wybranym folderze]</strong>: wybór tej opcji powoduje przenoszenie wiadomości do dowolnego wybranego folderu.</li>
+      <li><strong>Niechciane wiadomości usuwaj automatycznie po upływie [__] dni</strong>: jeżeli użytkownik ma pewność, że wiadomości oznaczone jako jako niechciane na pewno takimi są, to wybór tej opcji spowoduje ich automatyczne usuwanie po upływie wpisanej liczby dni.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h2 id="return_receipts">Potwierdzenia odbioru</h2>
+
+<p>Ten rozdział opisuje w jaki sposób używać potwierdzeń doręczenia wiadomości. Jeżeli okno dialogowe ustawień potwierdzeń doręczenia wiadomości nie jest widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać konto grup dyskusyjnych i dla niego Potwierdzenia.</li>
+</ol>
+
+<p>Poniższe ustawienia potwierdzeń doręczenia wiadomości dotyczą wiadomości wysyłanych za pomocą wybranego konta. Ustawień tych można również użyć do określenia sposobu postępowania z żądaniami potwierdzeń dostarczenia odbieranych przez użytkownika. Te ustawienia zastępują dla tego konta globalne ustawienia zdefiniowane w <a href="#return_receipts_preferences">Preferencjach Kuriera Poczty &mdash; Potwierdzenia odbioru</a>.</p>
+
+<ul>
+  <li><strong>Użyj globalnych potwierdzeń doręczenia wiadomości dla tego konta</strong>: wybrane konto domyślnie będzie używało preferencji potwierdzeń dostarczenia wiadomości określonych w <a href="#return_receipts_preferences">Preferencjach Kuriera Poczty &mdash; Potwierdzenia odbioru</a>.</li>
+  <li><strong>Dostosuj ustawienia potwierdzenia doręczenia wiadomości dla tego konta</strong>: umożliwia zmianę preferencji obsługi żądań potwierdzenia dostarczenia wiadomości dla tego konta.
+    <ul>
+      <li><strong>Zawsze żądaj potwierdzeń doręczenia wysyłanych wiadomości</strong>: włącza automatyczne żądania potwierdzenia dostarczenia wiadomości dla wszystkich wiadomości wysłanych za pomocą tego konta.</li>
+      <li><strong>pozostawiaj w folderze Odebrane</strong>: przychodzące potwierdzenia dostarczenia wiadomości są umieszczane w folderze Odebrane wybranego konta.
+
+        <p><strong>Wskazówka</strong>: należy wybrać tę opcję jeżeli użytkownik ma zamiar używać filtru, który będzie przenosił przychodzące wiadomości potwierdzeń dostarczenia wiadomości do innego folderu. Więcej informacji o używaniu filtrów wiadomości w rozdziale <a href="mailnews_organizing.xhtml#creating_message_filters">Tworzenie filtrów wiadomości</a>.</p>
+      </li>
+      <li><strong>przenoś do folderu Wysłane</strong>: przychodzące wiadomości potwierdzające dostarczenie wiadomości są przenoszone do folderu wysłane wybranego konta.</li>
+      <li><strong>Nigdy nie wysyłaj potwierdzeń doręczenia wiadomości</strong>: wybór tej opcji powoduje, że potwierdzenia dostarczenia wiadomości nigdy nie będą wysyłane na żądania w wiadomościach od innych.</li>
+      <li><strong>Wysyłaj potwierdzenia doręczenia wiadomości tylko w poniższych przypadkach</strong>: należy wybrać jak &brandShortName; ma postępować z żądaniami potwierdzeń dostarczenia wiadomości przychodzących.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h2 id="security">Zabezpieczenia</h2>
+
+<p>Ten rozdział opisuje w jaki sposób skonfigurować ustawienia konta w Kurierze Poczty, które odpowiadają za bezpieczeństwo wiadomości. Przed użyciem tych wiadomości użytkownik musi uzyskać jeden lub więcej certyfikatów do obsługi wiadomości pocztowych. Więcej informacji w rozdziale <a href="mailnews_security.xhtml">Podpisywanie i szyfrowanie wiadomości</a>.</p>
+
+<p>Jeżeli okno dialogowe ustawień zabezpieczeń wiadomości dla wybranego konta pocztowego nie jest widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać konto pocztowe i dla niego Zabezpieczenia.</li>
+</ol>
+
+<div class="contentsBox">W tym rozdziale:
+  <ul>
+    <li><a href="#about_certificates">Certyfikaty</a></li>
+    <li><a href="#digital_signing">Podpis cyfrowy</a></li>
+    <li><a href="#encryption">Szyfrowanie</a></li>
+  </ul>
+</div>
+
+<h3 id="about_certificates">Certyfikaty</h3>
+
+<p>Głównym zadaniem panelu zabezpieczeń jest umożliwienie użytkownikowi wskazania do używania dwóch certyfikatów:</p>
+
+<ul>
+  <li>Certyfikatu, który ma być używany do podpisywania wysyłanych wiadomości pocztowych.</li>
+  <li>Certyfikatu, który ma być używany do szyfrowania wiadomości które mają być wysyłane do nas przez innych nadawców.</li>
+</ul>
+
+<p>Zależnie od zasad <a href="glossary.xhtml#certificate_authority">organu certyfikacji</a> który opublikował certyfikat(y) możliwe jest użycie jednego certyfikatu do obu powyższych celów lub dwóch odrębnych certyfikatów. Jednak nawet jeżeli używany ma być tylko jeden certyfikat, to i tak musi być wskazany dwa razy. Do podpisywania i szyfrowania osobno.</p>
+
+<p>Wskazane certyfikaty są dołączane do każdej wysłanej wiadomości. Umożliwiają one adresatom sprawdzenie podpisu cyfrowego nadawcy i zaszyfrowanie wysyłanych przez Nich do Użytkownika wiadomości.</p>
+
+<h3 id="digital_signing">Podpis cyfrowy</h3>
+
+<p>Sekcja Podpis cyfrowy w <a href="#security">panelu Zabezpieczenia wiadomości</a> umożliwia określenie w jaki sposób mają być podpisywane wychodzące wiadomości pocztowe:</p>
+
+<ul>
+  <li><strong>Certyfikat, który będzie używany do cyfrowego podpisywania wysyłanych wiadomości</strong>: jeżeli to pole jest puste lub wskazuje na błędny certyfikat należy nacisnąć przycisk Wybierz i wybrać odpowiedni plik certyfikatu.</li>
+  <li><strong>Podpisuj cyfrowo wiadomości (domyślnie)</strong>: zaznaczenie tej opcji powoduje podpisywanie cyfrowo wszystkich wysyłanych wiadomości. Certyfikat osobistego podpisu cyfrowego musi zostać określony wcześniej, by było możliwe wybranie tej opcji.</li>
+</ul>
+
+<p>Bez względu na to, czy opcja <strong>Podpisuj cyfrowo wiadomości (domyślnie)</strong> jest wybrana czy nie, przed wysłaniem każdej pojedynczej wiadomości można zdecydować, czy ma ona być podpisana cyfrowo.</p>
+
+<p>Aby zmienić ustawienia podpisu cyfrowego dla tworzonej wiadomości, w oknie komponowania tej wiadomości należy kliknąć na strzałce przy przycisku Zabezpieczenia na pasku narzędzi i odznaczyć opcję <q>Podpisz cyfrowo tę wiadomość</q>. Więcej informacji w rozdziale <a href="mailnews_security.xhtml#signing_and_encrypting_a_new_message">Podpisywanie i szyfrowanie nowej wiadomości</a>.</p>
+
+<h3 id="encryption">Szyfrowanie</h3>
+
+<p>Sekcja Szyfrowanie wiadomości w <a href="#security">panelu Zabezpieczenia wiadomości</a> umożliwia określenie w jaki sposób domyślnie ma być używane szyfrowanie wiadomości wysyłanych przez użytkownika:</p>
+
+<ul>
+  <li><strong>Certyfikat, który będzie używany do szyfrowania i deszyfrowania otrzymanych wiadomości</strong>: jeżeli to pole jest puste lub wskazuje na błędny certyfikat należy nacisnąć przycisk Wybierz i wybrać odpowiedni plik certyfikatu.</li>
+  <li><strong>Nigdy (nie używaj szyfrowania)</strong>: należy zaznaczyć tę opcję jeżeli użytkownik nie chce szyfrować wiadomości lub będzie to robione okazjonalnie.</li>
+  <li><strong>Wymagaj (nie można wysłać wiadomości jeśli nie wszyscy adresaci mają certyfikat)</strong>: należy zaznaczyć tę opcję jeżeli wszystkie wiadomości wysyłane mają być szyfrowane. Jeżeli użytkownik nie posiada certyfikatów wszystkich adresatów, to nie będzie możliwe wysłanie tej wiadomości aż do momentu wyłączenia szyfrowania dla tej wiadomości.</li>
+</ul>
+
+<p>Bez względu na to która opcja szyfrowania zostanie wybrana, przed wysłaniem pojedynczej wiadomości można zmienić ustawienie jej szyfrowania.</p>
+
+<p>Aby zmienić ustawienia szyfrowania dla tworzonej wiadomości, w oknie komponowania tej wiadomości należy kliknąć na strzałce przy przycisku Zabezpieczenia na pasku narzędzi poczty i wybrać pożądaną opcję szyfrowania. Więcej informacji w rozdziale <a href="mailnews_security.xhtml#signing_and_encrypting_a_new_message">Podpisywanie i szyfrowanie nowej wiadomości</a>.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h2 id="local_folders">Lokalne foldery</h2>
+
+<p>Lokalne foldery są kontem, w którym Kurier Poczty &brandShortName; zapisuje wszystkie wiadomości wysłane w trakcie pracy w trybie offline. Wiadomości te zapisywane są w folderze Wychodzące. Zawartość każdego folder utworzony w Lokalnych folderach jest przechowywana na lokalnym dysku komputera użytkownika, więc Lokalne foldery są dobrym miejscem do zapisywania wiadomości, które użytkownik chce zachować.</p>
+
+<p>Jeżeli ustawienia Lokalnych folderów nie są widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać Lokalne foldery.</li>
+</ol>
+
+<ul>
+  <li><strong>Nazwa konta</strong>: nazwa określająca konto Lokalne foldery.</li>
+  <li><strong>Przy wyjściu z programu opróżniaj Kosz</strong>: zaznaczenie tej opcji powoduje automatyczne opróżnienie kosza tego konta przy kończeniu pracy &brandShortName;.</li>
+  <li><strong>Katalog na lokalnym komputerze</strong>: miejsce na dysku w którym przechowywana jest zawartość tego konta.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+<h2 id="outgoing_server">Serwer poczty wychodzącej (SMTP)</h2>
+
+<p>Serwer poczty wychodzącej przesyła wiadomości wychodzące do odpowiednich adresatów.</p>
+
+<p>Jeżeli ustawienia serwera poczty wychodzącej (SMTP) nie są jeszcze widoczne, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Otworzyć dowolne okno Kuriera Poczty.</li>
+  <li>Z menu Edycja wybrać Konfiguracja kont.</li>
+  <li>Wybrać Serwer poczty wychodzącej (SMTP) i zmodyfikować ustawienia istniejącego serwera lub dodać nowy. Jeżeli użytkownik nie jest pewien jaką opcję ma wybrać, to należy skontaktować się z administratorem sieci lub dostawcą usług internetowych (ISP).<br/>Można wybierać zdefiniowane tu serwery na rozwijanej liście w <a href="#account_settings">Konfiguracji kont</a>.</li>
+</ol>
+
+<ul>
+  <li><strong>Opis</strong>: krótki tekst opisujący konfigurację serwera. Zostanie wyświetlony jako pierwszy w wierszu na liście serwerów.</li>
+  <li><strong>Nazwa serwera</strong>: serwer SMTP który będzie dostarczał pocztę wysyłaną przez użytkownika. Aby używać innego serwera, należy zmienić treść wpisaną w tym polu.</li>
+  <li><strong>Port</strong>: port na którym będzie następowało połączenie do serwera SMTP. Domyślnie wpisywany jest domyślny port dla wybranego typu szyfrowania połączenia. Należy go zmienić jeżeli serwer nasłuchuje połączeń na niestandardowym porcie.</li>
+  <li><strong>Używaj identyfikatora użytkownika oraz hasła</strong>: jeżeli serwer SMTP wymaga uwierzytelniania do wysyłania poczty, to należy wybrać tę opcję i wpisać nazwę użytkownika na serwerze. Przy pierwszym połączeniu z serwerem &brandShortName; wyświetli prośbę o podanie hasła. Można wtedy również włączyć opcję która spowoduje, że hasło zostanie zapamiętane przez &brandShortName;.</li>
+  <li><strong>Używaj bezpiecznego uwierzytelniania</strong>: należy wybrać tę opcję, jeżeli użytkownik chce używać bezpiecznych mechanizmów uwierzytelniania na serwerze, takich jak CRAM-MD5. Jeżeli użytkownik nie jest pewien ustawień w tym oknie dialogowym należy skontaktować się z dostawcą usług internetowych lub administratorem sieci.</li>
+  <li><strong>Bezpieczeństwo połączenia</strong>: są dwie metody ustanawiania <a href="glossary.xhtml#secure_connection">bezpiecznego połączenia</a> z serwerem poczty wychodzącej. Należy wybrać odpowiednią. Jeżeli serwer jej nie obsługuje, to wyświetlony zostanie komunikat o błędzie w trakcie wysyłania wiadomości.
+    <ul>
+      <li><strong>Bez szyfrowania</strong>: Program &brandShortName; będzie łączył się z serwerem poczty bez szyfrowania.</li>
+      <li><strong>STARTTLS</strong>: wymagane jest szyfrowane połączenie z użyciem mechanizmu <a href="glossary.xhtml#starttls">STARTTLS</a>. Najczęściej wykorzystywany jest standardowy port 25.</li>
+      <li><strong>SSL/TLS</strong>: wymagane jest szyfrowane połączenie z serwerem, używany jest mechanizm SMTP-over-SSL, zwany również SMTPS. Domyślny port dla takiej usługi to 465.
+     </li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Na początek rozdziału</a>]</p>
+
+</body>
+</html>

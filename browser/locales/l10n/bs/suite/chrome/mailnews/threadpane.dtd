@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Nit">
+<!ENTITY fromColumn.label "Šalje">
+<!ENTITY recipientColumn.label "Primalac">
+<!ENTITY attachmentColumn.label "Prilozi">
+<!ENTITY subjectColumn.label "Naslov">
+<!ENTITY dateColumn.label "Datum">
+<!ENTITY priorityColumn.label "Prioritet">
+<!ENTITY tagsColumn.label "Oznake">
+<!ENTITY accountColumn.label "Račun">
+<!ENTITY statusColumn.label "Status">
+<!ENTITY sizeColumn.label "Veličina">
+<!ENTITY junkStatusColumn.label "Status neželjene pošte">
+<!ENTITY unreadColumn.label "Nepročitana nit">
+<!ENTITY totalColumn.label "Ukupno u niti">
+<!ENTITY readColumn.label "Pročitano">
+<!ENTITY receivedColumn.label "Primljeno">
+<!ENTITY flagColumn.label "Označeno zastavicom">
+<!ENTITY locationColumn.label "Lokacija">
+<!ENTITY idColumn.label "Redoslijed primanja">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Izaberite kolone za prikaz">
+<!ENTITY threadColumn2.tooltip "Prikaži niti poruke">
+<!ENTITY fromColumn2.tooltip "Sortiraj prema pošiljaocu">
+<!ENTITY recipientColumn2.tooltip "Sortiraj prema primaocu">
+<!ENTITY attachmentColumn2.tooltip "Poredaj prema dodacima">
+<!ENTITY subjectColumn2.tooltip "Sortiraj prema naslovu">
+<!ENTITY dateColumn2.tooltip "Sortiraj po datumu">
+<!ENTITY priorityColumn2.tooltip "Poredaj prema prioritetu">
+<!ENTITY tagsColumn2.tooltip "Sortiraj po oznakama">
+<!ENTITY accountColumn2.tooltip "Poredaj prema računu">
+<!ENTITY statusColumn2.tooltip "Poredaj prema statusu">
+<!ENTITY sizeColumn2.tooltip "Poredaj po veličini">
+<!ENTITY junkStatusColumn2.tooltip "Poredaj po statusu neželjene pošte">
+<!ENTITY unreadColumn2.tooltip "Broj nepročitanih poruka u niti">
+<!ENTITY totalColumn2.tooltip "Ukupan broj poruka u niti">
+<!ENTITY readColumn2.tooltip "Sortiraj prema pročitanom">
+<!ENTITY receivedColumn2.tooltip "Sortiraj prema datumu prijema">
+<!ENTITY flagColumn2.tooltip "Sortiraj po oznakama sa zastavicom">
+<!ENTITY locationColumn2.tooltip "Poredaj po lokaciji">
+<!ENTITY idColumn2.tooltip "Poredaj prema redosljedu prijema">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Convertir ad ina tabella">
+<!ENTITY instructions1.label   "Composer creascha ina nova colonna da tabella per mintga paragraph ch'è marcà.">
+<!ENTITY instructions2.label   "Tscherna in segn ch'è utilisà per seperar il text marcà en colonnas:">
+<!ENTITY commaRadio.label      "Comma">
+<!ENTITY spaceRadio.label      "Spazi">
+<!ENTITY otherRadio.label      "Auter segn:">
+<!ENTITY deleteCharCheck.label "Stizzar il segn da separaziun">
+<!ENTITY collapseSpaces.label  "Ignorar plirs spazis">
+<!ENTITY collapseSpaces.tooltip "Converter spazis cunfinants en in separader">

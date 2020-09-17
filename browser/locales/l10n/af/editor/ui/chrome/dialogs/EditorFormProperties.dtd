@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Vormeienskappe">
+
+<!ENTITY Settings.label "Opstelling">
+
+<!ENTITY FormName.label "Vormnaam:">
+<!ENTITY FormName.accesskey "n">
+<!ENTITY FormAction.label "Aksie-URL:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "Metode:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Enkodering:">
+<!ENTITY FormEncType.accesskey "k">
+<!ENTITY FormTarget.label "Doelraam:">
+<!ENTITY FormTarget.accesskey "D">
+
+<!ENTITY RemoveForm.label "Verwyder vorm">
+<!ENTITY RemoveForm.accesskey "V">

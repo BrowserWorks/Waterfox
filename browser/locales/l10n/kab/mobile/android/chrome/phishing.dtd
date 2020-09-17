@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "amek ara fɣeɣ s yagi!">
+<!ENTITY safeb.palm.decline.label "Ttu alɣu-yagi">
+<!ENTITY safeb.palm.reportPage.label "Acuɣer iwḥel usebter-agi?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Tamuγli iga-tt <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "D asebter n uẓḍam!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Asebter-agi web illan deg <span id='malware_sitename'/> yettwammel d akken d yir asebter. Ihi yettusewḥel akken llan ismenyifen-inek n tɣellist.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Isebtar n uẓdam ttaɛraḍen ad sbedden ahilen i yettakwren talɣut tusligt, i yesseqdacen aselkim-inek i uẓdam ɣef iselkimen nniḍen neɣ ad sexeṣren anagraw-inek.</p><p>Kra n isebtar n uzḍam zuzuren yir iseɣẓanen, acu kan ddeqs deg-sen ur ssawaḍen ara ad sexsṛen ma yella ur sen-tefkiḍ ara tasiregt.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Asmel web n ukellex!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Asebter-agi web illan deg <span id='phishing_sitename'/> yettwammel d akken d asmel n ukellex. Ihi, ittusewḥel akken llan ismenyifen-inek n tɣellist.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Ismal web n ukellex d wid ittaɛraḍen ad xedmen ayen ur yelhin ara, am usebded n iseɣẓanen, neɣ takkerḍa n telɣut-inek tudmawant, am awalen uffiren, uṭṭunen n tiliɣṛi, takkerḍa n usmad.</p><p>Yezmer d akken ma tsekcmeḍ talɣut-inek tudmawant, ad d-yeglu s takkeṛḍa-ines neɣ akellex-nniḍen.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Asmel awgi yettwassen d akken yegber iseɣẓanen ur nettwabɣi ara !">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Asebter-agi web illan deg <span id='unwanted_sitename'/> yettwammel d akken igber aseɣẓan araɣelsan. Ihi yettusewḥel akken llan ismenyifen-inek n tɣellist.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Isebtar igebren iseɣẓanen uggagen ttaɛraḍen ad sbedden iseɣẓanen izemren ad kellxen neɣ ad sexeṣren anagraw-ik s wudem ur nettwarǧi ara.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Asmel-agi yegber ahat yir aseɣẓan">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; isewḥel asebter-agi acku izmer ad isebded asnas ad k-yakren neγ ad yekkes talγut-inek(amedya, tiwlafin, awalen uffiren, iznan neγ tikardiwin n wedrim).">

@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+
+
+
+<!ENTITY performanceUI.bufferStatusTooltip "Profilaren tresnak buffer zirkular batean gordetzen ditu laginak eta behin bufferraren grabazio-mugara heltzean, lagin berriek grabazioaren hasierako laginak gainidazten dituzte.">
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.nonE10SBuild): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a non-multiprocess build. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Gaitu multiprozesu modua hobespenetan grabazioen datuak denbora errealean errendatzeko.">
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+
+<!ENTITY performanceUI.bufferStatusFull "Bufferra beteta dago. Lagin zaharragoak gainidatzi egingo dira orain.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+
+<!ENTITY performanceUI.unavailableNoticePB "Profila grabatzea ez dago erabilgarri une honetan. Itxi nabigazio pribatuko leiho guztiak eta saiatu berriro.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+
+<!ENTITY performanceUI.loadingNotice "Kargatzen…">
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+
+<!ENTITY performanceUI.toolbar.waterfall "Ur-jauzia">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Grabazioan zehar nabigatzailea burutzen ari den eragiketa ezberdinak erakusten ditu, modu sekuentzialean ur-jauzi gisa hedatuta.">
+<!ENTITY performanceUI.toolbar.js-calltree "Deien zuhaitza">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Grabazioan zehar nabigatzaileak denbora gehien igarotako funtzioak nabarmentzen ditu.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Esleipenak">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Grabazioan zehar memoria non esleitu den erakusten du.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS sugar-diagrama">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Grabazioan zehar JavaScript deiaren pila erakusten du.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Esleipenen sugar-diagrama">
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+
+<!ENTITY performanceUI.table.totalDuration            "Denbora guztira">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Funtzio honetan eta honek deitzen dituen funtzioetan igarotako denbora.">
+<!ENTITY performanceUI.table.selfDuration             "Bere denbora">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Funtzio honetan soilik igarotako denbora.">
+<!ENTITY performanceUI.table.totalPercentage          "Kostua guztira">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Funtzio honetan eta honek deitzen dituen funtzioetan igarotako denboraren ehunekoa.">
+<!ENTITY performanceUI.table.selfPercentage           "Norbere kostua">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Funtzio honetan soilik igarotako denboraren ehunekoa.">
+<!ENTITY performanceUI.table.samples                  "Laginak">
+<!ENTITY performanceUI.table.samples.tooltip          "Funtzio hau pilan zenbat aldiz zegoen analizatzaileak lagina hartzerakoan.">
+<!ENTITY performanceUI.table.function                 "Funtzioa">
+<!ENTITY performanceUI.table.function.tooltip         "Lagindutako funtzioaren izena eta iturburuko kokapena.">
+<!ENTITY performanceUI.table.totalAlloc               "Hartutako esleipenen laginak guztira">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Kokaleku eta funtzio-deitzaileetan hartutako objektuen esleipenen laginak guztira.">
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+
+<!ENTITY performanceUI.options.filter.tooltiptext "Hautatu denbora-lerroan bistaratu beharreko datuak">
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+
+<!ENTITY performanceUI.options.gear.tooltiptext "Konfiguratu errendimenduaren hobespenak.">
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+
+<!ENTITY performanceUI.invertTree             "Alderantzikatu deien zuhaitza">
+<!ENTITY performanceUI.invertTree.tooltiptext "Deien zuhaitza alderantzikatzean analizatutako dei-bideak marko berrienetatik zaharrenetara bistaratzen ditu.">
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+
+<!ENTITY performanceUI.invertFlameGraph             "Alderantzikatu sugar-diagrama">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Sugar-diagrama alderantzikatzean analizatutako dei-bideak marko berrienetatik zaharrenetara bistaratzen ditu.">
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+
+<!ENTITY performanceUI.showPlatformData             "Erakutsi Gecko plataformaren datuak">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Plataformaren datuak erakustearekin bat, Gecko plataformaren sinboloak gaituko dira JavaScript analizatzaileko txostenetan.">
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+
+<!ENTITY performanceUI.showJITOptimizations             "Erakutsi JIT optimizazioak">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Erakutsi JavaScript marko bakoitzean hartutako laginen JIT optimizazio-datuak.">
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+
+<!ENTITY performanceUI.flattenTreeRecursion             "Berdindu zuhaitzen errekurtsioa">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Berdindu errekurtsioa funtzioak ikuskatzean.">
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableMemory             "Grabatu memoria">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Grabatu memoriaren erabilpena analisia egiterakoan.">
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableAllocations             "Grabatu esleipenak">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Grabatu objektuen esleipenak analisia egitean.">
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+
+<!ENTITY performanceUI.enableFramerate             "Grabatu marko-abiadura">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Grabatu marko-abiadura analisia egiterakoan.">
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+
+<!ENTITY performanceUI.console.recordingNoticeStart "Une honetan">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+
+<!ENTITY performanceUI.console.stopCommandStart "Gelditu grabatzen kontsolan">
+<!ENTITY performanceUI.console.stopCommandEnd   "idatziz.">

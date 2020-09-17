@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Berri garrantzitsua">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "&brandShortName;(r)en instalazio honekin Firefoxen gorde duzun informazioa sinkronizatzeko, hasi saioa zure &syncBrand.fxAccount.label;(e)ra.">
+<!ENTITY continue-button "Jarraitu">
+
+<!ENTITY mainText "&brandShortName;(r)en instalazioak profil berria dauka. Ez du laster-marka, pasahitz eta erabiltzaile-hobespenik partekatzen ordenagailu honetako Firefoxen beste instalazioekin (Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition eta Firefox Nightly barne).">

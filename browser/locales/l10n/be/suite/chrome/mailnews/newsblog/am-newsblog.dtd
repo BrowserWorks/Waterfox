@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffStart.label "Правяраць, ці існуюць новыя артыкулы, кожныя">
+<!ENTITY biffStart.accesskey "я">
+<!ENTITY biffEnd.label "хвілінаў">
+<!ENTITY loginAtStartup.label "Правяраць, ці існуюць новыя артыкулы, падчас запуску">
+<!ENTITY loginAtStartup.accesskey "П">
+<!ENTITY useQuickMode.label "Змоўчна паказваць зводку артыкула, а не загружаць старонку сеціва">
+<!ENTITY useQuickMode.accesskey "з">
+<!ENTITY manageSubscriptions.label "Кіраваць падпіскамі…">
+<!ENTITY manageSubscriptions.accesskey "К">
+<!ENTITY feeds.accountName "Жывільнікі дзённікаў і навінаў">
+<!ENTITY feeds.wizardShortName "Жывільнікі">
+<!ENTITY feeds.wizardLongName "Жывільнікі дзённікаў і навінаў">
+<!ENTITY feeds.wizardLongName.accesskey "Ж">

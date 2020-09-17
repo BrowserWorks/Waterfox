@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(უსათაურო)">
+<!ENTITY  newTab.label           "ახალი ჩანართი">
+<!ENTITY  newTab.accesskey       "ა">
+<!ENTITY  closeTab.label         "ჩანართის დახურვა">
+<!ENTITY  closeTab.accesskey         "დ">
+<!ENTITY  closeOtherTabs.label   "სხვა ჩანართების დახურვა">
+<!ENTITY  closeOtherTabs.accesskey         "ვ">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "მარჯვენა ჩანართების დახურვა">
+<!ENTITY  closeTabsToTheEnd.accesskey "ჯ">
+<!ENTITY  reloadAllTabs.label    "ყველა ჩანართის განახლება">
+<!ENTITY  reloadAllTabs.accesskey         "ყ">
+<!ENTITY  reloadTab.label        "ჩანართის განახლება">
+<!ENTITY  reloadTab.accesskey         "გ">
+<!ENTITY  bookmarkGroup.label    "ამ ჩანართების ჯგუფის ჩანიშვნა">
+<!ENTITY  bookmarkGroup.accesskey  "B">
+<!ENTITY  closeTabButton.tooltip   "მიმდინარე ჩანართის დახურვა">
+<!ENTITY  newTabButton.tooltip   "ახალი ჩანართის გახსნა">
+<!ENTITY  listAllTabs.tooltip    "ყველა ჩანართის სია">
+<!ENTITY  undoCloseTab.label    "დახურული ჩანართის დაბრუნება">
+<!ENTITY  undoCloseTab.accesskey  "დ">

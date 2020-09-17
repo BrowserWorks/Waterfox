@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Kontakte Në Linjë">
+<!ENTITY offlineContactsHeader.label   "Kontakte Jo Në Linjë">
+<!ENTITY conversationsHeader.label     "Biseda">
+<!ENTITY searchResultConversation.label "Përfundime kërkimi">
+<!ENTITY chat.noConv.title             "Bisedat do të shfaqen këtu.">
+<!ENTITY chat.noConv.description       "Përdorni listën e kontakteve te kuadrati majtas që të nisni një bisedë.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName;-i hëpërhë nuk ka ndonjë bisedë të mëparshme të ruajtur për këtë kontakt.">
+<!ENTITY chat.noAccount.title             "Ende nuk keni të rregulluar ndonjë llogari fjalosjeje.">
+<!ENTITY chat.noAccount.description       "Lëreni &brandShortName;-in t&apos;ju udhëheqë nëpër procesin e rregullimit të llogarisë suaj të fjalosjes.">
+<!ENTITY chat.accountWizard.button       "Fillojani">
+<!ENTITY chat.noConnectedAccount.title             "Nuk është bërë lidhja për llogaritë tuaja të fjalosjes.">
+<!ENTITY chat.noConnectedAccount.description       "Lidhjen për to mund ta bëni nga dialogu 'Gjendje fjalosjesh':">
+<!ENTITY chat.showAccountManager.button       "Shfaq gjendje fjalosjeje">
+
+<!ENTITY chat.participants             "Pjesëmarrës:">
+<!ENTITY chat.previousConversations    "Biseda të Mëparshme:">
+<!ENTITY chat.ongoingConversation      "Biseda në zhvillim e sipër">
+
+<!ENTITY openConversationCmd.label     "Nisni një Bisedë">
+<!ENTITY openConversationCmd.accesskey "N">
+<!ENTITY closeConversationCmd.label    "Mbylle Bisedën">
+<!ENTITY closeConversationCmd.accesskey "M">
+<!ENTITY aliasCmd.label                "Riemërtojeni">
+<!ENTITY aliasCmd.accesskey            "R">
+<!ENTITY deleteCmd.label               "Hiqe Kontaktin">
+<!ENTITY deleteCmd.accesskey           "H">
+
+<!ENTITY openConversationButton.tooltip  "Nisni një bisedë">
+<!ENTITY closeConversationButton.tooltip "Mbylleni bisedën">
+
+<!ENTITY addBuddyButton.label          "Shtoni Një Kontakt">
+<!ENTITY joinChatButton.label          "Hyni Në Fjalosje">
+<!ENTITY chatAccountsButton.label      "Shfaq Llogaritë">
+
+<!ENTITY status.available          "I lirë">
+<!ENTITY status.unavailable        "Jo i lirë">
+<!ENTITY status.offline            "Jo në linjë">
+
+<!ENTITY openLinkCmd.label            "Hapni Lidhje…">
+<!ENTITY openLinkCmd.accesskey        "H">

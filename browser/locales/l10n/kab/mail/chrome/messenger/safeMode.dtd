@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "Askar aɣelsan n &brandShortName;">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; yettwaselkam akka tura deg uskar aɣelsan, d ayen ara yekksen s wudem askudan iɣewwaṛen udmawanen-inek, isental, akked isiɣzaf.">
+<!ENTITY safeModeDescription2.label       "Tzemreḍ ad terred kra n yesnifal-inek d imeɣlal">
+
+<!ENTITY disableAddons.label              "Kkes armad n izegrar-inek imeṛṛa">
+<!ENTITY disableAddons.accesskey          "m">
+
+<!ENTITY resetToolbars.label              "Wennez tikelt nniḍen ifegagen n ifecka d isenqden">
+<!ENTITY resetToolbars.accesskey          "W">
+
+<!ENTITY changeAndRestartButton.label     "Snifel sakin senker tikelt nniḍḍen">
+<!ENTITY changeAndRestartButton.accesskey "l">
+
+<!ENTITY continueButton.label             "Kemmel deg uskar war tuqqna">
+<!ENTITY continueButton.accesskey         "m">

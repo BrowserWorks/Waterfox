@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Пашыраныя наладжванні рахунку">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Дырэкторыя паслугача IMAP:">
+<!ENTITY serverDirectory.accesskey "Д">
+<!ENTITY usingSubscription.label "Паказваць толькі падпісаныя папкі">
+<!ENTITY usingSubscription.accesskey "ц">
+<!ENTITY dualUseFolders.label "Паслугач падтрымлівае папкі, якія змяшчаюць падпапкі і лісты">
+<!ENTITY dualUseFolders.accesskey "п">
+<!ENTITY maximumConnectionsNumber.label "Найбольшы лік злучэнняў паслугача з запаснікам">
+<!ENTITY maximumConnectionsNumber.accesskey "а">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Гэтыя перавагі вызначаюць назвапрасторы на вашым паслугачы IMAP">
+<!ENTITY personalNamespace.label "Асабістая назвапрастора:">
+<!ENTITY personalNamespace.accesskey "А">
+<!ENTITY publicNamespace.label "Публічныя (супольныя):">
+<!ENTITY publicNamespace.accesskey "у">
+<!ENTITY otherUsersNamespace.label "Іншыя карыстальнікі:">
+<!ENTITY otherUsersNamespace.accesskey "І">
+<!ENTITY overrideNamespaces.label "Дазволіць паслугачу адхіляць гэтыя назвапрасторы">
+<!ENTITY overrideNamespaces.accesskey "Д">
+<!ENTITY pop3DeferringDesc.label "Пры сцягванні пошты з гэтага сервера ўліковага запісу змяшчаць новыя паведамленні ў папку:" >
+<!ENTITY accountInbox.label '"Уваходныя" для гэтага ўліковага запісу'>
+<!ENTITY accountInbox.accesskey "а">
+<!ENTITY deferToServer.label "Папка Атрыманыя іншага рахунку">
+<!ENTITY deferToServer.accesskey "і">
+<!ENTITY deferGetNewMail.label "Уключаць гэты паслугач падчас атрымання новай пошты">
+<!ENTITY deferGetNewMail.accesskey "У">

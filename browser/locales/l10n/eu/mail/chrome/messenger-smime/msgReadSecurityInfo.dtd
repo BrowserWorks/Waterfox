@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "Mezuaren segurtasuna">
+<!ENTITY signatureCert.label "Ikusi sinaduraren ziurtagiria">
+<!ENTITY encryptionCert.label "Ikusi zifraketaren ziurtagiria">
+
+<!ENTITY signer.name "Nork sinatua:">
+<!ENTITY recipient.name "Norentzat zifratua:">
+<!ENTITY email.address "Helbide elektronikoa:">
+<!ENTITY issuer.name "Ziurtagiriaren jaulkitzailea:">
+
+<!-- LOCALIZATION NOTE(SMIME.label): This a name for a technical standard. You should not translate it, but if applicable, you may write it using localized characters. -->
+<!ENTITY SMIME.label "S/MIME">

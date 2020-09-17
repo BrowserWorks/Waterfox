@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Paràmetres del compte">
+<!ENTITY accountName.label "Nom del compte:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Identitat per defecte">
+<!ENTITY identityDesc.label "Cada compte pot tenir una identitat pròpia, que és la informació que els altres veuen quan llegeixen els vostres missatges.">
+<!ENTITY name.label "El vostre nom:">
+<!ENTITY name.accesskey "v">
+<!ENTITY email.label "Adreça electrònica:">
+<!ENTITY email.accesskey "e">
+<!ENTITY catchAll.label "Respon des d'aquesta identitat quan coincideixin les capçaleres de lliurament:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Adreça de resposta:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Els destinataris respondran a aquesta adreça electrònica">
+<!ENTITY organization.label "Organització:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Text de la signatura:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "Utilitza HTML (ex., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "H">
+<!ENTITY signatureFile.label "Adjunta la signatura des d'un fitxer (text, HTML o imatge):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Edita…">
+<!ENTITY choose.label "Trieu…">
+<!ENTITY choose.accesskey "T">
+<!ENTITY editVCard.label "Edita la targeta electrònica…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Adjunta la meva targeta electrònica als missatges (vCard)">
+<!ENTITY attachVCard.accesskey "m">
+
+<!ENTITY manageIdentities.label "Gestiona les identitats…">
+<!ENTITY manageIdentities.accesskey "G">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Servidor de sortida (SMTP):">
+<!ENTITY smtpName.accesskey "i">
+<!ENTITY smtpDefaultServer.label "Utilitza el servidor per defecte">
+
+<!ENTITY smtpServerEdit.label "Edita el servidor SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

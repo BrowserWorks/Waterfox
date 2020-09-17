@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Argivearopsjes">
+<!ENTITY archiveGranularityPrefix.label "By it argivearjen fan berjochten, pleats se yn:">
+<!ENTITY archiveFlat.label "Ien inkelde map">
+<!ENTITY archiveFlat.accesskey "I">
+<!ENTITY archiveYearly.label "Argyfmappen yn it jier">
+<!ENTITY archiveYearly.accesskey "j">
+<!ENTITY archiveMonthly.label "Argyfmappen yn 'e moanne">
+<!ENTITY archiveMonthly.accesskey "m">
+<!ENTITY keepFolderStructure.label "Bewarje de besteande mapstruktuer fan de argivearre berjochten">
+<!ENTITY keepFolderStructure.accesskey "b">
+<!ENTITY archiveExample.label "Foarbyld">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Argiven">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Postfek YN">

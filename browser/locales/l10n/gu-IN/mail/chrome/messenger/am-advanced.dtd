@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "આઉટગોઈંગ સર્વર (SMTP) સુયોજનો">
+
+<!ENTITY smtpListAdd.label  "એડ-ઓન...">
+<!ENTITY smtpListAdd.accesskey  "d">
+<!ENTITY smtpListEdit.label "ફેરફાર કરો...">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "દૂર કરો">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "મૂળભુત તરીકે સુયોજિત કરો">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDescription.label "વર્ણન: ">
+<!ENTITY serverName.label "સર્વર નામ: ">
+<!ENTITY serverPort.label "પોર્ટ: ">
+<!ENTITY userName.label   "વપરાશકર્તા નામ: ">

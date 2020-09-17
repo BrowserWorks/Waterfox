@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Opções de arquivo">
+<!ENTITY archiveGranularityPrefix.label "Ao arquivar mensagens, colocá-las em:">
+<!ENTITY archiveFlat.label "Uma única pasta">
+<!ENTITY archiveFlat.accesskey "s">
+<!ENTITY archiveYearly.label "Pastas arquivadas por ano">
+<!ENTITY archiveYearly.accesskey "n">
+<!ENTITY archiveMonthly.label "Pastas arquivadas por mês">
+<!ENTITY archiveMonthly.accesskey "m">
+<!ENTITY keepFolderStructure.label "Manter estrutura atual da pasta de mensagens arquivadas">
+<!ENTITY keepFolderStructure.accesskey "e">
+<!ENTITY archiveExample.label "Exemplo">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Arquivos">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Caixa de entrada">

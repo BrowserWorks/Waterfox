@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Speciális postafiók-beállítások">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP-kiszolgáló könyvtár:">
+<!ENTITY serverDirectory.accesskey "k">
+<!ENTITY usingSubscription.label "Csak a feliratkozott mappák megjelenítése">
+<!ENTITY usingSubscription.accesskey "f">
+<!ENTITY dualUseFolders.label "A kiszolgáló támogat olyan mappákat, amelyek további almappákat és leveleket tartalmaznak">
+<!ENTITY dualUseFolders.accesskey "t">
+<!ENTITY maximumConnectionsNumber.label "A gyorsítótárazandó kiszolgáló-kapcsolatok maximális száma">
+<!ENTITY maximumConnectionsNumber.accesskey "o">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Ezek a beállítások meghatározzák a névtartományokat az IMAP-kiszolgálón">
+<!ENTITY personalNamespace.label "Személyes névtartomány:">
+<!ENTITY personalNamespace.accesskey "S">
+<!ENTITY publicNamespace.label "Nyilvános (megosztott):">
+<!ENTITY publicNamespace.accesskey "N">
+<!ENTITY otherUsersNamespace.label "Más felhasználók:">
+<!ENTITY otherUsersNamespace.accesskey "M">
+<!ENTITY overrideNamespaces.label "A kiszolgáló felülírhatja ezeket a névtartományokat">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY pop3DeferringDesc.label "A fiók kiszolgálójáról való levélletöltéskor a következő mappa használata új levelek tárolására:">
+<!ENTITY accountInbox.label "Fiók beérkezett üzenetek mappája">
+<!ENTITY accountInbox.accesskey "F">
+<!ENTITY deferToServer.label "Másik postafiók Beérkezett üzenetek mappája">
+<!ENTITY deferToServer.accesskey "M">
+<!ENTITY deferGetNewMail.label "Kiszolgáló lekérdezése új levelek letöltésekor">
+<!ENTITY deferGetNewMail.accesskey "K">

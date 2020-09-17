@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Novo cartafol">
+<!ENTITY name.label                 "Nome:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Crear como subcartafol de:">
+<!ENTITY description.accesskey      "C">
+<!ENTITY folderRestriction1.label   "Este servidor restrinxe os cartafoles a dúas clases.">
+<!ENTITY folderRestriction2.label   "Permitir que o novo cartafol conteña:">
+<!ENTITY foldersOnly.label          "Só cartafoles">
+<!ENTITY messagesOnly.label         "Só mensaxes">
+<!ENTITY accept.label               "Crear cartafol">
+<!ENTITY accept.accesskey           "r">

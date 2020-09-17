@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Pildi omadused">
+
+<!ENTITY pixelsPopup.value "pikslit">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Pildi asukoht:">
+<!ENTITY locationEditField.accessKey "P">
+<!ENTITY locationEditField.tooltip "Sisesta pildi failinimi või aadress">
+<!ENTITY locationEditField.shortenedDataURI "Lühendatud andmete URI (kopeerimine asetab lõikepuhvrisse täieliku URI)">
+<!ENTITY title.label "Vihje:">
+<!ENTITY title.accessKey "V">
+<!ENTITY title.tooltip "HTML-i 'title' atribuut, mida näidatakse vihjena">
+<!ENTITY altText.label "Alternatiivtekst:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Sisesta tekst, mida näidatakse pildi puudumisel">
+<!ENTITY noAltText.label "Alternatiivteksti ei kasutata">
+<!ENTITY noAltText.accessKey "r">
+
+<!ENTITY previewBox.label "Pildi eelvaade">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Tegelik suurus:">
+<!ENTITY actualSizeRadio.label "Tegelik suurus">
+<!ENTITY actualSizeRadio.accessKey "T">
+<!ENTITY actualSizeRadio.tooltip "Taasta pildi algsuurus">
+<!ENTITY customSizeRadio.label "Kohandatud suurus">
+<!ENTITY customSizeRadio.accessKey "s">
+<!ENTITY customSizeRadio.tooltip "Määra pildi kuvamise suurus lehel.">
+<!ENTITY heightEditField.label "Kõrgus:">
+<!ENTITY heightEditField.accessKey "K">
+<!ENTITY widthEditField.label "Laius:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY constrainCheckbox.label "Proportsioonid säilitatakse">
+<!ENTITY constrainCheckbox.accessKey "P">
+<!ENTITY constrainCheckbox.tooltip "Säilitab pildi proportsioonid">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Hüperpilt">
+<!ENTITY removeImageMapButton.label "Eemalda">
+<!ENTITY removeImageMapButton.accessKey "E">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Teksti joondus pildi suhtes">
+<!ENTITY bottomPopup.value "Kohakuti alumise servaga">
+<!ENTITY topPopup.value "Kohakuti ülemise servaga">
+<!ENTITY centerPopup.value "Keskel">
+<!ENTITY wrapRightPopup.value "Mähitud paremalt">
+<!ENTITY wrapLeftPopup.value "Mähitud vasakult">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Vahed">
+<!ENTITY leftRightEditField.label "Vasakul ja paremal:">
+<!ENTITY leftRightEditField.accessKey "V">
+<!ENTITY topBottomEditField.label "Üleval ja all:">
+<!ENTITY topBottomEditField.accessKey "a">
+<!ENTITY borderEditField.label "Ühtlane piirjoon:">
+<!ENTITY borderEditField.accessKey "h">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Piirjoone näitamine lingitud pildi ümber">
+<!ENTITY showImageLinkBorder.accessKey "m">
+<!ENTITY LinkAdvancedEditButton.label "Lingi täpsem muutmine…">
+<!ENTITY LinkAdvancedEditButton.accessKey "L">
+<!ENTITY LinkAdvancedEditButton.tooltip "Lisa või muuda HTMLi atribuute, stiilide atribuute ja JavaScripti">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Vorm">
+<!ENTITY imageLocationTab.label "Asukoht">
+<!ENTITY imageDimensionsTab.label "Mõõtmed">
+<!ENTITY imageAppearanceTab.label "Välimus">
+<!ENTITY imageLinkTab.label "Link">

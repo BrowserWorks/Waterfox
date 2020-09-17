@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Postavke računa">
+<!ENTITY accountName.label "Naziv računa:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Glavni identitet">
+<!ENTITY identityDesc.label "Svaki račun ima svoj identitet, a to su informacije koje drugi ljudi vide kada čitaju vaše poruke.">
+<!ENTITY name.label "Vaše ime:">
+<!ENTITY name.accesskey "i">
+<!ENTITY email.label "Email adresa:">
+<!ENTITY email.accesskey "E">
+<!ENTITY replyTo.label "Adresa za odgovor:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Primaoci će odgovarati na ovu adresu">
+<!ENTITY organization.label "Organizacija:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Tekst potpisa:">
+<!ENTITY signatureText.accesskey "k">
+<!ENTITY signatureHtml.label "Koristi HTML (npr., &lt;b&gt;podebljano&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Priloži potpis iz fajla (tekst, HTML ili slika):">
+<!ENTITY signatureFile.accesskey "T">
+<!ENTITY edit.label "Uredi...">
+<!ENTITY choose.label "Izaberi...">
+<!ENTITY choose.accesskey "I">
+<!ENTITY editVCard.label "Uredi karticu…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Priloži moj vCard uz poruke">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Upravljanje identitetima…">
+<!ENTITY manageIdentities.accesskey "m">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Odlazni server (SMTP):">
+<!ENTITY smtpName.accesskey "d">
+<!ENTITY smtpDefaultServer.label "Koristi glavni server">
+
+<!ENTITY smtpServerEdit.label "Uredi SMTP server…">
+<!ENTITY smtpServerEdit.accesskey "P">

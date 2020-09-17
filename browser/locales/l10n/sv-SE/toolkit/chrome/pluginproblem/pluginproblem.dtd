@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tapToPlayPlugin                                     "Tryck här för att aktivera insticksmodulen.">
+<!ENTITY clickToActivatePlugin                               "Aktivera insticksmodulen.">
+<!ENTITY checkForUpdates                                     "Sök efter uppdateringar…">
+<!ENTITY blockedPlugin.label                                 "Den här insticksmodulen är blockerad av säkerhetsskäl.">
+<!ENTITY hidePluginBtn.label                                 "Dölj insticksmodul">
+<!ENTITY managePlugins                                       "Hantera insticksmoduler…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Ladda om sidan">
+<!ENTITY reloadPlugin.post                                   " för att försöka igen.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Skicka kraschrapport">
+<!ENTITY report.submitting                                   "Skickar rapporten…">
+<!ENTITY report.submitted                                    "Kraschrapport skickad.">
+<!ENTITY report.disabled                                     "Kraschrapportering är inaktiverad.">
+<!ENTITY report.failed                                       "Inskickningen misslyckades.">
+<!ENTITY report.unavailable                                  "Ingen rapport är tillgänglig.">
+<!ENTITY report.comment                                      "Lägg till en kommentar (kommentarer visas offentligt)">
+<!ENTITY report.pageURL                                      "Inkludera sidans URL">
+
+<!ENTITY plugin.file                                         "Fil">
+<!ENTITY plugin.mimeTypes                                    "MIME-typer">
+<!ENTITY plugin.flashProtectedMode.label                     "Aktivera Adobe Flash skyddat läge">
+<!ENTITY plugin.enableBlocklists.label                       "Blockera farligt och inkräktande Flash-innehåll">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Convertitor del typo de archivo messages">
+<!ENTITY converterDialog.continueButton "Continuar">
+<!ENTITY converterDialog.cancelButton "Cancellar">
+<!ENTITY converterDialog.finishButton "Finir">
+<!ENTITY converterDialog.complete "Le conversion es complete. &brandShortName; ora reinitiara.">
+<!ENTITY converterDialog.error "Conversion fallite.">
+

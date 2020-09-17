@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Thư mục Mới">
+<!ENTITY name.label                 "Tên:">
+<!ENTITY name.accesskey             "T">
+<!ENTITY description.label          "Tạo thành thư mục con cho:">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "Máy chủ này giới hạn thư mục trong hai dạng đặc biệt.">
+<!ENTITY folderRestriction2.label   "Cho phép thư mục mới của bạn chứa:">
+<!ENTITY foldersOnly.label          "Chỉ Thư Mục">
+<!ENTITY messagesOnly.label         "Chỉ Thư">
+<!ENTITY accept.label               "Tạo Thư Mục">
+<!ENTITY accept.accesskey           "o">
+

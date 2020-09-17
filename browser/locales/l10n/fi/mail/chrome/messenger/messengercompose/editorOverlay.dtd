@@ -1,0 +1,303 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Liitä ilman muotoilua">
+<!ENTITY pasteNoFormatting.accesskey "m">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Liitä lainauksena">
+<!ENTITY pasteAsQuotationCmd.accesskey "n">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Lisää">
+<!ENTITY insertMenu.accesskey "L">
+<!ENTITY insertLinkCmd2.label "Lähetä linkki…">
+<!ENTITY insertLinkCmd2.accesskey "L">
+<!ENTITY insertLinkCmd2.key "k">
+<!ENTITY insertAnchorCmd.label "Nimetty ankkuri…">
+<!ENTITY insertAnchorCmd.accesskey "N">
+<!ENTITY insertImageCmd.label "Kuva…">
+<!ENTITY insertImageCmd.accesskey "K">
+<!ENTITY insertHLineCmd.label "Vaakaviiva">
+<!ENTITY insertHLineCmd.accesskey "V">
+<!ENTITY insertTableCmd.label "Taulukko…">
+<!ENTITY insertTableCmd.accesskey "T">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Matematiikkaa…">
+<!ENTITY insertMathCmd.accesskey "a">
+<!ENTITY insertCharsCmd.label "Merkit ja symbolit…">
+<!ENTITY insertCharsCmd.accesskey "M">
+<!ENTITY insertBreakAllCmd.label "Rivinvaihto kuvien jälkeen">
+<!ENTITY insertBreakAllCmd.accesskey "R">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Luo linkki…">
+<!ENTITY createLinkCmd.accesskey "n">
+<!ENTITY editLinkCmd.label "Muokkaa linkkiä uudessa Composer-ikkunassa">
+<!ENTITY editLinkCmd.accesskey "u">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "Valitse kirjasinlaji">
+<!ENTITY fontfaceMenu.label "Kirjasinlaji">
+<!ENTITY fontfaceMenu.accesskey "K">
+<!ENTITY fontVarWidth.label "Suhteellinen">
+<!ENTITY fontVarWidth.accesskey "S">
+<!ENTITY fontFixedWidth.label "Tasavälinen">
+<!ENTITY fontFixedWidth.accesskey "T">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "H">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "Valitse kirjasinten koko">
+<!ENTITY decreaseFontSize.label "Pienempi">
+<!ENTITY decreaseFontSize.accesskey "P">
+<!ENTITY decrementFontSize.key "-">
+<!ENTITY decrementFontSize.key2 "_"> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Suurempi">
+<!ENTITY increaseFontSize.accesskey "S">
+<!ENTITY incrementFontSize.key "+">
+<!ENTITY incrementFontSize.key2 "?"> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Koko">
+<!ENTITY fontSizeMenu.accesskey "o">
+<!ENTITY size-tinyCmd.label "Pienin">
+<!ENTITY size-tinyCmd.accesskey "P">
+<!ENTITY size-smallCmd.label "Pieni">
+<!ENTITY size-smallCmd.accesskey "n">
+<!ENTITY size-mediumCmd.label "Keskikokoinen">
+<!ENTITY size-mediumCmd.accesskey "K">
+<!ENTITY size-largeCmd.label "Suuri">
+<!ENTITY size-largeCmd.accesskey "u">
+<!ENTITY size-extraLargeCmd.label "Suurempi">
+<!ENTITY size-extraLargeCmd.accesskey "u">
+<!ENTITY size-hugeCmd.label "Suurin">
+<!ENTITY size-hugeCmd.accesskey "r">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Tekstin tyyli">
+<!ENTITY fontStyleMenu.accesskey "T">
+<!ENTITY styleBoldCmd.label "Lihavoitu">
+<!ENTITY styleBoldCmd.accesskey "L">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Kursivoitu">
+<!ENTITY styleItalicCmd.accesskey "K">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Alleviivattu">
+<!ENTITY styleUnderlineCmd.accesskey "A">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Yliviivattu">
+<!ENTITY styleStrikeThruCmd.accesskey "Y">
+<!ENTITY styleSuperscriptCmd.label "Yläindeksi">
+<!ENTITY styleSuperscriptCmd.accesskey "ä">
+<!ENTITY styleSubscriptCmd.label "Alaindeksi">
+<!ENTITY styleSubscriptCmd.accesskey "a">
+<!ENTITY styleNonbreakingCmd.label "Katkeamaton">
+<!ENTITY styleNonbreakingCmd.accesskey "t">
+<!ENTITY styleEm.label "Korostus">
+<!ENTITY styleEm.accesskey "r">
+<!ENTITY styleStrong.label "Vahvempi korostus">
+<!ENTITY styleStrong.accesskey "V">
+<!ENTITY styleCite.label "Sitaatti">
+<!ENTITY styleCite.accesskey "S">
+<!ENTITY styleAbbr.label "Lyhenne">
+<!ENTITY styleAbbr.accesskey "h">
+<!ENTITY styleAcronym.label "Lyhennesana">
+<!ENTITY styleAcronym.accesskey "y">
+<!ENTITY styleCode.label "Koodi">
+<!ENTITY styleCode.accesskey "d">
+<!ENTITY styleSamp.label "Esimerkkiteksti">
+<!ENTITY styleSamp.accesskey "E">
+<!ENTITY styleVar.label "Muuttuja">
+<!ENTITY styleVar.accesskey "M">
+
+<!ENTITY formatFontColor.label "Tekstin väri…">
+<!ENTITY formatFontColor.accesskey "e">
+<!ENTITY tableOrCellColor.label "Taulukon tai solun taustaväri…">
+<!ENTITY tableOrCellColor.accesskey "T">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Poista nimetyt ankkurit">
+<!ENTITY formatRemoveNamedAnchors.accesskey "P">
+<!ENTITY formatRemoveNamedAnchors2.key "A">
+
+<!ENTITY paragraphMenu.label "Kappale">
+<!ENTITY paragraphMenu.accesskey "a">
+<!ENTITY paragraphParagraphCmd.label "Kappale">
+<!ENTITY paragraphParagraphCmd.accesskey "K">
+<!ENTITY heading1Cmd.label "Otsikko 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Otsikko 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Otsikko 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Otsikko 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Otsikko 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Otsikko 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Osoite">
+<!ENTITY paragraphAddressCmd.accesskey "O">
+<!ENTITY paragraphPreformatCmd.label "Esimuotoiltu">
+<!ENTITY paragraphPreformatCmd.accesskey "E">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Luettelo">
+<!ENTITY formatlistMenu.accesskey "L">
+<!ENTITY noneCmd.label "Ei mitään">
+<!ENTITY noneCmd.accesskey "E">
+<!ENTITY listBulletCmd.label "Numeroimaton">
+<!ENTITY listBulletCmd.accesskey "N">
+<!ENTITY listNumberedCmd.label "Numeroitu">
+<!ENTITY listNumberedCmd.accesskey "u">
+<!ENTITY listTermCmd.label "Termi">
+<!ENTITY listTermCmd.accesskey "T">
+<!ENTITY listDefinitionCmd.label "Määritelmä">
+<!ENTITY listDefinitionCmd.accesskey "M">
+<!ENTITY listPropsCmd.label "Luettelon ominaisuudet…">
+<!ENTITY listPropsCmd.accesskey "L">
+
+<!ENTITY ParagraphSelect.tooltip "Valitse kappaleen muotoilu">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Leipäteksti">
+<!ENTITY bodyTextCmd.accesskey "L">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Tasaus">
+<!ENTITY alignMenu.accesskey "u">
+<!ENTITY alignLeft.label "Vasen">
+<!ENTITY alignLeft.accesskey "V">
+<!ENTITY alignLeft.tooltip "Tasaa vasemmalle">
+<!ENTITY alignCenter.label "Keskitetty">
+<!ENTITY alignCenter.accesskey "K">
+<!ENTITY alignCenter.tooltip "Tasaa keskelle">
+<!ENTITY alignRight.label "Oikea">
+<!ENTITY alignRight.accesskey "O">
+<!ENTITY alignRight.tooltip "Tasaa oikealle">
+<!ENTITY alignJustify.label "Tasaleveys">
+<!ENTITY alignJustify.accesskey "T">
+<!ENTITY alignJustify.tooltip "Tasaa vakioleveyteen">
+
+<!ENTITY increaseIndent.label "Lisää sisennystä">
+<!ENTITY increaseIndent.accesskey "e">
+<!ENTITY increaseIndent.key "=">
+<!ENTITY decreaseIndent.label "Vähennä sisennystä">
+<!ENTITY decreaseIndent.accesskey "h">
+<!ENTITY decreaseIndent.key "-">
+
+<!ENTITY colorsAndBackground.label "Sivun värit ja tausta…">
+<!ENTITY colorsAndBackground.accesskey "S">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Taulukko">
+<!ENTITY tableMenu.accesskey "k">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Valitse">
+<!ENTITY tableSelectMenu.accesskey "V">
+
+<!ENTITY tableSelectMenu2.label "Valitse taulukko">
+<!ENTITY tableSelectMenu2.accesskey "V">
+<!ENTITY tableInsertMenu2.label "Lisää taulukko">
+<!ENTITY tableInsertMenu2.accesskey "L">
+<!ENTITY tableDeleteMenu2.label "Poista taulukko">
+<!ENTITY tableDeleteMenu2.accesskey "P">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Lisää">
+<!ENTITY tableInsertMenu.accesskey "L">
+<!ENTITY tableTable.label "Taulukko">
+<!ENTITY tableTable.accesskey "T">
+<!ENTITY tableRow.label "Rivi">
+<!ENTITY tableRows.label "Rivejä">
+<!ENTITY tableRow.accesskey "R">
+<!ENTITY tableRowAbove.label "Rivi yläpuolelle">
+<!ENTITY tableRowAbove.accesskey "R">
+<!ENTITY tableRowBelow.label "Rivi alapuolelle">
+<!ENTITY tableRowBelow.accesskey "v">
+<!ENTITY tableColumn.label "Sarake">
+<!ENTITY tableColumns.label "Sarakkeita">
+<!ENTITY tableColumn.accesskey "S">
+<!ENTITY tableColumnBefore.label "Sarake ennen">
+<!ENTITY tableColumnBefore.accesskey "S">
+<!ENTITY tableColumnAfter.label "Sarake jälkeen">
+<!ENTITY tableColumnAfter.accesskey "a">
+<!ENTITY tableCell.label "Solu">
+<!ENTITY tableCells.label "Soluja">
+<!ENTITY tableCell.accesskey "o">
+<!ENTITY tableCellContents.label "Solun sisältö">
+<!ENTITY tableCellContents.accesskey "n">
+<!ENTITY tableAllCells.label "Kaikki solut">
+<!ENTITY tableAllCells.accesskey "K">
+<!ENTITY tableCellBefore.label "Solu ennen">
+<!ENTITY tableCellBefore.accesskey "S">
+<!ENTITY tableCellAfter.label "Solu jälkeen">
+<!ENTITY tableCellAfter.accesskey "u">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Poista">
+<!ENTITY tableDeleteMenu.accesskey "o">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "t">
+<!ENTITY tableJoinCells.accesskey "t">
+<!ENTITY tableSplitCell.label "Jaa solu">
+<!ENTITY tableSplitCell.accesskey "J">
+<!ENTITY convertToTable.label "Luo taulukko valinnasta">
+<!ENTITY convertToTable.accesskey "u">
+<!ENTITY tableProperties.label "Taulukon ominaisuudet…">
+<!ENTITY tableProperties.accesskey "T">
+
+<!ENTITY imageToolbarCmd.label "Kuva">
+<!ENTITY imageToolbarCmd.tooltip "Lisää uusi kuva tai muokkaa valitun kuvan ominaisuuksia">
+<!ENTITY hruleToolbarCmd.label "Vaakaviiva">
+<!ENTITY hruleToolbarCmd.tooltip "Lisää vaakaviiva tai muokkaa valitun viivan ominaisuuksia">
+<!ENTITY tableToolbarCmd.label "Taulukko">
+<!ENTITY tableToolbarCmd.tooltip "Lisää uusi taulukko tai muokkaa valitun taulukon ominaisuuksia">
+<!ENTITY linkToolbarCmd.label "Linkki">
+<!ENTITY linkToolbarCmd.tooltip "Lisää uusi linkki tai muokkaa valitun linkin ominaisuuksia">
+<!ENTITY anchorToolbarCmd.label "Ankkuri">
+<!ENTITY anchorToolbarCmd.tooltip "Lisää uusi ankkuri tai muokkaa valitun ankkurin ominaisuuksia">
+<!ENTITY TextColorButton.tooltip "Valitse tekstin väri">
+<!ENTITY BackgroundColorButton.tooltip "Valitse taustaväri">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Muuta kirjasinkokoa">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Pienempi kirjasinkoko">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Suurempi kirjasinkoko">
+<!ENTITY boldToolbarCmd.tooltip "Lihavoi">
+<!ENTITY italicToolbarCmd.tooltip "Kursivoi">
+<!ENTITY underlineToolbarCmd.tooltip "Alleviivaa">
+<!ENTITY bulletListToolbarCmd.tooltip "Lisää tai poista numeroimaton lista">
+<!ENTITY numberListToolbarCmd.tooltip "Lisää tai poista numeroitu lista">
+<!ENTITY outdentToolbarCmd.tooltip "Vähennä sisennystä (siirrä vasemmalle)">
+<!ENTITY indentToolbarCmd.tooltip "Lisää sisennystä (siirrä oikealle)">
+<!ENTITY AlignPopupButton.tooltip "Valitse tekstin tasaus">
+<!ENTITY InsertPopupButton.tooltip "Lisää linkki, ankkuri, kuva, vaakaviiva tai taulukko">
+<!ENTITY alignLeftButton.tooltip "Tasaa teksti vasemman marginaalin mukaan">
+<!ENTITY alignCenterButton.tooltip "Tasaa teksti keskelle">
+<!ENTITY alignRightButton.tooltip "Tasaa teksti oikean marginaalin mukaan">
+<!ENTITY alignJustifyButton.tooltip "Tasaa teksti vasemman ja oikean marginaalin mukaan">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Lisää">
+<!ENTITY insertTOC.accesskey      "L">
+<!ENTITY updateTOC.label          "Päivitä">
+<!ENTITY updateTOC.accesskey      "ä">
+<!ENTITY removeTOC.label          "Poista">
+<!ENTITY removeTOC.accesskey      "o">
+<!ENTITY tocMenu.label            "Sisällysluettelo…">
+<!ENTITY tocMenu.accesskey        "S">

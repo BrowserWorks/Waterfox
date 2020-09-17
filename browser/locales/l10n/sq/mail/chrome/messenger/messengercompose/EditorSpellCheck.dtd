@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Kontroll Drejtshkrimi">
+
+<!ENTITY misspelledWord.label "Fjalë e keqshkruajtur:">
+<!ENTITY wordEditField.label "Zëvendësoje me:">
+<!ENTITY wordEditField.accessKey "e">
+<!ENTITY checkwordButton.label "Kontrollo Fjalët">
+<!ENTITY checkwordButton.accessKey "K">
+<!ENTITY suggestions.label "Sugjerime:">
+<!ENTITY suggestions.accessKey "i">
+<!ENTITY ignoreButton.label "Shpërfille">
+<!ENTITY ignoreButton.accessKey "S">
+<!ENTITY ignoreAllButton.label "Shpërfilli të Tëra">
+<!ENTITY ignoreAllButton.accessKey "T">
+<!ENTITY replaceButton.label "Zëvendësoje">
+<!ENTITY replaceButton.accessKey "Z">
+<!ENTITY replaceAllButton.label "Zëvendësoji të Tëra">
+<!ENTITY replaceAllButton.accessKey "v">
+<!ENTITY stopButton.label "Ndale">
+<!ENTITY stopButton.accessKey "N">
+<!ENTITY userDictionary.label "Fjalor Vetjak:">
+<!ENTITY moreDictionaries.label "Shkarkoni Më Tepër">
+<!ENTITY addToUserDictionaryButton.label "Shtoje Fjalën">
+<!ENTITY addToUserDictionaryButton.accessKey "F">
+<!ENTITY editUserDictionaryButton.label "Përpunoni…">
+<!ENTITY editUserDictionaryButton.accessKey "P">
+<!ENTITY recheckButton2.label "Rikontrollo Tekstin">
+<!ENTITY recheckButton2.accessKey "R">
+<!ENTITY closeButton.label "Mbylleni">
+<!ENTITY closeButton.accessKey "M">
+<!ENTITY sendButton.label "Dërgoje">
+<!ENTITY sendButton.accessKey "D">
+<!ENTITY languagePopup.label "Gjuhë:">
+<!ENTITY languagePopup.accessKey "G">

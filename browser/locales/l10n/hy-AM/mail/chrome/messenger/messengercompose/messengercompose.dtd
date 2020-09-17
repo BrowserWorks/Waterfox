@@ -1,0 +1,345 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Նոր նամակ. (անվերնագիր)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Ֆայլ">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY newMenu.label "Նոր">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "Նամակ">
+<!ENTITY newMessage.key "Ն">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "M">
+<!ENTITY newContact.label "Հասցեագրքի Կոնտակտ...">
+<!ENTITY newContact.accesskey "Կ">
+<!ENTITY attachMenu.label "Կցել">
+<!ENTITY attachMenu.accesskey "լ">
+<!ENTITY attachFileCmd.label "Ֆայլեր...">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Ֆայլի հղումը">
+<!ENTITY attachCloudCmd.accesskey "Ֆ">
+<!ENTITY attachPageCmd.label "Վեբ էջ...">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Անձնական քարտ (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY remindLater.label "Հիշեցնել ավելի ուշ">
+<!ENTITY remindLater.accesskey "ո">
+<!ENTITY closeCmd.label "Փակել">
+<!ENTITY closeCmd.key "Փ">
+<!ENTITY closeCmd.accesskey "C">
+<!ENTITY saveCmd.label "Պահպանել">
+<!ENTITY saveCmd.key "Պ">
+<!ENTITY saveCmd.accesskey "Պ">
+<!ENTITY saveAsCmd.label "Պահպանել Որպես">
+<!ENTITY saveAsCmd.accesskey "Ո">
+<!ENTITY saveAsFileCmd.label "Ֆայլ...">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Սևագիր">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "Նմուշ">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY sendNowCmd.label "Ուղարկել">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "Հետո ուղարկել">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "L">
+<!ENTITY printSetupCmd.label "Էջի կարգավորումներ…">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printPreviewCmd.label "Տպելու նախադիտում">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Տպել…">
+<!ENTITY printCmd.key "Տ">
+<!ENTITY printCmd.accesskey "P">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Խմբագրել">
+<!ENTITY editMenu.accesskey "E">
+<!ENTITY undoCmd.label "Հետարկել">
+<!ENTITY undoCmd.key "Հ">
+<!ENTITY undoCmd.accesskey "Հ">
+<!ENTITY redoCmd.label "Կրկնել">
+<!ENTITY redoCmd.key "Ա">
+<!ENTITY redoCmd.accesskey "R">
+<!ENTITY cutCmd.key "Կ">
+<!ENTITY copyCmd.key "Պ">
+<!ENTITY pasteCmd.key "Տ">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "ղ">
+<!ENTITY deleteCmd.label "Ջնջել">
+<!ENTITY deleteCmd.accesskey "D">
+<!ENTITY editRewrapCmd.label "Տողադարձ">
+<!ENTITY editRewrapCmd.key "Վ">
+<!ENTITY renameAttachmentCmd.label "Վերանվանել կցորդը...">
+<!ENTITY renameAttachmentCmd.accesskey "ե">
+<!ENTITY reorderAttachmentsCmd.label "Վերադասավորել կցորդները…">
+<!ENTITY reorderAttachmentsCmd.accesskey "s">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Կցորդի փեղկ">
+<!ENTITY toggleAttachmentPaneCmd.accesskey "m">
+<!ENTITY selectAllCmd.accesskey "A">
+<!ENTITY findBarCmd.label "Գտնել...">
+<!ENTITY findBarCmd.accesskey "Գ">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Գտնել և ՓոFխարինել...">
+<!ENTITY findReplaceCmd.accesskey "l">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Կրկին գտնել">
+<!ENTITY findAgainCmd.accesskey "ր">
+<!ENTITY findAgainCmd.key "Կ">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Գտնել Նախորդը">
+<!ENTITY findPrevCmd.accesskey "ո">
+<!ENTITY findPrevCmd.key "Փ">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Վերադասավորել կցորդները">
+<!ENTITY moveAttachmentTopPanelBtn.label "Տեղափոխել վեր">
+<!ENTITY moveAttachmentUpPanelBtn.label "Վեր">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Տեղափոխել միասին">
+<!ENTITY moveAttachmentDownPanelBtn.label "Վար">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Տեղափոխել ներքև">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Տեսակավորել՝ A - Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Տեսակավորել՝ Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Տեսակավորել ընտրությունը. A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Տեսակավորել ընտրությունը. Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Տեսք">
+<!ENTITY viewMenu.accesskey "Տ">
+<!ENTITY viewToolbarsMenuNew.label "Գործիքագոտիներ">
+<!ENTITY viewToolbarsMenuNew.accesskey "Գ">
+<!ENTITY menubarCmd.label "Ցանկագոտի">
+<!ENTITY menubarCmd.accesskey "Ց">
+<!ENTITY showCompositionToolbarCmd.label "Ստեղծագործության գործիքաշերտը">
+<!ENTITY showCompositionToolbarCmd.accesskey "o">
+<!ENTITY showFormattingBarCmd.label "Ձևաչափման վահանակ">
+<!ENTITY showFormattingBarCmd.accesskey "Ձ">
+<!ENTITY showTaskbarCmd.label "Վիճակի տողը">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "Կարգավորել…">
+<!ENTITY customizeToolbar.accesskey "C">
+
+<!ENTITY addressSidebar.label "Կոնտակտների կողագոտի">
+<!ENTITY addressSidebar.accesskey "ո">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Ձևափաչում">
+<!ENTITY formatMenu.accesskey "և">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Ընտրանքներ">
+<!ENTITY optionsMenu.accesskey "ր">
+<!ENTITY checkSpellingCmd2.label "Ստուգել ուղղագրությունը...">
+<!ENTITY checkSpellingCmd2.key "Ս">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "h">
+<!ENTITY enableInlineSpellChecker.label "Ստուգել ուղղագրությունը, ինչպես նշված է">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY quoteCmd.label "Մեջբերել նամակը">
+<!ENTITY quoteCmd.accesskey "Q">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Կցել Անձնական քարտ (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Պահանջել ստացական">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Հասցնելու վիճակի տեղեկությունը">
+<!ENTITY dsnMenu.accesskey "N">
+<!ENTITY deliveryFormatMenu.label "Delivery Format">
+<!ENTITY deliveryFormatMenu.accesskey "F">
+<!ENTITY autoFormatCmd.label "Ինքնաբացահայտում">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Միայն Սովորական տեքստ">
+<!ENTITY plainTextFormatCmd.accesskey "P">
+<!ENTITY htmlFormatCmd.label "Միայն հարուստ (HTML) տեքստ">
+<!ENTITY htmlFormatCmd.accesskey "R">
+<!ENTITY bothFormatCmd.label "Հասարակ կամ Հարստագիր (HTML) տեքստ">
+<!ENTITY bothFormatCmd.accesskey "ա">
+<!ENTITY priorityMenu.label "Առաջնահերթ-ը">
+<!ENTITY priorityMenu.accesskey "Ա">
+<!ENTITY priorityButton.title "Առաջնահերթություն">
+<!ENTITY priorityButton.tooltiptext "Փոխել հաղորդագրության առաջնահերությունը">
+<!ENTITY priorityButton.label "Առաջն-ը.">
+<!ENTITY lowestPriorityCmd.label "Ամենացածր">
+<!ENTITY lowestPriorityCmd.accesskey "L">
+<!ENTITY lowPriorityCmd.label "Ցածր">
+<!ENTITY lowPriorityCmd.accesskey "o">
+<!ENTITY normalPriorityCmd.label "Նորմալ">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Բարձր">
+<!ENTITY highPriorityCmd.accesskey "i">
+<!ENTITY highestPriorityCmd.label "Ամենաբարձր">
+<!ENTITY highestPriorityCmd.accesskey "H">
+<!ENTITY fileCarbonCopyCmd.label "Ուղարկել պատճեն՝">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "Ֆայլը այստեղ">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Գործիքներ">
+<!ENTITY tasksMenu.accesskey "T">
+<!ENTITY messengerCmd.label "Փոստ և Լուրախմբեր">
+<!ENTITY messengerCmd.accesskey "Փ">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Հասցեագիրք">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "Հ">
+<!ENTITY accountManagerCmd2.label "Փոստարկղի կարգավորումներ">
+<!ENTITY accountManagerCmd2.accesskey "կ">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label "Ընտրանքներ">
+<!ENTITY preferencesCmd2.accesskey "Կ">
+<!ENTITY preferencesCmdUnix.label "Նախապատվություններ">
+<!ENTITY preferencesCmdUnix.accesskey "n">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "Թ">
+<!ENTITY minimizeWindow.label "Թաքցնել">
+<!ENTITY bringAllToFront.label "Բոլորից առջև">
+<!ENTITY zoomWindow.label "Չափը">
+<!ENTITY windowMenu.label "Պատուհան">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Ուղարկել">
+<!ENTITY quoteButton.label "Մեջբերում">
+<!ENTITY addressButton.label "Կոնտակտներ">
+<!ENTITY attachButton.label "Կցել">
+<!ENTITY spellingButton.label "Ուղղագրությունը">
+<!ENTITY saveButton.label "Պահպանել">
+<!ENTITY printButton.label "Տպել">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Ուղարկել հիմա">
+<!ENTITY sendlaterButton.tooltip "Նամակը հետո ուղարկել">
+<!ENTITY quoteButton.tooltip "Մեջբերել նախորդ նամակը">
+<!ENTITY addressButton.tooltip "Հասցեատերին ընտրել Հասցեագրքից">
+<!ENTITY attachButton.tooltip2 "Ավելացնել կցորդ">
+<!ENTITY spellingButton.tooltip "Ստուգել ընտրվածի ուղղագրությունը">
+<!ENTITY saveButton.tooltip "Պահպանել նամակը">
+<!ENTITY cutButton.tooltip              "Կտրել">
+<!ENTITY copyButton.tooltip             "Պատճենել">
+<!ENTITY pasteButton.tooltip            "Տեղադրել">
+<!ENTITY printButton.tooltip "Տպել այս նամակը">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style "width: 8em;">
+<!ENTITY extraRecipients.tooltip "Հասցեագրման դաշտերի այլ տեսակներ">
+<!ENTITY fromAddr2.label "Ումից">
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY toAddr2.label "Ում">
+<!ENTITY ccAddr2.label "Պճ">
+<!ENTITY bccAddr2.label "Ծպճ">
+<!ENTITY replyAddr2.label "Պատասխանել՝">
+<!ENTITY newsgroupsAddr2.label "Լուրախումբ">
+<!ENTITY followupAddr2.label "Հետևել՝">
+<!ENTITY subject2.label "Վերնագիր">
+<!ENTITY subject.accesskey "Վ">
+<!ENTITY attachmentBucketCloseButton.tooltip "Թաքցնել կցորդի փեղկը">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "Ներմուծել ժպտացող դեմք">
+<!ENTITY smiley1Cmd.label "Ժպիտ">
+<!ENTITY smiley2Cmd.label "Մռայլ">
+<!ENTITY smiley3Cmd.label "Աչքով տալ">
+<!ENTITY smiley4Cmd.label "Լեզվանի">
+<!ENTITY smiley5Cmd.label "Ծիծաղող">
+<!ENTITY smiley6Cmd.label "Շփոթված">
+<!ENTITY smiley7Cmd.label "Անորոշ">
+<!ENTITY smiley8Cmd.label "Զարմանք">
+<!ENTITY smiley9Cmd.label "Համբույր">
+<!ENTITY smiley10Cmd.label "Գոռալ">
+<!ENTITY smiley11Cmd.label "Գժոտ">
+<!ENTITY smiley12Cmd.label "Փողոտ ">
+<!ENTITY smiley13Cmd.label "Գլխիվայր ">
+<!ENTITY smiley14Cmd.label "Անմեղ">
+<!ENTITY smiley15Cmd.label "Լաց">
+<!ENTITY smiley16Cmd.label "Բերանփակ">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Առաջարկություններ չկան">
+<!ENTITY spellCheckIgnoreWord.label "Անտեսել բառը">
+<!ENTITY spellCheckIgnoreWord.accesskey "Ա">
+<!ENTITY spellCheckAddToDictionary.label "Ավելացնել բառարանում">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "Հետարկել">
+<!ENTITY undo.accesskey "Հ">
+<!ENTITY cut.label "Կտրել">
+<!ENTITY cut.accesskey "t">
+<!ENTITY copy.label "Պատճենել">
+<!ENTITY copy.accesskey "Պ">
+<!ENTITY paste.label "Տեղադրել">
+<!ENTITY paste.accesskey "P">
+<!ENTITY pasteQuote.label "Տեղադրել որպես մեջբերում">
+<!ENTITY pasteQuote.accesskey "Q">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Բացել">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "Ջնջել">
+<!ENTITY delete.accesskey "D">
+<!ENTITY removeAttachment.label "Ջնջել կցորդը">
+<!ENTITY removeAttachment.accesskey "m">
+<!ENTITY renameAttachment.label "Վերանվանել...">
+<!ENTITY renameAttachment.accesskey "Վ">
+<!ENTITY reorderAttachments.label "Վերադասավորել կցորդները…">
+<!ENTITY reorderAttachments.accesskey "s">
+<!ENTITY removeAllAttachments.label "Հեռացնել բոլոր կցորդները">
+<!ENTITY removeAllAttachments.accesskey "v">
+<!ENTITY selectAll.label "Ընտրել բոլորը">
+<!ENTITY selectAll.accesskey "A">
+<!ENTITY attachFile.label "Կցել ֆայլեր...">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachCloud.label "Ֆայլի հղումը...">
+<!ENTITY attachCloud.accesskey "Ֆ">
+<!ENTITY convertCloud.label "Փոխարկել՝">
+<!ENTITY convertCloud.accesskey "Փ">
+<!ENTITY cancelUpload.label "Չեղարկել վերբեռնումը">
+<!ENTITY cancelUpload.accesskey "Չ">
+<!ENTITY convertRegularAttachment.label "Կանոնավոր կցորդ">
+<!ENTITY convertRegularAttachment.accesskey "Կ">
+<!ENTITY attachPage.label "Կցել վեբ էջ...">
+<!ENTITY attachPage.accesskey "W">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Սկզբում ցուցադրեք հավելվածի փեղկը">
+<!ENTITY initiallyShowAttachmentPane.accesskey "S">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Ավելացնել Բառարաններ...">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Կոնտակտներ">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Հարմարեցնել հասցեից...">
+<!ENTITY customizeFromAddress.accesskey "հ">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Հաղորդագրության մարմին">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Ուղղագրության լեզու">
+<!ENTITY encodingStatusPanel.tooltip "Գրույթի կոդավորում">

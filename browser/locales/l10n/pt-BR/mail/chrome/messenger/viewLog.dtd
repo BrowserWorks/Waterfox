@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Relatório de filtros">
+<!ENTITY viewLogInfo.text "A atividade do filtro de mensagens mostra os filtros executados para esta conta. Marque a opção para ativar o relatório.">
+<!ENTITY clearLog.label "Limpar relatório">
+<!ENTITY clearLog.accesskey "L">
+<!ENTITY enableLog.label "Registrar a atividade dos filtros de mensagens">
+<!ENTITY enableLog.accesskey "R">
+<!ENTITY closeLog.label "Fechar">
+<!ENTITY closeLog.accesskey "F">

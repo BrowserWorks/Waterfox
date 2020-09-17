@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "કમ્પોઝર"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- View menu items -->
+<!ENTITY viewMenu.label "દેખાવ">
+<!ENTITY viewmenu.accesskey "v">
+<!ENTITY compositionToolbarCmd.label "જોડાણ સાધનપટ્ટી">
+<!ENTITY compositiontb.accesskey "c">
+<!ENTITY formattingToolbarCmd.label "બંધારણ સાધનપટ્ટી">
+<!ENTITY formattingtb.accesskey "f">
+<!ENTITY editmodeToolbarCmd.label "સંપાદન સ્થિતિ સાધનપટ્ટી">
+<!ENTITY editmodetb.accesskey "E">
+<!ENTITY taskbarCmd.label "પરિસ્થિતિદર્શક પટ્ટી">
+<!ENTITY taskbarCmd.accesskey "S">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "બંધારણ">
+<!ENTITY formatmenu.accesskey "o">
+
+<!ENTITY helpMenu.label "મદદ">
+<!ENTITY aboutCmd.label ".વિશે">
+
+<!-- Display Mode Toolbar -->
+<!ENTITY editMode.label "સંપાદન સ્થિતિ:">
+
+<!ENTITY statusText.label "પાનું લાવવાનું પૂર્ણ">
+

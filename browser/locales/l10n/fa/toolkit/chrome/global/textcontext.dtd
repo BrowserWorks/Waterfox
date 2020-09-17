@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "اضافه‌کردن به واژه‌نامه">
+<!ENTITY spellAddToDictionary.accesskey "ا">
+<!ENTITY spellUndoAddToDictionary.label "حذف کردن از واژه‌ نامه">
+<!ENTITY spellUndoAddToDictionary.accesskey "ف">
+<!ENTITY spellCheckToggle.label "بررسی املا">
+<!ENTITY spellCheckToggle.accesskey "ا">
+<!ENTITY spellNoSuggestions.label "(پیشنهاد املائی موجود نیست)">
+<!ENTITY spellDictionaries.label "زبان‌ها">
+<!ENTITY spellDictionaries.accesskey "ز">
+
+<!ENTITY searchTextBox.clear.label "پاک کردن">
+
+<!ENTITY fillLoginMenu.label          "پرکردن اطلاعات ورود">
+<!ENTITY fillLoginMenu.accesskey      "ا">
+<!ENTITY fillPasswordMenu.label       "پرکردن گذرواژه">
+<!ENTITY fillPasswordMenu.accesskey   "گ">
+<!ENTITY fillUsernameMenu.label       "پرکردن نام کاربری">
+<!ENTITY fillUsernameMenu.accesskey   "ن">
+<!ENTITY noLoginSuggestions.label     "(پیشنهادی برای اطلاعات ورود موجود نیست)">
+<!ENTITY viewSavedLogins.label        "مشاهدهٔ اطلاعات ورودهای ذخیره شده">

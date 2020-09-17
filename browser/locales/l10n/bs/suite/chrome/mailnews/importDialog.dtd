@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Uvoz">
+<!ENTITY importAll.label          "Uvezi sve">
+<!ENTITY importMail.label         "Pošta">
+<!ENTITY importFeeds.label        "Pretplate na feedove">
+<!ENTITY importAddressbook.label  "Adresari">
+<!ENTITY importSettings.label     "Postavke">
+<!ENTITY importFilters.label      "Filteri">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; čarobnjak uvoza">
+<!ENTITY importShortDesc.label    "Uvezite email, adresare, postavke i filtere iz drugih programa">
+
+<!ENTITY importDescription1.label "Ovaj čarobnjak će uvesti poruke, unose adresara, pretplate na feedove, postavke i/ili filtere iz drugih programa za poštu i zajedničke formate adresara u &brandShortName;.">
+<!ENTITY importDescription2.label "Jednom uvezeni biti će dostupni za upotrebu unutar &brandShortName;a.">
+
+<!ENTITY selectDescription.label  "Izaberite tip datoteke koju želite uvesti:">
+<!ENTITY selectDescriptionB.label "Izaberite postojeći ili kreirajte novi račun:">
+<!ENTITY acctName.label           "Naziv:">
+<!ENTITY noModulesFound.label     "Ni jedna aplikacija ili datoteka za uvoz podataka nije pronađena.">
+
+<!ENTITY back.label               "&lt; Nazad">
+<!ENTITY forward.label            "Sljedeće &gt;">
+<!ENTITY finish.label             "Završi">
+<!ENTITY cancel.label             "Otkaži">
+
+<!ENTITY select.label             "ili izaberite tip podataka za uvoz:">
+
+<!ENTITY title.label              "Naslov">
+<!ENTITY processing.label         "Uvoz…">

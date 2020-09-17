@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# toffee <daniel@toffee.ro>
+# nicubunu <nicubunu@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from am-addressing.xul -->
+
+<!ENTITY addressing.label          "Redactare și adrese">
+<!ENTITY addressingGroupTitle.label "Adrese">
+<!ENTITY autocompleteToMyDomain.label     "Automatically append my domain to addresses">
+<!ENTITY autocompleteToMyDomain.accesskey "o">
+<!ENTITY addressingText.label      "La căutarea adreselor:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Folosește pentru acest cont preferințele globale pentru servere LDAP">
+<!ENTITY useGlobal.accesskey       "u">
+<!ENTITY editDirectories.label     "Editează repertoare…">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Folosește un alt server LDAP:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "Nespecificat">
+
+<!-- am-addressing.xul -->
+
+<!ENTITY compositionGroupTitle.label "Redactare">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Redactează mesajele în format HTML">
+<!ENTITY useHtml.accesskey                    "c">
+<!ENTITY autoQuote.label                      "La răspuns, citează automat din mesajul original">
+<!ENTITY autoQuote.accesskey                  "m">
+<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY then.label                           "Apoi,">
+<!ENTITY then.accesskey                       "A">
+<!ENTITY aboveQuote.label                     "începe răspunsul deasupra textului citat">
+<!ENTITY belowQuote.label                     "începe răspunsul sub textul citat">
+<!ENTITY selectAndQuote.label                 "selectează textul citat">
+<!ENTITY place.label                          "și plasează semnătura mea">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "sub citat (recomandat)">
+<!ENTITY aboveText.label                      "sub răspunsul meu (deasupra citatului)">
+<!ENTITY includeSigOnReply.label              "Include signature for replies">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "Include signature for forwards">
+<!ENTITY includeSigOnForward.accesskey        "w">

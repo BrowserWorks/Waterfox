@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Kirjoittaminen ja osoitteet">
+<!ENTITY addressingGroupTitle.label "Osoitteisto">
+<!ENTITY addressingText.label      "Etsittäessä osoitteita:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Käytä yleisiä LDAP-palvelinasetuksia">
+<!ENTITY useGlobal.accesskey       "ä">
+<!ENTITY editDirectories.label     "Muokkaa hakemistoja…">
+<!ENTITY editDirectories.accesskey "M">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Käytä seuraavaa LDAP-palvelinta:">
+<!ENTITY directories.accesskey     "t">
+<!ENTITY directoriesNone.label     "Ei mitään">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Viestien kirjoittaminen">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Kirjoita viestit HTML-muotoisina">
+<!ENTITY useHtml.accesskey                    "K">
+<!ENTITY autoQuote.label                      "Vastattaessa liitä alkuperäinen viesti automaattisesti lainauksena">
+<!ENTITY autoQuote.accesskey                  "V">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Vastattaessa,">
+<!ENTITY quoting.accesskey                    "V">
+<!ENTITY aboveQuote.label                     "aloita vastaukseni ennen lainausta">
+<!ENTITY belowQuote.label                     "aloita vastaukseni lainauksen jälkeen">
+<!ENTITY selectAndQuote.label                 "valitse lainattu teksti">
+<!ENTITY place.label                          "sekä sijoita allekirjoitukseni">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "viestin loppuun (suositeltu)">
+<!ENTITY aboveText.label                      "vastaukseni jälkeen (ennen lainausta)">
+<!ENTITY includeSigOnReply.label              "Lisää allekirjoitus vastauksiin">
+<!ENTITY includeSigOnReply.accesskey          "L">
+<!ENTITY includeSigOnForward.label            "Lisää allekirjoitus välitettyihin viesteihin">
+<!ENTITY includeSigOnForward.accesskey        "a">
+
+<!ENTITY globalComposingPrefs.label           "Yleiset viestinluontiasetukset…">
+<!ENTITY globalComposingPrefs.accesskey       "v">
+
+<!ENTITY globalAddressingPrefs.label          "Yleiset osoitteistoasetukset…">
+<!ENTITY globalAddressingPrefs.accesskey      "o">

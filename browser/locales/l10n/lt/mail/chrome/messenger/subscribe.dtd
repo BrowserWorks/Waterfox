@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Naujienų prenumerata">
+<!ENTITY subscribeButton.label        "Prenumeruoti">
+<!ENTITY subscribeButton.accesskey    "P">
+<!ENTITY unsubscribeButton.label      "Atsisakyti prenumeratos">
+<!ENTITY unsubscribeButton.accesskey  "A">
+<!ENTITY newGroupsTab.label           "Naujos grupės">
+<!ENTITY newGroupsTab.accesskey       "g">
+<!ENTITY refreshButton.label          "Atsiųsti iš naujo">
+<!ENTITY refreshButton.accesskey      "n">
+<!ENTITY stopButton.label             "Stabdyti">
+<!ENTITY stopButton.accesskey         "S">
+<!ENTITY server.label                 "Naujienų paskyra:">
+<!ENTITY server.accesskey             "u">
+<!ENTITY subscribedHeader.label       "Prenumerata">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Rodyti objektus, turinčius:">
+<!ENTITY namefield.accesskey          "R">

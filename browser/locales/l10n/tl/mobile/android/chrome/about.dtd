@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Tungkol sa &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "Experimental ang &brandShortName; at maaring unstable pa ito.">
+<!ENTITY aboutPage.checkForUpdates.link         "Suriin ang Mga Update »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Naghahanap ng mga update...">
+<!ENTITY aboutPage.checkForUpdates.none         "Walang update na available">
+<!ENTITY aboutPage.checkForUpdates.available2   "I-download ang update">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Nagda-download ng update...">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "I-install ang update">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "Suporta">
+<!ENTITY aboutPage.privacyPolicy.label          "Patakaran sa Privacy">
+<!ENTITY aboutPage.rights.label                 "Alamin ang Iyong mga Karapatan">
+<!ENTITY aboutPage.relNotes.label               "Mga Tala ng Paglabas">
+<!ENTITY aboutPage.credits.label                "Mga credit">
+<!ENTITY aboutPage.license.label                "Impormasyon sa pag-License">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Ang Firefox at mga logo ng Firefox ay tatak-pangkalakal ng Mozilla Foundation.">

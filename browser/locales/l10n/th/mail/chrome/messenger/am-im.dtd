@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "คุณสมบัติบัญชี">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "ทั่วไป">
+<!ENTITY account.advanced              "ตัวเลือกขั้นสูง">
+<!ENTITY account.name                  "ชื่อผู้ใช้:">
+<!ENTITY account.password              "รหัสผ่าน:">
+<!ENTITY account.alias                 "นามแฝง:">
+<!ENTITY account.newMailNotification   "แจ้งเตือนเมื่อมีจดหมายใหม่">
+<!ENTITY account.autojoin              "ช่องที่เข้าร่วมอัตโนมัติ:">
+<!ENTITY account.proxySettings.caption "การตั้งค่าพร็อกซี:">
+<!ENTITY account.proxySettings.change.label     "เปลี่ยน…">
+<!ENTITY account.proxySettings.change.accessKey "ป">

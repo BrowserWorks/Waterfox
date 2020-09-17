@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Priodweddau">
+
+<!ENTITY generalInfo.label                       "Gwybodaeth Gyffredinol">
+<!ENTITY folderCharsetFallback2.label            "Amgodio Testun wrth Gefn:">
+<!ENTITY folderCharsetFallback2.accesskey        "G">
+<!ENTITY folderCharsetEnforce2.label             "Gosod amgodiad i bob neges yn y ffolder (bydd gosodiadau amgodio nodau negeseuon unigol ac awto-ganfod yn cael eu hanwybyddu)">
+<!ENTITY folderCharsetEnforce2.accesskey         "G">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Ailadeiladu'r Mynegai Ffeil Cryno">
+<!ENTITY folderRebuildSummaryFile2.label         "Trwsio'r Ffolder">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "T">
+<!ENTITY folderRebuildSummaryFile.explanation    "Weithiau bydd y ffeil mynegai'r ffolder (..msf) yn cael ei difrodi ac mae modd i negeseuon sy'n ymddangos ar goll neu ffeiliau sydd wedi'u dileu parhau i gael eu dangos; gall drwsio'r ffolder ddatrys y problemau hyn.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Cynnwys y negeseuon yn y ffolder yng nghanlyniadau'r Chwilio Eang">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "n">
+
+<!ENTITY retention.label "Polisi Cadw">
+<!ENTITY retentionUseAccount.label  "Defnyddio gosodiadau fy nghyfrif">
+<!ENTITY retentionUseAccount.accesskey "D">
+<!ENTITY daysOld.label "diwrnod oed">
+<!ENTITY message.label "negeseuon">
+<!ENTITY retentionCleanup.label "I adfer lle ar ddisg, mae modd dileu hen negeseuon yn barhaol.">
+<!ENTITY retentionCleanupImap.label "I adfer lle ar ddisg, mae modd dileu hen negeseuon yn barhaol yn gopïau lleol a'r gwreiddiol ar y gweinydd pell.">
+<!ENTITY retentionCleanupPop.label "I adfer lle ar ddisg, mae modd dileu hen negeseuon yn barhaol gan gynnwys y gwreiddiol ar y gweinydd pell.">
+<!ENTITY retentionDeleteMsg.label "Dileu negeseuon mwy na">
+<!ENTITY retentionDeleteMsg.accesskey "i">
+<!ENTITY retentionKeepAll.label "Peidio dileu unrhyw neges">
+<!ENTITY retentionKeepAll.accesskey "P">
+<!ENTITY retentionKeepRecent.label "Dileu pob un heblaw'r mwyaf diweddar">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "Cadw negeseuon serennog pob tro">
+<!ENTITY retentionApplyToFlagged.accesskey "s">
+
+<!ENTITY folderSynchronizationTab.label          "Cydweddu">
+<!ENTITY folderCheckForNewMessages2.label         "Wrth dderbyn negeseuon newydd ar gyfer y cyfrif hwn, gwirio'r ffolder bob tro">
+<!ENTITY folderCheckForNewMessages2.accesskey     "g">
+
+<!ENTITY offlineFolder.check.label               "Dewis y ffolder ar gyfer defnydd all-lein">
+<!ENTITY offlineFolder.check.accesskey           "D">
+<!ENTITY offlineFolder.button.label              "Llwytho i Lawr Nawr">
+<!ENTITY offlineFolder.button.accesskey          "L">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Dewiswch y grŵp newyddion ar gyfer defnydd all-lein">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "a">
+<!ENTITY offlineNewsgroup.button.label           "Llwytho i Lawr Nawr">
+<!ENTITY offlineNewsgroup.button.accesskey       "L">
+
+<!ENTITY folderProps.name.label                  "Enw:">
+<!ENTITY folderProps.name.accesskey              "E">
+<!ENTITY folderProps.color.label                 "Lliw Eicon:">
+<!ENTITY folderProps.color.accesskey             "E">
+<!ENTITY folderProps.reset.tooltip               "Adfer lliw rhagosodedig">
+<!ENTITY folderProps.location.label              "Lleoliad:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Rhannu">
+<!ENTITY privileges.button.label                 "Breintiau…">
+<!ENTITY privileges.button.accesskey             "B">
+<!ENTITY permissionsDesc.label                   "Mae gennych y caniatâd canlynol:">
+<!ENTITY folderOtherUsers.label                  "Eraill sydd â mynediad i'r ffolder hon:">
+<!ENTITY folderType.label                        "Math o Ffolder:">
+
+<!ENTITY folderQuotaTab.label                    "Cwota">
+<!ENTITY folderQuotaUsage.label                  "Defnydd:">
+<!ENTITY folderQuotaStatus.label                 "Statws:">
+
+<!ENTITY numberOfMessages.label                  "Nifer o negeseuon:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "anhysbys">
+<!ENTITY sizeOnDisk.label                        "Maint ar ddisg:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "anhysbys">

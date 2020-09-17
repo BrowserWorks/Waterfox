@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title         "Uuden sivun asetukset">
+
+<!ENTITY  authorName.label           "Tekijä:">
+<!ENTITY  authorName.accesskey       "T">
+<!ENTITY  pageColorHeader            "Sivun oletusulkoasu">
+
+<!ENTITY defaultColors.label        "Selaimen oletusvärit (älä aseta värejä sivulla)">
+<!ENTITY defaultColors.accesskey    "o">
+<!ENTITY customColors.label         "Käytä omia värejä:">
+<!ENTITY customColors.accesskey     "K">
+
+<!ENTITY normalText.label            "Normaali teksti">
+<!ENTITY normalText.accesskey        "N">
+<!ENTITY linkText.label              "Linkkiteksti">
+<!ENTITY linkText.accesskey          "L">
+<!ENTITY activeLinkText.label        "Aktiivisen linkin teksti">
+<!ENTITY activeLinkText.accesskey    "A">
+<!ENTITY visitedLinkText.label       "Avatun linkin teksti">
+<!ENTITY visitedLinkText.accesskey   "v">
+<!ENTITY background.label            "Tausta:">
+<!ENTITY background.accesskey        "u">
+<!ENTITY colon.character             ":">
+
+<!ENTITY backgroundImage.label       "Taustakuva:">
+<!ENTITY backgroundImage.accesskey   "T">
+<!ENTITY chooseFile.label            "Valitse tiedosto…">
+<!ENTITY chooseFile.accesskey        "V">
+

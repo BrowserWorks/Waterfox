@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+
+<!ENTITY window.width2                    "485">
+<!ENTITY window.height                    "300">
+
+<!ENTITY activity.title                  "Activity Manager">
+
+<!ENTITY cmd.pause.label                  "مکث">
+<!ENTITY cmd.pause.accesskey              "م">
+<!ENTITY cmd.resume.label                 "ازسرگیری">
+<!ENTITY cmd.resume.accesskey             "ا">
+<!ENTITY cmd.cancel.label                 "انصراف">
+<!ENTITY cmd.cancel.accesskey             "ا">
+<!ENTITY cmd.undo.label                   "واگرد">
+<!ENTITY cmd.undo.accesskey               "و">
+<!ENTITY cmd.recover.label                "Recover">
+<!ENTITY cmd.recover.accesskey            "v">
+<!ENTITY cmd.retry.label                  "تلاش مجدد">
+<!ENTITY cmd.retry.accesskey              "ت">
+<!ENTITY cmd.removeFromList.label         "حذف از فهرست">
+<!ENTITY cmd.removeFromList.accesskey     "ح">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "پاک‌سازی فهرست">
+<!ENTITY cmd.clearList.tooltip            "Removes completed, canceled, and failed items from the list">
+<!ENTITY cmd.clearList.accesskey          "پ">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "جست‌وجو…">

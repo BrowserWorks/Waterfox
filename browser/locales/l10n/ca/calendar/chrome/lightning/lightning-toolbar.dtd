@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Barra d'eines del calendari">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "C">
+<!ENTITY lightning.toolbar.task.name "Barra d'eines de les tasques">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "Sincronitza">
+<!ENTITY lightning.toolbar.sync.tooltip "Torna a carregar els calendaris i sincronitza els canvis">
+<!ENTITY lightning.toolbar.delete.label "Suprimeix">
+<!ENTITY lightning.toolbar.delete.tooltip "Suprimeix les cites o les tasques seleccionades">
+<!ENTITY lightning.toolbar.edit.label "Edita">
+<!ENTITY lightning.toolbar.edit.tooltip "Edita la cita o la tasca seleccionada">
+<!ENTITY lightning.toolbar.gototoday.label "Vés a avui">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Vés a avui">
+<!ENTITY lightning.toolbar.print.label "Imprimeix">
+<!ENTITY lightning.toolbar.print.tooltip "Imprimeix cites o tasques">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Calendari">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Mostra la pestanya del calendari">
+<!ENTITY lightning.toolbar.calendar.accesskey "C">
+<!ENTITY lightning.toolbar.task.label         "Tasques">
+<!ENTITY lightning.toolbar.task.tooltip       "Mostra la pestanya de les tasques">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Cita">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Crea una cita nova">
+<!ENTITY lightning.toolbar.newtask.label      "Tasca">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Crea una tasca nova">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Dia">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Setmana">
+<!ENTITY lightning.toolbar.week.accesskey            "S">
+<!ENTITY lightning.toolbar.multiweek.label           "Multisetmana">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "u">
+<!ENTITY lightning.toolbar.month.label               "Mes">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Menú d'aplicacions">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Mostra el menú del &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Subfinestra del calendari">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "b">
+<!ENTITY lightning.toolbar.calendarpane.label        "Mostra la subfinestra del calendari">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "b">

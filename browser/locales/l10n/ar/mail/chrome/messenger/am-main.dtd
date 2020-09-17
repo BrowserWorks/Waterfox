@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "إعدادات الحسابات">
+<!ENTITY accountName.label "اسم الحساب:">
+<!ENTITY accountName.accesskey "س">
+<!ENTITY identityTitle.label "الهويّة المبدئية">
+<!ENTITY identityDesc.label "لكلّ حساب هويّة، و هي المعلومات التّي يراها الآخرون عندما يقرؤون رسائلك.">
+<!ENTITY name.label "اسمك:">
+<!ENTITY name.accesskey "ك">
+<!ENTITY email.label "عنوان بريدك:">
+<!ENTITY email.accesskey "ب">
+<!ENTITY replyTo.label "عنوان الرّد:">
+<!ENTITY replyTo.accesskey "د">
+<!ENTITY replyTo.placeholder "سيرد المستلمون على هذا العنوان">
+<!ENTITY organization.label "المنظمة:">
+<!ENTITY organization.accesskey "ظ">
+<!ENTITY signatureText.label "نص التوقيع:">
+<!ENTITY signatureText.accesskey "ص">
+<!ENTITY signatureHtml.label "استخدم HTML (e.g., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "أرفِق التوقيع من ملف (نص أو HTML أو صورة):">
+<!ENTITY signatureFile.accesskey "ف">
+<!ENTITY edit.label "حرّر…">
+<!ENTITY choose.label "اختر…">
+<!ENTITY choose.accesskey "ر">
+<!ENTITY editVCard.label "حرّر البطاقة…">
+<!ENTITY editVCard.accesskey "ح">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "أرفِق بطاقة vCard مع الرّسائل">
+<!ENTITY attachVCard.accesskey "ق">
+
+<!ENTITY manageIdentities.label "أدِر الهويّات…">
+<!ENTITY manageIdentities.accesskey "د">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "خادوم الصّادر (SMTP):‏">
+<!ENTITY smtpName.accesskey "ص">
+<!ENTITY smtpDefaultServer.label "استخدم الخادوم المبدئي">
+
+<!ENTITY smtpServerEdit.label "حرر خادوم الصادر (SMTP)…">
+<!ENTITY smtpServerEdit.accesskey "ص">

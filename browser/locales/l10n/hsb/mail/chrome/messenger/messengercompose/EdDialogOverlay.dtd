@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Rozšěrjene wobdźěłanje…">
+<!ENTITY AdvancedEditButton.accessKey "R">
+<!ENTITY AdvancedEditButton.tooltip "HTML-atributy, stilowe atribute a JavaScript přidać abo změnić">
+<!ENTITY chooseFileButton.label "Dataju wubrać...">
+<!ENTITY chooseFileButton.accessKey "D">
+<!ENTITY chooseFileLinkButton.label "Dataju wubrać...">
+<!ENTITY chooseFileLinkButton.accessKey "b">
+<!ENTITY makeUrlRelative.label "URL je relatiwny k adresy strony">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Mjez relatiwnym a absolutnym URL přeměnić. Dyrbiće najprjedy stronu składować, prjedy hač móžeće to změnić.">
+
+<!ENTITY LinkURLEditField2.label "Zapodajće adresu webstrony, lokalnu dataju abo wubjerće pomjenowanu kótwičku abo nadpismo z kontekstoweho menija pola:">
+<!ENTITY LinkURLEditField2.accessKey "b">

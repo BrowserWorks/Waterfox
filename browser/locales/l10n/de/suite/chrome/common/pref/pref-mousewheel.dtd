@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "Mausrad">
+<!ENTITY mouseWheelPanel.label           "Mausrad-Verhalten unter Verwendung folgender Zusatztasten:">
+<!ENTITY usingJustTheWheel.label         "Keine Taste">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!ENTITY mouseWheelGroup.label           "Vertikales Scrollen">
+<!ENTITY mouseWheelHorizGroup.label      "Horizontales Scrollen">
+<!ENTITY sameAsVertical.label            "Wie vertikales Scrollen">
+<!ENTITY sameAsVertical.accesskey        "e">
+<!ENTITY doNothing.label                 "Keine Aktion">
+<!ENTITY doNothing.accesskey             "K">
+<!ENTITY doNothingHoriz.accesskey        "n">
+<!ENTITY scrollDocument.label            "Das Dokument scrollen">
+<!ENTITY scrollDocument.accesskey        "D">
+<!ENTITY scrollDocumentHoriz.accesskey   "a">
+<!ENTITY history.label                   "Vor und zurück in der Browser-Chronik bewegen">
+<!ENTITY history.accesskey               "V">
+<!ENTITY historyHoriz.accesskey          "z">
+<!ENTITY zoom.label                      "Die Seite vergrößern oder verkleinern">
+<!ENTITY zoom.accesskey                  "S">
+<!ENTITY zoomHoriz.accesskey             "o">
+<!ENTITY wheelSpeed.label                "Mausrad-Geschwindigkeit:">
+<!ENTITY wheelSpeed.accesskey            "M">
+<!ENTITY wheelSpeedHoriz.accesskey       "G">
+<!ENTITY reverseDirection.label          "Richtung umkehren">
+<!ENTITY reverseDirection.accesskey      "R">
+<!ENTITY reverseDirectionHoriz.accesskey "u">

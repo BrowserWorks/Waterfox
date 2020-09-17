@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Пакінуць гэтае месца!">
+<!ENTITY safeb.palm.decline.label "Ігнараваць гэтае папярэджанне">
+<!ENTITY safeb.palm.reportPage.label "Чаму гэтая старонка затрымана?">
+<!ENTITY safeb.blocked.malwarePage.title "Занатаваная нападная пляцоўка!">
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Гэтая старонка <span id='malware_sitename'/> занатована як нападная і затрымана згодна вашым перавагам бяспекі.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Нападныя старонкі спрабуюць усталёўваць праграмы, якія крадуць асабістыя звесткі, скарыстоўваюць ваш кампутар, каб нападаць на іншыя, або псуюць вашу сістэму.</p><p>Асобныя нападныя старонкі наўмысна распаўсюджваюць шкодныя праграмы, шмат з якіх перакручаны без ведаму і дазволу іх уладальнікаў.</p>">
+<!ENTITY safeb.blocked.phishingPage.title "Папярэджанне: сеціўная падробка!">
+<!ENTITY safeb.blocked.phishingPage.shortDesc "Старонка Сеціва <span id='phishing_sitename'/> занатована як сеціўная падробка і затрымана згодна вашым перавагам бяспекі.">
+<!ENTITY safeb.blocked.phishingPage.longDesc "<p>Сеціўныя падробкі ствараюцца падобнымі на крыніцы, якім вы давяраеце, дзеля таго, каб ашукаць вас, каб скрасці вашы асабістыя або фінансавыя звесткі.</p><p>Увод усякіх звестак на гэтай старонцы прывядзе, магчыма, да крадзяжу адметы або іншага ашуканства.</p>">
+<!ENTITY reportPhishSite.label "Паведамленне пра сеціўную падробку…">
+<!ENTITY reportPhishSite.accesskey "п">
+<!ENTITY notAForgery.label "Гэта не сеціўная падробка…">
+<!ENTITY notAForgery.accesskey "п">

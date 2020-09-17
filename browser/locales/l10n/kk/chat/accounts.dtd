@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "Тіркелгілер - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Лезде хабарласу қалып-күйі">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Жаңа тіркелгі">
+<!ENTITY accountManager.newAccount.accesskey "Ж">
+<!ENTITY accountManager.close.label          "Жабу">
+<!ENTITY accountManager.close.accesskey      "Ж">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "к">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Бапталған тіркелгілер жоқ">
+<!ENTITY accountManager.noAccount.description "&brandShortName; үшін сізге тіркелгіні баптауға көмектесу үшін &accountManager.newAccount.label; батырмасына басыңыз.">
+<!ENTITY account.autoSignOn.label     "Іске қосылған кезде кіру">
+<!ENTITY account.autoSignOn.accesskey "к">
+<!ENTITY account.connect.label        "Байланысу">
+<!ENTITY account.connect.accesskey    "а">
+<!ENTITY account.disconnect.label     "Байланысты үзу">
+<!ENTITY account.disconnect.accesskey "з">
+<!ENTITY account.delete.label         "Өшіру">
+<!ENTITY account.delete.accesskey     "ш">
+<!ENTITY account.edit.label           "Қасиеттері">
+<!ENTITY account.edit.accesskey       "а">
+<!ENTITY account.moveup.label         "Жоғары жылжыту">
+<!ENTITY account.movedown.label       "Төмен жылжыту">
+<!ENTITY account.cancelReconnection.label         "Қайта байланысудан бас тарту">
+<!ENTITY account.cancelReconnection.accesskey     "с">
+<!ENTITY account.copyDebugLog.label     "Жөндеу журналын көшіріп алу">
+<!ENTITY account.copyDebugLog.accesskey "к">
+<!ENTITY account.showDebugLog.label     "Жөндеу журналын көрсету">
+<!ENTITY account.showDebugLog.accesskey "с">
+<!ENTITY account.connecting           "Байланысу…">
+<!ENTITY account.disconnecting        "Байланысты үзу…">
+<!ENTITY account.disconnected         "Байланыспаған">

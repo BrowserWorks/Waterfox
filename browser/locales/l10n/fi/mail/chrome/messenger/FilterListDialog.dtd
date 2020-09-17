@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Viestisuodattimet">
+<!ENTITY nameColumn.label "Suodattimen nimi">
+<!ENTITY activeColumn.label "Käytössä">
+<!ENTITY newButton.label "Uusi…">
+<!ENTITY newButton.accesskey "U">
+<!ENTITY newButton.popupCopy.label "Kopioi…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Muokkaa…">
+<!ENTITY editButton.accesskey "M">
+<!ENTITY deleteButton.label "Poista">
+<!ENTITY deleteButton.accesskey "o">
+<!ENTITY reorderTopButton "Siirrä ylimmäksi">
+<!ENTITY reorderTopButton.accessKey "y">
+<!ENTITY reorderTopButton.toolTip "Siirrä suodatin niin, että se suoritetaan ensimmäisenä">
+<!ENTITY reorderUpButton.label "Siirrä ylös">
+<!ENTITY reorderUpButton.accesskey "y">
+<!ENTITY reorderDownButton.label "Siirrä alas">
+<!ENTITY reorderDownButton.accesskey "a">
+<!ENTITY reorderBottomButton "Siirrä alimmaiseksi">
+<!ENTITY reorderBottomButton.accessKey "a">
+<!ENTITY reorderBottomButton.toolTip "Siirrä suodatin niin, että se suoritetaan viimeisenä">
+<!ENTITY filterHeader.label "Käytössä olevat suodattimet suoritetaan alla näkyvässä järjestyksessä.">
+<!ENTITY filtersForPrefix.label "Suodattimet kohteelle:">
+<!ENTITY filtersForPrefix.accesskey "S">
+<!ENTITY viewLogButton.label "Suodatinloki">
+<!ENTITY viewLogButton.accesskey "S">
+<!ENTITY runFilters.label "Suorita nyt">
+<!ENTITY runFilters.accesskey "n">
+<!ENTITY stopFilters.label "Pysäytä">
+<!ENTITY stopFilters.accesskey "y">
+<!ENTITY folderPickerPrefix.label "Suorita valitut suodattimet kansiolle:">
+<!ENTITY folderPickerPrefix.accesskey "v">
+<!ENTITY helpButton.label "Ohje">
+<!ENTITY helpButton.accesskey "O">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Etsi suodatinta nimellä…">
+
+
+

@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Titz'uk K'ak'a' Cholb'äl Q'ij" >
+<!ENTITY wizard.label             "Titz'uk k'ak'a' cholb'äl q'ij" >
+
+<!ENTITY initialpage.computer.label  "Pa Nukematz'ib'">
+<!ENTITY initialpage.network.label  "Pa K'amab'ey">
+
+<!ENTITY locationpage.login.description   "Cha'el: titz'ib'äx jun rub'i' okisanel chuqa' ewan tzij" >
+<!ENTITY locationpage.username.label      "Rub'i' winäq:" >
+<!ENTITY locationpage.password.label      "Ewan tzij:" >
+
+<!ENTITY custompage.shortdescription  "Tawichinaj ri acholb'al q'ij" >
+
+<!ENTITY finishpage.shortdescription  "Xtz'uk ri Cholb'äl Q'ij" >
+<!ENTITY finishpage.longdescription   "Xtz'uk ri acholb'al q'ij." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Juley chik">
+
+<!ENTITY buttons.create.label "Titz'uk Cholb'äl Q'ij">
+<!ENTITY buttons.create.accesskey "j">
+
+
+
+<!ENTITY buttons.subscribe.label "Tz'ib'anïk b'i'aj">
+
+<!ENTITY location.label "Ochochib'al:">
+
+

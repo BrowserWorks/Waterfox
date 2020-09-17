@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Adresboek">
+<!ENTITY Addrbook.accesskey                    "A">
+<!ENTITY GeneratedName.label                   "Namme">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "E-mail">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organisaasje">
+<!ENTITY Company.accesskey                     "s">
+<!ENTITY _PhoneticName.label                   "Fonetyske namme">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Bynamme">
+<!ENTITY NickName.accesskey                    "y">
+<!ENTITY SecondEmail.label                     "Alternative e-mail">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "Ofdieling">
+<!ENTITY Department.accesskey                  "d">
+<!ENTITY JobTitle.label                        "Titel">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Mobyl">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Piper">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Faks">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Telefoan thús">
+<!ENTITY HomePhone.accesskey                   "t">
+<!ENTITY WorkPhone.label                       "Telefoan wurk">
+<!ENTITY WorkPhone.accesskey                   "w">
+<!ENTITY ChatName.label                        "Chatnamme">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "Opgeand">
+<!ENTITY sortAscending.accesskey               "O">
+<!ENTITY sortDescending.label                  "Delgeand">
+<!ENTITY sortDescending.accesskey              "D">

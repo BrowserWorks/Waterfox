@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title "रसीद फर्काउनुहोस्">
+<!ENTITY useGlobalPrefs.label "यो खाताका लागि मेरो विश्वव्यापी फर्काउने रसीद प्राथमिकता प्रयोग गर्नुहोस्">
+<!ENTITY useGlobalPrefs.accesskey "U">
+<!ENTITY useCustomPrefs.label "यो खाताका लागि फर्काउने रसीद अनुकूलन गर्नुहोस्">
+<!ENTITY useCustomPrefs.accesskey "C">
+<!ENTITY requestReceipt.label "सन्देशहरु पठाउँदा, सधै फर्काउने रसीद अनुरोध गर्नुहोस्">
+<!ENTITY requestReceipt.accesskey "W">
+<!ENTITY receiptArrive.label "रसीद आइपुग्दा:">
+<!ENTITY leaveIt.label "यो मेरो पत्रमञ्जूषामा छोड्नुहोस्">
+<!ENTITY leaveIt.accesskey "I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label "यसलाई मेरो &quot;पठाइएका&quot; फोल्डरमा सार्नुहोस्">
+<!ENTITY moveToSent.accesskey "M">
+<!ENTITY requestMDN.label "मैले फर्काउने रसीदका लागि अनुरोध प्राप्त गर्दा:">
+<!ENTITY returnSome.label "केही सन्देशहरूका लागि फर्काउने रसीदलाई अनुमति दिनुहोस्">
+<!ENTITY returnSome.accesskey "e">
+<!ENTITY never.label "फर्काउने रसीद कहिल्यै नपठाउनुहोस्">
+<!ENTITY never.accesskey "N">
+<!ENTITY notInToCc.label "यदि म सन्देशको लाई वा बोधार्थ प्रतिलिपिमा छैन भने:">
+<!ENTITY notInToCc.accesskey "T">
+<!ENTITY outsideDomain.label "यदि प्रेषक मेरो डोमेन बाहिर छ भने:">
+<!ENTITY outsideDomain.accesskey "s">
+<!ENTITY otherCases.label "सबै अन्य केसहरूमा:">
+<!ENTITY otherCases.accesskey "o">
+<!ENTITY askMe.label "मलाई सोध्नुहोस्">
+<!ENTITY alwaysSend.label "सधै पठाउनुहोस्">
+<!ENTITY neverSend.label "कहिल्यै नपठाउनुहोस्">

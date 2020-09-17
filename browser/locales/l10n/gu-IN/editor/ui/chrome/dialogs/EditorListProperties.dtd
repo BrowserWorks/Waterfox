@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "યાદી ગુણધર્મો">
+
+<!ENTITY ListType.label "યાદી પ્રકાર">
+<!ENTITY bulletStyle.label "બુલેટ શૈલી:">
+<!ENTITY startingNumber.label "અહીં શરૂ થાય:">
+<!ENTITY startingNumber.accessKey "S">
+<!ENTITY none.value "કંઈ નહિં">
+<!ENTITY bulletList.value "બુલેટ (નંબર વિનાની) યાદી">
+<!ENTITY numberList.value "નંબરવાળી યાદી">
+<!ENTITY definitionList.value "વ્યાખ્યા યાદી">
+<!ENTITY changeListMsg.label "જ્યારે યાદીનો પ્રકાર બદલી રહ્યા હોય:">
+<!ENTITY changeEntireListRadio.label "વર્તમાન યાદી બદલો">
+<!ENTITY changeEntireListRadio.accessKey "C">
+<!ENTITY changeSelectedRadio.label "ખાલી પસંદ કરેલ વસ્તુઓ જ બદલો">
+<!ENTITY changeSelectedRadio.accessKey "I">

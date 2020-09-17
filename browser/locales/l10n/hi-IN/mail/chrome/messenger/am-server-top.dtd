@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+
+<!ENTITY securitySettings.label "सुरक्षा जमावट">
+<!ENTITY serverSettings.label "सर्वर जमावट">
+<!ENTITY serverType.label "सर्वर प्रकार:">
+<!ENTITY serverName.label "सर्वर नाम:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "उपयोक्ता नाम:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "पोर्ट:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "मूलभूत:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "नये संदेश के लिये जांचें हर ">
+<!ENTITY biffStart.accesskey "k">
+<!ENTITY biffEnd.label "मिनट पर">
+<!ENTITY leaveOnServer.label "सर्वर पर संदेश छोड़ें">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "सिर्फ हेडर लायें">
+<!ENTITY headersOnly.accesskey "f">
+<!ENTITY deleteByAgeFromServer.label "सबसे ज्यादा इसके लिये">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "दिन">
+<!ENTITY downloadOnBiff.label "नये संदेश को स्वतः डाउनलोड करें">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "जब मैं एक संदेश मिटाता हूं:">
+<!ENTITY modelMoveToTrash.label "इसे रद्दी फोल्डर में भेजें">
+<!ENTITY modelMarkDeleted.label "मिटाये गये रूप में इसे चिह्नित करें">
+<!ENTITY modelDeleteImmediately.label "इसे तत्काल मिटायें">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Clean up (&quot;Expunge&quot;) निकास पर इनबॉक्स">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "निकास पर रद्दी खाली करें">
+<!ENTITY emptyTrashOnExit.accesskey "x">
+<!ENTITY loginAtStartup.label "आरंभ में नये संदेश के लिये जांचें"> 
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency 
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+	 of messages between them
+-->
+<!ENTITY maxMessagesStart.label "इससे ज्यादा डाउनलोड किये जाने के पहले मुझसे पूछें">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "संदेश">
+<!ENTITY alwaysAuthenticate.label "इस सर्वर से जुड़ने पर हमेशा सत्यापन के लिये आग्रह करें">
+<!ENTITY alwaysAuthenticate.accesskey "w">
+<!ENTITY abbreviate.label "मेल फोल्डर पैन में समाचारसमूह नाम इस रूप में दिखायें:">
+<!ENTITY abbreviateOn.label "पूरा नाम (उदाहरणार्थ, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "संक्षिप्त नाम (उदाहरणार्थ, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "उन्नत...">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY localFolderPicker.label "स्थानीय निर्देशिका चुनें">
+<!ENTITY browseFolder.label "ब्रॉउज करें...">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "ब्रॉउज करें...">
+<!ENTITY browseNewsrc.accesskey "e">
+

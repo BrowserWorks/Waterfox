@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Сурет қасиеттері">
+
+<!ENTITY pixelsPopup.value "пиксель">
+<!-- These are in the Location tab panel -->
+
+<!ENTITY locationEditField.label "Суреттің орналасуы:">
+<!ENTITY locationEditField.accessKey "л">
+<!ENTITY locationEditField.tooltip "Суреттің файл атын не орналасуын енгізіңіз">
+<!ENTITY locationEditField.shortenedDataURI "Деректердің қысқартылған URI-і (көшіру толық URI-ді алмасу буферіне орналастырады)">
+<!ENTITY title.label "Қалқымалы кеңес:">
+<!ENTITY title.accessKey "к">
+<!ENTITY title.tooltip "Қалқымалы кеңес ретінде көрсетілетін html &quot;title&quot; атрибуты">
+<!ENTITY altText.label "Балама мәтін:">
+<!ENTITY altText.accessKey "а">
+<!ENTITY altTextEditField.tooltip "Суреттің орнына көрсетілетін мәтінді теріңіз">
+<!ENTITY noAltText.label "Балама мәтінді қолданбау">
+<!ENTITY noAltText.accessKey "д">
+
+<!ENTITY previewBox.label "Суретті алдын-ала қарау">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+
+<!ENTITY actualSize.label "Нақты өлшемі:">
+<!ENTITY actualSizeRadio.label "Нақты өлшемі">
+<!ENTITY actualSizeRadio.accessKey "Н">
+<!ENTITY actualSizeRadio.tooltip "Суреттің нақты өлшеміне қайтару">
+<!ENTITY customSizeRadio.label "Таңдауыңызша өлшем">
+<!ENTITY customSizeRadio.accessKey "л">
+<!ENTITY customSizeRadio.tooltip "Сурет өлшемін парақтағы көрсетілгендей өзгерту">
+<!ENTITY heightEditField.label "Биіктігі:">
+<!ENTITY heightEditField.accessKey "и">
+<!ENTITY widthEditField.label "Ені:">
+<!ENTITY widthEditField.accessKey "Е">
+<!ENTITY constrainCheckbox.label "Шектеу">
+<!ENTITY constrainCheckbox.accessKey "Ш">
+<!ENTITY constrainCheckbox.tooltip "Сурет жақтарының арақатынасын сақтау">
+<!-- These controls are in the Image Map box of the expanded area -->
+
+<!ENTITY imagemapBox.label "Суретінің картасы">
+<!ENTITY removeImageMapButton.label "Өшіру">
+<!ENTITY removeImageMapButton.accessKey "ш">
+<!-- These are the options for image alignment -->
+
+<!ENTITY alignment.label "Мәтінді суретке туралау">
+<!ENTITY bottomPopup.value "Астынан">
+<!ENTITY topPopup.value "Үстінен">
+<!ENTITY centerPopup.value "Ортасынан">
+<!ENTITY wrapRightPopup.value "Оң жақтан аймалау">
+<!ENTITY wrapLeftPopup.value "Сол жақтан аймалау">
+<!-- These controls are in the Spacing Box -->
+
+<!ENTITY spacingBox.label "Аралық">
+<!ENTITY leftRightEditField.label "Сол және оң жақ:">
+<!ENTITY leftRightEditField.accessKey "л">
+<!ENTITY topBottomEditField.label "Үстінен және астынан:">
+<!ENTITY topBottomEditField.accessKey "т">
+<!ENTITY borderEditField.label "Бүтін шекара:">
+<!ENTITY borderEditField.accessKey "ш">
+<!-- These controls are in the Link Box -->
+
+<!ENTITY showImageLinkBorder.label "Сілтемесі бар суреттің айналасында шекараны көрсету">
+<!ENTITY showImageLinkBorder.accessKey "ш">
+<!ENTITY LinkAdvancedEditButton.label "Сілтеме қасиеттерін түзету…">
+<!ENTITY LinkAdvancedEditButton.accessKey "л">
+<!ENTITY LinkAdvancedEditButton.tooltip "HTML/стиль атрибуттарын, JavaScript-ты қосу немесе түзету">
+<!-- These tabs are currently used in the image input dialog -->
+
+<!ENTITY imageInputTab.label "Форма">
+<!ENTITY imageLocationTab.label "Орналасуы">
+<!ENTITY imageDimensionsTab.label "Өлшемдері">
+<!ENTITY imageAppearanceTab.label "Сыртқы түрі">
+<!ENTITY imageLinkTab.label "Сілтеме">

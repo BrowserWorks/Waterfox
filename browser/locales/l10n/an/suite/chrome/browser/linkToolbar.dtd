@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Link Toolbar Title -->
+
+<!ENTITY linkToolbar.label "Barra de navegación d'o puesto web">
+<!ENTITY linkToolbar.accesskey "a">
+<!ENTITY linkToolbar.tooltip "Website Navigation Bar">
+<!-- Link Toolbar visibility options -->
+
+<!ENTITY linkToolbarAlways.label "Mostrar siempre">
+<!ENTITY linkToolbarAlways.accesskey "s">
+<!ENTITY linkToolbarAsNeeded.label "Mostrar solament quan sía necesaria">
+<!ENTITY linkToolbarAsNeeded.accesskey "o">
+<!ENTITY linkToolbarNever.label "Ucultar siempre">
+<!ENTITY linkToolbarNever.accesskey "c">
+<!-- Toolbar buttons, menus, and menuitems -->
+
+<!ENTITY topButton.label "Superior">
+<!ENTITY upButton.label "Alto">
+<!ENTITY firstButton.label "Primero">
+<!ENTITY prevButton.label "Anterior">
+<!ENTITY nextButton.label "Siguient">
+<!ENTITY lastButton.label "Zaguer">
+
+<!ENTITY documentButton.label "Documento">
+
+<!ENTITY tocButton.label "Tabla de contenius">
+<!ENTITY chapterButton.label "Capitols">
+<!ENTITY sectionButton.label "Seccions">
+<!ENTITY subSectionButton.label "Subsecciones">
+<!ENTITY appendixButton.label "Apéndices">
+<!ENTITY glossaryButton.label "Glosario">
+<!ENTITY indexButton.label "Indiz">
+
+<!ENTITY moreButton.label "Mas">
+
+<!ENTITY helpButton.label "Aduya">
+<!ENTITY searchButton.label "Buscar">
+
+<!ENTITY authorButton.label "Autor(ye)">
+<!ENTITY copyrightButton.label "Copyright">
+
+<!ENTITY bookmarkButton.label "Marcadors">
+
+<!ENTITY alternateButton.label "Atras versions">
+
+<!ENTITY feedButton.label "Suscribirse">

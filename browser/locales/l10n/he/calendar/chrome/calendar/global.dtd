@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "חצות" >
+<!ENTITY time.noon "צהרי היום" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "ראשון" >
+<!ENTITY day.1.Ddd.accesskey "ר">
+<!ENTITY day.2.Ddd "שני" >
+<!ENTITY day.2.Ddd.accesskey "ש">
+<!ENTITY day.3.Ddd "שלישי" >
+<!ENTITY day.3.Ddd.accesskey "ל">
+<!ENTITY day.4.Ddd "רביעי" >
+<!ENTITY day.4.Ddd.accesskey "ב">
+<!ENTITY day.5.Ddd "חמישי" >
+<!ENTITY day.5.Ddd.accesskey "ח">
+<!ENTITY day.6.Ddd "שישי" >
+<!ENTITY day.6.Ddd.accesskey "י">
+<!ENTITY day.7.Ddd "שבת" >
+<!ENTITY day.7.Ddd.accesskey "ת">
+
+<!ENTITY day.1.name "ראשון" >
+<!ENTITY day.2.name "שני" >
+<!ENTITY day.3.name "שלישי" >
+<!ENTITY day.4.name "רביעי" >
+<!ENTITY day.5.name "חמישי" >
+<!ENTITY day.6.name "שישי" >
+<!ENTITY day.7.name "שבת" >
+
+<!-- Units -->
+<!ENTITY calendar.global.units.minute   "דקה">
+<!ENTITY calendar.global.units.minutes  "דקות">
+<!ENTITY calendar.global.units.hour     "שעה">
+<!ENTITY calendar.global.units.hours    "שעות">
+<!ENTITY calendar.global.units.day      "יום">
+<!ENTITY calendar.global.units.days     "ימים">
+
+<!ENTITY month.1.name "ינואר" >
+<!ENTITY month.2.name "פברואר" >
+<!ENTITY month.3.name "מרץ" >
+<!ENTITY month.4.name "אפריל" >
+<!ENTITY month.5.name "מאי" >
+<!ENTITY month.6.name "יוני" >
+<!ENTITY month.7.name "יולי" >
+<!ENTITY month.8.name "אוגוסט" >
+<!ENTITY month.9.name "ספטמבר" >
+<!ENTITY month.10.name "אוקטובר" >
+<!ENTITY month.11.name "נובמבר" >
+<!ENTITY month.12.name "דצמבר" >
+
+<!ENTITY onemonthbackward.tooltip "חודש אחד אחורה" >
+<!ENTITY onemonthforward.tooltip "חודש אחד קדימה" >
+<!ENTITY showToday.tooltip "עבור להיום">
+<!ENTITY onedayforward.tooltip "יום אחד קדימה">
+<!ENTITY onedaybackward.tooltip "יום אחד אחורה">
+<!ENTITY showselectedday.tooltip "הצג אירועים ליום הנבחר">
+

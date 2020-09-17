@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox खाती">
+<!ENTITY aboutAccounts.connected.description "आपण या नावाने जुळलेले आहात">
+<!ENTITY aboutAccounts.syncPreferences.label "आपल्या ताळमेळ सेटिंग तपासण्यासाठी येथे दाबा">
+
+<!ENTITY aboutAccounts.noConnection.title "इंटरनेट जोडणी नाही">
+<!ENTITY aboutAccounts.retry.label "पुनःप्रयत्न करा">
+
+<!ENTITY aboutAccounts.restrictedError.title "प्रतिबंधित">
+<!ENTITY aboutAccounts.restrictedError.description "या प्रोफाइलवरुन आपण Firefox खाते व्यवस्थापित नाही करु शकत.">

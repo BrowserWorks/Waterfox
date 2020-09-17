@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+ "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Podpisywanie i&nbsp;szyfrowanie wiadomości</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+
+<h1 id="signing_and_encrypting_messages">Podpisywanie i&nbsp;szyfrowanie wiadomości</h1>
+
+<div class="contentsBox">W&nbsp;tym rozdziale:
+  <ul>
+    <li><a href="#about_digital_signatures_and_encryption">O&nbsp;podpisach cyfrowych i&nbsp;szyfrowaniu</a></li>
+    <li><a href="#getting_other_peoples_certificates">Uzyskiwanie certyfikatów osób trzecich</a></li>
+    <li><a href="#configuring_security_settings">Konfigurowanie ustawień zabezpieczeń</a></li>
+    <li><a href="#signing_and_encrypting_a_new_message">Podpisywanie i&nbsp;szyfrowanie nowej wiadomości</a></li>
+    <li><a href="#reading_signed_and_encrypted_messages">Odczytywanie podpisanych i&nbsp;zaszyfrowanych wiadomości</a></li>
+    <li><a href="#message_security_compose_window">Zabezpieczenia wiadomości &mdash; komponowanie wiadomości</a></li>
+    <li><a href="#message_security_received_message">Zabezpieczenia wiadomości &mdash; odebrana wiadomość</a></li>
+  </ul>
+</div>
+
+<h2 id="about_digital_signatures_and_encryption">O&nbsp;podpisach cyfrowych i&nbsp;szyfrowaniu</h2>
+
+<p>W&nbsp;trakcie tworzenia wiadomości użytkownik może dołączyć do wiadomości własny podpis cyfrowy. <a href="glossary.xhtml#digital_signature">Podpis cyfrowy</a> pozwala adresatom wiadomości zweryfikować, czy wiadomość ta w&nbsp;rzeczywistości pochodzi od nadawcy i&nbsp;nie została sfałszowana.</p>
+
+<p>W&nbsp;trakcie tworzenia wiadomości użytkownik może również zdecydować o&nbsp;zaszyfrowaniu tej wiadomości. <a href="glossary.xhtml#encryption">Szyfrowanie</a> znacznie utrudnia odczytanie wiadomości przez osoby trzecie w&nbsp;trakcie przesyłania przez internet.</p>
+
+<p>Szyfrowanie i&nbsp;podpis cyfrowy są niedostępne dla wiadomości do grup dyskusyjnych.</p>
+
+<p>Przed cyfrowym podpisaniem wiadomości lub jej zaszyfrowaniem, należy wykonać opisane poniżej czynności wstępne:</p>
+
+<ol>
+  <li>Uzyskać jeden lub więcej <a href="glossary.xhtml#certificate">certyfikatów</a> (cyfrowe odpowiedniki dowodów tożsamości). Więcej informacji w&nbsp;rozdziale <a href="using_certs_help.xhtml#getting_your_own_certificate">Uzyskiwanie własnego certyfikatu</a>.</li>
+  <li>Skonfigurować ustawienia zabezpieczeń dla konta pocztowego. Więcej informacji w&nbsp;rozdziale <a href="mailnews_account_settings.xhtml#security">Ustawienia kont pocztowych i&nbsp;grup dyskusyjnych &mdash; Zabezpieczenia</a>.
+  </li>
+</ol>
+
+<p>Po przeprowadzeniu powyższych czynności użytkownik może wykonać dalsze kroki opisane w&nbsp;rozdziale <a href="#signing_and_encrypting_a_new_message">Podpisywanie i&nbsp;szyfrowanie nowej wiadomości</a>.</p>
+
+<p>Poniżej krótko opisane zostało działanie podpisów cyfrowych i&nbsp;szyfrowania. Więcej informacji w&nbsp;dokumencie online <q>Wprowadzenie do kryptografii z&nbsp;użyciem kluczy publicznych</q>: <a href="http://developer.mozilla.org/en/Introduction_to_Public-Key_Cryptography">Introduction to Public-Key Cryptography</a> (strona w&nbsp;języku angielskim).</p>
+
+<h3 id="how_digital_signatures_work">Jak działają podpisy cyfrowe</h3>
+
+<p>Podpis cyfrowy to specjalny kod, unikalny dla każdej z&nbsp;wiadomości, utworzony według zasad <a href="glossary.xhtml#public-key_cryptography">kryptografii z&nbsp;użyciem kluczy publicznych</a>.</p>
+
+<p>Podpis cyfrowy jest czymś całkowicie odmiennym od podpisu odręcznego, aczkolwiek może być używany w&nbsp;podobnych sytuacjach, na przykład do podpisywania kontraktu.</p>
+
+<p>Aby utworzyć podpis cyfrowy dla wiadomości potrzebne są dwie rzeczy:</p>
+
+<ul>
+  <li><a href="glossary.xhtml#signing_certificate">Certyfikat podpisujący</a> identyfikujący użytkownika. Do każdej podpisanej wiadomości dołączany jest certyfikat użytkownika użyty do tego podpisu. Certyfikat zawiera <a href="glossary.xhtml#public_key">klucz publiczny</a>. Obecność certyfikatu w&nbsp;wiadomości umożliwia adresatowi weryfikację podpisu cyfrowego nadawcy.
+
+    <p>Certyfikat jest jak nazwisko i&nbsp;numer telefonu w&nbsp;książce telefonicznej &mdash; jest do publiczna informacja umożliwiająca innym osobom komunikację z&nbsp;użytkownikiem.</p>
+  </li>
+  <li><a href="glossary.xhtml#private_key">Klucz prywatny</a>, który jest tworzony na dysku komputera użytkownika po uzyskaniu certyfikatu.
+
+    <p>Klucz prywatny do certyfikatu podpisującego jest zabezpieczony <a href="glossary.xhtml#master_password">głównym hasłem</a>, a&nbsp;&brandShortName; nie udostępnia go osobom trzecim. Kurier Poczty używa klucza prywatnego do tworzenia unikalnego i&nbsp;weryfikowalnego podpisu cyfrowego dla każdej wiadomości do podpisania.</p>
+  </li>
+</ul>
+
+<h3 id="how_encryption_works">Jak działa szyfrowanie</h3>
+
+<p>Aby zaszyfrować wiadomość niezbędny jest <a href="glossary.xhtml#encryption_certificate">certyfikat szyfrowania</a> dla każdego z&nbsp;adresatów wiadomości. Klucz publiczny w&nbsp;każdym certyfikacie jest używany do zaszyfrowania wiadomości dla danego adresata.</p>
+
+<p>Wiadomość nie może zostać zaszyfrowana jeżeli użytkownik nie posiada certyfikatu dla żadnego adresata.</p>
+
+<p>Oprogramowanie adresata używa jego klucza prywatnego, umieszczonego na jego komputerze, do odszyfrowania otrzymanej wiadomości.</p>
+  
+<p>[<a href="#signing_and_encrypting_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="getting_other_peoples_certificates">Uzyskiwanie certyfikatów osób trzecich</h2>
+
+<p>Wysłanie wiadomości zawierającej podpis cyfrowy powoduje dołączenie do tej wiadomości certyfikatu szyfrowania. Dlatego najłatwiejszą metodą uzyskania certyfikatu drugiej osoby jest otrzymanie od tej osoby podpisanej cyfrowo wiadomości.</p>
+
+<p>Po odebraniu takiej wiadomości certyfikat jest automatycznie zapisywany przez <a href="certs_help.xhtml">Menedżera certyfikatów</a>, który zarządza certyfikatami. Jest to bardzo użyteczne, ponieważ dla każdego adresata zaszyfrowanej wiadomości potrzebny jest certyfikat.</p>
+
+<p>Inną metodą uzyskania certyfikatów jest wyszukanie ich w&nbsp;publicznych katalogach takich jak <q>książka telefoniczna</q> utrzymywana przez wiele przedsiębiorstw.</p>
+
+<p>Istnieje również możliwość automatycznego wyszukiwania certyfikatów. Funkcję tę można włączyć w&nbsp;<a href="mailnews_preferences.xhtml#addressing_preferences">Preferencje adresowania Kuriera Poczty &brandShortName;</a> lub <a href="mailnews_account_settings.xhtml#addressing">Preferencje komponowania Kuriera Poczty &brandShortName;</a> i&nbsp;skonfigurować do wyszukiwania adresów e-mail w&nbsp;katalogu.</p>
+
+<p>Jeżeli używane jest konto skonfigurowane do wyszukiwania adresów w&nbsp;katalogu, to ten sam katalog jest przeszukiwany pod kątem odpowiednich certyfikatów przy próbie wysłania zaszyfrowanej wiadomości do jednego lub więcej adresatów, dla których użytkownik nie posiada zapisanego certyfikatu.</p>
+
+<p>W&nbsp;katalogu będą również wyszukiwane brakujące certyfikaty po wybraniu opcji Pokaż informacje o&nbsp;zabezpieczeniach z&nbsp;menu dostępnego po kliknięciu strzałki na prawej części przycisku z&nbsp;ikoną Zabezpieczenia.</p>
+
+<p>[<a href="#signing_and_encrypting_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="configuring_security_settings">Konfigurowanie ustawień zabezpieczeń</h2>
+
+<p>Po uzyskaniu certyfikatu (lub certyfikatów) do szyfrowania wiadomości, użytkownik musi określić, których certyfikatów będzie używał do podpisywania i&nbsp;szyfrowania wiadomości.</p> 
+
+<p>Informacje odnośnie uzyskiwania certyfikatów zawarte są w&nbsp;rozdziale <a href="using_certs_help.xhtml#getting_your_own_certificate">Uzyskiwanie własnego certyfikatu</a>.</p>
+
+<p>Aby określić, których certyfikatów używać dla poszczególnych kont, należy w&nbsp;oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z&nbsp;menu Edycja wybrać Konfiguracja kont.</li>
+  <li>Kliknąć Zabezpieczenia na liście pod nazwą konta, którego ustawienia zabezpieczeń mają być konfigurowane.</li>
+  <li>W&nbsp;polu Podpis cyfrowy nacisnąć przycisk Wybierz. (Użytkownik może zostać poproszony o&nbsp;podanie <a href="glossary.xhtml#master_password">głównego hasła</a>, aby móc przeprowadzić dalsze czynności.)
+
+    <p>Wyświetlone zostanie okno dialogowe umożliwiające wybór spośród dostępnych certyfikatów podpisujących.</p>
+  </li>
+  <li>Wybrać certyfikat, który ma być używany i&nbsp;nacisnąć klawisz OK.</li>
+  <li>Przeprowadzić te same czynności w&nbsp;dla pola Szyfrowanie: nacisnąć przycisk Wybierz, wybrać certyfikat, który ma być użyty do szyfrowania i&nbsp;nacisnąć przycisk OK.</li>
+
+  <p>W&nbsp;wybranych przypadkach użytkownik może użyć do szyfrowania tego samego certyfikatu, który będzie używany do podpisywania. Należy się skonsultować z&nbsp;administratorem systemu w&nbsp;celu uzyskania dokładnej informacji.</p>
+</ol>
+
+<p>Opcjonalnie, użytkownik może określić, że domyślnie wszystkie wiadomości wysyłane z&nbsp;danego konta mają być podpisywane cyfrowo lub szyfrowane. Te ustawienia kont służą tylko ułatwieniu pracy i&nbsp;można je zmienić dla poszczególnych wiadomości.</p>
+
+<p>Aby skonfigurować domyślne ustawienia podpisywania i&nbsp;szyfrowania, należy w&nbsp;panelu Zabezpieczenia wybranego konta (opisanym powyżej) ustawić odpowiednie opcje:</p>
+
+<ul>
+  <li>W&nbsp;polu Podpis cyfrowy:
+    <ul>
+      <li><strong>Podpisz cyfrowo wiadomości (domyślnie)</strong>: Kiedy ta opcja jest zaznaczona wszystkie wiadomości wysyłane z&nbsp;tego konta będą podpisywane cyfrowo, chyba że użytkownik zdecyduje inaczej przed wysłaniem wiadomości. Wyłączenie takiego domyślnego działania następuje po odznaczeniu opcji.</li>
+    </ul>
+  </li>
+  <li>W&nbsp;polu Szyfrowanie wiadomości (wybrać jedną opcję):
+    <ul>
+      <li><strong>Nigdy (nie używaj szyfrowania)</strong>: Kiedy ta opcja jest wybrana, wiadomości wysyłane z&nbsp;tego konta nie będą szyfrowane, chyba że użytkownik zdecyduje inaczej przed wysłaniem wiadomości.</li>
+      <li><strong>Wymagaj (nie można wysłać wiadomości jeśli nie wszyscy adresaci mają certyfikat)</strong>: Kiedy ta opcja jest wybrana, wiadomości wysyłane z&nbsp;tego konta będą szyfrowane, ale tylko wtedy jeżeli użytkownik posiada ważny certyfikat dla każdego adresata wiadomości. Jeżeli użytkownik nie posiada wszystkich wymaganych certyfikatów, to nie będzie można wysłać wiadomości, chyba że szyfrowanie zostanie dla tej wiadomości wyłączone.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Po zakończeniu konfigurowania ustawień zabezpieczeń wiadomości należy nacisnąć klawisz OK w&nbsp;celu ich zatwierdzenia.</p>
+ 
+<p>[<a href="#signing_and_encrypting_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="signing_and_encrypting_a_new_message">Podpisywanie i&nbsp;szyfrowanie nowej wiadomości</h2>
+
+<p>Zanim będzie możliwe podpisywanie cyfrowe lub szyfrowanie wiadomości, użytkownik musi uzyskać co najmniej jeden certyfikat wiadomości i&nbsp;poprawnie skonfigurować ustawienia zabezpieczeń wiadomości. Więcej informacji jak to zrobić w&nbsp;rozdziale <a href="#about_digital_signatures_and_encryption">O&nbsp;podpisach cyfrowych i&nbsp;szyfrowaniu</a>.</p>
+
+<p>Ustawienia zdefiniowane w&nbsp;<a href="mailnews_account_settings.xhtml#security">Ustawieniach zabezpieczeń kont pocztowych i&nbsp;grup dyskusyjnych</a> określają domyślne ustawienia dla każdego okna tworzenia nowej wiadomości (Komponowanie) do wysłania.</p>
+
+<p>Aby otworzyć okno Komponowanie, należy w&nbsp;oknie Kuriera Poczty kliknąć przycisk Nowa. Domyślne ustawienia zabezpieczeń można szybko odczytać na podstawie obecności lub nieobecności poniższych ikon w&nbsp;prawym dolnym rogu okna:</p>
+
+<table>
+  <tr>
+    <td><img src="chrome://messenger/skin/smime/icons/hdrSignOk.gif"
+      alt="ikona podpisu cyfrowego"/></td><td>Wiadomość zostanie podpisana cyfrowo (zakładając, że użytkownik ma ważny certyfikat identyfikujący go).</td>
+  </tr>
+  <tr>
+    <td><img src="chrome://messenger/skin/smime/icons/hdrCryptoOk.gif"
+      alt="ikona szyfrowania"/></td><td>Wiadomość zostanie zaszyfrowana (zakładając, że użytkownik ma ważne certyfikaty dla wszystkich adresatów).</td>
+  </tr>
+</table>
+
+<p>Aby włączyć lub wyłączyć te ustawienia, należy kliknąć strzałkę na prawej części przycisku z&nbsp;ikoną Zabezpieczenia w&nbsp;pasku narzędzi poczty i&nbsp;wybrać z&nbsp;wyświetlonej listy odpowiednią pozycję:</p>
+
+<ul>
+  <li><strong>Nie szyfruj tej wiadomości</strong>: Należy wybrać, aby wyłączyć szyfrowanie dla tej wiadomości. Wiadomość zostanie przesłana w&nbsp;postaci niezaszyfrowanej.</li>
+  <li><strong>Zaszyfruj tę wiadomość</strong>: Należy wybrać, aby włączyć szyfrowanie dla tej wiadomości. Wiadomość zostanie przesłana w&nbsp;postaci zaszyfrowanej. Ale nie będzie można jej wysłać jeżeli użytkownik nie posiada ważnych certyfikatów dla wszystkich adresatów.</li>
+  <li><strong>Podpisz cyfrowo tę wiadomość</strong>: Należy wybrać, aby włączyć lub wyłączyć podpisywanie cyfrowe tej wiadomości. Włączenie opcji sygnalizowane jest znaczkiem przy jej nazwie.</li> 
+  <li><strong>Pokaż informacje o&nbsp;zabezpieczeniach</strong>: Należy wybrać, aby wyświetlić informacje o&nbsp;stanie zabezpieczeń tej wiadomości. Pozwala to na określenie, czy dla któregoś z&nbsp;adresatów nie zachodzi potrzeba uzyskania certyfikatu.</li>
+</ul>
+
+<p>Aby przejrzeć szczegółowe informacje o&nbsp;zabezpieczeniach wiadomości można również kliknąć ikonę klucza lub kłódki jak opisane w&nbsp;rozdziale <a href="#message_security_compose_window">Zabezpieczenia wiadomości &mdash; komponowanie wiadomości</a>.</p>
+
+<p>[<a href="#signing_and_encrypting_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="reading_signed_and_encrypted_messages">Odczytywanie podpisanych i&nbsp;zaszyfrowanych wiadomości</h2>
+
+<p>Podczas przeglądania podpisanej cyfrowo lub zaszyfrowanej wiadomości w&nbsp;oknie Kuriera Poczty poniższe ikony w&nbsp;prawym górnym rogu nagłówka wiadomości określają stan zabezpieczeń wiadomości:</p>
+  
+<table>
+  <tr>
+    <td><img src="chrome://messenger/skin/smime/icons/hdrSignOk.gif" alt="ikona podpisu cyfrowego"/></td><td>Wiadomość jest podpisana cyfrowo i&nbsp;została poprawnie zweryfikowana. Jeżeli wystąpił problem z&nbsp;weryfikacją podpisu, to pióro na ikonie jest uszkodzone.</td>
+  </tr>
+  <tr>
+    <td><img src="chrome://messenger/skin/smime/icons/hdrSignUnknown.gif" alt="ikona nieznanego podpisu"/></td><td>Wiadomość jest podpisana cyfrowo, ale dołączony jest do niej duży załącznik, który nie został jeszcze wczytany z&nbsp;serwera IMAP. Z&nbsp;tego powodu podpis nie został zweryfikowany. Po kliknięciu w&nbsp;ikonę załącznik zostanie wczytany i&nbsp;nastąpi weryfikacja podpisu cyfrowego.</td>
+  </tr>
+  <tr>
+    <td><img src="chrome://messenger/skin/smime/icons/hdrCryptoOk.gif" alt="ikona szyfrowania"/></td><td>Wiadomość jest zaszyfrowana. Jeżeli wystąpił problem z&nbsp;szyfrowaniem, to klucz na ikonie jest uszkodzony.</td>
+  </tr>
+</table>
+
+<p>Więcej informacji o&nbsp;weryfikacji certyfikatów w&nbsp;rozdziale <a href="using_certs_help.xhtml#controlling_validation">Kontrola ważności</a>.</p>
+
+<p>Aby wyświetlić więcej informacji o&nbsp;zabezpieczeniach wiadomości, należy kliknąć ikonę klucza lub kłódki, albo postępować według instrukcji opisanych w&nbsp;rozdziale <a href="#message_security_received_message">Zabezpieczenia wiadomości &mdash; odebrana wiadomość</a>.</p>
+
+<p>[<a href="#signing_and_encrypting_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="message_security_compose_window">Zabezpieczenia wiadomości &mdash; komponowanie wiadomości</h2>
+
+<p>Ten rozdział opisuje okno dialogowe Zabezpieczenia wiadomości, które można wyświetlić dla dowolnej tworzonej wiadomości. Aby je wyświetlić, należy kliknąć na przycisku z&nbsp;ikoną Zabezpieczenia na pasku narzędzi poczty w&nbsp;oknie komponowania wiadomości.</p>
+
+<p>Okno dialogowe Zabezpieczenia wiadomości opisuje sposób wysłania wiadomości:</p>
+
+<ul>
+  <li><strong>Podpisano cyfrowo</strong>: W&nbsp;tej linii znajduje się informacja dotycząca możliwości podpisania wiadomości. Są trzy przypadki:
+    <ul>
+      <li><strong>Tak</strong>: Podpis cyfrowy został włączony dla tej wiadomości, użytkownik ma ważny certyfikat identyfikujący i&nbsp;wiadomość może zostać podpisana.</li>
+      <li><strong>Nie</strong>: Podpis cyfrowy został wyłączony dla tej wiadomości.</li>
+      <li><strong>Nie jest to możliwe</strong>: Podpis cyfrowy został włączony dla tej wiadomości. Jednak ważny <a href="glossary.xhtml#certificate">certyfikat</a> identyfikujący użytkownika w&nbsp;tym celu jest niedostępny lub występuje inny problem uniemożliwiający cyfrowe podpisanie wiadomości.</li>
+    </ul>
+  </li>
+  <li><strong>Zaszyfrowano</strong>: W&nbsp;tej linii znajduje się informacja dotycząca możliwości zaszyfrowania wiadomości. Są trzy przypadki:
+    <ul>
+      <li><strong>Tak</strong>: Szyfrowanie zostało włączone dla tej wiadomości, ważne certyfikaty dla wszystkich adresatów są dostępne i&nbsp;wiadomość może zostać zaszyfrowana.</li>
+      <li><strong>Nie</strong>: Szyfrowanie zostało wyłączone dla tej wiadomości.</li>
+      <li><strong>Nie jest to możliwe</strong>: Szyfrowanie zostało włączone dla tej wiadomości. Jednak ważny certyfikat dla co najmniej jednego adresata nie jest dostępny, adresaci nie zostali określeni lub występuje inny problem uniemożliwiający zaszyfrowanie wiadomości.</li>
+    </ul>
+  </li>
+</ul>
+
+<!-- TODO: start localizing -->
+<p>When you compose a message and select a different account, the signing
+  and encryption preferences are updated to reflect the settings of
+  the newly selected account.</p>
+<!-- TODO: stop localizing -->
+
+<p>W&nbsp;oknie dialogowym Zabezpieczenia wiadomości wyświetlane są również dostępne certyfikaty dla adresatów tworzonej wiadomości:</p>
+
+<ul>
+  <li><strong>Pokaż</strong> Aby wyświetlić szczegółowe informacje o&nbsp;dowolnym certyfikacie z&nbsp;listy, należy zaznaczyć wybrany certyfikat i&nbsp;nacisnąć przycisk Pokaż.</li>
+</ul>
+
+<p>Więcej informacji o&nbsp;uzyskiwaniu certyfikatów i&nbsp;konfigurowaniu ustawień zabezpieczeń wiadomości w&nbsp;rozdziale <a href="#signing_and_encrypting_messages">Podpisywanie i&nbsp;szyfrowanie wiadomości</a>.</p>
+
+<p>Wybór opcji szyfrowania i&nbsp;podpisywania cyfrowego dla danej wiadomości następuje poprzez wybór odpowiednich opcji z&nbsp;menu dostępnego po kliknięciu strzałki na prawej części przycisku z&nbsp;ikoną Zabezpieczenia w&nbsp;oknie Komponowanie.</p>
+
+<p>Informacje o&nbsp;ustawianiu domyślnych opcji szyfrowania i&nbsp;podpisywania cyfrowego dla wszystkich wiadomości są zawarte w&nbsp;rozdziale <a href="mailnews_account_settings.xhtml#security">Ustawienia kont pocztowych i&nbsp;grup dyskusyjnych &mdash; Zabezpieczenia</a></p>
+
+<p>[<a href="#signing_and_encrypting_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="message_security_received_message">Zabezpieczenia wiadomości &mdash; odebrana wiadomość</h2>
+
+<p>Ten rozdział opisuje okno dialogowe Zabezpieczenia wiadomości, które można wyświetlić dla każdej odebranej wiadomości. Aby wyświetlić to okno, należy:</p>
+
+<ol>
+  <li>W&nbsp;oknie Kuriera Poczty wybrać wiadomość, dla której mają być wyświetlone informacje o&nbsp;zabezpieczeniach.</li>
+  <li>Z&nbsp;menu Widok wybrać Informacje o&nbsp;zabezpieczeniach wiadomości.</li>
+</ol>
+
+<p>Okno dialogowe Zabezpieczenia wiadomości zawiera następujące informacje:</p>
+
+<ul>
+  <li><strong>Podpis cyfrowy</strong>: Górna część okna dialogowego zawiera informacje o&nbsp;podpisie cyfrowym, czy jest dostępny i&nbsp;został pozytywnie zweryfikowany.</li>
+  
+  <p>Jeżeli weryfikacja niepowiodła się przy użyciu protokołu OCSP, należy sprawdzić ustawienia OCSP w&nbsp;<a href="certs_prefs_help.xhtml#privacy_and_security_preferences_certificates">Preferencjach certyfikatów</a>. Jeżeli użytkownik nie zna protokołu OCSP, należy skonsultować ustawienia z&nbsp;administratorem systemu. Jeżeli ustawienia są poprawne, to może występować problem z&nbsp;serwisem OCSP lub certyfikat użyty do stworzenia podpisu jest już nieważny.</p>
+  
+  <p>Jeżeli podpis jest nieprawidłowy ze względu na problem z&nbsp;ustawieniami zaufania certyfikatu, to można użyć <a href="certs_help.xhtml">Menedżer certyfikatów</a> do przejrzenia lub zmiany tych ustawień.</p>
+
+  <li><strong>Pokaż certyfikat podpisujący</strong>: Jeżeli wiadomość jest podpisana cyfrowo, to po naciśnięciu tego przycisku wyświetlone zostanie okno dialogowe podglądu certyfikatu użytego do podpisania.</li>
+  <li><strong>Szyfrowanie</strong>: Dolna część okna dialogowego zawiera informacje o&nbsp;stanie zaszyfrowania wiadomości i&nbsp;problemach z&nbsp;deszyfrowaniem.
+    <ul>
+      <li>Jeżeli zawartość wiadomości została zmieniona w&nbsp;trakcie przesyłania, to użytkownik powinien poprosić nadawcę o&nbsp;jej ponowne wysłanie. Zmiany mogły nastąpić z&nbsp;powodu problemów w&nbsp;działaniu sieci.</li>
+      <li>Jeżeli kopia własnego certyfikatu użytkownika (użyta przez nadawcę do zaszyfrowania wiadomości) nie jest dostępna na komputerze użytkownika, to nie ma możliwości uzyskania klucza prywatnego niezbędnego do jej odszyfrowania. Jedynym rozwiązaniem jest wczytanie certyfikatu i&nbsp;klucza prywatnego z&nbsp;kopii zapasowej. Więcej informacji w&nbsp;rozdziale <a href="certs_help.xhtml#your_certificates">Twoje certyfikaty</a>. Jeżeli użytkownik nie posiada kopii zapasowej certyfikatu (lub dostępu do niej), to odszyfrowanie wiadomości jest niemożliwe.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#signing_and_encrypting_messages">Na początek rozdziału</a>]</p>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Nylig brukte filer">
+<!ENTITY  documentsInMenu.label         "Maksimalt antall filer i listen:">
+<!ENTITY  documentsInMenu.accesskey     "M">
+<!ENTITY  savingFiles.title             "Ved lagring eller publisering av sider">
+<!ENTITY  preserveExisting.label        "Behold opprinnelig kildekodeformatering">
+<!ENTITY  preserveExisting.accesskey    "e">
+<!ENTITY  preserveExisting.tooltip      "Behold linjeskift og sidens opprinnelige formatering">
+<!ENTITY  saveAssociatedFiles.label     "Lagre bilder og andre brukte filer ved lagring av sider">
+<!ENTITY  saveAssociatedFiles.accesskey "L">
+<!ENTITY  showPublishDialog.label       "Vis alltid Publiser-dialogen ved publisering av sider">
+<!ENTITY  showPublishDialog.accesskey   "V">
+<!ENTITY  composerEditing.label         "Redigering">
+<!ENTITY  maintainStructure.label       "Behold tabellutseende ved innsetting eller sletting av celler">
+<!ENTITY  maintainStructure.tooltip     "Behold tabellens rektangulære form ved å automatisk legge til celler etter at celler slettes eller setter inn">
+<!ENTITY  maintainStructure.accesskey   "B">
+<!ENTITY  useCSS.label                  "Use CSS styles instead of HTML elements and attributes">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "Linjeskift i et avsnitt lager alltid et nytt avsnitt">
+<!ENTITY  crInPCreatesNewP.accesskey    "L">

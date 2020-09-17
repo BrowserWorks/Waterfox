@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Orriaren koloreak eta atzeko planoa">
+<!ENTITY pageColors.label "Orriaren koloreak">
+<!ENTITY defaultColorsRadio.label "Irakurlearen kolore lehenetsiak (ez ezarri koloreak orrian)">
+<!ENTITY defaultColorsRadio.accessKey "z">
+<!ENTITY defaultColorsRadio.tooltip "Erabili soilik ikustailearen (irakurlearen) arakatzailearen kolore-ezarpenak">
+<!ENTITY customColorsRadio.label "Erabili kolore pertsonalizatuak:">
+<!ENTITY customColorsRadio.accessKey "p">
+<!ENTITY customColorsRadio.tooltip "Kolore-ezarpen hauek ikustailearen arakatzailearen ezarpenen gainetik jartzen dira">
+
+<!ENTITY normalText.label "Testu normala">
+<!ENTITY normalText.accessKey "n">
+<!ENTITY linkText.label "Loturaren testua">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "Lotura aktiboen testua">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Bisitatutako loturen testua">
+<!ENTITY visitedLinkText.accessKey "B">
+<!ENTITY background.label "Atzeko planoa:">
+<!ENTITY background.accessKey "A">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Atzeko planoko irudia:">
+<!ENTITY backgroundImage.accessKey "r">
+<!ENTITY backgroundImage.tooltip "Erabili irudi-fitxategi bat zure orriaren atzeko plano gisa">
+<!ENTITY backgroundImage.shortenedDataURI "Moztutako URI datuak (kopiatzeak URI osoa kokatuko du arbelean)">

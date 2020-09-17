@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Vacib Xəbərlər">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Firefox səyyahına artıq saxladığınız məlumatları &brandShortName; səyyahının bu quruluşu ilə sinxronlaşdırmaq istəyirsinizsə, &syncBrand.fxAccount.label;nıza daxil olun.">
+<!ENTITY continue-button "Davam et">
+
+<!ENTITY mainText "&brandShortName; səyyahının bu quruluşunda yeni profil var. Bu kompüterinizdəki digər Firefox quruluşları (Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition və Firefox Nightly daxil) ilə əlfəcin, parol və istifadəçi nizamlamalarını paylaşmır.">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Enporzhiañ">
+<!ENTITY importAll.label          "Enporzhiañ pep tra">
+<!ENTITY importAll.accesskey      "E">
+<!ENTITY importMail.label         "Lizher">
+<!ENTITY importMail.accesskey     "L">
+<!ENTITY importFeeds.label        "Koumanantoù da lanvioù">
+<!ENTITY importFeeds.accesskey    "o">
+<!ENTITY importAddressbook.label  "Karnedoù chomlec'hioù">
+<!ENTITY importAddressbook.accesskey "K">
+<!ENTITY importSettings.label     "Arventennoù">
+<!ENTITY importSettings.accesskey "A">
+<!ENTITY importFilters.label      "Siloù">
+<!ENTITY importFilters.accesskey  "S">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; Skoazeller enporzhiañ posteloù">
+<!ENTITY importShortDesc.label    "Enporzhiañ ar posteloù, karnedoù chomlec'hioù, arventennoù ha siloù diouzh goulevioù all">
+
+<!ENTITY importDescription1.label "Posteloù, enankadoù karned chomlec'hioù, gwellvezioù ha/pe siloù diouzh arloadoù posteloù all ha mentrezhoù boutin karnedoù a enporzhio ar skoazeller-mañ e &brandShortName;.">
+<!ENTITY importDescription2.label "Ur wech enporzhiet e viot barrek d'o zizhout diouzh karned chomlec'hioù ha/pe posteloù &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Diuzit ar goulev ma vo enporzhiet dioutañ :">
+<!ENTITY selectDescriptionB.label "Mar plij diuzit ur gont a zo endeo pe grouit ur gont nevez :">
+<!ENTITY selectDescription.accesskey "i">
+<!ENTITY acctName.label           "Anv :">
+<!ENTITY acctName.accesskey       "A">
+<!ENTITY noModulesFound.label     "N'eus bet kavet restr pe arload ebet evit enporzhiañ roadennoù.">
+
+<!ENTITY back.label               "&lt; Kent">
+<!ENTITY forward.label            "War-lerc'h &gt;">
+<!ENTITY finish.label             "Echuiñ">
+<!ENTITY cancel.label             "Nullañ">
+
+<!ENTITY select.label             "Diuzañ rizh an dafar da enporzhiañ :">
+
+<!ENTITY title.label              "Titl">
+<!ENTITY processing.label         "Oc'h enporzhiañ…">

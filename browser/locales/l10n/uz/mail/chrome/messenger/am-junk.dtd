@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Spam sozlamalari">
+<!ENTITY trainingDescription.label "Agar u yoqib qo‘yiladigan bo‘lsa, &quot;Spam&quot; panelidagi tugma yordamida xabarlarni spak yoki spam emas deb belgilab, &brandShortName; dasturini spam xabarlarini aniqlashga o‘rgatish kerak. Siz spam va spam bo‘lmagan xabarlarni tasdiqlashigiz kerak. Shundan so‘ng &brandShortName; dasturi avtomatik tarzda spam sifatida belgilay oladi.">
+<!ENTITY level.label "Ushbu hisob uchun avtomatik spam xatlarni aniqlash boshqaruvini yoqib qo‘yish">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "Yangi spam xabarni ko‘chirish:">
+<!ENTITY move.accesskey "k">
+<!ENTITY junkFolderOn.label "&quot;Spam&quot; jildi:">
+<!ENTITY junkFolderOn.accesskey "S">
+<!ENTITY otherFolder.label "Boshqa:">
+<!ENTITY otherFolder.accesskey "o">
+<!ENTITY purge1.label "Ushbudan eskiroq bo‘lgan spam xatlarni avtomatik tarzda o‘chirish">
+<!ENTITY purge1.accesskey "v">
+<!ENTITY purge2.label "kun">
+
+<!ENTITY whitelistHeader.label "Ushbu jo‘natuvchiga tegishli xabarlar avtomatik tarzda spam sifatida :belgilanasin">
+<!ENTITY whitelistHeader.accesskey ":">
+
+<!ENTITY ispHeadersWarning.label "Agar bu parametr tanlansa, &brandShortName; bu tashqi tasniflovchi tomonidan belgilangan xabarlarni spam deb hisoblaydi.">
+<!ENTITY ispHeaders.label "Sarlahasi quyidagicha o‘rnatilgan bo‘lsa spam deb hisoblansin: ">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "Tanlash">
+<!ENTITY junkActions.label "Mo‘ljal va eslab qolish">
+
+<!ENTITY globalJunkPrefs.label "Global spam parametrlari…">
+<!ENTITY globalJunkPrefs.accesskey "G">

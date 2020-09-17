@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Eigenskippen">
+
+<!ENTITY generalInfo.label                       "Algemiene ynformaasje">
+<!ENTITY folderCharsetFallback2.label            "Tebekfaltekstkodearring:">
+<!ENTITY folderCharsetFallback2.accesskey        "e">
+<!ENTITY folderCharsetEnforce2.label             "Kodearring tapasse op alle berjochten yn de map (yndividuele ynstellingen tekstkodearring en autodeteksje sille negearre wurde)">
+<!ENTITY folderCharsetEnforce2.accesskey         "K">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Gearfettingsbestân opnij meitsje">
+<!ENTITY folderRebuildSummaryFile2.label         "Map reparearje">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "r">
+<!ENTITY folderRebuildSummaryFile.explanation    "Somtiden wurdt it mapyndeksbestân (.msf) skansearre en liket it oft berjochten misse of fuortsmiten berjochten weromkomme; de map reparearje kin dit oplosse.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Berjochten yn dizze map meinimme yn globale sykresultaten">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "Behâldbelied">
+<!ENTITY retentionUseAccount.label  "Brûk myn accountynstellingen">
+<!ENTITY retentionUseAccount.accesskey "r">
+<!ENTITY daysOld.label "dagen">
+<!ENTITY message.label "">
+<!ENTITY retentionCleanup.label "Om skiifromte frij te meitsjen, kinne âlde berjochten foargoed fuortsmiten wurde">
+<!ENTITY retentionCleanupImap.label "Om skiifromte frij te meitsjen, kinne âlde berjochten permanint fuortsmiten wurde, sawol lokale kopyen as de orizjinele op de server.">
+<!ENTITY retentionCleanupPop.label "Om skiifromte frij te meitsjen, kinne âlde berjochten permanint fuortsmiten wurde, ynklusyf orizjinelen op de server.">
+<!ENTITY retentionDeleteMsg.label "Berjochten fuortsmite dy't âlder binne as">
+<!ENTITY retentionDeleteMsg.accesskey "o">
+<!ENTITY retentionKeepAll.label "Gjin berjochten fuortsmite">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "Alle fuortsmite, útsein de lêste">
+<!ENTITY retentionKeepRecent.accesskey "a">
+<!ENTITY retentionApplyToFlagged.label "Berjochten mei stjerke altyd bewarje">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Syngronisaasje">
+<!ENTITY folderCheckForNewMessages2.label         "By it krijen fan nije berjochten foar dit account, kontrolearje altyd dizze map">
+<!ENTITY folderCheckForNewMessages2.accesskey     "k">
+
+<!ENTITY offlineFolder.check.label               "Dizze map foar gebrûk sûnder ferbining selektearje">
+<!ENTITY offlineFolder.check.accesskey           "s">
+<!ENTITY offlineFolder.button.label              "No downloade">
+<!ENTITY offlineFolder.button.accesskey          "d">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Dizze nijsgroep foar gebrûk sûnder ferbining selektearje">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "f">
+<!ENTITY offlineNewsgroup.button.label           "No downloade">
+<!ENTITY offlineNewsgroup.button.accesskey       "d">
+
+<!ENTITY folderProps.name.label                  "Namme:">
+<!ENTITY folderProps.name.accesskey              "m">
+<!ENTITY folderProps.color.label                 "Piktogramkleur:">
+<!ENTITY folderProps.color.accesskey             "k">
+<!ENTITY folderProps.reset.tooltip               "Standertkleur opnij ynstelle">
+<!ENTITY folderProps.location.label              "Lokaasje:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Diele">
+<!ENTITY privileges.button.label                 "Privileezjes…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Jo hawwe de folgjende foegen:">
+<!ENTITY folderOtherUsers.label                  "Oaren mei tagong ta dizze map:">
+<!ENTITY folderType.label                        "Maptype:">
+
+<!ENTITY folderQuotaTab.label                    "Kwota">
+<!ENTITY folderQuotaUsage.label                  "Gebrûk">
+<!ENTITY folderQuotaStatus.label                 "Steat:">
+
+<!ENTITY numberOfMessages.label                  "Oantal berjochten:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "net bekend">
+<!ENTITY sizeOnDisk.label                        "Diskromte:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "net bekend">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Ger tinfaliyin n tusnakt">
+
+<!ENTITY sourceEditField.label "Sekcem tangalt aɣbalu Latex:">
+
+<!ENTITY options.label "Iɣewwaṛen">
+<!ENTITY optionInline.label "Askar d axel n izirig">
+<!ENTITY optionInline.accesskey "g">
+<!ENTITY optionDisplay.label "Askar n uskan">
+<!ENTITY optionDisplay.accesskey "k">
+<!ENTITY optionLTR.label "Taɣda seg uyeffus s aẓelmaḍ">
+<!ENTITY optionLTR.accesskey "d">
+<!ENTITY optionRTL.label "Taɣda seg uẓelmaḍ s ayeffus">
+<!ENTITY optionRTL.accesskey "a">
+
+<!ENTITY insertButton.label "Senni">
+<!ENTITY insertButton.accesskey "S">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nije firtuele sykmap">
+<!ENTITY name.label "Namme:">
+<!ENTITY name.accesskey "N">
+<!ENTITY description.label "Meitsje as in submap fan:">
+<!ENTITY description.accesskey "M">
+
+<!ENTITY searchTermCaption.label "Konfigurearje de brûkte sykkritearia foar dizze firtuele sykmap:">
+
+<!ENTITY folderSelectionCaption.label "Selektearje de troch te sykjen mappen:">
+<!ENTITY chooseFoldersButton.label "Kieze…">
+<!ENTITY chooseFoldersButton.accesskey "K">
+
+<!ENTITY searchOnline.label "Online sykje (Jout up-to-date resultaten foar IMAP- en nijsmappen, mar it duorret langer om de map te iepenjen)">
+<!ENTITY searchOnline.accesskey "O">
+<!ENTITY newFolderButton.label       "Meitsje">
+<!ENTITY newFolderButton.accesskey   "M">
+<!ENTITY editFolderButton.label      "Bywurkje">
+<!ENTITY editFolderButton.accesskey  "B">

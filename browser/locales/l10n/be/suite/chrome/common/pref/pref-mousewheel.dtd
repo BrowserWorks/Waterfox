@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mouseWheel.title "Кола мышы">
+<!ENTITY mouseWheelPanel.label "Вызначыць паводзіны кола мышы, калі яна выкарыстоўваецца з змяняльнай клавішай:">
+<!ENTITY usingJustTheWheel.label "Без змяняльнай клавішы">
+<!ENTITY usingWheelAndAlt.label "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label "&shiftKey.label;">
+<!ENTITY mouseWheelGroup.label "Вертыкальнае пракручванне">
+<!ENTITY mouseWheelHorizGroup.label "Гарызантальнае пракручванне">
+<!ENTITY sameAsVertical.label "Як і вертыкальнае пракручванне">
+<!ENTITY sameAsVertical.accesskey "в">
+<!ENTITY doNothing.label "Не рабіць нічога">
+<!ENTITY doNothing.accesskey "н">
+<!ENTITY doNothingHoriz.accesskey "н">
+<!ENTITY scrollDocument.label "Пракрутка дакумента">
+<!ENTITY scrollDocument.accesskey "к">
+<!ENTITY scrollDocumentHoriz.accesskey "г">
+<!ENTITY history.label "Перайсці назад ці наперад згодна гісторыі азірання">
+<!ENTITY history.accesskey "п">
+<!ENTITY historyHoriz.accesskey "р">
+<!ENTITY zoom.label "Зрабіць старонку большай ці меншай">
+<!ENTITY zoom.accesskey "З">
+<!ENTITY zoomHoriz.accesskey "з">
+<!ENTITY wheelSpeed.label "Хуткасць кола мышы:">
+<!ENTITY wheelSpeed.accesskey "к">
+<!ENTITY wheelSpeedHoriz.accesskey "о">
+<!ENTITY reverseDirection.label "Адваротны кірунак:">
+<!ENTITY reverseDirection.accesskey "А">
+<!ENTITY reverseDirectionHoriz.accesskey "д">

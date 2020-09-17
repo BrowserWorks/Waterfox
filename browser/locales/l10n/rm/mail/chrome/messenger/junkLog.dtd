@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Protocol dad e-mails nungiavischads">
+<!ENTITY adaptiveJunkLogInfo.label "Protocol da las activitads dal filter intelligent per e-mails nungiavischads.">
+<!ENTITY clearLog.label "Svidar il protocol">
+<!ENTITY clearLog.accesskey "s">
+<!ENTITY closeLog.label "Serrar">
+<!ENTITY closeLog.accesskey "r">

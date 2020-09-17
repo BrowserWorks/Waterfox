@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY prefWindow.size "width: 70em; height: 53em;">
+<!ENTITY urlbar.label "Ctrl+Увод на паліцы месцазнаходжання">
+<!ENTITY urlbar.accesskey "м">
+<!ENTITY middleClick.label "Сярэд-пстрык, Ctrl+пстрык ці Ctrl+Увод па спасылкам на старонцы сеціва">
+<!ENTITY middleClick.accesskey "С">

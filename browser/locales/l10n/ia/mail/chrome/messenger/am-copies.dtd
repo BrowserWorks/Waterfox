@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Copias e dossiers">
+<!ENTITY sendingPrefix.label "Post haber inviate messages: ">
+<!ENTITY fccMailFolder.label "Placiar un copia in:">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "Placiar responsas in le dossier del message respondite">
+<!ENTITY fccReplyFollowsParent.accesskey "R">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "CC a iste adresses email:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Adresses separate per virgulas">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "BcC a iste adresses email:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Adresses separate per virgulas">
+<!ENTITY saveMessageDlg.label "Monstrar le fenestra de dialogo de confirmation durante que le messages es salvate">
+<!ENTITY saveMessageDlg.accesskey "s">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Dossier &quot;Inviate&quot; sur:">
+<!ENTITY sentFolderOn.accesskey "I">
+<!ENTITY sentInOtherFolder.label "Altere:">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Archivos de messages">
+<!ENTITY keepArchives.label "Tener archivos de messages in:">
+<!ENTITY keepArchives.accesskey "T">
+<!ENTITY archiveHierarchyButton.label "Optiones de archivo…">
+<!ENTITY archiveHierarchyButton.accesskey "a">
+<!ENTITY archivesFolderOn.label "Dossier &quot;Archivos&quot; sur:">
+<!ENTITY archivesFolderOn.accesskey "D">
+<!ENTITY archiveInOtherFolder.label "Altere:">
+<!ENTITY archiveInOtherFolder.accesskey "A">
+<!ENTITY specialFolders.label "Esbossos e modellos">
+<!ENTITY keepDrafts2.label "Mantener esbossos in:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Dossier &quot;Esbossos&quot; sur:">
+<!ENTITY draftsFolderOn.accesskey "E">
+<!ENTITY draftInOtherFolder.label "Altere:">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "Mantener modellos in:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Dossier &quot;Modellos&quot; sur:">
+<!ENTITY templatesFolderOn.accesskey "M">
+<!ENTITY templateInOtherFolder.label "Altere:">
+<!ENTITY templateInOtherFolder.accesskey "A">

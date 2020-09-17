@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+<!-- Toolbar-only items -->
+<!ENTITY previewToolbarCmd.label "Blaai">
+<!ENTITY previewToolbarCmd.tooltip "Laai hierdie bladsy in die blaaier">
+<!-- File menu items -->
+
+<!ENTITY previewCmd.label "Blaai deur bladsy">
+<!ENTITY previewCmd.accesskey "a">
+<!ENTITY sendPageCmd.label "Stuur bladsy…">
+<!ENTITY sendPageCmd.accesskey "S">
+<!-- View menu items -->
+
+<!ENTITY compositionToolbarCmd.label "Skryf-nutsbalk">
+<!ENTITY compositionToolbarCmd.accesskey "S">
+<!ENTITY formattingToolbarCmd.label "Formateer-nutsbalk">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Redigeermodus-nutsbalk">
+<!ENTITY editmodeToolbarCmd.accesskey "e">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "Formateer">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "Posisioneerrooster">
+<!ENTITY grid.accesskey "s">
+<!ENTITY pageProperties.label "Bladsytitel en -eienskappe…">
+<!ENTITY pageProperties.accesskey "B">
+<!-- Tools menu items -->
+
+<!ENTITY validateCmd.label "Valideer HTML">
+<!ENTITY validateCmd.accesskey "V">
+<!-- Display Mode toolbar and View menu items -->
+
+<!ENTITY NormalModeTab.label "Gewoon">
+<!ENTITY NormalMode.label "Gewoneredigeer-modus">
+<!ENTITY NormalMode.accesskey "G">
+<!ENTITY NormalMode.tooltip "Wys tabelrande en genoemde ankers">
+
+<!ENTITY AllTagsMode.label "HTML-merkers">
+<!ENTITY AllTagsMode.accesskey "e">
+<!ENTITY AllTagsMode.tooltip "Vertoon ikone vir alle HTML-merkers">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Bron">
+<!ENTITY HTMLSourceMode.label "HTML-bron">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Redigeer HTML-bron">
+<!ENTITY PreviewModeTab.label "Voorskou">
+<!ENTITY PreviewMode.label "Voorskou">
+<!ENTITY PreviewMode.accesskey "V">
+<!ENTITY PreviewMode.tooltip "Wys as WYSIWYG (soos in die blaaier)">

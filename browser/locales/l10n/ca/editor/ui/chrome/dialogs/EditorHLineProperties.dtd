@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Propietats de la línia horitzontal">
+
+<!ENTITY dimensionsBox.label "Dimensions">
+<!ENTITY heightEditField.label "Alçada:">
+<!ENTITY heightEditField.accessKey "A">
+<!ENTITY widthEditField.label "Amplada:">
+<!ENTITY widthEditField.accessKey "A">
+<!ENTITY pixelsPopup.value "píxels">
+<!ENTITY alignmentBox.label "Alineació">
+<!ENTITY leftRadio.label "Esquerra">
+<!ENTITY leftRadio.accessKey "E">
+<!ENTITY centerRadio.label "Centre">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.label "Dreta">
+<!ENTITY rightRadio.accessKey "D">
+
+<!ENTITY threeDShading.label "Ombreig en 3D">
+<!ENTITY threeDShading.accessKey "m">
+<!ENTITY saveSettings.label "Utilitza com a valor per defecte">
+<!ENTITY saveSettings.accessKey "d">
+<!ENTITY saveSettings.tooltip "Desa aquests paràmetres per utilitzar-los en inserir línies horitzontals noves">

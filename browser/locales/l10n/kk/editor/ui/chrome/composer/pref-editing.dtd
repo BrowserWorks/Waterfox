@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Жаңа парақтың баптаулары">
+
+<!ENTITY  authorName.label          "Авторы:">
+<!ENTITY  authorName.accesskey      "о">
+<!ENTITY  pageColorHeader           "Әдетті парағының көрінісі">
+
+<!ENTITY defaultColors.label        "Пайдаланушының бастапқы түстері (Парақта түстерді орнатпау)">
+<!ENTITY defaultColors.accesskey    "й">
+<!ENTITY customColors.label         "Таңдауыңызша түстерді қолдану:">
+<!ENTITY customColors.accesskey     "Т">
+
+<!ENTITY normalText.label           "Кәдімгі мәтін">
+<!ENTITY normalText.accesskey       "К">
+<!ENTITY linkText.label             "Сілтеме мәтіні">
+<!ENTITY linkText.accesskey         "С">
+<!ENTITY activeLinkText.label       "Белсенді сілтеме мәтіні">
+<!ENTITY activeLinkText.accesskey   "Б">
+<!ENTITY visitedLinkText.label      "Қаралған сілтеме мәтіні">
+<!ENTITY visitedLinkText.accesskey  "а">
+<!ENTITY background.label           "Фон:">
+<!ENTITY background.accesskey       "Ф">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Сыртқы көрiнiсi:">
+<!ENTITY backgroundImage.accesskey  "к">
+<!ENTITY chooseFile.label           "Файлды таңдау…">
+<!ENTITY chooseFile.accesskey       "т">
+

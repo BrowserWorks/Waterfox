@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Публикуване на страница">
+<!ENTITY windowTitleSettings.label    "Настройки за публикуване">
+<!ENTITY publishTab.label             "Публикуване">
+<!ENTITY settingsTab.label            "Настройки">
+<!ENTITY publishButton.label          "Публикуване">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Име на сайта:">
+<!ENTITY siteList.accesskey           "И">
+<!ENTITY siteList.tooltip             "Изберете сайта, на който искате да публикувате">
+<!ENTITY newSiteButton.label          "Нов сайт">
+<!ENTITY newSiteButton.accesskey      "Н">
+<!ENTITY docDirList.label             "Поддиректория за страницата:">
+<!ENTITY docDirList.accesskey         "П">
+<!ENTITY docDirList.tooltip           "Изберете или напишете името на отдалечената поддиректория за тази страница">
+<!ENTITY publishImgCheckbox.label     "Включително изображения и други файлове">
+<!ENTITY publishImgCheckbox.accesskey "д">
+<!ENTITY publishImgCheckbox.tooltip   "Публикуване на изображенията и другите файлове, свързани с тази страница">
+<!ENTITY sameLocationRadio.label      "Използване на същото място като на страницата">
+<!ENTITY sameLocationRadio.accesskey  "И">
+<!ENTITY sameLocationRadio.tooltip    "Публикуване на файловете на същото място като на страницата">
+<!ENTITY useSubdirRadio.label         "Използване на тази поддиректория в сайта:">
+<!ENTITY useSubdirRadio.accesskey     "р">
+<!ENTITY useSubdirRadio.tooltip       "Публикуване на файловете в избраната отдалечена поддиректория">
+<!ENTITY otherDirList.tooltip         "Изберете или напишете името на отдалечената поддиректория, където файловете да бъдат публикувани">
+<!ENTITY pageTitle.label              "Заглавие на страницата:">
+<!ENTITY pageTitle.accesskey          "З">
+<!ENTITY pageTitle.tooltip            "Въведете заглавие, с което страницата ще се идентифицира в прозореца и в отметките">
+<!ENTITY pageTitleExample.label       "напр.: &quot;Моята Интернет страница&quot;">
+<!ENTITY filename.label               "Име на файл:">
+<!ENTITY filename.accesskey           "ф">
+<!ENTITY filename.tooltip             "Въведете име на файла, включително '.html' за уеб страница">
+<!ENTITY filenameExample.label        "напр.: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label       "Установява като стандартна">
+<!ENTITY setDefaultButton.accesskey   "с">
+<!ENTITY removeButton.label           "Премахване на сайт">
+<!ENTITY removeButton.accesskey       "П">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Публикувани сайтове">
+<!ENTITY serverInfo.label             "Информация за сървър">
+<!ENTITY loginInfo.label              "Информация за влизане">
+<!ENTITY siteName.label               "Име на сайта:">
+<!ENTITY siteName.accesskey           "й">
+<!ENTITY siteName.tooltip             "Псевдоним, идентифициращ публикувания сайт (напр.: 'МоятСайт')">
+<!ENTITY siteUrl.label                "Адрес за публикуване (напр.: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "А">
+<!ENTITY siteUrl.tooltip              "FTP:// или HTTP:// адрес, даден от вашия ISP или хостващия сайт">
+<!ENTITY browseUrl.label              "HTTP адрес на вашата начална страница (напр.: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "е">
+<!ENTITY browseUrl.tooltip            "HTTP:// адресът на вашата домашна директория (без файлови имена)">
+<!ENTITY username.label               "Потребителско име:">
+<!ENTITY username.accesskey           "П">
+<!ENTITY username.tooltip             "Потребителското име, което използвате за регистриране при вашия ISP или хостващия сайт">
+<!ENTITY password.label               "Парола:">
+<!ENTITY password.accesskey           "о">
+<!ENTITY password.tooltip             "Паролата, използвана с вашето потребителско име">
+<!ENTITY savePassword.label           "Запазване на парола">
+<!ENTITY savePassword.accesskey       "З">
+<!ENTITY savePassword.tooltip         "Използвайте тази опция, за да запазите паролата чрез управлението на пароли">

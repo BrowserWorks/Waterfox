@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Library">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Ayusin">
+<!ENTITY organize.accesskey    "A">
+<!ENTITY organize.tooltip      "Ayusin ang iyong mga bookmark">
+
+<!ENTITY file.close.label               "Isara">
+<!ENTITY file.close.accesskey           "I">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Views">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Palitan ang iyong view">
+<!ENTITY view.columns.label             "Ipakita ang mga Column">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "Pagsunud-sunurin">
+<!ENTITY view.sort.accesskey            "s">
+<!ENTITY view.unsorted.label            "Unsorted">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "A > Z na Pagkakasunud-sunod">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A na Pagkakasunud-sunod">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Mag-import ng mga Bookmark galing sa HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "I-export ang mga Bookmark sa HTML...">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "I-import ang Data mula sa Ibang Browser...">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "I-backup...">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "Ibalik">
+<!ENTITY cmd.restore2.accesskey         "I">
+<!ENTITY cmd.restoreFromFile.label      "Pumili ng File…">
+<!ENTITY cmd.restoreFromFile.accesskey  "P">
+
+<!ENTITY col.name.label          "Pangalan">
+<!ENTITY col.tags.label          "Mga Tag">
+<!ENTITY col.url.label           "Lokasyon">
+<!ENTITY col.mostrecentvisit.label "Pinakabagong Kamakailang Pagbisita">
+<!ENTITY col.visitcount.label    "Bilang ng Pagbisita">
+<!ENTITY col.dateadded.label     "Idinagdag">
+<!ENTITY col.lastmodified.label  "Huling Binago">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Import at Backup">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "I-import at i-backup ang iyong mga bookmark">
+
+<!ENTITY backButton.tooltip  "Bumalik">
+
+<!ENTITY forwardButton.tooltip  "Sulong">
+
+<!ENTITY detailsPane.selectAnItemText.description "Pumili ng item na titingnan at i-edit ang mga properties nito">
+

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Event Menu -->
+
+<!ENTITY event.new.event                        "Жаңа оқиға…">
+<!ENTITY event.new.event.accesskey              "ж">
+
+<!ENTITY event.new.task                         "Жаңа тапсырма…">
+<!ENTITY event.new.task.accesskey               "т">
+
+<!ENTITY calendar.import.label                  "Импорттау…">
+<!ENTITY calendar.import.accesskey              "И">
+
+<!ENTITY calendar.export.label                  "Экспорттау…">
+<!ENTITY calendar.export.accesskey              "Э">
+
+<!ENTITY calendar.publish.label                 "Жариялау…">
+<!ENTITY calendar.publish.accesskey             "и">
+
+<!ENTITY calendar.deletecalendar.label          "Таңдалған күнтізбені өшіру…">
+<!ENTITY calendar.deletecalendar.accesskey      "ш">
+<!ENTITY calendar.unsubscribecalendar.label     "Таңдалған күнтізбеге жазылуын өшіру…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "ы">
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+
+<!ENTITY calendar.removecalendar.label          "Таңдалған күнтізбеге жазылуын өшіру…">
+<!ENTITY calendar.removecalendar.accesskey      "ш">
+
+
+<!ENTITY calendar.menu.customize.label          "Баптау…">
+<!ENTITY calendar.menu.customize.accesskey      "а">
+
+<!ENTITY showUnifinderCmd.label                 "Оқиғаларды табу">
+<!ENTITY showUnifinderCmd.accesskey             "т">
+<!ENTITY showUnifinderCmd.tooltip               "Оқиғаны табу панелін көрсету/жасыру">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Тапсырмаларды күнтізбеде көрсету">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "Т">
+
+<!ENTITY goTodayCmd.label                       "Бүгін">
+<!ENTITY goTodayCmd.accesskey                   "Б">
+
+<!ENTITY showCurrentView.label                  "Ағымдағы көрініс">
+<!ENTITY showCurrentView.accesskey              "к">
+
+<!ENTITY calendar.properties.label              "Күнтізбе қасиеттері…">
+<!ENTITY calendar.properties.accesskey          "н">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Pretvarač tipa pohrane poruka">
+<!ENTITY converterDialog.continueButton "Nastavi">
+<!ENTITY converterDialog.cancelButton "Odustani">
+<!ENTITY converterDialog.finishButton "Završi">
+<!ENTITY converterDialog.complete "Pretvaranje je završeno. &brandShortName; će se sada ponovno pokrenuti.">
+<!ENTITY converterDialog.error "Pretvaranje nije uspjelo.">
+

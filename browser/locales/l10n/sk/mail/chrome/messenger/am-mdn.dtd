@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                  "Potvrdenia o prečítaní">
+<!ENTITY useGlobalPrefs.label        "Použiť pre tento účet globálne nastavenie pre potvrdenia o prečítaní">
+<!ENTITY useGlobalPrefs.accesskey    "u">
+<!ENTITY globalReceipts.label        "Globálne nastavenia…">
+<!ENTITY globalReceipts.accesskey    "G">
+<!ENTITY useCustomPrefs.label        "Upraviť nastavenie pre potvrdenia o prečítaní pre tento účet">
+<!ENTITY useCustomPrefs.accesskey    "a">
+<!ENTITY requestReceipt.label        "Pri odosielaní správy vždy žiadať potvrdenie o prečítaní">
+<!ENTITY requestReceipt.accesskey    "t">
+<!ENTITY receiptArrive.label         "Ak príde potvrdenie o prečítaní:">
+<!ENTITY leaveIt.label               "Nechať ho v priečinku &quot;Doručená pošta&quot;">
+<!ENTITY leaveIt.accesskey           "e">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label            "Presunúť ho do priečinka &quot;Odoslaná pošta&quot;">
+<!ENTITY moveToSent.accesskey        "r">
+<!ENTITY requestMDN.label            "Ak prijatá správa požaduje potvrdenie o prečítaní:">
+<!ENTITY returnSome.label            "Posielať potvrdenia pre dané správy nasledovne:">
+<!ENTITY returnSome.accesskey        "s">
+<!ENTITY never.label                 "Nikdy neposielať potvrdenia">
+<!ENTITY never.accesskey             "k">
+<!ENTITY notInToCc.label             "Ak nie som v poliach &quot;Komu&quot; alebo &quot;Kópia&quot;:">
+<!ENTITY notInToCc.accesskey         "m">
+<!ENTITY outsideDomain.label         "Ak je odosielateľ mimo mojej domény:">
+<!ENTITY outsideDomain.accesskey     "d">
+<!ENTITY otherCases.label            "V ostatných prípadoch:">
+<!ENTITY otherCases.accesskey        "V">
+<!ENTITY askMe.label                 "Opýtať sa">
+<!ENTITY alwaysSend.label            "Vždy odoslať">
+<!ENTITY neverSend.label             "Nikdy neposielať">

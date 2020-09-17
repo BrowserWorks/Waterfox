@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "පෞද්ගලික ගවේෂණය">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ ලුහුබැඳීම් ආරක්ෂණය">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "ඔබ සිටින්නේ පුද්ගලික ගවේශනයේ නොවේ">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; පිටු වල සමහර කොටස් ඔබගේ ගවේෂණයන් විමර්ශණය කරනු ඇතැයි සළකා ඒවා අවහිර කර ඇත.">
+<!ENTITY privatebrowsingpage.description.privateDetails "අප අතීතයේ කිසිවක් මතකයේ තබා නොගනිමු. නමුත් බාගත කල ගොනු හා නව පිටුසළකුණු ඔබේ උපාංගයට සුරැකෙනු ඇත.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "පුද්ගලික ගවේෂනයේදී, ඔබ ගවේෂනයේ අතීතය හා කුකීස් කිසිවක් අප තබා නොගනිමු. ඔබ එක් කරන පිටු සළකුණු හා ඔබ බාගත කරන ගොනු ඔබේ උපාංගයේ සුරැකේ.">
+
+<!ENTITY privatebrowsingpage.link.private "තවත් දැන ගැනීමට අවැසිද?">
+<!ENTITY privatebrowsingpage.link.normal "නව පුද්ගලික ටැබයක් විවර කරන්න">

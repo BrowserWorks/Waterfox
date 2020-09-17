@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Nïm taq Tzijol">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Richin nixim ri etamab'äl yakon chik pa Firefox rik'in re ruyakoj re &brandShortName;, tatikirisaj molojri'ïl rik'in ri &syncBrand.fxAccount.label;.">
+<!ENTITY continue-button "Titikïr chik el">
+
+<!ENTITY mainText "Re ruyakoj re &brandShortName; k'o jun k'ak'a' ruwäch rub'i'. Man yerukomonij ta taq yaketal, ewan taq tzij chuqa' taq rajowab'al okisanel kik'in ch'aqa' chik taq ruyakoj Firefox (achi'el Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition chuqa' Firefox Nightly) pa re kematz'ib' re'.">

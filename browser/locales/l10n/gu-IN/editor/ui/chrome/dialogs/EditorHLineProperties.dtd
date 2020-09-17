@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "આડી લીટીના ગુણધર્મો">
+
+<!ENTITY dimensionsBox.label "પરિમાણો">
+<!ENTITY heightEditField.label "ઊંચાઈ:">
+<!ENTITY heightEditField.accessKey "G">
+<!ENTITY widthEditField.label "પહોળાઈ:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY pixelsPopup.value "પિક્સેલો">
+<!ENTITY alignmentBox.label "ગોઠવણી">
+<!ENTITY leftRadio.value "ડાબું">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.value "કેન્દ્ર">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.value "જમણું">
+<!ENTITY rightRadio.accessKey "R">
+
+<!ENTITY threeDShading.label "3-D શેડીંગ">
+<!ENTITY threeDShading.accessKey "S">
+<!ENTITY saveSettings.label "મૂળભુત તરીકે વાપરો">
+<!ENTITY saveSettings.accessKey "D">
+<!ENTITY saveSettings.tooltip "જ્યારે નવી આડી લીટીઓ દાખલ કરી રહ્યા હોય ત્યારે વાપરવા માએ આ સેટીંગ સંગ્રહો">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "收件回執">
+<!ENTITY prefReceipts.caption         "收件回執">
+<!ENTITY requestReceipt.label         "寄送郵件時一律要求收件回執">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "收到回執時:">
+<!ENTITY leaveIt.label                "留在「收件匣」中">
+<!ENTITY leaveIt.accesskey            "L">
+<!ENTITY moveToSent.label             "移到「寄件備份」匣">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "收到要求收件回執的郵件時:">
+<!ENTITY returnSome.label             "依下列設定決定是否寄出回執">
+<!ENTITY returnSome.accesskey         "A">
+<!ENTITY never.label                  "一律不寄出回執">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "如果我不在郵件的收件者或副本列表中:">
+<!ENTITY notInToCc.accesskey          "t">
+<!ENTITY outsideDomain.label          "如果寄件者在我的網域以外:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "其它情形:">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "詢問我">
+<!ENTITY alwaysSend.label             "一律寄出">
+<!ENTITY neverSend.label              "不要寄出">
+

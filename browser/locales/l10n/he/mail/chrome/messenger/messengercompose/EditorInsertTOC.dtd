@@ -1,0 +1,23 @@
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "תוכן עניינים">
+<!ENTITY buildToc.label      "בנה תוכן עניינים מתוך:">
+<!ENTITY tag.label           "תגית:">
+<!ENTITY class.label         "קבוצה:">
+<!ENTITY header1.label       "רמה 1">
+<!ENTITY header2.label       "רמה 2">
+<!ENTITY header3.label       "רמה 3">
+<!ENTITY header4.label       "רמה 4">
+<!ENTITY header5.label       "רמה 5">
+<!ENTITY header6.label       "רמה 6">
+<!ENTITY makeReadOnly.label  "הפוך את תוכן העניינים לקריאה־בלבד">
+<!ENTITY orderedList.label   "מספר את כל הרשומות בתוכן העניינים">
+

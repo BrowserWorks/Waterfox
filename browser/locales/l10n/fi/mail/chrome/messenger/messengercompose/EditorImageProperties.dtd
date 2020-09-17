@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Kuvan ominaisuudet">
+
+<!ENTITY pixelsPopup.value "kuvapistettä">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Kuvan sijainti:">
+<!ENTITY locationEditField.accessKey "K">
+<!ENTITY locationEditField.tooltip "Kirjoita kuvan tiedostonimi tai sijainti">
+<!ENTITY locationEditField.shortenedDataURI "Lyhennetty datan URI (kopioiminen sijoittaa täydellisen URIn leikepöydälle)">
+<!ENTITY title.label "Työkaluvihje:">
+<!ENTITY title.accessKey "T">
+<!ENTITY title.tooltip "HTML-määre ”title”, joka näkyy työkaluvihjeenä">
+<!ENTITY altText.label "Vaihtoehtoinen teksti:">
+<!ENTITY altText.accessKey "V">
+<!ENTITY altTextEditField.tooltip "Kirjoita kuvan tilalla näytettävä teksti">
+<!ENTITY noAltText.label "Älä käytä vaihtoehtoista tekstiä">
+<!ENTITY noAltText.accessKey "Ä">
+
+<!ENTITY previewBox.label "Kuvan esikatselu">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Todellinen koko:">
+<!ENTITY actualSizeRadio.label "Todellinen koko">
+<!ENTITY actualSizeRadio.accessKey "T">
+<!ENTITY actualSizeRadio.tooltip "Palaa kuvan todelliseen kokoon">
+<!ENTITY customSizeRadio.label "Mukautettu koko">
+<!ENTITY customSizeRadio.accessKey "M">
+<!ENTITY customSizeRadio.tooltip "Muuta kuvan kokoa näytöllä">
+<!ENTITY heightEditField.label "Korkeus:">
+<!ENTITY heightEditField.accessKey "K">
+<!ENTITY widthEditField.label "Leveys:">
+<!ENTITY widthEditField.accessKey "e">
+<!ENTITY constrainCheckbox.label "Säilytä muoto">
+<!ENTITY constrainCheckbox.accessKey "S">
+<!ENTITY constrainCheckbox.tooltip "Säilytä kuvan suhteet ennallaan">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Kuvan kartta">
+<!ENTITY removeImageMapButton.label "Poista">
+<!ENTITY removeImageMapButton.accessKey "P">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Linjaa teksti kuvaan">
+<!ENTITY bottomPopup.value "Pohjalle">
+<!ENTITY topPopup.value "Ylös">
+<!ENTITY centerPopup.value "Keskelle">
+<!ENTITY wrapRightPopup.value "Rivitä oikealle">
+<!ENTITY wrapLeftPopup.value "Rivitä vasemmalle">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Vapaa tila">
+<!ENTITY leftRightEditField.label "Vasemmalla ja oikealla:">
+<!ENTITY leftRightEditField.accessKey "V">
+<!ENTITY topBottomEditField.label "Ylhäällä ja alhaalla:">
+<!ENTITY topBottomEditField.accessKey "Y">
+<!ENTITY borderEditField.label "Jatkuva reunaviiva:">
+<!ENTITY borderEditField.accessKey "n">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Näytä linkkikuvan ympärillä reunus">
+<!ENTITY showImageLinkBorder.accessKey "N">
+<!ENTITY LinkAdvancedEditButton.label "Linkin lisäasetukset…">
+<!ENTITY LinkAdvancedEditButton.accessKey "a">
+<!ENTITY LinkAdvancedEditButton.tooltip "Lisää tai muokkaa HTML-attribuutteja, tyyliattribuutteja ja JavaScript-komentosarjoja">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Lomake">
+<!ENTITY imageLocationTab.label "Sijainti">
+<!ENTITY imageDimensionsTab.label "Mitat">
+<!ENTITY imageAppearanceTab.label "Ulkoasu">
+<!ENTITY imageLinkTab.label "Linkki">

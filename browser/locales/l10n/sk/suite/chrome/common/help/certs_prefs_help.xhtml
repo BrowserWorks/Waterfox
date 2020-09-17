@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Súkromie a bezpečnosť - Certifikáty</title>
+	<link rel="stylesheet" type="text/css" href="helpFileLayout.css" />
+</head>
+
+<body>
+<h1 id="certificate_settings">Nastavenia certifikátov</h1>
+
+<p>Táto kapitola popisuje postup ako nastaviť predvoľby pre certifikáty a ako používať Správcu certifikátov,
+ Správcu bezpečnostných zariadení a ďalšie dialógové okná, ktoré sa certifikátov týkajú.</p>
+
+<p>Ak si chcete pozrieť podrobné návody rôznych činností týkajúcich sa certifikátov, navštívte kapitolu
+  <a href="using_certs_help.xhtml">Používanie certifikátov</a>.</p>
+
+<div class="contentsBox">V tejto kapitole:
+  <ul>
+    <li><a href="#privacy_and_security_preferences_certificates">Nastavenie certifikátov</a></li>
+    <li><a href="certs_help.xhtml">Správa certifikátov</a></li>
+    <li><a href="certs_help.xhtml#device_manager">Správa bezpečnostných zariadení</a></li>
+    <li><a href="cert_dialog_help.xhtml">Informácie o certifikátoch a rozhodnutia</a></li>
+  </ul>
+</div>
+
+<h1 id="privacy_and_security_preferences_certificates">Súkromie a bezpečnosť - Certifikáty</h1>
+
+<p>Táto kapitola popisuje prácu s panelom Certifikáty. Ak ho chcete zobraziť, vykonajte nasledovné kroky:</p>
+
+<ol>
+   <li>Otvorte ponuku <span class="mac">&brandShortName;</span>
+     <span class="noMac">Upraviť</span> a kliknite na položku Možnosti.</li>
+   <li>V kategórii Súkromie a bezpečnosť kliknite na podkategóriu Certifikáty. (Pokiaľ nevidíte žiadnu podkategóriu, dvojitým
+    kliknutím na kategóriu Súkromie a bezpečnosť zobrazíte ich zoznam)</li>
+</ol>
+
+<h3 id="client_certificate_selection">Výber klientskeho certifikátu</h3>
+
+<p>Niektoré webové stránky vyžadujú, aby ste sa identifikovali certifikátom. Toto nastavenie určuje chovanie
+prehliadača v prípadoch, kedy má k dispozícii viac ako jeden použiteľný certifikát:</p>
+<ul>
+	<li><strong>Vybrať automaticky</strong>: Vyberte túto možnosť,
+pokiaľ chcete, aby prehliadač vybral certifikát bez toho, aby sa vás predtým opýtal.</li>
+	<li><strong>Vždy sa opýtať</strong>: Ak chcete, aby vám prehliadač vždy dal na výber, aký certifikát použiť v okamihu, keď
+webová stránka certifikát požaduje, vyberte túmo možnosť.</li>
+</ul>
+
+<h3 id="manage_certificates">Správa certifikátov</h3>
+
+<p>Certifikáty sú digitálnymi ekvivalentami osobných preukazov. Pomáhajú ostatným ľuďom identifikovať vás
+a vám identifikovať ostatných ľudí, webové stránky a organizácie.</p>
+
+<p>Ak si chcete prezrieť certifikáty alebo zmeniť nastavenia uložených certifikátov,
+kliknite na tlačidlo Správa certifikátov. Ďalšie informácie o tomto dialógovom okne nájdete v časti
+<a href="using_certs_help.xhtml#managing_certificates">Správa
+certifikátov</a>.</p>
+
+<h3 id="manage_security_devices">Správa bezpečnostných zariadení</h3>
+
+<p>Bezpečnostné zariadenie je softvérové alebo hardvérové zariadenie, ktoré slúži
+na ukladanie vašich certifikátov a šifrovacích kľúčov. Príkladom takého zariadenia je smart card.
+Váš prehliadač má vlastné vstavané softvérové zariadenie, zároveň si môžete pridať ďalšie
+bezpečnostné zariadenia ako napríklad smart cards.</p>
+
+<p>Ak si chcete prezrieť bezpečnostné zariadania alebo zmeniť ich nastavenia, kliknite na tlačidlo Správa bezpečnostných zariadení.
+Ďalšie informácie o tomto dialógovom okne nájdete v časti <a href="using_certs_help.xhtml#managing_smart_cards_and_other_security_devices">Správa kariet
+      Smart card a ďalších bezpečnostných zariadení</a>.</p>
+
+
+<h3 id="ocsp">OCSP</h3>
+
+<p>Online overenie stavu certifikátov (OCSP) umožňuje Správcovi
+  certifikátov skontrolovať online platnosť certifikátu pri každom jeho
+  prehliadaní alebo použití. Tento proces zahŕňa porovnanie certifikátu
+  so zoznamom zrušených certifikátov CRL udržovaným určeným webovým serverom.
+  Aby toto overenie fungovalo, musí byť počítač v režime online.</p>
+
+<p>Ak chcete upresniť využívanie OCSP, zvoľte jednu z nasledujúcich možností
+  nastavenia v sekcii Online overenie stavu certifikátov v podkategórii Overovanie:</p>
+
+<ul>
+  <li><strong>Použiť Online overenie stavu certifikátov (OCSP) na potvrdenie
+    platnosti certifikátov</strong>: označte túto voľbu, ak chcete, aby
+    Správca certifikátov vykonal kontrolu online pri každom overení
+    certifikátu. Ak je toto nastavenie vypnuté, Správca certifikátov kontroluje len
+    lehotu platnosti certifikátu, či je správne podpísaný certifikačnou autoritou,
+    ktorej vlastný certifikát CA sa nachádza v zozname na karte Certifikáty CA
+    (v hlavnom okne Správcu certifikátov) a či je označený ako dôveryhodný
+    pre vydávanie daného typu certifikátov.</li>
+  <li><strong>Overiť certifikát, ak to určuje server OCSP</strong>:
+    označte túto voľbu, ak chcete overovať platnosť certifikátov pomocou služby
+    definovanej v certifikáte. Správca certifikátov sa potom
+    uisťuje, či je certifikát v zozname certifikátov určenej služby označený ako
+    platný a kontrolujte takisto lehotu jeho platnosti a nastavenie dôveryhodnosti.</li>
+  <li><strong>Overiť všetky certifikáty pomocou nasledujúceho servera OCSP</strong>:
+    označte túto voľbu, ak chcete určiť server OCSP, pomocou ktorého budete overovať
+    všetky certifikáty. Ak zvolíte toto nastavenie, mali by ste zvoliť certifikát
+    zo zoznamu "Odpoveď podpísal", ktorý slúži na identifikáciu toho, kto certifikát
+    podpísal. Po zapnutí tohto nastavenia Správca certifikátov rozpozná len tie
+    certifikáty, ktoré je možné overiť pomocou odpovede zo servera OCSP podpísanej
+    zvoleným certifikátom (alebo certifikátom, ktorý naň nadväzuje).
+
+    <p>Keď vyberáte certifikát pre "Odpoveď podpísal" z rozbaľovacieho zoznamu,
+      Správca certifikátov vyplní pole Adresa URL služby automaticky. Ak sa tak
+      nestane, musíte ho vyplniť sami. Podrobnosti vám poskytne správca systému.</p>
+  </li>
+  <li><strong>Ak pripojenie k serveru OCSP zlyhá, označiť certifikát ako
+    neplatný</strong>: označte túto voľbu, ak chcete v prípade nemožnosti
+    pripojiť sa k serveru OCSP označiť overenie ako neúspešné.</li>
+</ul>
+
+<p>Podrobnejšie informácie nájdete v časti <a href="using_certs_help.xhtml#controlling_validation">Overovanie platnosti</a>.</p>
+
+</body>
+</html>

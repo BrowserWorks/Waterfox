@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "दृश्य:">
+<!ENTITY viewPicker.accesskey "i">
+<!ENTITY viewAll.label "सबै">
+<!ENTITY viewAll.accesskey "A">
+<!ENTITY viewUnread.label "नपढ्नुहोस्">
+<!ENTITY viewUnread.accesskey "U">
+<!ENTITY viewTags.label "ट्याग">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "अनुकूल दृश्य">
+<!ENTITY viewCustomViews.accesskey "V">
+<!ENTITY viewVirtualFolder.label "फोल्डरको रूपमा दृश्य बचत गर्नुहोस्...">
+<!ENTITY viewVirtualFolder.accesskey "S">
+<!ENTITY viewCustomizeView.label "अनुकूलन...">
+<!ENTITY viewCustomizeView.accesskey "C">

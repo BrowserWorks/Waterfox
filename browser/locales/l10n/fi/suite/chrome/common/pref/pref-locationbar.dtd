@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Osoitepalkki">
+
+<!ENTITY autoComplete.label                    "Automaattinen täydennys">
+<!ENTITY autoCompleteMatchHistory.label        "Ehdota verkkosivustoja automaattisesti historiasta">
+<!ENTITY autoCompleteMatchHistory.accesskey    "h">
+<!ENTITY autoCompleteMatchBookmarks.label      "Ehdota verkkosivustoja automaattisesti kirjanmerkeistä">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "k">
+<!ENTITY autoCompleteAutoFill.label            "Kirjoita paras osuma valmiiksi">
+<!ENTITY autoCompleteAutoFill.accesskey        "K">
+<!ENTITY autoCompleteShowPopup.label           "Näytä lista vastaavista osoitteista">
+<!ENTITY autoCompleteShowPopup.accesskey       "N">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Etsi vain osoitteista, jotka olen itse kirjoittanut">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "v">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Etsi">
+<!ENTITY autoCompleteMatch.accesskey           "t">
+<!ENTITY autoCompleteMatchAnywhere             "Kaikkialta osoitteesta tai otsikosta">
+<!ENTITY autoCompleteMatchWordsFirst           "Kaikkialta, mutta sanojen rajoja suosien">
+<!ENTITY autoCompleteMatchWords                "Vain sanojen rajoilta">
+<!ENTITY autoCompleteMatchStart                "Vain sijainnin tai otsikon alusta">
+<!ENTITY showInternetSearch.label              "Näytä oletushakukone">
+<!ENTITY showInternetSearch.accesskey          "e">
+
+<!ENTITY formatting.label                      "Muotoilu">
+<!ENTITY domainFormatting.label                "Korosta verkkosivujen osoitteiden kaksi viimeistä osaa">
+<!ENTITY domainFormatting.accesskey            "s">
+<!ENTITY highlightSecure.label                 "Korosta verkkosivut, joiden yhteys on vahvasti suojattu">
+<!ENTITY highlightSecure.accesskey             "a">
+
+<!ENTITY unknownLocations.label                "Tuntemattomat osoitteet">
+<!ENTITY domainGuessing.label                  "Lisää osoitteen alkuun &quot;www.&quot; ja loppuun &quot;.com&quot;, jos verkkosivua ei löydy">
+<!ENTITY domainGuessing.accesskey              "L">
+<!ENTITY keywords.label                        "Tee verkkohaku, jos kirjoitettu teksti ei ole osoite">
+<!ENTITY keywords.accesskey                    "r">

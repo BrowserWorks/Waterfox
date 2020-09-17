@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propietats del camp del formulari">
+<!ENTITY windowTitleImage.label "Propietats de la imatge del formulari">
+
+<!ENTITY InputType.label "Tipus de camp">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Text">
+<!ENTITY password.value "Contrasenya">
+<!ENTITY checkbox.value "Casella de selecció">
+<!ENTITY radio.value "Botó d'opció">
+<!ENTITY submit.value "Botó de tramesa">
+<!ENTITY reset.value "Botó Reinicia">
+<!ENTITY file.value "Fitxer">
+<!ENTITY hidden.value "Amagat">
+<!ENTITY image.value "Imatge">
+<!ENTITY button.value "Botó">
+
+<!ENTITY InputSettings.label "Paràmetres del camp">
+<!ENTITY InputName.label "Nom del camp:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Nom del grup:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Valor del camp:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "Valor inicial:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "Marcat inicialment">
+<!ENTITY InputChecked.accesskey "M">
+<!ENTITY InputSelected.label "Seleccionat inicialment">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "Només de lectura">
+<!ENTITY InputReadOnly.accesskey "l">
+<!ENTITY InputDisabled.label "Inhabilitat">
+<!ENTITY InputDisabled.accesskey "I">
+<!ENTITY tabIndex.label "Índex de pestanyes:">
+<!ENTITY tabIndex.accesskey "p">
+<!ENTITY TextSize.label "Mida del camp:">
+<!ENTITY TextSize.accesskey "M">
+<!ENTITY TextLength.label "Longitud màxima:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "Clau d'accés:">
+<!ENTITY AccessKey.accesskey "C">
+<!ENTITY Accept.label "Accepta els tipus:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "Propietats de la imatge…">
+<!ENTITY ImageProperties.accesskey "g">

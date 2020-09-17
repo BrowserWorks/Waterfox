@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label "Sidebar">
+<!ENTITY sidebar.reload.label "Tazele">
+<!ENTITY sidebar.reload.accesskey "T">
+<!ENTITY sidebar.picker.label "Sekmeler">
+<!ENTITY sidebar.customize.label "Customize Sidebar…">
+<!ENTITY sidebar.customize.accesskey "u">
+<!ENTITY sidebar.hide.label "Hide Tab">
+<!ENTITY sidebar.hide.accesskey "H">
+<!ENTITY sidebar.switch.label "Switch to Tab">
+<!ENTITY sidebar.switch.accesskey "T">
+<!ENTITY sidebarCmd.label "Sidebar">
+<!ENTITY sidebarCmd.accesskey "b">
+<!ENTITY sidebar.loading.label "Loading…">
+<!ENTITY sidebar.loadstopped.label "Load stopped">
+<!ENTITY sidebar.loading.stop.label "Dur">
+<!ENTITY sidebar.loading.stop.accesskey "D">
+
+<!ENTITY sidebar.no-panels.state "The sidebar is currently empty.">
+<!ENTITY sidebar.no-panels.add 'You may add tabs by clicking on the "Tabs" button above.'>
+<!ENTITY sidebar.no-panels.hide 'If you would like to completely hide the Sidebar, click on the "View" menu above, and select "Sidebar" from the "Show/Hide" sub-menu.'>
+<!ENTITY sidebar.sbDirectory.label "Sidebar Directory…">
+
+<!ENTITY sidebar.pagenotfound.label "This tab is not available right now.">
+<!ENTITY sidebar.close.tooltip "Close Sidebar">
+<!ENTITY sidebar.open.tooltip "Open Sidebar">
+
+<!ENTITY sidebar.search.label "Ara">
+<!ENTITY sidebar.client-bookmarks.label "Yer imleri">
+<!ENTITY sidebar.client-history.label "Geçmiş">
+<!ENTITY sidebar.client-addressbook.label "Adres Defteri">

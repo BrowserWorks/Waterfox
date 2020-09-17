@@ -1,0 +1,131 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+
+<!ENTITY windowTitle.label "Umncedisi Weeakhawunti">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+
+<!ENTITY accountSetupInfo2.label "In order to receive messages, you first need to set up an account.">
+<!ENTITY accountTypeTitle.label "Ummiselo Omtsha Weakhawunti">
+<!ENTITY accountTypeDesc2.label "This Wizard will collect the information necessary to set up an account. If you do not know the information requested, please contact your System Administrator or Internet Service Provider.">
+<!ENTITY accountTypeDirections.label "Khetha uhlobo lweakhawunti onqwenela ukulumisela:">
+<!ENTITY accountTypeMail.label "Iakhawunti yemeyile">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "Iakhawunti yeqela leendaba">
+<!ENTITY accountTypeNews.accesskey "q">
+
+<!-- Entities for Identity page -->
+
+
+<!ENTITY identityTitle.label "Uphawu lokuchonga">
+<!ENTITY identityDesc.label "Iakhawunti nganye inophawu lokuchonga, elulwazi ngophawu elukuchonga kwabanye xa befumana imiyalezo yakho.">
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+
+<!ENTITY fullnameDesc.label "Ngenisa igama onqwenela ukuba livele kwi-&quot;Ukusuka&quot; ummandla wemiyalezo yakho ekhutshwayo">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(umzekelo, &quot;Sipho Mthembu&quot;).">
+<!ENTITY fullnameLabel.label "Igama Lakho:">
+<!ENTITY fullnameLabel.accesskey "I">
+
+<!ENTITY emailLabel.label "Idilesi Yemeyile:">
+<!ENTITY emailLabel.accesskey "I">
+
+<!-- Entities for Incoming Server page -->
+
+
+<!ENTITY incomingTitle.label "Incoming Server Information">
+<!ENTITY incomingServerTypeDesc.label "Khetha uhlobo lweseva efikayo oyisebenzisayo.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Leave messages on server">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Default:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Enter the name of your incoming server (for example, &quot;mail.example.net&quot;).">
+<!ENTITY incomingServer.label "Incoming Server:">
+<!ENTITY incomingServer.accesskey "S">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Enter the incoming user name given to you by your email provider (for example, &quot;jsmith&quot;).">
+<!ENTITY incomingUsername.label "User Name:">
+<!ENTITY incomingUsername.accesskey "U">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Ngenisa igama leseva yakho yeendaba (NNTP) (umzekelo, i-&quot;iindaba.umzekelo.net&quot;).">
+<!ENTITY newsServerLabel.label "Iseva Yeqela Leendaba:">
+<!ENTITY newsServerLabel.accesskey "I">
+
+<!-- Entities for Outgoing Server page -->
+
+
+<!ENTITY outgoingTitle.label "Outgoing Server Information">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Enter the name of your outgoing server (SMTP) (for example, &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label "Outgoing Server:">
+<!ENTITY outgoingServer.accesskey "S">
+<!ENTITY outgoingUsername.description "Enter the outgoing user name given to you by your email provider (this is typically the same as your incoming user name).">
+<!ENTITY outgoingUsername.label "Outgoing User Name:">
+<!ENTITY outgoingUsername.accesskey "U">
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+
+<!ENTITY modifyOutgoing.suffix "You can change outgoing servers in the account settings.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Iseva yakho ekhoyo ekhutshwayo (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, will be used.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Igama lakho lomsebenzisi le-(SMTP) elikhutshwayo, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, will be used.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Iseva yakho ekhutshwayo (SMTP), &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, is identical to your incoming server, your incoming user name will be used to access it.">
+
+<!-- Entities for Account name page -->
+
+
+<!ENTITY accnameTitle.label "Igama Leakhawunti">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Ngenisa igama othanda ukuba ubhekiselele kule akhawunti ngalo (umzekelo, &quot;Iakhawunti Yomsebenzi&quot;, &quot;Iakhawunti Yasekhaya&quot; or &quot;Iakhawunti Yeendaba&quot;).">
+<!ENTITY accnameLabel.label "Igama Leakhawunti:">
+<!ENTITY accnameLabel.accesskey "L">
+
+<!-- Entities for Done (Congratulations) page -->
+
+
+<!ENTITY completionTitle.label "Sivuyisana nawe!">
+<!ENTITY completionText.label "Nceda qinisekisa ukuba ulwazi olungezantsi luchanekile.">
+<!ENTITY serverTypePrefix.label "Uhlobo Lweseva Efikayo:">
+<!ENTITY serverNamePrefix.label "Igama Leseva Efikayo:">
+<!ENTITY smtpServerNamePrefix.label "Igama Leseva Ekhutshwayo (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Igama Leseva Yeendaba (NNTP):">
+<!ENTITY downloadOnLogin.label "Thoba umthwalo wemiyalezo ngoku">
+<!ENTITY downloadOnLogin.accesskey "D">
+<!ENTITY deferStorageDesc.label "Susa uqwalaselo kwibhokisi ukuze ulondoloze imeyile yale akhawunti kuvimba ongowayo weefayili. Oko kuya kwenza ukuba le akhawunti ivele njengeakhawunti ekwinqanaba eliphezulu. Ngaphandle koko, iya kuba yinxalenye yeakhwunti Yalapho Yengaphakathi Lebhokisi Yeziqulathi Zeefayili Zelimiweyo.">
+<!ENTITY deferStorage.label "Sebenzisa Ingaphakathi Lebhokisi Yelimiweyo (londoloza imeyile Kwiziqulathi Zeefayili Zalapha)">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "Nqomfa ku-Kugqityiwe ukugcina le mimiselo uze uphume Kumncedisi Weakhawunti.">
+<!ENTITY clickFinish.labelMac "Click Done to save these settings and exit the Account Wizard.">

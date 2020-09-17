@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox reikningar">
+<!ENTITY aboutAccounts.connected.description "Þú ert tengd/ur sem">
+<!ENTITY aboutAccounts.syncPreferences.label "Snertið hér til að skoða stillingar fyrir samstillingu">
+
+<!ENTITY aboutAccounts.noConnection.title "Engin internet tenging">
+<!ENTITY aboutAccounts.retry.label "Reyndu aftur">
+
+<!ENTITY aboutAccounts.restrictedError.title "Takmarkað">
+<!ENTITY aboutAccounts.restrictedError.description "Ekki er hægt að sýsla með Firefox reikninga með þessum notanda.">

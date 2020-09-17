@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Kreado kaj adresado de mesaĝoj">
+<!ENTITY addressingGroupTitle.label "Adresado">
+<!ENTITY addressingText.label      "Dum serĉi adresojn:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Uzi mian ĝeneralan agordon de servilo LDAP por tiu ĉi konto">
+<!ENTITY useGlobal.accesskey       "L">
+<!ENTITY editDirectories.label     "Redakti katalogojn…">
+<!ENTITY editDirectories.accesskey "k">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Uzi alian servilon LDAP:">
+<!ENTITY directories.accesskey     "z">
+<!ENTITY directoriesNone.label     "neniu">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Kreado">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Krei mesaĝojn en la formo HTML">
+<!ENTITY useHtml.accesskey                    "H">
+<!ENTITY autoQuote.label                      "Aŭtomate citi la originalan mesaĝon dum respondi">
+<!ENTITY autoQuote.accesskey                  "A">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Dum citi">
+<!ENTITY quoting.accesskey                    "c">
+<!ENTITY aboveQuote.label                     "enmeti mian respondon super la citata teksto">
+<!ENTITY belowQuote.label                     "enmeti mian respondon sub la citata teksto">
+<!ENTITY selectAndQuote.label                 "elekti la citatan tekston">
+<!ENTITY place.label                          "kaj aldoni subskribon">
+<!ENTITY place.accesskey                      "u">
+<!ENTITY belowText.label                      "sub la citata teksto (konsilinde)">
+<!ENTITY aboveText.label                      "sub mia respondo (super la citata teksto)">
+<!ENTITY includeSigOnReply.label              "Aldoni subskribon dum respondi">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "Aldoni subskribon dum plusendi">
+<!ENTITY includeSigOnForward.accesskey        "p">
+
+<!ENTITY globalComposingPrefs.label           "Ĝeneralaj preferoj pri kreado de mesaĝoj…">
+<!ENTITY globalComposingPrefs.accesskey       "r">
+
+<!ENTITY globalAddressingPrefs.label          "Ĝeneralaj preferoj pri adresado…">
+<!ENTITY globalAddressingPrefs.accesskey      "d">

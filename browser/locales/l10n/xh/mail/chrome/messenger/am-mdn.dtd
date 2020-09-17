@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Buyisela Izamkelo">
+<!ENTITY useGlobalPrefs.label         "Sebenzisa izikhethwa zam zelimiweyo zokubuyisa izamkelo zale akhawunti">
+<!ENTITY useGlobalPrefs.accesskey     "S">
+<!ENTITY globalReceipts.label         "Global Preferences…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "Lungiselela ukubuyisa izamkelo zale akhawunti">
+<!ENTITY useCustomPrefs.accesskey     "L">
+<!ENTITY requestReceipt.label         "Xa uthumela imiyalezo, yiba soloko ucela isamkelo sokubuyisa">
+<!ENTITY requestReceipt.accesskey     "X">
+<!ENTITY receiptArrive.label          "Xa kufika isamkelo:">
+<!ENTITY leaveIt.label                "Shiya Kwibhokisi yam Yokufikayo">
+<!ENTITY leaveIt.accesskey            "Y">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Sishenxisele kwi-&quot;Sithunyelwe&quot; isiqulathi seefayili sam">
+<!ENTITY moveToSent.accesskey         "S">
+<!ENTITY requestMDN.label             "Xa ndifumana isicelo sesamkelo sokubuyisa:">
+<!ENTITY returnSome.label             "Vumela izamkelo ezibuyiswayo ukwenzela imiyalezo ethile">
+<!ENTITY returnSome.accesskey         "b">
+<!ENTITY never.label                  "Ungaze uthumele isamkelo sokubuyisa">
+<!ENTITY never.accesskey              "U">
+<!ENTITY notInToCc.label              "Ukuba andikho kwi-Iya okanye i-Cc yomyalezo:">
+<!ENTITY notInToCc.accesskey          "I">
+<!ENTITY outsideDomain.label          "Ukuba umthumeli ungaphandle kommandla wam wolwazi:">
+<!ENTITY outsideDomain.accesskey      "u">
+<!ENTITY otherCases.label             "Kuzo zonke ezinye iziganeko:">
+<!ENTITY otherCases.accesskey         "e">
+<!ENTITY askMe.label                  "Ndibuze">
+<!ENTITY alwaysSend.label             "Yiba soloko uthumela">
+<!ENTITY neverSend.label              "Ungaze uthumele">

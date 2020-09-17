@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "Web stranice su ponekad dostupne na više jezika. Izaberite jezike za prikaz tih web stranica prema preferiranom redoslijedu.">
+<!ENTITY languages.customize.title                      "Jezici">
+<!ENTITY langtitle.label                                "Jezici za web stranice">
+<!ENTITY languages.customize.prefAddLangDescript        "Izaberite jezik(e) koje biste željeli dodati.">
+<!ENTITY languages.customize.addButton.label            "Dodaj…">
+<!ENTITY languages.customize.deleteButton.label         "Ukloni">
+<!ENTITY languages.customize.add.title.label            "Dodaj jezike">
+<!ENTITY languages.customize.available.label            "Jezici:">
+<!ENTITY languages.customize.active.label               "Jerizi po redosljedu prioriteta:">
+<!ENTITY languages.customize.others.label               "Ostalo:">
+<!ENTITY languages.customize.Fallback2.grouplabel       "Kodiranje teksta za zastarjeli sadržaj">
+<!ENTITY languages.customize.Fallback2.label            "Kodiranje teksta sa rezervnim kopijama:">
+<!ENTITY languages.customize.Fallback2.desc             "Koristi se za zastarjeli sadržaj koji ne deklariše kodiranje.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "npr.: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "Pomjeri gore">
+<!ENTITY languages.customize.moveDown.label             "Pomjeri dole">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "ලිපින පොත ආයාත කිරීම">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "සටහන් කිරීමට ආයාත කළ දත්ත: ">
+<!ENTITY fieldMapImport.next.label "ඊළඟ">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "පෙර">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "Use Move Up and Move Down to match the address book fields on the left to the correct data for import on the right. Untick items you do not want to import.">
+<!ENTITY fieldMapImport.up.label "ඉහළට ගෙනයන්න">
+<!ENTITY fieldMapImport.up.accesskey "U">
+<!ENTITY fieldMapImport.down.label "පහළට ගෙනයන්න">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "ලිපින පොතේ ක්ෂේත්‍රයන්">
+<!ENTITY fieldMapImport.dataTitle "ආයාත කිරීමට දත්ත සටහන් කිරීම">
+<!ENTITY fieldMapImport.skipFirstRecord.label "පළමු රෙකෝඩයේ ඇත්තේ ක්ෂේත්‍ර නම්ය (field names)">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">
+
+

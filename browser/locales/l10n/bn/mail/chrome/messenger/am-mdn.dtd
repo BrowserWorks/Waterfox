@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title "প্রাপ্তিজ্ঞাপন">
+<!ENTITY useGlobalPrefs.label "এই অ্যাকাউন্টটির জন্য আমার গ্লোবাল প্রাপ্তিজ্ঞাপন পছন্দসমূহ ব্যবহার করা হবে (U)">
+<!ENTITY useGlobalPrefs.accesskey "U">
+<!ENTITY useCustomPrefs.label "এই অ্যাকাউন্টটির জন্য প্রাপ্তিজ্ঞাপন স্বনির্ধারণ করা হবে (C)">
+<!ENTITY useCustomPrefs.accesskey "C">
+<!ENTITY requestReceipt.label "যখন বার্তা পাঠাবেন, সর্বদা প্রাপ্তিজ্ঞাপন অনুরোধ করা হবে (W)">
+<!ENTITY requestReceipt.accesskey "W">
+<!ENTITY receiptArrive.label "যখন প্রাপ্তি পৌছবে:">
+<!ENTITY leaveIt.label "এটাকে আমার ইনবক্সে রেখে দেয়া হবে (I)">
+<!ENTITY leaveIt.accesskey "I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label "এটাকে আমার &quot;Sent&quot; ফোল্ডারে সরানো হবে (M)">
+<!ENTITY moveToSent.accesskey "M">
+<!ENTITY requestMDN.label "যখন প্রাপ্তিজ্ঞাপনের জন্য আমি অনুরোধ পাই:">
+<!ENTITY returnSome.label "কিছু বার্তার জন্য প্রাপ্তিজ্ঞাপন অনুমোদন করা হবে (e)">
+<!ENTITY returnSome.accesskey "e">
+<!ENTITY never.label "কখনও প্রাপ্তিজ্ঞাপন পাঠানো হবে না (N)">
+<!ENTITY never.accesskey "N">
+<!ENTITY notInToCc.label "যদি আমাকে বার্তার প্রাপক বা Cc তে যোগ না করা হয়: (T)">
+<!ENTITY notInToCc.accesskey "T">
+<!ENTITY outsideDomain.label "যদি প্রেরক আমার ডোমেইনের বাইরে থাকে: (s)">
+<!ENTITY outsideDomain.accesskey "s">
+<!ENTITY otherCases.label "অন্য সকল ক্ষেত্রে: (o)">
+<!ENTITY otherCases.accesskey "o">
+<!ENTITY askMe.label "আমাকে জিজ্ঞেস করা হবে">
+<!ENTITY alwaysSend.label "সর্বদা পাঠানো হবে">
+<!ENTITY neverSend.label "কখনও পাঠানো হবে না">

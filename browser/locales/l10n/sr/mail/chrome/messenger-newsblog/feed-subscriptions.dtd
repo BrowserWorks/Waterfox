@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Претплате на доводе">
+<!ENTITY learnMore.label             "Сазнајте више о доводима">
+
+<!ENTITY feedTitle.label             "Наслов:">
+<!ENTITY feedTitle.accesskey         "Н">
+
+<!ENTITY feedLocation.label          "URL довода:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Унесите исправну адресу довода">
+<!ENTITY locationValidate.label      "Провери исправност">
+<!ENTITY validateText.label          "Провери исправност и добави исправан урл.">
+
+<!ENTITY feedFolder.label            "Складишти чланке у:">
+<!ENTITY feedFolder.accesskey        "С">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Провери да ли има нових чланака на сваких ">
+<!ENTITY biffStart.accesskey         "л">
+<!ENTITY biffMinutes.label           "минута">
+<!ENTITY biffMinutes.accesskey       "н">
+<!ENTITY biffDays.label              "дана">
+<!ENTITY biffDays.accesskey          "д">
+<!ENTITY recommendedUnits.label      "Издавач предлаже:">
+
+<!ENTITY quickMode.label             "Прикажи резиме чланка уместо учитавања веб странице">
+<!ENTITY quickMode.accesskey         "р">
+
+<!ENTITY autotagEnable.label         "Аутоматски направи ознаке из имена &lt;категорија&gt; унутар довода">
+<!ENTITY autotagEnable.accesskey     "к">
+<!ENTITY autotagUsePrefix.label      "Префиксуј ознаке са:">
+<!ENTITY autotagUsePrefix.accesskey  "П">
+<!ENTITY autoTagPrefix.placeholder   "Унесите префикс ознаке">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Додај">
+<!ENTITY button.addFeed.accesskey    "Д">
+<!ENTITY button.verifyFeed.label     "Потврди">
+<!ENTITY button.verifyFeed.accesskey "т">
+<!ENTITY button.updateFeed.label     "Ажурирај">
+<!ENTITY button.updateFeed.accesskey "j">
+<!ENTITY button.removeFeed.label     "Уклони">
+<!ENTITY button.removeFeed.accesskey "У">
+<!ENTITY button.importOPML.label     "Увези">
+<!ENTITY button.importOPML.accesskey "и">
+<!ENTITY button.exportOPML.label     "Извези">
+<!ENTITY button.exportOPML.accesskey "з">
+<!ENTITY button.exportOPML.tooltip   "Извези доводе задржавајући структуру фасцикле. Кликните док држите ctrl тастер или притисните ctrl+enter да бисте извезли доводе као списак">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Затвори">

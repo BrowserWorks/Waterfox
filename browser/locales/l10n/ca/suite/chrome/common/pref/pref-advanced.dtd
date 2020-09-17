@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+
+<!ENTITY pref.advanced.title              "Avançat">
+
+<!ENTITY systemPref.caption               "Preferències del sistema">
+<!ENTITY systemPrefCheck.label            "Utilitza les preferències des del sistema">
+<!ENTITY systemPrefCheck.accesskey        "s">
+<!ENTITY systemPref.desc                  "Marqueu aquest opció per a què el &brandShortName; hereti les preferències del sistema. Els paràmetres del sistema substituiran les preferències del &brandShortName;.">
+
+<!ENTITY prefCheckDefault.caption         "Integració al sistema">
+<!ENTITY prefCheckDefaultClient.label     "Comproveu els paràmetres d'aplicació per defecte a l'inici">
+<!ENTITY prefCheckDefaultClient.accesskey "C">
+
+<!ENTITY crashReports.caption             "Informe de fallada">
+<!ENTITY submitCrashes.label              "Envia informes de fallada">
+<!ENTITY submitCrashes.accesskey          "E">
+
+<!ENTITY devTools.caption                 "Eines per a desenvolupadors">
+<!ENTITY allowDebugger.label              "Permet que un depurador es connecti al &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "P">
+<!ENTITY allowRemoteConnections.label     "Permet connexions des d'altres ordinadors">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "Avisa'm si hi ha connexions entrants">
+<!ENTITY connectionPrompt.accesskey       "v">
+<!ENTITY remoteDebuggerPort.label         "Número de port per a la connexió:">
+<!ENTITY remoteDebuggerPort.accesskey     "N">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Про &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "о">
+
+<!ENTITY preferencesCmdMac.label        "Налаштування…">
+
+<!ENTITY servicesMenuMac.label          "Служби">
+
+<!ENTITY hideThisAppCmdMac2.label       "Приховати &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Приховати інші">
+
+<!ENTITY showAllAppsCmdMac.label        "Показати все">
+
+<!ENTITY touchBarCmdMac.label           "Налаштувати сенсорну панель…">

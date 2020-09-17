@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Botim Faqeje">
+<!ENTITY windowTitleSettings.label    "Rregullime Botimi">
+<!ENTITY publishTab.label             "Botim">
+<!ENTITY settingsTab.label            "Rregullime">
+<!ENTITY publishButton.label          "Botoje">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Emër Sajti:">
+<!ENTITY siteList.accesskey           "E">
+<!ENTITY siteList.tooltip             "Zgjidhni sajtin te i cili doni të botohet">
+<!ENTITY newSiteButton.label          "Sajt i Ri">
+<!ENTITY newSiteButton.accesskey      "S">
+<!ENTITY docDirList.label             "Nëndrejtori sajti për këtë faqe:">
+<!ENTITY docDirList.accesskey         "N">
+<!ENTITY docDirList.tooltip           "Zgjidhni ose jepni emrin e nëndrejtorisë së largët për këtë faqe">
+<!ENTITY publishImgCheckbox.label     "Përfshi figura dhe kartela të tjera">
+<!ENTITY publishImgCheckbox.accesskey "P">
+<!ENTITY publishImgCheckbox.tooltip   "Botoni figura dhe kartela të tjera të cilave u referohet kjo faqe">
+<!ENTITY sameLocationRadio.label      "Përdor të njëjtën vendndodhje si faqja">
+<!ENTITY sameLocationRadio.accesskey  "f">
+<!ENTITY sameLocationRadio.tooltip    "Kartelat botojini te e njëjta vendndodhje si faqja">
+<!ENTITY useSubdirRadio.label         "Përdor këtë nëndrejtori sajti:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Botojini kartelat te drejtoria e largët e përzgjedhur">
+<!ENTITY otherDirList.tooltip         "Zgjidhni ose jepni emrin e nëndrejtorisë së largët ku të botohen kartelat">
+<!ENTITY pageTitle.label              "Titull Faqeje:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Jepni një titull për identifikimin e faqes në dritare dhe në faqerojtës">
+<!ENTITY pageTitleExample.label       "p.sh.: &quot;Faqja Ime Web&quot;">
+<!ENTITY filename.label               "Emër kartele:">
+<!ENTITY filename.accesskey           "k">
+<!ENTITY filename.tooltip             "Jepni një emër për këtë kartelë, përfshi '.html' në rastin e një faqeje web">
+<!ENTITY filenameExample.label        "p.sh,: &quot;faqjaime.html&quot;">
+<!ENTITY setDefaultButton.label       "Vëre si Parazgjedhje">
+<!ENTITY setDefaultButton.accesskey   "V">
+<!ENTITY removeButton.label           "Hiqe Sajtin">
+<!ENTITY removeButton.accesskey       "H">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Sajte Botimi">
+<!ENTITY serverInfo.label             "Të dhëna Shërbyesi">
+<!ENTITY loginInfo.label              "Të dhëna Hyrjeje">
+<!ENTITY siteName.label               "Emër Sajti:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "Nofkë që identifikon këtë sajt botimi (p.sh.: 'Imi')">
+<!ENTITY siteUrl.label                "Adresë botimi (p.sh.: 'ftp://ftp.ispjaim.com/emriimipërdoruesit'):">
+<!ENTITY siteUrl.accesskey            "A">
+<!ENTITY siteUrl.tooltip              "Adresa FTP:// ose HTTP:// dhënë juve prej ISP-së tuaj apo shërbimi i strehimeve web">
+<!ENTITY browseUrl.label              "Adresa HTTP e faqes tuaj (p.sh.: 'http://www.ispjaim.com/emriimipërdoruesit'):">
+<!ENTITY browseUrl.accesskey          "A">
+<!ENTITY browseUrl.tooltip            "Adresa HTTP:// e drejtorisë suaj hyrëse (mos përfshini emër kartele)">
+<!ENTITY username.label               "Emër përdoruesi:">
+<!ENTITY username.accesskey           "E">
+<!ENTITY username.tooltip             "Emri i përdoruesit që përdorni për t&apos;u futur te ISP-ja juaj apo shërbimi i strehimeve web">
+<!ENTITY password.label               "Fjalëkalim:">
+<!ENTITY password.accesskey           "f">
+<!ENTITY password.tooltip             "Fjalëkalimi i përshoqëruar emrit tuaj të përdoruesit">
+<!ENTITY savePassword.label           "Ruaje Fjalëkalimin">
+<!ENTITY savePassword.accesskey       "R">
+<!ENTITY savePassword.tooltip         "Përzgjidheni këtë për ruajtje në mënyrë të sigurt të fjalëkalimit tuaj përmes Përgjegjësit të Fjalëkalimeve">

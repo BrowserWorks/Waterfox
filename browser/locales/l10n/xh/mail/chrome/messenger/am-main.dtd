@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Imimiselo Yeeakhawunti">
+<!ENTITY accountName.label "Igama Leakhawunti:">
+<!ENTITY accountName.accesskey "L">
+<!ENTITY identityTitle.label "Uphawu Lokuchonga Oluhlala Lukho">
+<!ENTITY identityDesc.label "Iakhawunti nganye inophawu lokuchonga, olululwazi olubonwa ngabanye abantu xa befunda imiyalezo yakho.">
+<!ENTITY name.label "Igama Lakho:">
+<!ENTITY name.accesskey "I">
+<!ENTITY email.label "Idilesi Yemeyile:">
+<!ENTITY email.accesskey "I">
+<!ENTITY replyTo.label "Phendula-Kwidilesi:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Recipients will reply to this other address">
+<!ENTITY organization.label "Umbutho:">
+<!ENTITY organization.accesskey "U">
+<!ENTITY signatureText.label "Signature text:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "Use HTML (e.g., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Attach the signature from a file instead (text, HTML, or image):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Hlela...">
+<!ENTITY choose.label "Khetha...">
+<!ENTITY choose.accesskey "K">
+<!ENTITY editVCard.label "Hlela Ikhadi...">
+<!ENTITY editVCard.accesskey "l">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Qhoboshela i-vCard yam kwimiyalezo">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Lawula Iimpawu Zokuchonga...">
+<!ENTITY manageIdentities.accesskey "L">
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+
+<!ENTITY smtpName.label "Iseva Ekhutshwayo (SMTP):">
+<!ENTITY smtpName.accesskey "k">
+<!ENTITY smtpDefaultServer.label "Sebenzisa Iseva Ehlala Ikho">
+

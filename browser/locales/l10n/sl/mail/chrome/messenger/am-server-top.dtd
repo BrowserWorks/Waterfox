@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Shramba sporočil">
+<!ENTITY securitySettings.label "Varnostne nastavitve">
+<!ENTITY serverSettings.label "Nastavitve strežnika">
+<!ENTITY serverType.label "Vrsta strežnika:">
+<!ENTITY serverName.label "Ime strežnika:">
+<!ENTITY serverName.accesskey "s">
+<!ENTITY userName.label "Uporabniško ime:">
+<!ENTITY userName.accesskey "U">
+<!ENTITY port.label "Vrata:">
+<!ENTITY port.accesskey "V">
+<!ENTITY serverPortDefault.label "Privzeto:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Preveri za nova sporočila vsakih ">
+<!ENTITY biffStart.accesskey "P">
+<!ENTITY biffEnd.label "minut">
+<!ENTITY useIdleNotifications.label "Dovoli takojšnja obvestila strežnika, ko prispejo nova sporočila">
+<!ENTITY useIdleNotifications.accesskey "D">
+<!ENTITY connectionSecurity.label "Varnost povezave:">
+<!ENTITY connectionSecurity.accesskey "a">
+<!ENTITY connectionSecurityType-0.label "Brez">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, če je na voljo">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Metoda overitve:">
+<!ENTITY authMethod.accesskey "M">
+<!ENTITY leaveOnServer.label "Pusti sporočila na strežniku">
+<!ENTITY leaveOnServer.accesskey "u">
+<!ENTITY headersOnly.label "Prenesi samo glave">
+<!ENTITY headersOnly.accesskey "r">
+<!ENTITY deleteByAgeFromServer.label "za največ">
+<!ENTITY deleteByAgeFromServer.accesskey "n">
+<!ENTITY daysEnd.label "dni">
+<!ENTITY deleteOnServer2.label "dokler jih ne izbrišem">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "Samodejno prenesi nova sporočila">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "Ko izbrišem sporočilo:">
+<!ENTITY modelMoveToTrash.label "ga premakni v mapo:">
+<!ENTITY modelMoveToTrash.accesskey "r">
+<!ENTITY modelMarkDeleted.label "ga samo označi kot izbrisano">
+<!ENTITY modelMarkDeleted.accesskey "m">
+<!ENTITY modelDeleteImmediately.label "ga odstrani takoj">
+<!ENTITY modelDeleteImmediately.accesskey "o">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Počisti (&quot;izprazni&quot;) mapo Prejeto ob izhodu">
+<!ENTITY expungeOnExit.accesskey "č">
+<!ENTITY emptyTrashOnExit.label "Ob izhodu izprazni Koš">
+<!ENTITY emptyTrashOnExit.accesskey "h">
+<!ENTITY loginAtStartup.label "Ob zagonu preveri za nova sporočila">
+<!ENTITY loginAtStartup.accesskey "z">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Vprašaj me pred prenašanjem več kot">
+<!ENTITY maxMessagesStart.accesskey "r">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "sporočil">
+<!ENTITY alwaysAuthenticate.label "Ob povezavi na ta strežnik vedno zahtevaj overitev">
+<!ENTITY alwaysAuthenticate.accesskey "o">
+<!ENTITY newsrcFilePath1.label "Datoteka news.rc:">
+<!ENTITY newsrcPicker1.label "Izberi datoteko news.rc">
+<!ENTITY abbreviate.label "Pokaži imena novičarskih skupin v podoknu Mapa za pošto kot:">
+<!ENTITY abbreviateOn.label "Polna imena (Na primer, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Skrajšaj imena (Na primer, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Napredno …">
+<!ENTITY advancedButton.accesskey "N">
+<!ENTITY serverDefaultCharset2.label "Privzeto kodiranje besedila:">
+<!ENTITY localPath1.label "Krajevna mapa:">
+<!ENTITY localFolderPicker.label "Izberi krajevni imenik">
+<!ENTITY browseFolder.label "Prebrskaj …">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "Prebrskaj …">
+<!ENTITY browseNewsrc.accesskey "k">
+
+<!ENTITY accountTitle.label "Nastavitve računa">
+<!ENTITY accountSettingsDesc.label "Naslednje je račun posebne vrste.  Z njim ni povezana nobena identiteta.">
+<!ENTITY storeType.label "Vrsta shrambe sporočil:">
+<!ENTITY storeType.accesskey "V">
+<!ENTITY mboxStore2.label "Ena datoteka na mapo (mbox)">
+<!ENTITY maildirStore.label "Ena datoteka na sporočilo (maildir)">

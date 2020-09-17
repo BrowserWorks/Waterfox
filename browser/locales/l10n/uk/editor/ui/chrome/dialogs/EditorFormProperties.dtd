@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Властивості форми">
+
+<!ENTITY Settings.label "Параметри">
+
+<!ENTITY FormName.label "Назва форми:">
+<!ENTITY FormName.accesskey "Н">
+<!ENTITY FormAction.label "URL обробника:">
+<!ENTITY FormAction.accesskey "о">
+<!ENTITY FormMethod.label "Метод:">
+<!ENTITY FormMethod.accesskey "М">
+<!ENTITY FormEncType.label "Кодування:">
+<!ENTITY FormEncType.accesskey "К">
+<!ENTITY FormTarget.label "Цільовий фрейм:">
+<!ENTITY FormTarget.accesskey "Ц">
+
+<!ENTITY RemoveForm.label "Вилучити форму">
+<!ENTITY RemoveForm.accesskey "В">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Webbapplikation för nedkopplat läge">
+<!ENTITY pref.offlineCache.caption          "Webbinnehåll och användardata för nedkopplat läge">
+
+<!ENTITY clearOfflineAppCache.label         "Rensa">
+<!ENTITY clearOfflineAppCache.accesskey     "R">
+
+<!ENTITY offlineAlwaysAllow.label           "Tillåt alla webbplatser att lagra data för nedkopplat läge">
+<!ENTITY offlineAlwaysAllow.accesskey       "a">
+<!ENTITY offlineExplicit.label              "Tillåt enbart webbplatser med uttrycklig tillåtelse">
+<!ENTITY offlineExplicit.accesskey          "e">
+<!ENTITY offlineNotifyAsk.label             "Meddela mig när en webbplats vill lagra data att användas i nedkopplat läge">
+<!ENTITY offlineNotifyAsk.accesskey         "M">
+<!ENTITY offlineNotifyPermissions.label     "Hantera tillåtelser">
+<!ENTITY offlineNotifyPermissions.accesskey "t">
+
+<!ENTITY offlineAppsUsage.label             "Följande webbplatser har lagrat data att användas i nedkopplat läge:">
+<!ENTITY offlineAppsListRemove.label        "Rensa data…">
+<!ENTITY offlineAppsListRemove.accesskey    "d">

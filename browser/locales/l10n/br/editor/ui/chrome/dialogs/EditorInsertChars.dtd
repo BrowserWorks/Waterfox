@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Enlakaat un arouezenn">
+<!ENTITY category.label "Rummad">
+<!ENTITY letter.label "Lizherenn :">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "Arouezenn :">
+<!ENTITY character.accessKey "r">
+<!ENTITY accentUpper.label "Pennlizherenn dre dired">
+<!ENTITY accentLower.label "Lizherenn vihan dre dired">
+<!ENTITY otherUpper.label "Pennlizherenn all">
+<!ENTITY otherLower.label "Lizherenn vihan all">
+<!ENTITY commonSymbols.label "Arouezioù boutin">
+<!ENTITY insertButton.label "Enlakaat">
+<!ENTITY closeButton.label "Serriñ">

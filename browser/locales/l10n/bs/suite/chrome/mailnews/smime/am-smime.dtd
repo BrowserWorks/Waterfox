@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Sigurnost">
+<!ENTITY securityTab.label "Sigurnost">
+<!ENTITY securityHeading.label "Da biste slali i primali potpisane ili enkriptovane poruke, trebate navesti certifikat za digitalni potpis i certifikat za enkripciju.">
+<!ENTITY encryptionGroupTitle.label "Enkripcija">
+<!ENTITY encryptionChoiceLabel.label "Glavne postavke enkripcije prilikom slanja poruka:">
+<!ENTITY neverEncrypt.label "Nikad (nemoj enkriptovati)">
+<!ENTITY alwaysEncryptMessage.label "Zahtijevano (slanje poruka nije moguće ukoliko svi primaoci nemaju certifikate)">
+<!ENTITY encryptionCert.message "Koristiti ovaj certifikat za enkripciju i dekripciju poruka poslanih vama:">
+<!ENTITY digitalSign.certificate.button "Odaberi…">
+<!ENTITY digitalSign.certificate_clear.button "Očisti">
+<!ENTITY encryption.certificate.button "Odaberi…">
+<!ENTITY encryption.certificate_clear.button "Očisti">
+<!ENTITY signingGroupTitle.label "Digitalno potpisivanje">
+<!ENTITY signMessage.label "Digitalno potpiši poruke (izvorno)">
+<!ENTITY signingCert.message "Koristiti ovaj certifikat za digitalno potpisivanje poruka koje šaljete:">
+
+<!ENTITY certificates.label "Certifikati">
+<!ENTITY manageCerts2.label "Upravljanje certifikatima…">
+<!ENTITY manageDevices.label "Upravljanje sigurnosnim uređajima…">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Odaberi certifikat">
+<!ENTITY certPicker.info  "Certifikat:">
+<!ENTITY certPicker.detailsLabel "Detalji izabranog certifikata:">

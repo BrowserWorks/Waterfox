@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY renameFolderDialog.title          "Endre mappenamn">
+<!ENTITY rename.label                      "Skriv inn det nye namnet på mappa:">
+<!ENTITY rename.accesskey                  "S">
+<!ENTITY accept.label                      "Endre namn">
+<!ENTITY accept.accesskey                  "E">

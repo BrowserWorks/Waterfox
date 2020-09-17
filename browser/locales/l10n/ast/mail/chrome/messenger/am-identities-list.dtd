@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Alministra les identidaes d'esta cuenta. Úsase por defeutu la primera identidá.">
+<!ENTITY identitiesListAdd.label "Amestar…">
+<!ENTITY identitiesListAdd.accesskey "A">
+<!ENTITY identitiesListEdit.label "Editar…">
+<!ENTITY identitiesListEdit.accesskey "E">
+<!ENTITY identitiesListDefault.label "Afitar predet">
+<!ENTITY identitiesListDefault.accesskey "i">
+<!ENTITY identitiesListDelete.label "Desaniciar">
+<!ENTITY identitiesListDelete.accesskey "r">
+<!ENTITY identitiesListClose.label "Zarrar">
+<!ENTITY identitiesListClose.accesskey "Z">

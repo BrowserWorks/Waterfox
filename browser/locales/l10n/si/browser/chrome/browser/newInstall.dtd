@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "වැදගත් පුවත්">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "මෙම &brandShortName; ස්ථාපනය මගින් ඔබ දැනටමත් Firefox වෙත සුරැකි තොරතුරු වෙත පිවිසීමට, ඔබේ &syncBrand.fxAccount.label; මගින් පිවිසෙන්න.">
+<!ENTITY continue-button "ඉදිරියට යන්න">
+
+<!ENTITY mainText "&brandShortName; ස්ථාපනය සතුව නව පැතිකඩක් පවතී. එය පරිගණකයේ පවතින වෙනත් Firefox ස්ථාපන (Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition, සහ Firefox Nightly ඇතුළුව) සමඟ පිටු සළකුණු, මුරපද සහ පරිශීලක අභිප්‍රේත හවුල් කර නොගනී.">

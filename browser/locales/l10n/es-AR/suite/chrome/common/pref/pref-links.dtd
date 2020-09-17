@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Comportamiento de enlaces">
+<!ENTITY newWindow.label "Comportamiento al abrir un enlace">
+<!ENTITY newWindowDescription.label "Abrir enlaces que deban abrirse en nueva ventana en">
+<!ENTITY newWindowRestriction.label "Cuando un script trate de abrir una nueva ventana:">
+<!ENTITY external.label "Enlaces desde otras aplicaciones">
+<!ENTITY externalDescription.label "Abrir enlaces enviados de otras aplicaciones en">
+
+<!ENTITY openCurrent.label "La pestaña/ventana actual">
+<!ENTITY newWindowGroupCurrent.accesskey "c">
+<!ENTITY externalGroupCurrent.accesskey "u">
+
+<!ENTITY openTab.label "Una nueva pestaña en la ventana actual">
+<!ENTITY newWindowGroupTab.accesskey "t">
+<!ENTITY externalGroupTab.accesskey "a">
+
+<!ENTITY openWindow.label "Una nueva ventana">
+<!ENTITY newWindowGroupWindow.accesskey "n">
+<!ENTITY externalGroupWindow.accesskey "v">
+
+<!ENTITY divertAll.label "Siempre desviar ventanas en pestañas">
+<!ENTITY divertAll.accesskey "d">
+<!ENTITY divertNoFeatures.label "No desviar ventanas personalizadas en pestañas">
+<!ENTITY divertNoFeatures.accesskey "s">
+<!ENTITY dontDivert.label "Siempre abrir nuevas ventanas">
+<!ENTITY dontDivert.accesskey "e">
+

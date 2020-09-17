@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!-- Labels -->
+<!ENTITY addToAddressBook.label "যোগ করা হবে (A):">
+
+<!ENTITY addToAddressBook.accesskey "A">
+<!ENTITY ListName.label "নামের তালিকা তৈরি করা হবে (L):">
+<!ENTITY ListName.accesskey "L">
+<!ENTITY ListNickName.label "ডাকনামের তালিকা তৈরি করা হবে (N):">
+<!ENTITY ListNickName.accesskey "N">
+<!ENTITY ListDescription.label "বিবরণ (e):">
+<!ENTITY ListDescription.accesskey "e">
+
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label "মেইলের তালিকায় যোগ করার জন্য ই-মেইল ঠিকানা টাইপ করা হবে:">
+<!ENTITY UpButton.label "উপরে উঠান">
+<!ENTITY DownButton.label "নিচে নামান">
+<!-- Access Keys -->
+

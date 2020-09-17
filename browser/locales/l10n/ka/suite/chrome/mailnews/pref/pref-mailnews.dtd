@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "ფოსტა და ჯგუფები">
+<!ENTITY generalSettings.caption          "ძირითადი პარამეტრები">
+<!ENTITY confirmMove.label                "თანხმობის მოთხოვნა საქაღალდის ურნაში გადატანისას">
+<!ENTITY confirmMove.accesskey            "C">
+<!ENTITY preserveThreading.label          "მიმოწერის შენარჩუნება წერილების დახარისხებისას">
+<!ENTITY preserveThreading.accesskey      "ნ">
+<!ENTITY loadInBackground.label           "ახალ ჩანართებზე გადასვლა გახსნისთანავე">
+<!ENTITY loadInBackground.accesskey       "დ">
+<!ENTITY mailBiffOnNewWindow.label        "ახალი ფოსტის შემოწმება მხოლოდ ფოსტისა და სიახლეთა ჯგუფების გახსნის შემდეგ">
+<!ENTITY mailBiffOnNewWindow.accesskey    "O">
+
+<!ENTITY defaultMailSettings.description  "&brandShortName; პროგრამის ნაგულისხმებად მითთება:">
+<!ENTITY setDefaultMail.label             "ფოსტისთვის">
+<!ENTITY setDefaultMail.accesskey         "M">
+<!ENTITY setDefaultNews.label             "სიახლეებისთვის">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "არხებისთვის">
+<!ENTITY setDefaultFeed.accesskey         "e">
+
+<!ENTITY useInternalSettings.description  "&brandShortName; ფოსტისა &amp; სიახლეების გამოყენება, ბრაუზერის ბმულების გახსნისას:">
+<!ENTITY useInternalMail.label            "ფოსტა (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "სიახლეები (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "s">
+
+<!ENTITY messengerStartPage.caption       "ფოსტის საწყისი გვერდი">
+<!ENTITY enableStartPage.label            "საფოსტო სეანსის გაშვებისას, საწყისი გვერდის ჩვენება წერილების არეში">
+<!ENTITY enableStartPage.accesskey        "W">
+<!ENTITY location.label                   "მისამართი:">
+<!ENTITY location.accesskey               "L">
+<!ENTITY useDefault.label                 "ძირითადის აღდგენა">
+<!ENTITY useDefault.accesskey             "D">
+<!ENTITY rememberLastMsg.label            "ბოლო მონიშნული წერილის დამახსოვრება">
+<!ENTITY rememberLastMsg.accesskey        "R">

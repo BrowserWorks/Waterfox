@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Fáilte go &brandShortName;">
+<!ENTITY header2.label "An bhfuil fonn ort seoladh nua ríomhphoist a fháil?">
+<!ENTITY other.languages "Nílimid ag taispeáint ach na soláthraithe a chuireann seoltaí ríomhphoist ar fáil i do cheantar. Cliceáil anseo chun gach uile sholáthraí a thaispeáint.">
+<!ENTITY error.line1 "Tá brón orainn, níorbh fhéidir linn aon seoltaí ríomhphoist a mholadh duit.">
+<!ENTITY error.line2 "Is féidir leasainmneacha nó aon téarmaí eile a chuardach chun tuilleadh seoltaí ríomhphoist a aimsiú.">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "Nó, bain triail as ceann de na ">
+<!ENTITY error.suggest.middle "seirbhísí ríomhphoist saor in aisce">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "Dia Dhuit ">
+<!ENTITY success.title.after ", is iad seo na seoltaí ríomhphoist atá ar fáil:">
+<!ENTITY success.tip "(Is féidir leasainmneacha nó aon téarmaí eile a chuardach freisin, chun tuilleadh seoltaí a aimsiú)">
+<!ENTITY partnership.description "I gcomhar le soláthraithe áirithe, is féidir leat cuntas nua ríomhphoist a chruthú trí &brandShortName;. Tabhair d'ainm agus sloinne, nó aon téarmaí eile, sna boscaí thuas chun tosú.">
+<!ENTITY existing.header "An bhfuil seoladh ríomhphoist agat cheana?">
+<!ENTITY tinyheader.title "Seoladh ríomhphoist agat?">
+<!ENTITY tinyheader.existing "Ná bac leis seo; úsáid an seoladh s'agam">
+<!ENTITY content.close "Socróidh mé cuntas ar ball.">
+<!ENTITY successful.title "Comhghairdeas!">
+<!ENTITY successful.successMessage "D'éirigh leat do chuntas a chruthú.">
+<!ENTITY successful.write "Scríobh ríomhphost">
+<!ENTITY successful.write.desc "Inis do chairde agus do chlann faoi do sheoladh nua.<br/> Nach é sin an fáth a bhfuair tú an cuntas seo?">
+<!ENTITY successful.customize "Cuir &brandShortName; in oiriúint duit féin le breiseáin">
+<!ENTITY successful.customize.desc "Tá na mílte breiseán ar fáil a chabhraíonn leat &brandShortName; a chur in oiriúint duit féin.">
+<!ENTITY successful.attach "Cuir síniú pearsanta le mo ríomhphost">
+<!ENTITY successful.attach.desc "Is féidir athfhriotal nó faisnéis fút féin a chur ag deireadh gach teachtaireacht a sheolann tú.">
+<!ENTITY successful.close "Dún an fhuinneog seo.">
+<!ENTITY input.namePlaceholder "D'ainm, nó leasainm">
+<!ENTITY input.search "Cuardaigh">
+<!ENTITY search_engine.title "Saincheap d'inneall cuardaigh">
+<!ENTITY search_engine.message "Seans gur féidir leat an Gréasán a chuardach trí do sholáthraí ríomhphoist freisin.">
+<!ENTITY search_engine.button "Críochnaigh">

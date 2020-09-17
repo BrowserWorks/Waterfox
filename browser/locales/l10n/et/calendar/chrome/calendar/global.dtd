@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "keskööl" >
+<!ENTITY time.noon "keskpäeval" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "pühap" >
+<!ENTITY day.1.Ddd.accesskey "p">
+<!ENTITY day.2.Ddd "esmasp" >
+<!ENTITY day.2.Ddd.accesskey "e">
+<!ENTITY day.3.Ddd "teisip" >
+<!ENTITY day.3.Ddd.accesskey "t">
+<!ENTITY day.4.Ddd "kolmap" >
+<!ENTITY day.4.Ddd.accesskey "k">
+<!ENTITY day.5.Ddd "neljap" >
+<!ENTITY day.5.Ddd.accesskey "n">
+<!ENTITY day.6.Ddd "ree" >
+<!ENTITY day.6.Ddd.accesskey "r">
+<!ENTITY day.7.Ddd "laup" >
+<!ENTITY day.7.Ddd.accesskey "l">
+
+<!ENTITY day.1.name "Pühapäev" >
+<!ENTITY day.2.name "Esmaspäev" >
+<!ENTITY day.3.name "Teisipäev" >
+<!ENTITY day.4.name "Kolmapäev" >
+<!ENTITY day.5.name "Neljapäev" >
+<!ENTITY day.6.name "Reede" >
+<!ENTITY day.7.name "Laupäev" >
+
+<!ENTITY month.1.name "jaanuar" >
+<!ENTITY month.2.name "veebruar" >
+<!ENTITY month.3.name "märts" >
+<!ENTITY month.4.name "aprill" >
+<!ENTITY month.5.name "mai" >
+<!ENTITY month.6.name "juuni" >
+<!ENTITY month.7.name "juuli" >
+<!ENTITY month.8.name "august" >
+<!ENTITY month.9.name "september" >
+<!ENTITY month.10.name "oktoober" >
+<!ENTITY month.11.name "november" >
+<!ENTITY month.12.name "detsember" >
+
+<!ENTITY onemonthbackward.tooltip "Üks kuu tagasi" >
+<!ENTITY onemonthforward.tooltip "Üks kuu edasi" >
+<!ENTITY oneyearbackward.tooltip "Üks aasta tagasi" >
+<!ENTITY oneyearforward.tooltip "Üks aasta edasi" >
+<!ENTITY showToday.tooltip "Tänase päeva juurde">
+<!ENTITY onedayforward.tooltip "Üks päev edasi">
+<!ENTITY onedaybackward.tooltip "Üks päev tagasi">
+<!ENTITY showselectedday.tooltip "Näita valitud päeva sündmusi">

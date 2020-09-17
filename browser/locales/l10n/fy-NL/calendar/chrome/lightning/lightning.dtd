@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Aginda">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Barren…">
+<!ENTITY lightning.menupopup.new.event.accesskey "B">
+<!ENTITY lightning.menupopup.new.task.label     "Taak…">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "Aginda…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "n">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Iepenje">
+<!ENTITY lightning.menupopup.open.accesskey           "I">
+<!ENTITY lightning.menupopup.open.message.label       "Bewarre berjocht…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "b">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Agindabestân…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "A">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Aginda">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "Taken">
+<!ENTITY lightning.menu.view.tasks.accesskey           "k">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Barrens en taken">
+<!ENTITY lightning.menu.eventtask.accesskey            "n">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-mail:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Foarkar foar e-mailplanning oan clientside">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Foarearst kinne jo dit allinnich ynskeakelje nei it ynstellen fan dizze aginda yn it eigenskippenfinster derfan as de agindaserver de planning fersoarget.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Dizze opsje is allinnich beskikber as de agindaserver planning fersoarget. By ynskeakeljen kin weromfallen wurde nei de standert op e-mail basearre planning yn stee fan dit oan de server oer te litten.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Akseptearje">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Barrensútnûging akseptearje ">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Alles akseptearje">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Barrensútnûging akseptearje foar alle gelegenheden fan it barren">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Tafoegje">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Foegje it barren ta oan de aginda">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Ofwize">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Barrensútnûging ôfwize">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Alles ôfwize">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Barrensútnûging ôfwize foar alle gelegenheden fan it barren">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Wegerje">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Nije foarstel wegerje">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Fuortsmite">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Fuortsmite út aginda">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Details…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Barrendetails toane">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Dit berjocht net mear toane">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Aginda">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Gean nei it agindaljepblêd">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Mear">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Klik om mear opsjes te toanen">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Befêstigje opnij">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Ferstjoert in nij befêstiging nei de organisearder">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Opnij ynplanne">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Evenemint opnij ynplanne">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "In kopie bewarje">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "In kopie fan it barren yn de aginda bewarje, ûnôfhinklik fan beantwurding nei de organisearder. De lijst van genodigden zal worden gewist.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Foarearst">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Barrensútnûging foarearst akseptearje">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Foarearst alles">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Barrensútnûging foarearst akseptearje foar alle gelegenheden fan it barren">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Fernij">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Barren fernije yn aginda">
+<!ENTITY lightning.imipbar.description                                      "Dit berjocht hat in útnûging foar in barren.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "No in antwurd ferstjoere">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "In antwurd nei de organisator ferstjoere">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "In antwurd foar de hiele searje nei de organisator ferstjoere">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Gjin antwurd ferstjoere">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Jo dielnamesteat wizigje sûnder in antwurd nei de organisator te ferstjoeren">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Jo dielnamesteat wizigje foar de hiele searje sûnder in antwurd nei de organisator te ferstjoeren">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "In nije aginda meitsje">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Minimoanne toane">
+<!ENTITY todaypane.showMinimonth.accesskey "m">
+<!ENTITY todaypane.showMiniday.label "Minidei toane">
+<!ENTITY todaypane.showMiniday.accesskey  "d">
+<!ENTITY todaypane.showNone.label "Neat toane">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Finster Hjoed toane">
+<!ENTITY todaypane.showTodayPane.accesskey "o">
+<!ENTITY todaypane.statusButton.label "Skerm hjoed">

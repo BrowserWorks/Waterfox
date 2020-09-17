@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "B'i'aj: ">
+<!ENTITY directoryName.accesskey           "b">
+<!ENTITY directoryHostname.label           "K'uxasamaj: ">
+<!ENTITY directoryHostname.accesskey       "u">
+<!ENTITY directoryBaseDN.label             "Xe'el DN: ">
+<!ENTITY directoryBaseDN.accesskey         "x">
+<!ENTITY findButton.label                  "Tikanöx">
+<!ENTITY findButton.accesskey              "k">
+<!ENTITY directorySecure.label             "Tokisäx jikïl okem (SSL)">
+<!ENTITY directorySecure.accesskey         "o">
+<!ENTITY directoryLogin.label              "Bind DN: ">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "Chijun">
+<!ENTITY Offline.tab                       "Chupül">
+<!ENTITY Advanced.tab                      "Q'axinäq">
+<!ENTITY portNumber.label                  "Rajilab'al b'ey: ">
+<!ENTITY portNumber.accesskey              "b">
+<!ENTITY searchFilter.label                "Tikanöx chayub'äl: ">
+<!ENTITY searchFilter.accesskey            "c">
+<!ENTITY scope.label                       "Akuchi' napon: ">
+<!ENTITY scope.accesskey                   "k">
+<!ENTITY scopeOneLevel.label               "Jun Rupalem">
+<!ENTITY scopeOneLevel.accesskey           "p">
+<!ENTITY scopeSubtree.label                "Achche'">
+<!ENTITY scopeSubtree.accesskey            "A">
+<!ENTITY return.label                      "Man titzolïx chik xa xe re'">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "taq q'i'oj">
+<!ENTITY offlineText.label                 "Yatikïr naqasaj jun aj wawe' ruwachib'enik re cholb'äl re' richin yatikïr nasamajij toq man atokinäq ta.">
+<!ENTITY saslMechanism.label               "Rub'eyal Okem: ">
+<!ENTITY saslMechanism.accesskey           "m">
+<!ENTITY saslOff.label                     "Relik">
+<!ENTITY saslOff.accesskey                 "l">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">

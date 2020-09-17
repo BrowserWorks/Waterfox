@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Cu how wen!">
+<!ENTITY safeb.palm.decline.label "Toś to warnowanje ignorěrowaś">
+<!ENTITY safeb.palm.reportPage.label "Cogodla jo se toś ten bok blokěrował?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "wót <a id='advisory_provider'/> póraźujucy">
+
+<!ENTITY safeb.blocked.malwarePage.title "Napadowy bok jo se k wěsći dał!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Toś ten webbok na <span id='malware_sitename'/> jo se ako napadowy bok k wěsći dał a na zakłaźe wašych wěstotnych nastajenjow blokěrował.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Napadowe boki wopytuju programy instalěrowaś, kótarež kšadnu priwatne informacije, wužywaju wašo licadło, aby druge napadnuli abo waš system wobškóźeli.</p><p>Někotare napadowe boki rozdźěluju z wótglědom škódnu softwaru, ale wjele wobgrozujo se bźez wěźenja abo dowólnosći jich wobsejźarjow.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Wobšudnikojske sedło!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Toś ten webbok na <span id='phishing_sitename'/> jo se ako wobšudnikojske sedło k wěsći dał a na zakłaźe wašych wěstotnych nastajenjow blokěrował.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Wobšudnkojske sedła su za to myslone, was zawjedowaś, něco tšašnego cyniś, ako na pś. instalěrowanje softwary abo pśeraźowanje wašych wósobinskich datow, na pś. gronidłow, telefonowych numerow abo numerow kreditnych kórtow.</p><p>Gaž daty na toś tom webboku zapódajośo, móžo to ku kšadnjenjeju identity abo drugej wobšuźe wjasć.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Njewitane softwarowe sedło k wěsći dane!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Toś ten webbok na <span id='unwanted_sitename'/> jo se ako bok k wěsći dał, kótaryž wopśimujo njewitanu softwaru a na zakłaźe wašych wěstotnych nastajenjow blokěrował.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Njewitane softwarowe boki wopytuju softwaru instalěrowaś, kótaraž móžo wobšudna byś a waš system na njewótcakowane nałogi wobwliwowaś.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Sedło prědku móžo škódnu softwaru wopśimowaś">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; jo toś ten bok zablokěrował, dokulaž mógła tšašne nałoženja instalěrowaś, kótarež waše daty kšadnu abo lašuju (na pśikład fota, gronidła, powěsći a kreditowe kórty).">

@@ -1,0 +1,126 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Menadžer podataka">
+
+
+<!ENTITY select.all.label "Sve vrste podataka">
+<!ENTITY select.cookies.label "Samo kolačiće">
+<!ENTITY select.permissions.label "Samo dozvole">
+<!ENTITY select.preferences.label "Samo preferencije">
+<!ENTITY select.passwords.label "Samo lozinke">
+<!ENTITY select.storage.label "Samo skladišta">
+
+<!ENTITY domain.search.placeholder "Traži domene">
+
+<!ENTITY domain.tree.domain.label "Domena">
+
+<!ENTITY domain.ctx.forgetdomain.label "Zaboravi na ovu domenu">
+<!ENTITY domain.ctx.forgetglobal.label "Zaboravi globalne podatke">
+
+
+<!ENTITY tab.cookies.label "Kolačići">
+<!ENTITY tab.permissions.label "Dozvole">
+<!ENTITY tab.preferences.label "Preferencije">
+<!ENTITY tab.passwords.label "Lozinke">
+<!ENTITY tab.storage.label "Skladište">
+<!ENTITY tab.formdata.label "Oblik podataka">
+<!ENTITY tab.forget.label "Zaboravi">
+
+<!-- cookies -->
+<!ENTITY cookies.description "Ova domena skladišti sljedeće kolačiće na vaš računar:">
+
+<!ENTITY cookies.tree.host.label "Web stranica">
+<!ENTITY cookies.tree.name.label "Naziv kolačića">
+<!ENTITY cookies.tree.expires.label "Ističe">
+
+<!ENTITY cookies.infobox.label "Informacije o odabranom kolačiću">
+
+<!ENTITY cookies.info.name.label "Naziv:">
+<!ENTITY cookies.info.value.label "Sadržaj:">
+<!ENTITY cookies.info.host.label "Host:">
+<!ENTITY cookies.info.domain.label "Domena:">
+<!ENTITY cookies.info.path.label "Putanja:">
+<!ENTITY cookies.info.sendtype.label "Pošalji za:">
+<!ENTITY cookies.info.expires.label "Ističe:">
+
+<!ENTITY cookies.ctx.remove.label "Ukloni">
+<!ENTITY cookies.ctx.selectAll.label "Označi sve">
+
+<!ENTITY cookies.button.remove.label "Ukloni">
+
+<!ENTITY cookies.blockOnRemove.label "Prilikom uklanjanja, blokirajte navedene web stranice od postavljanja budućih kolačića">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "Koristi izvorno">
+<!ENTITY perm.AskAlways "Uvijek pitaj">
+<!ENTITY perm.NeverSave "Nikad ne spašavaj">
+<!ENTITY perm.Allow "Dozvoli">
+<!ENTITY perm.AllowSameDomain "Dozvoli za istu domenu">
+<!ENTITY perm.AllowSession "Dozvoli za sesiju">
+<!ENTITY perm.Block "Blokiraj">
+
+<!ENTITY perm.host.placeholder "Unesite naziv hosta">
+<!ENTITY perm.button.add.label "Dodaj">
+
+<!-- preferences -->
+<!ENTITY prefs.description "Preferencije sadržaja su način za &brandShortName; da sačuva postavke, kao što su nivo uvečanja, posebno za web stranice.">
+
+<!ENTITY prefs.tree.host.label "Web stranica">
+<!ENTITY prefs.tree.name.label "Naziv preferencije">
+<!ENTITY prefs.tree.value.label "Vrijednost">
+
+<!ENTITY prefs.ctx.remove.label "Ukloni">
+<!ENTITY prefs.ctx.selectAll.label "Označi sve">
+
+<!ENTITY prefs.button.remove.label "Ukloni">
+
+<!-- passwords -->
+<!ENTITY pwd.description "Imate sljedeće lozinke pohranjene za ovu domenu:">
+
+<!ENTITY pwd.tree.host.label "Web stranica">
+<!ENTITY pwd.tree.username.label "Korisničko ime">
+<!ENTITY pwd.tree.password.label "Lozinka">
+
+<!ENTITY pwd.ctx.remove.label "Ukloni">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Kopiraj lozinku">
+<!ENTITY pwd.ctx.selectAll.label "Označi sve">
+
+<!ENTITY pwd.button.remove.label "Ukloni">
+
+<!-- storage -->
+<!ENTITY storage.description "Ova domena koristi sljedeća web skladišta na vašem računaru:">
+
+<!ENTITY storage.tree.host.label "Web stranica">
+<!ENTITY storage.tree.type.label "Tip">
+<!ENTITY storage.tree.size.label "Veličina">
+
+<!ENTITY storage.ctx.remove.label "Ukloni">
+<!ENTITY storage.ctx.selectAll.label "Označi sve">
+
+<!ENTITY storage.button.remove.label "Ukloni">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "Pretraživanje polja podataka">
+
+<!ENTITY fdata.tree.fieldname.label "Naziv polja">
+<!ENTITY fdata.tree.value.label "Unešena vrijednost">
+<!ENTITY fdata.tree.usecount.label "Broj pretraživanja">
+<!ENTITY fdata.tree.firstused.label "Prvi put korišteno">
+<!ENTITY fdata.tree.lastused.label "Zadnji put korišteno">
+
+<!ENTITY fdata.ctx.remove.label "Ukloni">
+<!ENTITY fdata.ctx.selectAll.label "Označi sve">
+
+<!ENTITY fdata.button.remove.label "Ukloni">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Kolačići">
+<!ENTITY forget.permissions.label "Dozvole">
+<!ENTITY forget.preferences.label "Preferencije sadržaja">
+<!ENTITY forget.passwords.label "Lozinke">
+<!ENTITY forget.storage.label "Skladište">
+<!ENTITY forget.formdata.label "Oblik podataka">
+
+<!ENTITY forget.button.label "Zaboravi ove podatke">

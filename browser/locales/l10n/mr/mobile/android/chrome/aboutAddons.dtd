@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "ॲड-ऑन्स्">
+<!ENTITY aboutAddons.header2                    "आपले ॲड-ऑन्स्">
+
+<!ENTITY addonAction.enable                     "कार्यान्वित करा">
+<!ENTITY addonAction.disable                    "निष्क्रिय करा">
+<!ENTITY addonAction.uninstall                  "विस्थापन करा">
+<!ENTITY addonAction.undo                       "आत्ताची कृती रद्द करा">
+<!ENTITY addonAction.update                     "अद्ययावत करा">
+
+<!ENTITY addonUnsigned.message                  "हे अॅड-ऑन &brandShortName; द्वारा सत्यापित नाही होउ शकले.">
+<!ENTITY addonUnsigned.learnMore                "अधिक जाणा">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY viewPicker.label "Perspectivă:">
+<!ENTITY viewPicker.accesskey "i">
+<!ENTITY viewAll.label "Toate">
+<!ENTITY viewAll.accesskey "a">
+<!ENTITY viewUnread.label "Necitite">
+<!ENTITY viewUnread.accesskey "N">
+<!ENTITY viewNotDeleted.label "Nu este șters">
+<!ENTITY viewNotDeleted.accesskey "N">
+<!ENTITY viewTags.label "Etichete">
+<!ENTITY viewTags.accesskey "t">
+<!ENTITY viewCustomViews.label "Vederi personalizate">
+<!ENTITY viewCustomViews.accesskey "V">
+<!ENTITY viewVirtualFolder.label "Salvează vederea ca un dosar…">
+<!ENTITY viewVirtualFolder.accesskey "S">
+<!ENTITY viewCustomizeView.label "Personalizează…">
+<!ENTITY viewCustomizeView.accesskey "P">

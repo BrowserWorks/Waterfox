@@ -1,0 +1,157 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "ブラウザータブ">
+<!ENTITY tabCmd.accesskey "T">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "URL を開く...">
+<!ENTITY openCmd.accesskey "L">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "ファイルを開く...">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "他のタブを閉じる">
+<!ENTITY closeOtherTabs.accesskey "T">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "右側のタブを閉じる">
+<!ENTITY  closeTabsToTheEnd.accesskey "i">
+
+<!ENTITY uploadFile.label "ファイルをアップロード...">
+<!ENTITY uploadFile.accesskey "F">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "ページ内を検索...">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "表示/隠す">
+<!ENTITY toolbarsCmd.accesskey "w">
+<!ENTITY tabbarCmd.label "タブバー">
+<!ENTITY tabbarCmd.accesskey "T">
+<!ENTITY taskbarCmd.label "ステータスバー">
+<!ENTITY taskbarCmd.accesskey "S">
+<!ENTITY componentbarCmd.label "コンポーネントバー">
+<!ENTITY componentbarCmd.accesskey "C">
+
+<!ENTITY fullScreenCmd.label "全画面表示">
+<!ENTITY fullScreenCmd.accesskey "F">
+
+<!ENTITY useStyleSheetMenu.label "スタイルを適用">
+<!ENTITY useStyleSheetMenu.accesskey "U">
+<!ENTITY useStyleSheetNone.label "使用しない">
+<!ENTITY useStyleSheetNone.accesskey "N">
+<!ENTITY useStyleSheetPersistentOnly.label "標準のスタイル">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "D">
+<!ENTITY bidiSwitchPageDirectionItem.label "ページの書記方向を切り換える">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "g">
+<!ENTITY pageSourceCmd.label "ページのソース">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "ページの情報">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "移動">
+<!ENTITY goMenu.accesskey "G">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goHomeCmd.label "ホーム">
+<!ENTITY goHomeCmd.accesskey "H">
+<!ENTITY historyCmd.label "履歴">
+<!ENTITY historyCmd.accesskey "s">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "最近閉じたタブ">
+<!ENTITY recentTabs.accesskey "C">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "最近閉じたウィンドウ">
+<!ENTITY recentWindows.accesskey "W">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "前のセッションを復元">
+<!ENTITY historyRestoreLastSession.accesskey "R">
+<!ENTITY syncTabsMenu.label "他のコンピューターのタブと同期">
+<!ENTITY syncTabsMenu.accesskey "O">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "ブックマーク">
+<!ENTITY bookmarksMenu.accesskey "B">
+<!ENTITY addCurPageCmd.label "このページをブックマーク">
+<!ENTITY addCurPageCmd.accesskey "B">
+<!ENTITY addCurPageAsCmd.label "ブックマークに追加...">
+<!ENTITY addCurPageAsCmd.accesskey "F">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "このタブグループをブックマークに追加...">
+<!ENTITY addCurTabsAsCmd.accesskey "G">
+<!ENTITY manBookmarksCmd.label "ブックマークの管理...">
+<!ENTITY manBookmarksCmd.accesskey "M">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "ウェブ検索">
+<!ENTITY searchInternetCmd.accesskey "b">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "ページ翻訳">
+<!ENTITY translateMenu.accesskey "T">
+
+<!ENTITY cookieMessageTitle.label "Cookie 取捨設定の変更">
+<!ENTITY cookieDisplayCookiesCmd.label "保存した Cookie の管理">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "M">
+<!ENTITY cookieAllowCookiesCmd.label "このサイトからの Cookie を受け入れる">
+<!ENTITY cookieAllowCookiesCmd.accesskey "A">
+<!ENTITY cookieAllowCookiesMsg.label "このサイトからの Cookie は常に受け入れます。">
+<!ENTITY cookieAllowSessionCookiesCmd.label "このサイトからのセッション Cookie を受け入れる">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "S">
+<!ENTITY cookieAllowSessionCookiesMsg.label "このサイトからの Cookie は現在のセッションのみ有効です。">
+<!ENTITY cookieCookiesDefaultCmd.label "既定の Cookie の取捨設定を使用する">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "U">
+<!ENTITY cookieCookiesDefaultMsg.label "このサイトからの Cookie は既定の設定に基づいて受け入れ、または捨てられます。">
+<!ENTITY cookieBlockCookiesCmd.label "このサイトからの Cookie を拒否する">
+<!ENTITY cookieBlockCookiesCmd.accesskey "B">
+<!ENTITY cookieBlockCookiesMsg.label "このサイトからの Cookie は常に拒否します。">
+
+<!ENTITY cookieImageMessageTitle.label "画像表示の可否設定の変更">
+<!ENTITY cookieDisplayImagesCmd.label "画像表示の可否設定の管理">
+<!ENTITY cookieDisplayImagesCmd.accesskey "M">
+<!ENTITY cookieAllowImagesCmd.label "このサイトの画像を表示する">
+<!ENTITY cookieAllowImagesCmd.accesskey "A">
+<!ENTITY cookieAllowImagesMsg.label "このサイトの画像は常に表示します。">
+<!ENTITY cookieImagesDefaultCmd.label "既定の画像表示の可否設定を使用する">
+<!ENTITY cookieImagesDefaultCmd.accesskey "U">
+<!ENTITY cookieImagesDefaultMsg.label "このサイトの画像は、既定の設定に基づいて表示、または無効化されます。">
+<!ENTITY cookieBlockImagesCmd.label "このサイトの画像を表示しない">
+<!ENTITY cookieBlockImagesCmd.accesskey "B">
+<!ENTITY cookieBlockImagesMsg.label "このサイトの画像は一切表示しません。">
+
+<!ENTITY popupsMessageChangeTitle.label "ポップアップ許可設定の変更">
+<!ENTITY popupAllowCmd.label "このサイトのポップアップ表示を許可">
+<!ENTITY popupAllowCmd.accesskey "A">
+<!ENTITY popupAllowMsg.label "このサイトからのポップアップは常に表示されます。">
+<!ENTITY popupDefaultCmd.label "既定のポップアップ許可設定を使用">
+<!ENTITY popupDefaultCmd.accesskey "U">
+<!ENTITY popupDefaultMsg.label "このサイトからのポップアップは既定の設定に従って表示されます。">
+<!ENTITY popupBlockCmd.label "このサイトからのポップアップをブロック">
+<!ENTITY popupBlockCmd.accesskey "B">
+<!ENTITY popupBlockMsg.label "このサイトからのポップアップは表示されません。">
+<!ENTITY popupsManage.label "ポップアップの管理">
+<!ENTITY popupsManage.accesskey "M">
+
+<!ENTITY cookieCookieManager.label "Cookie マネージャー">
+<!ENTITY cookieCookieManager.accesskey "C">
+<!ENTITY cookieImageManager.label "画像マネージャー">
+<!ENTITY cookieImageManager.accesskey "I">
+<!ENTITY popupsManager.label "ポップアップマネージャー">
+<!ENTITY popupsManager.accesskey "o">
+
+<!ENTITY clearPrivateDataCmd.label "プライバシー情報の消去...">
+<!ENTITY clearPrivateDataCmd.accesskey "e">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "f">

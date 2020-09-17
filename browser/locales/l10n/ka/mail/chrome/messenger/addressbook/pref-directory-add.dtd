@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "სახელი: ">
+<!ENTITY directoryName.accesskey           "n">
+<!ENTITY directoryHostname.label           "სერვერის სახელი: ">
+<!ENTITY directoryHostname.accesskey       "o">
+<!ENTITY directoryBaseDN.label             "საბაზო DN: ">
+<!ENTITY directoryBaseDN.accesskey         "b">
+<!ENTITY findButton.label                  "პოვნა">
+<!ENTITY findButton.accesskey              "f">
+<!ENTITY directorySecure.label             "უსაფრთხო კავშირის (SSL) გამოყენება">
+<!ENTITY directorySecure.accesskey         "U">
+<!ENTITY directoryLogin.label              "მიბმა DN: ">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "ძირითადი">
+<!ENTITY Offline.tab                       "კავშირგარეშე">
+<!ENTITY Advanced.tab                      "დამატებითი">
+<!ENTITY portNumber.label                  "პორტის ნომერი: ">
+<!ENTITY portNumber.accesskey              "p">
+<!ENTITY searchFilter.label                "ძიების ფილტრი: ">
+<!ENTITY searchFilter.accesskey            "f">
+<!ENTITY scope.label                       "ჭრილი: ">
+<!ENTITY scope.accesskey                   "c">
+<!ENTITY scopeOneLevel.label               "ერთი დონე">
+<!ENTITY scopeOneLevel.accesskey           "L">
+<!ENTITY scopeSubtree.label                "ქვესისტემა">
+<!ENTITY scopeSubtree.accesskey            "S">
+<!ENTITY return.label                      "არ გამოიტანო">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "-ზე მეტი შედეგი">
+<!ENTITY offlineText.label                 "შეგიძლიათ ჩამოტვირთოთ ამ საქაღალდის ადგილობრივი ასლი, მასზე კავშირგარეშე რეჟიმში სამუშაოდ.">
+<!ENTITY saslMechanism.label               "შესვლის მეთოდი: ">
+<!ENTITY saslMechanism.accesskey           "m">
+<!ENTITY saslOff.label                     "მარტივი">
+<!ENTITY saslOff.accesskey                 "l">
+<!ENTITY saslGSSAPI.label                  "კერბეროსი (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "45em">

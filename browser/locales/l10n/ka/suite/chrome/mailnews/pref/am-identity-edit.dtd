@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (identityDialog.style): This value should be roughly
+     equal to the value of accountManager.size entity minus the value
+     of accountTree.width entity. -->
+<!ENTITY identityDialog.style "min-width: 75ch;">
+<!ENTITY identityListDesc.label "მოცემული საფოსტო ანგარიშის პარამეტრების მითითება:">
+
+<!ENTITY settingsTab.label       "პარამეტრები">
+<!ENTITY copiesFoldersTab.label "ასლები და საქაღალდეები">
+<!ENTITY addressingTab.label    "შექმნა და მისამართები">
+
+<!ENTITY publicData.label        "საჯარო მონაცემები">
+<!ENTITY privateData.label       "პირადი მონაცემები">
+<!ENTITY identityAlias.label     "იარლიყით:">
+<!ENTITY identityAlias.accesskey "ყ">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Створити теку">
+<!ENTITY name.label                 "Назва:">
+<!ENTITY name.accesskey             "Н">
+<!ENTITY description.label          "Створити як вкладену теку:">
+<!ENTITY description.accesskey      "С">
+<!ENTITY folderRestriction1.label   "Цей сервер розділяє теки на два типи.">
+<!ENTITY folderRestriction2.label   "Дозволити новій теці містити:">
+<!ENTITY foldersOnly.label          "Теки">
+<!ENTITY messagesOnly.label         "Лише повідомлення">
+<!ENTITY accept.label               "Створити теку">
+<!ENTITY accept.accesskey           "и">

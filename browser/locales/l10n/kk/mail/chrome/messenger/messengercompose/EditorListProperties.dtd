@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Тізім қасиеттері">
+
+<!ENTITY ListType.label "Тізім түрі">
+<!ENTITY bulletStyle.label "Маркер стилі:">
+<!ENTITY startingNumber.label "Неден бастау:">
+<!ENTITY startingNumber.accessKey "с">
+<!ENTITY none.value "Ешнәрсе">
+<!ENTITY bulletList.value "Маркерленген (нөмірленбеген) тізім">
+<!ENTITY numberList.value "Нөмірленген тізім">
+<!ENTITY definitionList.value "Анықтама тізімі">
+<!ENTITY changeEntireListRadio.label "Толық тізімді өзгерту">
+<!ENTITY changeEntireListRadio.accessKey "з">
+<!ENTITY changeSelectedRadio.label "Тек таңдалған нәрселерді өзгерту">
+<!ENTITY changeSelectedRadio.accessKey "н">

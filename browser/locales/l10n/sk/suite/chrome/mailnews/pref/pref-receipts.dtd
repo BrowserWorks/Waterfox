@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "Potvrdenia o prečítaní">
+<!ENTITY prefReceipts.caption         "Potvrdenia o prečítaní">
+<!ENTITY requestReceipt.label         "Pri posielaní správy vždy žiadať o potvrdenie o prečítaní">
+<!ENTITY requestReceipt.accesskey     "s">
+<!ENTITY receiptArrive.label          "Ak príde potvrdenie:">
+<!ENTITY leaveIt.label                "Nechať ho v priečinku &quot;Doručená pošta&quot;">
+<!ENTITY leaveIt.accesskey            "e">
+<!ENTITY moveToSent.label             "Presunúť ho do priečinka &quot;Odoslaná pošta&quot;">
+<!ENTITY moveToSent.accesskey         "r">
+<!ENTITY requestMDN.label             "Ak prijatá správa obsahuje žiadosť o potvrdenie o prečítaní:">
+<!ENTITY returnSome.label             "Posielať potvrdenia pre správy nasledovne:">
+<!ENTITY returnSome.accesskey         "o">
+<!ENTITY never.label                  "Nikdy neposielať potvrdenie">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Ak nie som v poliach &quot;Komu&quot; alebo &quot;Kópia&quot;:">
+<!ENTITY notInToCc.accesskey          "A">
+<!ENTITY outsideDomain.label          "Ak je odosielateľ mimo mojej domény:">
+<!ENTITY outsideDomain.accesskey      "d">
+<!ENTITY otherCases.label             "V ostatných prípadoch:">
+<!ENTITY otherCases.accesskey         "V">
+<!ENTITY askMe.label                  "Opýtať sa">
+<!ENTITY alwaysSend.label             "Vždy odoslať">
+<!ENTITY neverSend.label              "Nikdy neposielať">

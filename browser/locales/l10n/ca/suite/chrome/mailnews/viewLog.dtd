@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Registre dels filtres">
+<!ENTITY viewLogInfo.text "El registre de filtres és un fitxer que documenta els filtres que s'han executat. Utilitzeu la casella de selecció inferior per habilitar el registre.">
+<!ENTITY clearLog.label "Buida el registre">
+<!ENTITY clearLog.accesskey "B">
+<!ENTITY enableLog.label "Habilita el registre de filtres">
+<!ENTITY enableLog.accesskey "H">
+<!ENTITY closeLog.label "Tanca">
+<!ENTITY closeLog.accesskey "c">

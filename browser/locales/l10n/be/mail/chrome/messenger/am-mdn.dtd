@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title "Квіткі атрымання">
+<!ENTITY useGlobalPrefs.label "Карыстацца маімі агульнымі перавагамі квіткоў атрымання для гэтага рахунку">
+<!ENTITY useGlobalPrefs.accesskey "г">
+<!ENTITY globalReceipts.label "Агульныя перавагі…">
+<!ENTITY globalReceipts.accesskey "г">
+<!ENTITY useCustomPrefs.label "Наладжванне квіткоў атрымання для гэтага рахунку">
+<!ENTITY useCustomPrefs.accesskey "л">
+<!ENTITY requestReceipt.label "Заўсёды патрабаваць квіток атрымання, калі дасылаюцца лісты">
+<!ENTITY requestReceipt.accesskey "К">
+<!ENTITY receiptArrive.label "Калі прыбывае квіток:">
+<!ENTITY leaveIt.label "Пакінуць яго ў маёй папцы Атрыманыя">
+<!ENTITY leaveIt.accesskey "і">
+<!ENTITY moveToSent.label "Змясціць яго ў маю папку &quot;Дасланыя&quot;">
+<!ENTITY moveToSent.accesskey "м">
+<!ENTITY requestMDN.label "Калі я атрымліваю патрабаванне квітка атрымання:">
+<!ENTITY returnSome.label "Дазволіць квіткі атрымання для асобных лістоў">
+<!ENTITY returnSome.accesskey "а">
+<!ENTITY never.label "Ніколі не дасылаць квіток атрымання">
+<!ENTITY never.accesskey "Н">
+<!ENTITY notInToCc.label "Калі я не ў Да ці Са ліста:">
+<!ENTITY notInToCc.accesskey "С">
+<!ENTITY outsideDomain.label "Калі адпраўнік па-за маім даменам:">
+<!ENTITY outsideDomain.accesskey "д">
+<!ENTITY otherCases.label "У іншых выпадках:">
+<!ENTITY otherCases.accesskey "ш">
+<!ENTITY askMe.label "Пытацца мяне">
+<!ENTITY alwaysSend.label "Заўсёды дасылаць">
+<!ENTITY neverSend.label "Ніколі не дасылаць">

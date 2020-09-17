@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "Browser">
+
+<!ENTITY navRadio.label                 "Mostra">
+<!ENTITY navRadio.accesskey             "M">
+<!ENTITY navStartPageMenu.label         "all'avvio del browser">
+<!ENTITY newWinPageMenu.label           "nella nuova finestra">
+<!ENTITY newTabPageMenu.label           "nella nuova scheda">
+
+<!ENTITY blankPageRadio.label           "Pagina bianca">
+<!ENTITY blankPageRadio.accesskey       "b">
+<!ENTITY homePageRadio.label            "Pagina iniziale">
+<!ENTITY homePageRadio.accesskey        "a">
+<!ENTITY lastPageRadio.label            "Ultima pagina visitata">
+<!ENTITY lastPageRadio.accesskey        "v">
+<!ENTITY restoreSessionRadio.label      "Ripristina sessione precedente">
+<!ENTITY restoreSessionRadio.accesskey  "d">
+
+<!ENTITY restoreSessionIntro.label      "Quando si ripristinano sessioni e finestre">
+<!ENTITY restoreImmediately.label       "Ripristina tutte le schede immediatamente">
+<!ENTITY restoreImmediately.accesskey   "u">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "Ripristina">
+<!ENTITY restoreTabs.accesskey          "R">
+<!ENTITY restoreTabsAtATime.label       "schede alla volta">
+<!ENTITY restoreDeferred.label          "Ripristina le schede solo quando necessarie">
+<!ENTITY restoreDeferred.accesskey      "c">
+
+<!ENTITY homePageIntro.label            "La pressione del pulsante Pagina iniziale fa caricare questo gruppo di pagine:">
+<!ENTITY useCurrent.label               "Utilizza pagina corrente">
+<!ENTITY useCurrent.accesskey           "z">
+<!ENTITY useCurrentGroup.label          "Utilizza gruppo corrente">
+<!ENTITY useCurrentGroup.accesskey      "o">
+<!ENTITY browseFile.label               "Scegli file…">
+<!ENTITY browseFile.accesskey           "S">
+<!ENTITY useDefault.label               "Ripristina valori predefiniti">
+<!ENTITY useDefault.accesskey           "f">
+
+<!ENTITY defaultBrowserGroup.label      "Browser predefinito">
+<!ENTITY defaultBrowserButton.label     "Imposta come browser predefinito">
+<!ENTITY defaultBrowserButton.accesskey "t">
+<!ENTITY alreadyDefaultText             "&brandShortName; è già il tuo browser predefinito.">
+<!ENTITY defaultPendingText             "&brandShortName; verrà impostato come tuo browser predefinito facendo clic su OK.">
+<!ENTITY wasMadeDefaultText             "&brandShortName; è stato impostato come browser predefinito.">
+<!ENTITY makeDefaultText                "Imposta &brandShortName; come tuo browser predefinito.">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Nej si kuendâ Firefox">
+<!ENTITY aboutAccounts.connected.description "Danaj hua Konektadôt ngà">
+<!ENTITY aboutAccounts.syncPreferences.label "Guru'ma ra'a hiuj na da' ni'iajt dàj nahuin guñan sa huin ruhuât">
+
+<!ENTITY aboutAccounts.noConnection.title "Nitaj internet hua">
+<!ENTITY aboutAccounts.retry.label "A'ngô ñû">
+
+<!ENTITY aboutAccounts.restrictedError.title "Sa nitaj si da'uît gatsít">
+<!ENTITY aboutAccounts.restrictedError.description "Si ga'ue girit 'ngo si Kuendâ Firefox ngà sa gachrûnt.">

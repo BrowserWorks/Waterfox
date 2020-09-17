@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY renameFolderDialog.title "Перайменаваць папку">
+<!ENTITY rename.label "Увядзіце новую назву для вашай папкі:">
+<!ENTITY rename.accesskey "у">
+<!ENTITY accept.label "Перайменаваць">
+<!ENTITY accept.accesskey "П">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title "Ачысціць асабістыя здаткі">
+<!ENTITY sanitizeItems.label "Ачысціць наступныя адзінкі зараз:">
+<!ENTITY itemHistory.label "Гісторыю азірання">
+<!ENTITY itemHistory.accesskey "а">
+<!ENTITY itemUrlBar.label "Гісторыю паліцы месцазнаходжання">
+<!ENTITY itemUrlBar.accesskey "Г">
+<!ENTITY itemDownloads.label "Гісторыю загрузак">
+<!ENTITY itemDownloads.accesskey "г">
+<!ENTITY itemFormSearchHistory.label "Захаваныя формы і гісторыя пошуку">
+<!ENTITY itemFormSearchHistory.accesskey "ф">
+<!ENTITY itemCache.label "Запаснік">
+<!ENTITY itemCache.accesskey "З">
+<!ENTITY itemCookies.label "Біркі">
+<!ENTITY itemCookies.accesskey "б">
+<!ENTITY itemOfflineApps.label "Пазасеткавыя здаткі пляцовак сеціва">
+<!ENTITY itemOfflineApps.accesskey "д">
+<!ENTITY itemPasswords.label "Захаваныя паролі">
+<!ENTITY itemPasswords.accesskey "п">
+<!ENTITY itemSessions.label "Апазнаныя сэсіі">
+<!ENTITY itemSessions.accesskey "с">
+<!ENTITY sanitizeButton.label "Ачысціць асабістыя здаткі зараз">

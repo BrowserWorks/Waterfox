@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "מאפיינים">
+
+<!ENTITY generalInfo.label                       "מידע כללי">
+<!ENTITY folderCharsetFallback2.label            "קידוד טקסט כבררת מחדל:">
+<!ENTITY folderCharsetFallback2.accesskey        "ק">
+<!ENTITY folderCharsetEnforce2.accesskey         "ח">
+<!ENTITY folderRebuildSummaryFileTip2.label      "בנה מחדש תקציר קובץ אינדקס">
+<!ENTITY folderRebuildSummaryFile2.label         "תקן תיקייה">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "ת">
+<!ENTITY folderRebuildSummaryFile.explanation    "לעיתים נפגם קובץ האינדקס של תיקייה (.msf) והודעות עשויות להיעלם או שהודעות שנמחקו תמשכנה להופיע; תיקון התיקייה עשוי לתקן מקרים אלו.">
+<!ENTITY folderIncludeInGlobalSearch.label       "כלול הודעות מתיקייה זו בתוצאות החיפוש הגלובליות">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "ג">
+
+<!ENTITY retention.label "מדיניות שמירה">
+<!ENTITY retentionUseAccount.label  "השתמש בהגדרות החשבון">
+<!ENTITY retentionUseAccount.accesskey "ח">
+<!ENTITY daysOld.label "הימים האחרונים">
+<!ENTITY message.label "ההודעות האחרונות">
+<!ENTITY retentionCleanup.label "כדי לשמר שטח דיסק, הודעות ישנות יכולות להימחק לצמיתות">
+<!ENTITY retentionCleanupImap.label "כדי לשמר שטח דיסק, הודעות ישנות יכולות להימחק לצמיתות, גם העותק המקומי וגם המקור על השרת המרוחק.">
+<!ENTITY retentionCleanupPop.label "כדי לשמר שטח דיסק, הודעות ישנות יכולות להימחק לצמיתות, כולל הודעות המקור בשרת המרוחק.">
+<!ENTITY retentionDeleteMsg.label "מחק הודעות בנות יותר מאשר">
+<!ENTITY retentionDeleteMsg.accesskey "י">
+<!ENTITY retentionKeepAll.label "אל תמחק שום הודעה">
+<!ENTITY retentionKeepAll.accesskey "א">
+<!ENTITY retentionKeepRecent.label "מחק הכול חוץ מההודעות האחרונות">
+<!ENTITY retentionKeepRecent.accesskey "מ">
+<!ENTITY retentionApplyToFlagged.label "שמור תמיד הודעות מסומנות בכוכבית">
+<!ENTITY retentionApplyToFlagged.accesskey "ש">
+
+<!ENTITY folderSynchronizationTab.label          "סינכרון">
+<!ENTITY folderCheckForNewMessages2.label         "כאשר מקבלים הודעות חדשות לחשבון, בדוק תמיד תיקייה זו">
+<!ENTITY folderCheckForNewMessages2.accesskey     "ב">
+
+<!ENTITY offlineFolder.check.label               "בחר תיקייה זו לשימוש לא־מקוון">
+<!ENTITY offlineFolder.check.accesskey           "ש">
+<!ENTITY offlineFolder.button.label              "הורד עכשיו">
+<!ENTITY offlineFolder.button.accesskey          "ה">
+
+<!ENTITY selectofflineNewsgroup.check.label      "בחר קבוצת דיון זו לשימוש לא־מקוון">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "ש">
+<!ENTITY offlineNewsgroup.button.label           "הורד עכשיו">
+<!ENTITY offlineNewsgroup.button.accesskey       "ה">
+
+<!ENTITY folderProps.name.label                  "שם:">
+<!ENTITY folderProps.name.accesskey              "ש">
+<!ENTITY folderProps.location.label              "מיקום:">
+<!ENTITY folderProps.location.accesskey          "מ">
+
+<!ENTITY folderSharingTab.label                  "שיתוף">
+<!ENTITY privileges.button.label                 "הרשאות...">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "ברשותך ההרשאות הבאות:">
+<!ENTITY folderType.label                        "סוג תיקייה:">
+
+<!ENTITY folderQuotaTab.label                    "מכסה">
+<!ENTITY folderQuotaUsage.label                  "שימוש:">
+<!ENTITY folderQuotaStatus.label                 "מצב:">
+
+<!ENTITY numberOfMessages.label                  "מספר ההודעות:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "לא ידוע">
+<!ENTITY sizeOnDisk.label                        "גודל בכונן:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "לא ידוע">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!-- These strings are used by Firefox's custom about:certerror page,
+a replacement for the standard security certificate errors produced
+by NSS/PSM via netError.xhtml. -->
+
+
+<!ENTITY certerror.pagetitle  "Okem itzel retal">
+<!ENTITY certerror.longpagetitle "Re okem re' man ruk'amon ta">
+<!-- Localization note (certerror.introPara1) - The string "#1" will
+be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+
+<!ENTITY certerror.introPara1 "Xak'utuj chi re ri &brandShortName; chi ütz tok chupam <b>#1</b>, xa xe chi man tikirel ta nijikib'äx chi ruk'amon ri okem.">
+
+<!ENTITY certerror.whatShouldIDo.heading "¿Achike ütz ninb'än?">
+<!ENTITY certerror.whatShouldIDo.content "We junelïk yatok chupam re ruxaq k'amaya'l re' majun k'ayewal, re k'ayewal re' rik'in jub'a' nuq'ajuj chi k'o jun winäq  tajin nutïj ruq'ij richin yatruk'ëx el ruma ri man ta chik nasamajij el.">
+<!ENTITY certerror.getMeOutOfHere.label "¡Kinawelesaj el wawe'!">
+
+<!ENTITY certerror.expert.heading "Niq'ax pa nuwi' ronojel ri ruk'ayewal">
+<!ENTITY certerror.expert.content "We awetaman atux tajin nik'ulwachitäj ütz naya' rutzijol chi re ri &brandShortName; chi ütz tutz'eta' re ruxaq k'amaya'l re'. <b>Stape' kuqül ak'u'x rik'in re ruxaq k'amaya'l re', re sachoj rik'in jub'a' nuq'ajuj chi k'o jun winäq tajin nunïm ri' pa ri awokem.</b>">
+<!ENTITY certerror.expert.contentPara2 "Man tatz'aqatisaj jun man relik  ta xa xe we k'o jun qitzij aruma chi re ruxaq k'amaya'l re' man rokisan ta ri ütz tz'etöy.">
+<!ENTITY certerror.addTemporaryException.label "Titz'et ruxaq k'amaya'l">
+<!ENTITY certerror.addPermanentException.label "Titz'aqatisäx chi junelïk man relik ta">
+
+<!ENTITY certerror.technical.heading "Etamanel taq b'anïk">

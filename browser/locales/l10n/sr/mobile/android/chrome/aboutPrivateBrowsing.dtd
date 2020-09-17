@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Приватно прегледање">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ Заштита од праћења">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Нисте у приватном прегледању">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; ће блокирати делове страница који прате вашу активност.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Историјат неће бити запамћен, али преузете датотеке и забелешке ће остати снимљене на вашем уређају.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "У приватном прегледању, ми нећемо памтити историју прегледања или колачиће. Забелешке које додате и датотеке које преузмете ће бити сачуване на уређају.">
+
+<!ENTITY privatebrowsingpage.link.private "Желите да сазнате више?">
+<!ENTITY privatebrowsingpage.link.normal "Отворите нови приватан језичак">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Додај во речник">
+<!ENTITY spellAddToDictionary.accesskey "о">
+<!ENTITY spellUndoAddToDictionary.label "Врати и додај во речник">
+<!ENTITY spellUndoAddToDictionary.accesskey "р">
+<!ENTITY spellCheckToggle.label "Провери правопис">
+<!ENTITY spellCheckToggle.accesskey "п">
+<!ENTITY spellNoSuggestions.label "(Нема предлози)">
+<!ENTITY spellDictionaries.label "Јазици">
+<!ENTITY spellDictionaries.accesskey "Ј">
+
+<!ENTITY searchTextBox.clear.label "Избриши">
+
+<!ENTITY fillLoginMenu.label          "Внеси најава">
+<!ENTITY fillLoginMenu.accesskey      "Н">
+<!ENTITY fillPasswordMenu.label       "Внеси лозинка">
+<!ENTITY fillPasswordMenu.accesskey   "Л">
+<!ENTITY fillUsernameMenu.label       "Внеси корисничко име">
+<!ENTITY fillUsernameMenu.accesskey   "И">
+<!ENTITY noLoginSuggestions.label     "(Нема предложени најави)">
+<!ENTITY viewSavedLogins.label        "Види зачувани најави">

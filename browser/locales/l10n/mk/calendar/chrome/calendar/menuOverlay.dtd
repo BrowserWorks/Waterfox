@@ -1,0 +1,211 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY event.menu.label "Настан">
+<!ENTITY event.menu.accesskey "А">
+<!ENTITY event.new.event "Нов настан…">
+<!ENTITY event.new.event.key "N">
+<!ENTITY event.new.event.accesskey "н">
+<!ENTITY event.new.todo "Нова задача…">
+<!ENTITY event.new.todo.key "T">
+<!ENTITY event.new.todo.accesskey "з">
+<!ENTITY calendar.new.server.label "Нов календар…">
+<!ENTITY calendar.new.server.key "L">
+<!ENTITY calendar.new.server.accesskey "к">
+<!ENTITY calendar.open.file.label "Отвори датотека со календар…">
+<!ENTITY calendar.open.file.key "O">
+<!ENTITY calendar.open.file.accesskey "О">
+<!ENTITY event.edit.event "Уреди го избраното…">
+<!ENTITY event.edit.event.key "E">
+<!ENTITY event.edit.event.accesskey "г">
+<!ENTITY event.delete.event "Избриши ги избраните настани">
+<!ENTITY event.delete.event.accesskey "б">
+<!ENTITY event.delete.tasks "Избриши ги избраните задачи">
+<!ENTITY event.delete.tasks.accesskey "р">
+<!ENTITY event.mail.event "Испрати по е-пошта…">
+<!ENTITY event.mail.event.key "M">
+<!ENTITY event.mail.event.accesskey "п">
+<!ENTITY calendar.print.label "Печати">
+<!ENTITY calendar.print.key "P">
+<!ENTITY calendar.print.accesskey "ч">
+<!ENTITY calendar.printpreview.label "Преглед за печатење">
+<!ENTITY calendar.printpreview.accesskey "е">
+<!ENTITY calendar.pagesetup.label "Прилагоди за печатење…">
+<!ENTITY calendar.pagesetup.accesskey "и">
+<!ENTITY calendar.import.label "Увоз…">
+<!ENTITY calendar.import.key "I">
+<!ENTITY calendar.import.accesskey "У">
+<!ENTITY calendar.export.label "Извези го изборот">
+<!ENTITY calendar.export.accesskey "б">
+<!ENTITY calendar.export.calendar.label "Извези го календарот…">
+<!ENTITY calendar.export.calendar.accesskey "л">
+<!ENTITY calendar.export.selection.label "Извези го изборот">
+<!ENTITY calendar.export.selection.accesskey "р">
+<!ENTITY calendar.subscribe.label "Претплати се на далечински календар…">
+<!ENTITY calendar.subscribe.accesskey "с">
+<!ENTITY calendar.reloadserver.label "Превчитај далечински календари">
+<!ENTITY calendar.reloadserver.key "R">
+<!ENTITY calendar.reloadserver.accesskey "ј">
+<!ENTITY calendar.publish.label "Објави…">
+<!ENTITY calendar.publish.accesskey "в">
+<!ENTITY calendar.publish.calendar.label "Објави календар…">
+<!ENTITY calendar.publish.calendar.accesskey "О">
+<!ENTITY calendar.publish.selection.label "Објави го избраното…">
+<!ENTITY calendar.publish.selection.accesskey "з">
+<!ENTITY calendar.quit.label "Излези">
+<!ENTITY calendar.quit.accesskey "И">
+<!ENTITY calendar.quit.label.mac "Излези од &brandShortName;">
+<!ENTITY calendar.quit.key.mac "Q">
+<!ENTITY calendar.quit.modifiers.mac "accel">
+<!ENTITY calendar.exit.label "Излези">
+<!ENTITY calendar.exit.accesskey "И">
+<!ENTITY calendar.about.label "За &brandShortName;">
+<!ENTITY calendar.about.accesskey "З">
+<!ENTITY calendar.undo.label "Врати">
+<!ENTITY calendar.undo.key "Z">
+<!ENTITY calendar.undo.accesskey "В">
+<!ENTITY calendar.redo.label "Повтори">
+<!ENTITY calendar.redo.key "Y">
+<!ENTITY calendar.redo.accesskey "П">
+<!ENTITY calendar.cut.label "Отсечи">
+<!ENTITY calendar.cut.key "X">
+<!ENTITY calendar.cut.accesskey "О">
+<!ENTITY calendar.copy.label "Копирај">
+<!ENTITY calendar.copy.key "C">
+<!ENTITY calendar.copy.accesskey "К">
+<!ENTITY calendar.paste.label "Вметни">
+<!ENTITY calendar.paste.key "V">
+<!ENTITY calendar.paste.accesskey "В">
+<!ENTITY calendar.selectall.label "Избери сè">
+<!ENTITY calendar.selectall.key "A">
+<!ENTITY calendar.selectall.accesskey "И">
+<!ENTITY toolbarsMenu.label "Алатници">
+<!ENTITY toolbarsMenu.accesskey "А">
+<!ENTITY calendar.toolbar.label "Календарски алатник">
+<!ENTITY calendar.toolbar.accesskey "К">
+<!ENTITY task.toolbar.label                     "Алатник со задачи">
+<!ENTITY task.toolbar.accesskey                 "з">
+<!ENTITY mode.toolbar.label "Режимски алатник">
+<!ENTITY mode.toolbar.accesskey "Р">
+<!ENTITY calendar.menu.customize.label "Прилагоди…">
+<!ENTITY calendar.menu.customize.accesskey "П">
+<!ENTITY calendar.preferences.label "Преференции…">
+<!ENTITY calendar.preferences.accesskey "е">
+<!ENTITY showStatusBarCmd.label "Статусна лента">
+<!ENTITY showStatusBarCmd.accesskey "С">
+<!ENTITY showTaskBoxCmd.label "Список со задачи">
+<!ENTITY showTaskBoxCmd.accesskey "п">
+<!ENTITY showUnifinderCmd.label "Пронајди настани">
+<!ENTITY showUnifinderCmd.accesskey "П">
+<!ENTITY calendar.displaytodos.checkbox.label "Прикажи ги задачите во календарот">
+<!ENTITY calendar.displaytodos.checkbox.accesskey "Т">
+<!ENTITY calendar.menu.numberofweeks.label "Седмици во повеќеседмичен преглед">
+<!ENTITY calendar.menu.numberofweeks.2 "Две седмици">
+<!ENTITY calendar.menu.numberofweeks.3 "Три седмици">
+<!ENTITY calendar.menu.numberofweeks.4 "Четири седмици">
+<!ENTITY calendar.menu.numberofweeks.5 "Пет седмици">
+<!ENTITY calendar.menu.numberofweeks.6 "Шест седмици">
+<!ENTITY calendar.fullscreen.label "На цел екран">
+<!ENTITY calendar.fullscreen.accesskey "Н">
+<!ENTITY calendar.addons.label "Додатоци">
+<!ENTITY calendar.addons.accesskey "Д">
+<!ENTITY goMenu.label "Оди">
+<!ENTITY goMenu.accesskey "О">
+<!ENTITY goTodayCmd.label "Денес">
+<!ENTITY goTodayCmd.accesskey "Д">
+<!ENTITY goDateCmd.label "Датум…">
+<!ENTITY goDateCmd.accesskey "Д">
+<!ENTITY goPreviousCmd.day.label "Претходен ден">
+<!ENTITY goPreviousCmd.week.label "Претходна седмица">
+<!ENTITY goPreviousCmd.month.label "Претходен месец">
+<!ENTITY goPreviousCmd.accesskey "П">
+<!ENTITY goNextCmd.day.label "Следен ден">
+<!ENTITY goNextCmd.week.label "Следна седмица">
+<!ENTITY goNextCmd.month.label "Следен месец">
+<!ENTITY goNextCmd.accesskey "С">
+<!ENTITY taskMenu.label "Задачи">
+<!ENTITY taskMenu.accesskey "З">
+<!ENTITY toolsMenu.label "Алатки">
+<!ENTITY toolsMenu.accesskey "А">
+<!ENTITY errorConsoleCmd.label "Конзола за грешки">
+<!ENTITY errorConsoleCmd.accesskey "К">
+<!ENTITY navigatorCmd.label "Прелистувач">
+<!ENTITY navigatorCmd.accesskey "Р">
+<!ENTITY messengerCmd.label "Пошта">
+<!ENTITY messengerCmd.accesskey "П">
+<!ENTITY addressBookCmd.label "Адресар">
+<!ENTITY addressBookCmd.accesskey "А">
+<!ENTITY helpMenu.label "Помош">
+<!ENTITY helpMenu.accesskey "П">
+<!ENTITY helpMenuWin.label "Помош">
+<!ENTITY helpMenuWin.accesskey "П">
+<!ENTITY walletPasswordManager.label "Менаџер на лозинки">
+<!ENTITY walletPasswordManager.accesskey "М">
+<!ENTITY fileMenu.label "Датотека">
+<!ENTITY fileMenu.accesskey "Д">
+<!ENTITY editMenu.label "Уредување">
+<!ENTITY editMenu.accesskey "У">
+<!ENTITY optionsCmd.label "Поставки…">
+<!ENTITY optionsCmd.accesskey "о">
+<!ENTITY preferencesCmd.label "Преференции">
+<!ENTITY preferencesCmd.accesskey "П">
+<!ENTITY preferencesCmdMac.label "Преференции…">
+<!ENTITY preferencesCmdMac.commandkey ",">
+<!ENTITY preferencesCmdMac.modifiers "accel">
+<!ENTITY viewMenu.label "Поглед">
+<!ENTITY viewMenu.accesskey "П">
+<!ENTITY releaseCmd.label "Белешки кон изданието">
+<!ENTITY releaseCmd.accesskey "Б">
+<!ENTITY aboutCmd.label "За &brandFullName;">
+<!ENTITY aboutCmd.accesskey "З">
+<!ENTITY updateCmd.label "Најди надградби…">
+<!ENTITY updateCmd.accesskey "н">
+<!ENTITY windowMenu.label "Прозорец">
+<!ENTITY minimizeWindow.label "Минимизира">
+<!ENTITY zoomWindow.label "Зумирај">
+<!ENTITY minimizeWindow.key "M">
+<!ENTITY bringAllToFront.label "Донеси ги сите напред">
+<!ENTITY servicesMenuMac.label "Сервиси">
+<!ENTITY hideThisAppCmdMac.label "Скриј &brandShortName;">
+<!ENTITY hideThisAppCmdMac.commandkey "H">
+<!ENTITY hideThisAppCmdMac.modifiers "accel">
+<!ENTITY hideOtherAppsCmdMac.label "Скриј ги другите">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+<!ENTITY hideOtherAppsCmdMac.modifiers "accel,alt">
+<!ENTITY showAllAppsCmdMac.label "Прикажи сè">
+<!ENTITY calendar.importcalendar.label "Увези календар…">
+<!ENTITY calendar.importcalendar.accesskey "У">
+<!ENTITY calendar.delete.label "Избриши">
+<!ENTITY calendar.delete.accesskey "И">
+<!ENTITY showCalendarlist.label "Список со календари">
+<!ENTITY showCalendarlist.accesskey "п">
+<!ENTITY showCurrentView.label "Тековен преглед">
+<!ENTITY showCurrentView.accesskey "Т">
+<!ENTITY task.menu.label "Задачи">
+<!ENTITY task.menu.accesskey "З">
+<!ENTITY day.menu.label "Ден">
+<!ENTITY day.menu.accesskey "Д">
+<!ENTITY week.menu.label "Седмица">
+<!ENTITY week.menu.accesskey "Н">
+<!ENTITY month.menu.label "Месец">
+<!ENTITY month.menu.accesskey "М">
+<!ENTITY next.menu.label "Следно">
+<!ENTITY next.menu.accesskey "С">
+<!ENTITY previous.menu.label "Претходно">
+<!ENTITY previous.menu.accesskey "П">
+<!ENTITY calendar.subscribeshort.label "Претплати се…">
+<!ENTITY calendar.subscribeshort.accesskey "Р">
+<!ENTITY calendar.unsubscribeshort.label "Прекини претплата…">
+<!ENTITY calendar.unsubscribeshort.accesskey "К">
+<!ENTITY calendar.properties.label "Својства на календарот…">
+<!ENTITY calendar.properties.accesskey "В">
+<!ENTITY calendar.showtasks.label "Прикажи задачи…">
+<!ENTITY calendar.showtasks.accesskey "З">
+<!ENTITY series.selectpastevents.label "Претходни настани во оваа серија">
+<!ENTITY series.selectpastevents.accesskey "А">
+<!ENTITY series.selectfutureevents.label "Нови настани во оваа серија">
+<!ENTITY series.selectfutureevents.accesskey "Ј">
+<!ENTITY series.selectallevents.label "Сите настани во оваа серија">
+<!ENTITY series.selectallevents.accesskey "О">
+<!ENTITY calendar.selectallevents.label "Сите настани во овој календар">
+<!ENTITY calendar.selectallevents.accesskey "Е">

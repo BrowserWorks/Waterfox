@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Otvori datoteku…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Otvori web lokaciju…">
+<!ENTITY openRemoteCmd.accesskey "l">
+<!ENTITY openRemoteCmd.key "l">
+<!ENTITY fileRecentMenu.label "Nedavne stranice">
+<!ENTITY fileRecentMenu.accesskey "r">
+<!ENTITY saveCmd.label "Spremi">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Spremi kao…">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsChangeEncodingCmd2.label "Spremi i promijeni kôdnu stranicu">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "e">
+<!ENTITY publishCmd.label "Objavi">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Objavi kao…">
+<!ENTITY publishAsCmd.accesskey "k">
+<!ENTITY fileRevert.label "Vrati">
+<!ENTITY fileRevert.accesskey "t">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Postavke objave stranice…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Novo">
+<!ENTITY newToolbarCmd.tooltip "Stvori novu Composer stranicu">
+<!ENTITY openToolbarCmd.label "Otvori">
+<!ENTITY openToolbarCmd.tooltip "Otvori lokalnu datoteku">
+<!ENTITY saveToolbarCmd.tooltip "Spremi datoteku na lokalnu lokaciju">
+<!ENTITY publishToolbarCmd.tooltip "Pošalji datoteku na udaljenu lokaciju">
+<!ENTITY printToolbarCmd.label "Ispiši">
+<!ENTITY printToolbarCmd.tooltip "Ispiši ovu stranicu">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Akaunt me Firefox">
+<!ENTITY aboutAccounts.connected.description "I kube calo">
+<!ENTITY aboutAccounts.syncPreferences.label "Gud kany me roto ter me Timo marom">
+
+<!ENTITY aboutAccounts.noConnection.title "Kube me intanet pe">
+<!ENTITY aboutAccounts.retry.label "Tem doki">
+
+<!ENTITY aboutAccounts.restrictedError.title "Kigengo woko">
+<!ENTITY aboutAccounts.restrictedError.description "Pe itwero lono Akaunt me Firefox ki i propwail man.">

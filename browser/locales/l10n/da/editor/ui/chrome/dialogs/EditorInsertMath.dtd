@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Indsæt matematisk">
+
+<!ENTITY sourceEditField.label "Indtast LaTeX-kildekode:">
+
+<!ENTITY options.label "Indstillinger">
+<!ENTITY optionInline.label "Inline-mode">
+<!ENTITY optionInline.accesskey "N">
+<!ENTITY optionDisplay.label "Display-mode">
+<!ENTITY optionDisplay.accesskey "D">
+<!ENTITY optionLTR.label "Venstre til højre-skriveretning">
+<!ENTITY optionLTR.accesskey "V">
+<!ENTITY optionRTL.label "Højre til venstre-skriveretning">
+<!ENTITY optionRTL.accesskey "H">
+
+<!ENTITY insertButton.label "Indsæt">
+<!ENTITY insertButton.accesskey "I">

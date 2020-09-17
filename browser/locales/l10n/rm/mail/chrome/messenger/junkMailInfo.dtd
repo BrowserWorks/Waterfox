@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Davart messadis nungiavischads">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; dispona d'in filter spezial che identifitgescha messadis nungiavischads (Junk/Spam) cun intercurir tut ils messadis che entran e silsuenter assortir els. Messadis che paran tenor &brandShortName; dad esser nungiavischads vegnan marcads cun in simbol correspundent">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "&brandShortName; po vegnir trenà uschia ch'il program cumenza cun il temp ad identifitgar meglier ed independentamain messadis nungiavischads. Utilisescha per quest intent il buttun correspundent en la trav da simbols. Marca per plaschair mintga messadi che n'è betg classifitgà correctamain sco &quot;Nungiavischà&quot; u &quot;Betg nungiavischà&quot;. Suenter in tschert temp vegn il filter a funcziunar meglier.">
+<!ENTITY info3.label   "Ina giada che &brandShortName; identifitgescha correctamain messadis nungiavischads pos ti duvrar las controllas da posta nungiavischada per spustar automaticamain messadis nungiavischads che entran en l'ordinatur per messadis nungiavischads.">
+<!ENTITY info4.label   "Clicca sin il buttun d'agid per ulteriuras infurmaziuns.">

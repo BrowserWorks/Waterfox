@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ਸਪੈਲਿੰਗ ਚੈੱਕ">
+
+<!ENTITY misspelledWord.label "ਗਲਤ ਸ਼ਬਦ:">
+<!ENTITY wordEditField.label "ਇਸ ਨਾਲ ਬਦਲੋ:">
+<!ENTITY wordEditField.accessKey "w">
+<!ENTITY checkwordButton.label "ਸਪੈਲਿੰਗ ਚੈੱਕ">
+<!ENTITY checkwordButton.accessKey "k">
+<!ENTITY suggestions.label "ਸੁਝਾਅ:">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "ਅਣਡਿੱਠਾ">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "ਸਭ ਅਣਡਿੱਠੇ">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "ਬਦਲੋ">
+<!ENTITY replaceButton.accessKey "R">
+<!ENTITY replaceAllButton.label "ਸਭ ਬਦਲੋ">
+<!ENTITY replaceAllButton.accessKey "A">
+<!ENTITY stopButton.label "ਰੋਕੋ">
+<!ENTITY stopButton.accessKey "t">
+<!ENTITY userDictionary.label "ਨਿੱਜੀ ਡਿਕਸ਼ਨਰੀ:">
+<!ENTITY moreDictionaries.label "ਹੋਰ ਡਾਊਨਲੋਡ ਕਰੋ">
+<!ENTITY addToUserDictionaryButton.label "ਸ਼ਬਦ ਸ਼ਾਮਿਲ">
+<!ENTITY addToUserDictionaryButton.accessKey "d">
+<!ENTITY editUserDictionaryButton.label "ਸੋਧ...">
+<!ENTITY editUserDictionaryButton.accessKey "E">
+<!ENTITY recheckButton.label "ਪੇਜ਼ ਮੁੜ ਚੈੱਕ ਕਰੋ">
+<!ENTITY recheckButton.accessKey "P">
+<!ENTITY closeButton.label "ਬੰਦ ਕਰੋ">
+<!ENTITY closeButton.accessKey "C">
+<!ENTITY sendButton.label "ਭੇਜੋ">
+<!ENTITY sendButton.accessKey "S">
+<!ENTITY languagePopup.label "ਭਾਸ਼ਾ:">
+<!ENTITY languagePopup.accessKey "L">

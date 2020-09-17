@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label "最小化">
+<!ENTITY minimizeWindowCmd.key "M">
+<!ENTITY zoomWindowCmd.label "缩放">
+<!ENTITY navigatorCmd.label "浏览器">
+<!ENTITY navigatorCmd.accesskey "B">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Composer">
+<!ENTITY editorCmd.accesskey "c">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "错误控制台">
+<!ENTITY errorConsoleCmd.accesskey "C">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "浏览器">
+<!ENTITY taskComposer.tooltip "编写器">
+
+<!ENTITY webDevelopment.label "Web 开发">
+<!ENTITY webDevelopment.accesskey "W">
+
+<!ENTITY windowMenu.label "窗口">
+<!ENTITY windowMenu.accesskey "W">
+
+<!ENTITY tasksMenu.label "工具">
+<!ENTITY tasksMenu.accesskey "T">
+
+<!ENTITY datamanCmd.label "数据管理器">
+<!ENTITY datamanCmd.accesskey "D">
+
+<!ENTITY passwordManagerCmd.label "密码管理器">
+<!ENTITY passwordManagerCmd.accesskey "P">
+
+<!ENTITY passwordDisplayCmd.label "管理存储的密码">
+<!ENTITY passwordDisplayCmd.accesskey "M">
+
+<!ENTITY passwordExpireCmd.label "退出">
+<!ENTITY passwordExpireCmd.accesskey "L">
+
+<!ENTITY downloadManagerCmd.label "下载管理器">
+<!ENTITY downloadManagerCmd.accesskey "n">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "附加组件管理器">
+<!ENTITY addOnsManagerCmd.accesskey "A">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "切换配置文件…">
+<!ENTITY switchProfileCmd.accesskey "h">
+
+<!ENTITY syncBrand.shortName.label "同步">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "设置同步…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "立即同步">
+<!ENTITY syncSyncNowItem.accesskey "S">

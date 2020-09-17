@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Nový rozosielací zoznam">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Pridať do:">
+<!ENTITY addToAddressBook.accesskey     "P">
+<!ENTITY ListName.label                 "Názov zoznamu:">
+<!ENTITY ListName.accesskey             "N">
+<!ENTITY ListNickName.label             "Prezývka zoznamu:">
+<!ENTITY ListNickName.accesskey         "r">
+<!ENTITY ListDescription.label          "Popis:">
+<!ENTITY ListDescription.accesskey      "o">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Napíšte e-mailové adresy, ktoré chcete pridať do rozosielacieho zoznamu:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Posunúť nahor">
+<!ENTITY DownButton.label               "Posunúť nadol">
+

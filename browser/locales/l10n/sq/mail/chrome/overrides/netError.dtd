@@ -1,0 +1,189 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problem në ngarkimin e faqes">
+<!ENTITY retry.label "Riprovoni">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "S&apos;arrin të lidhet">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Kjo adresë është e ndaluar">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Nuk u gjet shërbyes">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Kontrollojeni adresën për gabime shtypjeje të tillë si
+    <strong>ww</strong>.example.com në vend të
+    <strong>www</strong>.example.com</li>
+  <li>Nëse nuk arrini të ngarkoni asnjë faqe, kontrolloni lidhjen
+    në rrjet të kompjuterit tuaj.</li>
+  <li>Po qe se kompjuteri ose rrjeti juaj mbrohet me &quot;firewall&quot; ose ndërmjetës,
+    sigurohuni që &brandShortName;-it i është lejuar të hyjë në Web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "S&apos;u gjet kartelë">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Kontrolloni emrin e kartelës për gabime shkrimi me të mëdha ose të vogla, apo të tjera gabime në shkrim.</li>
+  <li>Shihni se mos kartela qe lëvizur, riemërtuar ose fshirë.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Hyrja te kartela u mohua">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Kartela mund të jetë hequr, lëvizur, ose hyrjen e pengojnë lejet mbi kartelën.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Hëm.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName;-i, për ndonjë arsye nuk mund ta ngarkojë këtë faqe.</p>
+">
+
+<!ENTITY malformedURI.title "Adresa nuk është e vlefshme">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Adresat Web zakonisht shkruhen si
+    <strong>http://www.example.com/</strong></li>
+  <li>Sigurohuni që i keni përdorur pjerraket djathtas (p.sh.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Lidhja u ndërpre">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokumenti Ka Skaduar">
+<!ENTITY notCached.longDesc "<p>Dokumenti i kërkuar nuk mund të kihet në prej fshehtinës.</p><ul><li>Si masë parandaluese, &brandShortName;-i nuk rikërkon vetvetiu dokumente rezervat.</li><li>Klikoni mbi Riprovoni të rikërkohet dokumenti prej sajtit.</li></ul>">
+
+<!ENTITY netOffline.title "Mënyrë jo në linjë">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Shtypni &quot;Riprovoni&quot; që të kalohet nën mënyrën në linjë dhe të ringarkohet faqja.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Gabim në kodim lënde">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;u bërë të ditur këtë problem.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Lloj kartele jo i parrezik">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;u bërë të ditur këtë problem.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Lidhja u rivendos">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Lidhjes i mbaroi koha">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Nuk u kuptua adresa">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Mund t&apos;ju duhet të instaloni tjetër program për të hapur këtë adresë.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Shërbyesi ndërmjetës po hedh poshtë lidhjet">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Kontrolloni rregullimet për ndërmjetësin, për t&apos;u siguruar që janë të sakta.</li>
+  <li>Lidhuni me përgjegjësin e rrjetit tuaj, për t&apos;u siguruar që shërbyesi ndërmjetës po punon.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "S&apos;arrihet të gjendet shërbyesi ndërmjetës">
+<!ENTITY proxyResolveFailure.longDesc "<ul>   <li>Kontrolloni rregullimet për ndërmjetësin, për t&apos;u siguruar që janë të sakta.</li>   <li>Kontrolloni kompjuterin tuaj, për t&apos;u siguruar që ka një lidhje rrjeti që punon.</li>   <li>Nëse kompjuteri apo rrjeti juaj mbrohet nga &quot;firewall&quot; apo ndërmjetës, sigurohuni që &brandShortName;-it i lejohet hyrja në Web.</li> </ul> ">
+
+<!ENTITY redirectLoop.title "Faqja nuk ridrejton si duhet">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Ndonjëherë ky problem mund të shkaktohet nga çaktivizim ose mospranim cookie-sh.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Përgjigje e papritur prej shërbyesit">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Kontrolloni për t&apos;u siguruar që sistemi juaj ka të instaluar Përgjegjësin e Sigurisë Vetjake.</li>
+  <li>Kjo mund të vijë nga një formësim jostandard te shërbyesi.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Lidhja e sigurt dështoi">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Faqja që po provoni të shihni nuk mund të shfaqet, ngaqë nuk verifikohet dot që të dhënat e marra janë të mirëfillta.</li>
+  <li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;u bërë të ditur këtë problem.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Lidhja e sigurt dështoi">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Ky mund të jetë një problem me formësimin e shërbyesit, ose dikush mund të jetë duke u përpjekur të imitojë shërbyesin.</li>
+  <li>Nëse në të kaluarën jeni lidhur me sukses te ky shërbyes, gabimi mund të jetë i përkohshëm, dhe mund të riprovoni më vonë.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Sajti mund të jetë përkohësisht i pakapshëm ose shumë i zënë. Riprovoni pas pak çastesh.</li>
+  <li>Po qe se nuk arrini të ngarkoni asnjë faqe, kontrolloni lidhjen në rrjet të kompjuterit tuaj.</li>
+  <li>Po qe se kompjuteri apo rrjeti juaj mbrohen me &quot;firewall&quot; ose ndërmjetës, sigurohuni
+    që &brandShortName;-it i lejohet të hyjë në Web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Bllokuar nga Rregulla Sigurie Lënde">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName;-i e pengoi ngarkimin e kësaj faqeje në këtë mënyrë, ngaqë faqja përmban një rregull sigurie lënde që nuk e lejon këtë.</p>">
+
+<!ENTITY xfoBlocked.title "Bllokuar nga Rregulla X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName;-i e pengoi ngarkimin e kësaj faqeje në këtë kontekst, ngaqë faqja ka një rregull X-Frame-Options që s’e lejon.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Gabim nga Lëndë e Dëmtuar">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Faqja që po rrekeni të shihni nuk mund të shfaqet, ngaqë u pikas një gabim në transmetimin e të dhënave.</p><ul><li>Ju lutemi, lidhuni me të zotët e sajtit që t&apos;u njoftoni këtë problem.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Ose mund të shtoni një përjashtim…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Hiqmë prej këtej!">
+<!ENTITY securityOverride.exceptionButtonLabel "Shtoni Përjashtim…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Nuk do të duhej të shtonit një përjashtim nëse po përdorni një lidhje internet të cilës nuk i zini besë plotësisht, ose nëse nuk jeni mësuar të shihni sinjalizime për këtë shërbyes.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "XUL i Largët">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;u njoftuar këtë problem.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Lidhja juaj s&apos;është e sigurt">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> përdor teknologji sigurie që është e vjetruar dhe e cenueshme përballë sulmesh. Dikush që sulmon do të mund të zbulonte lehtë të dhëna të cilat i mendonit të parrezikuara. Para se të mund të vizitoni këtë sajt, lypset që përgjegjësi i sajtit të ndreqë shërbyesin.</p><p>Kod gabimi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Faqe e Bllokuar">
+
+<!ENTITY networkProtocolError.title "Gabim Protokolli Rrjeti">
+<!ENTITY networkProtocolError.longDesc "<p>Faqja që po rrekeni të shihni s&apos;mund të shfaqet, ngaqë u pikas një gabim protokolli rrjeti.</p><ul><li>Ju lutemi, lidhuni me të zotët e sajtit që t&apos;u njoftoni këtë problem.</li></ul>">

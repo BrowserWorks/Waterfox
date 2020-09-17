@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Журнал на филтрирането">
+<!ENTITY viewLogInfo.text "Журналът документира активността на филтрите, работили за тази поща. Използвайте контролната отметка, за да включите отчитането.">
+<!ENTITY clearLog.label "Изчистване на журнала">
+<!ENTITY clearLog.accesskey "И">
+<!ENTITY enableLog.label "Включване на регистрирането">
+<!ENTITY enableLog.accesskey "В">
+<!ENTITY closeLog.label "Затваряне">
+<!ENTITY closeLog.accesskey "З">

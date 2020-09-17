@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Smiley Menu items -->
+
+<!ENTITY insertSmiley.label "Jilmaygan">
+<!ENTITY insertSmiley.accesskey "J">
+
+<!ENTITY smiley1Cmd.label "Smayl">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "&amp;Smayl yuzini kiritish">
+<!ENTITY smiley2Cmd.label "Xo‘mrayish">
+<!ENTITY smiley2Cmd.accesskey "X">
+<!ENTITY smiley2Cmd.tooltip "Xo‘mraygan yuzni kiritish">
+<!ENTITY smiley3Cmd.label "Ko‘z qisish">
+<!ENTITY smiley3Cmd.accesskey "K">
+<!ENTITY smiley3Cmd.tooltip "Ko‘zini qisgan yuzni kiritish">
+<!ENTITY smiley4Cmd.label "Tilini chiqargan">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "Tilini chiqarga yuzni kiritish">
+<!ENTITY smiley5Cmd.label "Kulayotgan">
+<!ENTITY smiley5Cmd.accesskey "K">
+<!ENTITY smiley5Cmd.tooltip "Kulayotgan yuzni kiritish">
+<!ENTITY smiley6Cmd.label "Uyalgan">
+<!ENTITY smiley6Cmd.accesskey "U">
+<!ENTITY smiley6Cmd.tooltip "Uyalgan yuzni kiritish">
+<!ENTITY smiley7Cmd.label "Qaror qilmagan">
+<!ENTITY smiley7Cmd.accesskey "Q">
+<!ENTITY smiley7Cmd.tooltip "Qaror qilmagan yuzni kiritish">
+<!ENTITY smiley8Cmd.label "Ajablangan">
+<!ENTITY smiley8Cmd.accesskey "A">
+<!ENTITY smiley8Cmd.tooltip "Ajablangan yuzni kiritish">
+<!ENTITY smiley9Cmd.label "Bo‘sa">
+<!ENTITY smiley9Cmd.accesskey "B">
+<!ENTITY smiley9Cmd.tooltip "Bo‘sali yuzni kiritish">
+<!ENTITY smiley10Cmd.label "Hayqiriq">
+<!ENTITY smiley10Cmd.accesskey "H">
+<!ENTITY smiley10Cmd.tooltip "Hayqirgan yuzni kiritish">
+<!ENTITY smiley11Cmd.label "Sovuqqon">
+<!ENTITY smiley11Cmd.accesskey "S">
+<!ENTITY smiley11Cmd.tooltip "Sovuqqon yuzni kiritish">
+<!ENTITY smiley12Cmd.label "Pullik og‘iz">
+<!ENTITY smiley12Cmd.accesskey "P">
+<!ENTITY smiley12Cmd.tooltip "Pullik og‘izli yuzni kiritish">
+<!ENTITY smiley13Cmd.label "Oyog‘i og‘zida">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "Oyog‘i og‘zida bo‘lgan yuzni kiritish">
+<!ENTITY smiley14Cmd.label "Sodda">
+<!ENTITY smiley14Cmd.accesskey "S">
+<!ENTITY smiley14Cmd.tooltip "Sodda yuzni kiritish">
+<!ENTITY smiley15Cmd.label "Yig‘lash">
+<!ENTITY smiley15Cmd.accesskey "g">
+<!ENTITY smiley15Cmd.tooltip "Yig‘layotgan yuzni kiritish">
+<!ENTITY smiley16Cmd.label "Labini tishlagan">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "Labini tishlagan yuzni kiritish">
+<!ENTITY SmileButton.tooltip "Jilmaygan yuzni kiritish">
+

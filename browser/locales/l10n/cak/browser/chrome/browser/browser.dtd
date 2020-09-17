@@ -1,0 +1,290 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Tijaq k'utsamaj">
+<!ENTITY navbarOverflow.label                "Ch'aqa' chik Samajib'äl…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Rujikib'axik ruwi' kajtz'ïk">
+<!ENTITY  unpinTab.label                     "Ruyujïk ruwi' kajtz'ik">
+
+<!ENTITY  listAllTabs.label      "Kecholajïx ronojel taq ruwi'">
+
+<!ENTITY tabCmd.label "K'ak'a' Ruwi'">
+<!ENTITY openFileCmd.label "Tijaq Yakb'äl…">
+<!ENTITY printCmd.label "Titz'ajb'äx…">
+
+<!ENTITY taskManagerCmd.label "Kinuk'samajel taq Samaj">
+
+<!ENTITY menubarCmd.label "Rucholob'al cha'osamaj">
+<!ENTITY menubarCmd.accesskey "c">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Okem pa k'amaya'l">
+<!ENTITY personalbarCmd.label "Kicholob'al taq kisamajib'al taq yaketal">
+<!ENTITY personalbarCmd.accesskey "K">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Yaketal">
+<!ENTITY bookmarksToolbarItem.label "Ruch'akulal taq kiyaketal cholsamajib'äl">
+
+<!ENTITY fullScreenCmd.label "Chijun ruwa kematz'ib'">
+
+
+<!ENTITY pictureInPictureHideToggle.label "Tewäx Rupitz'b'al Picture-in-Picture">
+<!ENTITY pictureInPictureHideToggle.accesskey "T">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "Taq runuk'ulem &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Tokisäx Jun Chik Okisaxel…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Titikirisäx molojri'ïl pa &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Titzij pa &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "&brandProductName; taq Samaj">
+<!ENTITY fxa.menu.account.label "Rub'i' taqoya'l">
+<!ENTITY fxa.menu.settings.label "Taq nuk'ulem">
+<!ENTITY fxa.menu.accountSettings.label "Kinuk'ulem Rub'i' Taqoya'l">
+<!ENTITY fxa.menu.manageAccount2.label "Tinuk'samajïx Rub'i' Taqoya'l">
+<!ENTITY fxa.menu.signOut.label "Titz'apïx Molojri'ïl…">
+<!ENTITY fxa.menu.setupSync.label "Tib'an runuk'ulem &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Tataqa' jun ruwi' chanin pa xab'achike okisab'äl akuchi' atikirisan molojri'ïl.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "wakami at k'o pa chijun ruwa kematz'ib'">
+<!ENTITY fullscreenWarning.generic.label "Wakami re wuj re' k'o pa chijun ruwa kematz'ib'">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Tel pa chijun ruwa kematz'ib' (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Tel pa chijun ruwa kematz'ib' (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "chajin ruma ri retal ch'oy. Tapitz'a' Esc richin nachajij chik el.">
+<!ENTITY pointerlockWarning.generic.label "Re ruxaq wuj re' chajin ruma ri retal ch'oy. Tapitz'a' Esc richin nachajij chik el.">
+
+<!ENTITY showAllBookmarks2.label "Kek'ut konojel ri taq yaketal">
+<!ENTITY recentBookmarks.label "K'a nimakol tiya' ketal">
+<!ENTITY bookmarksToolbarChevron.tooltip "Kek'ut pe ch'aqa' chik taq yaketal">
+
+<!ENTITY printButton.label            "Titz'ajb'äx">
+<!ENTITY printButton.tooltip          "Titz'ajb'äx re ruxaq re'">
+
+<!ENTITY searchItem.title             "Tikanöx">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Tikirib'äl">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; Rutikirib'al Ruxaq">
+
+<!ENTITY bookmarksButton.label          "Taq yaketal">
+
+<!ENTITY bookmarksSubview.label             "Taq yaketal">
+<!ENTITY bookmarksMenuButton2.label         "Kik'utsamaj taq Yaketal">
+<!ENTITY bookmarksMenuButton.other.label    "Ch'aqa' chik taq Yaketal">
+<!ENTITY bookmarksMenuButton.mobile.label   "Taq ruyaketal oyonib'äl">
+<!ENTITY viewBookmarksSidebar2.label        "Titz'et ri ajxikin kipas taq yaketal">
+<!ENTITY hideBookmarksSidebar.label         "Tewüx ri Ajxikin Kipas taq Yaketal">
+<!ENTITY viewBookmarksToolbar.label         "Titz'et rukatz'ik taq yaketal">
+<!ENTITY hideBookmarksToolbar.label         "Tewüx ri Kikajtz'ik taq Yaketal">
+<!ENTITY searchBookmarks.label              "Kekanöx Yaketal">
+<!ENTITY bookmarkingTools.label             "Taq kisamajib'al ri yakoj etal">
+<!ENTITY addBookmarksMenu.label             "Titz'aqatisäx Kik'utsamaj taq Yaketal pa Molsamajib'äl">
+<!ENTITY removeBookmarksMenu.label          "Tiyuj el Kik'utsamaj taq Yaketal pa Molsamajib'äl">
+
+<!ENTITY historyButton.label            "Natab'äl">
+
+<!ENTITY downloads.label              "Taq qasanïk">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Taq qasanïk">
+<!ENTITY addons.label                 "Taq tz'aqat">
+
+<!ENTITY webDeveloperMenu.label       "Nuk'unel ajk'amaya'l">
+
+<!ENTITY newNavigatorCmd.label        "K'ak'a' tzuwäch">
+<!ENTITY newPrivateWindow.label     "K'ak'a' ichinan tzuwäch">
+
+<!ENTITY editMenu.label         "Nuk'b'äl">
+<!ENTITY preferencesCmd2.label       "Taq cha'oj">
+<!ENTITY preferencesCmdUnix.label       "Taq ajowab'äl">
+<!ENTITY logins.label                           "Kitikirisaxik Molojri'ïl chuqa' Ewan taq Tzij">
+
+<!ENTITY overflowCustomizeToolbar.label       "Tichinäx ri kikajtz'ik taq samajib'äl…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "T">
+
+<!ENTITY historyMenu.label "Natab'äl">
+<!ENTITY historyUndoMenu.label "Taq Ruwi' k'a b'a' Ketz'apïx">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Taq k'ajtz'ib' k'a b'a' etz'apin">
+
+<!ENTITY appMenuHistory.showAll.label "Tik'ut pe ronojel ri natab'äl">
+<!ENTITY appMenuHistory.clearRecent.label "Tiyuj K'ak'a' Natab'äl…">
+<!ENTITY appMenuHistory.restoreSession.label "Titzolin pa ri molojri'ïl xik'o">
+<!ENTITY appMenuHistory.viewSidebar.label "Titz'et runatab'al Sidebar">
+<!ENTITY appMenuHistory.hideSidebar.label "Tewäx Runatab'al Sidebar">
+<!ENTITY appMenuHistory.recentHistory.label "K'ak'a' Natab'äl">
+<!ENTITY appMenuHelp.label "Tob'äl">
+
+<!ENTITY appMenuRemoteTabs.label "Ximon taq ruwi'">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Majun ruwi' ejaqon">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Kek'ut pe ch'aqa' chik">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Kek'ut pe ri taq ruwi' e k'o pa re okisaxel re'">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Tik'ut Ronojel">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Kek'ut pe ronojel ri taq ruwi' e k'o pa re okisaxel re'">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Tatzija' ri kiximoj taq ruwi' richin natz'ët kicholajem taq ruwi' pa ch'aqa' chik taq okisaxel.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "¿La nawajo' ye'atz'ët wawe' ri taq ruwi' ch'aqa' chik taq okisaxel?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Kejaq Kajowab'äl Sync">
+<!ENTITY appMenuRemoteTabs.welcome.label "Titz'et jun kicholb'al taq kiwi' juley chik taq awokisaxel.">
+<!ENTITY appMenuRemoteTabs.unverified.label "K'atzinel nijikib'äx ri rub'i' ataqoya'l.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Tatz'ib'aj ab'i' pa &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Tokisäx pa &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Kenuk'samajïx Okisab'äl…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Ketz'et ximïl taq ruwi' pa ajxikin kajtz'ik">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Tewüx Ximïl taq Ruwi' pan Ajxikin Kajtz'ik">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Tokisäx Jun Chik Okisaxel">
+
+<!ENTITY appMenuRecentHighlights.label "K'ak'a' Ya'on Kiq'ij">
+
+<!ENTITY customizeMenu.addToToolbar.label "Titz'aqatisäx pa Molsamajib'äl">
+<!ENTITY customizeMenu.addToToolbar.accesskey "T">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Titz'aqatisäx pa xik'oj K'utsamaj">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "K">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Telesäx retal pa Ruxik'oj K'utsamaj">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "T">
+<!ENTITY customizeMenu.removeFromToolbar.label "Telesäx el pa molsamajib'äl">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "T">
+<!ENTITY customizeMenu.addMoreItems.label "Titz'aqatisäx apo ch'aqa' chik Samajib'äl…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "T">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Ch'aqa' chik">
+
+<!ENTITY contentSearchSubmit.tooltip  "Titaq el ri xkanöx">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Tikanöx">
+<!ENTITY searchIcon.tooltip           "Tikanöx">
+
+<!ENTITY openLinkCmdInTab.accesskey   "r">
+
+<!ENTITY pageAction.copyLink.label    "Tiwachib'ëx Ximonel">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "Tiyak Ruxaq pa Pocket">
+<!ENTITY pocketMenuitem.label         "Titz'et Rucholb'al Pocket">
+
+<!ENTITY emailPageCmd.label           "Titaq ximonel tzij…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Runimilem">
+
+<!ENTITY sidebarCloseButton.tooltip     "Titz'apïx ajxikin">
+
+<!ENTITY quitApplicationCmdWin2.label       "Tel">
+<!ENTITY quitApplicationCmdWin2.accesskey   "e">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Tel el pa &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Tel">
+<!ENTITY quitApplicationCmd.accesskey   "T">
+<!ENTITY quitApplicationCmdMac2.label   "Tel pa &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Runuk'ik ajowanel q'aton taq silon kajtz'ïk…">
+<!ENTITY editPopupSettings.label "Kenuk' taq rucha'oj q'aton silon kajtz'ïk…">
+<!ENTITY editPopupSettings.accesskey "K">
+<!ENTITY dontShowMessage.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Tikanöx pa Re Ruxaq Re'…">
+
+<!ENTITY spellAddDictionaries.label "Ketz'aqatisäx taq Soltzij…">
+<!ENTITY spellAddDictionaries.accesskey "K">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Ruwi' kanonel">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Ruyonil trewaj qa ri'">
+
+
+<!ENTITY uiTour.infoPanel.close "Titz'apïx">
+
+<!ENTITY panicButton.thankyou.msg1                "Xyujtäj el ri k'ak'a' natab'äl.">
+<!ENTITY panicButton.thankyou.msg2                "¡Tachajij awi' richin yatok pa k'amaya'l!">
+<!ENTITY panicButton.thankyou.buttonlabel         "¡Matyox!">
+
+<!ENTITY updateAvailable.panelUI.label "Tiqasäx &brandShorterName; k'exoj">
+<!ENTITY updateManual.panelUI.label "Taqasaj jun k'ak'a' ruwachib'al &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Man tikirel ta chik yeb'an ch'aqa' chik k'exoj">
+<!ENTITY updateRestart.panelUI.label2 "Titikirisäx chik richin nik'ex &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "Tajin yexim ri taq Okisaxel…">
+
+<!ENTITY pageAction.shareUrl.label "Tikomonïx">
+<!ENTITY pageAction.shareMore.label "Ch'aqa' chik…">
+
+<!ENTITY libraryButton.tooltip "Titz'et ri natab'äl, yakon taq yaketal, chuqa' ch'aqa' chik">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Etzijon ri taq Rub'anikil Okem">

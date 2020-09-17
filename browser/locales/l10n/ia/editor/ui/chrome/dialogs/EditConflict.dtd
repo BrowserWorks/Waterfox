@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Seliger le cambios de redaction">
+<!ENTITY conflictWarning.label "Iste pagina ha essite modificate per un altere programma, ma tu ha anque cambios non salvate in le compositor.">
+<!ENTITY conflictResolve.label "Selige qual version retener:">
+<!ENTITY keepCurrentPageButton.label "Retener le cambios actual del pagina">
+<!ENTITY useOtherPageButton.label "Replaciar le pagina actual con altere cambios">

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "Tiya' ketal ri Rutzijol achi'el Esik'in chi Q'ijul">
+<!ENTITY markByDateLower.label "Tiya' ketal taq rutzijol achi'el esik'in pa:">
+<!ENTITY markByDateLower.accesskey "k">
+<!ENTITY markByDateUpper.label "Chi re:">
+<!ENTITY markByDateUpper.accesskey "C">

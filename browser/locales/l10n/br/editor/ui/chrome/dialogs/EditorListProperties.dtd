@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Perzhioù ar roll">
+
+<!ENTITY ListType.label "Rizh ar roll">
+<!ENTITY bulletStyle.label "Rizh ar padelligoù :">
+<!ENTITY startingNumber.label "Kregiñ da :">
+<!ENTITY startingNumber.accessKey "r">
+<!ENTITY none.value "tra ebet">
+<!ENTITY bulletList.value "Roll dre badelligoù (hep niverennoù)">
+<!ENTITY numberList.value "Roll niverennet">
+<!ENTITY definitionList.value "Roll despizañ">
+<!ENTITY changeEntireListRadio.label "Kemmañ ar roll a-bezh">
+<!ENTITY changeEntireListRadio.accessKey "o">
+<!ENTITY changeSelectedRadio.label "Kemmañ an ergorennoù diuzet hepken">
+<!ENTITY changeSelectedRadio.accessKey "i">

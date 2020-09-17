@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "Accusés de réception">
+<!ENTITY prefReceipts.caption         "Accusés de réception">
+<!ENTITY requestReceipt.label         "Lors de l’envoi d’un message, toujours demander un accusé de réception">
+<!ENTITY requestReceipt.accesskey     "L">
+<!ENTITY receiptArrive.label          "Lorsqu’un accusé de réception arrive :">
+<!ENTITY leaveIt.label                "Le laisser dans le dossier « Courrier entrant »">
+<!ENTITY leaveIt.accesskey            "i">
+<!ENTITY moveToSent.label             "Le déplacer dans le dossier « Envoyés »">
+<!ENTITY moveToSent.accesskey         "e">
+<!ENTITY requestMDN.label             "Lors de la réception d’une demande d’accusé de réception :">
+<!ENTITY returnSome.label             "Autoriser les accusés de réception pour certains messages">
+<!ENTITY returnSome.accesskey         "u">
+<!ENTITY never.label                  "Ne jamais envoyer d’accusé de réception">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Si je ne suis ni le destinataire ni en copie du message :">
+<!ENTITY notInToCc.accesskey          "S">
+<!ENTITY outsideDomain.label          "Si l’expéditeur est hors de mon domaine :">
+<!ENTITY outsideDomain.accesskey      "x">
+<!ENTITY otherCases.label             "Dans tous les autres cas :">
+<!ENTITY otherCases.accesskey         "D">
+<!ENTITY askMe.label                  "Me demander">
+<!ENTITY alwaysSend.label             "Toujours envoyer">
+<!ENTITY neverSend.label              "Ne jamais envoyer">

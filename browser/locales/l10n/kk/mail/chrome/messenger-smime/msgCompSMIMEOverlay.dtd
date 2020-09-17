@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Шифрлемеу">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "е">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Шифрлеуді талап ету">
+<!ENTITY menu_securityEncryptRequire.accesskey "ш">
+
+<!ENTITY menu_securitySign.label "Бұл хабарламаға цифрлық қолтаңбаны қосу">
+<!ENTITY menu_securitySign.accesskey "м">
+
+<!ENTITY menu_securityAttachMyKey.label "Менің ашық кілтімді тіркеу">
+<!ENTITY menu_securityAttachMyKey.accesskey "а">
+
+<!ENTITY menu_securityTech.label "Шифрлеу технологиясы">
+<!ENTITY menu_securityTech.accesskey "т">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Қауіпсіздік ақпаратын қарау">
+<!ENTITY menu_securityStatus.accesskey "п">
+
+<!ENTITY securityButton.label "Қауіпсіздік">
+<!ENTITY securityButton.tooltip "Қауіпсіздік баптауларын қарау немесе өзгерту">
+
+<!ENTITY menu_viewSecurityStatus.label "Хабарламаның қауіпсіздік ақпараты">
+<!ENTITY menu_viewSecurityStatus.accesskey "п">

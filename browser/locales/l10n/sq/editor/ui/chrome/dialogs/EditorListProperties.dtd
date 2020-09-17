@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Veti Liste">
+
+<!ENTITY ListType.label "Lloj Liste">
+<!ENTITY bulletStyle.label "Stil Shenjash:">
+<!ENTITY startingNumber.label "Fillo tek:">
+<!ENTITY startingNumber.accessKey "F">
+<!ENTITY none.value "Asnjë">
+<!ENTITY bulletList.value "Listë me Shenja (E panumërtuar)">
+<!ENTITY numberList.value "Listë me Numra">
+<!ENTITY definitionList.value "Listë Përkufizimesh">
+<!ENTITY changeEntireListRadio.label "Ndrysho krejt listën">
+<!ENTITY changeEntireListRadio.accessKey "k">
+<!ENTITY changeSelectedRadio.label "Ndrysho vetëm pjesët e përzgjedhura">
+<!ENTITY changeSelectedRadio.accessKey "v">

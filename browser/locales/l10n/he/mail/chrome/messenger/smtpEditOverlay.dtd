@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Yaron <sh.yaron@gmail.com>
+#
+-->
+
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!ENTITY settings.caption "הגדרות">
+<!ENTITY security.caption "אימות ואבטחה">
+<!ENTITY serverName.label "שם השרת:">
+<!ENTITY serverName.accesskey "ש">
+<!ENTITY serverDescription.label "תיאור:">
+<!ENTITY serverDescription.accesskey "ת">
+<!ENTITY serverPort.label "שער:">
+<!ENTITY serverPort.accesskey "ע">
+<!ENTITY userName.label "שם משתמש:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "אבטחת קישוריות:">
+<!ENTITY connectionSecurity.accesskey "ק">
+<!ENTITY connectionSecurityType-0.label "ללא">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, אם זמין">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP שרת">
+<!ENTITY serverPortDefault.label "ברירת מחדל:">
+<!ENTITY authMethod.label "צורת ההזדהות:">
+<!ENTITY authMethod.accesskey "ה">
+

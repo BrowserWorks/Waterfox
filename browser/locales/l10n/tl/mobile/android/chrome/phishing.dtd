@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Alisin mo ako dito!">
+<!ENTITY safeb.palm.decline.label "Balewalain itong babala">
+<!ENTITY safeb.palm.reportPage.label "Bakit hinarangan ang pahinang ito?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Advisory na ibinigay ng <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Naiulat na Pahinang Naatake!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Naiulat na isang attack page ang page na ito <span id='malware_sitename'/> at naka-block ito ayon sa inyong security preferences.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Susubukan ng mga attack page na mag-install ng mga program upang nakawin ang inyong mga private information, o gamitin ang inyong kompyuter upang mapahamak ang iba, o 'di kaya'y sirain ang inyong sistema.</p><p>Sinasadya ng iilang attack pages na magkalat ng nakakasasamang software, ngunit karamihan ay na-compromise na lingid sa kaalaman o walang pahintulot sa mga may-ari.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Mapanlinlang na Site!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "This web page at <span id='phishing_sitename'/> has been reported as a deceptive site and has been blocked based on your security preferences.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Ang mga mapanlinlang na site ay dinisenyo upang linlangin ka sa paggawa ng isang bagay na mapanganib, tulad ng pag-install ng software, o pagbubunyag ng iyong personal na impormasyon, tulad ng mga password, mga numero ng telepono o credit card.</p><p>Maaaring magresulta ang pagpasok ng anumang impormasyon sa web page na ito. sa pagnanakaw ng pagkakakilanlan o iba pang pandaraya.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Iniulat ang Hindi Gustong Software Site!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "This web page at <span id='unwanted_sitename'/> has been reported to contain unwanted software and has been blocked based on your security preferences.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Ang mga hindi nais na mga pahina ng software ay sinusubukan na mag-install ng software na maaaring mapanlinlang at makakaapekto sa iyong system sa di-inaasahang mga paraan.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Ang site na nasa unahan ay maaaring maglaman ng malware">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; hinarangan ang pahinang ito dahil maaaring subukan ang pag-install ng mga mapanganib na apps na magnakaw o tanggalin ang iyong impormasyon (halimbawa, mga larawan, password, mensahe at credit card).">

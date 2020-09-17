@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Pisaś a adresěrowaś">
+<!ENTITY addressingGroupTitle.label "Adresěrowanje">
+<!ENTITY addressingText.label      "Pśi pytanju adresow:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Móje nastajenja za globalny LDAP-serwer za toś to konto wužywaś">
+<!ENTITY useGlobal.accesskey       "M">
+<!ENTITY editDirectories.label     "Zapise wobźěłaś…">
+<!ENTITY editDirectories.accesskey "Z">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Drugi LDAP-serwer wužywaś:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "Žeden">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Pisaś">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Powěsći w HTML-formaśe spisaś">
+<!ENTITY useHtml.accesskey                    "P">
+<!ENTITY autoQuote.label                      "Spócetnu powěsć pśi wótegronjenju awtomatiski ako citat zasunuś">
+<!ENTITY autoQuote.accesskey                  "S">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Pśi citěrowanju">
+<!ENTITY quoting.accesskey                    "c">
+<!ENTITY aboveQuote.label                     "wótegrono nad citatom zachopiś">
+<!ENTITY belowQuote.label                     "wótegrono pód citatom zachopiś">
+<!ENTITY selectAndQuote.label                 "citat wubraś">
+<!ENTITY place.label                          "a móju signaturu zasajźiś">
+<!ENTITY place.accesskey                      "m">
+<!ENTITY belowText.label                      "pód citatom (pśiraźujo se)">
+<!ENTITY aboveText.label                      "pód mójim wótegronom (nad citatom)">
+<!ENTITY includeSigOnReply.label              "Signaturu za wótegrona zapśimjeś">
+<!ENTITY includeSigOnReply.accesskey          "i">
+<!ENTITY includeSigOnForward.label            "Signaturu za dalejpósrědnjenja zapśimjeś">
+<!ENTITY includeSigOnForward.accesskey        "d">
+
+<!ENTITY globalComposingPrefs.label           "Globalne wobźěłowańske nastajenja…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Globalne adresěrowańske nastajenja…">
+<!ENTITY globalAddressingPrefs.accesskey      "o">

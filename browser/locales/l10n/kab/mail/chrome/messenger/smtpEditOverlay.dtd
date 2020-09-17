@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Iɣewwaṛen">
+<!ENTITY security.caption "Taɣellist d usesteb">
+<!ENTITY serverName.label "Isem n uqeddac:">
+<!ENTITY serverName.accesskey "I">
+<!ENTITY serverDescription.label "Aglam:">
+<!ENTITY serverDescription.accesskey "A">
+<!ENTITY serverPort.label "Tabburt:">
+<!ENTITY serverPort.accesskey "T">
+<!ENTITY userName.label "Isem n useqdac:">
+<!ENTITY userName.accesskey "I">
+<!ENTITY connectionSecurity.label "Taɣellist n tuqqna:">
+<!ENTITY connectionSecurity.accesskey "q">
+<!ENTITY connectionSecurityType-0.label "Ula Yiwen">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ma yella">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Aqeddac SMPT">
+<!ENTITY serverPortDefault.label "Amezwer:">
+<!ENTITY authMethod.label "Tarrayt n usesteb:">
+<!ENTITY authMethod.accesskey "r">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Pilihan Arkib">
+<!ENTITY archiveGranularityPrefix.label "Apabila mengarkib mesej, letakkan dalam:">
+<!ENTITY archiveFlat.label "Folder tunggal">
+<!ENTITY archiveFlat.accesskey "t">
+<!ENTITY archiveYearly.label "Folder arkib tahunan">
+<!ENTITY archiveYearly.accesskey "F">
+<!ENTITY archiveMonthly.label "Folder arkib bulanan">
+<!ENTITY archiveMonthly.accesskey "b">
+<!ENTITY keepFolderStructure.label "Kekalkan struktur folder yang ada untuk mengarkib mesej">
+<!ENTITY keepFolderStructure.accesskey "K">
+<!ENTITY archiveExample.label "Contoh">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Arkib">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Peti masuk">

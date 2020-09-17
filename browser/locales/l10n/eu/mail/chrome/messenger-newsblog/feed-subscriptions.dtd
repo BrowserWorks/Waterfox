@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Jario harpidetzak">
+<!ENTITY learnMore.label             "Jarioei buruzko argibide gehiago">
+
+<!ENTITY feedTitle.label             "Izenburua:">
+<!ENTITY feedTitle.accesskey         "I">
+
+<!ENTITY feedLocation.label          "Jarioaren URL:">
+<!ENTITY feedLocation.accesskey      "J">
+<!ENTITY feedLocation2.placeholder   "Sartu baliozko jario URLa">
+<!ENTITY locationValidate.label      "Balidatu">
+<!ENTITY validateText.label          "Egiaztatu balidazioa eta eskuratu baliozko URLa.">
+
+<!ENTITY feedFolder.label            "Gorde artikuluak hemen:">
+<!ENTITY feedFolder.accesskey        "G">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Begiratu artikulu berririk dagoen ">
+<!ENTITY biffStart.accesskey         "B">
+<!ENTITY biffMinutes.label           "minutuero">
+<!ENTITY biffMinutes.accesskey       "m">
+<!ENTITY biffDays.label              "egunero">
+<!ENTITY biffDays.accesskey          "e">
+<!ENTITY recommendedUnits.label      "Argitaratzaileak gomendatuak:">
+
+<!ENTITY quickMode.label             "Erakutsi artikuluaren laburpena web orria kargatu ordez">
+<!ENTITY quickMode.accesskey         "E">
+
+<!ENTITY autotagEnable.label         "Automatikoki sortu etiketa jario &lt;kategoria&gt; izenekin">
+<!ENTITY autotagEnable.accesskey     "A">
+<!ENTITY autotagUsePrefix.label      "Erabili aurrizkia etiketentzat:">
+<!ENTITY autotagUsePrefix.accesskey  "z">
+<!ENTITY autoTagPrefix.placeholder   "Sartu etiketaren aurrizkia">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Gehitu">
+<!ENTITY button.addFeed.accesskey    "G">
+<!ENTITY button.verifyFeed.label     "Egiaztatu">
+<!ENTITY button.verifyFeed.accesskey "t">
+<!ENTITY button.updateFeed.label     "Editatu">
+<!ENTITY button.updateFeed.accesskey "E">
+<!ENTITY button.removeFeed.label     "Ezabatu">
+<!ENTITY button.removeFeed.accesskey "z">
+<!ENTITY button.importOPML.label     "Inportatu">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Esportatu">
+<!ENTITY button.exportOPML.accesskey "s">
+<!ENTITY button.exportOPML.tooltip   "Esportatu jarioak karpeta-egiturarekin; ktrl-klik edo ktrl-sartu jarioak zerrenda gisa esportatzeko">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Itxi">

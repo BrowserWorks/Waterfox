@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY attachImageSource.label "सन्देशमा यस छविलाई सङ्लग्न गर्नुहोस्">
+<!ENTITY attachImageSource.accesskey "s">
+
+<!ENTITY attachLinkSource.label "सन्देशमा यस लिङ्कको स्रोत सङ्लग्न गर्नुहोस्">
+<!ENTITY attachLinkSource.accesskey "s">

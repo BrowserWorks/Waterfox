@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "წიგნაკის იმპორტი">
+<!ENTITY fieldMapImport.size "width: 50em; height: 40em;">
+<!ENTITY fieldMapImport.recordNumber "ჩანაწერიდან დაიმპორტებული მონაცემები: ">
+<!ENTITY fieldMapImport.next.label "შემდეგი">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "წინა">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "გამოიყენეთ აწევა და ჩამოწევა მარცხენა დაფაზე წიგნაკის ველების სწორი შესატყვისების მარჯვნივ გადმოსატანად.  გამორიცხეთ იმპორტისათვის არასასურველი ელემენტები.">
+<!ENTITY fieldMapImport.up.label "აწევაა">
+<!ENTITY fieldMapImport.up.accesskey "U">
+<!ENTITY fieldMapImport.down.label "ჩამოწევა">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "წიგნაკის ველები">
+<!ENTITY fieldMapImport.dataTitle "ჩანაწერებიდან საიმპორტო მონაცემები">
+<!ENTITY fieldMapImport.skipFirstRecord.label "პირველი ჩანაწერი ველების სახელებს შეიცავს">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">

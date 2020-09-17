@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Yaron <sh.yaron@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# hatul <amiadb@gmail.com>
+#
+-->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "הצג:">
+<!ENTITY viewPicker.accesskey "צ">
+<!ENTITY viewAll.label "הכול">
+<!ENTITY viewAll.accesskey "כ">
+<!ENTITY viewUnread.label "לא נקרא">
+<!ENTITY viewUnread.accesskey "ל">
+<!ENTITY viewNotDeleted.label "לא נמחק">
+<!ENTITY viewNotDeleted.accesskey "מ">
+<!ENTITY viewTags.label "תווית">
+<!ENTITY viewTags.accesskey "ת">
+<!ENTITY viewCustomViews.label "תצוגות מותאמות אישית">
+<!ENTITY viewCustomViews.accesskey "א">
+<!ENTITY viewVirtualFolder.label "שמור תצוגה כתיקייה…">
+<!ENTITY viewVirtualFolder.accesskey "ש">
+<!ENTITY viewCustomizeView.label "התאמה אישית…">
+<!ENTITY viewCustomizeView.accesskey "ה">
+

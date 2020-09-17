@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Laudatti <Laudatti@gmail.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# BuBBaX <mikebubbax@yahoo.com>
+# nicubunu <nicubunu@gmail.com>
+# stas <stas@nerd.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY editPageCmd.label "Editare pagină">
+<!ENTITY editPageCmd.accesskey "E">
+<!ENTITY editPageCmd.commandkey "l">
+
+<!ENTITY navbarCmd.label "Bară de navigare">
+<!ENTITY navbarCmd.accesskey "n">
+<!ENTITY personalbarCmd.label "Bară Laterală Personală">
+<!ENTITY personalbarCmd.accesskey "P">
+
+<!ENTITY closeWindow.label "Închidere fereastră">
+<!ENTITY closeWindow.accesskey "n">
+
+<!ENTITY minimizeButton.tooltip       "Minimizează">
+<!ENTITY restoreButton.tooltip        "Restaurează">
+
+<!ENTITY feedsMenu.label "Abonare la această pagină">
+<!ENTITY feedsMenu.accesskey "s">
+
+<!ENTITY menuBar.tooltip                  "Bara meniului">
+<!ENTITY personalToolbar.tooltip          "Bară personală de unelte">
+<!ENTITY navigationToolbar.tooltip        "Bară de navigare">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Înapoi">
+<!ENTITY backButton.tooltip           "Mergi cu o pagină înapoi">
+<!ENTITY forwardButton.label          "Înainte">
+<!ENTITY forwardButton.tooltip        "Mergi cu o pagină înainte">
+<!ENTITY reloadButton.label           "Reîncarcă">
+<!ENTITY reloadButton.tooltip         "Reîncarcă pagina curentă">
+<!ENTITY stopButton.label             "Oprește">
+<!ENTITY stopButton.tooltip           "Oprește încărcarea acestei pagini">
+<!ENTITY searchButton.label           "Caută">
+<!ENTITY searchButton.tooltip         "Type a word in the field to the left, then click Search">
+<!ENTITY goButton.label               "Du-te">
+<!ENTITY goButton.tooltip             "Type a location in the field to the left, then click Go">
+<!ENTITY printButton.label            "Tipărește">
+<!ENTITY printButton.tooltip          "Tipărește această pagină">
+
+<!ENTITY throbber.tooltip             "Pagina principală &vendorShortName;">
+
+<!ENTITY locationBar.tooltip          "Enter search term, keyword, or web address">
+<!ENTITY locationBar.accesskey        "L">
+<!ENTITY locationBar.title            "Locul de desfășurare">
+<!ENTITY proxyIcon.tooltip            "Trageți și aruncați această iconiță pentru a crea o legătură la această pagină">
+
+<!ENTITY searchItem.title             "Search">
+
+<!ENTITY bookmarksButton.label        "Semne de carte">
+<!ENTITY bookmarksButton.tooltip      "Bookmarks list">
+<!ENTITY homeButton.label             "Acasă">
+<!ENTITY bookmarksToolbarItem.label   "Elemente pe bara pentru semne de carte">
+<!ENTITY bookmarksToolbarChevron.tooltip "Show more bookmarks">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Terminat">
+
+<!ENTITY popupIcon.tooltiptext      "Unblock this site's popups">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editfield0.label "ឈ្មោះ​អ្នក​ប្រើ ៖"> 
+<!ENTITY editfield1.label "ពាក្យ​សម្ងាត់ ៖"> 
+<!ENTITY copyCmd.label    "ចម្លង">
+<!ENTITY copyCmd.accesskey "ច">
+<!ENTITY selectAllCmd.label "ជ្រើស​ទាំងអស់">
+<!ENTITY selectAllCmd.accesskey "ស">

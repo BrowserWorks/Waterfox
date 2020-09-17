@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Runuk'unel Q'axinäq Ichinil">
+<!ENTITY AttName.label                  "Ichinil: ">
+<!ENTITY AttValue.label                 "Retal: ">
+<!ENTITY PropertyName.label             "Ichinil: ">
+<!ENTITY currentattributesfor.label     "Taq rub'anikil k'o wakami ri: ">
+<!ENTITY tree.attributeHeader.label     "B'anikil">
+<!ENTITY tree.propertyHeader.label      "Ichinil">
+<!ENTITY tree.valueHeader.label         "Retal">
+<!ENTITY tabHTML.label                  "HTML taq B'anikil">
+<!ENTITY tabCSS.label                   "Rub'anikil chakulal">
+<!ENTITY tabJSE.label                   "JavaScript taq Samaj">
+
+<!ENTITY editAttribute.label    "Tapitz'a' pa ruwi' jun ch'akulal richin ninuk' ri rejqalem">
+<!ENTITY removeAttribute.label  "Tiyuj">

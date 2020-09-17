@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Navigazione anonima">
+
+<!ENTITY editPageCmd.label "Modifica pagina">
+<!ENTITY editPageCmd.accesskey "o">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Barra di navigazione">
+<!ENTITY navbarCmd.accesskey "n">
+<!ENTITY bookmarksToolbarCmd.label     "Barra strumenti dei segnalibri">
+<!ENTITY bookmarksToolbarCmd.accesskey "m">
+
+<!ENTITY closeWindow.label "Chiudi finestra">
+<!ENTITY closeWindow.accesskey "t">
+
+<!ENTITY minimizeButton.tooltip       "Minimizza">
+<!ENTITY restoreButton.tooltip        "Ripristina">
+
+<!ENTITY feedsMenu.label "Abbonati a questa pagina">
+<!ENTITY feedsMenu.accesskey "b">
+
+<!ENTITY menuBar.tooltip                  "Barra del menu">
+<!ENTITY bookmarksToolbar.tooltip         "Barra strumenti dei segnalibri">
+<!ENTITY navigationToolbar.tooltip        "Barra di navigazione">
+
+<!ENTITY editBookmark.done.label "Fatto">
+<!ENTITY editBookmark.cancel.label "Annulla">
+<!ENTITY editBookmark.removeBookmark.accessKey "E">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Indietro">
+<!ENTITY backButton.tooltip           "Torna indietro di una pagina">
+<!ENTITY forwardButton.label          "Avanti">
+<!ENTITY forwardButton.tooltip        "Vai avanti di una pagina">
+<!ENTITY reloadButton.label           "Ricarica">
+<!ENTITY reloadButton.tooltip         "Ricarica la pagina corrente">
+<!ENTITY stopButton.label             "Interrompi">
+<!ENTITY stopButton.tooltip           "Interrompi il caricamento della pagina">
+<!ENTITY searchButton.label           "Cerca">
+<!ENTITY searchButton.tooltip         "Inserire una parola nel campo a sinistra e premere Cerca">
+<!ENTITY goButton.label               "Vai">
+<!ENTITY goButton.tooltip             "Inserire un indirizzo nel campo a sinistra e premere Vai">
+<!ENTITY printButton.label            "Stampa">
+<!ENTITY printButton.tooltip          "Stampa la pagina">
+
+<!ENTITY throbber.tooltip             "Visita la pagina iniziale di &vendorShortName;">
+
+<!ENTITY throbber.tooltip2            "Vai alla pagina iniziale di &brandShortName;">
+
+<!ENTITY locationBar.tooltip          "Immissione indirizzo, ricerca o parola chiave">
+<!ENTITY locationBar.accesskey        "n">
+<!ENTITY locationBar.title            "Indirizzo">
+<!ENTITY proxyIcon.tooltip            "Trascina questa icona per creare un collegamento alla pagina">
+
+<!ENTITY searchItem.title             "Cerca">
+
+<!ENTITY bookmarksButton.label        "Segnalibri">
+<!ENTITY bookmarksButton.tooltip      "Lista segnalibri">
+<!ENTITY homeButton.label             "Pagina iniziale">
+<!ENTITY bookmarksToolbarItem.label   "Elementi barra dei segnalibri">
+<!ENTITY bookmarksToolbarChevron.tooltip "Mostra altri segnalibri">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Completato">
+
+<!ENTITY popupIcon.tooltiptext      "Sblocca pop-up da questo sito">
+
+<!ENTITY viewSecurityInfo.label      "Visualizza informazioni di sicurezza">
+<!ENTITY viewSecurityInfo.accesskey  "z">
+<!ENTITY viewCertificate.label       "Visualizza certificato">
+<!ENTITY viewCertificate.accesskey   "c">
+<!ENTITY viewCertManager.label       "Apri Gestione certificati">
+<!ENTITY viewCertManager.accesskey   "G">
+
+<!ENTITY zoomIn.tooltiptext          "Più grande">
+<!ENTITY zoomOut.tooltiptext         "Più piccolo">

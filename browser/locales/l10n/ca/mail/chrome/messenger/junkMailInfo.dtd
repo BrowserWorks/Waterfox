@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Quant al correu brossa">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "El &brandShortName; detecta automàticament els missatges entrants que semblen ser correu brossa (també conegut com «spam»). Els missatges, que el &brandShortName; cregui que són correu brossa, mostraran una icona de correu brossa">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Al començament us caldrà ensenyar al &brandShortName; a identificar correu brossa mitjançant el botó correu brossa de la barra d'eines per marcar missatges.">
+<!ENTITY info3.label   "Quan el &brandShortName; ja identifiqui el correu brossa, podreu utilitzar els controls del correu brossa per passar el correu brossa entrant a la carpeta Correu brossa.">
+<!ENTITY info4.label   "Si en voleu més informació, feu clic a Ajuda.">

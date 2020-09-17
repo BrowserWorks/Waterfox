@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Ad">
+<!ENTITY directoryName.accesskey           "d">
+<!ENTITY directoryHostname.label           "Sunucu: ">
+<!ENTITY directoryHostname.accesskey       "c">
+<!ENTITY directoryBaseDN.label             "Base DN:">
+<!ENTITY directoryBaseDN.accesskey         "B">
+<!ENTITY findButton.label                  "Bul">
+<!ENTITY findButton.accesskey              "B">
+<!ENTITY directorySecure.label             "Güvenli bağlantı kullan (SSL)">
+<!ENTITY directorySecure.accesskey         "ü">
+<!ENTITY directoryLogin.label              "Bind DN: ">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "Genel">
+<!ENTITY Offline.tab                       "Çevrimdışı">
+<!ENTITY Advanced.tab                      "Gelişmiş">
+<!ENTITY portNumber.label                  "Bağlantı noktası numarası:">
+<!ENTITY portNumber.accesskey              "B">
+<!ENTITY searchFilter.label                "Arama süzgeci:">
+<!ENTITY searchFilter.accesskey            "r">
+<!ENTITY scope.label                       "Kapsam:">
+<!ENTITY scope.accesskey                   "p">
+<!ENTITY scopeOneLevel.label               "Bir Düzey ">
+<!ENTITY scopeOneLevel.accesskey           "B">
+<!ENTITY scopeSubtree.label                "Alt Ağaç">
+<!ENTITY scopeSubtree.accesskey            "A">
+<!ENTITY return.label                      "Sonuç üst sınırı:">
+<!ENTITY return.accesskey                  "ü">
+<!ENTITY results.label                     "sonuç">
+<!ENTITY offlineText.label                 "Çevrimdışı çalıştığınızda kullanabilmek için bu dizinin yerel bir kopyasını alabilirsiniz.">
+<!ENTITY saslMechanism.label               "Giriş yöntemi: ">
+<!ENTITY saslMechanism.accesskey           "y">
+<!ENTITY saslOff.label                     "Basit">
+<!ENTITY saslOff.accesskey                 "B">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+
+<!ENTITY newDirectoryWidth                 "36em">

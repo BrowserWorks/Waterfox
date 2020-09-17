@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+<!-- Tools menu -->
+
+
+<!ENTITY lightning.preferencesLabel "Taqvim">
+<!-- New menu popup in File menu -->
+
+<!ENTITY lightning.menupopup.new.event.label    "Tadbir…">
+<!ENTITY lightning.menupopup.new.event.accesskey "T">
+<!ENTITY lightning.menupopup.new.task.label     "Vazifa…">
+<!ENTITY lightning.menupopup.new.task.accesskey "V">
+<!ENTITY lightning.menupopup.new.calendar.label "Taqvim…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "v">
+<!-- Open menu popup in File menu -->
+
+<!ENTITY lightning.menupopup.open.label               "Ochish">
+<!ENTITY lightning.menupopup.open.accesskey           "O">
+<!ENTITY lightning.menupopup.open.message.label       "Saqlangan xabar…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "x">
+<!ENTITY lightning.menupopup.open.calendar.label      "Taqvim fayli…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "T">
+<!-- View Menu -->
+
+<!ENTITY lightning.menu.view.calendar.label            "Taqvim">
+<!ENTITY lightning.menu.view.calendar.accesskey        "v">
+<!ENTITY lightning.menu.view.tasks.label               "Vazifalar">
+<!ENTITY lightning.menu.view.tasks.accesskey           "V">
+<!-- Events and Tasks menu -->
+
+<!ENTITY lightning.menu.eventtask.label                "Tadbirlar va vazifalar">
+<!ENTITY lightning.menu.eventtask.accesskey            "T">
+<!-- properties dialog, calendar creation wizard -->
+
+<!ENTITY lightning.calendarproperties.email.label               "E-pochta:">
+<!-- iMIP Bar (meeting support) -->
+
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Qabul qilish">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Tadbir taklifini qabul qilish">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Barchasini qabul qilish">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Barcha tadbir hodisalari uchun takliflarni qabul qilish">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Qo‘shish">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Taqvimga tadbirni qo‘shish">
+
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Tadbir taklifini rad qilish">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Barchasini rad qilish">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Barcha tadbir hodisalari uchun tadbir takliflarini rad qilish">
+
+
+<!ENTITY lightning.imipbar.btnDelete.label                                  "O‘chirish">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Taqvimdan o‘chirish">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Tafsilotlar…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Tadbir tafsilotlarini ko‘rsatish">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Ko‘proq">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Ko‘proq tanlamalarni ko‘rish uchun bosing">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Qayta tasdiqlash">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Tashkilotchiga qayta tasdiqlashni jo‘natadi">
+
+
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Nusxasini saqlash">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Tashkilotchiga beriladigan javobdan mustaqil ravishda tadbir nusxasini taqvimga saqlang. Ishtirokchilar ro‘yxati tozalab tashlanadi.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Noaniq">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Tadbir taklifini &quot;borishim noma’lum&quot; deb qabul qilish">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Barchasiga noaniq deb belgilash">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Barcha tadbir hodisalari uchun tadbir takliflariga &quot;borishim noaniq&quot; deb qabul qilish">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Yangilash">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Taqvimdagi tadbirni yangilash">
+<!ENTITY lightning.imipbar.description                                      "Ushbu xabarda tadbirga taklif bor.">
+<!-- Lightning specific keybindings -->
+
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+<!-- Account Central page -->
+
+<!ENTITY lightning.acctCentral.newCalendar.label "Yangi taqvim yaratish">
+<!-- today-pane-specific -->
+
+<!ENTITY todaypane.showMinimonth.label "Kichik oylarni ko‘rsatish">
+<!ENTITY todaypane.showMinimonth.accesskey "K">
+<!ENTITY todaypane.showMiniday.label "Kichik kunlarni ko‘rsatish">
+<!ENTITY todaypane.showMiniday.accesskey  "k">
+<!ENTITY todaypane.showNone.label "Yo‘qlar ko‘rsatilsin">
+<!ENTITY todaypane.showNone.accesskey "Y">
+<!ENTITY todaypane.showTodayPane.label "Bugun yon oynasini ko‘rsatish">
+<!ENTITY todaypane.showTodayPane.accesskey "o">
+<!ENTITY todaypane.statusButton.label "Bugun yon oynasi">

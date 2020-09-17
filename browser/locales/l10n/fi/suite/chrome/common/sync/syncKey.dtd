@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Henkilökohtainen &syncBrand.fullName.label; -synkroinointiavain">
+<!ENTITY syncKey.page.description         "&syncBrand.fullName.label; -tilillesi tallennetut tiedot puretaan tällä avaimella. Avain pitää antaa joka kerta kun &syncBrand.fullName.label; asennetaan uudelle tietokoneelle tai laitteelle.">
+<!ENTITY syncKey.keepItSecret.heading     "Pidä se salaisena">
+<!ENTITY syncKey.keepItSecret.description "&syncBrand.fullName.label; -tilisi on salattu yksityisyydensuojasi vuoksi. Ilman tätä avainta tietojesi purkaminen vie vuosia. Olet ainoa henkilö, jolla on tämä avain. Tämän takia olet ainoa henkilö, joka pääsee käsiksi &syncBrand.fullName.label; -tilillesi tallennettuihin tietoihin.">
+<!ENTITY syncKey.keepItSafe.heading       "Pidä se tallessa">
+<!ENTITY syncKey.keepItSafe1.description  "Älä hukkaa tätä avainta.">
+<!ENTITY syncKey.keepItSafe2.description  " Me emme pidä kopiota avaimestasi (koska silloinhan se ei olisi salainen!), joten ">
+<!ENTITY syncKey.keepItSafe3.description  "emme voi auttaa sinua">
+<!ENTITY syncKey.keepItSafe4.description  " jos hukkaat sen. Tarvitset tätä avainta joka kerta kun yhdistät uuden tietokoneen tai laitteen &syncBrand.fullName.label; -tiliisi.">
+<!ENTITY syncKey.findOutMore1.label       "Lue lisää &syncBrand.fullName.label;istä ja yksityisyydensuojastasi osoitteesta ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "&syncBrand.fullName.label; -palvelun käyttöehdot ovat luettavissa osoitteessa ">
+<!ENTITY syncKey.footer2.label            ". Tietosuojakäytäntö on luettavissa osoitteessa ">
+<!ENTITY syncKey.footer3.label            ".">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Les preferències del ChatZilla">
+
+<!ENTITY loading.label "S'està carregant…">
+
+<!ENTITY homepage.url "http://www.softcatala.org/wiki/ChatZilla">
+<!ENTITY homepage.label "La pàgina d'inici del ChatZilla en català">
+
+<!ENTITY object.add.label "Afegeix…">
+<!ENTITY object.add.hint "Afegeix una xarxa, canal o usuari per a definir-hi les preferències">
+<!ENTITY object.add.accesskey "A">
+
+<!ENTITY object.del.label "Suprimeix">
+<!ENTITY object.del.hint "Suprimeix l'objecte actual, suprimint-ne totes les preferències">
+<!ENTITY object.del.accesskey "R">
+
+<!ENTITY object.reset.label "Reinicia">
+<!ENTITY object.reset.hint "Reinicia les preferències d'aquest objecte amb els valors predeterminats">
+<!ENTITY object.reset.accesskey "i">
+
+<!ENTITY dialog.apply "Aplica-ho">
+
+<!ENTITY network "Xarxa">
+<!ENTITY channel "Canal">
+<!ENTITY user "Usuari">
+
+<!ENTITY config.add.title "Afegeix un objecte de preferència">
+
+<!ENTITY config.type.label "Tipus:">
+<!ENTITY config.type.hint "Tipus d'objecte per afegir a les preferències">
+<!ENTITY config.type.accesskey "T">
+<!ENTITY config.network.label "Xarxa:">
+<!ENTITY config.network.hint "Nom conegut de la xarxa, o nom del del servidor">
+<!ENTITY config.network.accesskey "x">
+<!ENTITY config.target.label "Objectiu:">
+<!ENTITY config.target.hint "Canal objectiu o nom d'usuari">
+<!ENTITY config.target.accesskey "j">

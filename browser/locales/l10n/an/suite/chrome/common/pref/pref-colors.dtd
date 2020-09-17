@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-colors.xul -->
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+
+
+<!ENTITY pref.colors.title                 "Colors">
+<!ENTITY color                             "Texto y fondo">
+<!ENTITY textColor.label                   "Texto:">
+<!ENTITY textColor.accesskey               "T">
+<!ENTITY backgroundColor.label             "Fondo:">
+<!ENTITY backgroundColor.accesskey         "F">
+<!ENTITY useSystemColors.label             "Usar as colors d'o sistema">
+<!ENTITY useSystemColors.accesskey         "s">
+
+<!ENTITY underlineLinks.label              "Subrayar os vinclos">
+<!ENTITY underlineLinks.accesskey          "u">
+<!ENTITY links                             "Color d'os vinclos">
+<!ENTITY linkColor.label                   "Vinclos sin visitar:">
+<!ENTITY linkColor.accesskey               "V">
+<!ENTITY activeLinkColor.label             "Vinclos activos:">
+<!ENTITY activeLinkColor.accesskey         "c">
+<!ENTITY visitedLinkColor.label            "Vinclos visitaus:">
+<!ENTITY visitedLinkColor.accesskey        "v">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Quan una pachina proporcione as suyas propias colors y fondos">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Usar siempre as colors y o fondo especificau por a pachina web">
+<!ENTITY alwaysUseDocumentColors.accesskey "a">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Usar as mías colors, ignorando as colors y a imachen de fondo especificaus por a pachina">
+<!ENTITY useMyColors.accesskey             "a">

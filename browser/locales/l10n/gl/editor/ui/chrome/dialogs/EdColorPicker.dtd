@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Cor">
+<!ENTITY lastPickedColor.label "Última cor seleccionada">
+<!ENTITY lastPickedColor.accessKey "l">
+<!ENTITY setColor1.label "Prema unha cor ou">
+<!ENTITY setColor2.label "introduza unha cadea de cor HTML">
+<!ENTITY setColor2.accessKey "H">
+<!ENTITY setColorExample.label "(ex.: &quot;#0000ff&quot; ou &quot;azul&quot;):">
+<!ENTITY default.label "Predefinido">
+<!ENTITY default.accessKey "r">
+<!ENTITY palette.label "Paleta:">
+<!ENTITY standardPalette.label "Estándar">
+<!ENTITY webPalette.label "todas as cores web">
+<!ENTITY background.label "Fondo de:">
+<!ENTITY background.accessKey "F">
+<!ENTITY table.label "Táboa">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Celas">
+<!ENTITY cell.accessKey "C">

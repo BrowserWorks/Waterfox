@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Konto a daty wótpóraś">
+<!ENTITY removeButton.label           "Wótpóraś">
+<!ENTITY removeButton.accesskey       "W">
+<!ENTITY removeAccount.label          "Kontowe daty wótpóraś">
+<!ENTITY removeAccount.accesskey      "o">
+<!ENTITY removeAccount.desc           "Wótpórajo jano wědu &brandShortName; wó toś tom konśe. Njewobwliwujo konto same wó serwerje.">
+<!ENTITY removeData.label             "Powěsćowe daty wótpóraś">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Rozgronowe daty wótwónoźeś">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Wótpórajo wšykne powěsći, zarědniki a filtry zwěazane z toś tym kontom z wašeje lokalneje platy. To njewobwliwujo někotare powěsći, kótarež maju na serwerje wóstaś. Njewuběrajśo to, jolic cośo lokalne daty archiwěrowaś abo pózdźej w &brandShortName; zasej wužywaś.">
+<!ENTITY removeDataServerAccount.desc "Wótpórajo wšykne powěsći, zarědniki a filtry zwězane z toś tym kontom z wašeje lokalneje platy. Waše powěsći a zarědniki wóstanu hyšći na wašom serwerje.">
+<!ENTITY removeDataChatAccount.desc   "Wótwónoźijo wše protokole rozgronow skłaźone za toś to konto na lokalnej plaśe.">
+<!ENTITY showData.label               "Městno datow pokazaś">
+<!ENTITY showData.accesskey           "M">
+<!ENTITY progressPending              "Wubrane daty se wótwónoźuju…">
+<!ENTITY progressSuccess              "Daty su se wuspěšnje wótwónoźeli.">
+<!ENTITY progressFailure              "Daty njejsu dali se wótwónoźeś.">

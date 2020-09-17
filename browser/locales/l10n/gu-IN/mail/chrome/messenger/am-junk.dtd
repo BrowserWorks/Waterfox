@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "બગડેલ સુયોજનો">
+<!ENTITY level.label "આ ખાતા માટે અનૂકુલનાત્મક બગડેલ મેલ નિયંત્રણો સક્રિય કરો">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "નવા બગડેલ સંદેશાઓને આમાં ખસેડો:">
+<!ENTITY junkFolderOn.label "&quot;બગડેલ&quot; ફોલ્ડર પર:">
+<!ENTITY otherFolder.label "અન્ય:">
+<!ENTITY purge1.label "કરતાં જૂના બગડેલ મેલ આપોઆપ કાઢી નાંખો">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "દિવસો">
+
+<!ENTITY ispHeaders.label "આના દ્વારા સુયોજિત થયેલ બગડેલ મેલ હેડરોનો વિશ્વાસ કરો: ">
+<!ENTITY ispHeaders.accesskey "T">
+

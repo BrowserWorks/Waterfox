@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title "Выявы">
+<!ENTITY imageBlocking.label "Палітыка набывання выяваў">
+<!ENTITY imageDetails "Прызначыць, як &brandShortName; мусіць апрацоўваць выявы.">
+<!ENTITY loadAllImagesRadio.label "Загрузіць усе выявы">
+<!ENTITY loadAllImagesRadio.accesskey "З">
+<!ENTITY loadOrgImagesRadio.label "Загружаць выявы толькі з першапачатковых пляцовак">
+<!ENTITY loadOrgImagesRadio.accesskey "т">
+<!ENTITY loadNoImagesRadio.label "Не загружаць ніякіх выяваў">
+<!ENTITY loadNoImagesRadio.accesskey "н">
+<!ENTITY viewPermissions.label "Кіраваць дазволамі">
+<!ENTITY viewPermissions.accesskey "д">
+<!ENTITY animLoopingTitle.label "Ажыўленыя выявы павінны паўтарацца">
+<!ENTITY animLoopAsSpecified.label "Столькі, колькі выява прызначыла">
+<!ENTITY animLoopAsSpecified.accesskey "к">
+<!ENTITY animLoopOnce.label "Аднойчы">
+<!ENTITY animLoopOnce.accesskey "А">
+<!ENTITY animLoopNever.label "Ніколі">
+<!ENTITY animLoopNever.accesskey "Н">

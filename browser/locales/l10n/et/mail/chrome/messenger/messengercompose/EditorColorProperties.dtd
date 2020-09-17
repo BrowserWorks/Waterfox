@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Lehe värvid ja taust">
+<!ENTITY pageColors.label "Lehe värvid">
+<!ENTITY defaultColorsRadio.label "Lugeja vaikimisi värvid (lehele ei määrata värve)">
+<!ENTITY defaultColorsRadio.accessKey "R">
+<!ENTITY defaultColorsRadio.tooltip "Kasuta ainult vaataja (lugeja) värvide sätteid">
+<!ENTITY customColorsRadio.label "Kasuta kohandatud värve:">
+<!ENTITY customColorsRadio.accessKey "k">
+<!ENTITY customColorsRadio.tooltip "Nende sätete puhul vaataja sätted ei rakendu">
+
+<!ENTITY normalText.label "Tavaline tekst">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Lingi tekst">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "Aktiivse lingi tekst">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "Külastatud lingi tekst">
+<!ENTITY visitedLinkText.accessKey "T">
+<!ENTITY background.label "Taust:">
+<!ENTITY background.accessKey "u">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Taustapilt:">
+<!ENTITY backgroundImage.accessKey "s">
+<!ENTITY backgroundImage.tooltip "Lehe taustaks kasutatakse pildifaili">
+<!ENTITY backgroundImage.shortenedDataURI "Lühendatud andmete URI (kopeerimine asetab lõikepuhvrisse täieliku URI)">

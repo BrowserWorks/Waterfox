@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Napredno uređivanje…">
+<!ENTITY AdvancedEditButton.accessKey "e">
+<!ENTITY AdvancedEditButton.tooltip "Dodajte ili modificirajte HTML atribute, atribute stila i JavaScript">
+<!ENTITY chooseFileButton.label "Odaberi datoteku...">
+<!ENTITY chooseFileButton.accessKey "d">
+<!ENTITY chooseFileLinkButton.label "Odaberi datoteku...">
+<!ENTITY chooseFileLinkButton.accessKey "O">
+<!ENTITY makeUrlRelative.label "URL je relativan u odnosu na lokaciju stranice">
+<!ENTITY makeUrlRelative.accessKey "R">
+<!ENTITY makeUrlRelative.tooltip "Promijenite između relativnog i apsolutnog URL-a. Da biste promijenili, najprije morate spremiti stranicu.">
+
+<!ENTITY LinkURLEditField2.label "Upišite lokaciju web stranice, lokalne datoteke ili odaberite imenovano sidro, odnosno naslov iz kontekstnog izbornika:">
+<!ENTITY LinkURLEditField2.accessKey "U">

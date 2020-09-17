@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Restolar en privao">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ Proteición de rastrexu">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Nun tas restolando en privao">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; bloquia partes de les páxines que quiciabes rastrexen la to actividá de restolar.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Nun vamos recordar l'historial pero los ficheros baxaos y los marcadores nuevos entá van guardase nel to preséu.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "Al restolar en privao nun vamos guardar el to historial nin les cookies. Los marcadores qu'amiestes y los ficheros que baxes entá van guardase nel to preséu.">
+
+<!ENTITY privatebrowsingpage.link.private "¿Quies deprender más?">
+<!ENTITY privatebrowsingpage.link.normal "Abrir una llingüeta privada nueva">

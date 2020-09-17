@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from am-server-top.xul -->
+
+
+<!ENTITY messageStorage.label "ការ​ផ្ទុក​សារ">
+<!ENTITY securitySettings.label "Անվտ. կարգավորումներ">
+<!ENTITY serverSettings.label "Սպասարկիչի կարգավորումներ">
+<!ENTITY serverType.label "Սպասարկիչի տեսակը.">
+<!ENTITY serverName.label "Սպասարկիչի անունը.">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "Օգտվողի անունը.">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "Դարպասը.">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Ծրագրային.">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Ստուգել նամակները ամեն՝">
+<!ENTITY biffStart.accesskey "y">
+<!ENTITY biffEnd.label "րոպե">
+
+
+<!ENTITY connectionSecurity.label "Միացման անվտանգությունը.">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "Ոչինչ">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, if available">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Վավերացման եղանակը.">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Թողնել նամակները սպասարկիչում՝">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "Ընտրել միայն գլխագրերը">
+<!ENTITY headersOnly.accesskey "e">
+<!ENTITY deleteByAgeFromServer.label "Մեծամասամբ">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "օր">
+<!ENTITY deleteOnServer2.label "Մինչ ես կջնջեմ դրանք">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "Միանգամից բեռնել նոր նամակները">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "Նամակը ջնջելիս.">
+<!ENTITY modelMoveToTrash.label "Տեղափոխել այս թղթապանակ՝">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "Նշել որպես ջնջված">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "Միանգամից ջնջել">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Մաքրել (&quot;Ջնջել&quot;) Մուտքայինը փակելիս">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "Փակելիս դատարկել Աղբարկղը">
+<!ENTITY emptyTrashOnExit.accesskey "x">
+<!ENTITY loginAtStartup.label "Բացելի ստուգել նոր նամակները">
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+   of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Հարցնել ավելի քան բեռնելիս՝">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "նամակներ">
+<!ENTITY alwaysAuthenticate.label "Սպասարկիչին միանալիս միշտ պահանջել վավերացում">
+<!ENTITY alwaysAuthenticate.accesskey "w">
+<!ENTITY abbreviate.label "Ցուցադրել նորութ. անունները Նամակի թղթապանակում որպես.">
+<!ENTITY abbreviateOn.label "Անունները (օրինակ՝ 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Կրճատ անունները (օրինակ՝  'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Ընդլայնված...">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY serverDefaultCharset2.label "ការ​អ៊ិនកូដ​អត្ថបទ​លំនាំដើម៖">
+<!ENTITY localFolderPicker.label "Ընտրեք լոկալ թղթապանակը">
+<!ENTITY browseFolder.label "Browse…">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "Ընտրել…">
+<!ENTITY browseNewsrc.accesskey "e">
+
+<!ENTITY accountTitle.label "Փոստարկղի կարգավորումներ">
+<!ENTITY accountSettingsDesc.label "ខាង​ក្រោម​នេះ​ជា​គណនី​ពិសេស។ គ្មាន​អត្តសញ្ញាណ​​ភ្ជាប់​ជា​មួយ។">
+<!ENTITY storeType.label "ប្រភេទឧបករណ៍​ផ្ទុក​សារ៖">
+<!ENTITY storeType.accesskey "ឧ">
+<!ENTITY mboxStore2.label "ឯកសារ​ក្នុង​មួយ​ថត (mbox)">
+<!ENTITY maildirStore.label "ឯកសារ​ក្នុង​សារ​មួយ (maildir)">

@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Darempred">
+<!ENTITY Contact.accesskey               "C">
+<!ENTITY Name.box                        "Anv">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Anv-bihan:">
+<!ENTITY NameField1.accesskey           "F">
+<!ENTITY NameField2.label               "Anv:">
+<!ENTITY NameField2.accesskey           "L">
+<!ENTITY PhoneticField1.label           "Fonetek:">
+<!ENTITY PhoneticField2.label           "Fonetek:">
+<!ENTITY DisplayName.label              "Skrammañ:">
+<!ENTITY DisplayName.accesskey          "D">
+<!ENTITY preferDisplayName.label        "Kentoc'h skrammañ an anvioù eget talbenn ar gemennadenn">
+<!ENTITY preferDisplayName.accesskey    "y">
+<!ENTITY NickName.label                 "Lesanv:">
+<!ENTITY NickName.accesskey             "N">
+
+<!ENTITY PrimaryEmail.label             "Postel:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "Postel ouzhpenn:">
+<!ENTITY SecondEmail.accesskey          "i">
+<!ENTITY PreferMailFormat.label         "Gwell eo gantañ resev kemennadennoù gant ar mentrezh:">
+<!ENTITY PreferMailFormat.accesskey     "v">
+<!ENTITY PlainText.label                "Testenn eeun">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Dianav">
+<!ENTITY chatName.label                 "Anv postelerezh prim:">
+
+<!ENTITY WorkPhone.label                "Labour:">
+<!ENTITY WorkPhone.accesskey            "k">
+<!ENTITY HomePhone.label                "Er gêr:">
+<!ENTITY HomePhone.accesskey            "m">
+<!ENTITY FaxNumber.label                "Pelleiler:">
+<!ENTITY FaxNumber.accesskey            "x">
+<!ENTITY PagerNumber.label              "Pajenner:">
+<!ENTITY PagerNumber.accesskey          "g">
+<!ENTITY CellularNumber.label           "Hezoug:">
+<!ENTITY CellularNumber.accesskey       "b">
+
+<!ENTITY Home.tab                       "Prevez">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Chomlec'h:">
+<!ENTITY HomeAddress.accesskey          "d">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Kêr:">
+<!ENTITY HomeCity.accesskey             "y">
+<!ENTITY HomeState.label                "Stad/Rannvro:">
+<!ENTITY HomeState.accesskey            "S">
+<!ENTITY HomeZipCode.label              "Boneg Post/ZIP:">
+<!ENTITY HomeZipCode.accesskey          "Z">
+<!ENTITY HomeCountry.label              "Bro:">
+<!ENTITY HomeCountry.accesskey          "u">
+<!ENTITY HomeWebPage.label              "Lec'hienn:">
+<!ENTITY HomeWebPage.accesskey          "e">
+<!ENTITY Birthday.label                 "Deiz-ha-bloaz:">
+<!ENTITY Birthday.accesskey             "B">
+<!ENTITY Month.placeholder              "Miz">
+<!ENTITY Day.placeholder                "Deiz">
+<!ENTITY Year.placeholder               "Bloavezh">
+<!ENTITY Age.label                      "Oad:">
+<!ENTITY Age.placeholder                "Oad">
+
+<!ENTITY Work.tab                       "Labour">
+<!ENTITY Work.accesskey                 "W">
+<!ENTITY JobTitle.label                 "Titl:">
+<!ENTITY JobTitle.accesskey             "i">
+<!ENTITY Department.label               "Departamant:">
+<!ENTITY Department.accesskey           "m">
+<!ENTITY Company.label                  "Aozadur:">
+<!ENTITY Company.accesskey              "n">
+<!ENTITY WorkAddress.label              "Chomlec'h:">
+<!ENTITY WorkAddress.accesskey          "d">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Kêr:">
+<!ENTITY WorkCity.accesskey             "y">
+<!ENTITY WorkState.label                "Stad/Rannvro:">
+<!ENTITY WorkState.accesskey            "S">
+<!ENTITY WorkZipCode.label              "Boneg Post/ZIP:">
+<!ENTITY WorkZipCode.accesskey          "Z">
+<!ENTITY WorkCountry.label              "Bro:">
+<!ENTITY WorkCountry.accesskey          "u">
+<!ENTITY WorkWebPage.label              "Lec'hienn:">
+<!ENTITY WorkWebPage.accesskey          "e">
+
+<!ENTITY Other.tab                      "Traoù all">
+<!ENTITY Other.accesskey                "h">
+<!ENTITY Custom1.label                  "Personel 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Personel 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Personel 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Personel 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Notennoù:">
+<!ENTITY Notes.accesskey                "N">
+
+<!ENTITY Chat.tab                       "Flapva">
+<!ENTITY Chat.accesskey                 "a">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "ID Jabber:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "Lesanv IRC:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Skeudenn">
+<!ENTITY Photo.accesskey                "o">
+<!ENTITY GenericPhoto.label             "Skeudenn genrek">
+<!ENTITY GenericPhoto.accesskey         "G">
+<!ENTITY DefaultPhoto.label             "Diouer">
+<!ENTITY PhotoFile.label                "War an urzhiataer-mañ">
+<!ENTITY PhotoFile.accesskey            "n">
+<!ENTITY BrowsePhoto.label              "Furchal">
+<!ENTITY BrowsePhoto.accesskey          "r">
+<!ENTITY PhotoURL.label                 "War ar gwiad">
+<!ENTITY PhotoURL.accesskey             "b">
+<!ENTITY PhotoURL.placeholder           "Pegit pe bizskrivit chomlec'h gwiad ur skeudenn">
+<!ENTITY UpdatePhoto.label              "Hizivaat">
+<!ENTITY UpdatePhoto.accesskey          "u">
+<!ENTITY PhotoDropTarget.label          "Leuskel ur skeudenn nevez amañ">

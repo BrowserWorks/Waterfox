@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Властивості горизонтального роздільника">
+
+<!ENTITY dimensionsBox.label "Розміри">
+<!ENTITY heightEditField.label "Висота:">
+<!ENTITY heightEditField.accessKey "В">
+<!ENTITY widthEditField.label "Ширина:">
+<!ENTITY widthEditField.accessKey "Ш">
+<!ENTITY pixelsPopup.value "пікселів">
+<!ENTITY alignmentBox.label "Вирівнювання">
+<!ENTITY leftRadio.label "Вліво">
+<!ENTITY leftRadio.accessKey "В">
+<!ENTITY centerRadio.label "По центру">
+<!ENTITY centerRadio.accessKey "П">
+<!ENTITY rightRadio.label "Вправо">
+<!ENTITY rightRadio.accessKey "п">
+
+<!ENTITY threeDShading.label "3D-тінь">
+<!ENTITY threeDShading.accessKey "т">
+<!ENTITY saveSettings.label "Використовувати як типовий">
+<!ENTITY saveSettings.accessKey "к">
+<!ENTITY saveSettings.tooltip "Зберегти ці параметри, щоб використовувати їх при вставці нових роздільників">

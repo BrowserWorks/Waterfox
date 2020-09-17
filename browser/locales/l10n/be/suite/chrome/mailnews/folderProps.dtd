@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label "Уласцівасці">
+<!ENTITY generalInfo.label "Агульныя звесткі">
+<!ENTITY folderCharsetFallback.label "Запасная кадоўка знакаў:">
+<!ENTITY folderCharsetFallback.accesskey "З">
+<!ENTITY folderCharsetEnforce.label "Ужыць кадоўку для ўсіх лістоў у гэтай папцы (наладжванні кадоўкі знакаў асобных лістоў і самавызначэнне будуць ігнаравацца)">
+<!ENTITY folderCharsetEnforce.accesskey "У">
+<!ENTITY folderRebuildSummaryFileTip2.label "Перабудова паказальніка зводкавага файла">
+<!ENTITY folderRebuildSummaryFile2.label "Выправіць папку">
+<!ENTITY folderRebuildSummaryFile2.accesskey "В">
+<!ENTITY folderRebuildSummaryFile.explanation "Часам паказальнік папкі (.msf) псуецца і адсутныя або выдаленыя лісты працягваюцца паказвацца; выпраўленне папкі можа пазбавіцца такіх заганаў.">
+<!ENTITY folderIncludeInGlobalSearch.label "Уключыць лісты з гэтай папкі ў вынікі ўсеагульнага пошуку">
+<!ENTITY folderIncludeInGlobalSearch.accesskey "У">
+<!ENTITY retention.label "Палітыка ўтрымлівання">
+<!ENTITY retentionUseAccount.label "Ужываць наладжванні майго рахунку">
+<!ENTITY retentionUseAccount.accesskey "У">
+<!ENTITY daysOld.label "дзён">
+<!ENTITY message.label "апошніх лістоў">
+<!ENTITY retentionCleanup.label "Трымаць лісты:">
+<!ENTITY retentionCleanupImap.label "Захоўваць лісты, разам мясцовыя копіі і іх першакрыніцы на паслугачы:">
+<!ENTITY retentionCleanupPop.label "Захоўваць лісты, уключаючы іх першакрыніцы на паслугачы:">
+<!ENTITY retentionDeleteMsg.label "Выдаліць лісты, якім больш за">
+<!ENTITY retentionDeleteMsg.accesskey "В">
+<!ENTITY retentionKeepAll.label "Усе лісты">
+<!ENTITY retentionKeepAll.accesskey "У">
+<!ENTITY retentionKeepRecent.label "Самыя новыя">
+<!ENTITY retentionKeepRecent.accesskey "н">
+<!ENTITY retentionKeepUnreadHidden.label "Заўсёды выдаляць прачытаныя лісты (пераважвае наладжванні ўзросту)">
+<!ENTITY retentionApplyToFlagged.label "Заўсёды захоўваць лісты з сцяжкамі">
+<!ENTITY retentionApplyToFlagged.accesskey "ў">
+<!ENTITY folderSynchronizationTab.label "Сінхранізацыя">
+<!ENTITY folderCheckForNewMessages2.label "Калі атрымліваюцца лісты для гэтага рахунку, заўсёды правяраць гэтую папку">
+<!ENTITY folderCheckForNewMessages2.accesskey "К">
+<!ENTITY offlineFolder.check.label "Вылучыць гэтую папку для карыстання па-за сеткай">
+<!ENTITY offlineFolder.check.accesskey "в">
+<!ENTITY offlineFolder.button.label "Загрузіць зараз">
+<!ENTITY offlineFolder.button.accesskey "з">
+<!ENTITY selectofflineNewsgroup.check.label "Вылучыць гэтую навінакупу для карыстання па-за сеткай">
+<!ENTITY selectofflineNewsgroup.check.accesskey "е">
+<!ENTITY offlineNewsgroup.button.label "Загрузіць зараз">
+<!ENTITY offlineNewsgroup.button.accesskey "з">
+<!ENTITY folderProps.name.label "Назва:">
+<!ENTITY folderProps.name.accesskey "Н">
+<!ENTITY folderProps.location.label "Месцазнаходжанне:">
+<!ENTITY folderProps.location.accesskey "М">
+<!ENTITY folderSharingTab.label "Падзел">
+<!ENTITY privileges.button.label "Прывілеі…">
+<!ENTITY privileges.button.accesskey "П">
+<!ENTITY permissionsDesc.label "Вы маеце наступныя дазволы:">
+<!ENTITY folderType.label "Тып папкі:">
+<!ENTITY folderQuotaTab.label "Доля">
+<!ENTITY folderQuotaRoot.label "Корань доляў:">
+<!ENTITY folderQuotaUsage.label "Выкарыстоўванне:">
+<!ENTITY folderQuotaStatus.label "Статус:">
+<!ENTITY numberOfMessages.label "Колькасць лістоў:">
+<!ENTITY numberUnknown.label "невядомы">
+<!ENTITY sizeOnDisk.label "Памер на дыску:">
+<!ENTITY sizeUnknown.label "невядомы">

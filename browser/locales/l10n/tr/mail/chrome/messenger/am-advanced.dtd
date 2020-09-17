@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Giden Sunucusu (SMTP) Ayarları">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Kimliklerinizi yönetirken bu listeden bir sunucuyu kullanmak için onu Giden Sunucusu (SMTP) olarak seçebilir veya &quot;Varsayılan sunucuyu kullan&quot;ı seçerek bu listedeki varsayılan sunucuyu kullanabilirsiniz.">
+
+<!ENTITY smtpListAdd.label  "Ekle…">
+<!ENTITY smtpListAdd.accesskey  "l">
+<!ENTITY smtpListEdit.label "Düzenle…">
+<!ENTITY smtpListEdit.accesskey "e">
+<!ENTITY smtpListDelete.label "Kaldır">
+<!ENTITY smtpListDelete.accesskey "r">
+<!ENTITY smtpListSetDefault.label "Varsayılan yap">
+<!ENTITY smtpListSetDefault.accesskey "V">
+
+<!ENTITY serverDetails.label "Seçilen sunucunun ayrıntıları:">
+<!ENTITY serverDescription.label "Açıklama: ">
+<!ENTITY serverName.label "Sunucu adı: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "Kullanıcı adı: ">
+<!ENTITY connectionSecurity.label "Bağlantı güvenliği: ">
+<!ENTITY authMethod.label   "Yetkilendirme yöntemi: ">

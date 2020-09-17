@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Pilih Profil Pengguna">
+<!ENTITY            profileManager.title "Pengurus Profil &brandShortName;">
+
+<!ENTITY            manage.label     "Urus Profil…">
+<!ENTITY            manage.accesskey "U">
+<!ENTITY            select.label     "Guna Profil">
+
+<!ENTITY            availableProfiles.label "Profil Yang Ada">
+
+<!ENTITY            introStart.label         "Untuk mengakses profil peribadi anda yang mengandungi mesej yang disimpan, tetapan dan lain-lain maklumat peribadi, sila pilih profil dalam senarai dan klik &start.label; untuk memulakan sesi anda.">
+<!ENTITY            introSwitch.label        "Untuk bertukar ke profil lain yang mengandungi mesej yang disimpan, tetapan dan maklumat peribadi lain, sila pilih profil tersebut dari dalam senarai, dan klik &select.label; untuk mula menggunakan profil itu.">
+<!ENTITY            profileManagerText.label "&brandShortName; menyimpan maklumat tetapan, keutamaan, tandabuku, mesej yang disimpan dan item pengguna lain dalam profil pengguna anda.">
+
+<!ENTITY            autoSelect.label         "Piawai untuk profil ini">
+<!ENTITY            autoSelect.accesskey     "i">
+
+<!ENTITY            start.label              "Mulakan &brandShortName;">
+<!ENTITY            exit.label               "Keluar">
+
+<!ENTITY            newButton.label          "Cipta Profil…">
+<!ENTITY            newButton.accesskey      "C">
+<!ENTITY            renameButton.label       "Namakan semula Profil…">
+<!ENTITY            renameButton.accesskey   "N">
+<!ENTITY            deleteButton.label       "Buang Profil…">
+<!ENTITY            deleteButton.accesskey   "B">
+
+<!ENTITY            offlineState.label       "Kerja luar talian">
+<!ENTITY            offlineState.accesskey   "j">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Napredni urejevalnik lastnosti">
+<!ENTITY AttName.label                  "Atribut: ">
+<!ENTITY AttValue.label                 "Vrednost: ">
+<!ENTITY PropertyName.label             "Lastnost: ">
+<!ENTITY currentattributesfor.label     "Trenutni atributi za: ">
+<!ENTITY tree.attributeHeader.label     "Atribut">
+<!ENTITY tree.propertyHeader.label      "Lastnost">
+<!ENTITY tree.valueHeader.label         "Vrednost">
+<!ENTITY tabHTML.label                  "Atributi HTML">
+<!ENTITY tabCSS.label                   "Slog v besedilu">
+<!ENTITY tabJSE.label                   "Dogodki JavaScript">
+
+<!ENTITY editAttribute.label    "Za urejanje zgornjega predmeta kliknite na njegovo vrednost">
+<!ENTITY removeAttribute.label  "Odstrani">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Flytja inn">
+<!ENTITY importAll.label "Flytja inn allt">
+<!ENTITY importAll.accesskey "F">
+<!ENTITY importMail.label "Póstur">
+<!ENTITY importMail.accesskey "P">
+<!ENTITY importFeeds.label "Straumaáskriftir">
+<!ENTITY importFeeds.accesskey "S">
+<!ENTITY importAddressbook.label "Nafnaskrár">
+<!ENTITY importAddressbook.accesskey "a">
+<!ENTITY importSettings.label "Stillingar">
+<!ENTITY importSettings.accesskey "S">
+<!ENTITY importFilters.label "Síur">
+<!ENTITY importFilters.accesskey "u">
+
+<!ENTITY window.width "40em">
+<!ENTITY window.macWidth "45em">
+
+<!ENTITY importTitle.label "&brandShortName; Flytja inn póst">
+<!ENTITY importShortDesc.label "Flytja inn póst, nafnaskrár, stillingar, eða síur frá öðrum forritum">
+
+<!ENTITY importDescription1.label "Þessi hjálpargluggi flytur inn póst, nafnaskrár, stillingar, og/eða síur úr öðrum póstforritum og algengum nafnaskrám og setur inn í &brandShortName;.">
+<!ENTITY importDescription2.label "Um leið og efnið hefur verið flutt inn, færðu aðgang að því í með &brandShortName;.">
+
+<!ENTITY selectDescription.label "Veldu tegund skráar til að flytja inn:">
+<!ENTITY selectDescriptionB.label "Veldu reikning sem er þegar til eða búðu til nýjan reikning:">
+<!ENTITY selectDescription.accesskey "V">
+<!ENTITY acctName.label "Nafn:">
+<!ENTITY acctName.accesskey "N">
+<!ENTITY noModulesFound.label "Engin skrá eða forrit fannst til að flytja inn gögn.">
+
+<!ENTITY back.label "&lt; Til baka">
+<!ENTITY forward.label "Áfram &gt;">
+<!ENTITY finish.label "Ljúka">
+<!ENTITY cancel.label "Hætta við">
+
+<!ENTITY select.label "eða veldu tegund efnis til að flytja inn:">
+
+<!ENTITY title.label "Titill">
+<!ENTITY processing.label "Flyt inn…">

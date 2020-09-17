@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Управљајте идентитетима овог налога. Подразумевано се користи први идентитет.">
+<!ENTITY identitiesListAdd.label  "Додај…">
+<!ENTITY identitiesListAdd.accesskey  "а">
+<!ENTITY identitiesListEdit.label "Уреди…">
+<!ENTITY identitiesListEdit.accesskey "е">
+<!ENTITY identitiesListDefault.label "Подеси подразумевани">
+<!ENTITY identitiesListDefault.accesskey "с">
+<!ENTITY identitiesListDelete.label "Уклони">
+<!ENTITY identitiesListDelete.accesskey "У">
+<!ENTITY identitiesListClose.label "Затвори">
+<!ENTITY identitiesListClose.accesskey "З">

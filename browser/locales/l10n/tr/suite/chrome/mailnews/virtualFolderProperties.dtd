@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Yeni kaydolmuş arama dizini">
+<!ENTITY name.label "İsim:">
+<!ENTITY name.accesskey "s">
+<!ENTITY description.label "Buranın alt dizini olarak oluştur:">
+<!ENTITY description.accesskey "d">
+
+<!ENTITY searchTermCaption.label "Arama kriterini bu sanal dizin için ayarla:">
+
+<!ENTITY folderSelectionCaption.label "Aranacak dizini seçin:">
+<!ENTITY chooseFoldersButton.label "Seçin…">
+<!ENTITY chooseFoldersButton.accesskey "S">
+
+<!ENTITY searchOnline.label "Çevrim içi ara ">
+<!ENTITY searchOnline.accesskey "a">
+<!ENTITY newFolderButton.label "Create">
+<!ENTITY newFolderButton.accesskey "r">
+<!ENTITY editFolderButton.label "Güncelle">
+<!ENTITY editFolderButton.accesskey "G">

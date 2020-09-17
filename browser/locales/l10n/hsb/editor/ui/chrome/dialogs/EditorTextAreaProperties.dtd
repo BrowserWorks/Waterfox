@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kajkosće tekstoweho pola">
+
+<!ENTITY Settings.label "Nastajenja">
+
+<!ENTITY TextAreaName.label "Mjeno pola:">
+<!ENTITY TextAreaName.accessKey "M">
+<!ENTITY TextAreaRows.label "Rjadki:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Stołpiki:">
+<!ENTITY TextAreaCols.accessKey "S">
+<!ENTITY TextAreaReadOnly.label "Jenož čitać">
+<!ENTITY TextAreaReadOnly.accessKey "o">
+<!ENTITY TextAreaDisabled.label "Znjemóžnjeny">
+<!ENTITY TextAreaDisabled.accessKey "Z">
+<!ENTITY TextAreaTabIndex.label "Tabulatorowy indeks:">
+<!ENTITY TextAreaTabIndex.accessKey "i">
+<!ENTITY TextAreaAccessKey.label "Přistupna tasta:">
+<!ENTITY TextAreaAccessKey.accessKey "P">
+<!ENTITY InitialText.label "Spočatny tekst:">
+<!ENTITY InitialText.accessKey "t">
+
+<!ENTITY TextAreaWrap.label "Modus łamanja:">
+<!ENTITY TextAreaWrap.accessKey "a">
+<!ENTITY WrapDefault.value "Standardny">
+<!ENTITY WrapOff.value "Wupinjeny">
+<!ENTITY WrapHard.value "Twjerdy">
+<!ENTITY WrapSoft.value "Mjechki">
+<!ENTITY WrapPhysical.value "Fiziski">
+<!ENTITY WrapVirtual.value "Wirtuelny">

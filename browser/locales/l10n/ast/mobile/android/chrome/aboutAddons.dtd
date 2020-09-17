@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Estensiones">
+<!ENTITY aboutAddons.header2                    "Les tos estensiones">
+
+<!ENTITY addonAction.enable                     "Habilitar">
+<!ENTITY addonAction.disable                    "Deshabilitar">
+<!ENTITY addonAction.uninstall                  "Desinstalar">
+<!ENTITY addonAction.undo                       "Desfacer">
+<!ENTITY addonAction.update                     "Anovar">
+
+<!ENTITY addonUnsigned.message                  "&brandShortName; nun pudo verificar esta estensión.">
+<!ENTITY addonUnsigned.learnMore                "Deprendi más">

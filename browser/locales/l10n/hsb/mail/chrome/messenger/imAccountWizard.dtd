@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Asistent chatoweho konta">
+
+<!ENTITY accountProtocolTitle.label   "Chatowa syć">
+<!ENTITY accountProtocolInfo.label    "Prošu wubjerće syć za swoje chatowe konto.">
+<!ENTITY accountProtocolField.label   "Syć:">
+<!ENTITY accountProtocolGetMore.label "Wjace…">
+
+<!ENTITY accountUsernameTitle.label   "Wužiwarske mjeno">
+<!ENTITY accountUsernameDuplicate.label "Tute konto je so hižo konfigurowało!">
+
+<!ENTITY accountPasswordTitle.label   "Hesło">
+<!ENTITY accountPasswordInfo.label    "Prošu zapodajće swoje hesło w slědowacym kašćiku.">
+<!ENTITY accountPasswordField.label   "Hesło:">
+<!ENTITY accountPasswordManager.label "Hesło, kotrež sće tu zapodał, budźe so w zrjadowaku hesłow składować. Wostajće tutón kašćik prózdny, jeli chceće, zo kóždy raz, hdyž so tute konto zwjazuje, so was za wašim hesłom prašeja.">
+
+<!ENTITY accountAdvancedTitle.label   "Rozšěrjene nastajenja">
+<!ENTITY accountAdvancedInfo.label    "Móžeće rady tutón krok přeskočić, jeli to chceće.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Wo nowej e-mejli informować">
+<!ENTITY accountAliasGroupbox.caption "Lokalny alias">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "To zwobrazni so we wašich konwersacijach jenož potom, hdyž komunikujeće, zdalone kontakty njebudu to widźeć.">
+<!ENTITY accountProxySettings.caption "Proksynastajenja">
+<!ENTITY accountProxySettings.change.label     "Změnić…">
+<!ENTITY accountProxySettings.change.accessKey "Z">
+
+<!ENTITY accountSummaryTitle.label   "Zjeće">
+<!ENTITY accountSummaryInfo.label    "Zjeće informacijow, kotrež sće zapodał, so deleka zwobraznja. Prošu skontrolujće to, doniž konto załožene njeje.">
+<!ENTITY accountSummary.connectNow.label "Tute konto nětko zwjazać.">

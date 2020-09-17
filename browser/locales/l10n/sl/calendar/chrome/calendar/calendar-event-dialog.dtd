@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Uredi predmet" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Obdrži trajanje ob spremembi končnega datuma">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "Od" >
+<!ENTITY newevent.to.label                  "Do" >
+
+<!ENTITY newevent.status.label                    "Stanje" >
+<!ENTITY newevent.status.accesskey                "S" >
+<!ENTITY newevent.eventStatus.none.label          "Ni navedeno" >
+<!ENTITY newevent.eventStatus.none.accesskey      "N" >
+<!ENTITY newevent.todoStatus.none.label           "Ni navedeno" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Odpovedan" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "O" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Preklican" >
+<!ENTITY newevent.status.tentative.label          "Predviden" >
+<!ENTITY newevent.status.tentative.accesskey      "r" >
+<!ENTITY newevent.status.confirmed.label          "Potrjen" >
+<!ENTITY newevent.status.confirmed.accesskey      "P" >
+<!ENTITY newevent.status.needsaction.label        "potrebuje poseg" >
+<!ENTITY newevent.status.inprogress.label         "V teku" >
+<!ENTITY newevent.status.completed.label          "Dokončan" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#037; končano">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Obvesti udeležence">
+<!ENTITY event.attendees.notify.accesskey            "O">
+<!ENTITY event.attendees.notifyundisclosed.label     "Loči povabila za posamezne udeležence">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "L">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Ta možnost pošlje eno e-poštno povabilo za posameznega udeleženca. Vsako povabilo vsebuje samo prejemnika-udeleženca, tako da drugi udeleženci niso razkriti.">
+<!ENTITY event.attendees.disallowcounter.label       "Ne dovoli nadomestnih predlogov">
+<!ENTITY event.attendees.disallowcounter.accesskey   "N">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Nakazuje, da ne sprejemate nadomestnih predlogov">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "D">
+<!ENTITY event.dialog.new.task.key2               "O">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Novo">
+<!ENTITY  event.menu.item.new.accesskey                   "N">
+<!ENTITY  event.menu.item.new.event.label                 "Dogodek">
+<!ENTITY  event.menu.item.new.event.accesskey             "D">
+<!ENTITY  event.menu.item.new.task.label                  "Opravilo">
+<!ENTITY  event.menu.item.new.task.accesskey              "O">
+<!ENTITY  event.menu.item.new.message.label               "Sporočilo">
+<!ENTITY  event.menu.item.new.message.accesskey           "S">
+<!ENTITY  event.menu.item.new.contact.label               "Stik imenika">
+<!ENTITY  event.menu.item.new.contact.accesskey           "k">
+<!ENTITY  event.menu.item.close.label                     "Zapri">
+<!ENTITY  event.menu.item.close.accesskey                 "Z">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Shrani">
+<!ENTITY  event.menu.item.save.accesskey                  "S">
+<!ENTITY  event.menu.item.save.tab.accesskey              "h">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Shrani in zapri">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "a">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "Izbriši …">
+<!ENTITY  event.menu.item.delete.accesskey                "b">
+<!ENTITY  event.menu.item.page.setup.label                "Priprava strani">
+<!ENTITY  event.menu.item.page.setup.accesskey            "r">
+<!ENTITY  event.menu.item.print.label                     "Natisni">
+<!ENTITY  event.menu.item.print.accesskey                 "N">
+
+<!ENTITY  event.menu.edit.label                           "Uredi">
+<!ENTITY  event.menu.edit.accesskey                       "U">
+<!ENTITY  event.menu.edit.undo.label                      "Razveljavi">
+<!ENTITY  event.menu.edit.undo.accesskey                  "R">
+<!ENTITY  event.menu.edit.redo.label                      "Uveljavi">
+<!ENTITY  event.menu.edit.redo.accesskey                  "U">
+<!ENTITY  event.menu.edit.cut.label                       "Izreži">
+<!ENTITY  event.menu.edit.cut.accesskey                   "z">
+<!ENTITY  event.menu.edit.copy.label                      "Kopiraj">
+<!ENTITY  event.menu.edit.copy.accesskey                  "K">
+<!ENTITY  event.menu.edit.paste.label                     "Prilepi">
+<!ENTITY  event.menu.edit.paste.accesskey                 "P">
+<!ENTITY  event.menu.edit.select.all.label                "Izberi vse">
+<!ENTITY  event.menu.edit.select.all.accesskey            "v">
+
+<!ENTITY  event.menu.view.label                           "Pogled">
+<!ENTITY  event.menu.view.accesskey                       "P">
+<!ENTITY  event.menu.view.toolbars.label                  "Orodne vrstice">
+<!ENTITY  event.menu.view.toolbars.accesskey              "O">
+<!ENTITY  event.menu.view.toolbars.event.label            "Orodna vrstica dogodka">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "O">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Prilagodi…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "g">
+<!ENTITY  event.menu.view.showlink.label                  "Prikaži sorodno povezavo">
+<!ENTITY  event.menu.view.showlink.accesskey              "s">
+
+<!ENTITY  event.menu.options.label                            "Možnosti">
+<!ENTITY  event.menu.options.accesskey                        "M">
+<!ENTITY  event.menu.options.attendees.label                  "Povabi udeležence …">
+<!ENTITY  event.menu.options.attendees.accesskey              "u">
+<!ENTITY  event.menu.options.timezone2.label                  "Prikaži časovne pasove">
+<!ENTITY  event.menu.options.timezone2.accesskey              "č">
+<!ENTITY  event.menu.options.priority2.label                  "Prednost">
+<!ENTITY  event.menu.options.priority2.accesskey              "P">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Ni navedena">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "a">
+<!ENTITY  event.menu.options.priority.low.label               "Nizka">
+<!ENTITY  event.menu.options.priority.low.accesskey           "N">
+<!ENTITY  event.menu.options.priority.normal.label            "Običajna">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "O">
+<!ENTITY  event.menu.options.priority.high.label              "Visoka">
+<!ENTITY  event.menu.options.priority.high.accesskey          "V">
+<!ENTITY  event.menu.options.privacy.label                    "Zasebnost">
+<!ENTITY  event.menu.options.privacy.accesskey                "Z">
+<!ENTITY  event.menu.options.privacy.public.label             "Javni dogodek">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "J">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Prikaži samo čas in datum">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "P">
+<!ENTITY  event.menu.options.privacy.private.label            "Zasebni dogodek">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "Z">
+<!ENTITY  event.menu.options.show.time.label                  "Prikaži čas kot">
+<!ENTITY  event.menu.options.show.time.accesskey              "a">
+<!ENTITY  event.menu.options.show.time.busy.label             "Zaseden">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "Z">
+<!ENTITY  event.menu.options.show.time.free.label             "Prost">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "P">
+
+<!ENTITY event.invite.attendees.label                     "Povabi udeležence …">
+<!ENTITY event.invite.attendees.accesskey                 "P">
+<!ENTITY event.email.attendees.label                      "Sestavi e-pošto za vse udeležence …">
+<!ENTITY event.email.attendees.accesskey                  "v">
+<!ENTITY event.email.tentative.attendees.label            "Sestavi e-pošto za nepotrjene udeležence …">
+<!ENTITY event.email.tentative.attendees.accesskey        "n">
+<!ENTITY event.remove.attendees.label2                    "Odstrani vse udeležence">
+<!ENTITY event.remove.attendees.accesskey                 "v">
+<!ENTITY event.remove.attendee.label                      "Odstrani udeleženca">
+<!ENTITY event.remove.attendee.accesskey                  "u">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Shrani">
+<!ENTITY  event.toolbar.saveandclose.label                "Shrani in zapri">
+<!ENTITY  event.toolbar.delete.label                      "Izbriši">
+<!ENTITY  event.toolbar.attendees.label                   "Povabi udeležence">
+<!ENTITY  event.toolbar.privacy.label                     "Zasebnost">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Shrani">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Shrani in zapri">
+<!ENTITY  event.toolbar.delete.tooltip                    "Izbriši">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Povabi udeležence">
+<!ENTITY  event.toolbar.attachments.tooltip               "Dodaj priponke">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Spremeni zasebnost">
+<!ENTITY  event.toolbar.priority.tooltip                  "Spremeni prednost">
+<!ENTITY  event.toolbar.status.tooltip                    "Spremeni stanje">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Spremeni prosti/zaseden čas">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Uveljavi predlog">
+<!ENTITY counter.button.proposal.accesskey                "r">
+<!ENTITY counter.button.proposal.tooltip2                 "Polja dogodka bodo izpolnjena z vrednostmi nadomestnega predloga. Samo shranjevanje z ali brez dodatnih sprememb bo ustrezno obvestilo udeležence.">
+<!ENTITY counter.button.original.label                    "Uveljavi izvirne podatke">
+<!ENTITY counter.button.original.accesskey                "z">
+<!ENTITY counter.button.original.tooltip2                 "Polja bodo nastavljena na vrednosti izvirnega dogodka preden je bil podan nadomestni predlog.">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Naslov:" >
+<!ENTITY event.title.textbox.accesskey                    "N">
+<!ENTITY event.location.label                             "Kraj:" >
+<!ENTITY event.location.accesskey                         "a">
+<!ENTITY event.categories.label                           "Kategorija:">
+<!ENTITY event.categories.accesskey                       "e">
+<!ENTITY event.categories.textbox.label                   "Dodaj novo kategorijo" >
+<!ENTITY event.calendar.label                             "Koledar:" >
+<!ENTITY event.calendar.accesskey                         "K">
+<!ENTITY event.attendees.label                            "Udeleženci:" >
+<!ENTITY event.attendees.accesskey                        "U">
+<!ENTITY event.alldayevent.label                          "Celodnevni dogodek" >
+<!ENTITY event.alldayevent.accesskey                      "C">
+<!ENTITY event.from.label                                 "Začetek:" >
+<!ENTITY event.from.accesskey                             "Z">
+<!ENTITY task.from.label                                  "Začetek:" >
+<!ENTITY task.from.accesskey                              "Z">
+<!ENTITY event.to.label                                   "Konec:" >
+<!ENTITY event.to.accesskey                               "n">
+<!ENTITY task.to.label                                    "Rok:" >
+<!ENTITY task.to.accesskey                                "R">
+<!ENTITY task.status.label                                "Stanje:" >
+<!ENTITY task.status.accesskey                            "S">
+<!ENTITY event.repeat.label                               "Ponovitev:" >
+<!ENTITY event.repeat.accesskey                           "P">
+<!ENTITY event.until.label                                "Do:">
+<!ENTITY event.until.accesskey                            "D">
+<!ENTITY event.reminder.label                             "Opomnik:" >
+<!ENTITY event.reminder.accesskey                         "m">
+<!ENTITY event.description.label                          "Opis:" >
+<!ENTITY event.description.accesskey                      "O">
+<!ENTITY event.attachments.label                          "Priponke:" >
+<!ENTITY event.attachments.accesskey                      "r" >
+<!ENTITY event.attachments.menubutton.label               "Pripni">
+<!ENTITY event.attachments.menubutton.accesskey           "r">
+<!ENTITY event.attachments.url.label                      "Spletno stran …">
+<!ENTITY event.attachments.url.accesskey                  "S">
+<!ENTITY event.attachments.popup.remove.label             "Odstrani" >
+<!ENTITY event.attachments.popup.remove.accesskey         "n" >
+<!ENTITY event.attachments.popup.open.label               "Odpri" >
+<!ENTITY event.attachments.popup.open.accesskey           "O" >
+<!ENTITY event.attachments.popup.removeAll.label          "Odstrani vse" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "v" >
+<!ENTITY event.attachments.popup.attachPage.label         "Pripni spletno stran …" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "s" >
+<!ENTITY event.url.label                                  "Sorodna povezava:" >
+<!ENTITY event.priority2.label                            "Prednost:">
+
+<!ENTITY event.reminder.none.label                        "Brez opomnika" >
+<!ENTITY event.reminder.0minutes.before.label             "0 minut prej" >
+<!ENTITY event.reminder.5minutes.before.label             "5 minut prej" >
+<!ENTITY event.reminder.15minutes.before.label            "15 minut prej" >
+<!ENTITY event.reminder.30minutes.before.label            "30 minut prej" >
+<!ENTITY event.reminder.1hour.before.label                "1 ura prej" >
+<!ENTITY event.reminder.2hours.before.label               "2 uri prej" >
+<!ENTITY event.reminder.12hours.before.label              "12 ur prej" >
+<!ENTITY event.reminder.1day.before.label                 "1 dan prej" >
+<!ENTITY event.reminder.2days.before.label                "2 dni prej" >
+<!ENTITY event.reminder.1week.before.label                "1 teden prej" >
+<!ENTITY event.reminder.custom.label                      "Po meri …" >
+
+<!ENTITY event.reminder.multiple.label                    "Več opomnikov …" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Čas kot:">
+<!ENTITY event.statusbarpanel.privacy.label               "Zasebnost:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Uredi ponovitve">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Se ne ponavlja">
+<!ENTITY event.repeat.daily.label                       "Dnevno">
+<!ENTITY event.repeat.weekly.label                      "Tedensko">
+<!ENTITY event.repeat.every.weekday.label               "Vsak delavnik">
+<!ENTITY event.repeat.bi.weekly.label                   "Dvotedensko">
+<!ENTITY event.repeat.monthly.label                     "Mesečno">
+<!ENTITY event.repeat.yearly.label                      "Letno">
+<!ENTITY event.repeat.custom.label                      "Po meri …">
+
+<!ENTITY event.recurrence.pattern.label                 "Vzorec ponavljanja">
+<!ENTITY event.recurrence.occurs.label                  "Ponovi" >
+<!ENTITY event.recurrence.day.label                     "dnevno" >
+<!ENTITY event.recurrence.week.label                    "tedensko" >
+<!ENTITY event.recurrence.month.label                   "mesečno" >
+<!ENTITY event.recurrence.year.label                    "letno" >
+
+<!ENTITY event.recurrence.pattern.every.label           "vsakih" >
+<!ENTITY repeat.units.days.both                         "dni" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "vsak delovnik" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "vsakih" >
+<!ENTITY repeat.units.weeks.both                        "tednov" >
+<!ENTITY event.recurrence.on.label                      "na:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "vsakih" >
+<!ENTITY repeat.units.months.both                       "mesecev" >
+<!ENTITY event.recurrence.monthly.every.label           "Vsak" >
+<!ENTITY event.recurrence.monthly.first.label           "prvi">
+<!ENTITY event.recurrence.monthly.second.label          "drugi">
+<!ENTITY event.recurrence.monthly.third.label           "tretji">
+<!ENTITY event.recurrence.monthly.fourth.label          "četrti">
+<!ENTITY event.recurrence.monthly.fifth.label           "peti">
+<!ENTITY event.recurrence.monthly.last.label            "zadnji">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "nedelja" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "ponedeljek" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "torek" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "sreda" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "četrtek" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "petek" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "sobota" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "dan v mesecu">
+<!ENTITY event.recurrence.repeat.recur.label            "Ponovi na dni">
+
+<!ENTITY event.recurrence.every.label                        "vsakih:" >
+<!ENTITY repeat.units.years.both                             "let" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Vsak" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "." >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "januar" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "februar" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "marec" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "april" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "maj" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "junij" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "julij" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "avgust" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "september" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "oktober" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "november" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "december" >
+<!ENTITY event.recurrence.yearly.every.label                 "Vsak">
+<!ENTITY event.recurrence.yearly.first.label                 "Prvi">
+<!ENTITY event.recurrence.yearly.second.label                "Drugi">
+<!ENTITY event.recurrence.yearly.third.label                 "Tretji">
+<!ENTITY event.recurrence.yearly.fourth.label                "Četrti">
+<!ENTITY event.recurrence.yearly.fifth.label                 "Peti">
+<!ENTITY event.recurrence.yearly.last.label                  "Zadnji">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "nedelja" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "ponedeljek" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "torek" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "sreda" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "četrtek" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "petek" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "sobota" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "dan" >
+<!ENTITY event.recurrence.of.label                           "v" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "januarju" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "februarju" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "marcu" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "aprilu" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "maju" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "juniju" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "juliju" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "avgustu" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "septembru" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "oktobru" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "novembru" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "decembru" >
+
+<!ENTITY event.recurrence.range.label                   "Obseg ponavljanja">
+<!ENTITY event.recurrence.forever.label                 "Brez končnega datuma" >
+<!ENTITY event.recurrence.repeat.for.label              "Ustvari" >
+<!ENTITY event.recurrence.appointments.label            "domenkov" >
+<!ENTITY event.repeat.until.label                       "Ponavljaj do" >
+<!ENTITY event.recurrence.preview.label                 "Predogled">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Povabi udeležence">
+<!ENTITY event.organizer.label                  "Organizator">
+<!ENTITY event.freebusy.suggest.slot            "Predlagaj časovni termin:">
+<!ENTITY event.freebusy.button.next.slot        "Naslednji termin">
+<!ENTITY event.freebusy.button.previous.slot    "Prejšnji termin">
+<!ENTITY event.freebusy.zoom                    "Povečava:">
+<!ENTITY event.freebusy.legend.free             "Prosto" >
+<!ENTITY event.freebusy.legend.busy             "Zasedeno" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Predvideno" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Nedosegljivo" >
+<!ENTITY event.freebusy.legend.unknown          "Ni podatkov" >
+<!ENTITY event.attendee.role.required           "Zahtevani udeleženec">
+<!ENTITY event.attendee.role.optional           "Izbirni udeleženec">
+<!ENTITY event.attendee.role.chair              "Predsedujoči">
+<!ENTITY event.attendee.role.nonparticipant     "Nesodelujoči">
+<!ENTITY event.attendee.usertype.individual     "Posameznik">
+<!ENTITY event.attendee.usertype.group          "Skupina">
+<!ENTITY event.attendee.usertype.resource       "Vir">
+<!ENTITY event.attendee.usertype.room           "Klepetalnica">
+<!ENTITY event.attendee.usertype.unknown        "Neznano">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Navedite časovni pas">
+<!ENTITY event.timezone.custom.label     "Dodatni časovni pasovi …">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Splošno">
+<!ENTITY read.only.title.label           "Naziv:">
+<!ENTITY read.only.calendar.label        "Koledar:">
+<!ENTITY read.only.event.start.label     "Začetni datum:">
+<!ENTITY read.only.task.start.label      "Začetni datum:">
+<!ENTITY read.only.event.end.label       "Končni datum:">
+<!ENTITY read.only.task.due.label        "Rok:">
+<!ENTITY read.only.repeat.label          "Ponovitev:">
+<!ENTITY read.only.location.label        "Kraj:">
+<!ENTITY read.only.category.label        "Kategorija:">
+<!ENTITY read.only.organizer.label       "Organizator:">
+<!ENTITY read.only.reminder.label        "Opomnik:">
+<!ENTITY read.only.attachments.label     "Priponke:">
+<!ENTITY read.only.attendees.label       "Udeleženci">
+<!ENTITY read.only.description.label     "Opis">
+<!ENTITY read.only.link.label            "Sorodna povezava">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Shrani in zapri">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Shrani spremembe in zapri okno brez spremembe stanja udeležbe in pošiljanja odziva">
+<!ENTITY summary.dialog.accept.label            "Sprejmi">
+<!ENTITY summary.dialog.accept.tooltiptext      "Sprejmi povabilo">
+<!ENTITY summary.dialog.tentative.label         "Neodločeno">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Pogojno sprejmi povabilo">
+<!ENTITY summary.dialog.decline.label           "Zavrni">
+<!ENTITY summary.dialog.decline.tooltiptext     "Zavrni povabilo">
+<!ENTITY summary.dialog.dontsend.label          "Ne pošlji odziva">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Spremeni stanje udeležbe brez pošiljanja odziva organizatorju in zapri okno">
+<!ENTITY summary.dialog.send.label              "Pošlji odziv zdaj">
+<!ENTITY summary.dialog.send.tooltiptext        "Pošlji organizatorju odziv  in zapri okno">

@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Croeso i &brandShortName;">
+<!ENTITY header2.label "Hoffech chi gael cyfeiriad gwe newydd?">
+<!ENTITY other.languages "Dim ond y darparwyr sy'n cynnig cyfeiriadau yn eich ardal rydym yn eu dangos.  Cliciwch yma i ddangos yr holl ddarparwyr.">
+<!ENTITY error.line1 "Ymddiheuriadau, nid oeddem yn gallu canfod unrhyw un o'r cyfeiriadau e-bost awgrymwyd.">
+<!ENTITY error.line2 "Gallwch hefyd chwilio am lysenwau neu dermau eraill i ganfod ragor o e-byst eraill.">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "Gallwch hefyd brofi un o'r ">
+<!ENTITY error.suggest.middle "cyfrifon e-bost rhad ac am ddim eraill">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "Helo ">
+<!ENTITY success.title.after ", mae'r cyfeiriadau e-bost canlynol ar gael ar eich cyfer:">
+<!ENTITY success.tip "(Gallwch hefyd chwilio am lysenwau neu dermau eraill i ganfod ragor o e-byst eraill)">
+<!ENTITY partnership.description "Mewn partneriaeth â nifer o ddarparwyr, mae &brandShortName; yn gallu cynnig cyfrif e-bost newydd i chi. Llenwch eich enw cyntaf ac olaf, neu unrhyw eiriau'r hoffech chi yn y meysydd uchod er mwyn cychwyn arni.">
+<!ENTITY existing.header "A oes gennych gyfrif cyfredol yr hoffech ei defnyddio?">
+<!ENTITY tinyheader.title "A oes gennych gyfeiriad?">
+<!ENTITY tinyheader.existing "Hepgor hwn a defnyddio fy e-bost cyfredol">
+<!ENTITY content.close "Mi wna i ffurfweddu fy nghyfrif yn diweddarach.">
+<!ENTITY successful.title "Llongyfarchiadau!">
+<!ENTITY successful.successMessage "Rydych wedi creu eich cyfrif yn llwyddiannus.">
+<!ENTITY successful.write "Ysgrifennu e-byst">
+<!ENTITY successful.write.desc "Gadewch i'ch ffrindiau â'ch teulu wybod am eich cyfrif newydd. <br/> Dyna pam rydych wedi agor y cyfrif newydd?">
+<!ENTITY successful.customize "Cyfaddaswch &brandShortName; gydag ychwanegion difyr">
+<!ENTITY successful.customize.desc "Mae yna filoedd o ychwanegion sy'n caniatáu i chi gyfaddasu &brandShortName; i'w wneud yn addas ar gyfer eich anghenion chi.">
+<!ENTITY successful.attach "Rhowch lofnod personol i'ch e-byst">
+<!ENTITY successful.attach.desc "Mae modd i chi atodi dyfyniad neu ryw wybodaeth amdanoch chi eich hun ar ddiwedd pob neges fyddwch yn ei hanfon.">
+<!ENTITY successful.close "Cau'r ffenestr.">
+<!ENTITY input.namePlaceholder "Eich enw neu lysenw">
+<!ENTITY input.search "Chwilio">
+<!ENTITY search_engine.title "Cyfaddasu eich peiriant chwilio">
+<!ENTITY search_engine.message "Gall eich darparwr e-bost ddarparu gallu chwilio gwe i chi.">
+<!ENTITY search_engine.button "Gorffen">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Налаштування кнопки">
+
+<!ENTITY Settings.label "Налаштування">
+
+<!ENTITY ButtonType.label "Тип">
+<!ENTITY ButtonType.accesskey "Т">
+<!ENTITY submit.value "Надіслати">
+<!ENTITY reset.value "Скинути">
+<!ENTITY button.value "Кнопка">
+
+<!ENTITY ButtonName.label "Ім’я:">
+<!ENTITY ButtonName.accesskey "І">
+<!ENTITY ButtonValue.label "Значення:">
+<!ENTITY ButtonValue.accesskey "З">
+<!ENTITY tabIndex.label "Послідовність переходу:">
+<!ENTITY tabIndex.accesskey "П">
+<!ENTITY ButtonDisabled.label "Вимкнено">
+<!ENTITY ButtonDisabled.accesskey "В">
+<!ENTITY AccessKey.label "Клавіша доступу:">
+<!ENTITY AccessKey.accesskey "К">
+
+<!ENTITY RemoveButton.label "Вилучити кнопку">
+<!ENTITY RemoveButton.accesskey "и">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Spremljene datoteke">
+<!ENTITY aboutDownloads.empty                      "Nema spremljenih datoteka">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Otvori direktorij preuzimanja">
+<!ENTITY cmd.show.accesskey                        "t">
+<!ENTITY cmd.showMac.label                         "Prikaži u Finderu">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Otvori">
+<!ENTITY cmd.open.accesskey                        "O">
+<!ENTITY cmd.removeFromHistory.label               "Ukloni iz povijesti">
+<!ENTITY cmd.removeFromHistory.accesskey           "s">
+<!ENTITY cmd.clearList.label                       "Očisti popis">
+<!ENTITY cmd.clearList.accesskey                   "s">
+<!ENTITY cmd.clearList.tooltip                     "Ukloni sve unose s popisa spremljenih datoteka, osim preuzimanja u tijeku.">
+<!ENTITY cmd.searchDownloads.label                 "Traži…">
+<!ENTITY cmd.searchDownloads.key                   "F">

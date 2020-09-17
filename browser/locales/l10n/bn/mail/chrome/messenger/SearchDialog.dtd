@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label "বার্তা খোঁজা হবে এখানে (h):">
+<!ENTITY searchHeading.accesskey "h">
+<!ENTITY searchSubfolders.label "সাবফোল্ডারে খোঁজা হবে (e)">
+<!ENTITY searchSubfolders.accesskey "e">
+<!ENTITY searchOnServer.label "সার্ভারে অনুসন্ধান করা হবে (u)">
+<!ENTITY searchOnServer.accesskey "u">
+<!ENTITY resetButton.label "পরিষ্কার (C)">
+<!ENTITY resetButton.accesskey "C">
+<!ENTITY openButton.label "খুলুন (n)">
+<!ENTITY openButton.accesskey "n">
+<!ENTITY deleteButton.label "মুছে ফেলুন (D)">
+<!ENTITY deleteButton.accesskey "D">
+<!ENTITY searchDialogTitle.label "বার্তা অনুসন্ধান">
+<!ENTITY results.label "ফলাফল">
+<!ENTITY closeCmd.key "W">
+<!ENTITY openInFolder.label "ফোল্ডারে খোলা হবে (r)">
+<!ENTITY openInFolder.accesskey "r">
+<!ENTITY saveAsVFButton.label "অনুসন্ধান ফোল্ডার হিসেবে সংরক্ষণ (v)">
+<!ENTITY saveAsVFButton.accesskey "v">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label "খোঁজা হবে (h):">
+<!ENTITY abSearchHeading.accesskey "h">
+<!ENTITY propertiesButton.label "বৈশিষ্ট্য (P)">
+<!ENTITY propertiesButton.accesskey "P">
+<!ENTITY composeButton.label "লিখুন (W)">
+<!ENTITY composeButton.accesskey "W">
+<!ENTITY abSearchDialogTitle.label "উন্নত ঠিকানা বই অনুসন্ধান">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

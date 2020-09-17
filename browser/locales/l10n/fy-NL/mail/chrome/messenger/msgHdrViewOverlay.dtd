@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Oan">
+<!ENTITY fromField4.label "Fan">
+<!ENTITY senderField4.label "Ofstjoerder">
+<!ENTITY author.label "Auteur">
+<!ENTITY organizationField4.label "Organisaasje">
+<!ENTITY replyToField4.label "Antwurd-nei">
+
+<!ENTITY subjectField4.label "Underwerp">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Nijsgroepen">
+<!ENTITY followupToField4.label "Reaksjes-nei">
+<!ENTITY tagsHdr4.label "Labels">
+<!ENTITY dateField4.label "Datum">
+<!ENTITY userAgentField4.label "Useragent">
+<!ENTITY referencesField4.label "Referinsjes">
+<!ENTITY messageIdField4.label "Message-ID">
+<!ENTITY inReplyToField4.label "Yn-antwurd-op">
+<!ENTITY originalWebsite4.label "Website">
+
+<!ENTITY hdrArchiveButton1.label "Argivearje">
+<!ENTITY hdrArchiveButton1.tooltip "Dit berjocht argivearje">
+<!ENTITY hdrSmartReplyButton1.label "Tûk beäntwurdzje">
+<!ENTITY hdrReplyButton1.label "Beäntwurdzje">
+<!ENTITY hdrReplyButton2.tooltip "Ofstjoerder fan dit berjocht beäntwurdzje">
+<!ENTITY hdrReplyAllButton1.label "Elk beäntwurdzje">
+<!ENTITY hdrReplyAllButton1.tooltip "Beäntwurdzje nei ôfstjoerder en alle ûntfangers">
+<!ENTITY hdrReplyListButton1.label "List beäntwurdzje">
+<!ENTITY hdrReplyListButton1.tooltip "Beäntwurdzje nei mailinglist">
+<!ENTITY hdrFollowupButton1.label "Reagearje">
+<!ENTITY hdrFollowupButton1.tooltip "In reaksje yn dizze nijsgroep pleatse">
+<!ENTITY hdrForwardButton1.label "Trochstjoere">
+<!ENTITY hdrForwardButton1.tooltip "Dit berjocht trochstjoere">
+<!ENTITY hdrJunkButton1.label "Net-winske">
+<!ENTITY hdrJunkButton1.tooltip "Dit berjocht as net-winske markearje">
+<!ENTITY hdrTrashButton1.label "Fuortsmite">
+<!ENTITY hdrTrashButton1.tooltip "Dit berjocht fuortsmite">
+
+<!ENTITY hdrViewToolbarShowFull.label "Piktogrammen en tekst toane">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "Allinnich piktogrammen toane">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "i">
+<!ENTITY hdrViewToolbarShowText.label "Allinnich tekst toane">
+<!ENTITY hdrViewToolbarShowText.accesskey "T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Altyd antwurd nei ôfstjoerder toane">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "A">
+
+<!ENTITY otherActionsButton2.label "Mear">
+<!ENTITY otherActionsButton.tooltip "Mear aksjes">
+<!ENTITY otherActionsOpenConversation1.label "Iepenje yn petear">
+<!ENTITY otherActionsOpenConversation1.accesskey "p">
+<!ENTITY otherActionsOpenInNewWindow1.label "Iepenje yn nij finster">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "f">
+<!ENTITY otherActionsOpenInNewTab1.label "Iepenje yn nij ljepblêd">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "l">
+<!ENTITY markAsReadMenuItem1.label "Markearje as lêzen">
+<!ENTITY markAsReadMenuItem1.accesskey "r">
+<!ENTITY markAsUnreadMenuItem1.label "Markearje as net lêzen">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "Bewarje as…">
+<!ENTITY saveAsMenuItem1.accesskey "s">
+<!ENTITY viewSourceMenuItem1.label "Boarne besjen…">
+<!ENTITY viewSourceMenuItem1.accesskey "B">
+<!ENTITY otherActionsPrint1.label "Ofdrukke…">
+<!ENTITY otherActionsPrint1.accesskey "O">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Inisjeel bylagefinster toane">
+<!ENTITY startExpandedCmd.accesskey    "I">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Iepenje">
+<!ENTITY openAttachmentCmd.accesskey    "I">
+<!ENTITY saveAsAttachmentCmd.label    "Bewarje as…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "a">
+<!ENTITY detachAttachmentCmd.label    "Untkeppelje…">
+<!ENTITY detachAttachmentCmd.accesskey    "U">
+<!ENTITY deleteAttachmentCmd.label    "Fuortsmite">
+<!ENTITY deleteAttachmentCmd.accesskey    "F">
+<!ENTITY openAllAttachmentsCmd.label    "Iepenje alle…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "p">
+<!ENTITY saveAllAttachmentsCmd.label    "Alles bewarje…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "s">
+<!ENTITY detachAllAttachmentsCmd.label    "Alles ûntkeppelje…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "k">
+<!ENTITY deleteAllAttachmentsCmd.label    "Alles fuortsmite…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "f">
+
+<!ENTITY openAttachment.tooltip "Bylagebestân iepenje">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Byhearrende map iepenje">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "B">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Toane yn Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "T">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Bewarje">
+<!ENTITY saveAttachmentButton1.tooltip     "Bylage bewarje">
+<!ENTITY saveAllAttachmentsButton1.label   "Alles bewarje">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Alle bylagen bewarje">
+
+<!ENTITY copyLinkCmd.label        "Keppelingslokaasje kopiearje">
+<!ENTITY copyLinkCmd.accesskey    "k">
+
+<!ENTITY CopyMessageId.label "Berjocht-ID kopiearje">
+<!ENTITY CopyMessageId.accesskey "k">
+<!ENTITY OpenMessageForMsgId.label "Berjocht foar ID iepenje">
+<!ENTITY OpenMessageForMsgId.accesskey "i">
+<!ENTITY OpenBrowserWithMsgId.label "Browser mei berjocht-ID iepenje">
+<!ENTITY OpenBrowserWithMsgId.accesskey "B">

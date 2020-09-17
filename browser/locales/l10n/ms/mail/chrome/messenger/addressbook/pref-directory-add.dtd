@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Nama: ">
+<!ENTITY directoryName.accesskey           "m">
+<!ENTITY directoryHostname.label           "Nama hos: ">
+<!ENTITY directoryHostname.accesskey       "o">
+<!ENTITY directoryBaseDN.label             "Base DN: ">
+<!ENTITY directoryBaseDN.accesskey         "b">
+<!ENTITY findButton.label                  "Cari">
+<!ENTITY findButton.accesskey              "r">
+<!ENTITY directorySecure.label             "Guna sambungan selamat (SSL)">
+<!ENTITY directorySecure.accesskey         "G">
+<!ENTITY directoryLogin.label              "Bind DN: ">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "Umum">
+<!ENTITY Offline.tab                       "Luar talian">
+<!ENTITY Advanced.tab                      "Lanjutan">
+<!ENTITY portNumber.label                  "Nombor port: ">
+<!ENTITY portNumber.accesskey              "p">
+<!ENTITY searchFilter.label                "Tapis carian: ">
+<!ENTITY searchFilter.accesskey            "c">
+<!ENTITY scope.label                       "Skop: ">
+<!ENTITY scope.accesskey                   "k">
+<!ENTITY scopeOneLevel.label               "Satu Tahap">
+<!ENTITY scopeOneLevel.accesskey           "T">
+<!ENTITY scopeSubtree.label                "Sub-pepohon">
+<!ENTITY scopeSubtree.accesskey            "S">
+<!ENTITY return.label                      "Jangan kembalikan lebih daripada">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "hasil">
+<!ENTITY offlineText.label                 "Anda boleh muat turun salinan lokal direktori ini supaya boleh digunakan apabila di luar talian.">
+<!ENTITY saslMechanism.label               "Kaedah log masuk: ">
+<!ENTITY saslMechanism.accesskey           "d">
+<!ENTITY saslOff.label                     "Ringkas">
+<!ENTITY saslOff.accesskey                 "k">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">

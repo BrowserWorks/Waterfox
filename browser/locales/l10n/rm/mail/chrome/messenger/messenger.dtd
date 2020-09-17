@@ -1,0 +1,973 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY titledefault.label "&brandFullName;">
+<!ENTITY titleSeparator.label " - ">
+
+<!-- File Menu -->
+<!ENTITY newFolderCmd.label "Ordinatur…">
+<!ENTITY newFolderCmd.accesskey "d">
+<!ENTITY closeTabCmd2.label "Serrar il tab">
+<!ENTITY closeTabCmd2.accesskey "e">
+<!ENTITY closeOtherTabsCmd2.label "Serrar ils auters tabs">
+<!ENTITY closeOtherTabsCmd2.accesskey "l">
+<!ENTITY recentlyClosedTabsCmd.label "Tabs serrads dacurt">
+<!ENTITY recentlyClosedTabsCmd.accesskey "r">
+
+<!ENTITY undoCloseTabCmd.commandkey "T">
+<!-- LOCALIZATION NOTE (moveToNewWindow.label):
+     Menu option to cause the current tab to be migrated to a new Thunderbird
+     window.
+     -->
+<!ENTITY moveToNewWindow.label "Spustar en ina nova fanestra">
+<!ENTITY moveToNewWindow.accesskey "n">
+<!ENTITY newVirtualFolderCmd.label "Tschertga memorisada…">
+<!ENTITY newVirtualFolderCmd.accesskey "S">
+<!ENTITY newOtherAccountsCmd.label "Auters contos…">
+<!ENTITY newOtherAccountsCmd.accesskey "O">
+<!ENTITY newCreateEmailAccountCmd.label "Ir per in nov conto…">
+<!ENTITY newCreateEmailAccountCmd.accesskey "R">
+<!ENTITY newExistingEmailAccountCmd.label "In conto dad e-mail existent…">
+<!ENTITY newExistingEmailAccountCmd.accesskey "E">
+<!ENTITY newIMAccountCmd.label "Conto da chat…">
+<!ENTITY newIMAccountCmd.accesskey "C">
+<!ENTITY newFeedAccountCmd.label "Conto da feeds…">
+<!ENTITY newFeedAccountCmd.accesskey "d">
+<!ENTITY newIMContactCmd.label "Contact da chat…">
+<!ENTITY newIMContactCmd.accesskey "h">
+<!ENTITY  newMessageCmd2.key "N">
+<!ENTITY  newMessageCmd.key "M">
+<!ENTITY  newMessageCmd.label "Messadi">
+<!ENTITY  newMessageCmd.accesskey "m">
+<!ENTITY  newContactCmd.label "Contact en il cudeschet d'adressas…">
+<!ENTITY  newContactCmd.accesskey "C">
+<!ENTITY openMenuCmd.label "Avrir">
+<!ENTITY openMenuCmd.accesskey "A">
+<!ENTITY openMessageFileCmd.label "Avrir ina datoteca…">
+<!ENTITY openMessageFileCmd.accesskey "O">
+<!ENTITY saveAsMenu.label "Memorisar sco">
+<!ENTITY saveAsMenu.accesskey "S">
+<!ENTITY saveAsFileCmd.label "Datoteca">
+<!ENTITY saveAsFileCmd.accesskey "D">
+<!ENTITY saveAsFileCmd.key "s">
+<!ENTITY saveAsTemplateCmd.label "Model">
+<!ENTITY saveAsTemplateCmd.accesskey "M">
+<!ENTITY getNewMsgForCmd.label "Retschaiver messadis per">
+<!ENTITY getNewMsgForCmd.accesskey "v">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "Tut ils contos">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "T">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.label "Conto actual">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.accesskey "C">
+<!ENTITY getNextNMsgCmd2.label "Mussar ils proxims messadis da novitads">
+<!ENTITY getNextNMsgCmd2.accesskey "t">
+<!ENTITY sendUnsentCmd.label "Trametter ils messadis betg tramess">
+<!ENTITY sendUnsentCmd.accesskey "d">
+<!ENTITY subscribeCmd.label "Abunar…">
+<!ENTITY subscribeCmd.accesskey "b">
+<!ENTITY deleteFolder.label "Stizzar l'ordinatur">
+<!ENTITY deleteFolder.accesskey "u">
+<!ENTITY renameFolder.label "Renumnar l'ordinatur…">
+<!ENTITY renameFolder.accesskey "n">
+<!ENTITY renameFolder.key "VK_F2">
+<!ENTITY compactFolders.label "Cumprimer ils ordinaturs">
+<!ENTITY compactFolders.accesskey "p">
+<!ENTITY emptyTrashCmd.label "Svidar il chanaster da palpiri">
+<!ENTITY emptyTrashCmd.accesskey "h">
+<!ENTITY offlineMenu.label "Offline">
+<!ENTITY offlineMenu.accesskey "l">
+<!ENTITY offlineGoOfflineCmd.label "Lavurar offline">
+<!ENTITY offlineGoOfflineCmd.accesskey "l">
+<!ENTITY synchronizeOfflineCmd.label "Telechargiar/sincronisar ussa…">
+<!ENTITY synchronizeOfflineCmd.accesskey "S">
+<!ENTITY settingsOfflineCmd2.label "Configuraziun dal modus offline">
+<!ENTITY settingsOfflineCmd2.accesskey "e">
+<!ENTITY downloadSelectedCmd.label "Retschaiver ils messadis marcads">
+<!ENTITY downloadSelectedCmd.accesskey "l">
+<!ENTITY downloadStarredCmd.label "Retschaiver ils messadis cun staila">
+<!ENTITY downloadStarredCmd.accesskey "a">
+<!ENTITY printCmd.label "Stampar…">
+<!ENTITY printCmd.accesskey "P">
+<!ENTITY printCmd.key "P">
+<!ENTITY printPreviewCmd.label "Prevista da stampa">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printSetupCmd.label "Organisar la pagina…">
+<!ENTITY printSetupCmd.accesskey "g">
+
+<!-- Edit Menu -->
+<!ENTITY deleteMsgCmd.label "Stizzar il messadi">
+<!ENTITY deleteMsgCmd.accesskey "z">
+<!ENTITY undeleteMsgCmd.label "Restaurar il messadi">
+<!ENTITY undeleteMsgCmd.accesskey "R">
+<!ENTITY deleteMsgsCmd.label "Stizzar ils messadis marcads">
+<!ENTITY deleteMsgsCmd.accesskey "i">
+<!ENTITY undeleteMsgsCmd.label "Restaurar ils messadis marcads">
+<!ENTITY undeleteMsgsCmd.accesskey "c">
+<!ENTITY deleteFolderCmd.label "Stizzar l'ordinatur">
+<!ENTITY deleteFolderCmd.accesskey "z">
+<!ENTITY unsubscribeNewsgroupCmd.label "Annullar l'abunament">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "A">
+<!ENTITY selectMenu.label "Tscherner">
+<!ENTITY selectMenu.accesskey "h">
+<!ENTITY all.label "Tuts">
+<!ENTITY all.accesskey "u">
+<!ENTITY selectThreadCmd.label "Tema">
+<!ENTITY selectThreadCmd.accesskey "T">
+<!ENTITY selectThreadCmd.key "a">
+<!ENTITY selectFlaggedCmd.label "Messadis cun staila">
+<!ENTITY selectFlaggedCmd.accesskey "S">
+<!ENTITY menuFavoriteFolder.label "Ordinatur da favurits">
+<!ENTITY menuFavoriteFolder.accesskey "v">
+<!ENTITY folderPropsCmd2.label "Caracteristicas">
+<!ENTITY folderPropsFolderCmd2.label "Caracteristicas da l'ordinatur">
+<!ENTITY folderPropsNewsgroupCmd2.label "Caracteristicas da la gruppa da discussiun">
+<!ENTITY folderPropsCmd.accesskey "r">
+<!ENTITY undoDeleteMsgCmd.label "Revocar: Stizzar il messadi">
+<!ENTITY redoDeleteMsgCmd.label "Repeter: Stizzar il messadi">
+<!ENTITY undoMoveMsgCmd.label "Revocar: Spustar il messadi">
+<!ENTITY redoMoveMsgCmd.label "Repeter: Spustar il messadi">
+<!ENTITY undoCopyMsgCmd.label "Revocar: Copiar il messadi">
+<!ENTITY redoCopyMsgCmd.label "Repeter: Copiar il messadi">
+<!ENTITY undoMarkAllCmd.label "Revocar: Marcar tuts sco legids">
+<!ENTITY redoMarkAllCmd.label "Repeter: Marcar tuts sco legids">
+<!ENTITY undoDefaultCmd.label "Revocar">
+<!ENTITY undoDefaultCmd.accesskey "R">
+<!ENTITY redoDefaultCmd.label "Restituir">
+<!ENTITY redoDefaultCmd.accesskey "t">
+
+<!-- View Menu -->
+<!ENTITY menubarCmd.label "Trav da menu">
+<!ENTITY menubarCmd.accesskey "m">
+<!ENTITY showMessengerToolbarCmd.label "Trav d'utensils da messadi">
+<!ENTITY showMessengerToolbarCmd.accesskey "u">
+<!ENTITY customizeToolbar.label "Modifitgar…">
+<!ENTITY customizeToolbar.accesskey "m">
+
+<!ENTITY messagePaneLayoutStyle.label "Disposiziun">
+<!ENTITY messagePaneLayoutStyle.accesskey "D">
+<!ENTITY messagePaneClassic.label "Vista classica">
+<!ENTITY messagePaneClassic.accesskey "C">
+<!ENTITY messagePaneWide.label "Vista lada">
+<!ENTITY messagePaneWide.accesskey "l">
+<!ENTITY messagePaneVertical.label "Vista a 3 colonnas">
+<!ENTITY messagePaneVertical.accesskey "3">
+<!ENTITY showFolderPaneCmd.label "Trav dad ordinaturs">
+<!ENTITY showFolderPaneCmd.accesskey "T">
+<!ENTITY showFolderPaneColsCmd.label "Colonnas en la trav dad ordinaturs">
+<!ENTITY showFolderPaneColsCmd.accesskey "v">
+<!ENTITY showMessageCmd.label "Zona da prevista dals messadis">
+<!ENTITY showMessageCmd.accesskey "p">
+
+<!ENTITY folderView.label "Ordinaturs">
+<!ENTITY folderView.accesskey "O">
+<!ENTITY unifiedFolders.label "Gruppà">
+<!ENTITY unifiedFolders.accesskey "G">
+<!ENTITY allFolders.label "Tuts">
+<!ENTITY allFolders.accesskey "U">
+<!ENTITY unreadFolders.label "Nunlegì">
+<!ENTITY unreadFolders.accesskey "N">
+<!ENTITY favoriteFolders.label "Favurits">
+<!ENTITY favoriteFolders.accesskey "F">
+<!ENTITY recentFolders.label "Ultims ordinaturs">
+<!ENTITY recentFolders.accesskey "L">
+<!ENTITY compactVersion.label "Vista cumpacta">
+<!ENTITY compactVersion.accesskey "C">
+<!ENTITY folderPaneBar.label "Trav d'utensils da la panela d'ordinaturs">
+<!ENTITY folderPaneBar.accesskey "e">
+
+<!-- Sort Menu -->
+<!ENTITY sortMenu.label "Zavrar tenor">
+<!ENTITY sortMenu.accesskey "Z">
+<!ENTITY sortByDateCmd.label "Data">
+<!ENTITY sortByDateCmd.accesskey "D">
+<!ENTITY sortByReceivedCmd.label "Retschavì">
+<!ENTITY sortByReceivedCmd.accesskey "v">
+<!ENTITY sortByStarCmd.label "Staila">
+<!ENTITY sortByStarCmd.accesskey "S">
+<!ENTITY sortByAttachmentsCmd.label "Agiuntas">
+<!ENTITY sortByAttachmentsCmd.accesskey "A">
+<!ENTITY sortByPriorityCmd.label "Prioritad">
+<!ENTITY sortByPriorityCmd.accesskey "P">
+<!ENTITY sortBySizeCmd.label "Grondezza">
+<!ENTITY sortBySizeCmd.accesskey "z">
+<!ENTITY sortByStatusCmd.label "Status">
+<!ENTITY sortByStatusCmd.accesskey "u">
+<!ENTITY sortByTagsCmd.label "Etichettas">
+<!ENTITY sortByTagsCmd.accesskey "E">
+<!ENTITY sortByJunkStatusCmd.label "Status da nungiavischà">
+<!ENTITY sortByJunkStatusCmd.accesskey "g">
+<!ENTITY sortBySubjectCmd.label "Object">
+<!ENTITY sortBySubjectCmd.accesskey "b">
+<!ENTITY sortByFromCmd.label "Da">
+<!ENTITY sortByFromCmd.accesskey "a">
+<!ENTITY sortByRecipientCmd.label "Destinatur">
+<!ENTITY sortByRecipientCmd.accesskey "D">
+<!ENTITY sortByCorrespondentCmd.label "Correspundents">
+<!ENTITY sortByCorrespondentCmd.accesskey "e">
+<!ENTITY sortByUnreadCmd.label "Legì">
+<!ENTITY sortByUnreadCmd.accesskey "L">
+<!ENTITY sortByOrderReceivedCmd.label "Successiun d'entrada">
+<!ENTITY sortByOrderReceivedCmd.accesskey "s">
+<!ENTITY sortAscending.label "Ascendent">
+<!ENTITY sortAscending.accesskey "A">
+<!ENTITY sortDescending.label "Descendent">
+<!ENTITY sortDescending.accesskey "D">
+<!ENTITY sortThreaded.label "Gruppà tenor tema">
+<!ENTITY sortThreaded.accesskey "T">
+<!ENTITY sortUnthreaded.label "Betg gruppà">
+<!ENTITY sortUnthreaded.accesskey "b">
+<!ENTITY groupBySort.label "Gruppà tenor urden">
+<!ENTITY groupBySort.accesskey "G">
+<!ENTITY msgsMenu.label "Infurmaziuns">
+<!ENTITY msgsMenu.accesskey "M">
+<!ENTITY threads.label "Temas">
+<!ENTITY threads.accesskey "e">
+<!ENTITY allMsgsCmd.label "Tuts">
+<!ENTITY allMsgsCmd.accesskey "u">
+<!ENTITY expandAllThreadsCmd.label "Mussar tut ils temas">
+<!ENTITY expandAllThreadsCmd.accesskey "E">
+<!ENTITY expandAllThreadsCmd.key "*">
+<!ENTITY collapseAllThreadsCmd.label "Zuppentar tut ils temas">
+<!ENTITY collapseAllThreadsCmd.accesskey "p">
+<!ENTITY collapseAllThreadsCmd.key "\">
+<!ENTITY unreadMsgsCmd.label "Nunlegì">
+<!ENTITY unreadMsgsCmd.accesskey "N">
+<!ENTITY threadsWithUnreadCmd.label "Temas cun nunlegids">
+<!ENTITY threadsWithUnreadCmd.accesskey "c">
+<!ENTITY watchedThreadsWithUnreadCmd.label "Temas observads cun nunlegids">
+<!ENTITY watchedThreadsWithUnreadCmd.accesskey "O">
+<!ENTITY ignoredThreadsCmd.label "Temas ignorads">
+<!ENTITY ignoredThreadsCmd.accesskey "I">
+
+<!ENTITY headersMenu.label "Chaus-pagina">
+<!ENTITY headersMenu.accesskey "H">
+<!ENTITY headersAllCmd.label "Tut">
+<!ENTITY headersAllCmd.accesskey "u">
+<!ENTITY headersNormalCmd.label "Normal">
+<!ENTITY headersNormalCmd.accesskey "N">
+<!ENTITY bodyMenu.label "Text dal messadi sco">
+<!ENTITY bodyMenu.accesskey "t">
+<!ENTITY bodyAllowHTML.label "HTML original">
+<!ENTITY bodyAllowHTML.accesskey "H">
+<!ENTITY bodySanitized.label "HTML simplifitgà">
+<!ENTITY bodySanitized.accesskey "S">
+<!ENTITY bodyAsPlaintext.label "Text senza formataziun">
+<!ENTITY bodyAsPlaintext.accesskey "T">
+<!ENTITY bodyAllParts.label "Tut las parts dal corp">
+<!ENTITY bodyAllParts.accesskey "A">
+
+<!ENTITY bodyMenuFeed.label "Feed cun il text dal messadi sco">
+<!ENTITY bodyMenuFeed.accesskey "e">
+<!ENTITY viewFeedWebPage.label "Pagina web">
+<!ENTITY viewFeedWebPage.accesskey "W">
+<!ENTITY viewFeedSummary.label "Resumaziun">
+<!ENTITY viewFeedSummary.accesskey "m">
+<!ENTITY viewFeedSummaryFeedPropsPref.label "Format predefinì">
+<!ENTITY viewFeedSummaryFeedPropsPref.accesskey "D">
+
+<!ENTITY viewAttachmentsInlineCmd.label "Mussar las agiuntas cun incorporar">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "A">
+
+<!ENTITY pageSourceCmd.label "Text da funtuna dal messadi">
+<!ENTITY pageSourceCmd.accesskey "f">
+<!ENTITY pageSourceCmd.key "u">
+<!ENTITY getNewMessagesCmd.key "y">
+<!ENTITY getAllNewMessagesCmd.key "Y">
+
+<!-- Search Menu -->
+<!ENTITY findMenu.label "Tschertgar">
+<!ENTITY findMenu.accesskey "T">
+<!ENTITY findCmd.label "Tschertgar en quest messadi…">
+<!ENTITY findCmd.accesskey "e">
+<!ENTITY findCmd.key "f">
+<!ENTITY findAgainCmd.label "Tschertgar vinavant">
+<!ENTITY findAgainCmd.accesskey "v">
+<!ENTITY findAgainCmd.key "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.key "g">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY searchMailCmd.label "Tschertgar messadis…">
+<!ENTITY searchMailCmd.accesskey "M">
+<!ENTITY searchMailCmd.key "f">
+<!ENTITY glodaSearchCmd.label "Tschertga globala…">
+<!ENTITY glodaSearchCmd.accesskey "T">
+<!ENTITY searchAddressesCmd.label "Tschertgar adressas…">
+<!ENTITY searchAddressesCmd.accesskey "a">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Navigaziun">
+<!ENTITY goMenu.accesskey "N">
+<!ENTITY nextMenu.label "Proxim">
+<!ENTITY nextMenu.accesskey "x">
+<!ENTITY nextMsgCmd.label "Messadi">
+<!ENTITY nextMsgCmd.accesskey "M">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "Messadi nunlegì">
+<!ENTITY nextUnreadMsgCmd.accesskey "U">
+<!ENTITY nextUnreadMsgCmd.key "n">
+<!ENTITY nextStarredMsgCmd.label "Messadi cun staila">
+<!ENTITY nextStarredMsgCmd.accesskey "S">
+<!ENTITY nextUnreadThread.label "Tema nunlegì">
+<!ENTITY nextUnreadThread.accesskey "T">
+<!ENTITY nextUnreadThread.key "t">
+<!ENTITY prevMenu.label "Precedent">
+<!ENTITY prevMenu.accesskey "c">
+<!ENTITY prevMsgCmd.label "Messadi">
+<!ENTITY prevMsgCmd.accesskey "M">
+<!ENTITY prevMsgCmd.key "b">
+<!ENTITY prevUnreadMsgCmd.label "Messadi nunlegì">
+<!ENTITY prevUnreadMsgCmd.accesskey "U">
+<!ENTITY prevUnreadMsgCmd.key "P">
+<!ENTITY goForwardCmd.label "Enavant">
+<!ENTITY goForwardCmd.accesskey "A">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goBackCmd.label "Enavos">
+<!ENTITY goBackCmd.accesskey "O">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goChatCmd.label "Chat">
+<!ENTITY goChatCmd.accesskey "c">
+<!ENTITY goChatCmd2.key "H">
+<!ENTITY prevStarredMsgCmd.label "Messadi cun staila">
+<!ENTITY prevStarredMsgCmd.accesskey "S">
+<!ENTITY folderMenu.label "Ordinatur">
+<!ENTITY folderMenu.accesskey "o">
+<!ENTITY goRecentlyClosedTabs.label "Tabs serrads dacurt">
+<!ENTITY goRecentlyClosedTabs.accesskey "r">
+<!ENTITY startPageCmd.label "Pagina da partenza">
+<!ENTITY startPageCmd.accesskey "P">
+
+<!-- Message Menu -->
+<!ENTITY msgMenu.label "Messadi">
+<!ENTITY msgMenu.accesskey "M">
+<!ENTITY newMsgCmd.label "Nov messadi">
+<!ENTITY newMsgCmd.accesskey "N">
+<!ENTITY newNewMsgCmd.label "Messadi">
+<!ENTITY newNewMsgCmd.accesskey "M">
+<!ENTITY archiveMsgCmd.label "Archivar">
+<!ENTITY archiveMsgCmd.accesskey "A">
+<!ENTITY archiveMsgCmd.key "a">
+<!ENTITY cancelNewsMsgCmd.label "Annullar il messadi">
+<!ENTITY cancelNewsMsgCmd.accesskey "A">
+<!ENTITY replyMsgCmd.label "Respunder">
+<!ENTITY replyMsgCmd.accesskey "R">
+<!ENTITY replyMsgCmd.key "r">
+<!ENTITY replySenderCmd.label "Respunder mo al speditur">
+<!ENTITY replySenderCmd.accesskey "R">
+<!ENTITY replyNewsgroupCmd2.label "Followup a la gruppa da discussiun">
+<!ENTITY replyNewsgroupCmd2.accesskey "w">
+<!ENTITY replyToAllMsgCmd.label "Respunder a tuts">
+<!ENTITY replyToAllMsgCmd.accesskey "p">
+<!ENTITY replyToAllMsgCmd.key "r">
+<!ENTITY replyToListMsgCmd.label "Respunder a la glista">
+<!ENTITY replyToListMsgCmd.accesskey "L">
+<!ENTITY replyToListMsgCmd.key "l">
+<!ENTITY forwardMsgCmd.label "Renviar">
+<!ENTITY forwardMsgCmd.accesskey "R">
+<!ENTITY forwardMsgCmd.key "l">
+<!ENTITY forwardAsMenu.label "Renviar sco">
+<!ENTITY forwardAsMenu.accesskey "s">
+<!ENTITY forwardAsInline.label "Incorporà">
+<!ENTITY forwardAsInline.accesskey "I">
+<!ENTITY forwardAsAttachmentCmd.label "Agiunta">
+<!ENTITY forwardAsAttachmentCmd.accesskey "A">
+<!ENTITY editAsNewMsgCmd.label "Modifitgar sco nov messadi">
+<!ENTITY editAsNewMsgCmd.accesskey "E">
+<!ENTITY editAsNewMsgCmd.key "e">
+<!ENTITY editDraftMsgCmd.label "Modifitgar il sboz dal messadi">
+<!ENTITY editDraftMsgCmd.accesskey "s">
+<!ENTITY editTemplateMsgCmd.label "Modifitgar il model">
+<!ENTITY editTemplateMsgCmd.accesskey "t">
+<!ENTITY newMsgFromTemplateCmd.label "Nov messadi cun agid dad in model">
+<!ENTITY newMsgFromTemplateCmd.keycode "VK_RETURN"><!-- do not change "VK_RETURN" -->
+<!ENTITY createFilter.label "Crear in filter or dal messadi…">
+<!ENTITY createFilter.accesskey "a">
+<!ENTITY moveMsgToMenu.label "Spustar a">
+<!ENTITY moveMsgToMenu.accesskey "u">
+<!ENTITY moveCopyMsgRecentMenu.label "Ultims ordinaturs">
+<!ENTITY moveCopyMsgRecentMenu.accesskey "R">
+<!ENTITY copyMessageLocation.label "Copiar la URL dal messadi">
+<!ENTITY copyMessageLocation.accesskey "M">
+<!ENTITY copyMsgToMenu.label "Copiar a">
+<!ENTITY copyMsgToMenu.accesskey "C">
+<!ENTITY moveToFolderAgain.label "Spustar danovamain">
+<!ENTITY moveToFolderAgain.accesskey "i">
+<!ENTITY moveToFolderAgainCmd.key "m">
+<!ENTITY killThreadMenu.label "Ignorar il tema">
+<!ENTITY killThreadMenu.accesskey "I">
+<!ENTITY killThreadMenu.key "k">
+<!ENTITY killSubthreadMenu.label "Ignorar il suttema">
+<!ENTITY killSubthreadMenu.accesskey "S">
+<!ENTITY killSubthreadMenu.key "k">
+<!ENTITY watchThreadMenu.label "Observar il tema">
+<!ENTITY watchThreadMenu.accesskey "t">
+<!ENTITY watchThreadMenu.key "w">
+<!ENTITY tagMenu.label "Etichetta">
+<!ENTITY tagMenu.accesskey "E">
+<!ENTITY tagCmd0.key "0">
+<!ENTITY tagCmd1.key "1">
+<!ENTITY tagCmd2.key "2">
+<!ENTITY tagCmd3.key "3">
+<!ENTITY tagCmd4.key "4">
+<!ENTITY tagCmd5.key "5">
+<!ENTITY tagCmd6.key "6">
+<!ENTITY tagCmd7.key "7">
+<!ENTITY tagCmd8.key "8">
+<!ENTITY tagCmd9.key "9">
+<!ENTITY markMenu.label "Marcar">
+<!ENTITY markMenu.accesskey "m">
+<!ENTITY toggleReadCmd.key "m">
+<!ENTITY markAsReadCmd.label "Sco legì">
+<!ENTITY markAsReadCmd.accesskey "s">
+<!ENTITY markAsUnreadCmd.label "Sco nunlegì">
+<!ENTITY markAsUnreadCmd.accesskey "n">
+<!ENTITY markThreadAsReadCmd.label "Tema sco legì">
+<!ENTITY markThreadAsReadCmd.accesskey "T">
+<!ENTITY markThreadAsReadCmd.key "r">
+<!ENTITY markReadByDateCmd.label "Sco legì tenor data…">
+<!ENTITY markReadByDateCmd.accesskey "D">
+<!ENTITY markReadByDateCmd.key "c">
+<!ENTITY markAllReadCmd.label "Tuts legids">
+<!ENTITY markAllReadCmd.accesskey "u">
+<!ENTITY markAllReadCmd.key "c">
+<!ENTITY markStarredCmd.label "staila">
+<!ENTITY markStarredCmd.accesskey "t">
+<!ENTITY markStarredCmd.key "S">
+<!ENTITY markAsJunkCmd.label "Sco nungiavischà">
+<!ENTITY markAsJunkCmd.accesskey "n">
+<!ENTITY markAsJunkCmd.key "j">
+<!ENTITY markAsNotJunkCmd.label "Sco betg nungiavischà">
+<!ENTITY markAsNotJunkCmd.accesskey "N">
+<!ENTITY markAsNotJunkCmd.key "j">
+<!ENTITY recalculateJunkScoreCmd.label "Exequir il filter per e-mails nungiavischads">
+<!ENTITY recalculateJunkScoreCmd.accesskey "C">
+<!ENTITY openMessageWindowCmd.label "Avrir il messadi">
+<!ENTITY openMessageWindowCmd.accesskey "v">
+<!ENTITY openMessageWindowCmd.key "o">
+<!ENTITY openInConversationCmd.label "Avrir sco conversaziun">
+<!ENTITY openInConversationCmd.accesskey "s">
+<!ENTITY openInConversationCmd.key "o">
+<!ENTITY openAttachmentListCmd.label "Agiuntas">
+<!ENTITY openAttachmentListCmd.accesskey "A">
+<!ENTITY openFeedMessage1.label "Cun avrir messadis da feed">
+<!ENTITY openFeedMessage1.accesskey "A">
+<!ENTITY openFeedWebPage.label "Avrir sco pagina d'internet">
+<!ENTITY openFeedWebPage.accesskey "W">
+<!ENTITY openFeedSummary.label "Avrir sco resumaziun">
+<!ENTITY openFeedSummary.accesskey "S">
+<!ENTITY openFeedWebPageInMP.label "Midar en la zona da prevista dals messadis tranter pagina web e resumaziun">
+<!ENTITY openFeedWebPageInMP.accesskey "T">
+
+<!-- Windows Menu -->
+<!ENTITY windowMenu.label "Fanestra">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Utensils">
+<!ENTITY tasksMenu.accesskey "U">
+<!ENTITY messengerCmd.label "E-mail &amp; gruppas da discussiun">
+<!ENTITY messengerCmd.accesskey "g">
+<!ENTITY addressBookCmd.label "Cudeschet d'adressas">
+<!ENTITY addressBookCmd.accesskey "C">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY addons.label "Supplements">
+<!ENTITY addons.accesskey "S">
+<!ENTITY addonPrefs.label "Preferenzas dals supplements">
+<!ENTITY addonPrefs.accesskey "P">
+<!ENTITY addonPrefsUnix.label "Preferenzas dals supplements">
+<!ENTITY addonPrefsUnix.accesskey "P">
+<!ENTITY addonNoPrefs.label "Chattà naginas preferenzas da supplements.">
+<!ENTITY activitymanager.label "Activitads">
+<!ENTITY activitymanager.accesskey "v">
+<!ENTITY imAccountsStatus.label "Status da chat">
+<!ENTITY imAccountsStatus.accesskey "C">
+<!ENTITY imStatus.available          "Disponibel">
+<!ENTITY imStatus.unavailable        "Occupà">
+<!ENTITY imStatus.offline            "Offline">
+<!ENTITY imStatus.showAccounts       "Mussar ils contos…">
+<!ENTITY joinChatCmd.label "Acceder il chat…">
+<!ENTITY joinChatCmd.accesskey "c">
+<!ENTITY savedFiles.label "Datotecas memorisadas">
+<!ENTITY savedFiles.accesskey "m">
+<!ENTITY savedFiles.key "j">
+<!ENTITY filtersCmd2.label "Filters da messadis">
+<!ENTITY filtersCmd2.accesskey "F">
+<!ENTITY filtersApply.label "Exequir ils filters en l'ordinatur">
+<!ENTITY filtersApply.accesskey "R">
+<!ENTITY filtersApplyToSelection.label "Exequir ils filters per ils messadis tschernids">
+<!ENTITY filtersApplyToSelection.accesskey "u">
+<!ENTITY filtersApplyToMessage.label "Exequir ils filters per il messadi">
+<!ENTITY filtersApplyToMessage.accesskey "u">
+<!ENTITY runJunkControls.label "Exequir il filter per e-mails nungiavischads en l'ordinatur">
+<!ENTITY runJunkControls.accesskey "C">
+<!ENTITY deleteJunk.label "Stizzar ils messadis nungiavischads en quest ordinatur">
+<!ENTITY deleteJunk.accesskey "D">
+<!ENTITY importCmd.label "Importar…">
+<!ENTITY importCmd.accesskey "m">
+<!ENTITY clearRecentHistory.label "Stizzar la cronologia pli nova…">
+<!ENTITY clearRecentHistory.accesskey "c">
+<!ENTITY accountManagerCmd2.label "Configuraziun da contos">
+<!ENTITY accountManagerCmd2.accesskey "S">
+<!-- LOCALIZATION NOTE (accountManagerCmdUnix.accesskey):
+     Belongs to accountManagerCmd.label, which is placed under the Edit menu
+     on Unix systems
+  -->
+<!ENTITY accountManagerCmdUnix2.accesskey "c">
+
+<!-- Developer Tools Submenu -->
+<!ENTITY devtoolsMenu.label "Utensils per sviluppaders">
+<!ENTITY devtoolsMenu.accesskey "p">
+<!ENTITY devToolboxCmd.label "Chascha d'utensils per sviluppaders">
+<!ENTITY devToolboxCmd.accesskey "t">
+<!ENTITY devToolboxCmd.commandkey "i">
+<!ENTITY debugAddonsCmd.label "Debugar ils supplements">
+<!ENTITY debugAddonsCmd.accesskey "a">
+<!ENTITY tabsDebugCmd.label "Debugadi per il rom da cuntegn">
+<!ENTITY tabsDebugCmd.accesskey "c">
+<!ENTITY errorConsoleCmd.label "Consola d'errurs">
+<!ENTITY errorConsoleCmd.accesskey "E">
+<!ENTITY errorConsoleCmd.commandkey "j">
+
+<!-- Mail Toolbar -->
+<!ENTITY getMsgButton1.label "Retschaiver messadis">
+<!ENTITY newMsgButton.label "Scriver">
+<!ENTITY replyButton.label "Respunder">
+<!ENTITY replyAllButton.label "Respunder a tuts">
+<!ENTITY replyListButton.label "Respunder a la glista">
+<!ENTITY forwardButton.label "Vinavant">
+<!ENTITY fileButton.label "Datoteca">
+<!ENTITY archiveButton.label "Archivar">
+<!ENTITY openConversationButton.label "Conversaziun">
+<!ENTITY nextButton.label "Enavant">
+<!ENTITY nextButtonToolbarItem.label "Proxim nunlegì">
+<!ENTITY nextMsgButton.label "Proxim">
+<!ENTITY previousButton.label "Enavos">
+<!ENTITY previousButtonToolbarItem.label "Nunlegì precedent">
+<!ENTITY previousMsgButton.label "Precedent">
+<!ENTITY backButton1.label "Enavos">
+<!ENTITY goForwardButton1.label "Enavant">
+<!ENTITY deleteItem.title "Stizzar">
+<!ENTITY deleteButton.label "Stizzar">
+<!ENTITY undeleteButton.label "Restaurar">
+<!ENTITY markButton.label "Marcar">
+<!ENTITY printButton.label "Stampar">
+<!ENTITY stopButton.label "Fermar">
+<!ENTITY throbberItem.title "Indicaziun da l'activitad">
+<!ENTITY junkItem.title "Nungiavischà">
+<!ENTITY junkButton.label "Nungiavischà">
+<!ENTITY notJunkButton.label "Betg nungiavischà">
+<!ENTITY addressBookButton.label "Cudeschet d'adressas">
+<!ENTITY chatButton.label "Chat">
+<!ENTITY glodaSearch.title "Tschertga globala">
+<!ENTITY searchItem.title "Tschertga svelta">
+<!ENTITY mailViewsToolbarItem.title "Vistas">
+<!ENTITY folderLocationToolbarItem.title "Posiziun da l'ordinatur">
+<!ENTITY tagButton.label "Etichetta">
+<!ENTITY compactButton.label "Cumprimer">
+<!ENTITY appmenuButton.label "Menu cumpact">
+
+<!-- Mail Toolbar Tooltips-->
+<!ENTITY advancedButton.tooltip "Tschertga da messadis avanzada">
+<!ENTITY getMsgButton.tooltip "Retschaiver novs messadis">
+<!ENTITY getAllNewMsgCmd.label "Retschaiver tut ils messadis novs">
+<!ENTITY getAllNewMsgCmd.accesskey "n">
+<!ENTITY newMsgButton.tooltip "Scriver in nov messadi">
+<!ENTITY replyButton.tooltip "Respunder quest messadi">
+<!ENTITY replyAllButton.tooltip "Respunder al speditur ed a tut ils destinaturs">
+<!ENTITY replyListButton.tooltip "Respunder a la glista dad e-mail">
+<!ENTITY forwardButton.tooltip "Renviar il messadi tschernì">
+<!ENTITY forwardAsInline.tooltip "Trametter vinavant il messadi selecziunà sco text integrà">
+<!ENTITY forwardAsAttachment.tooltip "Trametter vinavant il messadi selecziunà sco agiunta">
+<!ENTITY fileButton.tooltip "Archivar il messadi tschernì">
+<!ENTITY archiveButton.tooltip "Archivar ils messadis tschernids">
+<!ENTITY openMsgConversationButton.tooltip "Mussar la conversaziun dal messadi tschernì">
+<!ENTITY nextButton.tooltip "Ir al proxim messadi nunlegì">
+<!ENTITY nextMsgButton.tooltip "Ir al proxim messadi">
+<!ENTITY previousButton.tooltip "Ir al messadi nunlegì precedent">
+<!ENTITY previousMsgButton.tooltip "Ir al messadi precedent">
+<!ENTITY goForwardButton.tooltip "Ir al proxim messadi">
+<!ENTITY goBackButton.tooltip "Ir al messadi precedent">
+<!ENTITY deleteButton.tooltip "Stizzar il messadi u l'ordinatur tschernì">
+<!ENTITY undeleteButton.tooltip "Restaurar il messadi tschernì">
+<!ENTITY markButton.tooltip "Marcar il(s) messadi(s)">
+<!ENTITY printButton.tooltip "Stampar quest messadi">
+<!ENTITY stopButton.tooltip "Fermar la transmissiun actuala">
+<!ENTITY junkButton.tooltip "Marcar ils messadis tschernids sco nungiavischads">
+<!ENTITY notJunkButton.tooltip "Betg pli marcar ils messadis tschernids sco nungiavischads">
+<!ENTITY addressBookButton.tooltip "Avrir il cudeschet d'adressas">
+<!ENTITY chatButton.tooltip "Mussar il tab da chat">
+<!ENTITY tagButton.tooltip "(De)etichettar ils messadis">
+<!ENTITY compactButton.tooltip "Eliminar definitivamain ils messadis stizzads da l'ordinatur tschernì">
+<!ENTITY appmenuButton1.tooltip "Mussar il menu da &brandShortName;">
+<!ENTITY addonsButton.tooltip "Administrar ils supplements">
+
+<!-- Toolbar Button Popup -->
+<!ENTITY buttonMenuForwardAsInline.label "Trametter vinavant integrà">
+<!ENTITY buttonMenuForwardAsAttachment.label "Trametter vinavant sco agiunta">
+
+<!-- Remote Content Button Popup -->
+<!ENTITY remoteContentOptionsAllowForMsg.label "Mussar il cuntegn extern en quest messadi">
+<!ENTITY remoteContentOptionsAllowForMsg.accesskey "S">
+<!ENTITY editRemoteContentSettings.label "Modifitgar las preferenzas per cuntegn extern…">
+<!ENTITY editRemoteContentSettings.accesskey "E">
+<!ENTITY editRemoteContentSettingsUnix.label "Modifitgar las preferenzas per cuntegn extern…">
+<!ENTITY editRemoteContentSettingsUnix.accesskey "E">
+
+<!-- Phishing Button Popup -->
+<!ENTITY phishingOptionIgnore.label "Ignorar l'avertiment per quest messadi">
+<!ENTITY phishingOptionIgnore.accesskey "n">
+<!ENTITY phishingOptionSettings.label "Modifitgar las preferenzas per chattar scam…">
+<!ENTITY phishingOptionSettings.accesskey "d">
+<!ENTITY phishingOptionSettingsUnix.label "Modifitgar las preferenzas per chattar scam…">
+<!ENTITY phishingOptionSettingsUnix.accesskey "d">
+
+<!-- AppMenu Popup -->
+<!ENTITY appmenuNewMsgCmd.label "Nov messadi">
+<!ENTITY appmenuNewContactCmd.label "Contact en il cudeschet d'adressas…">
+<!ENTITY appmenuEditMenu.label "Modifitgar">
+<!ENTITY appmenuToolbarLayout.label "Design da las travs d'utensils…">
+<!ENTITY appmenuSelectThread.label "Tscherner in tema">
+<!ENTITY appmenuSelectFlagged.label "Tscherner messadis cun staila">
+
+<!-- Tags Menu Popup -->
+<!ENTITY addNewTag.label "Nova etichetta…">
+<!ENTITY addNewTag.accesskey "N">
+<!ENTITY manageTags.label "Administrar las etichettas…">
+<!ENTITY manageTags.accesskey "M">
+
+<!-- Folder Pane -->
+<!ENTITY folderNameColumn.label "Num">
+<!ENTITY folderUnreadColumn.label "Nunlegì">
+<!ENTITY folderTotalColumn.label "Total">
+<!ENTITY folderSizeColumn.label "Grondezza">
+
+<!-- Folder Pane Context Menu -->
+<!ENTITY folderContextGetMessages.label "Retschaiver messadis">
+<!ENTITY folderContextGetMessages.accesskey "R">
+<!ENTITY folderContextMarkAllFoldersRead.label "Marcar tut ils ordinaturs sco legids">
+<!ENTITY folderContextPauseAllUpdates.label "Metter en pausa tut las actualisaziuns">
+<!ENTITY folderContextPauseUpdates.label "Metter en pausa las actualisaziuns">
+<!ENTITY folderContextPauseUpdates.accesskey "u">
+<!ENTITY folderContextOpenInNewWindow.label "Avrir en ina nova fanestra">
+<!ENTITY folderContextOpenInNewWindow.accesskey "A">
+<!ENTITY folderContextOpenNewTab.label "Avrir en in nov tab">
+<!ENTITY folderContextOpenNewTab.accesskey "T">
+<!ENTITY folderContextNew.label "Nov sutordinatur…">
+<!ENTITY folderContextNew.accesskey "N">
+<!ENTITY folderContextRename.label "Renumnar…">
+<!ENTITY folderContextRename.accesskey "R">
+<!ENTITY folderContextRemove.label "Stizzar">
+<!ENTITY folderContextRemove.accesskey "z">
+<!ENTITY folderContextCompact.label "Cumprimer">
+<!ENTITY folderContextCompact.accesskey "C">
+<!ENTITY folderContextEmptyTrash.label "Svidar il chanaster da palpiri">
+<!ENTITY folderContextEmptyTrash.accesskey "h">
+<!ENTITY folderContextEmptyJunk.label "Svidar l'ordinatur per messadis nungiavischads">
+<!ENTITY folderContextEmptyJunk.accesskey "n">
+<!ENTITY folderContextSendUnsentMessages.label "Trametter ils messadis betg tramess">
+<!ENTITY folderContextSendUnsentMessages.accesskey "t">
+<!ENTITY folderContextUnsubscribe.label "Annullar l'abunament">
+<!ENTITY folderContextUnsubscribe.accesskey "U">
+<!ENTITY folderContextMarkNewsgroupRead.label "Marcar la gruppa da discussiun sco legida">
+<!ENTITY folderContextMarkNewsgroupRead.accesskey "g">
+<!ENTITY folderContextMarkMailFolderRead.label "Marcar l'ordinatur sco legì">
+<!ENTITY folderContextMarkMailFolderRead.accesskey "M">
+<!ENTITY folderContextSubscribe.label "Abunar…">
+<!ENTITY folderContextSubscribe.accesskey "b">
+<!ENTITY folderContextSearchForMessages.label "Tschertgar messadis…">
+<!ENTITY folderContextSearchForMessages.accesskey "S">
+<!ENTITY folderContextProperties2.label "Caracteristicas">
+<!ENTITY folderContextProperties2.accesskey "C">
+<!ENTITY folderContextFavoriteFolder.label "Ordinatur da favurits">
+<!ENTITY folderContextFavoriteFolder.accesskey "a">
+<!ENTITY folderContextSettings2.label "Preferenzas">
+<!ENTITY folderContextSettings2.accesskey "P">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label "Il num u il messadi cuntegna:">
+<!ENTITY SearchNameOrEmail.accesskey "N">
+
+<!-- Gloda Search Bar -->
+<!ENTITY glodaSearchBar.placeholder "Tschertgar messadis…">
+
+<!-- Quick Search Menu Bar -->
+<!ENTITY searchSubjectMenu.label "Object">
+<!ENTITY searchFromMenu.label "Da">
+<!ENTITY searchSubjectOrFromMenu.label "Object u speditur">
+<!ENTITY searchRecipient.label "A u cc">
+<!ENTITY searchSubjectOrRecipientMenu.label "Object, a u cc">
+<!ENTITY searchMessageBody.label "Text dal messadi">
+<!ENTITY saveAsVirtualFolderMenu.label "Memorisar sco ordinatur virtual…">
+
+<!-- Thread Pane -->
+<!ENTITY selectColumn.label "Tscherner ils messadis">
+<!ENTITY threadColumn.label "Tema">
+<!ENTITY fromColumn.label "Da">
+<!ENTITY recipientColumn.label "Destinatur">
+<!ENTITY correspondentColumn.label "Correspundents">
+<!ENTITY subjectColumn.label "Object">
+<!ENTITY dateColumn.label "Data">
+<!ENTITY priorityColumn.label "Prioritad">
+<!ENTITY tagsColumn.label "Etichetta">
+<!ENTITY accountColumn.label "Conto">
+<!ENTITY statusColumn.label "Status">
+<!ENTITY sizeColumn.label "Grondezza">
+<!ENTITY junkStatusColumn.label "Status da nungiavischà">
+<!ENTITY unreadColumn.label "Nunlegì">
+<!ENTITY totalColumn.label "Total">
+<!ENTITY readColumn.label "Legì">
+<!ENTITY receivedColumn.label "Retschavì">
+<!ENTITY starredColumn.label "Cun staila">
+<!ENTITY locationColumn.label "Adressa">
+<!ENTITY idColumn.label "Successiun dad entrada">
+<!ENTITY attachmentColumn.label "Agiuntas">
+
+<!ENTITY deleteColumn.label "Stizzar">
+
+<!-- Thread Pane Tooltips -->
+<!ENTITY columnChooser2.tooltip "Tscherner las colonnas che duain vegnir mussadas">
+<!ENTITY selectColumn.tooltip "(De)selecziunar tut ils messadis">
+<!ENTITY threadColumn2.tooltip "Mussar gruppà tenor tema">
+<!ENTITY fromColumn2.tooltip "Zavrar tenor speditur">
+<!ENTITY recipientColumn2.tooltip "Zavrar tenor destinatur">
+<!ENTITY correspondentColumn2.tooltip "Zavrar tenor correspundents">
+<!ENTITY subjectColumn2.tooltip "Zavrar tenor object">
+<!ENTITY dateColumn2.tooltip "Zavrar tenor data">
+<!ENTITY priorityColumn2.tooltip "Zavrar tenor prioritad">
+<!ENTITY tagsColumn2.tooltip "Zavrar tenor etichettas">
+<!ENTITY accountColumn2.tooltip "Zavrar tenor conto">
+<!ENTITY statusColumn2.tooltip "Zavrar tenor status">
+<!ENTITY sizeColumn2.tooltip "Zavrar tenor grondezza">
+<!ENTITY junkStatusColumn2.tooltip "Zavrar tenor il status da nungiavischà">
+<!ENTITY unreadColumn2.tooltip "Dumber da messadis nunlegids en il tema">
+<!ENTITY totalColumn2.tooltip "Dumber total da messadis en il tema">
+<!ENTITY readColumn2.tooltip "Zavrar tenor 'Legì'">
+<!ENTITY receivedColumn2.tooltip "Zavrar tenor la data da retschavida">
+<!ENTITY starredColumn2.tooltip "Zavrar tenor staila">
+<!ENTITY locationColumn2.tooltip "Zavrar tenor lieu">
+<!ENTITY idColumn2.tooltip "Zavrar tenor successiun da retschavida">
+<!ENTITY attachmentColumn2.tooltip "Zavrar tenor agiuntas">
+
+<!ENTITY deleteColumn.tooltip "Stizzar in messadi">
+
+<!-- Thread Pane Context Menu -->
+<!ENTITY contextNewMsgFromTemplate.label "Nov messadi cun agid dad in model">
+<!ENTITY contextOpenNewWindow.label "Avrir il messadi en ina nova fanestra">
+<!ENTITY contextOpenNewWindow.accesskey "f">
+<!-- The contextOpenNewTab.accesskey ("T") potentially conflicts with
+     cutCmd.accessKey which is defined in textcontext.dtd from toolkit. Right
+     now, both menu items can't be visible at the same time, but should someone
+     enable copy/paste of message, this key would probably need to be changed. -->
+<!ENTITY contextOpenNewTab.label "Avrir il messadi en in nov tab">
+<!ENTITY contextOpenNewTab.accesskey "t">
+<!ENTITY contextOpenConversation.label "Avrir il messadi sco conversaziun">
+<!ENTITY contextOpenConversation.accesskey "v">
+<!ENTITY contextOpenContainingFolder.label "Avrir il messadi en l'ordinatur che cuntegna el">
+<!ENTITY contextOpenContainingFolder.accesskey "n">
+<!ENTITY contextEditMsgAsNew.label "Modifitgar sco nov messadi">
+<!ENTITY contextEditMsgAsNew.accesskey "M">
+<!ENTITY contextEditDraftMsg.label "Modifitgar il sboz dal messadi">
+<!ENTITY contextEditTemplate.label "Modifitgar il model">
+<!ENTITY contextEditTemplate.accesskey "m">
+<!ENTITY contextArchive.label "Archivar">
+<!ENTITY contextArchive.accesskey "A">
+<!ENTITY contextReplySender.label "Respunder mo al speditur">
+<!ENTITY contextReplySender.accesskey "R">
+<!ENTITY contextReplyNewsgroup2.label "Followup a la gruppa da discussiun">
+<!ENTITY contextReplyNewsgroup2.accesskey "d">
+<!ENTITY contextReplyAll.label "Respunder a tuts">
+<!ENTITY contextReplyAll.accesskey "a">
+<!ENTITY contextReplyList.label "Respunder a la glista">
+<!ENTITY contextReplyList.accesskey "g">
+<!ENTITY contextForward.label "Renviar">
+<!ENTITY contextForward.accesskey "F">
+<!ENTITY contextForwardAsMenu.label "Renviar sco">
+<!ENTITY contextForwardAsMenu.accesskey "o">
+<!ENTITY contextForwardAsInline.label "Integrà">
+<!ENTITY contextForwardAsInline.accesskey "I">
+<!ENTITY contextForwardAsAttachmentItem.label "Agiunta">
+<!ENTITY contextForwardAsAttachmentItem.accesskey "A">
+<!ENTITY contextMultiForwardAsAttachment.label "Renviar sco agiuntas">
+<!ENTITY contextMultiForwardAsAttachment.accesskey "o">
+<!ENTITY contextMoveMsgMenu.label "Spustar a">
+<!ENTITY contextMoveMsgMenu.accesskey "p">
+<!ENTITY contextMoveCopyMsgRecentMenu.label "Ultims ordinaturs">
+<!ENTITY contextMoveCopyMsgRecentMenu.accesskey "U">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.label "Favurits">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.accesskey "F">
+<!ENTITY contextCopyMsgMenu.label "Copiar en">
+<!ENTITY contextCopyMsgMenu.accesskey "C">
+<!ENTITY contextKillThreadMenu.label "Ignorar quest tema">
+<!ENTITY contextKillSubthreadMenu.accesskey "b">
+<!ENTITY contextKillThreadMenu.accesskey "I">
+<!ENTITY contextKillSubthreadMenu.label "Ignorar quest suttema">
+<!ENTITY contextWatchThreadMenu.label "Observar quest tema">
+<!-- LOCALIZATION NOTE (contextWatchThreadMenu.accesskey):
+     In the en-US locale we ran out of access keys, so there is an empty access key for
+     Watch Thread. Localizers can pick a suitable key
+  -->
+<!ENTITY contextWatchThreadMenu.accesskey "t">
+<!ENTITY contextSaveAs.label "Memorisar sut…">
+<!ENTITY contextSaveAs.accesskey "S">
+<!ENTITY contextPrint.label "Stampar…">
+<!ENTITY contextPrint.accesskey "P">
+<!ENTITY contextPrintPreview.label "Prevista da stampa">
+<!ENTITY contextPrintPreview.accesskey "t">
+
+<!-- LOCALIZATION NOTE (columnPicker.applyTo.label):
+     This option in the thread pane column picker pops up a sub-menu containing
+     the "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" options. This item indicates
+     a desire to apply the currently displayed set of columns to some other
+     folder(s). The sub-menu items indicate whether we want to apply it to just
+     a folder or also its children.
+  -->
+<!ENTITY columnPicker.applyTo.label "Applitgar las colonnas a…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolder.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolderAndChildren.label". It indicates a desire to
+     apply the currently display thread pane column settings to a single folder
+     that the user selects using the same widget as the move to/copy to
+     mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolder.label "Ordinatur">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolderAndChildren.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolder.label". It indicates a desire to
+     apply the currently display thread pane column settings to a folder and all
+     of its descendents. The user selects the folder using the same widget as the
+     move to/copy to mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolderAndChildren.label "Ordinatur e ses sutordinaturs…">
+<!-- LOCALIZATION NOTE (columnPicker.thisFolder.label):
+     This is used in the folder selection widget for the
+     "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" menu options. Whenever
+     a folder has children, it results in a menu popup; the first menu item
+     in that popup is given this label to indicate that that folder should be
+     selected. For example, if folder "A" has two children, "B" and "C", then
+     when the user hovers over "A", a new popup menu will be displayed whose
+     items are "This folder", "B", and "C". This is the equivalent of the
+     "File here" option for the move to/copy to widget.
+  -->
+<!ENTITY columnPicker.thisFolder.label "Quest ordinatur">
+
+<!-- Media (video/audio) controls -->
+<!ENTITY contextPlay.label "Fa ir">
+<!ENTITY contextPlay.accesskey "F">
+<!ENTITY contextPause.label "Pausa">
+<!ENTITY contextPause.accesskey "P">
+<!ENTITY contextMute.label "Senza tun">
+<!ENTITY contextMute.accesskey "z">
+<!ENTITY contextUnmute.label "Cun tun">
+<!ENTITY contextUnmute.accesskey "t">
+
+<!-- Quick Search Bar -->
+<!-- LOCALIZATION NOTE (quickSearchCmd.key):
+     This is actually the key used for the global message search box; we have
+     not changed
+  -->
+<!ENTITY quickSearchCmd.key "k">
+<!-- LOCALIZATION NOTE (search.label.base1):
+     This is the base of the empty text for the global search box. We replace
+     #1 with the contents of the appropriate search.keyLabel.* value for the
+     platform.
+     The goal is to convey to the user that typing in the box will allow them
+     to search for messages globally and that there is a hotkey they can press
+     to get to the box faster. If the global indexer is disabled, the search
+     box will be collapsed and the user will never see this message.
+  -->
+<!ENTITY search.label.base1 "Tschertgar #1">
+<!-- LOCALIZATION NOTE (search.keyLabel.nonmac):
+     The description of the key-binding to get into the global search box on
+     windows and linux (which use the control key). We use the key defined in
+     the quickSearchCmd.key entity defined above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.nonmac "&lt;Ctrl+K&gt;">
+<!-- LOCALIZATION NOTE (search.keyLabel.mac):
+     The description of the key-binding to get into the global search box on mac
+     systems. We use the key defined in the quickSearchCmd.key entity defined
+     above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.mac "&lt;&#x2318;K&gt;">
+
+<!-- Message Header Context Menu -->
+<!ENTITY AddToAddressBook.label "Agiuntar al cudeschet d'adressas…">
+<!ENTITY AddToAddressBook.accesskey "g">
+<!ENTITY AddDirectlyToAddressBook.label "Agiuntar al cudeschet d'adressas">
+<!ENTITY AddDirectlyToAddressBook.accesskey "g">
+<!ENTITY EditContact1.label "Modifitgar il contact…">
+<!ENTITY EditContact1.accesskey "M">
+<!ENTITY ViewContact.label "Mussar il contact">
+<!ENTITY ViewContact.accesskey "c">
+<!ENTITY SubscribeToNewsgroup.label "Abunar ina gruppa da discussiun">
+<!ENTITY SubscribeToNewsgroup.accesskey "N">
+<!ENTITY SendMessageTo.label "Scriver in messadi a">
+<!ENTITY SendMessageTo.accesskey "s">
+<!ENTITY CopyEmailAddress.label "Copiar l'adressa dad e-mail">
+<!ENTITY CopyEmailAddress.accesskey "C">
+<!ENTITY CopyNameAndEmailAddress.label "Copiar il num e l'adressa dad e-mail">
+<!ENTITY CopyNameAndEmailAddress.accesskey "n">
+<!ENTITY CopyNewsgroupName.label "Copiar il num da la gruppa da discussiun">
+<!ENTITY CopyNewsgroupName.accesskey "C">
+<!ENTITY CopyNewsgroupURL.label "Copiar l'URL da la gruppa da discussiun">
+<!ENTITY CopyNewsgroupURL.accesskey "U">
+<!ENTITY CreateFilterFrom.label "Crear in filter or da…">
+<!ENTITY CreateFilterFrom.accesskey "F">
+<!ENTITY reportPhishingURL.label "Rapportar ina emprova d'engion…">
+<!ENTITY reportPhishingURL.accesskey "o">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Agiuntar dicziunaris…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Content Pane Context Menu -->
+<!ENTITY saveLinkAsCmd.label "Memorisar la destinaziun sut…">
+<!ENTITY saveLinkAsCmd.accesskey "d">
+<!ENTITY saveImageAsCmd.label "Memorisar la grafica sut…">
+<!ENTITY saveImageAsCmd.accesskey "M">
+<!ENTITY copyLinkCmd.label "Copiar l'adressa da la colliaziun">
+<!ENTITY copyLinkCmd.accesskey "C">
+<!ENTITY copyImageAllCmd.label "Copiar la grafica">
+<!ENTITY copyImageAllCmd.accesskey "I">
+<!ENTITY copyEmailCmd.label "Copiar l'adressa dad e-mail">
+<!ENTITY copyEmailCmd.accesskey "E">
+<!ENTITY stopCmd.label "Fermar">
+<!ENTITY stopCmd.accesskey "F">
+<!ENTITY reloadCmd.label "Rechargiar">
+<!ENTITY reloadCmd.accesskey "R">
+<!ENTITY openInBrowser.label "Avrir en il navigatur">
+<!ENTITY openInBrowser.accesskey "A">
+<!ENTITY openLinkInBrowser.label "Avrir la colliaziun en il navigatur">
+<!ENTITY openLinkInBrowser.accesskey "O">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label "Terminar">
+
+<!-- Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.label "Minimar">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "Prender tuts enavant">
+<!ENTITY zoomWindow.label "Zoom">
+
+<!-- Mac OS X Application Menu (Cocoa widgets) -->
+<!ENTITY preferencesCmdMac2.label       "Preferenzas">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+<!ENTITY preferencesCmdMac.modifiers    "accel">
+<!ENTITY servicesMenuMac.label          "Servetschs">
+<!ENTITY hideThisAppCmdMac.label        "Zuppentar &brandShortName;">
+<!ENTITY hideThisAppCmdMac.commandkey   "H">
+<!ENTITY hideThisAppCmdMac.modifiers    "accel">
+<!ENTITY hideOtherAppsCmdMac.label      "Zuppentar il rest">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+<!ENTITY hideOtherAppsCmdMac.modifiers  "accel,alt">
+<!ENTITY showAllAppsCmdMac.label        "Mussar tut">
+
+<!-- Mac OS X Dock Icon pop-up menu -->
+<!ENTITY dockOptions.label              "Opziuns da l'icona da l'applicaziun…">
+<!ENTITY writeNewMessageDock.label      "Scriver in nov messadi">
+<!ENTITY openAddressBookDock.label      "Avrir il cudeschet d'adressas">
+
+<!-- Content tab Navigation buttons -->
+<!ENTITY browseBackButton.tooltip    "A la pagina precedenta">
+<!ENTITY browseForwardButton.tooltip "A la proxima pagina">

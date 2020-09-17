@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "O nevyžiadanej pošte">
+<!ENTITY window.width "450">
+<!ENTITY info1a.label "Program &brandShortName; automaticky detekuje prichádzajúce správy, ktoré vyzerajú ako nevyžiadaná pošta resp. nevyžiadaná reklama (tiež známe ako &quot;spam&quot;). Takéto správy potom &brandShortName; v zozname správ označí ikonou nevyžiadanej pošty">
+<!ENTITY info1b.label ".">
+<!ENTITY info2.label "Je vhodné vytrénovať program &brandShortName; tak, aby dokázal správne identifikovať nevyžiadanú poštu. Dosiahnete to používaním tlačidla Spam na paneli nástrojov pre tie správy, ktoré program neidentifikoval správne.">
+<!ENTITY info3.label "Keď sa &brandShortName; naučí správne rozpoznávať nevyžiadanú poštu, môžete nastaviť, aby sa takáto pošta automaticky presúvala do priečinka Spam.">
+<!ENTITY info4.label "Ďalšie informácie získate po kliknutí na tlačidlo Pomocník.">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Pretraživanje po tabovima">
+
+<!ENTITY tabDisplay.label "Prikaz taba">
+<!ENTITY autoHide.label "Sakrij traku taba kada je samo jedan tab otvoren">
+<!ENTITY background.label "Prebaci na nove tabove otvorene iz linkova">
+<!ENTITY warnOnClose.label "Upozori me prilikom zatvaranja prozora s većim brojem tabova">
+<!ENTITY relatedAfterCurrent.label "Otvori povezane tabove nakon trenutnog taba">
+
+<!ENTITY loadGroup.label "Pri otvaranju grupe zabilješki">
+<!ENTITY loadGroupAppend.label "Dodaj tabove">
+<!ENTITY loadGroupReplace.label "Zamijeni postojeće tabove">
+
+<!ENTITY openTabs.label "Otvori tabove umjesto prozora za">
+
+<!ENTITY openManagers.label "Otvori u novom tabu umjesto samostalnog prozora">
+<!ENTITY openDataManager.label "Menadžer podataka">
+<!ENTITY openAddOnsManager.label "Menadžer dodataka">

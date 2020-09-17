@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "HTML मेल प्रश्न">
+
+<!ENTITY recipient.label "कुछ प्राप्तकर्ता सूचीबद्ध नहीं है HTML मेल प्राप्त करने में समर्थ के रूप में.">
+
+<!ENTITY question.label "क्या आप संदेश को सादे पाठ में बदलना चाहेंगे या इसे HTML में किसी तरह भेजना चाहेंगे?">
+
+<!ENTITY plainTextAndHtml.label "सादे पाठ औऱ HTML में भेजें ">
+<!ENTITY plainTextOnly.label "सिर्फ सादे पाठ में भेजें ">
+<!ENTITY htmlOnly.label "सिर्फ HTML में भेजें">
+
+<!ENTITY send.label "भेजें">

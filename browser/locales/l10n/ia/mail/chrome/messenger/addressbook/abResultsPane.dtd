@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Libro del adresses">
+<!ENTITY Addrbook.accesskey                    "L">
+<!ENTITY GeneratedName.label                   "Nomine">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "Email">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organisation">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "Nomine phonetic">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Pseudonymo">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "Altere adresse email">
+<!ENTITY SecondEmail.accesskey                 "i">
+<!ENTITY Department.label                      "Departimento">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "Titulo">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Mobile">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Cerca-personas">
+<!ENTITY PagerNumber.accesskey                 "C">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Telephono casa">
+<!ENTITY HomePhone.accesskey                   "c">
+<!ENTITY WorkPhone.label                       "Telephono officio">
+<!ENTITY WorkPhone.accesskey                   "o">
+<!ENTITY ChatName.label                        "Nomine de chat">
+<!ENTITY ChatName.accesskey                    "c">
+<!ENTITY sortAscending.label                   "Ascendente">
+<!ENTITY sortAscending.accesskey               "A">
+<!ENTITY sortDescending.label                  "Descendente">
+<!ENTITY sortDescending.accesskey              "D">

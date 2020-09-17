@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Värvi valimine">
+<!ENTITY lastPickedColor.label "Viimati valitud värv">
+<!ENTITY lastPickedColor.accessKey "V">
+<!ENTITY chooseColor1.label "Vali värv:">
+<!ENTITY chooseColor2.label "Sisesta HTML-värvi kood">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(nt: &quot;#0000ff&quot; või &quot;blue&quot;):">
+<!ENTITY default.label "Vaikimisi">
+<!ENTITY default.accessKey "V">
+<!ENTITY palette.label "Palett:">
+<!ENTITY standardPalette.label "Standardne">
+<!ENTITY webPalette.label "Kõik veebivärvid">
+<!ENTITY background.label "Taust:">
+<!ENTITY background.accessKey "T">
+<!ENTITY table.label "Tabel">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Lahter/Lahtrid">
+<!ENTITY cell.accessKey "L">

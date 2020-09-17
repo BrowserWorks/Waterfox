@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "בדיקת איות">
+
+<!ENTITY misspelledWord.label "שפה:">
+<!ENTITY wordEditField.label "החלפה עם:">
+<!ENTITY wordEditField.accessKey "ע">
+<!ENTITY checkwordButton.label "בדיקת מילה">
+<!ENTITY checkwordButton.accessKey "k">
+<!ENTITY suggestions.label "הצעות:">
+<!ENTITY suggestions.accessKey "צ">
+<!ENTITY ignoreButton.label "התעלמות">
+<!ENTITY ignoreButton.accessKey "ת">
+<!ENTITY ignoreAllButton.label "התעלמות מהכול">
+<!ENTITY ignoreAllButton.accessKey "מ">
+<!ENTITY replaceButton.label "החלפה">
+<!ENTITY replaceButton.accessKey "ח">
+<!ENTITY replaceAllButton.label "החלפת הכול">
+<!ENTITY replaceAllButton.accessKey "כ">
+<!ENTITY stopButton.label "עצור">
+<!ENTITY stopButton.accessKey "ע">
+<!ENTITY userDictionary.label "מילון אישי:">
+<!ENTITY moreDictionaries.label "הורדת מילונים נוספים…">
+<!ENTITY addToUserDictionaryButton.label "הוספת מילה">
+<!ENTITY addToUserDictionaryButton.accessKey "ס">
+<!ENTITY editUserDictionaryButton.label "עריכה…">
+<!ENTITY editUserDictionaryButton.accessKey "ע">
+<!ENTITY recheckButton2.label "בדיקת הטקסט מחדש">
+<!ENTITY recheckButton2.accessKey "ט">
+<!ENTITY closeButton.label "סגירה">
+<!ENTITY closeButton.accessKey "ס">
+<!ENTITY sendButton.label "שליחה">
+<!ENTITY sendButton.accessKey "ש">
+<!ENTITY languagePopup.label "שפה:">
+<!ENTITY languagePopup.accessKey "פ">

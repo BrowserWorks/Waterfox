@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Налози - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Стање инстант дописивања">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Нови налог">
+<!ENTITY accountManager.newAccount.accesskey "Н">
+<!ENTITY accountManager.close.label          "Затвори">
+<!ENTITY accountManager.close.accesskey      "т">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Ниједан налог није подешен за сада">
+<!ENTITY accountManager.noAccount.description "Кликните на &accountManager.newAccount.label; дугме да би вас &brandShortName; спровео кроз поступак подешавања новог налога.">
+<!ENTITY account.autoSignOn.label     "Пријави ме при покретању">
+<!ENTITY account.autoSignOn.accesskey "ј">
+<!ENTITY account.connect.label        "Повежи">
+<!ENTITY account.connect.accesskey    "о">
+<!ENTITY account.disconnect.label     "Прекини везу">
+<!ENTITY account.disconnect.accesskey "з">
+<!ENTITY account.delete.label         "Обриши">
+<!ENTITY account.delete.accesskey     "б">
+<!ENTITY account.edit.label           "Својства">
+<!ENTITY account.edit.accesskey       "в">
+<!ENTITY account.moveup.label         "Помери на горе">
+<!ENTITY account.movedown.label       "Помери на доле">
+<!ENTITY account.cancelReconnection.label         "Откажи поновно повезивање">
+<!ENTITY account.cancelReconnection.accesskey     "к">
+<!ENTITY account.copyDebugLog.label     "Kопирај записник са грешкама">
+<!ENTITY account.copyDebugLog.accesskey "п">
+<!ENTITY account.showDebugLog.label     "Прикажи записник са грешкама">
+<!ENTITY account.showDebugLog.accesskey "г">
+<!ENTITY account.connecting           "Повезујем се…">
+<!ENTITY account.disconnecting        "Прекидам везу…">
+<!ENTITY account.disconnected         "Није повезано">

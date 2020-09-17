@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Ffeiliau wedi'u Cadw">
+<!ENTITY aboutDownloads.empty                      "Dim Ffeiliau wedi'u Cadw">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Agor y Ffolder sy'n eu Cynnwys">
+<!ENTITY cmd.show.accesskey                        "F">
+<!ENTITY cmd.showMac.label                         "Dangos yn Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Agor">
+<!ENTITY cmd.open.accesskey                        "o">
+<!ENTITY cmd.removeFromHistory.label               "Tynnu o'r Hanes">
+<!ENTITY cmd.removeFromHistory.accesskey           "T">
+<!ENTITY cmd.clearList.label                       "Clirio'r Rhestr">
+<!ENTITY cmd.clearList.accesskey                   "l">
+<!ENTITY cmd.clearList.tooltip                     "Tynnu pob cofnod o'r rhestr ffeiliau wedi eu cadw, ar wahân i lwythi i lawr sy'n digwydd ar hyn o bryd.">
+<!ENTITY cmd.searchDownloads.label                 "Chwilio…">
+<!ENTITY cmd.searchDownloads.key                   "w">

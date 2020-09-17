@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Abi">
+<!ENTITY helpMenu.accesskey "A">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Abi">
+<!ENTITY helpMenuWin.accesskey "A">
+<!ENTITY aboutProduct2.label "&brandShorterName;i teave">
+<!ENTITY aboutProduct2.accesskey "t">
+<!ENTITY helpTroubleshootingInfo.label     "Probleemide lahendamise teave">
+<!ENTITY helpTroubleshootingInfo.accesskey "P">
+<!ENTITY helpSafeMode.label     "Taaskäivita koos lisade keelamisega…">
+<!ENTITY helpSafeMode.accesskey "T">
+
+<!ENTITY helpSafeMode.stop.label     "Taaskäivita koos lisade lubamisega">
+<!ENTITY helpSafeMode.stop.accesskey "T">
+<!ENTITY productHelp.label "&brandShortName;i käsiraamat">
+<!ENTITY productHelp.accesskey "k">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Kiirklahvid">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpFeedbackPage.label "Anna tagasisidet…">
+<!ENTITY helpFeedbackPage.accesskey "A">
+
+<!ENTITY helpShowTour2.label "&brandShorterName;i ringkäik">
+<!ENTITY helpShowTour2.accesskey "i">
+
+<!ENTITY helpGetInvolvedPage.label "Aita kaasa">
+<!ENTITY helpGetInvolvedPage.accesskey "t">
+
+<!ENTITY helpDonationsPage.label "Tee annetus">
+<!ENTITY helpDonationsPage.accesskey "n">

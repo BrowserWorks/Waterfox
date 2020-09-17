@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "回復瀏覽狀態">
+<!ENTITY restorepage.pagetitle      "您想要如何還原您的瀏覽紀錄？">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "您前一次的 &brandShortName; 瀏覽階段不正常結束了。對於造成您的不便我們感到非常抱歉。您可以恢復您上個瀏覽階段的分頁標籤與視窗，若您不再需要它們的話也可以重新開啟一個新瀏覽階段。">
+<!ENTITY restorepage.remedies       "若 &brandShortName; 一直關閉:">
+<!ENTITY restorepage.dueToChrome    "請試著於附加元件管理員當中停用最近新增的擴充套件。">
+<!ENTITY restorepage.dueToContent   "請嘗試還原您的瀏覽階段，但不包含任何您懷疑可能造成問題的網頁:">
+
+<!ENTITY restorepage.restoreButton  "回復先前的瀏覽狀態">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.cancelButton   "放棄回復">
+<!ENTITY restorepage.cancel.access  "S">
+
+<!ENTITY restorepage.restoreHeader  "還原">
+<!ENTITY restorepage.listHeader     "視窗與分頁">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "視窗 &#37;S">
+

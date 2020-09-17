@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "ცხრილის პარამეტრები">
+<!ENTITY applyButton.label                "გამოყენება">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "დახურვა">
+<!ENTITY tableTab.label                   "ცხრილი">
+<!ENTITY cellTab.label                    "უჯრები">
+<!ENTITY tableRows.label                  "მწკრივები:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "სვეტები:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "სიმაღლე:">
+<!ENTITY tableHeight.accessKey            "G">
+<!ENTITY tableWidth.label                 "სიგანე:">
+<!ENTITY tableWidth.accessKey             "W">
+<!ENTITY tableBorderSpacing.label         "ჩარჩოები და ინტერვალი">
+<!ENTITY tableBorderWidth.label           "ჩარჩო:">
+<!ENTITY tableBorderWidth.accessKey       "B">
+<!ENTITY tableSpacing.label               "ინტერვალი:">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "სივრცე:">
+<!ENTITY tablePadding.accessKey           "P">
+<!ENTITY tablePxBetwCells.label           "პიქსელი უჯრებს შორის">
+<!ENTITY tablePxBetwBrdrCellContent.label "პიქსელი ჩარჩოსა და უჯრის შიგთავსს შორის">
+<!ENTITY tableAlignment.label             "ცხრილის განთავსება:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "სათაური:">
+<!ENTITY tableCaption.accessKey           "N">
+<!ENTITY tableCaptionAbove.label          "ცხრილის ზევით">
+<!ENTITY tableCaptionBelow.label          "ცხრილის ქვევით">
+<!ENTITY tableCaptionLeft.label           "ცხრილის მარცხნივ">
+<!ENTITY tableCaptionRight.label          "ცხრილის მარჯვნივ">
+<!ENTITY tableCaptionNone.label           "არა">
+<!ENTITY tableInheritColor.label           "(გვერდის ფერების ჩვენება)">
+
+<!ENTITY cellSelection.label              "მონიშვნა">
+<!ENTITY cellSelectCell.label             "უჯრა">
+<!ENTITY cellSelectRow.label              "მწკრივი">
+<!ENTITY cellSelectColumn.label           "სვეტი">
+<!ENTITY cellSelectNext.label             "შემდეგი">
+<!ENTITY cellSelectNext.accessKey         "N">
+<!ENTITY cellSelectPrevious.label         "წინა">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!ENTITY applyBeforeChange.label         "არსებული ცვლილებები გააქტივდება მონიშვნის შეცვლამდე">
+<!ENTITY cellContentAlignment.label       "შიგთავსის განთავსება">
+<!ENTITY cellHorizontal.label             "ჰორიზოტული:">
+<!ENTITY cellHorizontal.accessKey         "Z">
+<!ENTITY cellVertical.label               "ვერტიკალური:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "უჯრის სტილი:">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "ჩვეულებრივი">
+<!ENTITY cellHeader.label                 "თავსართი">
+<!ENTITY cellTextWrap.label               "სტრიქონის გადატანა:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "გადაიტანე">
+<!ENTITY cellNoWrap.label                 "არ გადაიტანო">
+<!ENTITY cellAlignTop.label               "ზევით">
+<!ENTITY cellAlignMiddle.label            "შუაში">
+<!ENTITY cellAlignBottom.label            "ქვევით">
+<!ENTITY cellAlignJustify.label           "შევსება">
+<!ENTITY cellInheritColor.label           "(ცხრილში ფერების ჩვენება)">
+<!ENTITY cellUseCheckboxHelp.label        "შერჩეული უჯრების პარამეტრების მისათითებლად ჩამრთველების გამოყენება">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "ზომა">
+<!ENTITY pixels.label                     "პიქსელი">
+<!ENTITY backgroundColor.label            "ფონის ფერი:">
+<!ENTITY backgroundColor.accessKey        "B">
+<!ENTITY AlignLeft.label                  "მარცხნივ">
+<!ENTITY AlignCenter.label                "ცენტრში">
+<!ENTITY AlignRight.label                 "მარჯვნივ">

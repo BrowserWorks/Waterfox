@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Abonnement på nyhetskilder">
+<!ENTITY learnMore.label             "Les mer om nyhetskilder">
+
+<!ENTITY feedTitle.label             "Tittel:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "Kilde-URL:">
+<!ENTITY feedLocation.accesskey      "K">
+<!ENTITY feedLocation2.placeholder   "Skriv inn en gyldig nyhetskilde-adresse">
+<!ENTITY locationValidate.label      "Valider">
+<!ENTITY validateText.label          "Kontroller validering og hent gyldig url.">
+
+<!ENTITY feedFolder.label            "Lagre artikler i:">
+<!ENTITY feedFolder.accesskey        "L">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Se etter nye artikler hvert ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "minutter">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "dager">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Utgiveren anbefaler:">
+
+<!ENTITY quickMode.label             "Vis artikkeloppsummering istedenfor å laste nettsiden">
+<!ENTITY quickMode.accesskey         "V">
+
+<!ENTITY autotagEnable.label         "Automatisk opprett tagger fra kildens &lt;kategori&gt;-navn">
+<!ENTITY autotagEnable.accesskey     "A">
+<!ENTITY autotagUsePrefix.label      "Prefiks på tagger:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Skriv inn taggprefiks">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Legg til">
+<!ENTITY button.addFeed.accesskey    "L">
+<!ENTITY button.verifyFeed.label     "Bekreft">
+<!ENTITY button.verifyFeed.accesskey "B">
+<!ENTITY button.updateFeed.label     "Rediger">
+<!ENTITY button.updateFeed.accesskey "R">
+<!ENTITY button.removeFeed.label     "Slett">
+<!ENTITY button.removeFeed.accesskey "S">
+<!ENTITY button.importOPML.label     "Importer">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Eksporter">
+<!ENTITY button.exportOPML.accesskey "E">
+<!ENTITY button.exportOPML.tooltip   "Eksporter nyhetskilder med mappestruktur; ctrl+klikk eller ctrl+enter for å eksportere nyhetskilder som en liste">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Lukk">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Rutzijol &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; choj nitojtob'ëx chuqa' rik'in jub'a' man jujik ta.">
+<!ENTITY aboutPage.checkForUpdates.link         "Tikanöx k'exoj taq ruwäch »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Tajin yekanöx k'exoj taq ruwäch…">
+<!ENTITY aboutPage.checkForUpdates.none         "Majun k'exoj taq ruwäch">
+<!ENTITY aboutPage.checkForUpdates.available2   "Tiqasäx k'exoj ruwäch">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Tajin niqasäx k'exoj ruwäch…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Tiyak k'exoj ruwäch chupam">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "To'ïk">
+<!ENTITY aboutPage.privacyPolicy.label          "Ichinan na'oj">
+<!ENTITY aboutPage.rights.label                 "Ke'awetamaj kiwäch ach'ojib'al">
+<!ENTITY aboutPage.relNotes.label               "Ruch'utitzijol taluxïk">
+<!ENTITY aboutPage.credits.label                "Kib'i' to'onela'">
+<!ENTITY aboutPage.license.label                "Na’oj chi rij ya'öl q’ij">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox chuqa' ri taq ruwachib'al rub'i' Firefox, etz'ib'an pa rub'i' ri Mozilla Moloj.">

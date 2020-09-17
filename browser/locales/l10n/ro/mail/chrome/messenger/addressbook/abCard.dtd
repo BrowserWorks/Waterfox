@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Contact">
+<!ENTITY Contact.accesskey               "C">
+<!ENTITY Name.box                        "Nume">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Prenume:">
+<!ENTITY NameField1.accesskey           "P">
+<!ENTITY NameField2.label               "Nume de familie:">
+<!ENTITY NameField2.accesskey           "f">
+<!ENTITY PhoneticField1.label           "Fonetic:">
+<!ENTITY PhoneticField2.label           "Fonetic:">
+<!ENTITY DisplayName.label              "Afișat ca:">
+<!ENTITY DisplayName.accesskey          "A">
+<!ENTITY preferDisplayName.label        "Prefer întotdeauna afișarea numelui deasupra antetului mesajului">
+<!ENTITY preferDisplayName.accesskey    "d">
+<!ENTITY NickName.label                 "Pseudonim:">
+<!ENTITY NickName.accesskey             "n">
+
+<!ENTITY PrimaryEmail.label             "E-mail:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "E-mail suplimentar:">
+<!ENTITY SecondEmail.accesskey          "s">
+<!ENTITY PreferMailFormat.label         "Preferă să primească mesaje în format:">
+<!ENTITY PreferMailFormat.accesskey     "r">
+<!ENTITY PlainText.label                "Text">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Necunoscut">
+<!ENTITY chatName.label                 "Nume de chat:">
+
+<!ENTITY WorkPhone.label                "Serviciu:">
+<!ENTITY WorkPhone.accesskey            "u">
+<!ENTITY HomePhone.label                "Acasă:">
+<!ENTITY HomePhone.accesskey            "m">
+<!ENTITY FaxNumber.label                "Fax:">
+<!ENTITY FaxNumber.accesskey            "x">
+<!ENTITY PagerNumber.label              "Pager:">
+<!ENTITY PagerNumber.accesskey          "g">
+<!ENTITY CellularNumber.label           "Mobil:">
+<!ENTITY CellularNumber.accesskey       "M">
+
+<!ENTITY Home.tab                       "Privat">
+<!ENTITY Home.accesskey                 "i">
+<!ENTITY HomeAddress.label              "Adresă:">
+<!ENTITY HomeAddress.accesskey          "A">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Localitate:">
+<!ENTITY HomeCity.accesskey             "o">
+<!ENTITY HomeState.label                "Județ/Provincie:">
+<!ENTITY HomeState.accesskey            "J">
+<!ENTITY HomeZipCode.label              "Cod poștal:">
+<!ENTITY HomeZipCode.accesskey          "C">
+<!ENTITY HomeCountry.label              "Țară:">
+<!ENTITY HomeCountry.accesskey          "r">
+<!ENTITY HomeWebPage.label              "Pagină web:">
+<!ENTITY HomeWebPage.accesskey          "w">
+<!ENTITY Birthday.label                 "Zi de naștere:">
+<!ENTITY Birthday.accesskey             "Z">
+<!ENTITY Month.placeholder              "Lună">
+<!ENTITY Day.placeholder                "Zi">
+<!ENTITY Year.placeholder               "An">
+<!ENTITY Age.label                      "Vârstă:">
+<!ENTITY Age.placeholder                "Vârsta">
+
+<!ENTITY Work.tab                       "Lucru">
+<!ENTITY Work.accesskey                 "L">
+<!ENTITY JobTitle.label                 "Titlu:">
+<!ENTITY JobTitle.accesskey             "T">
+<!ENTITY Department.label               "Departament:">
+<!ENTITY Department.accesskey           "D">
+<!ENTITY Company.label                  "Organizație:">
+<!ENTITY Company.accesskey              "g">
+<!ENTITY WorkAddress.label              "Adresă:">
+<!ENTITY WorkAddress.accesskey          "A">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Localitate:">
+<!ENTITY WorkCity.accesskey             "o">
+<!ENTITY WorkState.label                "Județ/provincie:">
+<!ENTITY WorkState.accesskey            "J">
+<!ENTITY WorkZipCode.label              "Cod poștal:">
+<!ENTITY WorkZipCode.accesskey          "C">
+<!ENTITY WorkCountry.label              "Țară:">
+<!ENTITY WorkCountry.accesskey          "r">
+<!ENTITY WorkWebPage.label              "Pagină web:">
+<!ENTITY WorkWebPage.accesskey          "w">
+
+<!ENTITY Other.tab                      "Altele">
+<!ENTITY Other.accesskey                "x">
+<!ENTITY Custom1.label                  "Diverse 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Diverse 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Diverse 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Diverse 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Notițe:">
+<!ENTITY Notes.accesskey                "N">
+
+<!ENTITY Chat.tab                       "Chat">
+<!ENTITY Chat.accesskey                 "h">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "Q">
+<!ENTITY XMPP.label                     "Jabber ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "Pseudonim de IRC:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Foto">
+<!ENTITY Photo.accesskey                "b">
+<!ENTITY GenericPhoto.label             "Poză generică">
+<!ENTITY GenericPhoto.accesskey         "g">
+<!ENTITY DefaultPhoto.label             "Implicită">
+<!ENTITY PhotoFile.label                "De pe acest calculator">
+<!ENTITY PhotoFile.accesskey            "r">
+<!ENTITY BrowsePhoto.label              "Răsfoiește">
+<!ENTITY BrowsePhoto.accesskey          "s">
+<!ENTITY PhotoURL.label                 "De pe web">
+<!ENTITY PhotoURL.accesskey             "w">
+<!ENTITY PhotoURL.placeholder           "Inserează sau tastează adresa web a pozei">
+<!ENTITY UpdatePhoto.label              "Actualizează">
+<!ENTITY UpdatePhoto.accesskey          "z">
+<!ENTITY PhotoDropTarget.label          "Trage noua fotografie aici">

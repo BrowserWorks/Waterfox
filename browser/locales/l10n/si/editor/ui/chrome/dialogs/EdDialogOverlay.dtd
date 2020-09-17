@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "වැඩිමනත් සැකසුම්...">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "HTML ගතිලක්ෂණ, මෝස්තර ගතිලක්ෂණ, සහ JavaScript එක් කිරීම හෝ වෙනස් කිරීම">
+<!ENTITY chooseFileButton.label "ගොනුව තෝරන්න...">
+<!ENTITY chooseFileButton.accessKey "F">
+<!ENTITY chooseFileLinkButton.label "ගොනුව තෝරන්න...">
+<!ENTITY chooseFileLinkButton.accessKey "o">
+<!ENTITY makeUrlRelative.label "URL පිටුවේ ස්ථානයට සාපේක්ෂ වේ">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "සාපේක්ෂ හා නිරපේක්ෂ URL අතර මාරු වීම. මෙය වෙනස් කිරීම සඳහා, ඔබ පළමුව පිටුව සුරැකිය යුතුමය.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField.label "Enter a web page location, a local file, or select a Named Anchor or Heading from the popup list:">
+<!ENTITY LinkURLEditField.accessKey "l">

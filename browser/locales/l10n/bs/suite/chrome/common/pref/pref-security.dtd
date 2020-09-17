@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+<!ENTITY pref.security.title              "Privatnost i sigurnost">
+
+<!ENTITY tracking.label                   "Praćenje korisnika">
+<!ENTITY trackingIntro.label              "Web stranice mogu pratiti kako ih koristite, čime utiču na vašu privatnost.">
+
+<!ENTITY doNotTrack.label                 "Reci web stranicama da ne želim biti praćen">
+<!ENTITY trackProtect.label               "Spriječite praćenje aktivnosti od poznatih stranica">
+<!ENTITY warnTrackContent.label           "Upozori me kada su otkrivene poznate aktivnosti praćenja">
+
+<!ENTITY geoLocation.label                "Lokacijski-svjesno pretraživanje">
+<!ENTITY geoIntro.label                   "Web stranice mogu zahtijevati više informacija o vašoj trenutnoj lokaciji.">
+
+<!ENTITY geoEnabled.label                 "Pitaj me za dozvolu ako je zahtjev napravljen">
+<!ENTITY geoDisabled.label                "Onemogući ovu funkciju i odbij sve zahtjeve">
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label               "Sigurno pretraživanje">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; može blokirati web stranice koje su prijavljene da imaju zlonamjerni sadržaj.">
+
+<!ENTITY blockAttackSites.label           "Blokiraj prijavljene napadačke stranice (zlonamjerni softver, virusi)">
+
+<!ENTITY blockWebForgeries.label          "Blokiraj prijavljene web falsifikate (Phishing)">

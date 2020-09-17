@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Selectielijsteigenschappen">
+
+<!ENTITY Select.label "Selectielijst">
+<!ENTITY SelectName.label "Lijstnaam:">
+<!ENTITY SelectName.accesskey "n">
+<!ENTITY SelectSize.label "Hoogte:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "Meervoudige selectie">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "Uitgeschakeld">
+<!ENTITY SelectDisabled.accesskey "U">
+<!ENTITY SelectTabIndex.label "Tabindex:">
+<!ENTITY SelectTabIndex.accesskey "i">
+
+<!ENTITY OptGroup.label "Optiegroep">
+<!ENTITY OptGroupLabel.label "Label:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "Uitgeschakeld">
+<!ENTITY OptGroupDisabled.accesskey "U">
+
+<!ENTITY Option.label "Optie">
+<!ENTITY OptionText.label "Tekst:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Waarde:">
+<!ENTITY OptionValue.accesskey "W">
+<!ENTITY OptionSelected.label "Initieel geselecteerd">
+<!ENTITY OptionSelected.accesskey "s">
+<!ENTITY OptionDisabled.label "Uitgeschakeld">
+<!ENTITY OptionDisabled.accesskey "U">
+
+<!ENTITY TextHeader.label "Tekst">
+<!ENTITY ValueHeader.label "Waarde">
+<!ENTITY SelectedHeader.label "Geselecteerd">
+
+<!ENTITY AddOption.label "Optie toevoegen">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "Groep toevoegen">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "Verwijderen">
+<!ENTITY RemoveElement.accesskey "V">
+<!ENTITY MoveElementUp.label "Omhoog verplaatsen">
+<!ENTITY MoveElementUp.accesskey "h">
+<!ENTITY MoveElementDown.label "Omlaag verplaatsen">
+<!ENTITY MoveElementDown.accesskey "l">

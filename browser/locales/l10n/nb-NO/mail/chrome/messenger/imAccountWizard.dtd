@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Veiviser for nettpratkonto">
+
+<!ENTITY accountProtocolTitle.label   "Velg nettverk">
+<!ENTITY accountProtocolInfo.label    "Velg nettverket du vil koble til.">
+<!ENTITY accountProtocolField.label   "Nettverk:">
+<!ENTITY accountProtocolGetMore.label "Hent flere …">
+
+<!ENTITY accountUsernameTitle.label   "Brukernavn">
+<!ENTITY accountUsernameDuplicate.label "Denne kontoen er allerede konfigurert!">
+
+<!ENTITY accountPasswordTitle.label   "Passord">
+<!ENTITY accountPasswordInfo.label    "Skriv inn passordet i boksen nedenfor.">
+<!ENTITY accountPasswordField.label   "Passord:">
+<!ENTITY accountPasswordManager.label "Passordet som skrives inn vil lagres i passordbehandleren. La det stå tomt dersom du ønsker å bli spurt om passordet hver gang denne kontoen kobles til.">
+
+<!ENTITY accountAdvancedTitle.label   "Avanserte innstillinger">
+<!ENTITY accountAdvancedInfo.label    "Du kan hoppe over dette steget om du vil.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Varsle meg ved ny post">
+<!ENTITY accountAliasGroupbox.caption "Lokalt alias">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Dette vil bli vist i dine samtaler når du prater. Kontakten på den andre siden vil ikke se det.">
+<!ENTITY accountProxySettings.caption "Proxyinnstillinger">
+<!ENTITY accountProxySettings.change.label     "Endre …">
+<!ENTITY accountProxySettings.change.accessKey "E">
+
+<!ENTITY accountSummaryTitle.label   "Oppsummering">
+<!ENTITY accountSummaryInfo.label    "En oppsummering av informasjonen du oppgav vises nedenfor. Kontroller den før kontoen opprettes.">
+<!ENTITY accountSummary.connectNow.label "Koble til med denne kontoen nå.">

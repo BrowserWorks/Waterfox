@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Cookies">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Zásady akceptovania cookies">
+
+<!ENTITY disableCookies.label           "Blokovať cookies">
+<!ENTITY disableCookies.accesskey       "B">
+
+<!ENTITY accNo3rdPartyCookies.label     "Povoliť len cookies z pôvodného servera (nie cookies tretích strán)">
+<!ENTITY accNo3rdPartyCookies.accesskey "e">
+
+<!ENTITY acc3rdPartyVisited.label       "Povoliť cookies tretích strán len pre v minulosti navštívené stránky">
+<!ENTITY acc3rdPartyVisited.accesskey   "m">
+
+<!ENTITY accAllCookies.label            "Povoliť všetky cookies">
+<!ENTITY accAllCookies.accesskey        "v">
+
+<!ENTITY cookieRetentionPolicy.label    "Zásady odmietnutia cookies">
+
+<!ENTITY acceptNormally.label           "Akceptovať cookies">
+<!ENTITY acceptNormally.accesskey       "A">
+
+<!ENTITY acceptForSession.label         "Akceptovať len pre aktuálnu reláciu">
+<!ENTITY acceptForSession.accesskey     "k">
+
+<!ENTITY acceptforNDays.label           "Akceptovať cookies na">
+<!ENTITY acceptforNDays.accesskey       "c">
+<!ENTITY days.label                     "dní">
+
+<!ENTITY manageCookies.label            "Správa cookies a stránok">
+<!ENTITY manageCookiesDescription.label "Povoliť zobrazenie a správu uložených cookies na základe povolenia alebo odmietnutia pre konkrétny server. Nastavenie pre konkrétny server má vyššiu prioritu ako nastavenia uvedené vyššie.">
+
+<!ENTITY viewCookies.label              "Správca Cookies">
+<!ENTITY viewCookies.accesskey          "S">
+

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY applyTheme.label          "Käytä teemaa">
+<!ENTITY applyTheme.accesskey      "e">
+<!ENTITY getMoreThemesCmd.label      "Hae lisää teemoja">
+<!ENTITY getMoreThemesCmd.accesskey  "H">
+<!ENTITY getBackgroundsCmd.label     "Hae taustakuvia">
+<!ENTITY getBackgroundsCmd.accesskey "t">

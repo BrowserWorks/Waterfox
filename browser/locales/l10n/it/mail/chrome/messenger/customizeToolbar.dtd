@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Personalizza barra degli strumenti">
+<!ENTITY dialog.dimensions        "width: 112ch; height: 36em;">
+<!ENTITY instructions.description "Si possono aggiungere o rimuovere elementi trascinandoli sulle o dalle barre degli strumenti.">
+<!ENTITY show.label               "Mostra:">
+<!ENTITY iconsAndText.label       "Icone e testo">
+<!ENTITY icons.label              "Icone">
+<!ENTITY text.label               "Testo">
+<!ENTITY iconsBesideText.label    "Icone affiancate al testo">
+<!ENTITY useSmallIcons.label      "Usa icone piccole">
+<!ENTITY restoreDefaultSet.label  "Ripristina predefiniti">
+<!ENTITY showTitlebar2.label      "Barra del titolo">
+<!ENTITY extraDragSpace2.label    "Spazio di trascinamento">
+<!ENTITY saveChanges.label        "Fine">
+<!ENTITY undoChanges.label        "Annulla cambiamenti">

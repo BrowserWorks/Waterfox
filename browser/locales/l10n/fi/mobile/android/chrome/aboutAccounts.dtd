@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox-tilit">
+<!ENTITY aboutAccounts.connected.description "Olet kirjautunut tunnuksella">
+<!ENTITY aboutAccounts.syncPreferences.label "Kosketa tästä tarkistaaksesi synkronointiasetukset">
+
+<!ENTITY aboutAccounts.noConnection.title "Ei Internet-yhteyttä">
+<!ENTITY aboutAccounts.retry.label "Yritä uudestaan">
+
+<!ENTITY aboutAccounts.restrictedError.title "Rajoitettu">
+<!ENTITY aboutAccounts.restrictedError.description "Et voi muokata Firefox-tiliä tästä profiilista.">

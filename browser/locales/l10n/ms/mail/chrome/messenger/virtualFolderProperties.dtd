@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Folder Carian Disimpan Baru">
+<!ENTITY name.label                 "Nama:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Cipta sebagai sub-folder kepada:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "Tetapkan kriteria yang digunakan untuk folder carian disimpan ini: ">
+
+<!ENTITY folderSelectionCaption.label "Pilih folder yang mahu dicari: ">
+<!ENTITY chooseFoldersButton.label "Pilih…">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "Carian Atas Talian (Memberikan hasil carian IMAP dan folder Berita yang sentiasa terkini, tapi menambah tempoh yang diambil untuk membuka folder)">
+<!ENTITY searchOnline.accesskey "C">
+<!ENTITY newFolderButton.label       "Cipta">
+<!ENTITY newFolderButton.accesskey   "p">
+<!ENTITY editFolderButton.label      "Kemaskini">
+<!ENTITY editFolderButton.accesskey  "K">

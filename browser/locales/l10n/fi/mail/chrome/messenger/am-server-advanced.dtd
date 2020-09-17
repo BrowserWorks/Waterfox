@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Tilin lisäasetukset">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP-palvelinhakemisto:">
+<!ENTITY serverDirectory.accesskey "I">
+<!ENTITY usingSubscription.label "Näytä vain tilatut kansiot">
+<!ENTITY usingSubscription.accesskey "N">
+<!ENTITY dualUseFolders.label "Palvelin tukee kansioita, joissa on alikansioita ja viestejä">
+<!ENTITY dualUseFolders.accesskey "P">
+<!ENTITY maximumConnectionsNumber.label "Suurin sallittu määrä välimuistiin tallennettuja palvelinyhteyksiä">
+<!ENTITY maximumConnectionsNumber.accesskey "S">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Nämä asetukset määrittävät IMAP-palvelimesi nimiavaruudet">
+<!ENTITY personalNamespace.label "Käyttäjäkohtainen:">
+<!ENTITY personalNamespace.accesskey "ä">
+<!ENTITY publicNamespace.label "Julkinen (yhteiskäytössä):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Muut käyttäjät:">
+<!ENTITY otherUsersNamespace.accesskey "M">
+<!ENTITY overrideNamespaces.label "Palvelin voi korvata nämä nimiavaruudet">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3DeferringDesc.label "Ladattaessa postia tämän tilin palvelimelta, tallennetaan uudet viestit kansioon:" >
+<!ENTITY accountInbox.label "Tämän tilin Saapuneet">
+<!ENTITY accountInbox.accesskey "t">
+<!ENTITY deferToServer.label "Saapuvat viestit toisen tilin saapuneet-kansioon">
+<!ENTITY deferToServer.accesskey "p">
+<!ENTITY deferGetNewMail.label "Nouda tilin viestit samalla kun muidenkin tilien viestit">
+<!ENTITY deferGetNewMail.accesskey "N">

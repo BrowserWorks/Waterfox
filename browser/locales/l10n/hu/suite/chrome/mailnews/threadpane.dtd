@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Témacsoport">
+<!ENTITY fromColumn.label "Feladó">
+<!ENTITY recipientColumn.label "Címzett">
+<!ENTITY attachmentColumn.label "Mellékletek">
+<!ENTITY subjectColumn.label "Tárgy">
+<!ENTITY dateColumn.label "Dátum">
+<!ENTITY priorityColumn.label "Sürgősség">
+<!ENTITY tagsColumn.label "Címkék">
+<!ENTITY accountColumn.label "Postafiók">
+<!ENTITY statusColumn.label "Állapot">
+<!ENTITY sizeColumn.label "Méret">
+<!ENTITY junkStatusColumn.label "Szemét-e">
+<!ENTITY unreadColumn.label "Olvasatlan">
+<!ENTITY totalColumn.label "Összesen">
+<!ENTITY readColumn.label "Olvasott">
+<!ENTITY receivedColumn.label "Érkezett">
+<!ENTITY flagColumn.label "Zászlócska">
+<!ENTITY locationColumn.label "Hely">
+<!ENTITY idColumn.label "Érkezési sorrend">
+<!--Tooltips-->
+
+<!ENTITY columnChooser2.tooltip "Válassza ki a megjelenítendő oszlopokat">
+<!ENTITY threadColumn2.tooltip "Témacsoportok megjelenítése">
+<!ENTITY fromColumn2.tooltip "Rendezés feladó szerint">
+<!ENTITY recipientColumn2.tooltip "Rendezés címzett szerint">
+<!ENTITY attachmentColumn2.tooltip "Rendezés mellékletek szerint">
+<!ENTITY subjectColumn2.tooltip "Rendezés tárgy szerint">
+<!ENTITY dateColumn2.tooltip "Rendezés dátum szerint">
+<!ENTITY priorityColumn2.tooltip "Rendezés sürgősség szerint">
+<!ENTITY tagsColumn2.tooltip "Rendezés címkék szerint">
+<!ENTITY accountColumn2.tooltip "Rendezés postafiók szerint">
+<!ENTITY statusColumn2.tooltip "Rendezés állapot szerint">
+<!ENTITY sizeColumn2.tooltip "Rendezés méret szerint">
+<!ENTITY junkStatusColumn2.tooltip "Rendezés szemét-e állapot szerint">
+<!ENTITY unreadColumn2.tooltip "A témacsoport olvasatlan üzeneteinek száma">
+<!ENTITY totalColumn2.tooltip "A témacsoport üzeneteinek száma">
+<!ENTITY readColumn2.tooltip "Rendezés olvasottság állapot szerint">
+<!ENTITY receivedColumn2.tooltip "Rendezés érkezési dátum szerint">
+<!ENTITY flagColumn2.tooltip "Rendezés zászlócska szerint">
+<!ENTITY locationColumn2.tooltip "Rendezés hely szerint">
+<!ENTITY idColumn2.tooltip "Rendezés érkezési sorrend szerint">

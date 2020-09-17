@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Proprietăți pagină">
+<!ENTITY location.label "Locație:">
+<!ENTITY lastModified.label "Ultima modificare:">
+<!ENTITY titleInput.label "Titlu:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Autor:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "Descriere:">
+<!ENTITY descriptionInput.accessKey "D">
+<!ENTITY locationNewPage.label "[Pagină nouă, nesalvată încă]">
+<!ENTITY EditHEADSource1.label "Utilizatori avansați:">
+<!ENTITY EditHEADSource2.label "Pentru a edita alte conținuturi din regiunea &lt;head&gt;, folosește „Sursă HTML” din meniul de vizualizare sau din bara modurilor de editare.">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Gjenopprett programøkt">
+<!ENTITY restorepage.pagetitle      "Vil du gjenopprette programøkten?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Den forrige &brandShortName;-programøkten fikk et uventet avbrudd. Vi beklager det inntrufne. Du kan gjenopprette faner og vinduer fra forrige programøkt, eller du kan starte en ny programøkt dersom du ikke trenger dem lenger.">
+<!ENTITY restorepage.remedies       "Dersom &brandShortName; avsluttes gjentatte ganger:">
+<!ENTITY restorepage.dueToChrome    "Forsøk å slå av utvidelser du har installert nylig i Utvidelsesbehandlingen.">
+<!ENTITY restorepage.dueToContent   "Forsøk å starte programøkten uten nettsider som du tror kan ha forårsaket problemet:">
+
+<!ENTITY restorepage.restoreButton  "Gjenopprett forrige programøkt">
+<!ENTITY restorepage.restore.access "G">
+<!ENTITY restorepage.cancelButton   "Start ny programøkt">
+<!ENTITY restorepage.cancel.access  "S">
+
+<!ENTITY restorepage.restoreHeader  "Gjenopprett">
+<!ENTITY restorepage.listHeader     "Vinduer og faner">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Vindu &#37;S">

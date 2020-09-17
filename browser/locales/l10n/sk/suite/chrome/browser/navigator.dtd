@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Súkromné prehliadanie">
+
+<!ENTITY editPageCmd.label "Upraviť stránku">
+<!ENTITY editPageCmd.accesskey "i">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Navigačný panel">
+<!ENTITY navbarCmd.accesskey "N">
+<!ENTITY bookmarksToolbarCmd.label     "Panel Záložky">
+<!ENTITY bookmarksToolbarCmd.accesskey "o">
+
+<!ENTITY closeWindow.label "Zavrieť okno">
+<!ENTITY closeWindow.accesskey "v">
+
+<!ENTITY minimizeButton.tooltip       "Minimalizovať">
+<!ENTITY restoreButton.tooltip        "Obnoviť">
+
+<!ENTITY feedsMenu.label "Odoberať kanál tejto stránky">
+<!ENTITY feedsMenu.accesskey "O">
+
+<!ENTITY menuBar.tooltip                  "Panel Ponuka">
+<!ENTITY bookmarksToolbar.tooltip         "Panel Záložky">
+<!ENTITY navigationToolbar.tooltip        "Navigačný panel">
+
+<!ENTITY editBookmark.done.label "Hotovo">
+<!ENTITY editBookmark.cancel.label "Zrušiť">
+<!ENTITY editBookmark.removeBookmark.accessKey "r">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Naspäť">
+<!ENTITY backButton.tooltip           "Späť o jednu stránku">
+<!ENTITY forwardButton.label          "Dopredu">
+<!ENTITY forwardButton.tooltip        "Dopredu o jednu stránku">
+<!ENTITY reloadButton.label           "Obnoviť">
+<!ENTITY reloadButton.tooltip         "Načítať najnovšiu verziu stránky">
+<!ENTITY stopButton.label             "Zastaviť">
+<!ENTITY stopButton.tooltip           "Zastaviť načítavanie tejto stránky">
+<!ENTITY searchButton.label           "Hľadať">
+<!ENTITY searchButton.tooltip         "Zadajte slovo do poľa vľavo a kliknite na tlačidlo Hľadať">
+<!ENTITY goButton.label               "Prejsť">
+<!ENTITY goButton.tooltip             "Zadajte adresu do poľa vľavo a kliknite na tlačidlo Prejsť">
+<!ENTITY printButton.label            "Tlačiť">
+<!ENTITY printButton.tooltip          "Vytlačiť túto stránku">
+
+<!ENTITY throbber.tooltip             "Prejsť na domovskú stránku &vendorShortName;">
+
+<!ENTITY throbber.tooltip2            "Prejsť na domovskú stránku &brandShortName;">
+
+<!ENTITY locationBar.tooltip          "Zadajte výraz vyhľadávania, kľúčové slovo alebo webovú adresu">
+<!ENTITY locationBar.accesskey        "t">
+<!ENTITY locationBar.title            "Umiestnenie">
+<!ENTITY proxyIcon.tooltip            "Presunutím ikony vytvorte odkaz na túto stránku">
+
+<!ENTITY searchItem.title             "Vyhľadávanie">
+
+<!ENTITY bookmarksButton.label        "Záložky">
+<!ENTITY bookmarksButton.tooltip      "Zoznam záložiek">
+<!ENTITY homeButton.label             "Domov">
+<!ENTITY bookmarksToolbarItem.label   "Položky panela Záložky">
+<!ENTITY bookmarksToolbarChevron.tooltip "Zobraziť ďalšie záložky">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Hotovo">
+
+<!ENTITY popupIcon.tooltiptext      "Zrušiť blokovanie vyskakovacích okien tejto stránky">
+
+<!ENTITY viewSecurityInfo.label      "Zobraziť informácie o zabezpečení">
+<!ENTITY viewSecurityInfo.accesskey  "Z">
+<!ENTITY viewCertificate.label       "Zobraziť certifikát">
+<!ENTITY viewCertificate.accesskey   "c">
+<!ENTITY viewCertManager.label       "Otvoriť Správcu certifikátov">
+<!ENTITY viewCertManager.accesskey   "S">
+
+<!ENTITY zoomIn.tooltiptext          "Zväčšiť">
+<!ENTITY zoomOut.tooltiptext         "Zmenšiť">

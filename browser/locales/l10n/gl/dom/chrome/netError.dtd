@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Produciuse un erro ao cargar a páxina">
+<!ENTITY retry.label "Tentar de novo">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Imposíbel conectar">
+<!ENTITY connectionFailure.longDesc "<p>A pesar de o sitio parecer válido, o explorador non conseguiu estabelecer 
+conexión.</p><ul><li>É posíbel que o sitio non estea dispoñíbel temporalmente? Tente de novo máis 
+tarde.</li><li>Non 
+consegue navegar por outros sitios? Verifique a conexión de rede do computador.</li><li>Están o computador ou a rede protexidos por un firewall ou por proxy? Unha configuración incorrecta pode interferir na exploración web.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Porto restrinxido por seguranza">
+<!ENTITY deniedPortAccess.longDesc "<p>O enderezo solicitado especificou un porto normalmente <em>non</em> utilizado para a 
+exploración web (por exemplo, <q>mozilla.org:80</q> para o porto 80 
+de mozilla.org) O explorador cancelou o seu pedido para súa protección e seguranza.</p>">
+
+<!ENTITY dnsNotFound.title "Non se atopou o enderezo">
+<!ENTITY dnsNotFound.longDesc "<p>O navegador non conseguiu localizar o servidor do enderezo fornecido.</p><ul><li>Introduciu correctamente o dominio? (i.e. <q><strong>ww</strong>.mozilla.org</q> en vez de <q><strong>www</strong>.mozilla.org</q>)</li><li>Ten a certeza de existir este nome de dominio? O seu rexistro pode ter caducado.</li><li>Non consegue navegar por outros sitios? Verifique a conexión de rede e a configuración do servidor DNS.</li><li>Están o computador ou a rede protexidos por un firewall ou por proxy? Unha configuración incorrecta pode interferir na exploración web.</li></ul>">
+
+<!ENTITY fileNotFound.title "Non se atopou o ficheiro">
+<!ENTITY fileNotFound.longDesc "<ul><li>É posíbel que o elemento fose renomeado, eliminado ou movido?</li><li>Hai algún erro ortográfico, de maiúsculas ou tipográfico no enderezo?</li><li>Ten os permisos necesarios para acceder ao elemento solicitado?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Denegouse o acceso ao ficheiro">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Pode que fose retirado, movido ou os permisos do ficheiro impiden o acceso.</li></ul>">
+
+<!ENTITY generic.title "Non é posíbel rematar a solicitude">
+<!ENTITY generic.longDesc "<p>Non hai información adicional dispoñíbel neste momento acerca deste problema ou erro.</p>">
+
+<!ENTITY malformedURI.title "Enderezo incorrecto">
+<!ENTITY malformedURI.longDesc "<p>Non se recoñece o formato do enderezo fornecido. Busque erros na barra de localización e tente de novo.</p>">
+
+<!ENTITY netInterrupt.title "Interrompeuse a transferencia de datos">
+<!ENTITY netInterrupt.longDesc "<p>O navegador conectouse con éxito, mais a conexión interrompeuse durante a transferencia de información. Tente de novo.</p><ul><li>Non consegue navegar por outros sitios? Verifique a conexión de rede do computador.</li><li>Continúa a ter problemas? Consulte co administrador da rede ou co fornecedor da Internet para obter soporte técnico.</li></ul>">
+
+<!ENTITY notCached.title "O documento caducou">
+<!ENTITY notCached.longDesc "<p>O documento solicitado non está dispoñíbel na memoria caché do navegador.</p><ul><li>Por razóns de seguranza, automaticamente o navegador non volve a solicitar documentos sensíbeis.</li><li>Prema Tentar de novo para volver a solicitar o documento do sitio web.</li></ul>">
+
+<!ENTITY netOffline.title "Modo sen conexión">
+<!ENTITY netOffline.longDesc2 "<p>O navegador está a funcionar en modo sen conexión e non é posíbel conectar ao elemento solicitado.</p><ul><li>O computador está conectado a unha rede activa?</li><li>Prema &quot;Tentar de novo&quot; para desactivar o modo sen conexión e recargar a páxina.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Erro de codificación do contido">
+<!ENTITY contentEncodingError.longDesc "<p>Non é posíbel amosar a páxina a que está a tentar acceder porque utiliza un formulario de compresión non compatíbel.</p><ul><li>Contacte cos propietarios do sitio web para informalos deste problema.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Tipo de ficheiro inseguro">
+<!ENTITY unsafeContentType.longDesc "<ul><li>Contacte cos propietarios do sitio web para informalos deste problema.</li></ul>">
+
+<!ENTITY netReset.title "Interrompeuse a conexión">
+<!ENTITY netReset.longDesc "<p>Interrompeuse a ligazón de rede durante a negociación da conexión. Tente de novo.</p>">
+
+<!ENTITY netTimeout.title "Tempo de espera da rede">
+<!ENTITY netTimeout.longDesc "<p>O navegador esgotou o tempo de espera de resposta porque o sitio solicitado non respondeu ao pedido de conexión.</p><ul><li>É posíbel que o servidor tivese un alto número de visitas ou estivese fóra de servizo? Tente de novo máis tarde.</li><li>Non consegue navegar por outros sitios? Verifique a conexión de rede do computador.</li><li>Están o computador ou a rede protexidos por un firewall ou por proxy? Unha configuración incorrecta pode interferir na exploración web.</li><li>Continúa a ter problemas? Consulte co administrador da rede ou co fornecedor da Internet para obter soporte técnico.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Protocolo descoñecido">
+<!ENTITY unknownProtocolFound.longDesc "<p>O enderezo especifica un protocolo que o navegador non recoñece (i.e. <q>wxyz://</q>) e, portanto, non consegue conectar correctamente co sitio.</p><ul><li>Está a tentar acceder a algún tipo de servizo multimedia ou outros servizos non textuais? Busque no sitio requisitos adicionais.</li><li>Algúns protocolos poden requirir software ou plugins de terceiros para que o explorador consiga recoñecelos.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "O servidor proxy rexeitou a conexión">
+<!ENTITY proxyConnectFailure.longDesc "<p>O navegador está configurado para utilizar un servidor proxy mais o proxy rexeitou unha conexión.</p><ul><li>É correcta a configuración proxy do navegador? Verifique a configuración e tente de novo.</li><li>Permite o servizo proxy conexións con esta rede?</li><li>Continúa a ter problemas? Consulte co administrador da rede ou co fornecedor da Internet para obter soporte técnico.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Non se atopou o servidor proxy">
+<!ENTITY proxyResolveFailure.longDesc "<p>O navegador está configurado para utilizar un servidor proxy mais non foi posíbel 
+atopalo.</p><ul><li>É correcta a configuración proxy do navegador? Comprobe a configuración e tente de novo.</li><li>O computador está conectado a unha rede activa?</li><li>Continúa a ter problemas? Consulte co administrador da rede ou co fornecedor da Internet para obter soporte técnico.</li></ul>">
+
+<!ENTITY redirectLoop.title "Bucle de redirección">
+<!ENTITY redirectLoop.longDesc "<p>O navegador deixou de tentar recuperar o elemento solicitado. O sitio está a redireccionar 
+o pedido dunha forma que nunca concluirá.</p><ul><li>Desactivou ou bloqueou cookies necesarias para este 
+sitio?</li><li><em>NOTA</em>: Se aceptando as cookies do sitio non soluciona o problema, é probábel que se deba a un 
+erro da configuración do servidor e non do computador.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Resposta incorrecta">
+<!ENTITY unknownSocketType.longDesc "<p>O sitio respondeu de maneira inesperada á solicitude da rede e o navegador non pode continuar.</p>">
+
+<!ENTITY nssFailure2.title "Fallou a conexión segura">
+<!ENTITY nssFailure2.longDesc2 "<p>Non é posíbel amosar a páxina a que está a tentar acceder porque non foi posíbel verificar a autenticidade dos datos recibidos.</p><ul><li>Contacte cos propietarios do sitio web para informalos deste problema.</li></ul>">
+
+<!ENTITY nssBadCert.title "Fallou a conexión segura">
+<!ENTITY nssBadCert.longDesc2 "<ul>
+<li>Pode ser debido a un problema da configuración do servidor ou pode ser que alguén estea a tentar facerse pasar polo 
+servidor.</li>
+<li>Se xa estivo conectado correctamente con este servidor, o erro podería ser temporal e poderá tentar de novo máis tarde.</li>
+</ul>
+">
+
+<!ENTITY securityOverride.linkText "Ou pode engadir unha excepción…">
+<!ENTITY securityOverride.warningContent "
+<p>Non debería engadir unha excepción se está usando unha conexión á Internet na que non se confía plenamente ou se non está acostumado a ver un aviso neste servidor.</p>
+<p>Se aínda desexa engadir unha excepción para este sitio, pode facelo na configuración avanzada de cifrado.</p>
+">
+
+<!ENTITY cspBlocked.title "Bloqueado pola política de seguranza de contidos">
+<!ENTITY cspBlocked.longDesc "<p>O navegador impediu que esta páxina se cargue desta forma porque a páxina ten una política de seguranza de contido que non o permite.</p>">
+
+<!ENTITY xfoBlocked.title "Bloqueado pola política de X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>O navegador impediu que esta páxina se cargase neste contexto porque a páxina ten unha política de X-Frame-Options que o prohibe.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Erro de contido danado">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Non é posíbel amosar a páxina a que está a tentar acceder porque se detectou un erro na transmisión de datos.</p><ul><li>Contacte cos propietarios do sitio web para informalos deste problema.</li></ul>">
+
+<!ENTITY remoteXUL.title "XUL remoto">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Contacte cos propietarios do sitio web para informalos deste problema.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "A súa conexión non é segura">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> usa unha tecnoloxía de seguranza obsoleta e vulnerábel a un ataque. Un atacante podería facilmente obter información que vostede cre segura. O administrador do sitio web debe arranxar o servidor antes de poder visitar o sitio.</p><p>Código de erro: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Páxina bloqueada">
+
+<!ENTITY networkProtocolError.title "Erro do protocolo de rede">
+<!ENTITY networkProtocolError.longDesc "<p>Non é posíbel amosar a páxina a que está a tentar acceder porque se detectou un erro protocolo da rede.</p><ul><li>Contacte cos propietarios do sitio web para informalos deste problema.</li></ul>">

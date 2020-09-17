@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Menu Halaman Terkini">
+<!ENTITY  documentsInMenu.label         "Bilangan maksimum halaman yang disenaraikan:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+<!ENTITY  savingFiles.title             "Apabila Menyimpan atau Menerbitkan Halaman">
+<!ENTITY  preserveExisting.label        "Kekalkan format sumber asal">
+<!ENTITY  preserveExisting.accesskey    "K">
+<!ENTITY  preserveExisting.tooltip      "Kekalkan pecahan garis dan format asal halaman">
+<!ENTITY  saveAssociatedFiles.label     "Simpan imej dan fail berkaitan lain apabila menyimpan halaman">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "Sentiasa papar dialog Terbitkan apabila menerbitkan halaman">
+<!ENTITY  showPublishDialog.accesskey   "S">
+<!ENTITY  composerEditing.label         "Mengedit">
+<!ENTITY  maintainStructure.label       "Kekalkan susun atur jadual apabila menyisip atau menghapuskan sel">
+<!ENTITY  maintainStructure.tooltip     "Kekalkan bentuk segi empat tepat jadual dengan menambah sel secara automatik selepas menyisip atau menghapuskan sel">
+<!ENTITY  maintainStructure.accesskey   "K">
+<!ENTITY  useCSS.label                  "Guna gaya CSS bukannya elemen dan atribut HTML">
+<!ENTITY  useCSS.accesskey              "G">
+<!ENTITY  crInPCreatesNewP.label        "Kembalian dalam satu perenggan sentiasa mewujudkan perenggan baru">
+<!ENTITY  crInPCreatesNewP.accesskey    "K">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Elérhető partnerek">
+<!ENTITY offlineContactsHeader.label   "Kilépett partnerek">
+<!ENTITY conversationsHeader.label     "Beszélgetések">
+<!ENTITY searchResultConversation.label "Találatok">
+<!ENTITY chat.noConv.title             "Itt jelennek meg a beszélgetések">
+<!ENTITY chat.noConv.description       "A bal oldali panel partnerlistája segítségével kezdhet beszélgetést.">
+<!ENTITY chat.noPreviousConv.description       "A &brandShortName; jelenleg nem tárol korábbi mentett beszélgetéseket ezzel a partnerrel.">
+<!ENTITY chat.noAccount.title             "Még nem állított be csevegőfiókot.">
+<!ENTITY chat.noAccount.description       "A &brandShortName; végigvezeti a csevegőfiók beállításának folyamatán.">
+<!ENTITY chat.accountWizard.button       "Kezdő lépések">
+<!ENTITY chat.noConnectedAccount.title             "Csevegőfiókjai nincsenek csatlakoztatva.">
+<!ENTITY chat.noConnectedAccount.description       "Ezeket a „Csevegés állapota” ablakban csatlakoztathatja:">
+<!ENTITY chat.showAccountManager.button       "Csevegés állapotának megjelenítése">
+
+<!ENTITY chat.participants             "Résztvevők:">
+<!ENTITY chat.previousConversations    "Korábbi beszélgetések:">
+<!ENTITY chat.ongoingConversation      "Folyamatban lévő beszélgetés">
+
+<!ENTITY openConversationCmd.label     "Beszélgetés kezdése">
+<!ENTITY openConversationCmd.accesskey "t">
+<!ENTITY closeConversationCmd.label    "Beszélgetés bezárása">
+<!ENTITY closeConversationCmd.accesskey "z">
+<!ENTITY aliasCmd.label                "Átnevezés">
+<!ENTITY aliasCmd.accesskey            "n">
+<!ENTITY deleteCmd.label               "Partner eltávolítása">
+<!ENTITY deleteCmd.accesskey           "e">
+
+<!ENTITY openConversationButton.tooltip  "Beszélgetés kezdése">
+<!ENTITY closeConversationButton.tooltip "Beszélgetés bezárása">
+
+<!ENTITY addBuddyButton.label          "Partner hozzáadása">
+<!ENTITY joinChatButton.label          "Csevegés kezdése">
+<!ENTITY chatAccountsButton.label      "Fiókok megjelenítése">
+
+<!ENTITY status.available          "Elérhető">
+<!ENTITY status.unavailable        "Elfoglalt">
+<!ENTITY status.offline            "Kapcsolat nélkül">
+
+<!ENTITY openLinkCmd.label            "Hivatkozás megnyitása…">
+<!ENTITY openLinkCmd.accesskey        "a">

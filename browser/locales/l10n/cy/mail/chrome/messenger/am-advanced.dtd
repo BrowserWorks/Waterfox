@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Gosodiadau Gweinydd Anfon (SMTP)">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpDescription.label "Wrth reoli eich hunaniaethau mae modd defnyddio gweinydd o&apos;r rhestr hon drwy ei dewis fel y Gweinydd Anfon (SMTP) neu mae modd defnyddio&apos;r gweinydd rhagosodedig o&apos;r rhestr hon drwy ddewis &quot;Defnyddio&apos;r Gweinydd Rhagosodedig&quot;.">
+
+<!ENTITY smtpListAdd.label  "Ychwanegu…">
+<!ENTITY smtpListAdd.accesskey  "Y">
+<!ENTITY smtpListEdit.label "Golygu…">
+<!ENTITY smtpListEdit.accesskey "G">
+<!ENTITY smtpListDelete.label "Tynnu">
+<!ENTITY smtpListDelete.accesskey "T">
+<!ENTITY smtpListSetDefault.label "Gosod y Rhagosodiad">
+<!ENTITY smtpListSetDefault.accesskey "R">
+
+<!ENTITY serverDetails.label "Manylion y gweinydd hwn:">
+<!ENTITY serverDescription.label "Disgrifiad: ">
+<!ENTITY serverName.label "Enw'r Gweinydd: ">
+<!ENTITY serverPort.label "Porth: ">
+<!ENTITY userName.label   "Enw Defnyddiwr: ">
+<!ENTITY connectionSecurity.label "Diogelwch y Cysylltiad: ">
+<!ENTITY authMethod.label   "Dull dilysu: ">

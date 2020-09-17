@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "წერილების საცავი">
+<!ENTITY securitySettings.label "უსაფრთხოების პარამეტრები">
+<!ENTITY serverSettings.label "სერვერის პარამეტრები">
+<!ENTITY serverType.label "სერვერის სახეობა:">
+<!ENTITY serverName.label "სერვერის სახელი:">
+<!ENTITY serverName.accesskey "ე">
+<!ENTITY userName.label "სახელი:">
+<!ENTITY userName.accesskey "ს">
+<!ENTITY port.label "პორტი:">
+<!ENTITY port.accesskey "პ">
+<!ENTITY serverPortDefault.label "ნაგულისხმევი:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "ახალი წერილის შემოწმება ყოველ ">
+<!ENTITY biffStart.accesskey "ყ">
+<!ENTITY biffEnd.label "წუთში">
+<!ENTITY useIdleNotifications.label "მყისიერი შეტყობინების დაშვება, წერილის მიღებისას">
+<!ENTITY useIdleNotifications.accesskey "ყ">
+<!ENTITY connectionSecurity.label "კავშირის უსაფრთხოება:">
+<!ENTITY connectionSecurity.accesskey "უ">
+<!ENTITY connectionSecurityType-0.label "არა">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, თუ მისაწვდომია">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "ანგარიშზე შესვლის უსაფრთხო მეთოდი:">
+<!ENTITY authMethod.accesskey "ს">
+<!ENTITY leaveOnServer.label "წერილების დატოვება სერვერზე">
+<!ENTITY leaveOnServer.accesskey "დ">
+<!ENTITY headersOnly.label "მხოლოდ თავსართების კითხვა">
+<!ENTITY headersOnly.accesskey "კ">
+<!ENTITY deleteByAgeFromServer.label "არა უმეტეს">
+<!ENTITY deleteByAgeFromServer.accesskey "უ">
+<!ENTITY daysEnd.label "დღისა">
+<!ENTITY deleteOnServer2.label "წაშლამდე ან მიღებულებიდან გადმოტანამდე">
+<!ENTITY deleteOnServer2.accesskey "გ">
+<!ENTITY downloadOnBiff.label "ახალი წერილების თვითჩამოტვირთვა">
+<!ENTITY downloadOnBiff.accesskey "ა">
+<!ENTITY deleteMessagePrefix.label "წერილის წაშლისას:">
+<!ENTITY modelMoveToTrash.label "გადატანა მოცემულ საქაღალდეში:">
+<!ENTITY modelMoveToTrash.accesskey "ო">
+<!ENTITY modelMarkDeleted.label "მონიშვნა წაშლილად">
+<!ENTITY modelMarkDeleted.accesskey "წ">
+<!ENTITY modelDeleteImmediately.label "მყისვე ამოშლა">
+<!ENTITY modelDeleteImmediately.accesskey "ყ">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "მიღებული წერილების საქაღალდის გასუფთავება („წაშლა“) გასვლისას">
+<!ENTITY expungeOnExit.accesskey "ი">
+<!ENTITY emptyTrashOnExit.label "ურნის გასუფთავება გასვლისას">
+<!ENTITY emptyTrashOnExit.accesskey "უ">
+<!ENTITY loginAtStartup.label "ახალი წერილების შემოწმება გაშვებისას">
+<!ENTITY loginAtStartup.accesskey "ა">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "ნებართვა, წერილების ჩამოტვირთვამდე, რომელთა რაოდენობაც აჭარბებს">
+<!ENTITY maxMessagesStart.accesskey "ნ">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "ერთეულს">
+<!ENTITY alwaysAuthenticate.label "ამ სერვერთან დაკავშირებისას, ანგარიშზე შესვლის მოთხოვნა ყოველ ჯერზე">
+<!ENTITY alwaysAuthenticate.accesskey "დ">
+<!ENTITY newsrcFilePath1.label "News.rc ფაილი:">
+<!ENTITY newsrcPicker1.label "აირჩიეთ News.rc ფაილი">
+<!ENTITY abbreviate.label "წერილების საქაღალდეების პანელში ჯგუფების სახელებს ჩვენების წესის მითითება:">
+<!ENTITY abbreviateOn.label "სრული სახით (მაგალითად, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "შემოკლებულად (მაგალითად, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "დამატებით…">
+<!ENTITY advancedButton.accesskey "მ">
+<!ENTITY serverDefaultCharset2.label "ტექსტის ნაგულისხმევი კოდირება:">
+<!ENTITY localPath1.label "ადგილობრივი საქაღალდე:">
+<!ENTITY localFolderPicker.label "ადგილობრივი საქაღალდის არჩევა">
+<!ENTITY browseFolder.label "ამორჩევა…">
+<!ENTITY browseFolder.accesskey "მ">
+<!ENTITY browseNewsrc.label "ამორჩევა…">
+<!ENTITY browseNewsrc.accesskey "ე">
+
+<!ENTITY accountTitle.label "ანგარიშის პარამეტრები">
+<!ENTITY accountSettingsDesc.label "ეს საგანგებო ანგარიშია.  იგი არავის ვინაობაზე არაა მიბმული.">
+<!ENTITY storeType.label "წერილის შენახვის სახე:">
+<!ENTITY storeType.accesskey "ხ">
+<!ENTITY mboxStore2.label "თითოეული საქაღალდე ფაილში (mbox)">
+<!ENTITY maildirStore.label "თითოეული წერილი ფაილში (maildir)">

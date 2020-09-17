@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "સંદેશા સુરક્ષા">
+<!ENTITY subject.plaintextWarning "મહેરબાની નોંધ: સંદેશાના વિષય વાક્યો ક્યારેય એનક્રિપ્ટ કરી શકાતા નથી.">
+<!ENTITY status.heading "તમારા સંદેશાના સમાવિષ્ટો નીચે મુજબ મોકલાશે:">
+<!ENTITY status.signed "ડિજીટલ રીતે સહી થયેલ:">
+<!ENTITY status.encrypted "એનક્રિપ્ટ થયેલ:">
+<!ENTITY status.certificates "પ્રમાણપત્રો:">
+<!ENTITY view.label "દેખાવ">
+<!ENTITY view.accesskey "V">
+<!ENTITY tree.recipient "મેળવનારો:">
+<!ENTITY tree.status "સ્થિતિ:">
+<!ENTITY tree.issuedDate "અદા થયેલ:">
+<!ENTITY tree.expiresDate "મર્યાદા પૂરી થયેલ:">

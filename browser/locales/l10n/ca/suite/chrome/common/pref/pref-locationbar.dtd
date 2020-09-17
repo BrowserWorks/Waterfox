@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+
+<!ENTITY pref.locationBar.title                "Barra d'ubicació">
+
+<!ENTITY autoComplete.label                    "Autocompleció">
+<!ENTITY enableAutoComplete.label              "Autocompleció a partir del vostre historial de navegació a mesura que s'escriu">
+<!ENTITY enableAutoComplete.accesskey          "A">
+<!ENTITY autoCompleteAutoFill.label            "Ompliu-ho automàticament amb la millor coincidència">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "Mostra una llista de resultats que hi coincideixen">
+<!ENTITY autoCompleteShowPopup.accesskey       "s">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Troba coincidències només amb els llocs web que hàgiu teclejat anteriorment">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "m">
+<!ENTITY autoCompleteMatchOnlyURLs.label       "Troba coincidències només amb les adreces, no amb els títols dels llocs web">
+<!ENTITY autoCompleteMatchOnlyURLs.accesskey   "a">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Troba">
+<!ENTITY autoCompleteMatch.accesskey           "T">
+<!ENTITY autoCompleteMatchAnywhere             "A qualsevol lloc de l'adreça o el títol">
+<!ENTITY autoCompleteMatchWordsFirst           "A qualsevol lloc però preferiblement paraules senceres">
+<!ENTITY autoCompleteMatchWords                "Només paraules senceres">
+<!ENTITY autoCompleteMatchStart                "Només al principi de l'adreça o el títol">
+<!ENTITY showInternetSearch.label              "Mostra el motor de cerca d'Internet per defecte">
+<!ENTITY showInternetSearch.accesskey          "e">
+
+<!ENTITY formatting.label                      "Formatació">
+<!ENTITY domainFormatting.label                "Ressalta l'adreça dels llocs web i dels servidors FTP.">
+<!ENTITY domainFormatting.accesskey            "d">
+<!ENTITY highlightSecure.label                 "Ressalta les pàgines web amb un nivell alt de seguretat de la connexió">
+<!ENTITY highlightSecure.accesskey             "c">
+
+<!ENTITY unknownLocations.label                "Ubicacions desconegudes">
+<!ENTITY domainGuessing.label                  "Afegeix «www.» i «.com» a la ubicació si no es troba la pàgina web">
+<!ENTITY domainGuessing.accesskey              "f">
+<!ENTITY keywords.label                        "Realitza una cerca web quan el text introduït no sigui una ubicació web">
+<!ENTITY keywords.accesskey                    "R">

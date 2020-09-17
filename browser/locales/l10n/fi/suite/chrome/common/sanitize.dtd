@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Poista yksityistietoja">
+<!ENTITY sanitizeItems.label             "Poista seuraavat tiedot:">
+
+<!ENTITY itemHistory.label               "Sivuhistoria">
+<!ENTITY itemHistory.accesskey           "S">
+<!ENTITY itemUrlBar.label                "Osoitehistoria">
+<!ENTITY itemUrlBar.accesskey            "O">
+<!ENTITY itemDownloads.label             "Latauslista">
+<!ENTITY itemDownloads.accesskey         "L">
+<!ENTITY itemFormSearchHistory.label     "Tallennetut lomake- ja hakutiedot">
+<!ENTITY itemFormSearchHistory.accesskey "T">
+<!ENTITY itemCache.label                 "Väliaikaistiedostot">
+<!ENTITY itemCache.accesskey             "V">
+<!ENTITY itemCookies.label               "Evästeet">
+<!ENTITY itemCookies.accesskey           "E">
+<!ENTITY itemOfflineApps.label           "Yhteydettömän tilan tiedot">
+<!ENTITY itemOfflineApps.accesskey       "Y">
+<!ENTITY itemPasswords.label             "Tallennetut salasanat">
+<!ENTITY itemPasswords.accesskey         "a">
+<!ENTITY itemSessions.label              "Varmennetut istunnot">
+<!ENTITY itemSessions.accesskey          "r">
+
+<!ENTITY sanitizeButton.label            "Poista valitut tiedot">

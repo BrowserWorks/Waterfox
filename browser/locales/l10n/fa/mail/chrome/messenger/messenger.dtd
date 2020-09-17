@@ -1,0 +1,695 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY titledefault.label "&brandFullName;">
+<!ENTITY titleSeparator.label " - ">
+
+<!-- File Menu -->
+<!ENTITY newFolderCmd.label "Folder…">
+<!ENTITY newFolderCmd.accesskey "F">
+
+<!-- LOCALIZATION NOTE (moveToNewWindow.label):
+     Menu option to cause the current tab to be migrated to a new Thunderbird
+     window.
+     -->
+<!ENTITY newVirtualFolderCmd.label "Saved Search…">
+<!ENTITY newVirtualFolderCmd.accesskey "S">
+<!ENTITY newOtherAccountsCmd.label "سایر حسابها…">
+<!ENTITY newOtherAccountsCmd.accesskey "س">
+<!ENTITY newIMAccountCmd.label "حساب گفت‌وگو…">
+<!ENTITY newIMContactCmd.label "مخاطب گفت‌وگو…">
+<!ENTITY openMessageFileCmd.label "Open Saved Message…">
+<!ENTITY openMessageFileCmd.accesskey "O">
+<!ENTITY saveAsMenu.label "ذخیره به نام">
+<!ENTITY saveAsMenu.accesskey "ذ">
+<!ENTITY saveAsFileCmd.label "پرونده">
+<!ENTITY saveAsFileCmd.accesskey "پ">
+<!ENTITY saveAsTemplateCmd.label "Template">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY getNewMsgForCmd.label "دریافت پیام‌های جدید برای">
+<!ENTITY getNewMsgForCmd.accesskey "w">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "همهٔ حسابها">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "A">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.label "Current Account">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.accesskey "C">
+<!ENTITY sendUnsentCmd.label "Send Unsent Messages">
+<!ENTITY sendUnsentCmd.accesskey "d">
+<!ENTITY subscribeCmd.label "Subscribe…">
+<!ENTITY subscribeCmd.accesskey "b">
+<!ENTITY deleteFolder.label "Delete Folder">
+<!ENTITY deleteFolder.accesskey "e">
+<!ENTITY renameFolder.label "Rename Folder…">
+<!ENTITY renameFolder.accesskey "R">
+<!ENTITY renameFolder.key "VK_F2">
+<!ENTITY compactFolders.label "Compact Folders">
+<!ENTITY compactFolders.accesskey "F">
+<!ENTITY emptyTrashCmd.label "خالی کردن زباله‌">
+<!ENTITY emptyTrashCmd.accesskey "ب">
+<!ENTITY offlineMenu.label "Offline">
+<!ENTITY offlineMenu.accesskey "l">
+<!ENTITY offlineGoOfflineCmd.label "کار منفصل">
+<!ENTITY offlineGoOfflineCmd.accesskey "ک">
+<!ENTITY synchronizeOfflineCmd.label "Download/Sync Now…">
+<!ENTITY synchronizeOfflineCmd.accesskey "S">
+<!ENTITY downloadSelectedCmd.label "Get Selected Messages">
+<!ENTITY downloadSelectedCmd.accesskey "l">
+<!ENTITY downloadStarredCmd.label "Get Starred Messages">
+<!ENTITY downloadStarredCmd.accesskey "a">
+<!ENTITY printCmd.label "چاپ…">
+<!ENTITY printCmd.accesskey "چ">
+<!ENTITY printCmd.key "p">
+<!ENTITY printPreviewCmd.label "پیش‌نمای چاپ">
+<!ENTITY printPreviewCmd.accesskey "پ">
+<!ENTITY printSetupCmd.label "تنظیم صفحه…">
+<!ENTITY printSetupCmd.accesskey "ت">
+
+<!-- Edit Menu -->
+<!ENTITY deleteMsgCmd.label "Delete Message">
+<!ENTITY deleteMsgCmd.accesskey "D">
+<!ENTITY undeleteMsgCmd.label "Undelete Message">
+<!ENTITY undeleteMsgCmd.accesskey "d">
+<!ENTITY deleteMsgsCmd.label "Delete Selected Messages">
+<!ENTITY deleteMsgsCmd.accesskey "D">
+<!ENTITY undeleteMsgsCmd.label "Undelete Selected Messages">
+<!ENTITY undeleteMsgsCmd.accesskey "d">
+<!ENTITY deleteFolderCmd.label "Delete Folder">
+<!ENTITY deleteFolderCmd.accesskey "D">
+<!ENTITY unsubscribeNewsgroupCmd.label "Unsubscribe">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "n">
+<!ENTITY selectMenu.label "انتخاب">
+<!ENTITY selectMenu.accesskey "ا">
+<!ENTITY all.label "همه">
+<!ENTITY all.accesskey "ه">
+<!ENTITY selectThreadCmd.label "Thread">
+<!ENTITY selectThreadCmd.accesskey "T">
+<!ENTITY selectThreadCmd.key "a">
+<!ENTITY selectFlaggedCmd.label "Starred Messages">
+<!ENTITY selectFlaggedCmd.accesskey "S">
+<!ENTITY menuFavoriteFolder.label "Favorite Folder">
+<!ENTITY menuFavoriteFolder.accesskey "a">
+<!ENTITY folderPropsCmd2.label "ویژگی‌ها">
+<!ENTITY folderPropsFolderCmd2.label "Folder Properties">
+<!ENTITY folderPropsCmd.accesskey "و">
+<!ENTITY undoDeleteMsgCmd.label "Undo Delete Message">
+<!ENTITY redoDeleteMsgCmd.label "Redo Delete Message">
+<!ENTITY undoMoveMsgCmd.label "Undo Move Message">
+<!ENTITY redoMoveMsgCmd.label "Redo Move Message">
+<!ENTITY undoCopyMsgCmd.label "Undo Copy Message">
+<!ENTITY redoCopyMsgCmd.label "Redo Copy Message">
+<!ENTITY undoMarkAllCmd.label "Undo Mark All Read">
+<!ENTITY redoMarkAllCmd.label "Redo Mark All Read">
+<!ENTITY undoDefaultCmd.label "واگرد">
+<!ENTITY undoDefaultCmd.accesskey "و">
+<!ENTITY redoDefaultCmd.label "از نو">
+<!ENTITY redoDefaultCmd.accesskey "ز">
+
+<!-- View Menu -->
+<!ENTITY showMessengerToolbarCmd.label "Mail Toolbar">
+<!ENTITY showMessengerToolbarCmd.accesskey "o">
+<!ENTITY customizeToolbar.label "سفارشی‌سازی…">
+<!ENTITY customizeToolbar.accesskey "س">
+
+<!ENTITY messagePaneLayoutStyle.label "Layout">
+<!ENTITY messagePaneLayoutStyle.accesskey "L">
+<!ENTITY messagePaneClassic.label "Classic View">
+<!ENTITY messagePaneClassic.accesskey "C">
+<!ENTITY messagePaneWide.label "Wide View">
+<!ENTITY messagePaneWide.accesskey "W">
+<!ENTITY messagePaneVertical.label "Vertical View">
+<!ENTITY messagePaneVertical.accesskey "V">
+<!ENTITY showMessageCmd.label "Message Pane">
+<!ENTITY showMessageCmd.accesskey "M">
+
+<!ENTITY folderView.label "Folders">
+<!ENTITY folderView.accesskey "F">
+<!ENTITY allFolders.label "همه">
+<!ENTITY allFolders.accesskey "ه">
+<!ENTITY unreadFolders.label "Unread">
+<!ENTITY unreadFolders.accesskey "U">
+<!ENTITY favoriteFolders.label "Favorite">
+<!ENTITY favoriteFolders.accesskey "F">
+<!ENTITY recentFolders.label "Recent">
+<!ENTITY recentFolders.accesskey "R">
+
+<!-- Sort Menu -->
+<!ENTITY sortMenu.label "Sort by">
+<!ENTITY sortMenu.accesskey "S">
+<!ENTITY sortByDateCmd.label "تاریخ">
+<!ENTITY sortByDateCmd.accesskey "ت">
+<!ENTITY sortByReceivedCmd.label "Received">
+<!ENTITY sortByReceivedCmd.accesskey "v">
+<!ENTITY sortByStarCmd.label "ستاره‌گذاری">
+<!ENTITY sortByStarCmd.accesskey "س">
+<!ENTITY sortByAttachmentsCmd.label "Attachments">
+<!ENTITY sortByAttachmentsCmd.accesskey "A">
+<!ENTITY sortByPriorityCmd.label "Priority">
+<!ENTITY sortByPriorityCmd.accesskey "P">
+<!ENTITY sortBySizeCmd.label "اندازه">
+<!ENTITY sortBySizeCmd.accesskey "ا">
+<!ENTITY sortByStatusCmd.label "وضعیت">
+<!ENTITY sortByStatusCmd.accesskey "و">
+<!ENTITY sortByTagsCmd.label "برچسب‌ها">
+<!ENTITY sortByTagsCmd.accesskey "ب">
+<!ENTITY sortByJunkStatusCmd.label "Junk Status">
+<!ENTITY sortByJunkStatusCmd.accesskey "J">
+<!ENTITY sortBySubjectCmd.label "موضوع">
+<!ENTITY sortBySubjectCmd.accesskey "م">
+<!ENTITY sortByFromCmd.label "From">
+<!ENTITY sortByFromCmd.accesskey "F">
+<!ENTITY sortByRecipientCmd.label "Recipient">
+<!ENTITY sortByRecipientCmd.accesskey "c">
+<!ENTITY sortByUnreadCmd.label "Read">
+<!ENTITY sortByUnreadCmd.accesskey "R">
+<!ENTITY sortByOrderReceivedCmd.label "Order Received">
+<!ENTITY sortByOrderReceivedCmd.accesskey "O">
+<!ENTITY sortAscending.label "Ascending">
+<!ENTITY sortAscending.accesskey "A">
+<!ENTITY sortDescending.label "Descending">
+<!ENTITY sortDescending.accesskey "D">
+<!ENTITY sortThreaded.label "Threaded">
+<!ENTITY sortThreaded.accesskey "T">
+<!ENTITY sortUnthreaded.label "Unthreaded">
+<!ENTITY sortUnthreaded.accesskey "h">
+<!ENTITY groupBySort.label "Grouped By Sort">
+<!ENTITY groupBySort.accesskey "G">
+<!ENTITY msgsMenu.label "پیغام‌ها">
+<!ENTITY msgsMenu.accesskey "پ">
+<!ENTITY threads.label "Threads">
+<!ENTITY threads.accesskey "e">
+<!ENTITY allMsgsCmd.label "همه">
+<!ENTITY allMsgsCmd.accesskey "ه">
+<!ENTITY expandAllThreadsCmd.label "Expand All Threads">
+<!ENTITY expandAllThreadsCmd.accesskey "E">
+<!ENTITY expandAllThreadsCmd.key "*">
+<!ENTITY collapseAllThreadsCmd.label "Collapse All Threads">
+<!ENTITY collapseAllThreadsCmd.accesskey "C">
+<!ENTITY collapseAllThreadsCmd.key "\">
+<!ENTITY unreadMsgsCmd.label "Unread">
+<!ENTITY unreadMsgsCmd.accesskey "U">
+<!ENTITY threadsWithUnreadCmd.label "Threads with Unread">
+<!ENTITY threadsWithUnreadCmd.accesskey "T">
+<!ENTITY watchedThreadsWithUnreadCmd.label "Watched Threads with Unread">
+<!ENTITY watchedThreadsWithUnreadCmd.accesskey "W">
+<!ENTITY ignoredThreadsCmd.label "Ignored Threads">
+<!ENTITY ignoredThreadsCmd.accesskey "I">
+
+<!ENTITY headersMenu.label "Headers">
+<!ENTITY headersMenu.accesskey "H">
+<!ENTITY headersAllCmd.label "همه">
+<!ENTITY headersAllCmd.accesskey "ه">
+<!ENTITY headersNormalCmd.label "عادی">
+<!ENTITY headersNormalCmd.accesskey "ع">
+<!ENTITY bodyMenu.label "Message Body As">
+<!ENTITY bodyMenu.accesskey "B">
+<!ENTITY bodyAllowHTML.label "Original HTML">
+<!ENTITY bodyAllowHTML.accesskey "H">
+<!ENTITY bodySanitized.label "Simple HTML">
+<!ENTITY bodySanitized.accesskey "S">
+<!ENTITY bodyAsPlaintext.label "Plain Text">
+<!ENTITY bodyAsPlaintext.accesskey "P">
+
+
+<!ENTITY viewAttachmentsInlineCmd.label "Display Attachments Inline">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "A">
+
+<!ENTITY pageSourceCmd.label "Message Source">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY getNewMessagesCmd.key "ب">
+<!ENTITY getAllNewMessagesCmd.key "ب">
+
+<!-- Search Menu -->
+<!ENTITY findMenu.label "پیدا کردن">
+<!ENTITY findMenu.accesskey "پ">
+<!ENTITY findCmd.label "Find in This Message…">
+<!ENTITY findCmd.accesskey "F">
+<!ENTITY findCmd.key "f">
+<!ENTITY findAgainCmd.label "پیدا کردن مجدد">
+<!ENTITY findAgainCmd.accesskey "پ">
+<!ENTITY findAgainCmd.key "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.key "g">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY searchMailCmd.label "Search Messages…">
+<!ENTITY searchMailCmd.accesskey "M">
+<!ENTITY searchMailCmd.key "f">
+<!ENTITY searchAddressesCmd.label "Search Addresses…">
+<!ENTITY searchAddressesCmd.accesskey "S">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "برو">
+<!ENTITY goMenu.accesskey "ب">
+<!ENTITY nextMenu.label "بعدی">
+<!ENTITY nextMenu.accesskey "ب">
+<!ENTITY nextMsgCmd.label "پیغام">
+<!ENTITY nextMsgCmd.accesskey "پ">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "Unread Message">
+<!ENTITY nextUnreadMsgCmd.accesskey "U">
+<!ENTITY nextStarredMsgCmd.label "Starred Message">
+<!ENTITY nextStarredMsgCmd.accesskey "S">
+<!ENTITY nextUnreadThread.label "Unread Thread">
+<!ENTITY nextUnreadThread.accesskey "T">
+<!ENTITY prevMenu.label "قبلی">
+<!ENTITY prevMenu.accesskey "ق">
+<!ENTITY prevMsgCmd.label "پیغام">
+<!ENTITY prevMsgCmd.accesskey "پ">
+<!ENTITY prevMsgCmd.key "b">
+<!ENTITY prevUnreadMsgCmd.label "Unread Message">
+<!ENTITY prevUnreadMsgCmd.accesskey "U">
+<!ENTITY prevUnreadMsgCmd.key "p">
+<!ENTITY goForwardCmd.label "جلو">
+<!ENTITY goForwardCmd.accesskey "ج">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goBackCmd.label "عقب">
+<!ENTITY goBackCmd.accesskey "ع">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goChatCmd.label "گفت‌وگو">
+<!ENTITY goChatCmd.accesskey "گ">
+<!ENTITY prevStarredMsgCmd.label "Starred Message">
+<!ENTITY prevStarredMsgCmd.accesskey "S">
+<!ENTITY startPageCmd.label "Mail Start Page">
+<!ENTITY startPageCmd.accesskey "S">
+
+<!-- Message Menu -->
+<!ENTITY msgMenu.label "پیغام">
+<!ENTITY msgMenu.accesskey "پ">
+<!ENTITY newMsgCmd.label "New Message">
+<!ENTITY newMsgCmd.accesskey "N">
+<!ENTITY newNewMsgCmd.label "پیغام">
+<!ENTITY newNewMsgCmd.accesskey "پ">
+<!ENTITY archiveMsgCmd.label "Archive">
+<!ENTITY archiveMsgCmd.accesskey "A">
+<!ENTITY archiveMsgCmd.key "a">
+<!ENTITY cancelNewsMsgCmd.label "Cancel Message">
+<!ENTITY cancelNewsMsgCmd.accesskey "M">
+<!ENTITY replyMsgCmd.label "پاسخ دادن">
+<!ENTITY replyMsgCmd.accesskey "پ">
+<!ENTITY replyMsgCmd.key "r">
+<!ENTITY replySenderCmd.label "Reply to Sender Only">
+<!ENTITY replySenderCmd.accesskey "R">
+<!ENTITY replyToAllMsgCmd.label "Reply to All">
+<!ENTITY replyToAllMsgCmd.accesskey "p">
+<!ENTITY replyToAllMsgCmd.key "r">
+<!ENTITY forwardMsgCmd.label "جلو">
+<!ENTITY forwardMsgCmd.accesskey "ج">
+<!ENTITY forwardMsgCmd.key "l">
+<!ENTITY forwardAsMenu.label "Forward As">
+<!ENTITY forwardAsMenu.accesskey "w">
+<!-- do not change "VK_RETURN" -->
+<!ENTITY createFilter.label "Create Filter From Message…">
+<!ENTITY createFilter.accesskey "a">
+<!ENTITY moveMsgToMenu.label "Move To">
+<!ENTITY moveMsgToMenu.accesskey "M">
+<!ENTITY moveCopyMsgRecentMenu.label "Recent">
+<!ENTITY moveCopyMsgRecentMenu.accesskey "R">
+<!ENTITY copyMessageLocation.label "Copy Message Location">
+<!ENTITY copyMessageLocation.accesskey "M">
+<!ENTITY copyMsgToMenu.label "Copy To">
+<!ENTITY copyMsgToMenu.accesskey "C">
+<!ENTITY moveToFolderAgain.label "Move Again">
+<!ENTITY moveToFolderAgain.accesskey "i">
+<!ENTITY moveToFolderAgainCmd.key "m">
+<!ENTITY killThreadMenu.key "k">
+<!ENTITY killSubthreadMenu.label "Ignore Subthread">
+<!ENTITY killSubthreadMenu.accesskey "S">
+<!ENTITY killSubthreadMenu.key "k">
+<!ENTITY watchThreadMenu.label "Watch Thread">
+<!ENTITY watchThreadMenu.accesskey "W">
+<!ENTITY watchThreadMenu.key "w">
+<!ENTITY tagMenu.label "برچسب">
+<!ENTITY tagMenu.accesskey "ب">
+<!ENTITY tagCmd0.key "0">
+<!ENTITY tagCmd1.key "1">
+<!ENTITY tagCmd2.key "2">
+<!ENTITY tagCmd3.key "3">
+<!ENTITY tagCmd4.key "4">
+<!ENTITY tagCmd5.key "5">
+<!ENTITY tagCmd6.key "6">
+<!ENTITY tagCmd7.key "7">
+<!ENTITY tagCmd8.key "8">
+<!ENTITY tagCmd9.key "9">
+<!ENTITY markMenu.label "Mark">
+<!ENTITY markMenu.accesskey "k">
+<!ENTITY markAsReadCmd.label "As Read">
+<!ENTITY markAsReadCmd.accesskey "R">
+<!ENTITY markThreadAsReadCmd.label "Thread As Read">
+<!ENTITY markThreadAsReadCmd.accesskey "T">
+<!ENTITY markThreadAsReadCmd.key "r">
+<!ENTITY markReadByDateCmd.label "As Read by Date…">
+<!ENTITY markReadByDateCmd.accesskey "D">
+<!ENTITY markReadByDateCmd.key "c">
+<!ENTITY markAllReadCmd.label "All Read">
+<!ENTITY markAllReadCmd.accesskey "A">
+<!ENTITY markAllReadCmd.key "c">
+<!ENTITY markStarredCmd.label "Add Star">
+<!ENTITY markStarredCmd.accesskey "S">
+<!ENTITY markAsJunkCmd.label "As Junk">
+<!ENTITY markAsJunkCmd.accesskey "J">
+<!ENTITY markAsJunkCmd.key "j">
+<!ENTITY markAsNotJunkCmd.label "As Not Junk">
+<!ENTITY markAsNotJunkCmd.accesskey "N">
+<!ENTITY markAsNotJunkCmd.key "j">
+<!ENTITY recalculateJunkScoreCmd.label "Run Junk Mail Controls">
+<!ENTITY recalculateJunkScoreCmd.accesskey "C">
+<!ENTITY openMessageWindowCmd.label "Open Message">
+<!ENTITY openMessageWindowCmd.accesskey "O">
+<!ENTITY openMessageWindowCmd.key "o">
+
+<!-- Windows Menu -->
+<!ENTITY windowMenu.label "پنجره">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "ابزارها">
+<!ENTITY tasksMenu.accesskey "ا">
+<!ENTITY messengerCmd.label "Mail &amp; Newsgroups">
+<!ENTITY messengerCmd.accesskey "M">
+<!ENTITY addressBookCmd.label "Address Book">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addons.label "افزودنی‌ها">
+<!ENTITY addons.accesskey "ا">
+<!ENTITY activitymanager.label "Activity Manager">
+<!ENTITY activitymanager.accesskey "a">
+<!ENTITY imAccountsStatus.label "وضعیت گفت‌وگو">
+<!ENTITY imAccountsStatus.accesskey "گ">
+<!ENTITY imStatus.showAccounts       "نمایش حسابها…">
+<!ENTITY filtersApply.label "Run Filters on Folder">
+<!ENTITY filtersApply.accesskey "R">
+<!ENTITY filtersApplyToSelection.label "Run Filters on Selected Messages">
+<!ENTITY filtersApplyToSelection.accesskey "S">
+<!ENTITY filtersApplyToMessage.label "Run Filters on Message">
+<!ENTITY filtersApplyToMessage.accesskey "s">
+<!ENTITY runJunkControls.label "Run Junk Mail Controls on Folder">
+<!ENTITY runJunkControls.accesskey "u">
+<!ENTITY deleteJunk.label "Delete Mail Marked as Junk in Folder">
+<!ENTITY deleteJunk.accesskey "l">
+<!ENTITY importCmd.label "وارد کردن…">
+<!ENTITY importCmd.accesskey "و">
+<!-- LOCALIZATION NOTE (accountManagerCmdUnix.accesskey):
+     Belongs to accountManagerCmd.label, which is placed under the Edit menu
+     on Unix systems
+  -->
+<!ENTITY accountManagerCmdUnix2.accesskey "A">
+
+<!-- Developer Tools Submenu -->
+<!ENTITY errorConsoleCmd.label "پیشانهٔ خطاها">
+<!ENTITY errorConsoleCmd.accesskey "پ">
+
+<!--LOCALIZATION NOTE (scratchpadCmd.keycode):
+    This should be a key code constant as per
+    https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode#Constants_for_keyCode_value
+    (but without the DOM_ prefix) -->
+<!--LOCALIZATION NOTE (scratchpadCmd.keytext):
+    This should be the text printed on the key defined in the previous string. -->
+
+<!-- Mail Toolbar -->
+<!ENTITY getMsgButton1.label "دریافت پیام‌ها">
+<!ENTITY newMsgButton.label "Write">
+<!ENTITY replyButton.label "پاسخ دادن">
+<!ENTITY replyAllButton.label "Reply All">
+<!ENTITY forwardButton.label "جلو">
+<!ENTITY fileButton.label "پرونده">
+<!ENTITY nextButton.label "بعدی">
+<!ENTITY previousButton.label "قبلی">
+<!ENTITY backButton1.label "عقب">
+<!ENTITY goForwardButton1.label "جلو">
+<!ENTITY deleteButton.label "حذف">
+<!ENTITY undeleteButton.label "Undelete">
+<!ENTITY markButton.label "Mark">
+<!ENTITY printButton.label "چاپ">
+<!ENTITY throbberItem.title "شاخص فعالیت">
+<!ENTITY junkButton.label "Junk">
+<!ENTITY notJunkButton.label "Not Junk">
+<!ENTITY addressBookButton.label "Address Book">
+<!ENTITY chatButton.label "گفت‌وگو">
+<!ENTITY glodaSearch.title "Global Search">
+<!ENTITY searchItem.title "Quick Search">
+<!ENTITY mailViewsToolbarItem.title "Mail Views">
+<!ENTITY folderLocationToolbarItem.title "Folder Location">
+<!ENTITY tagButton.label "برچسب">
+<!ENTITY compactButton.label "Compact">
+
+<!-- Mail Toolbar Tooltips-->
+<!ENTITY advancedButton.tooltip "Advanced message search">
+<!ENTITY getMsgButton.tooltip "دریافت پیام‌های جدید">
+<!ENTITY getAllNewMsgCmd.label "دریافت همهٔ پیام‌های جدید">
+<!ENTITY getAllNewMsgCmd.accesskey "G">
+<!ENTITY newMsgButton.tooltip "Create a new message">
+<!ENTITY replyButton.tooltip "Reply to the message">
+<!ENTITY replyAllButton.tooltip "Reply to sender and all recipients">
+<!ENTITY forwardButton.tooltip "Forward selected message">
+<!ENTITY fileButton.tooltip "File selected message">
+<!ENTITY nextButton.tooltip "Move to the next unread message">
+<!ENTITY previousButton.tooltip "Move to the previous unread message">
+<!ENTITY goForwardButton.tooltip "Go forward one message">
+<!ENTITY goBackButton.tooltip "Go back one message">
+<!ENTITY deleteButton.tooltip "Delete selected message or folder">
+<!ENTITY undeleteButton.tooltip "Undelete selected message">
+<!ENTITY markButton.tooltip "Mark messages">
+<!ENTITY printButton.tooltip "Print this message">
+<!ENTITY stopButton.tooltip "Stop the current transfer">
+<!ENTITY junkButton.tooltip "Mark the selected messages as junk">
+<!ENTITY notJunkButton.tooltip "Mark the selected messages as not junk">
+<!ENTITY addressBookButton.tooltip "Go to the address book">
+<!ENTITY chatButton.tooltip "نمایش سربرگ گفت‌وگو">
+<!ENTITY tagButton.tooltip "Tag messages">
+<!ENTITY compactButton.tooltip "Remove deleted messages from selected folder">
+
+
+<!-- Toolbar Button Popup -->
+
+<!-- Remote Content Button Popup -->
+
+<!-- Phishing Button Popup -->
+
+<!-- AppMenu Popup -->
+
+<!-- Tags Menu Popup -->
+<!ENTITY addNewTag.label "New Tag…">
+<!ENTITY addNewTag.accesskey "N">
+
+<!-- Folder Pane -->
+<!ENTITY folderNameColumn.label "نام">
+<!ENTITY folderSizeColumn.label "اندازه">
+
+<!-- Folder Pane Context Menu -->
+<!ENTITY folderContextGetMessages.label "Get Messages">
+<!ENTITY folderContextGetMessages.accesskey "د">
+<!ENTITY folderContextOpenNewTab.label "باز کردن در زبانهٔ جدید">
+<!ENTITY folderContextOpenNewTab.accesskey "ب">
+<!ENTITY folderContextNew.label "New Subfolder…">
+<!ENTITY folderContextNew.accesskey "N">
+<!ENTITY folderContextRename.label "تغییر نام">
+<!ENTITY folderContextRename.accesskey "ت">
+<!ENTITY folderContextRemove.label "حذف">
+<!ENTITY folderContextRemove.accesskey "ح">
+<!ENTITY folderContextCompact.label "Compact">
+<!ENTITY folderContextCompact.accesskey "C">
+<!ENTITY folderContextEmptyTrash.label "خالی کردن زباله">
+<!ENTITY folderContextEmptyTrash.accesskey "ب">
+<!ENTITY folderContextEmptyJunk.label "Empty Junk">
+<!ENTITY folderContextEmptyJunk.accesskey "J">
+<!ENTITY folderContextSendUnsentMessages.label "Send Unsent Messages">
+<!ENTITY folderContextSendUnsentMessages.accesskey "d">
+<!ENTITY folderContextUnsubscribe.label "Unsubscribe">
+<!ENTITY folderContextUnsubscribe.accesskey "U">
+<!ENTITY folderContextMarkNewsgroupRead.label "Mark Newsgroup Read">
+<!ENTITY folderContextMarkNewsgroupRead.accesskey "k">
+<!ENTITY folderContextMarkMailFolderRead.label "Mark Folder Read">
+<!ENTITY folderContextMarkMailFolderRead.accesskey "k">
+<!ENTITY folderContextSubscribe.label "Subscribe…">
+<!ENTITY folderContextSubscribe.accesskey "b">
+<!ENTITY folderContextProperties2.label "ویژگی‌ها">
+<!ENTITY folderContextProperties2.accesskey "و">
+<!ENTITY folderContextFavoriteFolder.label "Favorite Folder">
+<!ENTITY folderContextFavoriteFolder.accesskey "a">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label "Name or Email contains:">
+<!ENTITY SearchNameOrEmail.accesskey "N">
+
+<!-- Gloda Search Bar -->
+
+<!-- Quick Search Menu Bar -->
+<!ENTITY searchSubjectMenu.label "موضوع">
+<!ENTITY searchFromMenu.label "From">
+<!ENTITY searchSubjectOrFromMenu.label "Subject or From">
+<!ENTITY searchRecipient.label "To or Cc">
+<!ENTITY searchSubjectOrRecipientMenu.label "Subject, To or Cc">
+<!ENTITY searchMessageBody.label "Entire Message">
+<!ENTITY saveAsVirtualFolderMenu.label "Save Search as a Folder…">
+
+<!-- Thread Pane -->
+<!ENTITY threadColumn.label "Thread">
+<!ENTITY fromColumn.label "From">
+<!ENTITY recipientColumn.label "Recipient">
+<!ENTITY subjectColumn.label "موضوع">
+<!ENTITY dateColumn.label "تاریخ">
+<!ENTITY priorityColumn.label "Priority">
+<!ENTITY tagsColumn.label "برچسب">
+<!ENTITY accountColumn.label "Account">
+<!ENTITY statusColumn.label "وضعیت">
+<!ENTITY sizeColumn.label "اندازه">
+<!ENTITY junkStatusColumn.label "Junk Status">
+<!ENTITY readColumn.label "Read">
+<!ENTITY receivedColumn.label "Received">
+<!ENTITY starredColumn.label "Starred">
+<!ENTITY locationColumn.label "مکان">
+<!ENTITY idColumn.label "Order Received">
+
+<!-- Thread Pane Tooltips -->
+<!ENTITY subjectColumn2.tooltip "مرتب سازی بر اساس موضوع">
+
+<!-- Thread Pane Context Menu -->
+<!ENTITY contextOpenNewWindow.label "Open Message in New Window">
+<!ENTITY contextOpenNewWindow.accesskey "W">
+<!-- The contextOpenNewTab.accesskey ("T") potentially conflicts with
+     cutCmd.accessKey which is defined in textcontext.dtd from toolkit. Right
+     now, both menu items can't be visible at the same time, but should someone
+     enable copy/paste of message, this key would probably need to be changed. -->
+<!ENTITY contextOpenNewTab.label "Open Message in New Tab">
+<!ENTITY contextOpenNewTab.accesskey "T">
+<!ENTITY contextReplySender.label "Reply to Sender Only">
+<!ENTITY contextReplySender.accesskey "R">
+<!ENTITY contextReplyAll.label "Reply to All">
+<!ENTITY contextReplyAll.accesskey "A">
+<!ENTITY contextForward.label "جلو">
+<!ENTITY contextForward.accesskey "ج">
+<!ENTITY contextMoveMsgMenu.label "Move To">
+<!ENTITY contextMoveMsgMenu.accesskey "M">
+<!ENTITY contextMoveCopyMsgRecentMenu.label "Recent">
+<!ENTITY contextMoveCopyMsgRecentMenu.accesskey "R">
+<!ENTITY contextCopyMsgMenu.label "Copy To">
+<!ENTITY contextCopyMsgMenu.accesskey "C">
+<!-- LOCALIZATION NOTE (contextWatchThreadMenu.accesskey):
+     In the en-US locale we ran out of access keys, so there is an empty access key for
+     Watch Thread. Localizers can pick a suitable key
+  -->
+<!ENTITY contextWatchThreadMenu.accesskey "">
+<!ENTITY contextSaveAs.label "ذخیره به نام…">
+<!ENTITY contextSaveAs.accesskey "ذ">
+<!ENTITY contextPrint.label "چاپ…">
+<!ENTITY contextPrint.accesskey "چ">
+<!ENTITY contextPrintPreview.label "پیش‌نمای چاپ">
+<!ENTITY contextPrintPreview.accesskey "پ">
+
+<!-- LOCALIZATION NOTE (columnPicker.applyTo.label):
+     This option in the thread pane column picker pops up a sub-menu containing
+     the "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" options. This item indicates
+     a desire to apply the currently displayed set of columns to some other
+     folder(s). The sub-menu items indicate whether we want to apply it to just
+     a folder or also its children.
+  -->
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolder.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolderAndChildren.label". It indicates a desire to
+     apply the currently display thread pane column settings to a single folder
+     that the user selects using the same widget as the move to/copy to
+     mechanism (via a series of popups).
+  -->
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolderAndChildren.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolder.label". It indicates a desire to
+     apply the currently display thread pane column settings to a folder and all
+     of its descendents. The user selects the folder using the same widget as the
+     move to/copy to mechanism (via a series of popups).
+  -->
+<!-- LOCALIZATION NOTE (columnPicker.thisFolder.label):
+     This is used in the folder selection widget for the
+     "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" menu options. Whenever
+     a folder has children, it results in a menu popup; the first menu item
+     in that popup is given this label to indicate that that folder should be
+     selected. For example, if folder "A" has two children, "B" and "C", then
+     when the user hovers over "A", a new popup menu will be displayed whose
+     items are "This folder", "B", and "C". This is the equivalent of the
+     "File here" option for the move to/copy to widget.
+  -->
+
+<!-- Media (video/audio) controls -->
+<!ENTITY contextPlay.label "پخش">
+<!ENTITY contextPlay.accesskey "پ">
+<!ENTITY contextPause.label "مکث">
+<!ENTITY contextPause.accesskey "م">
+
+<!-- Quick Search Bar -->
+<!-- LOCALIZATION NOTE (quickSearchCmd.key):
+     This is actually the key used for the global message search box; we have
+     not changed
+  -->
+<!ENTITY quickSearchCmd.key "k">
+<!-- LOCALIZATION NOTE (search.label.base1):
+     This is the base of the empty text for the global search box. We replace
+     #1 with the contents of the appropriate search.keyLabel.* value for the
+     platform.
+     The goal is to convey to the user that typing in the box will allow them
+     to search for messages globally and that there is a hotkey they can press
+     to get to the box faster. If the global indexer is disabled, the search
+     box will be collapsed and the user will never see this message.
+  -->
+<!ENTITY search.label.base1 "جستجوی #1">
+<!-- LOCALIZATION NOTE (search.keyLabel.nonmac):
+     The description of the key-binding to get into the global search box on
+     windows and linux (which use the control key). We use the key defined in
+     the quickSearchCmd.key entity defined above, the letter should match it.
+  -->
+<!-- LOCALIZATION NOTE (search.keyLabel.mac):
+     The description of the key-binding to get into the global search box on mac
+     systems. We use the key defined in the quickSearchCmd.key entity defined
+     above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.mac "&lt;&#x2318;K&gt;">
+
+<!-- Message Header Context Menu -->
+<!ENTITY AddToAddressBook.label "Add to Address Book…">
+<!ENTITY AddToAddressBook.accesskey "B">
+<!ENTITY AddDirectlyToAddressBook.label "Add to Address Book">
+<!ENTITY AddDirectlyToAddressBook.accesskey "B">
+<!ENTITY ViewContact.label "View Contact">
+<!ENTITY ViewContact.accesskey "V">
+<!ENTITY CopyEmailAddress.label "رونوشت برداشتن از نشانی پست الکترونیکی">
+<!ENTITY CopyEmailAddress.accesskey "ن">
+<!ENTITY CreateFilterFrom.label "Create Filter From…">
+<!ENTITY CreateFilterFrom.accesskey "F">
+<!ENTITY reportPhishingURL.label "Report Email Scam">
+<!ENTITY reportPhishingURL.accesskey "o">
+
+<!-- Spell checker context menu items -->
+
+<!-- Content Pane Context Menu -->
+<!ENTITY saveLinkAsCmd.label "ذخیرهٔ پیوند به نام…">
+<!ENTITY saveLinkAsCmd.accesskey "ذ">
+<!ENTITY saveImageAsCmd.label "ذخیرهٔ تصویر به نام…">
+<!ENTITY saveImageAsCmd.accesskey "ذ">
+<!ENTITY copyLinkCmd.label "رونوشت برداشتن از مکان پیوند">
+<!ENTITY copyLinkCmd.accesskey "ن">
+<!ENTITY copyEmailCmd.label "رونوشت برداشتن از نشانی پست الکترونیکی">
+<!ENTITY copyEmailCmd.accesskey "ن">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label "انجام شد">
+
+<!-- Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.label "کمینه کردن">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "آوردن همه به جلو">
+<!ENTITY zoomWindow.label "زوم">
+
+<!-- Mac OS X Application Menu (Cocoa widgets) -->
+<!ENTITY preferencesCmdMac2.label       "ترجیحات">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+<!ENTITY preferencesCmdMac.modifiers    "accel">
+<!ENTITY servicesMenuMac.label          "خدمات">
+<!ENTITY hideThisAppCmdMac.label        "&brandShortName; را مخفی کن">
+<!ENTITY hideThisAppCmdMac.commandkey   "H">
+<!ENTITY hideThisAppCmdMac.modifiers    "accel">
+<!ENTITY hideOtherAppsCmdMac.label      "دیگر برنامه‌ها را مخفی کن">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+<!ENTITY hideOtherAppsCmdMac.modifiers  "accel,alt">
+<!ENTITY showAllAppsCmdMac.label        "نشان دادن همه">
+
+<!-- Mac OS X Dock Icon pop-up menu -->
+

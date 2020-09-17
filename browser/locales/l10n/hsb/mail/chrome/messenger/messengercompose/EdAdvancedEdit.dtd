@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Rozšěrjene nastajenja">
+<!ENTITY AttName.label                  "Atribut: ">
+<!ENTITY AttValue.label                 "Hódnota: ">
+<!ENTITY PropertyName.label             "Kajkosć: ">
+<!ENTITY currentattributesfor.label     "Aktuelne atributy za: ">
+<!ENTITY tree.attributeHeader.label     "Atribut">
+<!ENTITY tree.propertyHeader.label      "Kajkosć">
+<!ENTITY tree.valueHeader.label         "Hódnota">
+<!ENTITY tabHTML.label                  "Atributy HTML">
+<!ENTITY tabCSS.label                   "Inline-stil">
+<!ENTITY tabJSE.label                   "JavaScriptowe podawki">
+
+<!ENTITY editAttribute.label    "Klikńcé horjeka na zapisk, zo byšće jeho hódnotu wobdźěłał">
+<!ENTITY removeAttribute.label  "Atribut wotstronić">

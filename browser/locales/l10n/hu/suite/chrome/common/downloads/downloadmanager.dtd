@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Letöltéskezelő">
+
+<!ENTITY menuBar.tooltip                 "Menüsor">
+<!ENTITY searchBar.tooltip               "Kereső">
+
+<!ENTITY search.placeholder              "Letöltések keresése">
+<!ENTITY search.label                    "Letöltések keresése">
+<!ENTITY search.accesskey                "s">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "Lista törlése">
+<!ENTITY cmd.clearList.tooltip           "A befejezett, félbeszakított vagy sikertelen letöltések törlése a listáról">
+<!ENTITY cmd.clearList.accesskey         "i">
+
+<!ENTITY col.name.label                  "Név">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "Fájlnév:">
+<!ENTITY col.status.label                "Állapot">
+<!ENTITY col.status.accesskey            "l">
+<!ENTITY col.status.tooltip              "Állapot">
+<!ENTITY col.actionPlay.label            "Szünet/Folytatás/Újra">
+<!ENTITY col.actionPlay.accesskey        "n">
+<!ENTITY col.actionPlay.tooltip          "Szünet/Folytatás/Újra">
+<!ENTITY col.actionStop.label            "Megszakítás/Eltávolítás">
+<!ENTITY col.actionStop.accesskey        "M">
+<!ENTITY col.actionStop.tooltip          "Megszakítás/Eltávolítás">
+<!ENTITY col.progress.label              "Készültségi fok">
+<!ENTITY col.progress.accesskey          "K">
+<!ENTITY col.progress.tooltip            "Készültségi fok">
+<!ENTITY col.timeremaining.label         "Hátralévő idő">
+<!ENTITY col.timeremaining.accesskey     "l">
+<!ENTITY col.timeremaining.tooltip       "Hátralévő idő">
+<!ENTITY col.transferred.label           "Átvitel">
+<!ENTITY col.transferred.accesskey       "t">
+<!ENTITY col.transferred.tooltip         "Átvitel">
+<!ENTITY col.transferrate.label          "Sebesség">
+<!ENTITY col.transferrate.accesskey      "b">
+<!ENTITY col.transferrate.tooltip        "Sebesség">
+<!ENTITY col.timeelapsed.label           "Eltelt idő">
+<!ENTITY col.timeelapsed.accesskey       "E">
+<!ENTITY col.timeelapsed.tooltip         "Eltelt idő">
+<!ENTITY col.starttime.label             "Kezdés">
+<!ENTITY col.starttime.accesskey         "K">
+<!ENTITY col.starttime.tooltip           "Kezdés">
+<!ENTITY col.endtime.label               "Befejezés">
+<!ENTITY col.endtime.accesskey           "B">
+<!ENTITY col.endtime.tooltip             "Befejezés">
+<!ENTITY col.progresstext.label          "&#037;">
+<!ENTITY col.progresstext.accesskey      "&#037;">
+<!ENTITY col.progresstext.tooltip        "Készültségi fok (&#037;)">
+<!ENTITY col.source.label                "Forrás">
+<!ENTITY col.source.accesskey            "o">
+<!ENTITY col.source.tooltip              "Forrás: ">
+
+<!ENTITY view.columns.label              "Oszlopok megjelenítése">
+<!ENTITY view.columns.accesskey          "O">
+<!ENTITY view.sortBy.label               "Rendezés">
+<!ENTITY view.sortBy.accesskey           "R">
+
+<!ENTITY view.unsorted.label             "Rendezetlen">
+<!ENTITY view.unsorted.accesskey         "n">
+<!ENTITY view.sortAscending.label        "A > Z">
+<!ENTITY view.sortAscending.accesskey    "A">
+<!ENTITY view.sortDescending.label       "Z > A">
+<!ENTITY view.sortDescending.accesskey   "Z">
+
+<!ENTITY cmd.pause.label                 "Szünet">
+<!ENTITY cmd.pause.accesskey             "S">
+<!ENTITY cmd.resume.label                "Folytatás">
+<!ENTITY cmd.resume.accesskey            "F">
+<!ENTITY cmd.retry.label                 "Újra">
+<!ENTITY cmd.retry.accesskey             "j">
+<!ENTITY cmd.cancel.label                "Mégse">
+<!ENTITY cmd.cancel.accesskey            "M">
+<!ENTITY cmd.remove.label                "Törlés a listáról">
+<!ENTITY cmd.remove.accesskey            "T">
+<!ENTITY cmd.open.label                  "Megnyitás">
+<!ENTITY cmd.open.accesskey              "e">
+<!ENTITY cmd.show.label                  "Tartalmazó mappa megnyitása">
+<!ENTITY cmd.show.accesskey              "m">
+<!ENTITY cmd.goToDownloadPage.label      "Ugrás a letöltési oldalra">
+<!ENTITY cmd.goToDownloadPage.accesskey  "U">
+<!ENTITY cmd.copyDownloadLink.label      "Letöltési hivatkozás másolása">
+<!ENTITY cmd.copyDownloadLink.accesskey  "L">
+<!ENTITY cmd.properties.label            "Tulajdonságok…">
+<!ENTITY cmd.properties.accesskey        "s">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Letöltés engedélyezése">
+<!ENTITY cmd.unblock2.accesskey           "e">
+

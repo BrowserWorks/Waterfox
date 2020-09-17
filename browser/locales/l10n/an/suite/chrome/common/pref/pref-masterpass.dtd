@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Claus mayestras">
+<!ENTITY  managepassword.caption                 "Circumducción d'a clau mayestra">
+<!ENTITY  managepassword.text                    "&brandShortName; le preguntase a suya clau mayestra:">
+<!ENTITY  managepassword.askfirsttime            "a primera vez que s'amenesta">
+<!ENTITY  managepassword.askfirsttime.accesskey  "L">
+<!ENTITY  managepassword.askeverytime            "Cada vez que s'amenesta">
+<!ENTITY  managepassword.askeverytime.accesskey  "Y">
+<!ENTITY  managepassword.asktimeout              "Si no ha estau utilizada entre ">
+<!ENTITY  managepassword.asktimeout.accesskey    "n">
+<!ENTITY  managepassword.timeout.unit            "menutos u mas">
+
+<!ENTITY  changepassword.caption                 "Cambiar a clau mayestra">
+<!ENTITY  changepassword.text                    "A suya clau mayestra proteche a información confidencial tal como claus d'os suyos puestos web y certificaus.">
+<!ENTITY  changepassword.button                  "Cambiar a clau…">
+<!ENTITY  changepassword.accesskey               "C">
+
+<!ENTITY  resetpassword.caption                  "Restablir a clau mayestra">
+<!ENTITY  resetpassword.text                     "Si restableix a clau mayestra, se perderán todas as claus alzadas d'os suyos puestos web y correus, datos de formularios, certificaus personals y claves privadas.">
+<!ENTITY  resetpassword.button                   "Restablir a clau">
+<!ENTITY  resetpassword.accesskey                "R">

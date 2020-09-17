@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label	"このアカウントの差出人情報を管理します。既定では最初の差出人情報が使用されます。">
+<!ENTITY identitiesListAdd.label	"追加...">
+<!ENTITY identitiesListAdd.accesskey	"A">
+<!ENTITY identitiesListEdit.label	"編集...">
+<!ENTITY identitiesListEdit.accesskey	"E">
+<!ENTITY identitiesListDefault.label	"既定に設定">
+<!ENTITY identitiesListDefault.accesskey	"S">
+<!ENTITY identitiesListDelete.label	"削除">
+<!ENTITY identitiesListDelete.accesskey	"D">
+<!ENTITY identitiesListClose.label	"閉じる">
+<!ENTITY identitiesListClose.accesskey	"C">

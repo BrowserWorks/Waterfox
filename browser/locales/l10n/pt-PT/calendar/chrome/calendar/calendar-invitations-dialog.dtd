@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Invitations Dialog -->
+
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Convites">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "A atualizar lista de convites.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Não foram encontrados convites não confirmados.">
+<!-- Calendar Invitations List -->
+
+<!ENTITY calendar.invitations.list.accept.button.label                  "Aceitar">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Recusar">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Evento recorrente">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Evento para todo o dia">
+<!ENTITY calendar.invitations.list.location.text                        "Localização: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Organizador: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Participante: ">
+<!ENTITY calendar.invitations.list.none.text                            "Nenhum">

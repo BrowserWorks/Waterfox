@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Súkromné prehliadanie">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ Ochrana pre sledovaním">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Nenachádzate sa v režime súkromného prehliadania">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; blokuje tie časti stránok, ktoré môžu sledovať vašu aktivitu na webe.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Neukladáme vašu históriu prehliadania, v zariadení zachováme len prevzaté súbory a novo vytvorené záložky.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "V súkromnom prehliadaní sa nebude ukladať história prehliadania ani súbory cookies. Vytvorené záložky a prevzaté súbory však budú uložené.">
+
+<!ENTITY privatebrowsingpage.link.private "Chcete sa dozvedieť viac?">
+<!ENTITY privatebrowsingpage.link.normal "Otvoriť novú súkromnú kartu">

@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Dobrodošli v &brandShortName;u">
+<!ENTITY header2.label "Želite nov e-poštni naslov?">
+<!ENTITY other.languages "Prikazujemo samo ponudnike na vašem področju.  Za prikaz vseh ponudnikov kliknite tu.">
+<!ENTITY error.line1 "Na žalost predlaganih e-naslovov ni bilo mogoče najti.">
+<!ENTITY error.line2 "Poskusite iskati z vzdevki ali s kakim drugim izrazom, če želite najti še več e-poštnih naslovov">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Lahko si tudi pogledate možnosti ">
+<!ENTITY error.suggest.middle "za brezplačen e-poštni naslov">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Pozdravljeni ">
+<!ENTITY success.title.after ", naslednji e-poštni naslovi so vam na razpolago:">
+<!ENTITY success.tip "(Če želite najti še več sporočil, lahko iščete z vzdevki ali kakim drugim izrazom)">
+<!ENTITY partnership.description "V sodelovanju z več ponudniki vam &brandShortName; lahko ponudi nov e-poštni naslov. Za začetek enostavno v zgornje polje vnesite svoje ime in priimek, ali besede po vaši želji.">
+<!ENTITY existing.header "Ali že imate naslov, ki bi ga hoteli uporabljati?">
+<!ENTITY tinyheader.title "Že imate naslov?">
+<!ENTITY tinyheader.existing "Preskoči in uporabi moj obstoječi e-naslov">
+<!ENTITY content.close "Svoj račun bom raje uredil kasneje.">
+<!ENTITY successful.title "Čestitke!">
+<!ENTITY successful.successMessage "Uspešno ste si namestili svoj račun.">
+<!ENTITY successful.write "Sestavite zdaj kako e-pošto">
+<!ENTITY successful.write.desc "Sporočite svoj novi naslov vašim prijateljem in družini.<br/>Čemu novi račun, če ne zato, da ste v stiku z njimi?">
+<!ENTITY successful.customize "Prilagodite si &brandShortName; z nekaj kul dodatki">
+<!ENTITY successful.customize.desc "Na razpolago imate tisoče dodatkov, s katerim si lahko uredite &brandShortName;, kot vam najbolje ustreza.">
+<!ENTITY successful.attach "Dodajte svoji e-pošti oseben podpis">
+<!ENTITY successful.attach.desc "Vsakemu sporočilu lahko na koncu samodejno dodate kak navedek ali pa podatke o sebi.">
+<!ENTITY successful.close "Zapri to okno.">
+<!ENTITY input.namePlaceholder "Vaše ime ali vzdevek">
+<!ENTITY input.search "Išči">
+<!ENTITY search_engine.title "Prilagodite iskalnik">
+<!ENTITY search_engine.message "Vaš ponudnik pošte vam lahko tudi omogoči zmožnosti iskanja po spletu.">
+<!ENTITY search_engine.button "Končaj">

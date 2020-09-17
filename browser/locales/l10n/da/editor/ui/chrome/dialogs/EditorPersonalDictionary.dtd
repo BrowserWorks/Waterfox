@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Personlig ordbog">
+<!ENTITY wordEditField.label "Nyt ord:">
+<!ENTITY wordEditField.accessKey "N">
+<!ENTITY AddButton.label "Tilføj…">
+<!ENTITY AddButton.accessKey "T">
+<!ENTITY DictionaryList.label "Ord i ordbogen.">
+<!ENTITY DictionaryList.accessKey "O">
+<!ENTITY ReplaceButton.label "Erstat">
+<!ENTITY ReplaceButton.accessKey "E">
+<!ENTITY RemoveButton.label "Fjern">
+<!ENTITY RemoveButton.accessKey "F">
+<!ENTITY CloseButton.label "Luk">
+<!ENTITY CloseButton.accessKey "L">

@@ -1,0 +1,4 @@
+<!ENTITY options.title "Opzioni per gli strumenti di sviluppo">
+<!ENTITY options.status.label "Stato:">
+<!ENTITY options.port.label "Porta:">
+<!ENTITY options.forcelocal.label "Consenti connessioni da altri computer">

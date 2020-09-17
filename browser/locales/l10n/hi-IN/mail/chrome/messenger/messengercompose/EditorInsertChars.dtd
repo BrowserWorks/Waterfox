@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "संप्रतीक डालें">
+<!ENTITY category.label "श्रेणी">
+<!ENTITY letter.label "अक्षर:">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "संप्रतीक:">
+<!ENTITY character.accessKey "C">
+<!ENTITY accentUpper.label "उच्चारण अपरकेस">
+<!ENTITY accentLower.label "उच्चारण लोअरकेस">
+<!ENTITY otherUpper.label "अन्य अपरकेस">
+<!ENTITY otherLower.label "अन्य लोअरकेस">
+<!ENTITY commonSymbols.label "सामान्य संकेत">
+<!ENTITY insertButton.label "डालें">
+<!ENTITY closeButton.label "बंद करें">

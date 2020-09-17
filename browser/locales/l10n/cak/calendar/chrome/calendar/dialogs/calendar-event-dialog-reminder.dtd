@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Runuk'ik' rutzijol">
+<!ENTITY reminder.add.label                                "Titz'aqatisäx">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "Tiyuj">
+<!ENTITY reminder.remove.accesskey                         "y">
+
+<!ENTITY reminder.reminderDetails.label                    "Rutzijol wachinel">
+<!ENTITY reminder.action.label                             "Tacha' jun B'eyal chi re ri Tzijol">
+
+<!ENTITY reminder.action.alert.label                       "Tik'ut jun Retal k'ayewal">
+<!ENTITY reminder.action.email.label                       "Titaq jun Taqoya'l">
+
+<!ENTITY alarm.units.minutes                               "taq ch'utiramaj" >
+<!ENTITY alarm.units.hours                                 "taq ramaj" >
+<!ENTITY alarm.units.days                                  "taq q'ij" >

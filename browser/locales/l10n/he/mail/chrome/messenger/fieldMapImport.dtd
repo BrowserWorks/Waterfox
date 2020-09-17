@@ -1,0 +1,33 @@
+<!--
+# Translator(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "יבוא ספר כתובות">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "נתונים מיובאים עבור רשומה:">
+<!ENTITY fieldMapImport.next.label "הבא">
+<!ENTITY fieldMapImport.next.accesskey "ב">
+<!ENTITY fieldMapImport.previous.label "קודם">
+<!ENTITY fieldMapImport.previous.accesskey "ק">
+<!ENTITY fieldMapImport.text "השתמש ב״הזז מעלה״ ו־״הזז מטה״ כדי להתאים את שדות פנקס הכתובות מצד ימין לנתונים הנכונים ליבוא משמאל. בטל סימון של פריטים שאינך רוצה לייבא.">
+<!ENTITY fieldMapImport.up.label "הזז מעלה">
+<!ENTITY fieldMapImport.up.accesskey "ע">
+<!ENTITY fieldMapImport.down.label "הזז מטה">
+<!ENTITY fieldMapImport.down.accesskey "ט">
+<!ENTITY fieldMapImport.fieldListTitle "שדות פנקס כתובות">
+<!ENTITY fieldMapImport.dataTitle "נתוני רשומה ליבוא">
+<!ENTITY fieldMapImport.skipFirstRecord.label "רשומה ראשונה מכילה את שמות השדות">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "ר">
+

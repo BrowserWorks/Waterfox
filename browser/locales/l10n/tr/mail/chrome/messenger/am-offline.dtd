@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Disk alanı tasarrufu için şunları indirme:">
+<!ENTITY doNotDownloadNntp.label "Disk alanı tasarrufu için şunları çevrimdışı kullanılmak üzere indirme:">
+<!ENTITY doNotDownloadImap.label "Disk alanından tasarruf etmek için sunucudaki iletilerin indirilmesini ve çevrimdışı kullanım amacıyla yerel kopyalarının tutulmasını boyut veya yaşla sınırlandırabilirsiniz.">
+<!ENTITY allFoldersOffline2.label "Bu hesaba ait tüm dizinlerdeki iletileri bu bilgisayarda tut">
+<!ENTITY allFoldersOffline2.accesskey "u">
+<!ENTITY allFoldersOfflineNote.label "Not: Bu ayar, bu hesaptaki tüm dizinleri etkiler. Dizinleri ayrı ayrı ayarlamak isterseniz “Gelişmiş…” düğmesine tıklayın.">
+<!ENTITY offlineNotDownload.label "İleti">
+<!ENTITY offlineNotDownload.accesskey "t">
+<!ENTITY autosyncNotDownload.label "İleti">
+<!ENTITY autosyncNotDownload.accesskey "t">
+<!ENTITY kb.label "KB'den büyükse indirme">
+<!ENTITY daysOld.label "günden eskiyse sil">
+<!ENTITY message.label "ileti dışındakileri sil">
+<!ENTITY nntpNotDownloadRead.label "Okunmuş iletiler">
+<!ENTITY nntpNotDownloadRead.accesskey "l">
+<!ENTITY nntpDownloadMsg.label "İleti">
+<!ENTITY nntpDownloadMsg.accesskey "i">
+<!ENTITY retentionCleanup.label "Disk alanı kazanmak için eski iletileri kalıcı olarak silebilirsiniz.">
+<!ENTITY retentionCleanupImap.label "Disk alanı kazanmak için sunucudaki eski özgün iletiler ve yerel kopyaları tamamen silinebilir.">
+<!ENTITY retentionCleanupPop.label "Disk alanı kazanmak için sunucudaki eski özgün iletiler tamamen silinebilir.">
+<!ENTITY retentionKeepMsg.label "İleti">
+<!ENTITY retentionKeepMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "Hiçbir iletiyi silme">
+<!ENTITY retentionKeepAll.accesskey "H">
+<!ENTITY retentionKeepRecent.label "Son">
+<!ENTITY retentionKeepRecent.accesskey "S">
+<!ENTITY retentionApplyToFlagged.label "Yıldızlı iletileri hiçbir zaman silme">
+<!ENTITY retentionApplyToFlagged.accesskey "Y">
+<!ENTITY nntpRemoveMsgBody.label "İleti gövdesi">
+<!ENTITY nntpRemoveMsgBody.accesskey "ö">
+<!ENTITY offlineSelectNntp.label "Çevrimdışı kullanılacak haber gruplarını seçin…">
+<!ENTITY offlineSelectNntp.accesskey "s">
+<!ENTITY offlineImapAdvancedOffline.label "Gelişmiş…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "G">
+<!ENTITY syncGroupTitle.label "İleti eşitleme">
+<!ENTITY diskspaceGroupTitle.label "Disk alanı">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Tarihini göz ardı ederek tüm iletileri eşitle">
+<!ENTITY allAutosync.accesskey           "T">
+<!ENTITY ageAutosyncBefore.label         "Son">
+<!ENTITY ageAutosync.accesskey           "o">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "günü eşitle">
+<!ENTITY weekAgeInterval.label           "haftayı eşitle">
+<!ENTITY monthAgeInterval.label          "ayı eşitle">
+<!ENTITY yearAgeInterval.label           "yılı eşitle">
+<!ENTITY ageAutosyncAfter.label          "">

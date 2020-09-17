@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Chào mừng đến với &brandShortName;">
+<!ENTITY header2.label "Bạn có muốn thêm một địa chỉ email mới?">
+<!ENTITY other.languages "Chúng tôi chỉ hiển thị các nhà cung cấp cung cấp địa chỉ trong khu vực của bạn.  Nhấn vào đây để hiển thị tất cả các nhà cung cấp.">
+<!ENTITY error.line1 "Xin lỗi, chúng tôi không thể tìm thấy bất kỳ địa chỉ email được đề xuất.">
+<!ENTITY error.line2 "You try can search for nicknames or any other term to find more emails">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Ngoài ra, bạn có thể thử một trong những ">
+<!ENTITY error.suggest.middle "lựa chọn tài khoản email miễn phí">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Xin chào ">
+<!ENTITY success.title.after ", các địa chỉ email sau đây có sẵn cho bạn:">
+<!ENTITY success.tip "(Bạn cũng có thể tìm kiếm biệt danh hoặc bất kỳ thuật ngữ nào khác để tìm thêm email)">
+<!ENTITY partnership.description "Hợp tác với một số nhà cung cấp, &brandShortName; có thể cung cấp cho bạn một tài khoản email mới. Chỉ cần điền tên và họ của bạn hoặc bất kỳ từ nào bạn muốn, vào các trường ở trên để bắt đầu.">
+<!ENTITY existing.header "Đã có một địa chỉ bạn muốn sử dụng?">
+<!ENTITY tinyheader.title "Đã có một địa chỉ?">
+<!ENTITY tinyheader.existing "Bỏ qua cái này và sử dụng email hiện có của tôi">
+<!ENTITY content.close "Tôi nghĩ rằng tôi sẽ cấu hình tài khoản của mình sau.">
+<!ENTITY successful.title "Chúc mừng!">
+<!ENTITY successful.successMessage "Bạn đã thiết lập thành công tài khoản của bạn.">
+<!ENTITY successful.write "Viết một số email">
+<!ENTITY successful.write.desc "Let your friends and family know about your new address.<br/> That’s why you got this new account, isn’t it?">
+<!ENTITY successful.customize "Tùy chỉnh &brandShortName; với một số tiện ích mở rộng thú vị">
+<!ENTITY successful.customize.desc "Có hàng ngàn tiện ích bổ sung cho phép bạn tùy chỉnh &brandShortName; để làm cho nó phù hợp với nhu cầu cụ thể của bạn.">
+<!ENTITY successful.attach "Đính kèm chữ ký cá nhân vào email của tôi">
+<!ENTITY successful.attach.desc "Bạn có thể tự động đính kèm một trích dẫn hoặc một số thông tin về bản thân vào cuối mỗi tin nhắn bạn gửi.">
+<!ENTITY successful.close "Đóng cửa sổ này.">
+<!ENTITY input.namePlaceholder "Tên hoặc biệt danh của bạn">
+<!ENTITY input.search "Tìm kiếm">
+<!ENTITY search_engine.title "Tùy chỉnh công cụ tìm kiếm của bạn">
+<!ENTITY search_engine.message "Nhà cung cấp email của bạn cũng có thể cung cấp cho bạn khả năng tìm kiếm trên web.">
+<!ENTITY search_engine.button "Hoàn thành">

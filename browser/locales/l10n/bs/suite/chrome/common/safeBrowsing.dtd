@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Vodi me odavde!">
+<!ENTITY safeb.palm.decline.label "Ignoriši ovo upozorenje">
+<!ENTITY safeb.palm.reportPage.label "Zašto je ova stranica blokirana?">
+
+<!ENTITY safeb.blocked.malwarePage.title "Prijavljena napadačka stranica!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Ova web stranica na <span id='malware_sitename'/> je prijavljena da sadrži napadačku stranicu i blokirana je na osnovu vaših sigurnosnih preferenci.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Napadačke stranice pokušavaju instalirati programe koji kradu privatne informacije, koriste vaš računar za napade drugih ili oštećuju vaš sistem.</p><p>Neke napadačke stranice namjerno distribuiraju štetne softvere, ali mnogi su ugroženi bez njihovog znanja ili dozvole njihovih vlasnika.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Prijavljena stranica sa neželjenim sotverom!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Ova web stranica na <span id='unwanted_sitename'/> je prijavljena da sadrži neželjeni softver i blokirana je na osnovu vaših sigurnosnih preferenci.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Stranice sa neželjenim softverom pokušavaju instalirati softver koji može biti obmanjujući i može uticati na vaš sistem na neočekivane načine.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Obmanjujuća stranica!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Ova web stranica na <span id='phishing_sitename'/> je prijavljena kao obmanjujuća i blokirana je na osnovu vaših sigurnosnih postavki.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Obmanjujuće stranice su dizajnirane da vas natjeraju da uradite nešto opasno, kao što je instaliranje softvera ili otkrivate vaše lične informacije, kao što su lozinke, telefonski brojevi ili kreditne kartice.</p><p>Unošenjem bilo koje informacije na ovu web stranicu može rezultovati krađom identiteta ili drugih prevara.</p>">
+
+<!-- Localization note (reportDeceptiveSite, notADeceptiveSite) - The two button strings will never be shown at the same time, so it's okay for them to have the same access key. -->
+<!ENTITY reportDeceptiveSite.label "Prijavi obmanjujuću stranicu…">
+<!ENTITY notADeceptiveSite.label "Ovo nije obmanjujuća stranica…">
+

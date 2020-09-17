@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Kudeatu kontu honen identitateak. Lehenengo identitatea erabiltzen da lehenespenez.">
+<!ENTITY identitiesListAdd.label  "Gehitu…">
+<!ENTITY identitiesListAdd.accesskey  "G">
+<!ENTITY identitiesListEdit.label "Editatu…">
+<!ENTITY identitiesListEdit.accesskey "E">
+<!ENTITY identitiesListDefault.label "Lehenetsi">
+<!ENTITY identitiesListDefault.accesskey "L">
+<!ENTITY identitiesListDelete.label "Ezabatu">
+<!ENTITY identitiesListDelete.accesskey "z">
+<!ENTITY identitiesListClose.label "Itxi">
+<!ENTITY identitiesListClose.accesskey "I">

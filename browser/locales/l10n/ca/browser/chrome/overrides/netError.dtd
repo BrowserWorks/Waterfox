@@ -1,0 +1,147 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "S'ha produït un problema en carregar la pàgina">
+<!ENTITY retry.label "Torna-ho a provar">
+<!ENTITY returnToPreviousPage.label "Vés enrere">
+<!ENTITY returnToPreviousPage1.label "Vés enrere (recomanat)">
+<!ENTITY advanced2.label "Avançat…">
+<!ENTITY viewCertificate.label "Mostra el certificat">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "No s'ha trobat el servidor">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Si l'adreça és correcta, podeu provar aquestes tres coses:</strong>
+<ul>
+  <li>Torneu-ho a provar més tard.</li>
+  <li>Comproveu la vostra connexió a la xarxa.</li>
+  <li>Si esteu connectat a través d'un tallafoc, comproveu que el &brandShortName; tingui permís per accedir al web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Comproveu les majúscules i minúscules del nom del fitxer i qualsevol altre error que s'hagi produït en teclejar.</li> <li>Comproveu que el fitxer no s'hagi mogut, canviat de nom o eliminat.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Pot ser que s'hagi eliminat, que s'hagi traslladat o que els permisos del fitxer n'impedeixin l'accés.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>El &brandShortName; no ha pogut carregar la pàgina per algun motiu.</p>">
+
+<!ENTITY captivePortal.title "Inicieu la sessió a la xarxa">
+<!ENTITY captivePortal.longDesc2 "<p>Heu d'iniciar la sessió en aquesta xarxa per poder accedir a Internet.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Obre la pàgina d'inici de sessió a la xarxa">
+
+<!ENTITY malformedURI.pageTitle "L'URL no és vàlid">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>El document sol·licitat ja no està disponible a la memòria cau del &brandShortName;.</p><ul><li>Per precaució, el &brandShortName; no tornarà a sol·licitar automàticament els documents sensibles.</li><li>Feu clic a «Torna-ho a provar» per tornar a sol·licitar el document al lloc web.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Feu clic a «Torna-ho a provar» per tornar el mode en línia i actualitzar la pàgina.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Pot ser que calgui que instal·leu altre programari per obrir l'adreça.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Comproveu els paràmetres del servidor intermediari per assegurar-vos que siguin correctes.</li> <li>Poseu-vos en contacte amb l'administrador de la xarxa per assegurar-vos que el servidor intermediari funciona.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Comproveu els paràmetres del servidor intermediari per assegurar-vos que siguin correctes.</li> <li>Comproveu que el vostre ordinador té una connexió a la xarxa funcional.</li> <li>Si el vostre ordinador o la vostra xarxa estan protegits per un tallafoc o per un servidor intermediari, assegureu-vos que el &brandShortName; tingui permís per accedir al web.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Això podria passar per haver inhabilitat o rebutjat l'acceptació de galetes.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Assegureu-vos que el vostre sistema té un gestor de seguretat personal instal·lat.</li> <li>Això podria ser a causa d'una configuració no estàndard del servidor.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>La pàgina que esteu intentant veure no es pot mostrar perquè no s'ha pogut verificar l'autenticitat de les dades rebudes.</li> <li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "El &brandShortName; ha detectat una amenaça potencial de seguretat i ha interromput la connexió a <span class='hostname'/>. Si visiteu aquest lloc, els atacants podrien robar informació com ara contrasenyes, correus electrònics o detalls de targetes de crèdit.">
+<!ENTITY certerror.sts.introPara "El &brandShortName; ha detectat una amenaça potencial de seguretat i ha interromput la connexió a <span class='hostname'/> perquè aquest lloc web requereix una connexió segura.">
+
+<!ENTITY certerror.expiredCert.introPara "El &brandShortName; ha detectat un problema i ha interromput la connexió a <span class='hostname'/>. El lloc web està mal configurat o bé l'hora del vostre ordinador no és correcta.">
+<!ENTITY certerror.expiredCert.secondPara2 "És probable que el certificat del lloc web estigui caducat, cosa que impedeix al &brandShortName; connectar-se de forma segura. Si visiteu aquest lloc, els atacants podrien robar informació com ara contrasenyes, correus electrònics o detalls de targetes de crèdit.">
+<!ENTITY certerror.expiredCert.sts.secondPara "És probable que el certificat del lloc web estigui caducat, cosa que impedeix al &brandShortName; connectar-se de forma segura.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Què hi podeu fer?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Molt probablement, l'error és del lloc web i no hi podeu fer res per resoldre'l.</p>
+<p>Si esteu en una xarxa empresarial o utilitzeu programari antivirus, podeu posar-vos en contacte amb l'equip d'assistència tècnica. També podeu notificar el problema a l'administrador del lloc web.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Segons el rellotge del vostre ordinador, la data i l'hora actuals són: <span id='wrongSystemTime_systemDate2'/>. Assegureu-vos que l'ordinador tingui definits l'hora, data i fus horari correctes als paràmetres del sistema i, a continuació, torneu a carregar <span class='hostname'/>.</p>
+<p>Si l'hora del rellotge és correcta, és probable que el lloc web estigui mal configurat i no hi podeu fer res per resoldre-ho. Podeu notificar el problema a l'administrador del lloc web.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Molt probablement, l'error és del lloc web i no hi podeu fer res per resoldre'l. Podeu notificar el problema a l'administrador del lloc web.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>El lloc web podria estar temporalment no disponible o massa ocupat. Torneu-ho a provar d'aquí a uns moments.</li>
+  <li>Si no podeu carregar cap pàgina, comproveu la connexió a la xarxa del vostre ordinador.</li>
+  <li>Si el vostre ordinador o la vostra xarxa estan protegits per un tallafoc o per un servidor intermediari, assegureu-vos que el &brandShortName; tingui permís per accedir al web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>El &brandShortName; ha impedit que la pàgina es carregui d'aquesta manera perquè la pàgina té una política de seguretat del contingut que no ho permet.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>El &brandShortName; ha impedit que la pàgina es carregui en aquest context perquè la pàgina té una política X-Frame-Options que no ho permet.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>La pàgina que esteu intentant veure no es pot mostrar perquè s'ha produït un error en la transmissió de les dades.</p><ul><li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Accepto el risc i vull continuar">
+
+<!ENTITY errorReporting.automatic2 "Informa dels errors com aquest per ajudar a Mozilla a identificar i a blocar els llocs maliciosos">
+<!ENTITY errorReporting.learnMore "Més informació…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Informació avançada: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Avís: Risc potencial de seguretat">
+<!ENTITY certerror.sts.pagetitle  "No s'ha connectat: Problema potencial de seguretat">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> té una política de seguretat anomenada «HTTP Strict Transport Security» (Seguretat estricta de transport HTTP, o HSTS), que vol dir que el &brandShortName; només pot connectar-s'hi de forma segura. No podeu afegir cap excepció per visitar aquest lloc.">
+<!ENTITY certerror.copyToClipboard.label "Copia el text al porta-retalls">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> utilitza una tecnologia de seguretat obsoleta i vulnerable a atacs. Un atacant podria veure fàcilment la informació que altrament pensaríeu que és segura. Per tal que pugueu visitar el lloc, abans l'administrador del lloc web haurà d'arreglar el servidor.</p><p>Codi d'error: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Pàgina blocada">
+
+<!ENTITY certerror.mitm.longDesc "És probable que <span class='hostname'></span> sigui un lloc segur, però no s'ha pogut establir una connexió segura. La causa d'aquest problema és <span class='mitm-name'/>, que és un programari del vostre ordinador o de la vostra xarxa.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Si el vostre programari antivirus inclou una funció que escaneja les connexions xifrades (que sovint s'anomena «escàner web» o «escàner https»), podeu desactivar-la. Si no funciona, podeu eliminar el programari antivirus i reinstal·lar-lo.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Si us trobeu en una xarxa corporativa, poseu-vos en contacte amb el vostre departament informàtic.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Si no coneixeu <span class='mitm-name'/>, podria tractar-se d'un atac i no hauríeu de continuar al lloc.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Si no coneixeu <span class='mitm-name'/>, podria tractar-se d'un atac i no hi ha res que pugueu fer per accedir al lloc.">
+
+<!ENTITY clockSkewError.longDesc "Segons el vostre ordinador, la data i l'hora actuals són: <span id='wrongSystemTime_systemDate1'/>, cosa que impedeix al &brandShortName; establir una connexió segura. Per visitar <span class='hostname'></span>, actualitzeu el rellotge de l'ordinador als paràmetres del sistema per tal que coincideixi amb la data i hora actuals i el fus horari i, a continuació, torneu a carregar <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Sembla que la configuració actual de seguretat a la xarxa està causant aquest error. Voleu utilitzar la configuració per defecte?">
+<!ENTITY prefReset.label "Restaura la configuració per defecte">
+
+<!ENTITY enableTls10.longDesc "És possible que aquest lloc web no admeti el protocol TLS 1.2, que és la versió mínima compatible amb el &brandShortName;. L'activació de TLS 1.0 i TLS 1.1 podria fer que la connexió funcioni correctament.">
+<!ENTITY enableTls10.note "TLS 1.0 i TLS 1.1 es desactivaran permanentment en una pròxima versió.">
+<!ENTITY enableTls10.label "Habilita TLS 1.0 i 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>La pàgina que esteu intentant veure no es pot mostrar perquè s'ha produït un error del protocol de xarxa.</p><ul><li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li></ul>">

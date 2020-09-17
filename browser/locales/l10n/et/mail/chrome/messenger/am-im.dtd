@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title                    "Konto sätted">
+<!ENTITY accountWindow.width                    "300">
+<!ENTITY account.general                        "Üldine">
+<!ENTITY account.advanced                       "Täpsemad sätted">
+<!ENTITY account.name                           "Kasutajanimi:">
+<!ENTITY account.password                       "Parool:">
+<!ENTITY account.alias                          "Alias:">
+<!ENTITY account.newMailNotification            "Teavitatakse uue e-kirja saabumisest">
+<!ENTITY account.autojoin                       "Automaatselt ühendatavad kanalid:">
+<!ENTITY account.proxySettings.caption          "Puhverserveri häälestus:">
+<!ENTITY account.proxySettings.change.label     "Muuda…">
+<!ENTITY account.proxySettings.change.accessKey "M">

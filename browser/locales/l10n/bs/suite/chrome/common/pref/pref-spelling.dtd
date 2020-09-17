@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Pravopis">
+<!ENTITY generalSpelling.label                "Opće">
+<!ENTITY checkSpellingWhenTyping.label        "Pri kucanju, provjeri moj pravopis:">
+<!ENTITY dontCheckSpelling.label              "Nikad">
+<!ENTITY multilineCheckSpelling.label         "U okvire s više redova">
+<!ENTITY alwaysCheckSpelling.label            "Sve okvire">
+<!ENTITY spellForMailAndNews.label            "Pošta i novinske grupe">
+<!ENTITY checkSpellingBeforeSend.label        "Provjeri pravopis prije slanja">
+<!ENTITY spellCheckInline.label               "Provjeravaj pravopis dok kucam">
+<!ENTITY languagePopup.label                  "Jezik:">
+<!ENTITY moreDictionaries.label               "Preuzmi više rječnika&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "Nema dostupnih rječnika.">

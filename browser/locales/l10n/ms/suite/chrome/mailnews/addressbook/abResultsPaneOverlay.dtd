@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY GeneratedName.label                   "Nama">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "E-mel">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organisasi">
+<!ENTITY Company.accesskey                     "s">
+<!ENTITY _PhoneticName.label                   "Nama Fonetik">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Nama gelaran">
+<!ENTITY NickName.accesskey                    "l">
+<!ENTITY SecondEmail.label                     "E-mel Tambahan">
+<!ENTITY SecondEmail.accesskey                 "m">
+<!ENTITY Department.label                      "Jabatan">
+<!ENTITY Department.accesskey                  "t">
+<!ENTITY JobTitle.label                        "Jawatan">
+<!ENTITY JobTitle.accesskey                    "J">
+<!ENTITY CellularNumber.label                  "Mudah alih">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Kelui">
+<!ENTITY PagerNumber.accesskey                 "K">
+<!ENTITY FaxNumber.label                       "Faks">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Telefon Rumah">
+<!ENTITY HomePhone.accesskey                   "R">
+<!ENTITY WorkPhone.label                       "Telefon Kerja">
+<!ENTITY WorkPhone.accesskey                   "K">
+<!ENTITY ScreenName.label                      "Nama Skrin">
+<!ENTITY ScreenName.accesskey                  "S">
+<!ENTITY sortAscending.label                   "Menaik">
+<!ENTITY sortAscending.accesskey               "M">
+<!ENTITY sortDescending.label                  "Menurun">
+<!ENTITY sortDescending.accesskey              "n">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "Karang E-mel Kepada">
+<!ENTITY composeEmail.accesskey                "K">
+<!ENTITY copyAddress.label                     "Salin Alamat E-mel">
+<!ENTITY copyAddress.accesskey                 "A">
+<!ENTITY deleteAddrBookCard.label              "Buang">
+<!ENTITY deleteAddrBookCard.accesskey          "B">
+<!ENTITY newAddrBookCard.label                 "Kad Baru…">
+<!ENTITY newAddrBookCard.accesskey             "B">
+<!ENTITY newAddrBookMailingList.label          "Senarai Mel Baru…">
+<!ENTITY newAddrBookMailingList.accesskey      "M">
+<!ENTITY addrBookCardProperties.label          "Sifat">
+<!ENTITY addrBookCardProperties.accesskey      "S">

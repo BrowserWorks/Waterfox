@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label        "Ralat Memuatkan Halaman">
+<!ENTITY gopherAddon.title      "Protokol Gopher">
+<!ENTITY gopherAddon.shortDesc  "gopher bukan satu protokol yang didaftarkan.">
+<!ENTITY gopherAddon.longDesc   "Alamat ini menyatakan protokol gopher yang tidak lagi disokong, jadi pelayar tidak boleh menyambung ke laman. Anda boleh dapatkan add-on yang serasi untuk mengakses pelayan ini dari Add-ons Mozilla.">
+<!ENTITY goToAddOn.label        "Pergi ke Halaman Add-on">

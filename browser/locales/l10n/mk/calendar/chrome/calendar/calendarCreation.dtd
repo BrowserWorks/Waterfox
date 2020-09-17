@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY wizard.title "Креирање на нов календар">
+<!ENTITY wizard.label "Креирај нов календар">
+<!ENTITY wizard.description "Лоцирајте го Вашиот календар">
+<!ENTITY initialpage.description "Вашиот календар може да го зачувате во Вашиот компјутер или да го зачувате во сервер со цел да овозможите далечински пристап или пак да овозможите Вашите пријатели да пристапат до него">
+<!ENTITY initialpage.computer.label "Локално (мојот компјутер)">
+<!ENTITY initialpage.network.label "На мрежа (сервер)">
+<!ENTITY locationpage.description "Внесете ги потребните информации за да се овозможи пристап кон Вашиот далечински календар">
+<!ENTITY locationpage.login.description "Незадолжително: внесете корисничко име и лозинка">
+<!ENTITY locationpage.username.label "Корисничко име:">
+<!ENTITY locationpage.password.label "Лозинка:">
+<!ENTITY custompage.shortdescription "Прилагодете го Вашиот календар">
+<!ENTITY custompage.longdescription "Може да му дадете прекар на Вашиот календар, и да ги обоите настаните од овој календар">
+<!ENTITY finishpage.shortdescription "Календарот е креиран">
+<!ENTITY finishpage.longdescription "Вашиот календар е веќе креиран">

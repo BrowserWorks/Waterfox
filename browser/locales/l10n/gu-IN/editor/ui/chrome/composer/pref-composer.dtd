@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "કમ્પોઝર">
+
+<!ENTITY  saving                    "સંગ્રહવાનું">
+<!ENTITY  AutoSaveCheck             "દરેકને આપોઆપ સંગ્રહો">
+<!ENTITY  minText                   "મિનિટો">
+
+<!ENTITY  exterLegend.label         "બાહ્ય સંપાદકો">
+<!ENTITY  htmlSource                "HTML સ્રોત:">
+<!ENTITY  imageeditor               "ઈમેજો:">
+<!ENTITY  chooseButton.label        "પસંદ કરો">
+
+<!ENTITY  recentFiles.title         "છેલ્લા પાનાંઓ મેનુ">
+<!ENTITY  documentsInMenu.label     "યાદી થયેલ મહત્તમ સંખ્યાના પાનાંઓ:">
+<!ENTITY  documentsInMenu.accesskey "n">
+
+<!ENTITY  savingFiles.title             "જ્યારે પાનાંઓ સંગ્રહી અથવા પ્રકાશિત કરી રહ્યા હોય">
+<!ENTITY  preserveExisting.label        "મૂળ સ્રોત બંધારણ સાચવો">
+<!ENTITY  preserveExisting.accesskey    "P">
+<!ENTITY  preserveExisting.tooltip      "લીટી અટકણો અને પાનાંનું મૂળ બંધારણ સાચવે છે">
+<!ENTITY  saveAssociatedFiles.label     "જ્યારે પાનાંઓ સંગ્રહી રહ્યા હોય ત્યારે ઈમેજો અને અન્ય સંકળાયેલ ફાઈલો સંગ્રહો">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "જ્યારે પાનાંઓ પ્રકાશિત કરી રહ્યા હોય ત્યારે હંમેશા પ્રકાશન સંવાદ બતાવો">
+<!ENTITY  showPublishDialog.accesskey   "A">
+
+<!ENTITY  composerEditing.label         "સંપાદન">
+<!ENTITY  spellCheckInline.label        "તમે લખો તે પ્રમાણે જોડણી ચકાસો">
+<!ENTITY  spellCheckInline.accesskey    "C">
+<!ENTITY  maintainStructure.label       "જ્યારે ખાનાંઓ દાખલ કરી રહ્યા હોય અથવા કાઢી રહ્યા હોય ત્યારે કોષ્ટકને દેખાવ જાળવો">
+<!ENTITY  maintainStructure.tooltip     "કોષ્ટકમાંથી ખાનાંઓ દાખલ કર્યા પછી અથવા કાઢ્યા પછી તેનો લંબચોરસ આકાર આપોઆપ સાચવે છે">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "HTML ઘટકો અને લક્ષણેની જગ્યાએ CSS શૈલીઓ વાપરો">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "ફકરામાં પાછા આવવાનું હંમેશા નવો ફકરો બનાવે છે">
+<!ENTITY  crInPCreatesNewP.accesskey    "R">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Properti Garis Mendatar">
+
+<!ENTITY dimensionsBox.label "Ukuran">
+<!ENTITY heightEditField.label "Tinggi:">
+<!ENTITY heightEditField.accessKey "T">
+<!ENTITY widthEditField.label "Lebar:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY pixelsPopup.value "piksel">
+<!ENTITY alignmentBox.label "Rata">
+<!ENTITY leftRadio.label "Kiri">
+<!ENTITY leftRadio.accessKey "i">
+<!ENTITY centerRadio.label "Tengah">
+<!ENTITY centerRadio.accessKey "e">
+<!ENTITY rightRadio.label "Kanan">
+<!ENTITY rightRadio.accessKey "a">
+
+<!ENTITY threeDShading.label "Bayangan 3D">
+<!ENTITY threeDShading.accessKey "B">
+<!ENTITY saveSettings.label "Gunakan sebagai Default">
+<!ENTITY saveSettings.accessKey "D">
+<!ENTITY saveSettings.tooltip "Simpan pengaturan ini untuk digunakan saat membuat garis mendatar baru">

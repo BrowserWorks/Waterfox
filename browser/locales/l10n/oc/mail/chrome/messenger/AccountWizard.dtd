@@ -1,0 +1,98 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Assistent de creacion de compte">
+<!ENTITY accountWizard.size "width: 42em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountTypeTitle.label "Parametratge d'un compte novèl">
+<!ENTITY accountTypeDirections.label "Seleccionatz lo tipe de compte que volètz crear :">
+<!ENTITY accountTypeMail.label "Compte de corrièr electronic">
+<!ENTITY accountTypeMail.accesskey "C">
+<!ENTITY accountTypeNews.label "Compte de gropes de discussion">
+<!ENTITY accountTypeNews.accesskey "g">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identitat">
+<!ENTITY identityDesc.label "Cada compte es associat a una identitat que recampa las informacions que vos identifican quand vòstres destinataris recebon un messatge de vòstra part.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Picatz lo nom que volètz veire dins lo camp « De : » pels messatges que mandatz">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+	1, do not translate two of "&quot;"
+	2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(per exemple « Juli Cesar »).">
+<!ENTITY fullnameLabel.label "Vòstre nom :">
+<!ENTITY fullnameLabel.accesskey "V">
+
+<!ENTITY emailLabel.label "Adreça electronica :">
+<!ENTITY emailLabel.accesskey "A">
+
+<!-- Entities for Server page -->
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingServerTypeDesc.label "Seleccionatz lo tipe del servidor de recepcion.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Picatz lo nom de vòstre servidor de gropes (NNTP) (per exemple, « gropes.exemple.net »).">
+<!ENTITY newsServerLabel.label "Servidor de gropes :">
+<!ENTITY newsServerLabel.accesskey "g">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Vòstre servidor actual de corrièr sortent (SMTP), « ">
+
+<!-- Entities for Login page -->
+
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Vòstre nom d'utilizaire sortent actual (SMTP), « ">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Vòstre servidor sortent (SMTP), « ">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Nom del compte ">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Picatz lo nom amb lo qual vos volètz referir a aqueste compte (per exemple « Compte Trabalh », « Compte personal » o « Compte gropes »).">
+<!ENTITY accnameLabel.label "Nom del compte :">
+<!ENTITY accnameLabel.accesskey "c">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Felicitacions !">
+<!ENTITY completionText.label "Verificatz que las informacions çaijós son corrèctas.">
+<!ENTITY serverTypePrefix.label "Tipe del servidor de recepcion :">
+<!ENTITY serverNamePrefix.label "Nom del servidor de recepcion :">
+<!ENTITY smtpServerNamePrefix.label "Nom del servidor de mandadís (SMTP) :">
+<!ENTITY newsServerNamePrefix.label "Nom del servidor de gropes (NNTP) :">
+<!ENTITY downloadOnLogin.label "Telecargar los messatges ara">
+<!ENTITY downloadOnLogin.accesskey "T">
+
+<!ENTITY deferStorageDesc.label "Desmarcatz aquesta casa per estocar los messatges d'aqueste compte dins una arborescéncia independenta. Aqueste compte serà atal considerat coma un compte de nivèl superior. Dins lo cas contrari, farà partida del compte bóstia globala estocat dins los dorsièrs locals.">
+<!ENTITY deferStorage.label "Utilizar la bóstia globala (estocar los messatges dins Dorsièrs locals)">
+<!ENTITY deferStorage.accesskey "U">
+<!ENTITY clickFinish.label "Clicar sus Acabar per enregistrar aquestes paramètres e quitar l'assistent de creacion de compte.">
+<!ENTITY clickFinish.labelMac "Clicar sus Acabar per enregistrar aquestes paramètres e quitar l'assistent de creacion de compte.">

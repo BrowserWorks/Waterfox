@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Tzolin taq Wujil">
+<!ENTITY useGlobalPrefs.label         "Ke'okisäx ri ajowel taq chijun tzolin wujil richin re rub'i' taqoya'l re'">
+<!ENTITY useGlobalPrefs.accesskey     "K">
+<!ENTITY globalReceipts.label         "Chijun taq Ajowab'äl…">
+<!ENTITY globalReceipts.accesskey     "C">
+<!ENTITY useCustomPrefs.label         "Ke'ichinäx tzolin taq wujil richin re rub'i' taqoya'l re'">
+<!ENTITY useCustomPrefs.accesskey     "K">
+<!ENTITY requestReceipt.label         "Toq ye'atäq taq rutzijol, junelïk tak'utuj jun tzolin ruwujil">
+<!ENTITY requestReceipt.accesskey     "T">
+<!ENTITY receiptArrive.label          "Toq napon jun tzolin ruwujil:">
+<!ENTITY leaveIt.label                "Tiya' kan pa Numolb'äl">
+<!ENTITY leaveIt.accesskey            "I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Tisilöx pa &quot;Taqon&quot; numolwuj">
+<!ENTITY moveToSent.accesskey         "T">
+<!ENTITY requestMDN.label             "Toq tik'utüx jun tzolin wujil chwe:">
+<!ENTITY returnSome.label             "Tiya' q'ij yetzolïx kiwujil chi ke jujun taq tzijol">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Majub'ey titaq jun tzolin wujil">
+<!ENTITY never.accesskey              "M">
+<!ENTITY notInToCc.label              "We man in k'o ta pa Chi re o Cc richin ri rutzijol:">
+<!ENTITY notInToCc.accesskey          "C">
+<!ENTITY outsideDomain.label          "We man k'o ta pa ruk'ojlem nub'ey ri taqonel:">
+<!ENTITY outsideDomain.accesskey      "t">
+<!ENTITY otherCases.label             "Pa konojel ri ch'aqa' chik taq k'ulwachinïk:">
+<!ENTITY otherCases.accesskey         "a">
+<!ENTITY askMe.label                  "Tik'utüx pe chwe">
+<!ENTITY alwaysSend.label             "Junelïk titaq">
+<!ENTITY neverSend.label              "Majub'ey titaq">

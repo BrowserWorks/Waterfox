@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName; Hakkında">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; deneyseldir ve kararsız olabilir.">
+<!ENTITY aboutPage.checkForUpdates.link         "Güncellemeleri denetle »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Güncellemeler aranıyor…">
+<!ENTITY aboutPage.checkForUpdates.none         "Hiç güncelleme yok">
+<!ENTITY aboutPage.checkForUpdates.available2   "Güncellemeyi indir">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Güncelleme indiriliyor...">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Güncellemeyi kur">
+<!ENTITY aboutPage.faq.label                    "S.S.S.">
+<!ENTITY aboutPage.support.label                "Destek">
+<!ENTITY aboutPage.privacyPolicy.label          "Gizlilik ilkeleri">
+<!ENTITY aboutPage.rights.label                 "Haklarınızı bilin">
+<!ENTITY aboutPage.relNotes.label               "Sürüm notları">
+<!ENTITY aboutPage.credits.label                "Destekleyenler">
+<!ENTITY aboutPage.license.label                "Lisans bilgileri">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox adı ve Firefox logoları, Mozilla Vakfı’nın tescilli markalarıdır.">

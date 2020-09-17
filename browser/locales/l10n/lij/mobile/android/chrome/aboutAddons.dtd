@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Conp. azonti">
+<!ENTITY aboutAddons.header2                    "I teu conponenti azonti">
+
+<!ENTITY addonAction.enable                     "Abilita">
+<!ENTITY addonAction.disable                    "Dizabilita">
+<!ENTITY addonAction.uninstall                  "Dizinstalla">
+<!ENTITY addonAction.undo                       "Anulla">
+<!ENTITY addonAction.update                     "Agiorna">
+
+<!ENTITY addonUnsigned.message                  "Sto conponente azonto o no peu ese verificou da &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "Atre informaçioin">

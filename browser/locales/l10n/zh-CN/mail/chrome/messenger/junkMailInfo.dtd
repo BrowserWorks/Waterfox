@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "关于垃圾邮件">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; 自动检查收到的消息是否像垃圾邮件。被 &brandShortName; 认为是垃圾邮件的消息会显示一个垃圾图标。">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "首先，您必须使用垃圾工具栏将消息标记为垃圾消息或非垃圾消息来训练  &brandShortName; 识别垃圾邮件。">
+<!ENTITY info3.label   "一旦 &brandShortName; 正确地识别了垃圾邮件，您可以使用垃圾邮件控制来自动将垃圾邮件移动至垃圾文件夹。">
+<!ENTITY info4.label   "要获取更多信息，请单击“帮助”。">

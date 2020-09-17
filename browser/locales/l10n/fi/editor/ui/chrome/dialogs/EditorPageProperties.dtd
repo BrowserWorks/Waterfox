@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label  "Sivun ominaisuudet">
+<!ENTITY location.label  "Sijainti:">
+<!ENTITY lastModified.label  "Viimeksi muokattu:">
+<!ENTITY titleInput.label  "Otsikko:">
+<!ENTITY titleInput.accessKey  "O">
+<!ENTITY authorInput.label  "Tekijä:">
+<!ENTITY authorInput.accessKey  "T">
+<!ENTITY descriptionInput.label  "Kuvaus:">
+<!ENTITY descriptionInput.accessKey  "K">
+<!ENTITY locationNewPage.label  "[Uusi sivu, ei vielä tallennettu]">
+<!ENTITY EditHEADSource1.label  "Kokeneet käyttäjät:">
+<!ENTITY EditHEADSource2.label  "Jos haluat muokata &lt;head&gt;-lohkoa, valitse HTML-koodi Näytä-valikosta tai Muokkaustila-työkalupalkista.">

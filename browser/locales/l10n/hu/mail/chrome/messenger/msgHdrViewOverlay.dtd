@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Címzett">
+<!ENTITY fromField4.label "Feladó">
+<!ENTITY senderField4.label "Küldő">
+<!ENTITY author.label "Szerző">
+<!ENTITY organizationField4.label "Szervezet">
+<!ENTITY replyToField4.label "Válaszcím">
+
+<!ENTITY subjectField4.label "Tárgy">
+<!ENTITY ccField4.label "Másolat">
+<!ENTITY bccField4.label "Rejtett másolat">
+<!ENTITY newsgroupsField4.label "Hírcsoportok">
+<!ENTITY followupToField4.label "Hírcsop. vál.">
+<!ENTITY tagsHdr4.label "Címkék">
+<!ENTITY dateField4.label "Dátum">
+<!ENTITY userAgentField4.label "Ügyfélprogram">
+<!ENTITY referencesField4.label "Hivatkozások">
+<!ENTITY messageIdField4.label "Üzenetazonosító">
+<!ENTITY inReplyToField4.label "Válasz erre">
+<!ENTITY originalWebsite4.label "Webhely">
+
+<!ENTITY hdrArchiveButton1.label "Archiválás">
+<!ENTITY hdrArchiveButton1.tooltip "Üzenet archiválása">
+<!ENTITY hdrSmartReplyButton1.label "Intelligens válasz">
+<!ENTITY hdrReplyButton1.label "Válasz">
+<!ENTITY hdrReplyButton2.tooltip "Válasz az üzenet feladójának">
+<!ENTITY hdrReplyAllButton1.label "Válasz mindenkinek">
+<!ENTITY hdrReplyAllButton1.tooltip "Válasz a feladónak és az összes címzettnek">
+<!ENTITY hdrReplyListButton1.label "Válasz a listára">
+<!ENTITY hdrReplyListButton1.tooltip "Válasz a levelezőlistára">
+<!ENTITY hdrFollowupButton1.label "Válasz">
+<!ENTITY hdrFollowupButton1.tooltip "Válasz küldése ebbe a hírcsoportba">
+<!ENTITY hdrForwardButton1.label "Továbbítás">
+<!ENTITY hdrForwardButton1.tooltip "Az üzenet továbbküldése">
+<!ENTITY hdrJunkButton1.label "Szemét">
+<!ENTITY hdrJunkButton1.tooltip "Az üzenet megjelölése szemétként">
+<!ENTITY hdrTrashButton1.label "Törlés">
+<!ENTITY hdrTrashButton1.tooltip "Az üzenet törlése">
+
+<!ENTITY hdrViewToolbarShowFull.label "Ikonok és szöveg">
+<!ENTITY hdrViewToolbarShowFull.accesskey "I">
+<!ENTITY hdrViewToolbarShowIcons.label "Csak ikonok">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "C">
+<!ENTITY hdrViewToolbarShowText.label "Csak szöveg">
+<!ENTITY hdrViewToolbarShowText.accesskey "s">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "A „Válasz a feladónak” mindig megjelenik">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "V">
+
+<!ENTITY otherActionsButton2.label "Több">
+<!ENTITY otherActionsButton.tooltip "További műveletek">
+<!ENTITY otherActionsOpenConversation1.label "Megnyitás beszélgetésben">
+<!ENTITY otherActionsOpenConversation1.accesskey "b">
+<!ENTITY otherActionsOpenInNewWindow1.label "Megnyitás új ablakban">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "a">
+<!ENTITY otherActionsOpenInNewTab1.label "Megnyitás új lapon">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "l">
+<!ENTITY markAsReadMenuItem1.label "Megjelölés olvasottként">
+<!ENTITY markAsReadMenuItem1.accesskey "o">
+<!ENTITY markAsUnreadMenuItem1.label "Megjelölés olvasatlanként">
+<!ENTITY markAsUnreadMenuItem1.accesskey "v">
+<!ENTITY saveAsMenuItem1.label "Mentés másként…">
+<!ENTITY saveAsMenuItem1.accesskey "s">
+<!ENTITY viewSourceMenuItem1.label "Forrás megtekintése">
+<!ENTITY viewSourceMenuItem1.accesskey "F">
+<!ENTITY otherActionsPrint1.label "Nyomtatás…">
+<!ENTITY otherActionsPrint1.accesskey "N">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Melléklet panel megjelenítése induláskor">
+<!ENTITY startExpandedCmd.accesskey    "p">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Megnyitás">
+<!ENTITY openAttachmentCmd.accesskey    "M">
+<!ENTITY saveAsAttachmentCmd.label    "Mentés másként…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "s">
+<!ENTITY detachAttachmentCmd.label    "Leválasztás…">
+<!ENTITY detachAttachmentCmd.accesskey    "L">
+<!ENTITY deleteAttachmentCmd.label    "Törlés">
+<!ENTITY deleteAttachmentCmd.accesskey    "T">
+<!ENTITY openAllAttachmentsCmd.label    "Összes megnyitása…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "m">
+<!ENTITY saveAllAttachmentsCmd.label    "Összes mentése…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "e">
+<!ENTITY detachAllAttachmentsCmd.label    "Összes leválasztása…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "s">
+<!ENTITY deleteAllAttachmentsCmd.label    "Összes törlése…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "t">
+
+<!ENTITY openAttachment.tooltip "Csatolt fájl megnyitása">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Tartalmazó mappa megnyitása">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "m">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Megjelenítés a Finderben">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Mentés">
+<!ENTITY saveAttachmentButton1.tooltip     "Csatolt fájl mentése">
+<!ENTITY saveAllAttachmentsButton1.label   "Összes mentése">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Az összes csatolt fájl mentése">
+
+<!ENTITY copyLinkCmd.label        "Hivatkozás címének másolása">
+<!ENTITY copyLinkCmd.accesskey    "v">
+
+<!ENTITY CopyMessageId.label "Message-ID másolása">
+<!ENTITY CopyMessageId.accesskey "m">
+<!ENTITY OpenMessageForMsgId.label "Az ID-hoz tartozó üzenet megnyitása">
+<!ENTITY OpenMessageForMsgId.accesskey "z">
+<!ENTITY OpenBrowserWithMsgId.label "Böngésző megnyitása a Message-ID-hoz">
+<!ENTITY OpenBrowserWithMsgId.accesskey "B">

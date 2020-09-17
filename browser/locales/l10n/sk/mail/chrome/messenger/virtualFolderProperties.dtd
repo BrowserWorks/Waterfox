@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nový priečinok vyhľadávania">
+<!ENTITY name.label                 "Názov:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Vytvoriť ako podpriečinok v:">
+<!ENTITY description.accesskey      "o">
+
+<!ENTITY searchTermCaption.label "Konfigurácia kritérií vyhľadávania pre tento virtuálny priečinok:">
+
+<!ENTITY folderSelectionCaption.label "Prehľadávať nasledujúce priečinky:">
+<!ENTITY chooseFoldersButton.label "Vybrať…">
+<!ENTITY chooseFoldersButton.accesskey "b">
+
+<!ENTITY searchOnline.label "Hľadať online (vracia vždy aktuálne výsledky v priečinkoch IMAP a diskusných skupinách, ale zvyšuje čas potrebný na ich otvorenie)">
+<!ENTITY searchOnline.accesskey "o">
+<!ENTITY newFolderButton.label       "Vytvoriť">
+<!ENTITY newFolderButton.accesskey   "V">
+<!ENTITY editFolderButton.label      "Aktualizovať">
+<!ENTITY editFolderButton.accesskey  "A">

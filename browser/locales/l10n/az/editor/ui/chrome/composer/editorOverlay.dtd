@@ -1,0 +1,298 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+<!-- File menu items -->
+<!-- Edit menu items -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Insert menu items -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Used just in context popup. -->
+
+
+
+<!-- Font Face SubMenu -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Font Size SubMenu -->
+
+
+
+<!-- < is above this key on many keyboards -->
+
+
+
+<!-- > is above this key on many keyboards -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Font Style SubMenu -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- List menu items -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Shared in Paragraph, and Toolbar menulist -->
+
+<!-- isn't used in menu now, but may be added in future -->
+
+<!-- Align menu items -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Layer toolbar items -->
+
+
+
+
+
+
+
+
+
+
+<!-- Table Menu -->
+
+<!-- Select Submenu -->
+
+
+
+
+
+
+
+<!-- Insert SubMenu -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Delete SubMenu -->
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+
+
+
+
+
+
+
+<!-- Toolbar-only items -->
+
+
+<!ENTITY copyToolbarCmd.tooltip "Köçür">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Editor toolbar -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Structure Toolbar Context Menu items -->
+
+
+
+
+
+<!-- TOC manipulation -->
+
+
+
+
+
+
+

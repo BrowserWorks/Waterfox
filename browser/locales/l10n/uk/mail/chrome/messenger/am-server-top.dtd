@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Сховище повідомлень">
+<!ENTITY securitySettings.label "Налаштування захисту">
+<!ENTITY serverSettings.label "Параметри сервера">
+<!ENTITY serverType.label "Тип сервера:">
+<!ENTITY serverName.label "Ім’я сервера:">
+<!ENTITY serverName.accesskey "с">
+<!ENTITY userName.label "Ім’я користувача:">
+<!ENTITY userName.accesskey "к">
+<!ENTITY port.label "Порт:">
+<!ENTITY port.accesskey "П">
+<!ENTITY serverPortDefault.label "Типово:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Перевіряти наявність нових повідомлень кожні">
+<!ENTITY biffStart.accesskey "е">
+<!ENTITY biffEnd.label "хвилин">
+<!ENTITY useIdleNotifications.label "Дозволити миттєві сповіщення від сервера при отриманні нових повідомлень">
+<!ENTITY useIdleNotifications.accesskey "з">
+<!ENTITY connectionSecurity.label "Безпека з’єднання:">
+<!ENTITY connectionSecurity.accesskey "Б">
+<!ENTITY connectionSecurityType-0.label "Жодної">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, якщо є">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Метод автентифікації:">
+<!ENTITY authMethod.accesskey "в">
+<!ENTITY leaveOnServer.label "Залишати копії повідомлень на сервері">
+<!ENTITY leaveOnServer.accesskey "ш">
+<!ENTITY headersOnly.label "Завантажувати лише заголовки повідомлень">
+<!ENTITY headersOnly.accesskey "ж">
+<!ENTITY deleteByAgeFromServer.label "Не більш">
+<!ENTITY deleteByAgeFromServer.accesskey "е">
+<!ENTITY daysEnd.label "днів">
+<!ENTITY deleteOnServer2.label "Доки я їх не зітру">
+<!ENTITY deleteOnServer2.accesskey "к">
+<!ENTITY downloadOnBiff.label "Автоматично завантажувати нові повідомлення">
+<!ENTITY downloadOnBiff.accesskey "о">
+<!ENTITY deleteMessagePrefix.label "Під час видалення повідомлення:">
+<!ENTITY modelMoveToTrash.label "Перемістити його в теку «Кошик»">
+<!ENTITY modelMoveToTrash.accesskey "К">
+<!ENTITY modelMarkDeleted.label "Позначити його для вилучення">
+<!ENTITY modelMarkDeleted.accesskey "у">
+<!ENTITY modelDeleteImmediately.label "Вилучити його одразу">
+<!ENTITY modelDeleteImmediately.accesskey "о">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Стискати теку «Вхідні» при виході">
+<!ENTITY expungeOnExit.accesskey "т">
+<!ENTITY emptyTrashOnExit.label "Очищувати «Кошик» при виході">
+<!ENTITY emptyTrashOnExit.accesskey "ч">
+<!ENTITY loginAtStartup.label "Перевіряти повідомлення під час запуску">
+<!ENTITY loginAtStartup.accesskey "в">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Питати перед завантаженням понад">
+<!ENTITY maxMessagesStart.accesskey "П">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "повідомлень">
+<!ENTITY alwaysAuthenticate.label "Завжди вимагати автентифікацію при з'єднанні з цим сервером">
+<!ENTITY alwaysAuthenticate.accesskey "З">
+<!ENTITY newsrcFilePath1.label "Файл News.rc:">
+<!ENTITY newsrcPicker1.label "Обрати файл News.rc">
+<!ENTITY abbreviate.label "Показувати назви груп новин як:">
+<!ENTITY abbreviateOn.label "Повні (наприклад, «netscape.public.mozilla.mail-news»)">
+<!ENTITY abbreviateOff.label "Абревіатури (наприклад, «n.p.m.mail-news»)">
+<!ENTITY advancedButton.label "Додатково…">
+<!ENTITY advancedButton.accesskey "Д">
+<!ENTITY serverDefaultCharset2.label "Типове кодування шрифту:">
+<!ENTITY localPath1.label "Локальний каталог:">
+<!ENTITY localFolderPicker.label "Розташування локальних тек">
+<!ENTITY browseFolder.label "Огляд…">
+<!ENTITY browseFolder.accesskey "О">
+<!ENTITY browseNewsrc.label "Огляд…">
+<!ENTITY browseNewsrc.accesskey "О">
+
+<!ENTITY accountTitle.label "Налаштування облікового запису">
+<!ENTITY accountSettingsDesc.label "Це особливий обліковий запис.  З ним не пов'язано жодних особистих даних.">
+<!ENTITY storeType.label "Тип зберігання повідомлень:">
+<!ENTITY storeType.accesskey "Т">
+<!ENTITY mboxStore2.label "Один файл на теку (mbox)">
+<!ENTITY maildirStore.label "Один файл на повідомлення (maildir)">

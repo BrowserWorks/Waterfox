@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Հեռացնել հաշիվը և տվյալը">
+<!ENTITY removeButton.label           "Հեռացնել">
+<!ENTITY removeButton.accesskey       "Հ">
+<!ENTITY removeAccount.label          "Հեռացնել հաշվի տեղեկությունը">
+<!ENTITY removeAccount.accesskey      "հ">
+<!ENTITY removeAccount.desc           "Հեռացնում է միայն &brandShortName; -ի գիտելիքները այս հաշվի մասին: Սպասարկչի և հաշվի վրա չի ազդում:">
+<!ENTITY removeData.label             "Հեռացնել հաղորդագրության տվյալները">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Հեռացնել զրույցի տվյալները">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Տեղական սկավառակից հեռացնում է այս հաշվի հետ կապված բոլոր հաղորդագրությունները, պանակները և զտիչները: Սա չի ազդում որոշ հաղորդագրությունների վրա, որոնք դեռ կարող են պահվել սպասարկչում: Մի ընտրեք սա, եթե դուք պատրաստվում եք պահեսացնել տեղական տվյալները կամ դրանք կրկին օգտագործել &brandShortName; ֊ում ավելի ուշ:">
+<!ENTITY removeDataServerAccount.desc "Տեղական սկավառակից հեռացնում է այս հաշվի հետ կապված բոլոր հաղորդագրությունները, պանակները և զտիչները: Ձեր հաղորդագրությունները և պանակները դեռ պահվում են սպասարկչի վրա:">
+<!ENTITY removeDataChatAccount.desc   "Տեղական սկավառակում հեռացնում է այս հաշվի համար պահվող զրույցների բոլոր տեղեկամատյանները:">
+<!ENTITY showData.label               "Ցուցադրել տվյալների գտնվելու վայրը">
+<!ENTITY showData.accesskey           "S">
+<!ENTITY progressPending              "Ընտրված տվյալների հեռացում…">
+<!ENTITY progressSuccess              "Հեռացումը հաջողվեց:">
+<!ENTITY progressFailure              "Հեռացումը ձախողվեց:">

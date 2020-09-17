@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/openLocation.xul -->
+
+
+<!ENTITY enter.label "Introduïu la ubicació web (URL) o indiqueu el fitxer local que voleu obrir:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "I">
+<!ENTITY chooseFile.label "Trieu un fitxer...">
+<!ENTITY chooseFile.accesskey "T">
+<!ENTITY newPrivate.label "Finestra privada nova">
+<!ENTITY newWindow.label "Finestra nova del navegador">
+<!ENTITY newTab.label "Pestanya nova del navegador">
+<!ENTITY currentTab.label "Pestanya actual del navegador">
+<!ENTITY editNewWindow.label "Finestra nova del redactor">
+<!ENTITY open.label "Obre">
+<!ENTITY caption.label "Obre una ubicació web">
+<!ENTITY openWhere.label "Obre a:">
+<!ENTITY openWhere.accesskey "O">

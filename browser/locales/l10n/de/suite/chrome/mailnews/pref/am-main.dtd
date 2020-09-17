@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!ENTITY accountTitle.label "Account-Einstellungen">
+<!ENTITY accountName.label "Account-Name:">
+<!ENTITY accountName.accesskey "A">
+<!ENTITY identityTitle.label "Standard-Identität">
+<!ENTITY identityDesc.label "Jeder Account hat eine Identität. Diese Informationen sehen andere Personen, wenn sie Ihre Nachrichten lesen.">
+<!ENTITY name.label "Ihr Name:">
+<!ENTITY name.accesskey "I">
+<!ENTITY email.label "E-Mail-Adresse:">
+<!ENTITY email.accesskey "E">
+<!ENTITY replyTo.label "Rückantwortadresse:">
+<!ENTITY replyTo.accesskey "R">
+<!ENTITY replyTo.placeholder "Empfänger werden an diese andere Adresse antworten">
+<!ENTITY organization.label "Organisation:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Signaturtext:">
+<!ENTITY signatureText.accesskey "S">
+<!ENTITY signatureHtml.label "HTML verwenden">
+<!ENTITY signatureHtml.accesskey "T">
+<!ENTITY signatureFile.label "Stattdessen die Signatur aus einer Datei anhängen:">
+<!ENTITY signatureFile.accesskey "u">
+<!ENTITY choose.label "Wählen…">
+<!ENTITY choose.accesskey "D">
+<!ENTITY editVCard.label "Karte bearbeiten…">
+<!ENTITY editVCard.accesskey "K">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Eigene vCard an Nachrichten anhängen">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Identitäten verwalten…">
+<!ENTITY manageIdentities.accesskey "I">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Ausgehender Server (SMTP):">
+<!ENTITY smtpName.accesskey "A">
+<!ENTITY smtpDefaultServer.label "Standard-Server verwenden">
+
+<!ENTITY smtpServerEdit.label "SMTP-Server bearbeiten…">
+<!ENTITY smtpServerEdit.accesskey "P">

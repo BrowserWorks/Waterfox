@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Copias &amp; ordinaturs">
+<!ENTITY sendingPrefix.label "Cun trametter messadis, automaticamain: ">
+<!ENTITY fccMailFolder.label "Memorisar ina copia sut:">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "Memorisar las respostas en l'ordinatur dal messadi respundì">
+<!ENTITY fccReplyFollowsParent.accesskey "m">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc a questas adressas dad e-mail:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Separar las adressas cun commas">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "BCC a questas adressas dad e-mail:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Separar las adressas cun commas">
+<!ENTITY saveMessageDlg.label "Mussar in dialog da conferma sch'ils messadis vegnan memorisads">
+<!ENTITY saveMessageDlg.accesskey "M">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Ordinatur &quot;Tramess&quot; en:">
+<!ENTITY sentFolderOn.accesskey "S">
+<!ENTITY sentInOtherFolder.label "Auter ordinatur:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Archivs da messadis">
+<!ENTITY keepArchives.label "Memorisar l'archiv sut:">
+<!ENTITY keepArchives.accesskey "M">
+<!ENTITY archiveHierarchyButton.label "Opziuns d'archivar…">
+<!ENTITY archiveHierarchyButton.accesskey "a">
+<!ENTITY archivesFolderOn.label "Ordinatur &quot;Archiv&quot; en:">
+<!ENTITY archivesFolderOn.accesskey "n">
+<!ENTITY archiveInOtherFolder.label "Auter ordinatur:">
+<!ENTITY archiveInOtherFolder.accesskey "A">
+<!ENTITY specialFolders.label "Sbozs e models">
+<!ENTITY keepDrafts2.label "Mantegnair ils sboz en:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Ordinatur &quot;Sboz&quot; en:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "Auter ordinatur:">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "Memorisar ils models da messadis en:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Ordinatur &quot;Models&quot; en:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "Auter ordinatur:">
+<!ENTITY templateInOtherFolder.accesskey "e">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "বার্তা পরিশোধক">
+<!ENTITY nameColumn.label "পরিশোধক নাম">
+<!ENTITY activeColumn.label "সক্রিয়">
+<!ENTITY newButton.label "নতুন… (N)">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "সম্পাদনা… (E)">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "মুছে ফেলুন (t)">
+<!ENTITY deleteButton.accesskey "t">
+<!ENTITY reorderUpButton.label "উপরে উঠান (U)">
+<!ENTITY reorderUpButton.accesskey "U">
+<!ENTITY reorderDownButton.label "নিচে নামান (D)">
+<!ENTITY reorderDownButton.accesskey "D">
+<!ENTITY filterHeader.label "সক্রিয় পরিশোধক স্বয়ংক্রিয়ভাবে নিচের ক্রমানুসারে চলে।">
+<!ENTITY filtersForPrefix.label "যার জন্য পরিশোধক: (F)">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "পরিশোধক লগ (L)">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "এখন চালান (R)">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "থামুন (S)">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "নির্বাচিত পরিশোধক যেখানে চালাবেন: (c)">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "সহায়তা (H)">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W">

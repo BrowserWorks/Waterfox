@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName; အကြောင်း">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; သည်စမ်းသပ်ဆဲ ကာလဖြစ်ပြီး မတည်ငြိမ်မှူဖြစ်ကောင်း ဖြစ်နိုင်သည်။">
+<!ENTITY aboutPage.checkForUpdates.link         "အဆင့်မြှင့်တင်ရန်လိုအပ်နေလားစစ်ကြည့်မည် »">
+<!ENTITY aboutPage.checkForUpdates.checking     "အသစ်ပြုပြင်ခြင်းများရှိနေပြီလားစစ်ဆေးနေပါသည်...">
+<!ENTITY aboutPage.checkForUpdates.none         "အဆင့်မြင်တင်မှု မရနိုင်သေးပါ">
+<!ENTITY aboutPage.checkForUpdates.available2   "အသစ်ဖြည့်စွက်ပြုပြင်မှု ရယူရန်">
+<!ENTITY aboutPage.checkForUpdates.downloading  "အသစ်ဖြည့်စွက်ပြုပြင်မှု ရယူနေသည်...">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "အသစ်ဖြည့်စွက်ပြုပြင်မှု ထည့်သွင်းရန်">
+<!ENTITY aboutPage.faq.label                    "အမေးအဖြေ">
+<!ENTITY aboutPage.support.label                "အထောက်အပံ့">
+<!ENTITY aboutPage.privacyPolicy.label          "ကိုယ်ရေးကိုယ်တာ လုံခြုံမှူအရလိုက်နာရမည့် စည်းမျဉ်း">
+<!ENTITY aboutPage.rights.label                 "သင့်အခွင့်အရေးများ ">
+<!ENTITY aboutPage.relNotes.label               "ထုတ်ပြန်မှုမှတ်စုများ">
+<!ENTITY aboutPage.credits.label                "ဂုဏ်ပြုမှတ်တမ်းများ">
+<!ENTITY aboutPage.license.label                "လိုင်စင်အကြောင်းသိကောင်းစရာ">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox နှင့် Firefox လိုဂိုများသည် Mozilla Foundation ၏ အမှတ်တံဆိပ်များဖြစ်သည်။">

@@ -1,0 +1,4 @@
+<!ENTITY options.title "ตัวเลือกเครื่องมือนักพัฒนา">
+<!ENTITY options.status.label "สถานะ:">
+<!ENTITY options.port.label "พอร์ต:">
+<!ENTITY options.forcelocal.label "อนุญาตการเชื่อมต่อจากคอมพิวเตอร์เครื่องอื่น ๆ">

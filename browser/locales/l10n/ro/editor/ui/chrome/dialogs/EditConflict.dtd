@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Selectează modificările de editare">
+<!ENTITY conflictWarning.label "Această pagină a fost modificată cu un alt program, dar și tu ai modificări nesalvate în Composer.">
+<!ENTITY conflictResolve.label "Selectează versiunea de păstrat:">
+<!ENTITY keepCurrentPageButton.label "Păstrează modificările actuale ale paginii">
+<!ENTITY useOtherPageButton.label "Înlocuiește pagina curentă cu alte modificări">

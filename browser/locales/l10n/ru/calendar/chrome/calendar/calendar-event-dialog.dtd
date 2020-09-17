@@ -1,0 +1,433 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Изменить" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Сохранять продолжительность при изменении даты завершения события">
+<!ENTITY event.dialog.keepDurationButton.accesskey "х">
+
+<!ENTITY newevent.from.label                "С" >
+<!ENTITY newevent.to.label                  "По" >
+
+<!ENTITY newevent.status.label                    "Состояние" >
+<!ENTITY newevent.status.accesskey                "я" >
+<!ENTITY newevent.eventStatus.none.label          "Не указано" >
+<!ENTITY newevent.eventStatus.none.accesskey      "Н" >
+<!ENTITY newevent.todoStatus.none.label           "Не указано" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Отменено" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "О" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Отменено" >
+<!ENTITY newevent.status.tentative.label          "Возможно" >
+<!ENTITY newevent.status.tentative.accesskey      "з" >
+<!ENTITY newevent.status.confirmed.label          "Подтверждено" >
+<!ENTITY newevent.status.confirmed.accesskey      "П" >
+<!ENTITY newevent.status.needsaction.label        "В ожидании" >
+<!ENTITY newevent.status.inprogress.label         "Выполняется" >
+<!ENTITY newevent.status.completed.label          "Выполнено" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#37; завершено">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Уведомить участников">
+<!ENTITY event.attendees.notify.accesskey            "в">
+<!ENTITY event.attendees.notifyundisclosed.label     "Разделить приглашения по участникам">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "з">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Эта настройка позволяет отправить эл.письмо с приглашением каждому участнику по отдельности. Каждое приглашение индивидуально и другие участники не раскрываются.">
+<!ENTITY event.attendees.disallowcounter.label       "Запретить встречные предложения">
+<!ENTITY event.attendees.disallowcounter.accesskey   "п">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Указывает, что вы не принимаете встречные предложения">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Создать">
+<!ENTITY  event.menu.item.new.accesskey                   "С">
+<!ENTITY  event.menu.item.new.event.label                 "Событие">
+<!ENTITY  event.menu.item.new.event.accesskey             "о">
+<!ENTITY  event.menu.item.new.task.label                  "Задача">
+<!ENTITY  event.menu.item.new.task.accesskey              "д">
+<!ENTITY  event.menu.item.new.message.label               "Сообщение">
+<!ENTITY  event.menu.item.new.message.accesskey           "б">
+<!ENTITY  event.menu.item.new.contact.label               "Карточку адресной книги">
+<!ENTITY  event.menu.item.new.contact.accesskey           "К">
+<!ENTITY  event.menu.item.close.label                     "Закрыть">
+<!ENTITY  event.menu.item.close.accesskey                 "З">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Сохранить">
+<!ENTITY  event.menu.item.save.accesskey                  "х">
+<!ENTITY  event.menu.item.save.tab.accesskey              "н">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Сохранить и закрыть">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "а">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "и">
+
+<!ENTITY  event.menu.item.delete.label                    "Удалить…">
+<!ENTITY  event.menu.item.delete.accesskey                "У">
+<!ENTITY  event.menu.item.page.setup.label                "Параметры страницы">
+<!ENTITY  event.menu.item.page.setup.accesskey            "а">
+<!ENTITY  event.menu.item.print.label                     "Печать">
+<!ENTITY  event.menu.item.print.accesskey                 "П">
+
+<!ENTITY  event.menu.edit.label                           "Правка">
+<!ENTITY  event.menu.edit.accesskey                       "П">
+<!ENTITY  event.menu.edit.undo.label                      "Отменить">
+<!ENTITY  event.menu.edit.undo.accesskey                  "О">
+<!ENTITY  event.menu.edit.redo.label                      "Повторить">
+<!ENTITY  event.menu.edit.redo.accesskey                  "т">
+<!ENTITY  event.menu.edit.cut.label                       "Вырезать">
+<!ENTITY  event.menu.edit.cut.accesskey                   "В">
+<!ENTITY  event.menu.edit.copy.label                      "Копировать">
+<!ENTITY  event.menu.edit.copy.accesskey                  "К">
+<!ENTITY  event.menu.edit.paste.label                     "Вставить">
+<!ENTITY  event.menu.edit.paste.accesskey                 "с">
+<!ENTITY  event.menu.edit.select.all.label                "Выделить всё">
+<!ENTITY  event.menu.edit.select.all.accesskey            "ы">
+
+<!ENTITY  event.menu.view.label                           "Вид">
+<!ENTITY  event.menu.view.accesskey                       "В">
+<!ENTITY  event.menu.view.toolbars.label                  "Панели инструментов">
+<!ENTITY  event.menu.view.toolbars.accesskey              "П">
+<!ENTITY  event.menu.view.toolbars.event.label            "Панель событий">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "с">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Настроить…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "Н">
+<!ENTITY  event.menu.view.showlink.label                  "Показать связанные ссылки">
+<!ENTITY  event.menu.view.showlink.accesskey              "о">
+
+<!ENTITY  event.menu.options.label                            "Настройки">
+<!ENTITY  event.menu.options.accesskey                        "Н">
+<!ENTITY  event.menu.options.attendees.label                  "Пригласить участников…">
+<!ENTITY  event.menu.options.attendees.accesskey              "П">
+<!ENTITY  event.menu.options.timezone2.label                  "Часовой пояс">
+<!ENTITY  event.menu.options.timezone2.accesskey              "Ч">
+<!ENTITY  event.menu.options.priority2.label                  "Приоритет">
+<!ENTITY  event.menu.options.priority2.accesskey              "р">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Не определен">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "о">
+<!ENTITY  event.menu.options.priority.low.label               "Низкий">
+<!ENTITY  event.menu.options.priority.low.accesskey           "и">
+<!ENTITY  event.menu.options.priority.normal.label            "Обычный">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "б">
+<!ENTITY  event.menu.options.priority.high.label              "Высокий">
+<!ENTITY  event.menu.options.priority.high.accesskey          "ы">
+<!ENTITY  event.menu.options.privacy.label                    "Приватность">
+<!ENTITY  event.menu.options.privacy.accesskey                "а">
+<!ENTITY  event.menu.options.privacy.public.label             "Публичное событие">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "у">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Показывать только дату и время">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "з">
+<!ENTITY  event.menu.options.privacy.private.label            "Личное событие">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "Л">
+<!ENTITY  event.menu.options.show.time.label                  "Показывать время как">
+<!ENTITY  event.menu.options.show.time.accesskey              "т">
+<!ENTITY  event.menu.options.show.time.busy.label             "Занято">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "я">
+<!ENTITY  event.menu.options.show.time.free.label             "Свободно">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "в">
+
+<!ENTITY event.invite.attendees.label                     "Пригласить участников…">
+<!ENTITY event.invite.attendees.accesskey                 "П">
+<!ENTITY event.email.attendees.label                      "Создать сообщение для всех участников…">
+<!ENTITY event.email.attendees.accesskey                  "С">
+<!ENTITY event.email.tentative.attendees.label            "Создать сообщение для неопределившихся участников…">
+<!ENTITY event.email.tentative.attendees.accesskey        "о">
+<!ENTITY event.remove.attendees.label2                    "Удалить всех участников">
+<!ENTITY event.remove.attendees.accesskey                 "а">
+<!ENTITY event.remove.attendee.label                      "Удалить участника">
+<!ENTITY event.remove.attendee.accesskey                  "л">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Сохранить">
+<!ENTITY  event.toolbar.saveandclose.label                "Сохранить и закрыть">
+<!ENTITY  event.toolbar.delete.label                      "Удалить">
+<!ENTITY  event.toolbar.attendees.label                   "Пригласить участников">
+<!ENTITY  event.toolbar.privacy.label                     "Приватность">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Сохранить">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Сохранить и закрыть">
+<!ENTITY  event.toolbar.delete.tooltip                    "Удалить">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Пригласить участников">
+<!ENTITY  event.toolbar.attachments.tooltip               "Добавить вложение">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Изменить приватность">
+<!ENTITY  event.toolbar.priority.tooltip                  "Изменить приоритет">
+<!ENTITY  event.toolbar.status.tooltip                    "Изменить состояние">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Изменить время свободен/занят">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Использовать предложение">
+<!ENTITY counter.button.proposal.accesskey                "ж">
+<!ENTITY counter.button.proposal.tooltip2                 "Поля события будут заполнены с использованием значений из встречного предложения, только сохранение с или без дополнительных изменений соответственно уведомит всех участников">
+<!ENTITY counter.button.original.label                    "Использовать оригинальные данные">
+<!ENTITY counter.button.original.accesskey                "л">
+<!ENTITY counter.button.original.tooltip2                 "Полям будут присвоены значения из исходного события, прежде чем было сделано встречное предложение">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Название:" >
+<!ENTITY event.title.textbox.accesskey                    "з">
+<!ENTITY event.location.label                             "Место:" >
+<!ENTITY event.location.accesskey                         "М">
+<!ENTITY event.categories.label                           "Категория:">
+<!ENTITY event.categories.accesskey                       "К">
+<!ENTITY event.categories.textbox.label                   "Добавить новую категорию" >
+<!ENTITY event.calendar.label                             "Календарь:" >
+<!ENTITY event.calendar.accesskey                         "а">
+<!ENTITY event.attendees.label                            "Участники:" >
+<!ENTITY event.attendees.accesskey                        "У">
+<!ENTITY event.alldayevent.label                          "Весь день" >
+<!ENTITY event.alldayevent.accesskey                      "д">
+<!ENTITY event.from.label                                 "Начало:" >
+<!ENTITY event.from.accesskey                             "ч">
+<!ENTITY task.from.label                                  "Начало:" >
+<!ENTITY task.from.accesskey                              "л">
+<!ENTITY event.to.label                                   "Конец:" >
+<!ENTITY event.to.accesskey                               "о">
+<!ENTITY task.to.label                                    "Срок:" >
+<!ENTITY task.to.accesskey                                "р">
+<!ENTITY task.status.label                                "Состояние:" >
+<!ENTITY task.status.accesskey                            "т">
+<!ENTITY event.repeat.label                               "Повтор:" >
+<!ENTITY event.repeat.accesskey                           "П">
+<!ENTITY event.until.label                                "До:">
+<!ENTITY event.until.accesskey                            "о">
+<!ENTITY event.reminder.label                             "Напоминание:" >
+<!ENTITY event.reminder.accesskey                         "и">
+<!ENTITY event.description.label                          "Описание:" >
+<!ENTITY event.description.accesskey                      "е">
+<!ENTITY event.attachments.label                          "Вложения:" >
+<!ENTITY event.attachments.accesskey                      "В" >
+<!ENTITY event.attachments.menubutton.label               "Прикрепить">
+<!ENTITY event.attachments.menubutton.accesskey           "п">
+<!ENTITY event.attachments.url.label                      "Веб-страницу…">
+<!ENTITY event.attachments.url.accesskey                  "ц">
+<!ENTITY event.attachments.popup.remove.label             "Удалить" >
+<!ENTITY event.attachments.popup.remove.accesskey         "ь" >
+<!ENTITY event.attachments.popup.open.label               "Открыть" >
+<!ENTITY event.attachments.popup.open.accesskey           "ы" >
+<!ENTITY event.attachments.popup.removeAll.label          "Удалить всё" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "с" >
+<!ENTITY event.attachments.popup.attachPage.label         "Прикрепить веб-страницу…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "б" >
+<!ENTITY event.url.label                                  "Связанные ссылки:" >
+<!ENTITY event.priority2.label                            "Приоритет:">
+
+<!ENTITY event.reminder.none.label                        "Не напоминать " >
+<!ENTITY event.reminder.0minutes.before.label             "за 0 минут до" >
+<!ENTITY event.reminder.5minutes.before.label             "за 5 минут до" >
+<!ENTITY event.reminder.15minutes.before.label            "за 15 минут до" >
+<!ENTITY event.reminder.30minutes.before.label            "за 30 минут до" >
+<!ENTITY event.reminder.1hour.before.label                "за 1 час до" >
+<!ENTITY event.reminder.2hours.before.label               "за 2 час до" >
+<!ENTITY event.reminder.12hours.before.label              "за 12 час до" >
+<!ENTITY event.reminder.1day.before.label                 "за 1 день до" >
+<!ENTITY event.reminder.2days.before.label                "за 2 дня до" >
+<!ENTITY event.reminder.1week.before.label                "за 1 неделю до" >
+<!ENTITY event.reminder.custom.label                      "Настроить…" >
+
+<!ENTITY event.reminder.multiple.label                    "Множественные напоминания…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Время как:">
+<!ENTITY event.statusbarpanel.privacy.label               "Приватность:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Изменить повторения">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Не повторять">
+<!ENTITY event.repeat.daily.label                       "Ежедневно">
+<!ENTITY event.repeat.weekly.label                      "Еженедельно">
+<!ENTITY event.repeat.every.weekday.label               "Каждый будний день">
+<!ENTITY event.repeat.bi.weekly.label                   "Каждые 2 недели">
+<!ENTITY event.repeat.monthly.label                     "Ежемесячно">
+<!ENTITY event.repeat.yearly.label                      "Ежегодно">
+<!ENTITY event.repeat.custom.label                      "Настроить…">
+
+<!ENTITY event.recurrence.pattern.label                 "Задать периодичность">
+<!ENTITY event.recurrence.occurs.label                  "Повторять" >
+<!ENTITY event.recurrence.day.label                     "ежедневно" >
+<!ENTITY event.recurrence.week.label                    "еженедельно" >
+<!ENTITY event.recurrence.month.label                   "ежемесячно" >
+<!ENTITY event.recurrence.year.label                    "ежегодно" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Каждый" >
+<!ENTITY repeat.units.days.both                         "день" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Каждый день недели" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Каждую" >
+<!ENTITY repeat.units.weeks.both                        "неделю" >
+<!ENTITY event.recurrence.on.label                      "в:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Каждый" >
+<!ENTITY repeat.units.months.both                       "месяц" >
+<!ENTITY event.recurrence.monthly.every.label           "Каждый" >
+<!ENTITY event.recurrence.monthly.first.label           "первый">
+<!ENTITY event.recurrence.monthly.second.label          "второй">
+<!ENTITY event.recurrence.monthly.third.label           "третий">
+<!ENTITY event.recurrence.monthly.fourth.label          "четвёртый">
+<!ENTITY event.recurrence.monthly.fifth.label           "пятый">
+<!ENTITY event.recurrence.monthly.last.label            "последний">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "Воскресенье" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "Понедельник" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "Вторник" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "Среда" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "Четверг" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "Пятница" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "Суббота" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "День месяца">
+<!ENTITY event.recurrence.repeat.recur.label            "В следующие дни">
+
+<!ENTITY event.recurrence.every.label                        "Каждый:" >
+<!ENTITY repeat.units.years.both                             "год" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Каждый" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "Январь" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "Февраль" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "Март" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "Апрель" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "Май" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "Июнь" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "Июль" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "Август" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "Сентябрь" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "Октябрь" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "Ноябрь " >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "Декабрь" >
+<!ENTITY event.recurrence.yearly.every.label                 "Каждый">
+<!ENTITY event.recurrence.yearly.first.label                 "первый">
+<!ENTITY event.recurrence.yearly.second.label                "второй">
+<!ENTITY event.recurrence.yearly.third.label                 "третий">
+<!ENTITY event.recurrence.yearly.fourth.label                "четвёртый">
+<!ENTITY event.recurrence.yearly.fifth.label                 "пятый">
+<!ENTITY event.recurrence.yearly.last.label                  "последний">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "Воскресенье" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "Понедельник" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "Вторник" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "Среда" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "Четверг" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "Пятница" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "Суббота" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "день" >
+<!ENTITY event.recurrence.of.label                           "" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "Январь" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "Февраль" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "Март" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "Апрель" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "Май" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "Июнь" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "Июль" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "Август" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "Сентябрь" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "Октябрь" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "Ноябрь" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "Декабрь" >
+
+<!ENTITY event.recurrence.range.label                   "Уровень повторений">
+<!ENTITY event.recurrence.forever.label                 "Нет конечной даты" >
+<!ENTITY event.recurrence.repeat.for.label              "Повторять только" >
+<!ENTITY event.recurrence.appointments.label            "раз" >
+<!ENTITY event.repeat.until.label                       "Повторять до" >
+<!ENTITY event.recurrence.preview.label                 "Предварительный просмотр">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Приглашение участников">
+<!ENTITY event.organizer.label                  "Организатор">
+<!ENTITY event.freebusy.suggest.slot            "Предложить отрезок времени:">
+<!ENTITY event.freebusy.button.next.slot        "Следующий отрезок">
+<!ENTITY event.freebusy.button.previous.slot    "Предыдущий отрезок">
+<!ENTITY event.freebusy.zoom                    "Масштаб:">
+<!ENTITY event.freebusy.legend.free             "Свободен" >
+<!ENTITY event.freebusy.legend.busy             "Занят" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Неопределено" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Нет на месте" >
+<!ENTITY event.freebusy.legend.unknown          "Нет информации" >
+<!ENTITY event.attendee.role.required           "Обязательный участник">
+<!ENTITY event.attendee.role.optional           "Необязательный уастник">
+<!ENTITY event.attendee.role.chair              "Организатор">
+<!ENTITY event.attendee.role.nonparticipant     "Не участник">
+<!ENTITY event.attendee.usertype.individual     "Человек">
+<!ENTITY event.attendee.usertype.group          "Группа">
+<!ENTITY event.attendee.usertype.resource       "Ресурс">
+<!ENTITY event.attendee.usertype.room           "Комната">
+<!ENTITY event.attendee.usertype.unknown        "Неизвестно">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Укажите часовой пояс">
+<!ENTITY event.timezone.custom.label     "Дополнительные часовые пояса…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Основные">
+<!ENTITY read.only.title.label           "Название:">
+<!ENTITY read.only.calendar.label        "Календарь:">
+<!ENTITY read.only.event.start.label     "Дата начала:">
+<!ENTITY read.only.task.start.label      "Дата начала:">
+<!ENTITY read.only.event.end.label       "Дата окончания:">
+<!ENTITY read.only.task.due.label        "Срок:">
+<!ENTITY read.only.repeat.label          "Повторение:">
+<!ENTITY read.only.location.label        "Место:">
+<!ENTITY read.only.category.label        "Категория:">
+<!ENTITY read.only.organizer.label       "Организатор:">
+<!ENTITY read.only.reply.label           "Ответ:">
+<!ENTITY read.only.accept.label          "Я буду участвовать">
+<!ENTITY read.only.decline.label         "Я не буду участвовать">
+<!ENTITY read.only.tentative.label       "Я мог бы присутствовать">
+<!ENTITY read.only.needs.action.label    "Я подтвержу позже">
+<!ENTITY read.only.reminder.label        "Напоминание:">
+<!ENTITY read.only.attachments.label     "Вложения:">
+<!ENTITY read.only.attendees.label       "Участники">
+<!ENTITY read.only.description.label     "Описание">
+<!ENTITY read.only.link.label            "Связанная ссылка">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Сохранить и закрыть">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Сохранить изменения и закрыть окно без сохранения статуса участия и отправки ответа">
+<!ENTITY summary.dialog.accept.label            "Принять">
+<!ENTITY summary.dialog.accept.tooltiptext      "Принять приглашение">
+<!ENTITY summary.dialog.tentative.label         "Ориентировочно">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Ориентировочно принять приглашение">
+<!ENTITY summary.dialog.decline.label           "Отклонить">
+<!ENTITY summary.dialog.decline.tooltiptext     "Отклонить приглашение">
+<!ENTITY summary.dialog.dontsend.label          "Не отправлять ответ">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Изменить мой статус участия без отправки ответа организатору и закрыть окно">
+<!ENTITY summary.dialog.send.label              "Отправить ответ сейчас">
+<!ENTITY summary.dialog.send.tooltiptext        "Отправить ответ организатору  и закрыть окно">

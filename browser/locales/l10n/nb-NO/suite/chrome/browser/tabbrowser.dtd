@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Ingen tittel)">
+<!ENTITY  newTab.label           "Ny fane">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Lukk fane">
+<!ENTITY  closeTab.accesskey         "L">
+<!ENTITY  closeOtherTabs.label   "Lukk andre faner">
+<!ENTITY  closeOtherTabs.accesskey         "L">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Lukk faner til høyre">
+<!ENTITY  closeTabsToTheEnd.accesskey "h">
+<!ENTITY  reloadAllTabs.label    "Oppdater alle faner">
+<!ENTITY  reloadAllTabs.accesskey         "d">
+<!ENTITY  reloadTab.label        "Oppdater fane">
+<!ENTITY  reloadTab.accesskey         "O">
+<!ENTITY  bookmarkGroup.label    "Bokmerk denne gruppen av faner">
+<!ENTITY  bookmarkGroup.accesskey  "B">
+<!ENTITY  closeTabButton.tooltip   "Lukk denne fanen">
+<!ENTITY  newTabButton.tooltip   "Åpne en ny fane">
+<!ENTITY  listAllTabs.tooltip    "List alle faner">
+<!ENTITY  undoCloseTab.label    "Angre lukking av fane">
+<!ENTITY  undoCloseTab.accesskey  "U">

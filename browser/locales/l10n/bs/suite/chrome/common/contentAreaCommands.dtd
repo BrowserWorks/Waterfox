@@ -1,0 +1,85 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label     "Odbacite iskočne prozore sa ove web stranice">
+<!ENTITY popupWindowAllowCmd.label      "Dozvolite iskočne prozore sa ove web stranice">
+<!ENTITY openLinkCmdInTab.label       "Otvori link u novom tabu">
+<!ENTITY openLinkCmd.label            "Otvori link u novom prozoru">
+<!ENTITY openLinkCmdInPrivateWindow.label     "Otvori link u privatnom prozoru">
+<!ENTITY openLinkInWindowCmd.label    "Otvori">
+<!ENTITY openFrameCmd.label           "Otvori okvir u novom prozoru">
+<!ENTITY openFrameCmdInTab.label      "Otvori okvir u novom tabu">
+<!ENTITY keywordfield.label           "Dodaj ključnu riječ za ovu pretragu…">
+<!ENTITY showOnlyThisFrameCmd.label     "Prikaži samo ovaj okvir">
+<!ENTITY goBackCmd.label              "Nazad">
+<!ENTITY goForwardCmd.label           "Naprijed">
+<!ENTITY goUpCmd.label                "Gore">
+<!ENTITY reloadCmd.label              "Učitaj ponovo">
+<!ENTITY stopCmd.label                "Zaustavi">
+<!ENTITY reloadFrameCmd.label         "Ponovo učitaj okvir">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Pregled izvornog koda selekcije">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Pregled MathML izvornog koda">
+<!ENTITY viewPageSourceCmd.label      "Pregled izvornog koda stranice">
+<!ENTITY viewFrameSourceCmd.label     "Pregled izvornog koda okvira">
+<!ENTITY viewPageInfoCmd.label        "Pogledajte informacije o stranici">
+<!ENTITY viewFrameInfoCmd.label       "Pogledajte informacije o okviru">
+<!ENTITY fitImageCmd.label            "Prilagodi veličinu slike prozoru">
+<!ENTITY reloadImageCmd.label         "Ponovo učitaj sliku">
+<!ENTITY viewImageCmd.label           "Pogledaj sliku">
+<!ENTITY viewVideoCmd.label           "Pogledaj video">
+<!ENTITY viewBGImageCmd.label         "Pogledaj sliku pozadine">
+<!ENTITY setDesktopBackgroundCmd.label     "Postavi pozadinu desktopa…">
+<!ENTITY bookmarkPageCmd.label        "Zabilježi ovu stranicu…">
+<!ENTITY bookmarkLinkCmd.label        "Zabilježi ovaj link…">
+<!ENTITY bookmarkFrameCmd.label       "Zabilježi ovaj okvir…">
+<!ENTITY savePageAsCmd.label          "Sačuvaj stranicu kao…">
+<!ENTITY savePageCmd.label            "Sačuvaj stranicu">
+<!ENTITY saveFrameAsCmd.label         "Sačuvaj okvir kao…">
+<!ENTITY saveFrameCmd.label           "Sačuvaj okvir">
+<!ENTITY printFrameCmd.label          "Štampaj okvir…">
+<!ENTITY saveLinkAsCmd.label          "Sačuvaj link cilja kao…">
+<!ENTITY saveLinkCmd.label            "Sačuvaj link cilja">
+<!ENTITY saveImageAsCmd.label         "Sačuvaj sliku kao…">
+<!ENTITY saveImageCmd.label           "Sačuvaj sliku">
+<!ENTITY saveVideoCmd.label           "Sačuvaj video kao…">
+<!ENTITY saveAudioCmd.label           "Sačuvaj audio kao…">
+<!ENTITY copyLinkCmd.label            "Kopiraj lokaciju linka">
+<!ENTITY copyImageCmd.label           "Kopiraj sliku">
+<!ENTITY copyVideoURLCmd.label        "Kopiraj lokaciju videa">
+<!ENTITY copyAudioURLCmd.label        "Kopiraj lokaciju audia">
+<!ENTITY metadataCmd.label            "Svojstva">
+<!ENTITY copyEmailCmd.label           "Kopiraj adresu e-pošte">
+<!ENTITY thisFrameMenu.label          "Ovaj okvir">
+<!ENTITY mediaPlay.label              "Reproduciraj">
+<!ENTITY mediaPause.label             "Pauziraj">
+<!ENTITY mediaMute.label              "Isključi zvuk">
+<!ENTITY mediaUnmute.label            "Uključi zvuk">
+<!ENTITY mediaPlaybackRate.label        "Brzina reprodukcije">
+<!ENTITY mediaPlaybackRate050.label     "Usporeno (½ x)">
+<!ENTITY mediaPlaybackRate100.label     "Normalna brzina">
+<!ENTITY mediaPlaybackRate125.label     "Ubrzano (1¼×)">
+<!ENTITY mediaPlaybackRate150.label     "Visoka brzina (1½ ×)">
+<!ENTITY mediaPlaybackRate200.label     "Dvostruka brzina">
+<!ENTITY mediaLoop.label              "Ponavljaj">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label      "Pokaži kontrole medija">
+<!ENTITY mediaHideControls.label      "Sakrij kontrole medija">
+<!ENTITY videoFullScreen.label        "Prikaz preko cijelog ekrana">
+<!ENTITY videoSaveImage.label         "Sačuvaj Snapshot kao…">
+<!ENTITY videoShowStats.label         "Prikaži statistiku">
+<!ENTITY videoHideStats.label         "Sakrij statistiku">
+<!ENTITY bidiSwitchPageDirectionItem.label        "Promijeni smjer stranice">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Promijeni smjer teksta">
+<!ENTITY spellAddToDictionary.label     "Dodaj u rječnik">
+<!ENTITY spellUndoAddToDictionary.label      "Poništi dodavanje u rječnik">
+<!ENTITY spellIgnoreWord.label          "Ignoriši riječ">
+<!ENTITY spellCheckEnable.label         "Provjeri pravopis">
+<!ENTITY spellNoSuggestions.label       "(Nema pravopisnih prijedloga)">
+<!ENTITY spellDictionaries.label        "Jezici">
+<!ENTITY spellAddDictionaries.label     "Preuzmite više rječnika…">
+<!-- Developer Tools -->
+<!ENTITY devtoolsInspect.label          "Inspekcija elementa">

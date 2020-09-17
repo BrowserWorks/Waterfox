@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Pengurus Muat Turun">
+
+<!ENTITY menuBar.tooltip                 "Bar Menu">
+<!ENTITY searchBar.tooltip               "Bar Carian">
+
+<!ENTITY search.placeholder              "Cari Muat turun">
+<!ENTITY search.label                    "Cari Muat turun">
+<!ENTITY search.accesskey                "C">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "Buang Senarai">
+<!ENTITY cmd.clearList.tooltip           "Buang muat turun yang telah lengkap, dibatalkan dan gagal dari senarai">
+<!ENTITY cmd.clearList.accesskey         "B">
+
+<!ENTITY col.name.label                  "Nama">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "Nama Fail">
+<!ENTITY col.status.label                "Status">
+<!ENTITY col.status.accesskey            "S">
+<!ENTITY col.status.tooltip              "Status">
+<!ENTITY col.actionPlay.label            "Jeda/Sambung/Cuba lagi">
+<!ENTITY col.actionPlay.accesskey        "u">
+<!ENTITY col.actionPlay.tooltip          "Jeda/Sambung/Cuba lagi">
+<!ENTITY col.actionStop.label            "Batal/Buang">
+<!ENTITY col.actionStop.accesskey        "B">
+<!ENTITY col.actionStop.tooltip          "Batal/Buang">
+<!ENTITY col.progress.label              "Kemajuan">
+<!ENTITY col.progress.accesskey          "K">
+<!ENTITY col.progress.tooltip            "Kemajuan">
+<!ENTITY col.timeremaining.label         "Baki Masa">
+<!ENTITY col.timeremaining.accesskey     "B">
+<!ENTITY col.timeremaining.tooltip       "Baki Masa">
+<!ENTITY col.transferred.label           "Dipindahkan">
+<!ENTITY col.transferred.accesskey       "D">
+<!ENTITY col.transferred.tooltip         "Dipindahkan">
+<!ENTITY col.transferrate.label          "Kelajuan">
+<!ENTITY col.transferrate.accesskey      "j">
+<!ENTITY col.transferrate.tooltip        "Kelajuan">
+<!ENTITY col.timeelapsed.label           "Masa Berlalu">
+<!ENTITY col.timeelapsed.accesskey       "B">
+<!ENTITY col.timeelapsed.tooltip         "Masa Berlalu">
+<!ENTITY col.starttime.label             "Masa Mula">
+<!ENTITY col.starttime.accesskey         "a">
+<!ENTITY col.starttime.tooltip           "Masa Mula">
+<!ENTITY col.endtime.label               "Masa Tamat">
+<!ENTITY col.endtime.accesskey           "m">
+<!ENTITY col.endtime.tooltip             "Masa Tamat">
+<!ENTITY col.progresstext.label          "&#37;">
+<!ENTITY col.progresstext.accesskey      "&#37;">
+<!ENTITY col.progresstext.tooltip        "Kemajuan (&#37;)">
+<!ENTITY col.source.label                "Sumber">
+<!ENTITY col.source.accesskey            "u">
+<!ENTITY col.source.tooltip              "Sumber">
+
+<!ENTITY view.columns.label              "Papar Lajur">
+<!ENTITY view.columns.accesskey          "L">
+<!ENTITY view.sortBy.label               "Susun mengikut">
+<!ENTITY view.sortBy.accesskey           "S">
+
+<!ENTITY view.unsorted.label             "Tidak disusun">
+<!ENTITY view.unsorted.accesskey         "T">
+<!ENTITY view.sortAscending.label        "Tertib Susunan A > Z">
+<!ENTITY view.sortAscending.accesskey    "A">
+<!ENTITY view.sortDescending.label       "Tertib Susunan Z > A">
+<!ENTITY view.sortDescending.accesskey   "Z">
+
+<!ENTITY cmd.pause.label                 "Jeda">
+<!ENTITY cmd.pause.accesskey             "J">
+<!ENTITY cmd.resume.label                "Sambung">
+<!ENTITY cmd.resume.accesskey            "S">
+<!ENTITY cmd.retry.label                 "Cuba lagi">
+<!ENTITY cmd.retry.accesskey             "l">
+<!ENTITY cmd.cancel.label                "Batal">
+<!ENTITY cmd.cancel.accesskey            "B">
+<!ENTITY cmd.remove.label                "Buang Daripada Senarai">
+<!ENTITY cmd.remove.accesskey            "u">
+<!ENTITY cmd.open.label                  "Buka">
+<!ENTITY cmd.open.accesskey              "B">
+<!ENTITY cmd.show.label                  "Buka Kandungan Folder">
+<!ENTITY cmd.show.accesskey              "F">
+<!ENTITY cmd.goToDownloadPage.label      "Pergi ke Halaman Muat Turun">
+<!ENTITY cmd.goToDownloadPage.accesskey  "P">
+<!ENTITY cmd.copyDownloadLink.label      "Salin Pautan Muat Turun">
+<!ENTITY cmd.copyDownloadLink.accesskey  "T">
+<!ENTITY cmd.properties.label            "Sifat…">
+<!ENTITY cmd.properties.accesskey        "f">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Izinkan Muat turun">
+<!ENTITY cmd.unblock2.accesskey           "i">
+

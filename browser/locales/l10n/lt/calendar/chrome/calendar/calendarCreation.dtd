@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Naujo kalendoriaus kūrimas" >
+<!ENTITY wizard.label             "Naujo kalendoriaus kūrimas" >
+<!ENTITY wizard.description       "Nurodykite kalendoriaus vietą" >
+
+<!ENTITY initialpage.description    "Kalendorius gali būti saugomas jūsų kompiuteryje arba tinklo serveryje, jei norite jį pasiekti iš kitur, arba dalintis juo su draugais." >
+<!ENTITY initialpage.computer.label  "Mano kompiuteryje">
+<!ENTITY initialpage.network.label  "Tinkle">
+
+<!ENTITY locationpage.description         "Įveskite informaciją apie kuriamą nuotolinį kalendorių" >
+<!ENTITY locationpage.login.description   "Galite įvesti abonento vardą ir slaptažodį" >
+<!ENTITY locationpage.username.label      "Abonento vardas:" >
+<!ENTITY locationpage.password.label      "Slaptažodis:" >
+
+<!ENTITY custompage.shortdescription  "Individualizuokite kalendorių" >
+<!ENTITY custompage.longdescription   "Savo kuriamam kalendoriui galite suteikti pavadinimą, o jo įvykiams priskirti spalvą." >
+
+<!ENTITY finishpage.shortdescription  "Kalendorius sukurtas" >
+<!ENTITY finishpage.longdescription   "Jūsų kalendorius sukurtas." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Kita">
+
+<!ENTITY buttons.create.label "Kurti kalendorių">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Rasti kalendorius">
+<!ENTITY buttons.find.accesskey "F">
+
+<!ENTITY buttons.back.label "Atgal">
+<!ENTITY buttons.back.accesskey "B">
+
+<!ENTITY buttons.subscribe.label "Prenumeruoti">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "Kalendoriaus tipas:">
+<!ENTITY location.label "Vieta:">
+<!ENTITY location.placeholder "URL arba kalendoriaus serveris">
+
+<!ENTITY network.nocredentials.label "Šiai vietai nereikia prisijungimo duomenų">
+<!ENTITY network.loading.description "Palaukite, tuoj bus surasti jūsų kalendoriai.">
+<!ENTITY network.notfound.description "Nurodytoje vietoje nepavyko rasti kalendorių. Patikrinkite nustatymus.">
+<!ENTITY network.authfail.description "Jūsų įvesti kredencialai buvo atmesti. Patikrinkite nustatymus.">
+
+<!ENTITY network.subscribe.single.description "Pasirinkite kalendorius, kuriuos norėtumėte prenumeruoti.">
+<!ENTITY network.subscribe.multiple.description "Čia siūlomi kelis kalendoriaus tipai. Pasirinkite kalendoriaus tipą ir tada pažymėkite kalendorius, kuriuos norėtumėte užsiprenumeruoti.">

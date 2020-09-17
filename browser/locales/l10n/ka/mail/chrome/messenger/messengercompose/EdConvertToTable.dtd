@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ცხრილად გარდაქმნა">
+<!ENTITY instructions1.label   "მონიშნულ არეში თითოეული აბზაცისათვის შემდგენი ცხრილის ახალ მწკრივს ქმნის.">
+<!ENTITY instructions2.label   "შეარჩიეთ სიმბოლო მონიშნული არის სვეტებად დასაყოფად:">
+<!ENTITY commaRadio.label      "მძიმე">
+<!ENTITY spaceRadio.label      "ხარე">
+<!ENTITY otherRadio.label      "სხვა სიმბოლო:">
+<!ENTITY deleteCharCheck.label "გამყოფი სიმბოლოს წაშლა">
+<!ENTITY collapseSpaces.label  "ზედმეტი ხარეს უგულებელყოფა">
+<!ENTITY collapseSpaces.tooltip "რამდენიმე შორისის ერთ გამყოფად გარდაქმნა">

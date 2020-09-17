@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Kalender">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Hendelse …">
+<!ENTITY lightning.menupopup.new.event.accesskey "H">
+<!ENTITY lightning.menupopup.new.task.label     "Oppgave …">
+<!ENTITY lightning.menupopup.new.task.accesskey "O">
+<!ENTITY lightning.menupopup.new.calendar.label "Kalender …">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "K">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Åpne">
+<!ENTITY lightning.menupopup.open.accesskey           "p">
+<!ENTITY lightning.menupopup.open.message.label       "Lagrede meldinger …">
+<!ENTITY lightning.menupopup.open.message.accesskey   "L">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Kalenderfiler …">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "K">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Kalender">
+<!ENTITY lightning.menu.view.calendar.accesskey        "K">
+<!ENTITY lightning.menu.view.tasks.label               "Oppgaver">
+<!ENTITY lightning.menu.view.tasks.accesskey           "a">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Hendelser og oppgaver">
+<!ENTITY lightning.menu.eventtask.accesskey            "n">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-postadresse:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "La klienten håndtere utsending av e-post">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Denne innstillingen kan for tiden bare endres, hvis du har opprettet en kalender, hvor det er kalenderserveren som håndterar utsending av e-post.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Denne innstillingen kan bare endres, hvis det er kalenderserveren som håndterer utsending av e-post. Velger du å aktivere innstillingen, har klienten mulighet for selv å sende ut e-post istedenfor å overlate det til serveren.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Aksepter">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Aksepter arrangementinvitasjon">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Aksepter alle">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Aksepter invitasjon til arrangement for alle oppføringer av arrangementet">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Legg til">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Legg til arrangement i kalenderen">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Avvis">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Avvis arrangementinvitasjon">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Avvis alle">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Avvis arrangementinvitasjon for alle oppføringer av arrangementet">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Avvis">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Avvis motforslaget">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Slett">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Slett fra kalenderen">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Detaljer …">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Vis detaljer">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Ikke vis meg disse meldingene">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Kalender">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Gå til kalenderfanen">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Mer">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Trykk for å vise flere valg">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Bekreft på nytt">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Send en ny bekreftelse til arrangementinnkaller">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Planlegg på nytt">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Planlegge hendelsen på nytt">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Lagre en kopi">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Lagre en kopi av hendelsen i kalenderen, uavhengig av å svare til den som organiserer. Deltakerlisten vil tømmes.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Med forbehold">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Aksepter arrangementinvitasjon med forbehold">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Alle med forbehold">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Aksepter arrangementinvitasjon med forbehold, for alle oppføringer av arrangementet">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Oppdater">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Oppdater arrangement i kalenderen">
+<!ENTITY lightning.imipbar.description                                      "Denne meldingen inneholder en invitasjon til et arrangement.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Send et svar nå">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Send et svar til arrangøren">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Send et svar for hele serien til arrangøren">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Send ikke et svar">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Endre deltagelsesstatusen din uten å sende et svar til arrangøren">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Endre deltagelsesstatusen din for serien uten å sende et svar til arrangøren">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Lag en ny kalender">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Vis mini-måned">
+<!ENTITY todaypane.showMinimonth.accesskey "m">
+<!ENTITY todaypane.showMiniday.label "Vis mini-dag">
+<!ENTITY todaypane.showMiniday.accesskey  "d">
+<!ENTITY todaypane.showNone.label "Vis ingen">
+<!ENTITY todaypane.showNone.accesskey "s">
+<!ENTITY todaypane.showTodayPane.label "Vis i dag-vinduet">
+<!ENTITY todaypane.showTodayPane.accesskey "a">
+<!ENTITY todaypane.statusButton.label "I dag-vinduet">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName; को बारेमा">
+<!ENTITY aboutProduct2.accesskey  "A">
+
+<!ENTITY preferencesCmdMac.label        "प्राथमिकताहरू…">
+
+<!ENTITY servicesMenuMac.label          "सेवाहरू">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; लुकाउनुहोस्">
+
+<!ENTITY hideOtherAppsCmdMac.label      "अन्य लुकाउनुहोस्">
+
+<!ENTITY showAllAppsCmdMac.label        "सबै देखाउनुहोस्">
+

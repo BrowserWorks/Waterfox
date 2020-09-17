@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Abunaments da feeds">
+<!ENTITY learnMore.label             "Ulteriuras infurmaziuns davart feeds">
+
+<!ENTITY feedTitle.label             "Titel:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL dal feed:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Endatar in URL valid dal feed">
+<!ENTITY locationValidate.label      "Validar">
+<!ENTITY validateText.label          "Controllar la validaziun e retschaiver ina URL valida.">
+
+<!ENTITY feedFolder.label            "Memorisar ils artitgels en:">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Controllar sch'i dettia novs artitgels mintga ">
+<!ENTITY biffStart.accesskey         "i">
+<!ENTITY biffMinutes.label           "minutas">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "dis">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "L'editur recumonda:">
+
+<!ENTITY quickMode.label             "Mussar la resumaziun da l'artitgel empè da chargiar la website">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "Crear automaticamain etichettas cun ils nums da la &lt;categoria&gt; dal feed">
+<!ENTITY autotagEnable.accesskey     "c">
+<!ENTITY autotagUsePrefix.label      "Prefix per las etichettas:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Endatescha il prefix per las etichettas">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Agiuntar">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.verifyFeed.label     "Verifitgar">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "Actualisar">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label     "Allontanar">
+<!ENTITY button.removeFeed.accesskey "l">
+<!ENTITY button.importOPML.label     "Import">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Export">
+<!ENTITY button.exportOPML.accesskey "E">
+<!ENTITY button.exportOPML.tooltip   "Exportar ils feeds cun la structura dad ordinaturs; clicca cun ctrl u smatga la tasta enter cun ctrl per exportar ils feeds sco glista">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Serrar">

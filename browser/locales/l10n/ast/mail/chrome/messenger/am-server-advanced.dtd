@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Configuración avanzada de cuentes">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "direutoriu del sirvidor IMAP:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Amosar namái les carpetes soscrites">
+<!ENTITY usingSubscription.accesskey "u">
+<!ENTITY dualUseFolders.label "El sirvidor almite carpetes que contengan sub-carpetes y mensaxes">
+<!ENTITY dualUseFolders.accesskey "g">
+<!ENTITY maximumConnectionsNumber.label "Númberu máximu de conexones del sirvidor a la caché">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Estes preferencies especifiquen los espacios de nomes nel to sirvidor IMAP">
+<!ENTITY personalNamespace.label "Espaciu de nomes personal:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Públicu (compartíu):">
+<!ENTITY publicNamespace.accesskey "b">
+<!ENTITY otherUsersNamespace.label "Otros usuarios:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "Permitir que'l sirvidor troque estos espacios de nomes">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY pop3DeferringDesc.label "Al baxar corréu dende'l sirvidor d'esta cuenta, usar la carpeta de darréu p'atroxar mensaxes nuevos:" >
+<!ENTITY accountInbox.label "Bandexa d'entrada pa esta cuenta">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Bandexa d'entrada pa una cuenta distinta">
+<!ENTITY deferToServer.accesskey "D">
+<!ENTITY deferGetNewMail.label "Incluyir esti sirvidor al recibir corréu nuevu">
+<!ENTITY deferGetNewMail.accesskey "I">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Chataccounthelper">
+
+<!ENTITY accountProtocolTitle.label   "Chatnetwurk">
+<!ENTITY accountProtocolInfo.label    "Kies it netwurk fan jo chataccount.">
+<!ENTITY accountProtocolField.label   "Netwurk:">
+<!ENTITY accountProtocolGetMore.label "Mear…">
+
+<!ENTITY accountUsernameTitle.label   "Brûkersnamme">
+<!ENTITY accountUsernameDuplicate.label "Dizze account is al konfigurearre!">
+
+<!ENTITY accountPasswordTitle.label   "Wachtwurd">
+<!ENTITY accountPasswordInfo.label    "Fier jo wachtwurd yn it ûndersteande fjild yn.">
+<!ENTITY accountPasswordField.label   "Wachtwurd:">
+<!ENTITY accountPasswordManager.label "It ynfierde wachtwurd wurdt bewarre yn de wachtwurdbehearder. Lit dit fjild leech as jo elke kear as jo mei dit account ferbining meitsje jo wachtwurd ynfolje wolle.">
+
+<!ENTITY accountAdvancedTitle.label   "Avansearre opsjes">
+<!ENTITY accountAdvancedInfo.label    "Fiel jo frij om dizze stap oer te slaan, as jo dat wolle.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Melding jaan by nije e-mail">
+<!ENTITY accountAliasGroupbox.caption "Lokale alias">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Dizze sil allinnich wylst petearen werjûn wurde, buddy’s op oare kompjûters sille se net sjen.">
+<!ENTITY accountProxySettings.caption "Proxy-ynstellingen">
+<!ENTITY accountProxySettings.change.label     "Wizigje…">
+<!ENTITY accountProxySettings.change.accessKey "W">
+
+<!ENTITY accountSummaryTitle.label   "Gearfetting">
+<!ENTITY accountSummaryInfo.label    "Hjirûnder wurdt in gearfetting fan de ynfierde gegevens werjûn. Kontrolearje dizze eardat de account oanmakke wurdt.">
+<!ENTITY accountSummary.connectNow.label "Dizze account no ferbine">

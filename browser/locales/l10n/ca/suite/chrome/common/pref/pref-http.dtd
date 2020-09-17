@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "Xarxa HTTP">
+<!-- Network-->
+
+<!ENTITY prefDirect.label                    "Opcions de connexió directa">
+<!ENTITY prefProxy.label                     "Opcions de connexió del servidor">
+<!ENTITY prefEnableHTTP10.label              "Utilitza HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "U">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "z">
+<!ENTITY prefEnableHTTP11.label              "Utilitza HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "H">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefEnablePipelining.label          "Habilita la conducció">
+<!ENTITY prefEnablePipelining.accesskey      "d">
+<!ENTITY prefEnablePipeliningProxy.accesskey "I">
+<!ENTITY prefPara                            "Les connexions HTTP es posen a punt utilitzant aquests opcions per millorar-ne el funcionament o la compatibilitat. Se sap que alguns servidors intermediaris, per exemple, requereixen HTTP/1.0 (consulteu-ne els detalls a les notes de la versió). ">
+<!ENTITY prefPipeWarning                     "ADVERTIMENT: la conducció (pipelining) és una funció experimental dissenyada per millorar la càrrega de pàgines, però que malauradament no funciona bé en alguns servidors web i intermediaris. ">
+<!ENTITY prefUseragent.label                 "Cadena d'agent d'usuari">
+<!ENTITY prefFirefoxCompat.label             "Anuncia la compatibilitat amb el Firefox">
+<!ENTITY prefFirefoxCompat.accesskey         "F">

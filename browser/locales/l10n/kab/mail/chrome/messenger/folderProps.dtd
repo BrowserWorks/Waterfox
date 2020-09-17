@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Timeẓliyin">
+
+<!ENTITY generalInfo.label                       "Talɣut tamatut">
+<!ENTITY folderCharsetFallback2.label            "Asettengel n uḍris n ufran aneggaru:">
+<!ENTITY folderCharsetFallback2.accesskey        "t">
+<!ENTITY folderCharsetEnforce2.label             "Snes asettengel i yeznan imeṛṛa deg ukaram (iɣewwaṛe n usettengel n  yiwen n yizen akked tifin tawurmant ad ttwazeglen)">
+<!ENTITY folderCharsetEnforce2.accesskey         "n">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Bnu tikelt nniḍen amatar n ufaylu n ugzul">
+<!ENTITY folderRebuildSummaryFile2.label         "Seggem akaram">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "g">
+<!ENTITY folderRebuildSummaryFile.explanation    "Tikwal, afaylu n umatar n ukaram (.msf) ixetteṛ udiɣ yezmer d akken kra n yeznan ad ṛuḥen, iznan nni den yettwakksen ad banen. Aseggem n ukaram-agi yemzer ad yefru uguren-agi.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Seddu iznan deg ukaram-agi deg igmaḍ n unadi amatu">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "z">
+
+<!ENTITY retention.label "Tasertit n tuṭṭfa">
+<!ENTITY retentionUseAccount.label  "Seqdec iɣewwaṛen n imiḍan inu">
+<!ENTITY retentionUseAccount.accesskey "S">
+<!ENTITY daysOld.label "ussan aya">
+<!ENTITY message.label "iznan">
+<!ENTITY retentionCleanup.label "Akken ad terreḍ amḍan ɣef udebsi, iznan iqbuṛen zemren ad ttakksen i lebda.">
+<!ENTITY retentionCleanupImap.label "Akken ad terreḍ amkan ɣef udebsi, iznan iqbuṛen zemren ad ttakksen i lebda, ama d idiganen neɣ wid yellan ɣef uqeddac anmeggag.">
+<!ENTITY retentionCleanupPop.label "Akken ad terreḍ amkan ɣef udebsi, iznan iqbuṛen zemren ad ttakksen i lebda, ula d wid yellan ɣef uqeddac anmeggag.">
+<!ENTITY retentionDeleteMsg.label "Kkes iznan ugar n">
+<!ENTITY retentionDeleteMsg.accesskey "k">
+<!ENTITY retentionKeepAll.label "Ur tekkes ula d yiwen n yizen">
+<!ENTITY retentionKeepAll.accesskey "k">
+<!ENTITY retentionKeepRecent.label "Kkes akk iznan ala wid n melmi kan">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "Ḥrez yal tikelt iznan s yetran">
+<!ENTITY retentionApplyToFlagged.accesskey "z">
+
+<!ENTITY folderSynchronizationTab.label          "Amtawi">
+<!ENTITY folderCheckForNewMessages2.label         "Ticki bbḍen-k-id yeznan imaynuten ɣef umiḍan-agi, senqad akaram-agi yal tikelt">
+<!ENTITY folderCheckForNewMessages2.accesskey     "ḍ">
+
+<!ENTITY offlineFolder.check.label               "Fren akaram-agi i useqdec n war tuqqna">
+<!ENTITY offlineFolder.check.accesskey           "F">
+<!ENTITY offlineFolder.button.label              "Zdem tura">
+<!ENTITY offlineFolder.button.accesskey          "Z">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Fren agraw n isallen i useqdec di war tuqqna">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "q">
+<!ENTITY offlineNewsgroup.button.label           "Zdem tura">
+<!ENTITY offlineNewsgroup.button.accesskey       "Z">
+
+<!ENTITY folderProps.name.label                  "Isem:">
+<!ENTITY folderProps.name.accesskey              "I">
+<!ENTITY folderProps.color.label                 "Ini n tegnit:">
+<!ENTITY folderProps.color.accesskey             "I">
+<!ENTITY folderProps.reset.tooltip               "Err-d ini amezwer">
+<!ENTITY folderProps.location.label              "Adig:">
+<!ENTITY folderProps.location.accesskey          "A">
+
+<!ENTITY folderSharingTab.label                  "Beṭṭu">
+<!ENTITY privileges.button.label                 "Tiseglutin…">
+<!ENTITY privileges.button.accesskey             "g">
+<!ENTITY permissionsDesc.label                   "Ɣur-k tisirag-agi:">
+<!ENTITY folderOtherUsers.label                  "Imdanen-nniḍen yesεan azref ad kecmen ɣer ukaram-a:">
+<!ENTITY folderType.label                        "Tawsit n ukaram:">
+
+<!ENTITY folderQuotaTab.label                    "Amur">
+<!ENTITY folderQuotaUsage.label                  "Aseqdec:">
+<!ENTITY folderQuotaStatus.label                 "Addad:">
+
+<!ENTITY numberOfMessages.label                  "Amḍan n iznan:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "arussin">
+<!ENTITY sizeOnDisk.label                        "&amp;Teɣzi n uḍebsi:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "arussin">

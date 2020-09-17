@@ -1,0 +1,78 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label "Nafnið þitt:">
+<!ENTITY name.accesskey "N">
+<!ENTITY name.text "Nafnið þitt, eins og það birtist öðrum">
+<!ENTITY email.label "Tölvupóstfang:">
+<!ENTITY email.accesskey "T">
+<!ENTITY password.label "Lykilorð:">
+<!ENTITY password.accesskey "L">
+<!ENTITY password.placeholder "Lykilorð">
+<!ENTITY password.text "Valkvæmt, verður aðeins notað til að staðfesta notandanafnið">
+<!ENTITY rememberPassword.label "Muna lykilorð">
+<!ENTITY rememberPassword.accesskey "M">
+
+<!ENTITY imapLong.label "IMAP (ytri möppur)">
+<!ENTITY pop3Long.label "POP3 (geyma póst í tölvunni)">
+
+<!ENTITY incoming.label "Innsent:">
+<!ENTITY outgoing.label "Útsent:">
+<!ENTITY username.label "Notandanafn:">
+<!ENTITY auth.label "Auðkenning">
+<!ENTITY imap.label "IMAP">
+<!ENTITY pop3.label "POP3">
+<!ENTITY smtp.label "SMTP">
+<!ENTITY autodetect.label "Leita sjálfkrafa">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label "Ekkert">
+<!ENTITY starttls.label "STARTTLS">
+<!ENTITY sslTls.label "SSL/TLS">
+
+<!ENTITY advancedSetup.label "Ítarlegar stillingar">
+<!ENTITY advancedSetup.accesskey "a">
+<!ENTITY cancel.label "Hætta við">
+<!ENTITY cancel.accesskey "v">
+<!ENTITY continue.label "Áfram">
+<!ENTITY continue.accesskey "f">
+<!ENTITY stop.label "Stöðva">
+<!ENTITY stop.accesskey "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label "Prófa aftur">
+<!ENTITY half-manual-test.accesskey "t">
+
+
+<!ENTITY warning.label "Viðvörun!">
+<!ENTITY incomingSettings.label "Stillingar fyrir innsendan póst:">
+<!ENTITY outgoingSettings.label "Stillingar fyrir útsendan póst:">
+<!ENTITY technicaldetails.label "Tæknileg atriði">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label "Ég skil þessar áhættur.">
+<!ENTITY confirmWarning.accesskey "g">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label "Ljúka">
+<!ENTITY doneAccount.accesskey "L">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label "Breyta stillingum">
+<!ENTITY changeSettings.accesskey "s">
+
+<!ENTITY contactYourProvider.description "&brandShortName; getur náð í póstinn þinn með þessum stillingum. Hinsvegar, er æskilegt að þú hafir samband við kerfisstjóra eða tölvupóstþjónustuaðila með að athuga þessar röngu tengingar. Kíktu í spurt og svarað í Thunderbird fyrir meiri upplýsingar.">
+
+<!ENTITY insecureServer.tooltip.title "Aðvörun! Þetta er óöruggur netþjónn.">
+<!ENTITY insecureServer.tooltip.details "Smelltu á hringinn fyrir meiri upplýsingar.">
+
+<!ENTITY insecureUnencrypted.description "Tölvupósturinn þinn og auðkenni er ekki sent dulkóðað, þannig að hugsanlegt er að aðrir aðilar geti lesið lykilorðið (og tölvupóstinn). &brandShortName; getur náð í póstinn þinn, hinsvegar er æskilegt að þú hafir samband við kerfisstjóra eða tölvupóstþjónustuaðila um hvernig er hægt að nota dulkóðaða tengingu.">
+<!ENTITY insecureSelfSigned.description "Netþjónninn notar skilríki sem er hægt að treysta, þar af leiðandi er ekki hægt að vera viss um að einhver sé ekki að hlusta á netumferð á milli &brandShortName; og netþjónsins. &brandShortName; getur náð í póstinn þinn með þessum stillingum, en æskilegt er að þú fáir þinn tölvupóstþjónustuaðila til að stilla netþjóninn þannig að hann sé með öruggt skilríki.">
+<!ENTITY secureServer.description "Til hamingju! Þetta er öruggur netþjónn.">

@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietates del listas de selection">
+
+<!ENTITY Select.label "Lista de selection">
+<!ENTITY SelectName.label "Nomine del lista:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Altor:">
+<!ENTITY SelectSize.accesskey "A">
+<!ENTITY SelectMultiple.label "Selection multiple">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "Disactivate">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "Indice tubulation:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "Gruppo de optiones">
+<!ENTITY OptGroupLabel.label "Etiquetta:">
+<!ENTITY OptGroupLabel.accesskey "E">
+<!ENTITY OptGroupDisabled.label "Disactivate">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "Option">
+<!ENTITY OptionText.label "Texto:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Valor:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "Seligite initialmente">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "Disactivate">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "Texto">
+<!ENTITY ValueHeader.label "Valor">
+<!ENTITY SelectedHeader.label "Seligite">
+
+<!ENTITY AddOption.label "Adder un option">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "Adder un gruppo">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "Remover">
+<!ENTITY RemoveElement.accesskey "R">
+<!ENTITY MoveElementUp.label "Mover in alto">
+<!ENTITY MoveElementUp.accesskey "A">
+<!ENTITY MoveElementDown.label "Mover in basso">
+<!ENTITY MoveElementDown.accesskey "B">

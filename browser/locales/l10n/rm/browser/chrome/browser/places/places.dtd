@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Biblioteca">
+<!ENTITY places.library.width  "850">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Administrar">
+<!ENTITY organize.accesskey    "A">
+<!ENTITY organize.tooltip      "Administrar ils segnapaginas">
+
+<!ENTITY file.close.label               "Serrar">
+<!ENTITY file.close.accesskey           "S">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Vistas">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Midar la vista">
+<!ENTITY view.columns.label             "Mussar las colonnas">
+<!ENTITY view.columns.accesskey         "M">
+<!ENTITY view.sort.label                "Zavrar">
+<!ENTITY view.sort.accesskey            "Z">
+<!ENTITY view.unsorted.label            "Betg zavrà">
+<!ENTITY view.unsorted.accesskey        "B">
+<!ENTITY view.sortAscending.label       "Ascendent ">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Descendent ">
+<!ENTITY view.sortDescending.accesskey  "D">
+
+<!ENTITY importBookmarksFromHTML.label     "Importar segnapaginas da HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Exportar segnapaginas sco HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importar datas dad in auter navigatur…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "Copia da segirezza…">
+<!ENTITY cmd.backup.accesskey           "C">
+<!ENTITY cmd.restore2.label             "Restaurar">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Tscherner ina datoteca">
+<!ENTITY cmd.restoreFromFile.accesskey  "d">
+
+<!ENTITY col.name.label          "Num">
+<!ENTITY col.tags.label          "Chavazzins">
+<!ENTITY col.url.label           "Adressa">
+<!ENTITY col.mostrecentvisit.label "L'ultima visita">
+<!ENTITY col.visitcount.label    "Visità il pli savens">
+<!ENTITY col.dateadded.label     "Agiuntà">
+<!ENTITY col.lastmodified.label  "Midà la davosa giada">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importar e far ina copia da segirezza">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Importar e far ina copia da segirezza dals segnapaginas">
+
+<!ENTITY backButton.tooltip  "A la pagina precedenta">
+
+<!ENTITY forwardButton.tooltip  "A la proxima pagina">
+
+<!ENTITY detailsPane.selectAnItemText.description "Tscherna in'endataziun per vesair e modifitgar sias caracteristicas">
+

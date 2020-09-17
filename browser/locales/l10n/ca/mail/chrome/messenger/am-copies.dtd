@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Còpies i carpetes">
+<!ENTITY sendingPrefix.label "En enviar missatges, automàticament:">
+<!ENTITY fccMailFolder.label "Deixa'n una còpia a:">
+<!ENTITY fccMailFolder.accesskey "D">
+<!ENTITY fccReplyFollowsParent.label "Deixa les respostes en la carpeta del missatge que es respon">
+<!ENTITY fccReplyFollowsParent.accesskey "l">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc a aquestes adreces electròniques:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Separeu les adreces amb comes">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Cco a aquestes adreces electròniques:">
+<!ENTITY bccAddress.accesskey "o">
+<!ENTITY bccAddressList.placeholder "Separeu les adreces amb comes">
+<!ENTITY saveMessageDlg.label "Mostra un diàleg de confirmació quan els missatges s'hagin desat">
+<!ENTITY saveMessageDlg.accesskey "s">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Carpeta «Enviats» de:">
+<!ENTITY sentFolderOn.accesskey "E">
+<!ENTITY sentInOtherFolder.label "Altres:">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Arxiu de missatges">
+<!ENTITY keepArchives.label "Conserva l'arxiu de missatges a:">
+<!ENTITY keepArchives.accesskey "C">
+<!ENTITY archiveHierarchyButton.label "Opcions de l'arxiu…">
+<!ENTITY archiveHierarchyButton.accesskey "O">
+<!ENTITY archivesFolderOn.label "Carpeta «Arxiu» de:">
+<!ENTITY archivesFolderOn.accesskey "A">
+<!ENTITY archiveInOtherFolder.label "Altres:">
+<!ENTITY archiveInOtherFolder.accesskey "r">
+<!ENTITY specialFolders.label "Esborranys i plantilles">
+<!ENTITY keepDrafts2.label "Conserva els esborranys a:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Carpeta «Esborranys» de:">
+<!ENTITY draftsFolderOn.accesskey "b">
+<!ENTITY draftInOtherFolder.label "Altres:">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "Conserva les plantilles a:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Carpeta «Plantilles» de:">
+<!ENTITY templatesFolderOn.accesskey "P">
+<!ENTITY templateInOtherFolder.label "Altres:">
+<!ENTITY templateInOtherFolder.accesskey "r">

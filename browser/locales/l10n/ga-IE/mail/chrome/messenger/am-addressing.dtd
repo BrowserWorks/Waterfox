@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Cumadóireacht agus Seoladh">
+<!ENTITY addressingGroupTitle.label "Seoladh">
+<!ENTITY addressingText.label      "Agus seoltaí á lorg:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Úsáid mo shainroghanna uilíocha maidir le freastalaithe LDAP don chuntas seo">
+<!ENTITY useGlobal.accesskey       "u">
+<!ENTITY editDirectories.label     "Cuir Eolairí in Eagar…">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Úsáid freastalaí LDAP eile:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "Gan sonrú">
+
+<!-- am-addressing.xul -->
+
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Cumadh">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Cum teachtaireachtaí i bhformáid HTML">
+<!ENTITY useHtml.accesskey                    "C">
+<!ENTITY autoQuote.label                      "Cuir isteach an teachtaireacht bhunaidh go huathoibríoch agus freagra á chumadh">
+<!ENTITY autoQuote.accesskey                  "m">
+<!ENTITY aboveQuote.label                     "cuir tús le mo fhreagra os cionn an athfhriotail">
+<!ENTITY belowQuote.label                     "cuir tús le mo fhreagra faoin athfhriotal">
+<!ENTITY selectAndQuote.label                 "roghnaigh an t-athfhriotal">
+<!ENTITY place.label                          "agus cuir mo shíniú">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "faoin athfhriotal (molta)">
+<!ENTITY aboveText.label                      "faoi mo fhreagra (os cionn an athfhriotail)">
+<!ENTITY includeSigOnReply.label              "Cuir an síniú i bhfreagraí">
+<!ENTITY includeSigOnReply.accesskey          "i">
+<!ENTITY includeSigOnForward.label            "Cuir síniú san áireamh i dteachtaireachtaí curtha ar aghaidh">
+<!ENTITY includeSigOnForward.accesskey        "t">
+
+<!ENTITY globalComposingPrefs.label           "Sainroghanna Comhchoiteanna Cumtha…">
+<!ENTITY globalComposingPrefs.accesskey       "g">
+
+<!ENTITY globalAddressingPrefs.label          "Sainroghanna Comhchoiteanna Seolta…">
+<!ENTITY globalAddressingPrefs.accesskey      "S">

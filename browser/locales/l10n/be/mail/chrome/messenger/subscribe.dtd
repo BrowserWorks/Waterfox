@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title "Падпіска">
+<!ENTITY subscribeButton.label "Падпісацца">
+<!ENTITY subscribeButton.accesskey "П">
+<!ENTITY unsubscribeButton.label "Адпісацца">
+<!ENTITY unsubscribeButton.accesskey "А">
+<!ENTITY newGroupsTab.label "Новыя купы">
+<!ENTITY newGroupsTab.accesskey "Н">
+<!ENTITY refreshButton.label "Паднавіць">
+<!ENTITY refreshButton.accesskey "н">
+<!ENTITY stopButton.label "Спыніць">
+<!ENTITY stopButton.accesskey "С">
+<!ENTITY server.label "Рахунак:">
+<!ENTITY server.accesskey "Р">
+<!ENTITY subscribedHeader.label "Падпіска">
+<!ENTITY namefield.label "Паказваць адзінкі, якія змяшчаюць:">
+<!ENTITY namefield.accesskey "к">

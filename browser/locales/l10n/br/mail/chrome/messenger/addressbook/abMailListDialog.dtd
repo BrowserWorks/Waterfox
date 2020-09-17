@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Roll skignañ nevez">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Ouzhpennañ da :">
+<!ENTITY addToAddressBook.accesskey     "O">
+<!ENTITY ListName.label                 "Anv ar roll :">
+<!ENTITY ListName.accesskey             "l">
+<!ENTITY ListNickName.label             "Moranv ar roll :">
+<!ENTITY ListNickName.accesskey         "n">
+<!ENTITY ListDescription.label          "Deskrivadur:">
+<!ENTITY ListDescription.accesskey      "e">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Roit posteloù da ouzhpennañ er roll-skignañ:">
+<!ENTITY AddressTitle.accesskey         "R">
+<!ENTITY UpButton.label                 "Dilec'hiañ d'ar c'hrec'h">
+<!ENTITY DownButton.label               "Dilec'hiañ d'an diaz">
+

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Subscriptions Dialog -->
+<!ENTITY calendar.subscriptions.dialog.title                            "Kalendrite tellimine">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Näita kalendreid, mis sisaldavad:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Otsi">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Vali kalendrid, mida tellida:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Telli">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Lõpeta tellimine">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Otsi…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Sobivaid kalendreid ei leitud.">

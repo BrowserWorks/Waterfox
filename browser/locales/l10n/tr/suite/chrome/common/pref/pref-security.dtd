@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+
+<!ENTITY pref.security.title "Kişisel gizlilik ve güvenlik">
+
+<!ENTITY tracking.label "User Tracking">
+<!ENTITY doNotTrack.label "Tell web sites I do not want to be tracked">
+<!ENTITY doNotTrack.accesskey "T">
+
+<!ENTITY privateData.label "Özel Veri">
+
+<!ENTITY alwaysClear.label "&brandShortName; tarayıcısını her kapatışımda özel verilerimi temizle">
+<!ENTITY alwaysClear.accesskey "d">
+
+<!ENTITY askBeforeClear.label "Ask me before clearing private data">
+<!ENTITY askBeforeClear.accesskey "A">
+
+<!ENTITY clearDataSettings.label "When I ask &brandShortName; to clear my private data, it should erase:">
+<!--LOCALIZATION NOTE (clearDataDialog.label, clearDataSilent.label, clearDataDialog.accesskey):
+  The only difference bettween the two labels is that one calls a dialog, the other doesn't.
+  The same accesskey is used for both labels.
+-->
+
+<!ENTITY clearDataDialog.label "Şimdi temizle…">
+<!ENTITY clearDataSilent.label "Şimdi temizle">
+<!ENTITY clearDataDialog.accesskey "m">

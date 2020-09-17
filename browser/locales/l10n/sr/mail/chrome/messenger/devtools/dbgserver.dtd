@@ -1,0 +1,4 @@
+<!ENTITY options.title "Опције програмерских алатки">
+<!ENTITY options.status.label "Стање:">
+<!ENTITY options.port.label "Порт:">
+<!ENTITY options.forcelocal.label "Дозволи везе са других рачунара">

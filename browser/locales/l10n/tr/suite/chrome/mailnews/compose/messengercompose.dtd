@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Yeni ileti: (konusuz)">
+
+<!ENTITY fromAddr.label "Gönderen:">
+<!ENTITY fromAddr.accesskey "G">
+<!ENTITY subject.label "Konu:">
+<!ENTITY subject.accesskey "K">
+<!ENTITY attachments.label "Ekler:">
+<!ENTITY attachments.accesskey "E">
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+<!-- File menu items -->
+
+
+<!ENTITY saveCmd.label "Kaydet">
+<!ENTITY saveCmd.accesskey "K">
+<!ENTITY saveAsCmd.label "Farklı kaydet">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsFileCmd.label "Dosya…">
+<!ENTITY saveAsFileCmd.accesskey "o">
+<!ENTITY saveAsDraftCmd.label "Taslak">
+<!ENTITY saveAsDraftCmd.accesskey "T">
+<!ENTITY saveAsTemplateCmd.label "Geçici">
+<!ENTITY saveAsTemplateCmd.accesskey "c">
+<!ENTITY attachMenu.label "Ek">
+<!ENTITY attachMenu.accesskey "E">
+<!ENTITY attachFileCmd.label "Dosya…">
+<!ENTITY attachFileCmd.accesskey "o">
+<!ENTITY attachPageCmd.label "Web sayfası…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Kartvizit ekle (vCard)">
+<!ENTITY attachVCardCmd.accesskey "K">
+<!ENTITY sendNowCmd.label "Şimdi gönder">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "Daha sonra gönder">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "a">
+<!-- Edit menu items -->
+
+<!ENTITY editRewrapCmd.label "Yeniden kaydır">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey "e">
+<!ENTITY findCmd.label "Find and Replace…">
+<!ENTITY accountManagerCmd.label "Posta ve haber grupları ayarları…">
+<!ENTITY accountManagerCmd.accesskey "P">
+<!-- View menu items -->
+
+<!ENTITY showComposeToolbarCmd.label "Posta araç çubuğu">
+<!ENTITY showComposeToolbarCmd.accesskey "o">
+<!ENTITY showFormatToolbarCmd.label "Biçimlendirme araç çubuğu">
+<!ENTITY showFormatToolbarCmd.accesskey "B">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "Biçim">
+<!ENTITY formatMenu.accesskey "B">
+<!-- Options menu items -->
+
+<!ENTITY optionsMenu.label "Seçenekler">
+<!ENTITY optionsMenu.accesskey "S">
+
+<!ENTITY quoteCmd.label "Alıntı yap">
+<!ENTITY quoteCmd.accesskey "y">
+<!ENTITY selectAddressCmd.label "Adresleri seçin…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "A">
+
+<!ENTITY checkSpellingCmd2.label "İmla Denetimi…">
+<!ENTITY checkSpellingCmd2.accesskey "İ">
+<!ENTITY enableInlineSpellChecker.label "Yazarken yazım denetimini gerçekleştir">
+<!ENTITY enableInlineSpellChecker.accesskey "Y">
+
+<!ENTITY priorityMenu.label "Önemlilik">
+<!ENTITY priorityMenu.accesskey "Ö">
+<!ENTITY lowestPriorityCmd.label "En düşük">
+<!ENTITY lowestPriorityCmd.accesskey "d">
+<!ENTITY lowPriorityCmd.label "Düşük">
+<!ENTITY lowPriorityCmd.accesskey "ş">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Yüksek">
+<!ENTITY highPriorityCmd.accesskey "ü">
+<!ENTITY highestPriorityCmd.label "En yüksek">
+<!ENTITY highestPriorityCmd.accesskey "E">
+
+<!ENTITY returnReceiptMenu.label "Alındı onayı">
+<!ENTITY returnReceiptMenu.accesskey "A">
+<!ENTITY outputFormatMenu.label "Biçim">
+<!ENTITY outputFormatMenu.accesskey "B">
+<!ENTITY autoFormatCmd.label "Otomatik tanıma">
+<!ENTITY autoFormatCmd.accesskey "t">
+<!ENTITY plainTextFormatCmd.label "Sadece düz metin">
+<!ENTITY plainTextFormatCmd.accesskey "c">
+<!ENTITY htmlFormatCmd.label "Sadece zengin metin olarak (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "z">
+<!ENTITY bothFormatCmd.label "Düzgün ve Zengin (HTML) Metin">
+<!ENTITY bothFormatCmd.accesskey "Z">
+
+<!ENTITY fileCarbonCopyCmd.label "Bir kopyasını gönder">
+<!ENTITY fileCarbonCopyCmd.accesskey "o">
+<!ENTITY fileHereMenu.label "Burada dosyala">
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+
+<!ENTITY sendButton.label "Gönder">
+<!ENTITY addressButton.label "Adres">
+<!ENTITY attachButton.label "Ek">
+<!ENTITY spellingButton.label "İmla denetimi">
+<!ENTITY saveButton.label "Kaydet">
+<!ENTITY stopButton.label "Dur">
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+
+<!ENTITY addressBar.tooltip "Adres çubuğu">
+<!ENTITY formatToolbar.tooltip "Biçimlendirme araç çubuğu">
+<!ENTITY sendButton.tooltip "İletiyi şimdi gönder">
+<!ENTITY sendlaterButton.tooltip "İletiyi daha sonra gönder">
+<!ENTITY addressButton.tooltip "Alıcıyı adres defterinden seç">
+<!ENTITY attachButton.tooltip "Bu iletiye dosya ekle">
+<!ENTITY saveButton.tooltip "Bu iletiyi kaydet">
+<!ENTITY stopButton.tooltip "Şu anki aktarımı durdur">
+<!-- context menu items -->
+
+<!ENTITY spellCheckNoSuggestions.label "(Öneri bulunamadı)">
+<!ENTITY spellCheckIgnoreWord.label "Sözcüğü görmezden gel">
+<!ENTITY spellCheckIgnoreWord.accesskey "g">
+<!ENTITY spellCheckAddToDictionary.label "Sözlüğe ekle">
+<!ENTITY spellCheckAddToDictionary.accesskey "k">
+
+<!ENTITY openAttachment.label "Aç">
+<!ENTITY openAttachment.accesskey "A">
+<!ENTITY renameAttachment.label "Yeniden isimlendir…">
+<!ENTITY renameAttachment.accesskey "r">
+<!ENTITY deleteAttachment.accesskey "D">
+<!ENTITY selectAllAttachments.accesskey "A">
+<!ENTITY attachFile.label "Dosyayı ek olarak  ekle…">
+<!ENTITY attachFile.accesskey "D">
+<!ENTITY attachPage.label "Web sayfasını ek olarak ekle…">
+<!ENTITY attachPage.accesskey "W">

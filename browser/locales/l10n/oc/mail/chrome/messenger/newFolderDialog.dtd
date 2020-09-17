@@ -1,0 +1,20 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Dorsièr novèl">
+<!ENTITY name.label                 "Nom :">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "Crear coma sosdorsièr de :">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "Aqueste servidor accèpta pas que dos tipes especials de dorsièr.">
+<!ENTITY folderRestriction2.label   "Permetre a vòstre dorsièr novèl de conténer :">
+<!ENTITY foldersOnly.label          "de dorsièrs solament">
+<!ENTITY messagesOnly.label         "de messatges solament">

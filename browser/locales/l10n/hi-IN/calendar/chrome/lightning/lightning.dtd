@@ -1,0 +1,85 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+<!-- Tools menu -->
+
+
+<!ENTITY lightning.preferencesLabel "कैलेन्डर">
+<!-- New menu popup in File menu -->
+
+<!ENTITY lightning.menupopup.new.event.label    "कार्यक्रम">
+<!ENTITY lightning.menupopup.new.event.accesskey "E">
+<!ENTITY lightning.menupopup.new.task.label     "कार्य...">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "कैलेंडर">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "n">
+<!-- Open menu popup in File menu -->
+
+<!ENTITY lightning.menupopup.open.label               "खोंले">
+<!ENTITY lightning.menupopup.open.accesskey           "O">
+<!ENTITY lightning.menupopup.open.message.label       "सहेजे गए संदेश">
+<!ENTITY lightning.menupopup.open.message.accesskey   "M">
+<!ENTITY lightning.menupopup.open.calendar.label      "कैलेन्डर फ़ाइल...">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "C">
+<!-- View Menu -->
+
+<!ENTITY lightning.menu.view.calendar.label            "कैलेंडर">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "कार्य">
+<!ENTITY lightning.menu.view.tasks.accesskey           "k">
+<!-- Events and Tasks menu -->
+
+<!-- properties dialog, calendar creation wizard -->
+
+<!ENTITY lightning.calendarproperties.email.label               "ई-मेल:">
+<!-- iMIP Bar (meeting support) -->
+
+<!ENTITY lightning.imipbar.btnAccept.label                                  "स्वीकारें">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "कार्यक्रम आमंत्रण स्वीकार करें">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "सभी स्वीकारें">
+
+<!ENTITY lightning.imipbar.btnAdd.label                                     "जोड़ें">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "कार्यक्रम को कैलेंडर में जोड़ें">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "मना करें">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "कार्यक्रम निमंत्रण अस्वीकार करें">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "सबको मना करें">
+
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "मना करें">
+
+<!ENTITY lightning.imipbar.btnDelete.label                                  "मिटाएँ">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "कैलेंडर से हटाएं">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "विवरण...">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "कार्यक्रम विवरण दिखाएं">
+<!ENTITY lightning.imipbar.btnMore.label                                    "अधिक">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "अधिक विकल्प देखने के लिए क्लिक करें">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "फिर से पुष्टि">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "आयोजक को एक पुष्टिकरण भेजता है">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "पुनर्निर्धारित">
+
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "एक प्रतिलिपि सहेजें">
+
+<!ENTITY lightning.imipbar.btnTentative.label                               "संभावित">
+
+
+
+
+
+
+<!-- Lightning specific keybindings -->
+
+
+
+<!-- Account Central page -->
+<!-- today-pane-specific -->
+
+
+
+
+
+
+
+

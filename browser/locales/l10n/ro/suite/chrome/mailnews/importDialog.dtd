@@ -1,0 +1,53 @@
+<!--
+# Translator(s):
+#
+# nicubunu <nicubunu@gmail.com>
+# Laudatti <Laudatti@gmail.com>
+# janimo <jani@ubuntu.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# strainu <crangasi2001@yahoo.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Import">
+<!ENTITY importAll.label          "Importă totul">
+<!ENTITY importAll.accesskey      "I">
+<!ENTITY importMail.label         "Email">
+<!ENTITY importMail.accesskey     "m">
+<!ENTITY importAddressbook.label  "Agende de contacte">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Parametri">
+<!ENTITY importSettings.accesskey "P">
+<!ENTITY importFilters.label      "Filtre">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Asistent import mesaje &brandShortName;">
+<!ENTITY importShortDesc.label    "Importă mesaje, agende de contacte, setări și filtre din alte programe">
+
+<!ENTITY importDescription1.label "Acest ghid va importa mesajele, agenda, preferințele și/sau filtrele din alte programe de mail, precum și formatele obișnuite de agende în &brandShortName;">
+<!ENTITY importDescription2.label "Odată importate, le veți putea accesa din  &brandShortName; și/sau agenda de contacte.">
+
+<!ENTITY selectDescription.label  "Vă rog alegeți programul din care doriți să importați:">
+<!ENTITY selectDescription.accesskey "p">
+
+<!ENTITY back.label               "&lt; Înapoi">
+<!ENTITY forward.label            "Înainte &gt;">
+<!ENTITY finish.label             "Încheiere">
+<!ENTITY cancel.label             "Revocare">
+
+<!ENTITY select.label             "Alegeți ce material se va importa:">
+
+<!ENTITY title.label              "Titlul">
+<!ENTITY processing.label         "Se importă…">

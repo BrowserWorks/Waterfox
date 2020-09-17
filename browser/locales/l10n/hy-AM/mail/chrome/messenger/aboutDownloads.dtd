@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Պահպանված ֆայլեր">
+<!ENTITY aboutDownloads.empty                      "Չկան պահպանված ֆայլեր">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Բացել թղթապանակը">
+<!ENTITY cmd.show.accesskey                        "թ">
+<!ENTITY cmd.showMac.label                         "Ցուցադրել Finder-ում">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Բացել">
+<!ENTITY cmd.open.accesskey                        "O">
+<!ENTITY cmd.removeFromHistory.label               "Ջնջել Պատմությունից">
+<!ENTITY cmd.removeFromHistory.accesskey           "ն">
+<!ENTITY cmd.clearList.label                       "Մաքրել ցանկը">
+<!ENTITY cmd.clearList.accesskey                   "Մ">
+<!ENTITY cmd.clearList.tooltip                     "Հեռացնել պահված ֆայլերի բոլոր գրառումները, բացի շարունակվող ներբեռնումներից:">
+<!ENTITY cmd.searchDownloads.label                 "Որոնում...">
+<!ENTITY cmd.searchDownloads.key                   "F">

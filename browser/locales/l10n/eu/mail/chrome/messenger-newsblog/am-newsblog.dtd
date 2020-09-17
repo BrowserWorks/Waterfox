@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Gaitu eguneratzeak jario guztietarako">
+<!ENTITY biffAll.accesskey             "e">
+
+<!ENTITY newFeedSettings.label         "Ezarpen lehenetsiak jario berrietarako">
+
+<!ENTITY manageSubscriptions.label     "Kudeatu harpidetzak…">
+<!ENTITY manageSubscriptions.accesskey "K">
+
+<!ENTITY feedWindowTitle.label         "Jario-kontuaren morroia">
+<!ENTITY feeds.accountName             "Blogen eta albisteen jarioak">

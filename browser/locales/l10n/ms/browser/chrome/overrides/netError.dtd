@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Masalah memuatkan halaman">
+<!ENTITY retry.label "Cuba Lagi">
+<!ENTITY returnToPreviousPage.label "Undur">
+<!ENTITY returnToPreviousPage1.label "Undur (Disyorkan)">
+
+<!ENTITY viewCertificate.label "Papar Sijil">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Pelayan Tidak Ditemui">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Jika alamat ini betul, ada tiga cara yang anda boleh cuba:</strong>
+<ul>
+  <li>Cuba lagi nanti.</li>
+  <li>Semak sambungan rangkaian.</li>
+  <li>Jika anda sudah disambungkan tetapi ada firewall, semak samada &brandShortName; telah diberi izin untuk mengakses Web ini.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Semak ralat huruf besar nama fail atau ralat menaip lain.</li>
+  <li>Semak samada fail telah dipindahkan, dinamakan semula atau dibuang.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Mungkin telah dibuang, dipindahkan, atau keizinan fail yang menghalang akses.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; tidak dapat memuat halaman ini atas beberapa alasan.</p>
+">
+
+<!ENTITY captivePortal.title "Log masuk ke rangkaian">
+<!ENTITY captivePortal.longDesc2 "<p>Anda perlu log masuk ke rangkaian ini sebelum anda boleh mengakses Internet.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Buka Halaman Log Masuk Rangkaian">
+
+<!ENTITY malformedURI.pageTitle "URL tak sah">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Dokumen yang diminta tidak ada dalam cache &brandShortName;.</p><ul><li>Sebagai langkah keselamatan, &brandShortName; tidak akan meminta semula dokumen yang sensitif secara automatik.</li><li>Klik Cuba Lagi untuk meminta semula dokumen daripada laman web.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Tekan &quot;Cuba Lagi&quot; untuk bertukar ke mod atas talian dan memuatkan halaman.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Sila hubungi pemilik laman web untuk memaklumkan masalah ini.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Sila hubungi pemilik laman web untuk memaklumkan masalah ini.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Anda mungkin perlu pasang perisian lain untuk membuka alamat ini.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Semak tetapan proksi untuk memastikan tetapan itu betul.</li>
+  <li>Hubungi pentadbir rangkaian untuk memastikan bahawa pelayan proksi
+    berfungsi.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Semak tetapan proksi untuk memastikan tetapan adalah betul.</li>
+  <li>Pastikan komputer anda ada sambungan rangkaian yang berfungsi.</li>
+  <li>Jika komputer atau rangkaian dilindungi firewall atau proksi, pastikan
+   bahawa &brandShortName; diberi izin mengakses Web.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Masalah ini kadangkala disebabkan oleh menyahaktifkan atau tidak mahu menerima
+    kuki.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Semak untuk memastikan sistem sudah ada Pengurus Keselamatan Peribadi
+    yang dipasang.</li>
+  <li>Ini mungkin kerana konfigurasi bukan-piawai dalam pelayar.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Halaman yang anda mahu lihat tidak dapat dipaparkan kerana autentisiti data yang diterima tidak dapat disahkan.</li>
+  <li>Sila hubungi pemilik laman web untuk memaklumkan masalah ini.</li>
+</ul>
+">
+
+<!ENTITY certerror.introPara2 "&brandShortName; mengesan ada potensi ancaman keselamatan dan tidak meneruskan ke <span class='hostname'/>. Jika anda lawat laman web ini, penyerang boleh cuba untuk mencuri maklumat seperti kata laluan, e-mel atau butiran kad kredit anda.">
+
+<!ENTITY certerror.sts.introPara "&brandShortName; mengesan potensi ancaman keselamatan dan tidak terus <span class='hostname'/> kerana laman web ini memerlukan sambungan yang selamat.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; mengesan isu dan tidak terus <span class='hostname'/>. Laman web sama ada salah konfigurasi atau jam komputer ditetapkan mengikut masa yang salah.">
+<!ENTITY certerror.expiredCert.secondPara2 "Kemungkinan sijil laman web tamat tempoh, yang menghalang &brandShortName; menyambung dengan selamat. Jika anda melawat laman web ini, penyerang boleh cuba mencuri maklumat seperti kata laluan, emel atau butiran kad kredit anda.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Kemungkinan sijil laman web tamat tempoh, yang menghalang &brandShortName; menyambung dengan selamat.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Apa yang anda boleh lakukan tentangnya?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Isu ini mungkin berkaitan laman web dan tiada apa yang boleh anda lakukan untuk menyelesaikannya.</p>
+<p>Jika anda berada dalam rangkaian korporat atau menggunakan perisian antivirus, anda boleh minta bantuan pasukan sokongan. Anda juga boleh maklumkan masalah ini kepada pentadbir laman web.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Jam komputer ditetapkan ke <span id='wrongSystemTime_systemDate2'/>. Pastikan komputer ditetapkan ke tarikh, masa dan zon masa yang betul dalam tetapan sistem, dan mulakan semula <span class='hostname'/>.</p>
+<p>Jika jam sudah ditetapkan ke masa yang betul, mungkin laman web tersalah konfigurasi dan anda tidak boleh buat apa-apa untuk menyelesaikan isu ini. Anda boleh maklumkan pentadbir laman web mengenai masalah ini.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>Isu ini mungkin berkaitan laman web dan tiada apa yang boleh anda lakukan untuk menyelesaikannya. Anda boleh maklumkan masalah ini kepada pentadbir laman web.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Laman ini tidak ada buat sementara waktu atau terlalu sibuk. Cuba lagi dalam beberapa
+    ketika.</li>
+  <li>Jika anda tidak dapat memuatkan sebarang halaman, semak sambungan rangkaian
+    komputer.</li>
+  <li>Jika komputer atau rangkaian anda dilindungi firewall atau proksi, sila pastikan
+    bahawa &brandShortName; diberi izin mengakses Web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; menghalang halaman ini daripada dimuatkan kerana ada kandungan yang tidak dibenarkan oleh polisi keselamatan.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Halaman yang anda cuba lihat tidak dapat dipaparkan kerana ada ralat dalam transmisi data.</p><ul><li>Sila hubungi pemilik laman web untuk memaklumkan masalah ini.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButton1Label "Terima Risiko dan Teruskan">
+
+<!ENTITY errorReporting.automatic2 "Laporkan ralat seperti ini untuk membantu Mozilla mengenal pasti dan menyekat laman berbahaya">
+<!ENTITY errorReporting.learnMore "Ketahui selanjutnya…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Sila hubungi pemilik laman web untuk memaklumkan masalah ini.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Info lanjutan: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Amaran: Mungkin Ada Risiko Keselamatan">
+<!ENTITY certerror.sts.pagetitle  "Jangan Sambung: Potensi Isu Sekuriti">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> ada polisi keselamatan yang dipanggil HTTP Keselamatan Pengangkutan Ketat (HSTS), iaitu &brandShortName; boleh menyambung secara selamat sahaja. Anda tidak boleh menambah pengecualian untuk melawat laman ini.">
+<!ENTITY certerror.copyToClipboard.label "Salin teks ke klipbod">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> menggunakan teknologi keselamatan yang usang dan terdedah kepada serangan. Penyerang dengan mudah boleh mendedahkan maklumat yang anda fikir selamat. Pentadbir laman web perlu membaiki pelayan terlebih dahulu sebelum anda boleh melawat laman ini.</p><p>Kod ralat: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Halaman Disekat">
+
+<!ENTITY clockSkewError.longDesc "Komputer anda fikir sekarang ialah <span id='wrongSystemTime_systemDate1'/>, yang menghalang &brandShortName; membuat sambungan dengan selamat. Untuk melawat <span class='hostname'></span>, kemas kini jam komputer dalam tetapan sistem ke tarikh, masa dan zon masa semasa dan mulakan semula <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Tetapan keselamatan rangkaian anda mungkin menyebabkan masalah ini. Adakah anda mahu tetapan piawai anda dipulihkan?">
+<!ENTITY prefReset.label "Pulih tetapan piawai">
+
+<!ENTITY networkProtocolError.longDesc "<p>Halaman yang anda cuba papar tidak dapat ditunjukkan kerana ada ralat dalam protokol rangkaian.</p><ul><li>Sila hubungi pemilik laman web untuk memaklumkan masalah ini.</li></ul>">

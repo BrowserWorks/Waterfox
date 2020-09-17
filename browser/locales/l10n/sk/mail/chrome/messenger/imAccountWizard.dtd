@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Sprievodca nastavením diskusného účtu">
+
+<!ENTITY accountProtocolTitle.label   "Diskusná sieť">
+<!ENTITY accountProtocolInfo.label    "Zvoľte typ vášho diskusného účtu.">
+<!ENTITY accountProtocolField.label   "Sieť:">
+<!ENTITY accountProtocolGetMore.label "Získať ďalšie…">
+
+<!ENTITY accountUsernameTitle.label   "Používateľské meno">
+<!ENTITY accountUsernameDuplicate.label "Tento účet je už nastavený.">
+
+<!ENTITY accountPasswordTitle.label   "Heslo">
+<!ENTITY accountPasswordInfo.label    "Zadajte svoje heslo.">
+<!ENTITY accountPasswordField.label   "Heslo:">
+<!ENTITY accountPasswordManager.label "Heslo bude uložené v Správcovi hesiel. Ak chcete heslo zadávať pri každom pripojení, nechajte pole prázdne.">
+
+<!ENTITY accountAdvancedTitle.label   "Rozšírené nastavenia">
+<!ENTITY accountAdvancedInfo.label    "Ak chcete, tento krok môžete vynechať.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Notifikácia pri prijatí novej správy">
+<!ENTITY accountAliasGroupbox.caption "Lokálny alias">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Zobrazuje sa iba priamo v konverzáciách, vzdialené kontakty ho neuvidia.">
+<!ENTITY accountProxySettings.caption "Nastavenia proxy">
+<!ENTITY accountProxySettings.change.label     "Zmeniť…">
+<!ENTITY accountProxySettings.change.accessKey "Z">
+
+<!ENTITY accountSummaryTitle.label   "Súhrn">
+<!ENTITY accountSummaryInfo.label    "Súhrn zadaných informácií. Teraz si ich môžete skontrolovať.">
+<!ENTITY accountSummary.connectNow.label "Pripojiť k účtu">

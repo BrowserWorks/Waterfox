@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "K'ak'a' Runuk'ulem Ruxaq">
+
+<!ENTITY  authorName.label          "B'anel:">
+<!ENTITY  authorName.accesskey      "e">
+<!ENTITY  pageColorHeader           "Ruwäch Ruxaq Kan K'o Wi">
+
+<!ENTITY defaultColors.label        "Taq rub'onil sik'inel kan k'o wi (Man kejikib'äx taq b'onil pa ruxaq)">
+<!ENTITY defaultColors.accesskey    "k">
+<!ENTITY customColors.label         "Ke'okisäx ichinan taq b'onil:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "Relik rucholajem tzij">
+<!ENTITY normalText.accesskey       "R">
+<!ENTITY linkText.label             "Rucholajem tzij ximonel">
+<!ENTITY linkText.accesskey         "x">
+<!ENTITY activeLinkText.label       "Titzij rucholajem tzij ximonel">
+<!ENTITY activeLinkText.accesskey   "t">
+<!ENTITY visitedLinkText.label      "Rucholajem rutzij ximonel tz'eton">
+<!ENTITY visitedLinkText.accesskey  "R">
+<!ENTITY background.label           "Rupam:">
+<!ENTITY background.accesskey       "p">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Rupam wachib'äl:">
+<!ENTITY backgroundImage.accesskey  "w">
+<!ENTITY chooseFile.label           "Ticha' Yakb'äl…">
+<!ENTITY chooseFile.accesskey       "c">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "मलाई यहाँबाट बाहिर निकाल्नुहोस्!">
+<!ENTITY safeb.palm.decline.label "यस चेतावनीलाई उपेक्षा गर्नुहोस्">
+<!ENTITY safeb.palm.reportPage.label "यो पृष्ठ किन बन्द गरिएको थियो?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "<a id='advisory_provider'/> द्वारा प्रदान गरिएको सल्लाह">
+
+<!ENTITY safeb.blocked.malwarePage.title "उजुर गरिएको आक्रमण साइट!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "यो वेब पृष्ठ <span id='malware_sitename'/> आक्रामक साइट भएको प्रतिवेदन दिइएको छ र तपाईँको सुरक्षा प्राथमिकताहरूका आधारमा अबरुद्द गरिएको छ।">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>आक्रमण पृष्ठले त्यस्तो कार्यक्रम स्थापना गर्ने प्रयास गर्छ जुन तपाईँकोको गोप्य सूचना चोर्न, तपाईको सुसांख्य यन्त्र अरुलाई आक्रमण गर्न वा तपाईँको उपकरण बिगार्न प्रयोग हुन सक्छ।</p><p>केहि आक्रमण पृष्ठले जानी बुझी हानिकारक सफ्टवेयर वितरण गर्छन तर धेरैले भने मालिकको ज्ञान बिना तथा अनुमति बिनानै हानिकारक सफ्टवेयर वितरण गर्छन।</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "छल गर्ने साइट!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "यो वेब पृष्ठ <span id='phishing_sitename'/> आक्रामक साइट भएको प्रतिवेदन दिइएको छ र तपाईंको सुरक्षा प्राथमिकताहरूका अनुसार अबरुद्द गरिएको छ।">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p> भ्रामक साइटहरू तपाईँलाई झुक्काएर केही खतरनाक कार्य जस्तै सफ्टवेयर स्थापना, वा आफ्नो व्यक्तिगत जानकारी खुलासा गर्न जस्तै गोप्यशब्द, फोन नम्बर वा क्रेडिट कार्ड गर्न डिजाइन गरिएको हुन्छ।</p><p> यस वेब पेज मा कुनै पनि जानकारी राख्दा पहिचान चोरी वा अन्य ठगी को परिणाम आउन सक्छ। </p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "अवाञ्छित सफ्टवेयर साइटबारे प्रतिवेदन पठाइयो!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "यो साइटमा <span id='unwanted_sitename'/>अनावस्यक सफ्टवेयर भएको प्रतिवेदन दिइएको छ र तपाईंको सुरक्षा प्राथमिकताहरूका अनुसार अबरुद्द गरिएको छ।">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "अनावस्यक सफ्टवेयर पृष्ठहरूले जाली र तपाईँको प्रणालीलाई हानी गर्ने सफ्टवेयरहरू स्थापना गर्न सक्छ।">
+
+<!ENTITY safeb.blocked.harmfulPage.title "अगाडिको साइटमा मालवेयर हुन सक्छ">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; ले यो पृष्ठ लाई अबरुद्द गरेको छ किनकि उक्त पृष्ठले खतरनाक अनुप्रयोगहरू स्थापना गर्ने प्रयास गर्न सक्छ जुन ले तपाईँको सूचनाहरु(उदाहरणको लागि, तस्बिरहरू, गोप्यशब्दहरू, सन्देशहरू, क्रेडिट कार्डहरू) चोर्न वा मेटाउन सक्छन ।">

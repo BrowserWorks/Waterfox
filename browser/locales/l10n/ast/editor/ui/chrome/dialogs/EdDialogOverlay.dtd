@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY AdvancedEditButton.label "Edición avanzada…">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "Amiesta o modifica atributos HTML, atributos d'estilu y JavaScript">
+<!ENTITY chooseFileButton.label "Esbillar ficheru...">
+<!ENTITY chooseFileButton.accessKey "a">
+<!ENTITY chooseFileLinkButton.label "Esbillar ficheru...">
+<!ENTITY chooseFileLinkButton.accessKey "u">
+<!ENTITY makeUrlRelative.label "La URL ye rellativa a la ruta de la páxina">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Alterna ente URL absoluta y rellativa. Tienes de guardar previamente la páxina pa camudar esta propiedá.">
+<!ENTITY LinkURLEditField.label "Introduz una direición de páxina web, un ficheru llocal, o esbilla un enllaz con nome o encabezáu de la llista desplegable:">
+<!ENTITY LinkURLEditField.accessKey "I">

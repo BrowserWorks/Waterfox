@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Uvozi imenik">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Uvoženi podatki za zapis: ">
+<!ENTITY fieldMapImport.next.label "Naslednje">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "Prejšnje">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "Uporabite Premakni gor/dol za ujemanje polj imenika na levi z ustreznimi podatki za uvoz na desni . Odznačite predmete, ki jih ne želite uvoziti.">
+<!ENTITY fieldMapImport.up.label "Premakni gor">
+<!ENTITY fieldMapImport.up.accesskey "g">
+<!ENTITY fieldMapImport.down.label "Premakni dol">
+<!ENTITY fieldMapImport.down.accesskey "d">
+<!ENTITY fieldMapImport.fieldListTitle "Polja imenika">
+<!ENTITY fieldMapImport.dataTitle "Zapis podatkov za uvoz">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Prvi zapis vsebuje imena polj">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "P">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!-- <!ENTITY securityMenu.label "ආරක්ෂාව">
+<!ENTITY securityMenu.accesskey "e"> -->
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire.accesskey "E">
+
+<!-- <!ENTITY menu_securityNoEncryption.label "මෙම ලිපිය සංකේතනය නොකරන්න">
+<!ENTITY menu_securityNoEncryption.accesskey "N"> -->
+
+<!ENTITY menu_securitySign.label "මෙම ලිපිය අංකිතව අත්සන් කරන්න">
+<!ENTITY menu_securitySign.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "ආරක්ෂක තොරතුරු පෙන්වන්න">
+<!ENTITY menu_securityStatus.accesskey "I">
+
+<!ENTITY securityButton.label "ආරක්ෂාව">
+<!ENTITY securityButton.tooltip "ආරක්ෂක සැකසුම් පෙන්වීම හෝ වෙනස් කිරීම">
+
+<!ENTITY menu_viewSecurityStatus.label "ලිපි ආරක්ෂක තොරතුරු">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Sifat">
+
+<!ENTITY generalInfo.label                       "Maklumat Umum">
+<!ENTITY folderCharsetFallback2.label            "Pengekodan Teks Unduran:">
+<!ENTITY folderCharsetFallback2.accesskey        "P">
+<!ENTITY folderCharsetEnforce2.label             "Guna pengekodan untuk semua mesej dalam folder (tetapan pengekodan teks mesej individu dan pengesanan auto akan diabaikan)">
+<!ENTITY folderCharsetEnforce2.accesskey         "G">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Bina semula Indeks Fail Ringkasan">
+<!ENTITY folderRebuildSummaryFile2.label         "Pembaikan Folder">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "P">
+<!ENTITY folderRebuildSummaryFile.explanation    "Kadang-kala folder fail indeks (.msf) menjadi rosak, dan mesej mungkin nampak seperti sudah hilang atau mesej yang sudah dibuang akan terus dipaparkan; oleh itu tindakan membaiki folder dapat mengatasi isu ini.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Sertakan mesej yang ada dalam folder ini dalam hasil Carian Global">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "Polisi Pengekalan">
+<!ENTITY retentionUseAccount.label "Guna tetapan akaun saya">
+<!ENTITY retentionUseAccount.accesskey "G">
+<!ENTITY daysOld.label "hari lepas">
+<!ENTITY message.label "mesej">
+<!ENTITY retentionCleanup.label "Simpan mesej:">
+<!ENTITY retentionCleanupImap.label "Simpan mesej: kedua-dua salinan lokal dan yang asal dalam pelayan:">
+<!ENTITY retentionCleanupPop.label "Simpan mesej: termasuk salinan asal dalam pelayan:">
+<!ENTITY retentionDeleteMsg.label "Buang mesej yang melebihi">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Semua mesej">
+<!ENTITY retentionKeepAll.accesskey "S">
+<!ENTITY retentionKeepRecent.label "Paling baru">
+<!ENTITY retentionKeepRecent.accesskey "b">
+<!ENTITY retentionApplyToFlagged.label "Sentiasa simpan mesej bertanda">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Penyelarasan">
+<!ENTITY folderCheckForNewMessages2.label        "Apabila mendapatkan mesej baru untuk akaun ini, sentiasa semak folder ini">
+<!ENTITY folderCheckForNewMessages2.accesskey    "k">
+
+<!ENTITY offlineFolder.check.label               "Pilih folder ini bagi kegunaan luar talian">
+<!ENTITY offlineFolder.check.accesskey           "P">
+<!ENTITY offlineFolder.button.label              "Muat turun Sekarang">
+<!ENTITY offlineFolder.button.accesskey          "M">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Pilih kumpulan berita ini bagi kegunaan luar talian">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "l">
+<!ENTITY offlineNewsgroup.button.label           "Muat turun Sekarang">
+<!ENTITY offlineNewsgroup.button.accesskey       "M">
+
+<!ENTITY folderProps.name.label                  "Nama:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Lokasi:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Perkongsian">
+<!ENTITY privileges.button.label                 "Keistimewaan…">
+<!ENTITY privileges.button.accesskey             "K">
+<!ENTITY permissionsDesc.label                   "Anda ada keizinan berikut:">
+<!ENTITY folderType.label                        "Jenis Folder:">
+
+<!ENTITY folderQuotaTab.label                    "Kuota">
+<!ENTITY folderQuotaRoot.label                   "Akar Kuota:">
+<!ENTITY folderQuotaUsage.label                  "Penggunaan:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Bilangan mesej:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "tidak diketahui">
+<!ENTITY sizeOnDisk.label                        "Saiz dalam cakera:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "tidak diketahui">

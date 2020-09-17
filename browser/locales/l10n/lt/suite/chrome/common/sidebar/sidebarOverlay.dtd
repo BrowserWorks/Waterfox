@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Parankinė">
+<!ENTITY sidebar.reload.label           "Įkelti iš naujo">
+<!ENTITY sidebar.reload.accesskey       "n">
+<!ENTITY sidebar.picker.label           "Kortelės">
+<!ENTITY sidebar.customize.label        "Tvarkyti parankinę…">
+<!ENTITY sidebar.customize.accesskey    "T">
+<!ENTITY sidebar.hide.label             "Paslėpti kortelę">
+<!ENTITY sidebar.hide.accesskey         "P">
+<!ENTITY sidebar.switch.label           "Atverti kortelę">
+<!ENTITY sidebar.switch.accesskey       "A">
+<!ENTITY sidebarCmd.label               "Parankinė">
+<!ENTITY sidebarCmd.accesskey           "P">
+<!ENTITY sidebar.loading.label          "Įkeliama…">
+<!ENTITY sidebar.loadstopped.label      "Įkėlimas sustabdytas">
+<!ENTITY sidebar.loading.stop.label     "Stabdyti">
+<!ENTITY sidebar.loading.stop.accesskey "S">
+
+<!ENTITY sidebar.no-panels.state     "Šiuo metu parankinėje nėra kortelių.">
+<!ENTITY sidebar.no-panels.add       "Nauja kortelė įtraukiama spustelėjus parankinės viršuje esantį mygtuką „Kortelės“.">
+<!ENTITY sidebar.no-panels.hide      "Jei norite užverti parankinę, pagrindinio meniu punkte „Rodymas“ pašalinkite žymėjimą (varnelę) šalia „Parankinė“">
+<!ENTITY sidebar.sbDirectory.label   "Parankinės katalogas…">
+
+<!ENTITY sidebar.pagenotfound.label  "Šiuo metu kortelės turinys nepasiekiamas.">
+<!ENTITY sidebar.close.tooltip       "Užverti parankinę">
+<!ENTITY sidebar.open.tooltip        "Atverti parankinę">
+
+<!ENTITY sidebar.search.label         "Paieška">
+<!ENTITY sidebar.client-bookmarks.label     "Adresynas">
+<!ENTITY sidebar.client-history.label       "Žurnalas">
+<!ENTITY sidebar.client-addressbook.label   "Adresų knyga">

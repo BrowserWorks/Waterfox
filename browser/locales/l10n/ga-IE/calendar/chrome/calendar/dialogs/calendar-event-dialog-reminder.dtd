@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Socraigh Meabhrúcháin">
+<!ENTITY reminder.add.label                                "Cuir Leis">
+<!ENTITY reminder.add.accesskey                            "L">
+<!ENTITY reminder.remove.label                             "Bain">
+<!ENTITY reminder.remove.accesskey                         "B">
+
+<!ENTITY reminder.reminderDetails.label                    "Mionsonraí an Mheabhrúcháin">
+<!ENTITY reminder.action.label                             "Roghnaigh gníomh meabhrúcháin">
+
+<!ENTITY reminder.action.alert.label                       "Taispeáin airdeall">
+<!ENTITY reminder.action.email.label                       "Seol ríomhphost">
+
+<!ENTITY alarm.units.minutes                               "nóiméad" >
+<!ENTITY alarm.units.hours                                 "uaire" >
+<!ENTITY alarm.units.days                                  "lá anuas" >

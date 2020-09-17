@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Awgelhen seg yixef ɣer wayeḍ">
+<!ENTITY e2eLearnMore.label "Issin ugar">
+
+<!ENTITY e2eEnc.description "S war awgelhen si ṭṭerf ɣer ṭṭerf, agbur n yiznan izmer ad t-iwali usaǧǧaw-ik n yimayl, izmer daɣen ad tḥaz-it tɛessast.">
+<!ENTITY e2eeReqWarning.description "Ma tesriḍ awgelhen, akken ad tazneḍ izen, ilaq ad tesɛuḍ tasarut tazayazt neɣ aselkin i yal anermis.">
+
+<!ENTITY e2eSigning.description "Azmul umḍin ad yeǧǧ inermisen ad sneqden d akken izen yettwazen-d sɣur-k daɣen agbur-is ur ibeddel ara.">
+<!ENTITY e2eTechPref.description "Tatiknulujit n awgelhen tebɣiḍ:">
+
+<!ENTITY doNotEncrypt.label "Ur sirig ara awgelhen s wudem amezwer">
+<!ENTITY doNotEncrypt.accesskey "U">
+<!ENTITY requireEncryptMessage.label "Isra awgelhen s wudem amezwer">
+<!ENTITY requireEncryptMessage.accesskey "s">
+<!ENTITY encryptionCert2.message "Aselkin udmawan i uwgelhen:">
+<!ENTITY digitalSign.certificate.button "Fren...">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Sfeḍ">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "Fren...">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "Sfeḍ">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "Azmul umḍin">
+<!ENTITY signMessage2.label "Rnu azmul-inu umḍin s wudem amezwer">
+<!ENTITY signMessage.accesskey "Z">
+
+<!ENTITY signingCert2.message "Aselkin udmawan i uzmul amḍin:">
+
+<!ENTITY sendingDefaults.label "Iɣewwaṛen imezwar i tuzzna n yeznan">
+
+<!ENTITY technologyAutomatic.label "Fren s wudem awurman akken llant tsura neɣ iselkinen">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Sefrek iselkan S/MIME">
+<!ENTITY manageCerts3.accesskey "S">
+<!ENTITY manageDevices2.label "Ibenkan n tɣellist S/MIME">
+<!ENTITY manageDevices2.accesskey "n">
+
+<!ENTITY technologySMIME.label "Smenyef S/MIME">
+<!ENTITY technologyOpenPGP.label "Smenyef OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Fren aselkin">
+<!ENTITY certPicker.info  "Aselkin:">
+<!ENTITY certPicker.detailsLabel "Talqayt n uselkin yettwafernen:">
+
+<!ENTITY openpgpKey.message "Tasarut tudmawant i uwgelhen akked uzmul umḍin:">
+<!ENTITY openpgpKey.button "Sbadu tasarut tudmawant…">
+<!ENTITY openpgpKey.accesskey "o">

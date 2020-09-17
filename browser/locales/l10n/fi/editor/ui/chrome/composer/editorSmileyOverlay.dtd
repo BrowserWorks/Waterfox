@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Hymiö">
+<!ENTITY insertSmiley.accesskey "H">
+
+<!ENTITY smiley1Cmd.label "Hymy">
+<!ENTITY smiley1Cmd.accesskey "H">
+<!ENTITY smiley1Cmd.tooltip "Lisää hymyilevä hymiö">
+<!ENTITY smiley2Cmd.label "Suru">
+<!ENTITY smiley2Cmd.accesskey "S">
+<!ENTITY smiley2Cmd.tooltip "Lisää vakava hymiö">
+<!ENTITY smiley3Cmd.label "Silmänisku">
+<!ENTITY smiley3Cmd.accesskey "m">
+<!ENTITY smiley3Cmd.tooltip "Lisää silmänisku hymiö">
+<!ENTITY smiley4Cmd.label "Kieli ulkona">
+<!ENTITY smiley4Cmd.accesskey "K">
+<!ENTITY smiley4Cmd.tooltip "Lisää kieli poskessa -hymiö">
+<!ENTITY smiley5Cmd.label "Naurava">
+<!ENTITY smiley5Cmd.accesskey "N">
+<!ENTITY smiley5Cmd.tooltip "Lisää naurava hymiö">
+<!ENTITY smiley6Cmd.label "Nolo">
+<!ENTITY smiley6Cmd.accesskey "l">
+<!ENTITY smiley6Cmd.tooltip "Lisää nolostunut hymiö">
+<!ENTITY smiley7Cmd.label "Epävarma">
+<!ENTITY smiley7Cmd.accesskey "a">
+<!ENTITY smiley7Cmd.tooltip "Lisää epävarma hymiö">
+<!ENTITY smiley8Cmd.label "Yllätys">
+<!ENTITY smiley8Cmd.accesskey "Y">
+<!ENTITY smiley8Cmd.tooltip "Lisää yllättynyt hymiö">
+<!ENTITY smiley9Cmd.label "Suukko">
+<!ENTITY smiley9Cmd.accesskey "u">
+<!ENTITY smiley9Cmd.tooltip "Lisää pusu-hymiö">
+<!ENTITY smiley10Cmd.label "Huuto">
+<!ENTITY smiley10Cmd.accesskey "t">
+<!ENTITY smiley10Cmd.tooltip "Lisää huutava hymiö">
+<!ENTITY smiley11Cmd.label "Hieno">
+<!ENTITY smiley11Cmd.accesskey "e">
+<!ENTITY smiley11Cmd.tooltip "Lisää viileä hymiö">
+<!ENTITY smiley12Cmd.label "Rahat-suuhun">
+<!ENTITY smiley12Cmd.accesskey "r">
+<!ENTITY smiley12Cmd.tooltip "Lisää rahat suussa -hymiö">
+<!ENTITY smiley13Cmd.label "Jalka-suussa">
+<!ENTITY smiley13Cmd.accesskey "J">
+<!ENTITY smiley13Cmd.tooltip "Lisää jalat suussa -hymiö">
+<!ENTITY smiley14Cmd.label "Viaton">
+<!ENTITY smiley14Cmd.accesskey "o">
+<!ENTITY smiley14Cmd.tooltip "Lisää viaton hymiö">
+<!ENTITY smiley15Cmd.label "Itku">
+<!ENTITY smiley15Cmd.accesskey "I">
+<!ENTITY smiley15Cmd.tooltip "Lisää itkevä hymiö">
+<!ENTITY smiley16Cmd.label "Vaikenee">
+<!ENTITY smiley16Cmd.accesskey "V">
+<!ENTITY smiley16Cmd.tooltip "Lisää sinetöidyt huulet -hymiö">
+<!ENTITY SmileButton.label "Lisää hymiö">
+<!ENTITY SmileButton.tooltip "Lisää hymiö">

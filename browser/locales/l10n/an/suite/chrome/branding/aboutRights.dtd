@@ -1,0 +1,73 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "Sobre os suyos dreitos">
+<!ENTITY rights.intro "&brandFullName; ye software libre y de codigo ubierto, realizau por una comunidat de milars de personas de totz. I hai qualques cosetas que debe saber:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; ye disponible ta vusté baixo os termins de a ">
+<!ENTITY rights.intro-point1b "Licencia Publica de Mozilla">
+<!ENTITY rights.intro-point1c ". Isto significa que puede usar, copiar y distribuir &brandShortName; a atros. Tamién ye libre de modificar o codigo fuent de &brandShortName; como deseye ta adaptar-lo a las suyas necesidatz. a Licencia Publica Mozilla tamién le atorga o dreito a distribuir as suyas versions modificadas.">
+
+<!ENTITY rights.intro-point2a "Mozilla no le atorga garra dreito sobre las marcas rechistradas y logos de Mozilla y SeaMonkey. Se puede trobar información adicional sobre las marcas rechistradas ">
+<!ENTITY rights.intro-point2b "aquí">
+<!ENTITY rights.intro-point2c ".">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights.intro-point3a "As politicas de privacidat d'os productos de se &vendorShortName; pueden trobar ">
+<!ENTITY rights.intro-point3b "aquí">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "&brandShortName; offers optional website information services, such as Add-on or Safe Browsing services; however, we cannot guarantee that they are 100&#37; accurate or error-free. More details, including information on how to disable the services, can be found in the ">
+<!ENTITY rights.intro-point4b "termins d'o servicio">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.webservices-header "Servicios de puestos web de &brandFullName;">
+<!-- Note that this paragraph references entities from extensions.dtd,
+     preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
+     so that we can refer to text the user sees in the UI, without
+     this page being forgotten every time those strings are updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; offers optional services (&quot;Services&quot;), such as the Add-on suggestion and update services or the Safe Browsing feature, that are available for your use with this binary version of &brandShortName; as described below.  These services are enabled by default.  If you do not want to use the Services or the terms below are unacceptable, instructions on how to disable a particular feature or Service may be found ">
+<!ENTITY rights2.webservices-b "here">
+<!ENTITY rights2.webservices-c ". Other features and Services can be disabled in the application preferences.">
+<!-- add-on related points for branded builds -->
+
+<!ENTITY rights.addons-a "Add-on Services: ">
+<!ENTITY rights.addons-b "By default, &brandShortName; will suggest add-ons on the &view.discover.label; page and check for updates in regular intervals.  If you wish to disable these features to avoid communication of information on installed add-ons to the server, follow these steps:">
+<!ENTITY rights.addons-term1 "Open the application preferences">
+<!ENTITY rights.addons-term2 "Select the &smart.label; panel in the &advance.label; category">
+<!ENTITY rights.addons-term3 "Uncheck the options to &quot;&autoAddOnsUpdates.label;&quot; and &quot;&enablePersonalized.label;&quot;">
+<!ENTITY rights.addons-term4 "The Add-on Services are now disabled">
+<!-- safe browsing points for branded builds -->
+
+
+<!ENTITY rights.safebrowsing-a "Safe Browsing: ">
+<!ENTITY rights.safebrowsing-b "Disabling the Safe Browsing feature is not recommended as it may result in you going to unsafe sites.  If you wish to disable the feature completely, follow these steps:">
+<!ENTITY rights.safebrowsing-term1 "Open the application preferences">
+<!ENTITY rights.safebrowsing-term2 "Select the main &security.label; panel">
+<!ENTITY rights.safebrowsing-term3 "Uncheck the options to &quot;&blockAttackSites.label;&quot; and &quot;&blockWebForgeries.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Safe Browsing is now disabled">
+<!-- points 1-6 text for branded builds -->
+
+
+<!ENTITY rights.webservices-term1 "&vendorShortName; puede abandonar u cambiar os servicios a la suya discrección.">
+<!ENTITY rights.webservices-term2 "Ye convidau a usar istes servicios con a versión correspondient de &brandShortName;, y disposa d'os dreitos necesarios ta fer-lo. &vendorShortName; y os suyos licenciatarios se reservan totz os de demás dreitos en os servicios. Istes termins no son orientaus a limitar garra dreito atorgau baixo as licencias de codigo ubierto aplicables a y &brandShortName; a las versions de codigo ubierto correspondients de &brandShortName;.">
+<!ENTITY rights.webservices-term3 "The Services are provided &quot;as-is.&quot;  &vendorShortName;, its contributors, licensors, and distributors, disclaim all warranties, whether express or implied, including without limitation, warranties that the Services are merchantable and fit for your particular purposes.  You bear the entire risk as to selecting the Services for your purposes and as to the quality and performance of the Services. Some jurisdictions do not allow the exclusion or limitation of implied warranties, so this disclaimer may not apply to you.">
+<!ENTITY rights.webservices-term4 "Fueras d'an sía requeriu por a lei, &vendorShortName;, os suyos colaboradors, licenciatarios y distribuidors no podrán estar responsables de garra danyo indirecto, especial, imprevisto, resultant, punitivo u eixemplar derivau de, u relacionau con, l'uso de &brandShortName; y os servicios. a responsabilidat colectiva baixo istes termins no podrá exceder os US$500 (cincientos dolars americans). Qualques jurisdicciones no permiten a exclusión u limitación de bells daños, asinas que ista exclusión y limitación puede no estar aplicables a vusté.">
+<!ENTITY rights.webservices-term5 "&vendorShortName; puede actualizar istes termins seguntes sía necesario de vez en quan. Istes termins no pueden estar modificaus u cancelaus sin l'alcuerdo escrito de &vendorShortName;.">
+<!ENTITY rights.webservices-term6 "Istes termins son regidos por as leis d'o estau de California, EE.UU., excluindo os suyos conflictos con atras estipulaciones d'a lei. Si qualsiquier parte d'istes termins resulta estar invalida u inexigible, as porciones restantes continarán tenendo pleno efecto. En o caso d'haber un conflicto entre una versión traducida d'istes termins y a versión en idioma Anglés, prevalerá a versión en Inglés.">
+

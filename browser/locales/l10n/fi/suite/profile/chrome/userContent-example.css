@@ -1,0 +1,48 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Muokkaa tätä tiedostoa ja kopioi nimellä userContent.css 
+ * profiilikansiosi chrome-kansioon
+ */
+
+/*
+ * Tätä tiedostoa muokkaamalla on mahdollista muuttaa kaikkien ohjelmalla
+ * avattujen WWW-sivujen ulkonäköä. Säännöt, joissa on !important-lisäys,
+ * korvaavat sivun tekijän antamat samannimiset säännöt. Jos lisäystä ei 
+ * löydy, sivulle asetetut tyylit voivat korvata tässä tiedostossa annetut.
+ */
+
+/*
+ * esimerkki: estetään blink-elementtiä vilkkumasta
+ *
+ * blink { text-decoration: none ! important; }
+ *
+ */
+
+/*
+ * esimerkki: asetetaan kaikille taulukoille kahden kuvapisteen reunat
+ *
+ * table { border: 2px solid; }
+ */
+
+/*
+ * esimerkki: estetään marquee-elementtin sisällön vieriminen
+ *
+ * marquee { -moz-binding: none; }
+ *
+ */
+
+/*
+ * esimerkki: tehdään kaikista www.mozilla.org-sivustolla olevien hakukenttien teksteistä mustaa valkoisella:
+ *
+ * @-moz-document url-prefix(http://www.mozilla.org/) {
+ *   #q { background: white ! important; color: black ! important; }
+ * }
+ */
+ 
+/* 
+ * Lisää esimerkkejä säännöistä (englanniksi) osoitteessa http://www.mozilla.org/unix/customizing.html
+ */
+

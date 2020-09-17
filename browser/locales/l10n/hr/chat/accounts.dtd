@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Računi – &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Status instant poruka">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Novi račun">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Zatvori">
+<!ENTITY accountManager.close.accesskey      "t">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "Z">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Niti jedan račun još nije podešen">
+<!ENTITY accountManager.noAccount.description "Kliknite na &accountManager.newAccount.label; tipku kako bi vas &brandShortName; proveo kroz proces podešavanja računa.">
+<!ENTITY account.autoSignOn.label     "Prijavi se prilikom pokretanja">
+<!ENTITY account.autoSignOn.accesskey "r">
+<!ENTITY account.connect.label        "Poveži">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "Prekini vezu">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "Obriši">
+<!ENTITY account.delete.accesskey     "b">
+<!ENTITY account.edit.label           "Svojstva">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "Pomakni gore">
+<!ENTITY account.movedown.label       "Pomakni dolje">
+<!ENTITY account.cancelReconnection.label         "Prekini ponovno povezivanje">
+<!ENTITY account.cancelReconnection.accesskey     "a">
+<!ENTITY account.copyDebugLog.label     "Kopiraj zapisnik za otklanjanje greški">
+<!ENTITY account.copyDebugLog.accesskey "K">
+<!ENTITY account.showDebugLog.label     "Prikaži zapisnik za otklanjanje greški">
+<!ENTITY account.showDebugLog.accesskey "z">
+<!ENTITY account.connecting           "Povezivanje…">
+<!ENTITY account.disconnecting        "Prekidanje veze…">
+<!ENTITY account.disconnected         "Nije spojeno">

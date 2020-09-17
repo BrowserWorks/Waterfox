@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Sett inn tegn">
+<!ENTITY category.label "Kategori">
+<!ENTITY letter.label "Bokstav:">
+<!ENTITY letter.accessKey "B">
+<!ENTITY character.label "Tegn:">
+<!ENTITY character.accessKey "T">
+<!ENTITY accentUpper.label "Store bokstaver med aksenttegn">
+<!ENTITY accentLower.label "Små bokstaver med aksenttegn">
+<!ENTITY otherUpper.label "Andre store bokstaver">
+<!ENTITY otherLower.label "Andre små bokstaver">
+<!ENTITY commonSymbols.label "Vanlige symboler">
+<!ENTITY insertButton.label "Sett inn">
+<!ENTITY closeButton.label "Lukk">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title        "Redacción">
+<!ENTITY generalComposing.label               "Cheneral">
+<!ENTITY forwardMsg.label                     "Reninviar mensaches:">
+<!ENTITY inline.label                         "Incorporado">
+<!ENTITY inline.accesskey                     "n">
+<!ENTITY asAttachment.label                   "Como adchunto">
+<!ENTITY asAttachment.accesskey               "a">
+
+<!ENTITY replyQuoteInline.label               "Citar adjuntos visibles en linia en as respuestas">
+<!ENTITY replyQuoteInline.accesskey           "C">
+<!ENTITY warnOnSendAccelKey.label             "Confirmar en usar l'atajo de teclau ta ninviar un mensache">
+<!ENTITY warnOnSendAccelKey.accesskey         "j">
+<!-- LOCALIZATION NOTE (autoSave.label): This will concatenate with
+     "xxx minutes", using a number and (autoSaveEnd.label). -->
+<!ENTITY autoSave.label                       "Guardar o mensache automaticament cada">
+<!ENTITY autoSave.accesskey                   "u">
+<!ENTITY autoSaveEnd.label                    "menutos">
+<!-- LOCALIZATION NOTE (wrapOutMsg.label): This will concatenate with "xxx characters", using a number and (char.label). -->
+<!ENTITY wrapOutMsg.label                     "Ajuste de linia en mens. texto sin formato en">
+<!ENTITY wrapOutMsg.accesskey                 "u">
+<!ENTITY char.label                           "caracters">
+
+<!ENTITY defaultMessagesHeader.label          "Valors predeterminadas ta mensaches HTML">
+<!ENTITY font.label                           "Tipo de letra:">
+<!ENTITY font.accesskey                       "l">
+<!ENTITY size.label                           "Tamanyo:">
+<!ENTITY size.accesskey                       "m">
+<!ENTITY fontColor.label                      "Texto:">
+<!ENTITY fontColor.accesskey                  "T">
+<!ENTITY bgColor.label                        "Fondo:">
+<!ENTITY bgColor.accesskey                    "F">
+
+<!ENTITY selectHeaderType.label               "Select reply header type:">
+<!ENTITY selectHeaderType.accesskey           "e">
+<!ENTITY noReplyOption.label                  "No Reply Header">
+<!-- LOCALIZATION NOTE (authorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwrotesingle preference. [Author] needs to be
+  translated. -->
+<!ENTITY authorWroteOption.label              "[Author] wrote:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_ondateauthorwrote preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY onDateAuthorWroteOption.label        "On [date], [Author] wrote:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwroteondate preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY authorWroteOnDateOption.label        "[Author] wrote on [date]:">

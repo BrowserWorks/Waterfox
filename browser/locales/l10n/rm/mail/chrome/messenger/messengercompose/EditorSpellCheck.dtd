@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Controllar l'ortografia">
+
+<!ENTITY misspelledWord.label "Pled cun sbagl(s):">
+<!ENTITY wordEditField.label "Remplazzar cun:">
+<!ENTITY wordEditField.accessKey "R">
+<!ENTITY checkwordButton.label "Controllar il pled">
+<!ENTITY checkwordButton.accessKey "t">
+<!ENTITY suggestions.label "Propostas:">
+<!ENTITY suggestions.accessKey "P">
+<!ENTITY ignoreButton.label "Ignorar">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "Ignorar tut">
+<!ENTITY ignoreAllButton.accessKey "g">
+<!ENTITY replaceButton.label "Remplazzar">
+<!ENTITY replaceButton.accessKey "z">
+<!ENTITY replaceAllButton.label "Remplazzar tut">
+<!ENTITY replaceAllButton.accessKey "u">
+<!ENTITY stopButton.label "Fermar">
+<!ENTITY stopButton.accessKey "F">
+<!ENTITY userDictionary.label "Dicziunari persunal:">
+<!ENTITY moreDictionaries.label "Telechargiar ulteriurs dicziunaris…">
+<!ENTITY addToUserDictionaryButton.label "Agiuntar il pled">
+<!ENTITY addToUserDictionaryButton.accessKey "A">
+<!ENTITY editUserDictionaryButton.label "Modifitgar…">
+<!ENTITY editUserDictionaryButton.accessKey "M">
+<!ENTITY recheckButton2.label "Controllar anc ina giada il text">
+<!ENTITY recheckButton2.accessKey "T">
+<!ENTITY closeButton.label "Serrar">
+<!ENTITY closeButton.accessKey "S">
+<!ENTITY sendButton.label "Trametter">
+<!ENTITY sendButton.accessKey "e">
+<!ENTITY languagePopup.label "Lingua:">
+<!ENTITY languagePopup.accessKey "L">

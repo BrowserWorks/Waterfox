@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox Accounts">
+<!ENTITY aboutAccounts.connected.description "আপনি সংযুক্ত আছেন যে হিসেবে">
+<!ENTITY aboutAccounts.syncPreferences.label "সিঙ্ক সেটিং দেখার জন্য এখানে ক্লিক করুন">
+
+<!ENTITY aboutAccounts.noConnection.title "ইন্টারনেট সংযোগ নেই">
+<!ENTITY aboutAccounts.retry.label "পুনরায় চেষ্টা করুন">
+
+<!ENTITY aboutAccounts.restrictedError.title "সীমাবদ্ধ">
+<!ENTITY aboutAccounts.restrictedError.description "এই প্রোফাইল থেকে আপনি Firefox Accounts পরিচালনা করতে পারবেন না।">

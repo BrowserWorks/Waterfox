@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "חדשות חשובות">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "כדי לסנכרן מידע שכבר שמרת ב־Firefox עם התקנה זו של &brandShortName;, יש להתחבר עם ה־&syncBrand.fxAccount.label; שלך.">
+<!ENTITY continue-button "המשך">
+
+<!ENTITY mainText "להתקנה זו של &brandShortName; יש פרופיל חדש. הוא אינו משתף סימניות, ססמאות והעדפות משתמש עם התקנות אחרות של Firefox (לרבות Firefox, ‏Firefox ESR, ‏Firefox Beta, ‏Firefox Developer Edition ו־Firefox Nightly) במחשב זה.">

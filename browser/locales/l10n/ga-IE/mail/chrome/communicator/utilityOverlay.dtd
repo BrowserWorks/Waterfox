@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+
+<!ENTITY fileMenu.label          "Comhad">
+<!ENTITY fileMenu.accesskey        "C">
+<!ENTITY newMenu.label            "Nua">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Eagar">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "Cealaigh">
+<!ENTITY undoCmd.accesskey          "l">
+<!ENTITY redoCmd.label            "Athfheidhmigh">
+<!ENTITY redoCmd.accesskey          "f">
+<!ENTITY deleteCmd.label          "Scrios">
+<!ENTITY deleteCmd.accesskey        "S">
+<!ENTITY preferencesCmd2.label "Roghanna">
+<!ENTITY preferencesCmd2.accesskey "o">
+<!ENTITY preferencesCmdUnix.label       "Sainroghanna">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY viewMenu.label          "Amharc">
+<!ENTITY viewMenu.accesskey        "A">
+<!ENTITY viewToolbarsMenu.label        "Barraí Uirlisí">
+<!ENTITY viewToolbarsMenu.accesskey      "U">
+<!ENTITY showTaskbarCmd.label          "Barra Stádais">
+<!ENTITY showTaskbarCmd.accesskey        "S">
+
+<!ENTITY closeCmd.label      "Dún">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "D">
+
+<!ENTITY quitApplicationCmd.label  "Scoir">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "S">
+
+<!ENTITY quitApplicationCmdUnix.label  "Scoir">
+<!ENTITY quitApplicationCmdUnix.accesskey  "S">
+
+<!ENTITY quitApplicationCmdMac.label  "Scoir &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "S">

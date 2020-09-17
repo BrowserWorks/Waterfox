@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "संदेश सुरक्षा">
+<!ENTITY subject.plaintextWarning "ध्यान दें: विषय पंक्ति ईमेल संदेश की गोपित नहीं होती.">
+<!ENTITY status.heading "आपके संदेश की सामग्री निम्न तरीके से भेजी जायेगीा:">
+<!ENTITY status.signed "डिजिटली हस्ताक्षरित:">
+<!ENTITY status.encrypted "गोपित:">
+<!ENTITY status.certificates "प्रमाणपत्र:">
+<!ENTITY view.label "देखें">
+<!ENTITY view.accesskey "V">
+<!ENTITY tree.recipient "प्राप्तकर्ता">
+<!ENTITY tree.status "स्थिति">
+<!ENTITY tree.issuedDate "निर्गत">
+<!ENTITY tree.expiresDate "कालातीत">

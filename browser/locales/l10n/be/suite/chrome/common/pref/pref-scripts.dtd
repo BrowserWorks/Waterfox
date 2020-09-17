@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.scripts.title "Сцэнары і ўбудовы">
+<!ENTITY navigator.label "Азіральніку">
+<!ENTITY navigator.accesskey "Н">
+<!ENTITY enableJavaScript.label "Дазволіць JavaScript у">
+<!ENTITY allowScripts.label "Дазволіць сцэнарам:">
+<!ENTITY allowScripts.accesskey "Д">
+<!ENTITY allowWindowMoveResize.label "Перасоўваць існыя вокны ці зменьваць іх памеры">
+<!ENTITY allowWindowFlip.label "Узнімаць ці зніжаць вокны">
+<!ENTITY allowWindowStatusChange.label "Змяняць тэкст на паліцы статусу">
+<!ENTITY allowWindowImageSrcChange.label "Зменьваць выявы">
+<!ENTITY allowContextmenuDisable.label "Забараняць ці замяняць меню">
+<!ENTITY allowHideStatusBar.label "Хаваць паліцу статусу">
+<!ENTITY enablePlugins.label "Дазволіць убудовы для">
+<!ENTITY enablePluginForSuite.label "Збор">
+<!ENTITY enablePluginForSuite.accesskey "З">
+<!ENTITY whenPageRequiresPlugins.label "Калі патрабуюцца ўбудовы на старонцы">
+<!ENTITY activateAllPlugins.label "Задзейнічаць усе ўбудовы змоўчна">
+<!ENTITY activateAllPlugins.accesskey "д">
+<!ENTITY warnPluginsRequired.label "Папярэджваць, калі патрэбна ўсталяванне дадатковых убудоваў ">
+<!ENTITY warnPluginsRequired.accesskey "П">

@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Абонаменти за емисии">
+<!ENTITY learnMore.label             "Научете повече относно емисиите">
+
+<!ENTITY feedTitle.label             "Заглавие:">
+<!ENTITY feedTitle.accesskey         "З">
+
+<!ENTITY feedLocation.label          "Адрес на емисия:">
+<!ENTITY feedLocation.accesskey      "А">
+<!ENTITY feedLocation2.placeholder   "Въведете валиден адрес на емисия">
+<!ENTITY locationValidate.label      "Проверка">
+<!ENTITY validateText.label          "Проверяване и изтегляне на валиден адрес.">
+
+<!ENTITY feedFolder.label            "Съхраняване на статиите в: ">
+<!ENTITY feedFolder.accesskey        "С">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Проверяване за нови статии на всеки">
+<!ENTITY biffStart.accesskey         "н">
+<!ENTITY biffMinutes.label           "минути">
+<!ENTITY biffMinutes.accesskey       "м">
+<!ENTITY biffDays.label              "дена">
+<!ENTITY biffDays.accesskey          "д">
+<!ENTITY recommendedUnits.label      "Издателят препоръчва:">
+
+<!ENTITY quickMode.label             "Показване на резюме от статията вместо зареждане на уеб страницата">
+<!ENTITY quickMode.accesskey         "П">
+
+<!ENTITY autotagEnable.label         "Автоматично създаване на етикети от имената в &lt;category&gt; на емисията">
+<!ENTITY autotagEnable.accesskey     "А">
+<!ENTITY autotagUsePrefix.label      "Представка за създаваните етикети:">
+<!ENTITY autotagUsePrefix.accesskey  "П">
+<!ENTITY autoTagPrefix.placeholder   "Въведете представка за етикет">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Добавяне">
+<!ENTITY button.addFeed.accesskey    "Д">
+<!ENTITY button.verifyFeed.label     "Проверяване">
+<!ENTITY button.verifyFeed.accesskey "п">
+<!ENTITY button.updateFeed.label     "Обновяване">
+<!ENTITY button.updateFeed.accesskey "а">
+<!ENTITY button.removeFeed.label     "Премахване">
+<!ENTITY button.removeFeed.accesskey "П">
+<!ENTITY button.importOPML.label     "Внасяне">
+<!ENTITY button.importOPML.accesskey "В">
+<!ENTITY button.exportOPML.label     "Изнасяне">
+<!ENTITY button.exportOPML.accesskey "з">
+<!ENTITY button.exportOPML.tooltip   "Изнасяне на емисии с дървовидна структура; Ctrl-щрак или Ctrl-Enter за изнасяне на емисии като списък">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Затваряне">

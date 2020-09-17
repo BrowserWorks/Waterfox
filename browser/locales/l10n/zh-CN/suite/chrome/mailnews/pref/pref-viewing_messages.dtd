@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "显示信息">
+<!ENTITY style.label                      "样式：">
+<!ENTITY style.accesskey                  "S">
+<!ENTITY regular.label                    "普通">
+<!ENTITY bold.label                       "粗体">
+<!ENTITY italic.label                     "斜体">
+<!ENTITY boldItalic.label                 "粗斜体">
+<!ENTITY size.label                       "大小:">
+<!ENTITY size.accesskey                   "z">
+<!ENTITY bigger.label                     "较大">
+<!ENTITY smaller.label                    "缩小">
+<!ENTITY color.label                      "颜色：">
+<!ENTITY color.accesskey                  "C">
+<!ENTITY displayPlainText.caption         "纯文本信息">
+<!ENTITY fontPlainText.label              "字体：">
+<!ENTITY fontPlainText.accesskey          "F">
+<!ENTITY displayQuoted.label              "引用信息设置：">
+<!ENTITY wrapInMsg.label                  "按窗口宽度换行">
+<!ENTITY wrapInMsg.accesskey              "W">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "以图形显示表情图释">
+<!ENTITY convertEmoticons.accesskey       "D">
+<!ENTITY generalMessageDisplay.caption    "综述">
+<!ENTITY autoMarkAsRead.label             "自动将消息标记为已读">
+<!ENTITY autoMarkAsRead.accesskey         "A">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "仅在显示">
+<!ENTITY markAsReadAfter.accesskey        "t">
+<!ENTITY secondsLabel.label               "秒">
+
+<!ENTITY openingMessages.label            "打开信息，显示在：">
+<!ENTITY newWindowRadio.label             "新的消息窗口">
+<!ENTITY newWindowRadio.accesskey         "n">
+<!ENTITY existingWindowRadio.label        "已打开的消息窗口">
+<!ENTITY existingWindowRadio.accesskey    "e">
+<!ENTITY disableContent.label             "阻止从其它源来的图片和内容">
+<!ENTITY disableContent.accesskey         "B">
+<!ENTITY showCondensedAddresses.label     "仅显示我通讯录中联系人的显示名。">
+<!ENTITY showCondensedAddresses.accesskey "o">
+<!ENTITY closeMsgWindowOnDelete.label     "当删除信息时关闭信息窗口">
+<!ENTITY closeMsgWindowOnDelete.accesskey "l">

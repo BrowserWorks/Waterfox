@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "A-zivout &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "A">
+
+<!ENTITY preferencesCmdMac.label        "Ma gwellvezioù…">
+
+<!ENTITY servicesMenuMac.label          " Gwazerezhioù">
+
+<!ENTITY hideThisAppCmdMac2.label       "Kuzhat &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Kuzhat ar re all">
+
+<!ENTITY showAllAppsCmdMac.label        "Diskouez pep tra">
+
+<!ENTITY touchBarCmdMac.label           "Personelaat ar varrenn-stok…">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Tz'ib'anïk b'i'aj">
+<!ENTITY subscribeButton.label        "Tz'ib'anïk b'i'aj">
+<!ENTITY subscribeButton.accesskey    "T">
+<!ENTITY unsubscribeButton.label      "Tiq'at rutz'ib'axik b'i'aj">
+<!ENTITY unsubscribeButton.accesskey  "T">
+<!ENTITY newGroupsTab.label           "K'ak'a' taq Molaj">
+<!ENTITY newGroupsTab.accesskey       "K">
+<!ENTITY refreshButton.label          "Titzolïx">
+<!ENTITY refreshButton.accesskey      "T">
+<!ENTITY stopButton.label             "Tiq'at">
+<!ENTITY stopButton.accesskey         "q">
+<!ENTITY server.label                 "Rub'i' taqoya'l:">
+<!ENTITY server.accesskey             "t">
+<!ENTITY subscribedHeader.label       "Tz'ib'anïk b'i'aj">
+<!-- commenting out until bug 38906 is fixed
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Kek'ut pe ri taq ruch'akulal ruk'wan:">
+<!ENTITY namefield.accesskey          "t">

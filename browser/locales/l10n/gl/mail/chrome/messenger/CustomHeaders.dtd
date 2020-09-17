@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Personalización de cabeceiras">
+<!ENTITY addButton.label "Engadir">
+<!ENTITY addButton.accesskey "a">
+<!ENTITY removeButton.label "Eliminar">
+<!ENTITY removeButton.accesskey "E">
+<!ENTITY newMsgHeader.label "Nova cabeceira de mensaxe:">
+<!ENTITY newMsgHeader.accesskey "N">

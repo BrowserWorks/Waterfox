@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Postavke odlaznog (SMTP) poslužitelja">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpDescription.label "Prilikom upravljanja vašim identitetima možete koristiti poslužitelj s ovog popisa odabirući ga kao Odlazni poslužitelj (SMTP), ili možete koristiti zadani poslužitelj s ovog popisa tako da odaberete &quot;Koristi zadani poslužitelj&quot;.">
+
+<!ENTITY smtpListAdd.label  "Dodaj…">
+<!ENTITY smtpListAdd.accesskey  "D">
+<!ENTITY smtpListEdit.label "Uredi…">
+<!ENTITY smtpListEdit.accesskey "e">
+<!ENTITY smtpListDelete.label "Ukloni">
+<!ENTITY smtpListDelete.accesskey "U">
+<!ENTITY smtpListSetDefault.label "Postavi zadanim">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDetails.label "Detalji odabranog poslužitelja:">
+<!ENTITY serverDescription.label "Opis: ">
+<!ENTITY serverName.label "Ime poslužitelja: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "Korisničko ime: ">
+<!ENTITY connectionSecurity.label "Sigurnost veze: ">
+<!ENTITY authMethod.label   "Metoda autentifikacije: ">

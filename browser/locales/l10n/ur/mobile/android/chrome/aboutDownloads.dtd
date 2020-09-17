@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "ڈاؤن لوڈ">
+<!ENTITY aboutDownloads.header                     "آپ کے ڈاؤن لوڈ">
+<!ENTITY aboutDownloads.empty                      "کوئی ڈاؤن لوڈ نہیں">
+
+<!ENTITY aboutDownloads.open                       "کھولیں">
+<!ENTITY aboutDownloads.remove                     "حذف کریں">
+<!ENTITY aboutDownloads.removeAll                  "تمام حذف کریں">
+<!ENTITY aboutDownloads.pause                      "توقف کریں">
+<!ENTITY aboutDownloads.resume                     "پھر جاری کریں">
+<!ENTITY aboutDownloads.cancel                     "منسوخ کریں">
+<!ENTITY aboutDownloads.retry                      "پھر کوشش کریں">

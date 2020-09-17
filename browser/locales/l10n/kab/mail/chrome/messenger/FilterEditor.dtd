@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Ilugan n imzizdeg">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Isem n imzizdeg:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Aspam">
+<!ENTITY notJunk.label "Mačči d aspam">
+
+<!ENTITY lowestPriorityCmd.label "Ameẓyan">
+<!ENTITY lowPriorityCmd.label "Meẓẓi">
+<!ENTITY normalPriorityCmd.label "Amagnu">
+<!ENTITY highPriorityCmd.label "Awriran">
+<!ENTITY highestPriorityCmd.label "Ameqqran">
+
+<!ENTITY contextDesc.label "Snes imzideg ticki:">
+<!ENTITY contextIncomingMail.label "Aggay n yimaylen imaynuten.">
+<!ENTITY contextIncomingMail.accesskey "g">
+<!ENTITY contextManual.label "Selkem s ufus">
+<!ENTITY contextManual.accesskey "e">
+<!ENTITY contextBeforeCls.label "Zizdeg send tasartut n yespamen">
+<!ENTITY contextAfterCls.label "Zizdeg seld tasartut n yespamen">
+<!ENTITY contextOutgoing.label "Seld tuzzna">
+<!ENTITY contextOutgoing.accesskey "z">
+<!ENTITY contextArchive.label "Aḥraz">
+<!ENTITY contextArchive.accesskey "ḥ">
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Selkem tigawin-agi:">
+<!ENTITY filterActionDesc.accesskey "l">
+
+<!ENTITY filterActionOrderWarning.label "Tamawt: Tigawin n uzizdeg ad ttwaselkment s umizzwer nniḍen. ">
+<!ENTITY filterActionOrder.label "Wali amizzwer n uselkem">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Awi izen ɣer">
+<!ENTITY copyMessage.label "Nɣel izen ɣer">
+<!ENTITY forwardTo.label "Welleh izen i">
+<!ENTITY replyWithTemplate.label "Err s tneɣruft">
+<!ENTITY markMessageRead.label "Creḍ amzun yettwaɣṛa">
+<!ENTITY markMessageUnread.label "Creḍ-it amzun ur yettwaɣri ara">
+<!ENTITY markMessageStarred.label "Rnu itri">
+<!ENTITY setPriority.label "Sbadu tazwart i">
+<!ENTITY addTag.label "Rnu tabzimt i yizen">
+<!ENTITY setJunkScore.label "Sbadu addad n uspam i">
+<!ENTITY deleteMessage.label "Kkes izen">
+<!ENTITY deleteFromPOP.label "Kkes seg uqeddac POP">
+<!ENTITY fetchFromPOP.label "Awi-d seg  uqeddac POP">
+<!ENTITY ignoreThread.label "Ttu akala afessas">
+<!ENTITY ignoreSubthread.label "Eǧǧ akin ikalan ifessasen">
+<!ENTITY watchThread.label "Ɛas ikalan ifessasen">
+<!ENTITY stopExecution.label "Seḥbes aselkem n imzizdeg">
+
+<!ENTITY addAction.tooltip "Rnu tigawt tamaynut">
+<!ENTITY removeAction.tooltip "Kkes tigawt-agi">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

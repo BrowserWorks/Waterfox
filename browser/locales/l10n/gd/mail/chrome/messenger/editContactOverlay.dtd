@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Sguab às">
+<!ENTITY editContactPanelDeleteContact.accesskey "S">
+
+<!ENTITY editContactName.label "Ainm:">
+<!ENTITY editContactName.accesskey "n">
+
+<!ENTITY editContactEmail.label "Post-dealain:">
+<!ENTITY editContactEmail.accesskey "e">
+
+<!ENTITY editContactAddressBook.label "Leabhar nan seòladh:">
+<!ENTITY editContactAddressBook.accesskey "a">
+
+<!ENTITY editContactPanelDone.label "Dèanta">
+<!ENTITY editContactPanelDone.accesskey "D">
+
+<!ENTITY contactMoveDisabledWarning.description "Chan urrainn dhut leabhar nan seòladh atharrachadh a chionn 's gu bheil a' charaid air liosta puist.">

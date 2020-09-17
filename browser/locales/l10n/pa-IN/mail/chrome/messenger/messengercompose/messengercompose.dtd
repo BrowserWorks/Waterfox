@@ -1,0 +1,268 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "ਲਿਖੋ: (ਵਿਸ਼ਾ ਨਹੀਂ)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "ਫਾਇਲ"> 
+<!ENTITY fileMenu.accesskey "f">
+<!ENTITY newMenu.label "ਨਵਾਂ">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "ਸੁਨੇਹਾ">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "M">
+<!ENTITY newContact.label "ਐਡਰੈੱਸ ਬੁੱਕ ਸੰਪਰਕ…">
+<!ENTITY newContact.accesskey "C">
+<!ENTITY attachMenu.label "ਅਟੈਚ">
+<!ENTITY attachMenu.accesskey "t">
+<!ENTITY attachFileCmd.label "ਫਾਇਲ…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "ਵੈੱਬ ਪੇਜ਼…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "ਨਿੱਜੀ ਕਾਰਡ (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY closeCmd.label "ਬੰਦ ਕਰੋ">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "c">
+<!ENTITY saveCmd.label "ਸੰਭਾਲੋ">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "s">
+<!ENTITY saveAsCmd.label "ਇੰਝ ਸੰਭਾਲੋ">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsFileCmd.label "ਫਾਇਲ…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "ਡਰਾਫਟ">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "ਟੈਪਲੇਟ">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY sendNowCmd.label "ਹੁਣੇ ਭੇਜੋ">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "ਬਾਅਦ 'ਚ ਭੇਜੋ">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "L">
+<!ENTITY printSetupCmd.label "ਪੇਜ਼ ਸੈੱਟਅੱਪ…">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printCmd.label "ਪਰਿੰਟ ਕਰੋ…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "P">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "ਸੋਧ"> 
+<!ENTITY editMenu.accesskey "e">
+<!ENTITY undoCmd.label "ਵਾਪਿਸ">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "u"> 
+<!ENTITY redoCmd.label "ਪਰਤਾਓ">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "r"> 
+<!ENTITY cutCmd.key "X"> 
+<!ENTITY copyCmd.key "C"> 
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "w">
+<!ENTITY deleteCmd.label "ਹਟਾਓ">
+<!ENTITY deleteCmd.accesskey "d">
+<!ENTITY editRewrapCmd.label "ਮੁੜ-ਸਮੇਟੋ">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "ਅਟੈਚਮੈਂਟ ਨਾਂ ਬਦਲੋ…">
+<!ENTITY renameAttachmentCmd.accesskey "e">
+<!ENTITY selectAllCmd.accesskey "a"> 
+<!ENTITY findAgainCmd.label "ਅੱਗੇ ਖੋਜ">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "ਪਿੱਛੇ ਖੋਜ">
+<!ENTITY findPrevCmd.accesskey "v"> 
+
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "ਵੇਖੋ"> 
+<!ENTITY viewMenu.accesskey "v">
+<!ENTITY viewToolbarsMenuNew.label "ਟੂਲਬਾਰ"> 
+<!ENTITY viewToolbarsMenuNew.accesskey "T">
+<!ENTITY menubarCmd.label "ਮੇਨੂ ਪੱਟੀ">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY showCompositionToolbarCmd.label "ਕੰਪੋਜ਼ਿਸ਼ਨ ਟੂਲਬਾਰ">
+<!ENTITY showCompositionToolbarCmd.accesskey "o">
+<!ENTITY showFormattingBarCmd.label "ਫਾਰਮੈਟ ਟੂਲਬਾਰ">
+<!ENTITY showFormattingBarCmd.accesskey "F">
+<!ENTITY showTaskbarCmd.label "ਹਾਲਤ ਟੂਲਬਾਰ">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "ਕਸਟਮਾਈਜ਼…">
+<!ENTITY customizeToolbar.accesskey "C">
+
+<!ENTITY addressSidebar.label "ਸੰਪਰਕ ਬਾਹੀ"> 
+<!ENTITY addressSidebar.accesskey "o"> 
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "ਫਾਰਮੈਟ">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "ਚੋਣਾਂ">
+<!ENTITY optionsMenu.accesskey "p">
+<!ENTITY checkSpellingCmd2.label "ਸਪੈਲਿੰਗ ਚੈੱਕ…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "h">
+<!ENTITY enableInlineSpellChecker.label "ਜਿਵੇਂ ਮੈਂ ਲਿਖਾਂ, ਤਿਵੇਂ ਹੀ ਚੈੱਕ ਕਰੋ">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY quoteCmd.label "ਹਵਾਲਾ ਸੁਨੇਹਾ">
+<!ENTITY quoteCmd.accesskey "Q">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "ਨਿੱਜੀ ਕਾਰਡ (vCard) ਅਟੈਚ">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "ਵਾਪਸੀ ਰਸੀਦ">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "ਡਿਲਵਰੀ ਹਾਲਤ ਨੋਟੀਫਿਕੇਸ਼ਨ">
+<!ENTITY dsnMenu.accesskey "N">
+<!ENTITY deliveryFormatMenu.label "ਡਿਲਵਰੀ ਫਾਰਮੈਟ">
+<!ENTITY deliveryFormatMenu.accesskey "F">
+<!ENTITY autoFormatCmd.label "ਆਟੋਮੈਟਿਕ-ਖੋਜ">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "ਕੇਵਲ ਪਲੇਨ ਟੈਕਸਟ">
+<!ENTITY plainTextFormatCmd.accesskey "p">
+<!ENTITY htmlFormatCmd.label "ਕੇਵਲ ਰਿੱਚ ਟੈਕਸਟ (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "r">
+<!ENTITY bothFormatCmd.label "ਪਲੇਨ ਅਤੇ ਰਿੱਚ (HTML) ਟੈਕਸਟ">
+<!ENTITY bothFormatCmd.accesskey "l">
+<!ENTITY priorityMenu.label "ਤਰਜੀਹ">
+<!ENTITY priorityMenu.accesskey "p">
+<!ENTITY priorityButton.label "ਤਰਜੀਹ:">
+<!ENTITY lowestPriorityCmd.label "ਸਭ ਤੋਂ ਘੱਟ">
+<!ENTITY lowestPriorityCmd.accesskey "l">
+<!ENTITY lowPriorityCmd.label "ਘੱਟ">
+<!ENTITY lowPriorityCmd.accesskey "o">
+<!ENTITY normalPriorityCmd.label "ਸਧਾਰਨ">
+<!ENTITY normalPriorityCmd.accesskey "n">
+<!ENTITY highPriorityCmd.label "ਵੱਧ">
+<!ENTITY highPriorityCmd.accesskey "i">
+<!ENTITY highestPriorityCmd.label "ਸਭ ਤੋਂ ਵੱਧ">
+<!ENTITY highestPriorityCmd.accesskey "H">
+<!ENTITY fileCarbonCopyCmd.label "ਕਾਪੀ ਭੇਜੋ">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "ਫਾਇਲ ਇੱਥੇ">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "ਟੂਲ">
+<!ENTITY tasksMenu.accesskey "T">
+<!ENTITY messengerCmd.label "ਮੇਲ &amp; ਨਿਊਜ਼ਗਰੁੱਪ">
+<!ENTITY messengerCmd.accesskey "m">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "ਐਡਰੈੱਸ ਬੁੱਕ">
+<!ENTITY addressBookCmd.accesskey "a">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY preferencesCmdUnix.label       "ਮੇਰੀ ਪਸੰਦ">
+<!ENTITY preferencesCmdUnix.accesskey   "n"> 
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "ਘੱਟੋ-ਘੱਟ">
+<!ENTITY bringAllToFront.label "ਸਭ ਅੱਗੇ ਲਿਆਓ">
+<!ENTITY zoomWindow.label "ਜ਼ੂਮ"> 
+<!ENTITY windowMenu.label "ਵਿੰਡੋ">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "ਭੇਜੋ">
+<!ENTITY quoteButton.label "ਹਵਾਲਾ">
+<!ENTITY addressButton.label "ਸੰਪਰਕ">
+<!ENTITY attachButton.label "ਅਟੈਚ">
+<!ENTITY spellingButton.label "ਸਪੈਲਿੰਗ">
+<!ENTITY saveButton.label "ਸੰਭਾਲੋ">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "ਇਹ ਸੁਨੇਹਾ ਹੁਣੇ ਭੇਜੋ"> 
+<!ENTITY sendlaterButton.tooltip "ਇਹ ਸੁਨੇਹਾ ਬਾਅਦ ਵਿੱਚ ਭੇਜੋ"> 
+<!ENTITY quoteButton.tooltip "ਪਿਛਲੇ ਸੁਨੇਹਾ ਦਾ ਹਵਾਲਾ"> 
+<!ENTITY addressButton.tooltip "ਪ੍ਰਾਪਤ ਕਰਤਾ ਨੂੰ ਐਡਰੈਸ ਬੁੱਕ ਤੋਂ ਚੁਣੋ"> 
+<!ENTITY spellingButton.tooltip "ਚੋਣ ਜਾਂ ਪੂਰੇ ਸੁਨੇਹੇ ਲਈ ਸਪੈੱਲ ਚੈੱਕ ਕਰੋ">
+<!ENTITY saveButton.tooltip "ਇਹ ਸੁਨੇਹਾ ਸੰਭਾਲੋ">
+<!ENTITY cutButton.tooltip              "ਕੱਟੋ">
+<!ENTITY copyButton.tooltip             "ਕਾਪੀ ਕਰੋ">
+<!ENTITY pasteButton.tooltip            "ਚੇਪੋ">
+
+<!-- Headers -->
+<!ENTITY fromAddr.accesskey "r"> 
+<!ENTITY subject.accesskey "S">
+
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+<!ENTITY SmileButton.tooltip "ਇੱਕ ਹੱਸਦਾ ਚੇਹਰਾ ਸ਼ਾਮਲ">
+<!ENTITY smiley1Cmd.label "ਖੁਸ਼">
+<!ENTITY smiley2Cmd.label "Frown">
+<!ENTITY smiley3Cmd.label "Wink">
+<!ENTITY smiley4Cmd.label "ਜੀਭ ਕੱਢਦਾ">
+<!ENTITY smiley5Cmd.label "ਹੱਸਦਾ">
+<!ENTITY smiley6Cmd.label "Embarrassed">
+<!ENTITY smiley7Cmd.label "Undecided">
+<!ENTITY smiley8Cmd.label "ਹੈਰਾਨ">
+<!ENTITY smiley9Cmd.label "ਚੁੰਮਣ">
+<!ENTITY smiley10Cmd.label "Yell">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley12Cmd.label "Money-Mouth">
+<!ENTITY smiley13Cmd.label "Foot-in-Mouth">
+<!ENTITY smiley14Cmd.label "Innocent">
+<!ENTITY smiley15Cmd.label "ਰੋਂਦਾ">
+<!ENTITY smiley16Cmd.label "Lips-are-Sealed">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "ਕੋਈ ਸੁਝਾਅ ਨਹੀਂ ਲੱਭਿਆ">
+<!ENTITY spellCheckIgnoreWord.label "ਸ਼ਬਦ ਅਣਡਿੱਠਾ">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "ਡਿਕਸ਼ਨਰੀ ਵਿੱਚ ਸ਼ਾਮਲ">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "ਵਾਪਸ">
+<!ENTITY undo.accesskey "U">
+<!ENTITY cut.label "ਕੱਟੋ">
+<!ENTITY cut.accesskey "t">
+<!ENTITY copy.label "ਕਾਪੀ ਕਰੋ">
+<!ENTITY copy.accesskey "C">
+<!ENTITY paste.label "ਚੇਪੋ">
+<!ENTITY paste.accesskey "P">
+<!ENTITY pasteQuote.label "ਹਵਾਲੇ ਵਾਂਗ ਚੇਪੋ">
+<!ENTITY pasteQuote.accesskey "Q">
+
+<!ENTITY openAttachment.label "ਖੋਲ੍ਹੋ">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "ਹਟਾਓ">
+<!ENTITY delete.accesskey "D">
+<!ENTITY removeAttachment.label "ਅਟੈਚਮੈਂਟ ਹਟਾਓ">
+<!ENTITY removeAttachment.accesskey "M">
+<!ENTITY renameAttachment.label "ਨਾਂ ਬਦਲੋ…">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY selectAll.label "ਸਭ ਚੁਣੋ">
+<!ENTITY selectAll.accesskey "A">
+<!ENTITY attachFile.label "ਫਾਇਲਾਂ ਅਟੈਚ…">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachCloud.label "ਫਾਇਲ ਲਿੰਕ…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "…ਵਿੱਚ ਬਦਲੋ">
+<!ENTITY convertCloud.accesskey "C">
+<!ENTITY cancelUpload.label "ਅੱਪਲੋਡ ਰੱਦ ਕਰੋ">
+<!ENTITY cancelUpload.accesskey "n">
+<!ENTITY convertRegularAttachment.label "ਨਿਯਮਤ ਅਟੈਚਮੈਂਟ">
+<!ENTITY convertRegularAttachment.accesskey "A">
+<!ENTITY attachPage.label "ਵੈੱਬ ਪੇਜ਼ ਅਟੈਚ…">
+<!ENTITY attachPage.accesskey "W">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "ਡਿਕਸ਼ਨਰੀਆਂ ਸ਼ਾਮਲ…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "ਸੰਪਰਕ">
+

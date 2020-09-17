@@ -1,0 +1,120 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Buku Alamat">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Kenalan…">
+<!-- LOCALIZATION NOTE (newContact.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newContact.accesskey                           "K">
+<!ENTITY newListCmd.label                               "Senarai Mel…">
+<!-- LOCALIZATION NOTE (newListCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY newListCmd.accesskey                           "S">  
+<!ENTITY newAddressBookCmd.label                        "Buku Alamat…"> 
+<!ENTITY newAddressBookCmd.accesskey                    "u">  
+<!ENTITY newLDAPDirectoryCmd.label                      "Direktori LDAP…">
+<!-- LOCALIZATION NOTE (newLDAPDirectoryCmd.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "Cetak Kenalan…">
+<!ENTITY printContactViewCmd.accesskey                  "k">
+<!ENTITY printPreviewContactViewCmd.label               "Previu Cetakan Kenalan">
+<!ENTITY printPreviewContactViewCmd.accesskey           "v">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printAddressBook.label                         "Cetak Buku Alamat…"> 
+<!ENTITY printAddressBook.accesskey                     "A"> 
+<!ENTITY printPreviewAddressBook.label                  "Previu Cetakan Buku Alamat"> 
+<!ENTITY printPreviewAddressBook.accesskey              "B">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Buang Buku Alamat">  
+<!ENTITY deleteContactCmd.label                         "Buang Kenalan">
+<!ENTITY deleteContactsCmd.label                        "Buang Kenalan yang Dipilih">
+<!ENTITY deleteListCmd.label                            "Buang Senarai">
+<!ENTITY deleteListsCmd.label                           "Buang Senarai yang Dipilih">
+<!ENTITY deleteItemsCmd.label                           "Buang Item yang dipilih">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Tukar Nama Pertama/Akhir">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "u">  
+<!ENTITY propertiesCmd.label                            "Sifat…">
+<!-- LOCALIZATION NOTE (propertiesCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY propertiesCmd.accesskey                        "i">  
+<!ENTITY propertiesCmd.key                              "i">  
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Bar alatan Buku Alamat"> 
+<!ENTITY showAbToolbarCmd.accesskey                     "t">  
+<!ENTITY layoutMenu.label                               "Susun atur">
+<!ENTITY layoutMenu.accesskey                           "S">
+<!ENTITY showDirectoryPane.label                        "Anak tetingkap Direktori">
+<!ENTITY showDirectoryPane.accesskey                    "D">
+<!ENTITY showContactPane2.label                         "Anak tetingkap Kenalan">
+<!ENTITY showContactPane2.accesskey                     "K">
+<!ENTITY menu_ShowNameAs.label                          "Papar Nama Sebagai"> 
+<!ENTITY menu_ShowNameAs.accesskey                      "m"> 
+<!ENTITY firstLastCmd.label                             "Pertama Terakhir">  
+<!ENTITY firstLastCmd.accesskey                         "t"> 
+<!ENTITY lastFirstCmd.label                             "Nama Akhir, Pertama">  
+<!ENTITY lastFirstCmd.accesskey                         "h"> 
+<!ENTITY displayNameCmd.label                           "Nama Paparan">  
+<!ENTITY displayNameCmd.accesskey                       "p"> 
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Import…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Eksport…">
+<!ENTITY exportCmd.accesskey                            "E">
+
+<!-- Toolbar and Popup items -->  
+<!ENTITY newContactButton.label                         "Kenalan Baru">
+<!ENTITY newContactButton.accesskey                     "K">
+<!ENTITY newlistButton.label                            "Senarai Baru">  
+<!ENTITY newlistButton.accesskey                        "S">  
+<!ENTITY editItemButton.label                           "Sifat">
+<!ENTITY editItemButton.accesskey                       "S">
+<!ENTITY newmsgButton.label                             "Karang">  
+<!ENTITY newmsgButton.accesskey                         "K">  
+<!ENTITY deleteItemButton.label                         "Buang">
+<!ENTITY deleteItemButton.accesskey                     "B">
+<!ENTITY newimButton.label                              "Mesej Segera">  
+<!ENTITY newimButton.accesskey                          "M">  
+<!ENTITY searchNameAndEmail.placeholder                 "Cari Nama dan E-mel">
+<!ENTITY searchBox.title                                "Cari">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Bar alatan Buku Alamat">
+<!ENTITY newContactButton.tooltip                       "Cipta buku alamat kenalan baru">
+<!ENTITY newlistButton.tooltip                          "Cipta senarai baru"> 
+<!ENTITY editItemButton.tooltip                         "Edit item yang dipilih">
+<!ENTITY newmsgButton.tooltip                           "Hantar mesej mel"> 
+<!ENTITY newIM.tooltip                                  "Hantar mesej segera atau sembang"> 
+<!ENTITY deleteItemButton.tooltip                       "Buang item yang dipilih">
+<!ENTITY throbber.tooltip                               "Pergi ke laman &vendorShortName;">
+<!ENTITY advancedButton.tooltip                         "Carian alamat lanjutan">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Buku Alamat">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Kenalan">
+<!ENTITY home.heading                                   "Rumah">
+<!ENTITY other.heading                                  "Lain-lain">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Kerja">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Keterangan">
+<!ENTITY addresses.heading                              "Alamat">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Cari Peta">
+<!ENTITY mapIt.tooltip                                  "Papar peta untuk alamat ini daripada Web">
+
+<!-- Status Bar -->  
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

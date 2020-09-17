@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Vormveld-eienskappe">
+<!ENTITY windowTitleImage.label "Vormprent-eienskappe">
+
+<!ENTITY InputType.label "Veldsoort">
+<!ENTITY InputType.accesskey "s">
+<!ENTITY text.value "Teks">
+<!ENTITY password.value "Wagwoord">
+<!ENTITY checkbox.value "Merkkassie">
+<!ENTITY radio.value "Klinkknoppie">
+<!ENTITY submit.value "Indien-knoppie">
+<!ENTITY reset.value "Teruglaai-knoppie">
+<!ENTITY file.value "Lêer">
+<!ENTITY hidden.value "Verskuil">
+<!ENTITY image.value "Prent">
+<!ENTITY button.value "Knoppie">
+
+<!ENTITY InputSettings.label "Veldopstelling">
+<!ENTITY InputName.label "Veldnaam:">
+<!ENTITY InputName.accesskey "n">
+<!ENTITY GroupName.label "Groepnaam:">
+<!ENTITY GroupName.accesskey "n">
+<!ENTITY InputValue.label "Veldwaarde:">
+<!ENTITY InputValue.accesskey "w">
+<!ENTITY InitialValue.label "Aanvanklike waarde:">
+<!ENTITY InitialValue.accesskey "w">
+<!ENTITY InputChecked.label "Aanvanklik gemerk">
+<!ENTITY InputChecked.accesskey "g">
+<!ENTITY InputSelected.label "Aanvanklik gekies">
+<!ENTITY InputSelected.accesskey "g">
+<!ENTITY InputReadOnly.label "Leesalleen">
+<!ENTITY InputReadOnly.accesskey "L">
+<!ENTITY InputDisabled.label "Gedeaktiveer">
+<!ENTITY InputDisabled.accesskey "G">
+<!ENTITY tabIndex.label "Oortjie-indeks:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY TextSize.label "Veldgrootte:">
+<!ENTITY TextSize.accesskey "V">
+<!ENTITY TextLength.label "Maksimum lengte:">
+<!ENTITY TextLength.accesskey "l">
+<!ENTITY AccessKey.label "Toegangsleutel:">
+<!ENTITY AccessKey.accesskey "s">
+<!ENTITY Accept.label "Aanvaar soorte:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "Prenteienskappe…">
+<!ENTITY ImageProperties.accesskey "P">

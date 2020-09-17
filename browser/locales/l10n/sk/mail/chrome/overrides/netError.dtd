@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problém pri načítaní stránky">
+<!ENTITY retry.label "Skúsiť znova">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Nedá sa pripojiť">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Táto adresa je zakázaná">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Server sa nenašiel">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Skontrolujte, či ste nezadali napr.
+    <strong>ww</strong>.example.com namiesto
+    <strong>www</strong>.example.com</li>
+  <li>Ak sa nedá načítať žiadna stránka, skontrolujte pripojenie počítača k sieti.</li>
+  <li>Ak sú počítač alebo sieť chránené bránou firewall alebo serverom proxy, uistite sa, že &brandShortName; má povolený prístup k webu.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Súbor sa nenašiel">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Skontrolujte názov súboru, napríklad malé a veľké písmená alebo iné preklepy.</li>
+  <li>Skontrolujte, či súbor nebol premenovaný, presunutý alebo odstránený.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Prístup k súboru bol zamietnutý">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Mohol byť odstránený, premiestnený alebo vám v prístupe bránia jeho oprávnenia.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Problém.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; nedokáže z nejakého dôvodu načítať stránku.</p>
+">
+
+<!ENTITY malformedURI.title "Adresa nie je platná">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Webové adresy sú zvyčajne zadávané v tvare
+    <strong>http://www.example.com/</strong></li>
+  <li>Skontrolujte, či používate správne lomky (t.j. 
+    <strong>/</strong>). </li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Pripojenie bolo prerušené">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Platnosť dokumentu vypršala">
+<!ENTITY notCached.longDesc "<p>Požadovaný dokument sa vo vyrovnávacej pamäti nenachádza.</p><ul><li>Z bezpečnostných dôvodov &brandShortName; automaticky nežiada o opätovné načítanie citlivých dokumentov.</li><li>Kliknutím na tlačidlo Skúsiť znova požiadate o opätovné načítanie dokumentu.</li></ul>">
+
+<!ENTITY netOffline.title "Režim offline">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Ak chcete prejsť do režimu online a opätovne načítať obsah stránky, kliknite na tlačidlo &quot;Skúsiť znova&quot;.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Chyba kódovania obsahu">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Obráťte sa na vlastníkov stránky a informujte ich o tomto probléme.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Nebezpečný typ obsahu">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Obráťte sa na vlastníkov stránky a informujte ich o tomto probléme.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Výpadok pripojenia">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Čas pripojenia vypršal">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Adresa nebola rozpoznaná">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Na otvorenie tejto adresy možno bude potrebné nainštalovať ďalší softvér.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Server proxy odmieta pripojenia">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Skontrolujte nastavenia proxy servera.</li>
+  <li>Obráťte sa na správcu siete a skontrolujte, či server proxy funguje.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Server proxy nemožno nájsť">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Skontrolujte, či je nastavenie servera proxy správne.</li>
+  <li>Skontrolujte, či funguje pripojenie počítača k sieti.</li>
+  <li>Ak sú počítač alebo sieť chránené bránou firewall alebo serverom proxy, uistite sa, či má &brandShortName; povolený prístup k webu.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Stránku sa nepodarilo správne presmerovať">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Tento problém môže nastať pri nepovolení, resp. odmietnutí cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Neočakávaná odpoveď servera">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Uistite sa, či je v systéme nainštalovaný Správca súkromných kľúčov (PSM).</li>
+  <li>Môže to byť spôsobené neštandardnou konfiguráciou servera.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Zabezpečené pripojenie zlyhalo">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Stránku nemožno zobraziť, pretože pravosť prijímaných údajov sa nedá overiť.</li>
+  <li>Obráťte sa na vlastníkov stránky a informujte ich o tomto probléme.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Zabezpečené pripojenie zlyhalo">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Toto môže byť problém s konfiguráciou servera alebo sa ho niekto snaží napodobniť.</li>
+  <li>Ak ste sa k tomuto serveru úspešne pripojili v minulosti, chyba môže byť dočasná a pokus by ste mali opakovať neskôr.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Server môže byť dočasne nedostupný alebo zaneprázdnený. Svoj pokus opakujte neskôr.</li>
+  <li>Ak sa nedá načítať žiadna stránka, skontrolujte pripojenie počítača k sieti.</li>
+  <li>Ak sú počítač alebo sieť chránené bránou firewall alebo serverom proxy, uistite sa, či má &brandShortName; povolený prístup k webu.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Blokované kvôli zásadám ochrany obsahu">
+<!ENTITY cspBlocked.longDesc "<p>Aplikácia &brandShortName; nepovolila načítanie stránky týmto spôsobom, pretože stránka obsahuje zásady ochrany obsahu, ktoré takéto načítanie neumožňujú.</p>">
+
+<!ENTITY xfoBlocked.title "Blokované prostredníctvom X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>Aplikácia &brandShortName; nepovolila načítanie stránky týmto spôsobom, pretože stránka obsahuje zásady X-Frame-Options, ktoré takéto načítanie neumožňujú.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Poškodený obsah">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Požadovanú stránku nemožno zobraziť, pretože pri prenose údajov došlo k chybe.</p><ul><li>Kontaktujte prosím vlastníkov webového servera a informujte ich o tomto probléme.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Alebo môžete pridať výnimku…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Rýchlo odtiaľto preč!">
+<!ENTITY securityOverride.exceptionButtonLabel "Pridať výnimku…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Výnimku by ste nemali pridávať v prípade, že používate internetové pripojenie, ktorému úplne neveríte, alebo sa toto upozornenie predtým neobjavovalo.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Vzdialené XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontaktujte správcu webovej stránky a informujte ho o tomto probléme.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Vaše pripojenie nie je zabezpečené">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> využíva technológiu zabezpečenia, ktorá je zastaraná a zraniteľná voči útokom. Útočník by mohol jednoducho odhaliť informácie, o ktorých ste si mysleli, že sú v bezpečí. Správca webovej stránky ju bude musieť pred jej ďalšou návštevou opraviť.</p><p>Kód chyby: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Zablokovaná stránka">
+
+<!ENTITY networkProtocolError.title "Chyba sieťového protokolu">
+<!ENTITY networkProtocolError.longDesc "<p>Stránka, ktorú sa pokúšate navštíviť nemôže byť zobrazená, pretože bola zistená chyba v sieťovom protokole.</p><ul><li>Kontaktujte, prosím, vlastníkov stránky a informujte ich o tomto probléme.</li></ul>">

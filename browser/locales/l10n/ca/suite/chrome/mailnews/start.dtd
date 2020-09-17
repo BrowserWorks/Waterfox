@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Us donem la benvinguda a la Missatgeria del &brandShortName;">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label 'Us donem la benvinguda a la Missatgeria del <a id="vendorURL" href="">&brandShortName;</a>!'>
+<!ENTITY description.label "La Missatgeria del &brandShortName; és un potent client de correu i grups de discussió lliure. S'hi implementa una avançada detecció del correu brossa i altres característiques pioneres.">
+<!ENTITY features.title "Característiques">
+<!ENTITY feat_multiacc.label "Múltiples comptes">
+<!ENTITY feat_junk.label "Detecció de correu brossa">
+<!ENTITY feat_feeds.label "Lector de canals">
+<!ENTITY feat_filters.label "Filtres de missatge">
+<!ENTITY feat_htmlmsg.label "Missatges HTML">
+<!ENTITY feat_abook.label "Llibreta d'adreces">
+<!ENTITY feat_tags.label "Etiquetes i vistes de missatge personalitzables">
+<!ENTITY feat_integration.label "Estreta integració amb el conjunt d'aplicacions del &brandShortName;">
+<!ENTITY dict.title "Diccionaris">
+<!ENTITY dict_intro.label "Els diccionaris serveixen per comprovar l'ortografia dels vostres missatges.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label 'Es poden instal·lar llengües addicionals de la secció de 
+<a id="dictURL" href="">diccionaris</a> del 
+<a href="https://addons.mozilla.org/seamonkey/">Mozilla Add-ons</a>.'>
+<!ENTITY info.title "Més informació">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label '<a href="http://www.mozilla.org/mailnews/">Agraïm</a> informes sobre errors i sol·licituds de noves característiques, però abans de res llegiu les <a id="releaseNotesURL" href="">notes de la versió</a> i consulteu el 
+<a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

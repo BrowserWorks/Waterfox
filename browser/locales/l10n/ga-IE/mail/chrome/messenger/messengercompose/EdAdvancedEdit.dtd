@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Cur in Eagar na nArdairíonna">
+<!ENTITY AttName.label                  "Tréith: ">
+<!ENTITY AttValue.label                 "Luach: ">
+<!ENTITY PropertyName.label             "Airí: ">
+<!ENTITY currentattributesfor.label     "Tréithe reatha le haghaidh:">
+<!ENTITY tree.attributeHeader.label     "Aitreabúid">
+<!ENTITY tree.propertyHeader.label      "Airí">
+<!ENTITY tree.valueHeader.label         "Luach">
+<!ENTITY tabHTML.label                  "Tréithe HTML">
+<!ENTITY tabCSS.label                   "Stíl Inlíne">
+<!ENTITY tabJSE.label                   "Teagmhais JavaScript">
+
+<!ENTITY editAttribute.label    "Cliceáil mír thuas chun é a chur in eagar">
+<!ENTITY removeAttribute.label  "Bain">

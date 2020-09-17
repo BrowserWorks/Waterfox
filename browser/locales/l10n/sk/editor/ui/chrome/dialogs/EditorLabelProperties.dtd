@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Vlastnosti popisu">
+
+<!ENTITY Settings.label "Nastavenie">
+<!ENTITY Settings.accesskey "N">
+
+<!ENTITY EditLabelText.label "Upraviť text:">
+<!ENTITY EditLabelText.accesskey "t">
+<!ENTITY LabelFor.label "Pre ovládací prvok:">
+<!ENTITY LabelFor.accesskey "e">
+<!ENTITY AccessKey.label "Prístupový kláves:">
+<!ENTITY AccessKey.accesskey "s">
+
+<!ENTITY RemoveLabel.label "Odstrániť popis">
+<!ENTITY RemoveLabel.accesskey "s">

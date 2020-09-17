@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+
+<!ENTITY fileMenu.label          "Fayl">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Yeni">
+<!ENTITY newMenu.accesskey          "Y">
+
+<!ENTITY editMenu.label          "Düzəlt">
+<!ENTITY editMenu.accesskey        "D">
+<!ENTITY undoCmd.label            "Geri al">
+<!ENTITY undoCmd.accesskey          "r">
+<!ENTITY redoCmd.label            "Təkrarla">
+<!ENTITY redoCmd.accesskey          "r">
+<!ENTITY deleteCmd.label          "Sil">
+<!ENTITY deleteCmd.accesskey        "S">
+<!ENTITY preferencesCmd2.label "Seçimlər">
+<!ENTITY preferencesCmd2.accesskey "S">
+<!ENTITY preferencesCmdUnix.label       "Nizamlamalar">
+<!ENTITY preferencesCmdUnix.accesskey     "N">
+
+<!ENTITY viewMenu.label          "Görünüş">
+<!ENTITY viewMenu.accesskey        "G">
+<!ENTITY viewToolbarsMenu.label        "Alət Sətirləri">
+<!ENTITY viewToolbarsMenu.accesskey      "t">
+<!ENTITY showTaskbarCmd.label          "Status Sətri">
+<!ENTITY showTaskbarCmd.accesskey        "S">
+
+<!ENTITY closeCmd.label      "Qapat">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "Q">
+
+<!ENTITY quitApplicationCmd.label  "Çıxış">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "x">
+
+<!ENTITY quitApplicationCmdUnix.label  "Çıx">
+<!ENTITY quitApplicationCmdUnix.accesskey  "x">
+
+<!ENTITY quitApplicationCmdMac.label  "&brandShortName; proqramından çıx">
+<!ENTITY quitApplicationCmdMac.accesskey  "ç">

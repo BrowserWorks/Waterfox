@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "ჩანართების გამოყენება">
+
+<!ENTITY tabDisplay.label "ჩანართების ჩვენება">
+<!ENTITY autoHide.label "ჩანართების პანელის დამალვა მხოლოდ ერთი გახსნილი ჩანართის შემთხვევაში">
+<!ENTITY autoHide.accesskey2 "მ">
+<!ENTITY background.label "ბმებიდან გახსნილი ჩანართების არჩევა">
+<!ENTITY background.accesskey "ხ">
+<!ENTITY warnOnClose.label "გაფრთხილება, მრავალი ჩანართის ერთდროულად დახურვისას">
+<!ENTITY warnOnClose.accesskey "ფ">
+<!ENTITY relatedAfterCurrent.label "დაკავშირებული ჩანართების გახსნა მიმდინარე ჩანართის შემდეგ">
+<!ENTITY relatedAfterCurrent.accesskey "დ">
+
+<!ENTITY loadGroup.label "სანიშნეთა ჯგუფის გახსნისას">
+<!ENTITY loadGroupAppend.label "ჩანართების დამატება">
+<!ENTITY loadGroupAppend.accesskey "მ">
+<!ENTITY loadGroupReplace.label "არსებული ჩანართების ჩანაცვლება">
+<!ENTITY loadGroupReplace.accesskey "ჩ">
+
+<!ENTITY openTabs.label "გახსნა ჩანართებზე ნაცვლად სარკმლებისა">
+
+<!ENTITY middleClick.label "შუა წკაპი, Ctrl+წკაპი,ან Ctrl+Enter ვებგვერდზე არსებულ ბმულებზე">
+<!ENTITY middleClick.accesskey "შ">
+<!ENTITY middleClickMac.label "შუა წკაპი, &#8984;+წკაპი, ან &#8984;+Enter ვებგვერდზე არსებულ ბმულებზე">
+<!ENTITY middleClickMac.accesskey "შ">
+<!ENTITY urlbar.label "Ctrl+Enter მისამართების ველში">
+<!ENTITY urlbar.accesskey "ლ">
+<!ENTITY urlbarMac.label "&#8984;+Return მისამართების ველში">
+<!ENTITY urlbarMac.accesskey "ლ">
+
+<!ENTITY openManagers.label "ახალ ჩანართზე გახსნა, ფანჯრის ნაცვლად">
+<!ENTITY openDataManager.label "მონაცემთა მმართველი">
+<!ENTITY openDataManager.accesskey "მ">
+<!ENTITY openAddOnsManager.label "დამატებების მმართველი">
+<!ENTITY openAddOnsManager.accesskey "დ">

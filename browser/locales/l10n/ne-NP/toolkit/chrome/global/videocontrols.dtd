@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "प्ले">
+<!ENTITY playButton.pauseLabel "रोक्नुहोस्">
+<!ENTITY muteButton.muteLabel "आवाज बन्द गर्नुहोस्">
+<!ENTITY muteButton.unmuteLabel "आवाज आउने बनाउनुहोस्">
+<!ENTITY fullscreenButton.enterfullscreenlabel "पूरा पर्दा">
+<!ENTITY fullscreenButton.exitfullscreenlabel "पूरा पर्दा बन्द जानुहोस्">
+<!ENTITY castingButton.castingLabel "स्क्रिनमा कास्ट गर्नुहोस्">
+<!ENTITY closedCaption.off "बन्द गर्नुहोस">
+
+<!ENTITY error.aborted "भिडियो लोड हुँदै गर्दा रोकियो।">
+<!ENTITY error.network "सञ्जालको त्रुटिले गर्दा भिडियो प्लेब्याक परित्याग हुन पुग्यो।">
+<!ENTITY error.decode "फाइलको खराबीले गर्दा भिडियो प्ले गर्न सकिएन।">
+<!ENTITY error.srcNotSupported "भिडियो ढाँचा वा MIME प्रकार असमर्थित।">
+<!ENTITY error.noSource2 "कुनै पनि समर्थित भिडियो ढाँचा र MIME प्रकार भेटिएन।">
+<!ENTITY error.generic "अज्ञात त्रुटिले गर्दा भिडियो प्लेब्याक परित्याग हुन पुग्यो।">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

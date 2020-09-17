@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Cari">
+
+<!ENTITY newPref.namePlaceholder       "Nama">
+
+<!ENTITY newPref.valueBoolean          "Boolean">
+<!ENTITY newPref.valueString           "String">
+<!ENTITY newPref.valueInteger          "Integer">
+
+<!ENTITY newPref.stringPlaceholder     "Masukkan string">
+<!ENTITY newPref.numberPlaceholder     "Masukkan bilangan">
+
+<!ENTITY newPref.toggleButton          "Aktifkan/Nonaktifkan">
+<!ENTITY newPref.cancelButton          "Batalkan">
+
+<!ENTITY contextMenu.copyPrefName      "Salin Namanya">
+<!ENTITY contextMenu.copyPrefValue     "Salin Nilainya">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Perzhioù ar skritellig">
+
+<!ENTITY Settings.label "Arventennoù">
+<!ENTITY Settings.accesskey "A">
+
+<!ENTITY EditLabelText.label "Embann an destenn:">
+<!ENTITY EditLabelText.accesskey "E">
+<!ENTITY LabelFor.label "Kevredet gant ar vaezienn:">
+<!ENTITY LabelFor.accesskey "K">
+<!ENTITY AccessKey.label "Stokell moned:">
+<!ENTITY AccessKey.accesskey "S">
+
+<!ENTITY RemoveLabel.label "Dilemel ar skritellig">
+<!ENTITY RemoveLabel.accesskey "D">

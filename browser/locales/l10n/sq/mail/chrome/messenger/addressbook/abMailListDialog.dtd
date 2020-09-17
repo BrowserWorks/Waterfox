@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Listë e Re Postimesh">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Shtoje te: ">
+<!ENTITY addToAddressBook.accesskey     "S">
+<!ENTITY ListName.label                 "Emër Liste: ">
+<!ENTITY ListName.accesskey             "E">
+<!ENTITY ListNickName.label             "Nofkë Liste: ">
+<!ENTITY ListNickName.accesskey         "N">
+<!ENTITY ListDescription.label          "Përshkrim: ">
+<!ENTITY ListDescription.accesskey      "P">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Shtypni adresa email për t&apos;i shtuar te lista e postimeve:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Ngrije">
+<!ENTITY DownButton.label               "Zbrit">

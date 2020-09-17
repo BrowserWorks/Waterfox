@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Sil">
+<!ENTITY editContactPanelDeleteContact.accesskey "l">
+
+<!ENTITY editContactName.label "İsim:">
+<!ENTITY editContactName.accesskey "s">
+
+<!ENTITY editContactEmail.label "E-posta:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Adres defteri:">
+<!ENTITY editContactAddressBook.accesskey "A">
+
+<!ENTITY editContactPanelDone.label "Kaydet">
+<!ENTITY editContactPanelDone.accesskey "K">
+
+<!ENTITY contactMoveDisabledWarning.description "Bu kişi bir posta listesinde olduğu için adres defterini değiştiremezsiniz.">

@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Ot gwoko buk">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Yubi">
+<!ENTITY organize.accesskey    "Y">
+<!ENTITY organize.tooltip      "Yub alama me pot buk mamegi">
+
+<!ENTITY file.close.label               "Lor">
+<!ENTITY file.close.accesskey           "L">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Neno">
+<!ENTITY views.accesskey                "N">
+<!ENTITY views.tooltip                  "Lok neno ni">
+<!ENTITY view.columns.label             "Nyut Rek ati">
+<!ENTITY view.columns.accesskey         "R">
+<!ENTITY view.sort.label                "Yek">
+<!ENTITY view.sort.accesskey            "Y">
+<!ENTITY view.unsorted.label            "Ma pe kiyeko">
+<!ENTITY view.unsorted.accesskey        "M">
+<!ENTITY view.sortAscending.label       "A > Z cik me yeko">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A cik me yeko">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Kel alama me pot buk ki woko i HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "K">
+<!ENTITY exportBookmarksToHTML.label       "Cwal alama me pot buk woko bot HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "C">
+<!ENTITY importOtherBrowser.label          "Kel tic ki woko ki i Layeny mukene…">
+<!ENTITY importOtherBrowser.accesskey      "L">
+
+<!ENTITY cmd.backup.label               "Gwok kamukene…">
+<!ENTITY cmd.backup.accesskey           "G">
+<!ENTITY cmd.restore2.label             "Dwoki">
+<!ENTITY cmd.restore2.accesskey         "D">
+<!ENTITY cmd.restoreFromFile.label      "Yer Pwail…">
+<!ENTITY cmd.restoreFromFile.accesskey  "Y">
+
+<!ENTITY col.name.label          "Nying">
+<!ENTITY col.tags.label          "Lanyut">
+<!ENTITY col.url.label           "Kabedo">
+<!ENTITY col.mostrecentvisit.label "Lim mukato manyen loyo">
+<!ENTITY col.visitcount.label    "Wel Lim">
+<!ENTITY col.dateadded.label     "Kimedo">
+<!ENTITY col.lastmodified.label  "Yub me agiki">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Kel ki woko kadong Igwok kamukene">
+<!ENTITY maintenance.accesskey  "K">
+<!ENTITY maintenance.tooltip    "Kel ki woko kadong igwok kamukene alama me buk mamegi">
+
+<!ENTITY backButton.tooltip  "Dok cen">
+
+<!ENTITY forwardButton.tooltip  "Cit anyim">
+
+<!ENTITY detailsPane.selectAnItemText.description "Yer jami me anena kadong i yub jami me ticce">
+

@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Library">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "सङ्गठित गर्नुहोस्">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "आफ्नो पुस्तकचिनोहरू सङ्गठित गर्नुहोस्">
+
+<!ENTITY file.close.label               "बन्द गर्नुहोस्">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "दृश्य">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "तपाईँको दृश्य परिवर्तन गर्नुहोस्">
+<!ENTITY view.columns.label             "स्तम्भहरू देखाउनुहोस्">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "क्रमबद्ब गर्नुहोस्">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "क्रमबद्ध नगरिएको">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "A > Z श्रेणीबद्ध क्रम">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A क्रमवद्ध क्रम">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "HTML… बाट पुस्तकचिनो आयात गर्नुहोस्">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "पुस्तकचिनो HTML… मा निर्यात गर्नुहोस्">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "अर्को ब्राउजरबाट डाटा आयात गर्नुहोस्…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "जगेडा...">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "पूर्ववस्थामा ल्याउनुहोस्">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "फाइल रोज्नुहोस्...">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "नाम">
+<!ENTITY col.tags.label          "ट्यागहरू">
+<!ENTITY col.url.label           "स्थान">
+<!ENTITY col.mostrecentvisit.label "सबभन्दा हालैको भ्रमण">
+<!ENTITY col.visitcount.label    "भ्रमण गणना">
+<!ENTITY col.dateadded.label     "थपिएको">
+<!ENTITY col.lastmodified.label  "पछिल्लो परिमार्जित">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "आयात अनि जगेडा गर्नुहोस्">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "तपाईँको पुस्तकचिनो लाई आयात र जगेडा गर्नुहोस्">
+
+<!ENTITY backButton.tooltip  "पछाडि जानुहोस्">
+
+<!ENTITY forwardButton.tooltip  "अगाडि जानुहोस्">
+
+<!ENTITY detailsPane.selectAnItemText.description "वस्तुको गुण हेर्न र सम्पादन गर्न कुनै एक वस्तु चयन गर्नुहोस्">
+

@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Emoticona">
+<!ENTITY insertSmiley.accesskey "E">
+
+<!ENTITY smiley1Cmd.label "Somriure">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "Insereix una cara somrient">
+<!ENTITY smiley2Cmd.label "Enfadat">
+<!ENTITY smiley2Cmd.accesskey "E">
+<!ENTITY smiley2Cmd.tooltip "Insereix una cara enfadada">
+<!ENTITY smiley3Cmd.label "Fer l'ullet">
+<!ENTITY smiley3Cmd.accesskey "u">
+<!ENTITY smiley3Cmd.tooltip "Insereix una cara que fa l'ullet">
+<!ENTITY smiley4Cmd.label "Llengua fora">
+<!ENTITY smiley4Cmd.accesskey "L">
+<!ENTITY smiley4Cmd.tooltip "Insereix una cara que treu la llengua fora">
+<!ENTITY smiley5Cmd.label "Riure">
+<!ENTITY smiley5Cmd.accesskey "R">
+<!ENTITY smiley5Cmd.tooltip "Insereix una cara riallera">
+<!ENTITY smiley6Cmd.label "Avergonyit">
+<!ENTITY smiley6Cmd.accesskey "A">
+<!ENTITY smiley6Cmd.tooltip "Insereix una cara avergonyida">
+<!ENTITY smiley7Cmd.label "Indecís">
+<!ENTITY smiley7Cmd.accesskey "c">
+<!ENTITY smiley7Cmd.tooltip "Insereix una cara indecisa">
+<!ENTITY smiley8Cmd.label "Sorpresa">
+<!ENTITY smiley8Cmd.accesskey "p">
+<!ENTITY smiley8Cmd.tooltip "Insereix una cara sorpresa">
+<!ENTITY smiley9Cmd.label "Petó">
+<!ENTITY smiley9Cmd.accesskey "t">
+<!ENTITY smiley9Cmd.tooltip "Insereix una cara que fa un petó">
+<!ENTITY smiley10Cmd.label "Crit">
+<!ENTITY smiley10Cmd.accesskey "r">
+<!ENTITY smiley10Cmd.tooltip "Insereix una cara cridanera">
+<!ENTITY smiley11Cmd.label "Guai">
+<!ENTITY smiley11Cmd.accesskey "G">
+<!ENTITY smiley11Cmd.tooltip "Insereix una cara guai">
+<!ENTITY smiley12Cmd.label "Boca de diners">
+<!ENTITY smiley12Cmd.accesskey "B">
+<!ENTITY smiley12Cmd.tooltip "Insereix una cara amb boca de diners">
+<!ENTITY smiley13Cmd.label "Peu a la boca">
+<!ENTITY smiley13Cmd.accesskey "P">
+<!ENTITY smiley13Cmd.tooltip "Insereix una cara amb un peu a la boca">
+<!ENTITY smiley14Cmd.label "Innocent">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "Insereix una cara innocent">
+<!ENTITY smiley15Cmd.label "Plor">
+<!ENTITY smiley15Cmd.accesskey "l">
+<!ENTITY smiley15Cmd.tooltip "Insereix una cara ploranera">
+<!ENTITY smiley16Cmd.label "Llavis segellats">
+<!ENTITY smiley16Cmd.accesskey "L">
+<!ENTITY smiley16Cmd.tooltip "Insereix una cara amb llavis segellats">
+<!ENTITY SmileButton.label "Insereix una emoticona">
+<!ENTITY SmileButton.tooltip "Insereix una cara somrient">

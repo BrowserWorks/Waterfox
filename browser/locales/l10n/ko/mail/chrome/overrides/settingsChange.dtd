@@ -1,0 +1,7 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  settingsChangePreferences.label  "&brandShortName; 환경 설정의 첨부 파일 탭을 이용하여 설정을 변경할 수 있습니다.">
+<!ENTITY  settingsChangeOptions.label      "&brandShortName; 설정의 첨부 파일 탭을 이용하여 설정을 변경할 수 있습니다.">
+

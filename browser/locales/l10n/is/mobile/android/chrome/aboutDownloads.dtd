@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Niðurhal">
+<!ENTITY aboutDownloads.header                     "Niðurhalið þitt">
+<!ENTITY aboutDownloads.empty                      "Ekkert niðurhal">
+
+<!ENTITY aboutDownloads.open                       "Opna">
+<!ENTITY aboutDownloads.remove                     "Eyða">
+<!ENTITY aboutDownloads.removeAll                  "Eyða öllu">
+<!ENTITY aboutDownloads.pause                      "Bíða">
+<!ENTITY aboutDownloads.resume                     "Halda áfram">
+<!ENTITY aboutDownloads.cancel                     "Hætta við">
+<!ENTITY aboutDownloads.retry                      "Reyna aftur">

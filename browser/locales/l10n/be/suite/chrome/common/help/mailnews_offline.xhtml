@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Working Offline</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+<link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+      type="text/css"/>
+</head>
+<body>
+
+<h1 id="working_offline">Working Offline</h1>
+
+<p>&brandShortName; Mail &amp; Newsgroups includes advanced features to help
+  you manage your messaging needs when you are not connected to the Internet.
+  You can download mail and news messages before going offline for later
+  reading, and you can defer sending mail messages and newsgroup posts until
+  you get back online. All of these features are explained in this
+  document.</p>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#setting_up_mozilla_mail_and_newsgroups_to_work_offline">Setting
+      Up &brandShortName; Mail &amp; Newsgroups to Work Offline</a></li>
+    <li><a href="#downloading_all_messages_for_offline_use">Downloading All
+      Messages for Offline Use</a></li>
+    <li><a href="#downloading_an_individual_folder_for_offline_use">Downloading
+      an Individual Folder for Offline Use</a></li>
+    <li><a href="#downloading_selected_or_flagged_messages_for_offline_use">Downloading
+      Selected or Flagged Messages for Offline Use</a></li>
+    <li><a href="#downloading_directory_entries_for_offline_use">Downloading
+      Directory Entries for Offline Use</a></li>
+    <li><a href="#setting_up_your_accounts_for_working_offline">Setting Up Your
+      Accounts for Working Offline</a></li>
+    <li><a href="#selecting_items_for_offline_viewing">Selecting Items for
+      Offline Viewing</a></li>
+    <li><a href="#downloading_and_synchronizing_your_messages">Downloading and
+      Synchronizing Your Messages</a></li>
+    <li><a href="#working_offline_and_reconnecting_later">Working Offline and
+      Reconnecting Later</a></li>
+  </ul>
+</div>
+
+<h2 id="setting_up_mozilla_mail_and_newsgroups_to_work_offline">Setting Up
+  &brandShortName; Mail &amp; Newsgroups to Work Offline</h2>
+
+<p>&brandShortName; Mail &amp; Newsgroups&apos; offline feature lets you
+  download your mail and read it offline (while disconnected from the
+  Internet). If you use a dial-up (modem) connection to access your mail and
+  you want to reduce the time you are connected, or, if you need to temporarily
+  disconnect from your company&apos;s network while traveling or switching
+  locations, you can download your mail so that you can read it offline. The
+  offline feature can automatically download incoming messages and then later
+  send all your outgoing messages when you reconnect.</p>
+
+<p>Note that for POP accounts your mail is already downloaded by default, so
+  most of these offline features aren&apos;t relevant for POP accounts.</p>
+
+<p>If you occasionally want to work offline, &brandShortName; Mail &amp;
+  Newsgroups lets you easily:</p>
+
+<ul>
+  <li>Download your Inbox for offline use.</li>
+  <li>Download an individual folder for offline use.</li>
+  <li>Download only selected or flagged messages for offline use.</li>
+  <li>Download directory entries in your address book for offline use.</li>
+</ul>
+
+<p>If you frequently work offline, &brandShortName; Mail &amp; Newsgroups also
+  lets you:</p>
+
+<ul>
+  <li>Set up one or more of your accounts for offline use.</li>
+  <li>Set offline and disk space preferences for each account.</li>
+  <li>Select the folders and newsgroups that you want to view offline.</li>
+</ul>
+
+<p>[<a href="#working_offline">Return to beginning of section</a>]</p>
+
+<h2 id="downloading_all_messages_for_offline_use">Downloading All Messages for
+  Offline Use</h2>
+
+<p>You can tell &brandShortName; Mail &amp; Newsgroups to automatically
+  download your messages for offline use. Later, when you go back online,
+  &brandShortName; Mail &amp; Newsgroups automatically synchronizes your
+  messages with the server.</p>
+
+<p>Note that the Inbox for POP accounts is downloaded by default, so this
+  section does not apply for POP accounts.</p>
+
+<p>To automatically download your messages for offline use, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>In the left side of the dialog box, under the name of the account you
+    want to use offline, select Synchronization &amp; Storage. (This category
+    is not available for POP accounts.)</li>
+  <li>Check the box labeled <q>Keep messages for this account on this
+    computer</q>.</li>
+  <li>Click OK.</li>
+  <li>Click the Online/Offline indicator <img src="images/online.png" alt=""/>
+    in the lower right corner of the Mail window (to the left of the Cookie
+    icon) to go offline. You will be asked to download messages for them to be
+    available while offline. Click on <q>Download</q> to proceed.</li>
+</ol>
+
+<p><strong>Note</strong>: This setting also applies to any new folders
+  created. While the per-account setting can be overridden for an
+  <a href="#downloading_an_individual_folder_for_offline_use">individual
+  folder</a>, those per-folder settings are <em>removed</em> when the
+  <q>Keep messages</q> box is toggled.</p>
+
+<p>&brandShortName; Mail &amp; Newsgroups automatically downloads all messages
+  in your Inbox so you can read and respond to them while working offline.
+  After disconnecting, &brandShortName; Mail &amp; Newsgroups remains open so
+  you can continue to work with your messages.</p>
+
+<p>To reconnect to the Internet so you can work online:</p>
+
+<ul>
+  <li>Click the Online/Offline indicator <img src="images/offline.png"
+    alt=""/> in the lower right corner of the Mail window (to the left of the
+    Cookie icon) to go back online.</li>
+</ul>
+
+<p>When you go back online, &brandShortName; Mail &amp; Newsgroups
+  automatically synchronizes your Inbox messages with the server, by
+  replicating any changes you made while working offline.</p>
+
+<p><strong>Tip</strong>: &brandShortName; Mail &amp; Newsgroups saves any
+  messages that you send while working offline in the Unsent Messages folder
+  under Local Folders. To have &brandShortName; Mail &amp; Newsgroups
+  automatically send your unsent messages when you reconnect, use the
+  Preferences command on the <span class="mac">&brandShortName;</span>
+  <span class="noMac">Edit</span> menu to change the
+  <a href="mailnews_preferences.xhtml#network_and_storage_preferences">offline
+  preferences</a> for all your accounts.</p>
+
+<p>[<a href="#working_offline">Return to beginning of section</a>]</p>
+
+<h2 id="downloading_an_individual_folder_for_offline_use">Downloading an
+  Individual Folder for Offline Use</h2>
+
+<p>Note that POP accounts don&apos;t allow you to manage folders on the POP
+  server, so this section does not apply to POP accounts.</p>
+
+<p>To download a specific folder for offline use, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>In the left side of the Mail window, select the folder that you want to
+    download for offline use.</li>
+  <li>Open the Edit menu, and choose Folder Properties. You see the Properties
+    dialog box.</li>
+  <li>Click the Synchronization tab.</li>
+  <li>Check <q>Select this folder for offline use</q>.</li>
+  <li>Click Download Now if you want to immediately begin downloading the
+    folder&apos;s messages. Alternatively, you can continue working, and when
+    you are ready to go offline, proceed to the next step.</li>
+  <li>Click the Online/Offline indicator <img src="images/online.png" alt=""/>
+    in the lower right corner of the Mail window to go offline.</li>
+  <li>In the Work Offline dialog box, click Download.</li>
+</ol>
+
+<p>&brandShortName; Mail &amp; Newsgroups automatically downloads all messages
+  in the selected folder so you can read and respond to them while working
+  offline. After disconnecting, &brandShortName; Mail &amp; Newsgroups remains
+  open so you can continue to work with your messages.</p>
+
+<p><strong>Note</strong>: Message headers that have been downloaded for reading
+  offline display a darker gray envelope or newsgroup icon.</p>
+
+<p>To reconnect to the Internet so you can work online:</p>
+
+<ul>
+  <li>Click the Online/Offline indicator <img src="images/offline.png"
+    alt=""/> in the lower right corner of the Mail window (to the left of the
+    Cookie icon) to go back online.</li>
+</ul>
+
+<p>&brandShortName; Mail &amp; Newsgroups automatically synchronizes the
+  offline folders with the server, by replicating any changes you made while
+  working offline.</p>
+
+<p><strong>Tip</strong>: &brandShortName; Mail &amp; Newsgroups saves any
+  messages that you sent while working offline in the Unsent Messages folder
+  under Local Folders. When you reconnect, choose Send Unsent Messages from the
+  File menu to send all your saved messages at once. To have &brandShortName;
+  Mail &amp; Newsgroups automatically send your unsent messages when you
+  reconnect, use the Preferences command on the
+  <span class="mac">&brandShortName;</span> <span class="noMac">Edit</span>
+  menu to change your <a
+  href="mailnews_preferences.xhtml#network_and_storage_preferences">offline
+  preferences</a>.</p>
+
+<p>[<a href="#working_offline">Return to beginning of section</a>]</p>
+
+<h2 id="downloading_selected_or_flagged_messages_for_offline_use">Downloading
+  Selected or Flagged Messages for Offline Use</h2>
+
+<p>Note that messages are downloaded by default for POP accounts. However, if
+  you have enabled the <q>Fetch headers only</q> setting in the POP account
+  settings, then only the headers will be downloaded, and you will need to use
+  the commands in this section to download the complete messages.</p>
+
+<p>To download selected messages for offline use, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Select a Mail or Newsgroup folder to display its messages.</li>
+  <li>Select the messages you want to download, as follows:
+    <ul>
+      <li>To select a group of adjacent messages, click the first message, and
+        then Shift-click to select the last message in the group.</li>
+      <li>To select messages anywhere in the message list, hold down the
+        <kbd class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd> key and click
+        each message.</li>
+    </ul>
+  </li>
+  <li>Open the File menu, choose Offline, and then choose Get Selected Messages
+    from the submenu. &brandShortName; Mail &amp; Newsgroups downloads the
+    selected messages.</li>
+</ol>
+
+<p>To download flagged messages for offline use, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Select a Mail or Newsgroup folder to display its messages.</li>
+  <li>Click in the flag column of each message you want to download. A flag
+    appears where you clicked to indicate that the message has been marked. If
+    the flag column is not visible, click the Show/Hide Columns icon
+    <img src="images/columns.png" alt=""/> and select Flag from the list.</li>
+  <li>Open the File menu, choose Offline, and then choose Get Flagged Messages.
+    &brandShortName; Mail &amp; Newsgroups downloads the flagged messages.</li>
+</ol>
+
+<p>Once downloading is complete, click the Online/Offline indicator in the
+  lower right corner of the Mail window (to the left of the Cookie icon) to go
+  offline. After you disconnect, &brandShortName; Mail &amp; Newsgroups remains
+  open so you can continue to work with your messages.</p>
+
+<p>Note that the <q>Get Selected Messages</q> and <q>Get Flagged Messages</q>
+  menu items are also available in the pop-up thread context menu, for faster
+  access.</p>
+
+<p><strong>Note</strong>: Message headers that have been downloaded for reading
+  offline display a darker gray envelope or newsgroup icon.</p>
+
+<p>To reconnect to the Internet so you can work online:</p>
+
+<ul>
+  <li>Click the Online/Offline indicator <img src="images/offline.png"
+    alt=""/> in the lower right corner of the Mail window to go online.</li>
+</ul>
+
+<p><strong>Tip</strong>: &brandShortName; Mail &amp; Newsgroups saves any
+  messages that you sent while working offline in the Unsent Messages folder
+  under Local Folders. When you reconnect, choose Send Unsent Messages from the
+  File menu to send all your saved messages at once. To have &brandShortName;
+  Mail &amp; Newsgroups automatically send your unsent messages when you
+  reconnect, use the Preferences command on the
+  <span class="mac">&brandShortName;</span> <span class="noMac">Edit</span>
+  menu to change your <a
+  href="mailnews_preferences.xhtml#network_and_storage_preferences">offline
+  preferences</a>.</p>
+
+<p>[<a href="#working_offline">Return to beginning of section</a>]</p>
+
+<h2 id="downloading_directory_entries_for_offline_use">Downloading
+  Directory Entries for Offline Use</h2>
+
+<p>You can download (replicate) the entries in a directory server to your
+  computer so that they are available when you work offline. Once you&apos;ve
+  downloaded directory entries, you can use the same procedure to update your
+  local copy of the entries with the latest entries on the directory
+  server.</p>
+
+<p>To download or update an address book LDAP directory for offline use:</p>
+
+<ol>
+  <li>Make sure you&apos;re online.</li>
+  <li>Open the Window menu, and choose Address Book.</li>
+  <li>In the Address Book window, select the directory that you want to
+    download (replicate).</li>
+  <li>Click Properties in the Address Book toolbar. The Directory Server
+    Properties dialog box appears.</li>
+  <li>Click the Offline tab.</li>
+  <li>Click Download Now to start copying the entries to your computer.</li>
+  <li>If prompted, enter your network user name and password, and click OK to
+    start the download.
+
+    <p>Depending on the number of directory entries, the download process may
+      take a while, so please be patient.</p>
+  </li>
+</ol>
+
+<p>After the download finishes, you can work offline and search the directory
+  or use it for address autocompletion when composing messages. After
+  you&apos;ve been using your local copy of the directory for a while, you may
+  wish to update it to get the latest entries from the directory server. To
+  update your local copy, use the procedure described above.</p>
+
+<p>[<a href="#working_offline">Return to beginning of section</a>]</p>
+
+<h2 id="setting_up_your_accounts_for_working_offline">Setting Up Your Accounts
+  for Working Offline</h2>
+
+<p>To set up one or more accounts for working offline, you use the Offline and
+  Disk Space preferences in the Mail &amp; Newsgroups Account Settings dialog
+  box. Once set, you don&apos;t need to change these preferences each time you
+  want to work offline. The offline and disk space preferences you can set for
+  an account depend on the type of account (IMAP, POP, or Newsgroup).</p>
+
+<p>Here&apos;s a summary of the steps you will follow to set up your accounts
+  for offline use:</p>
+
+<ol>
+  <li>For each account that you want to work with while offline, use the Mail
+    &amp; Newsgroups Account Settings dialog box to set the Synchronization
+    &amp; Storage preferences for that account. You must select the items
+    (folders and newsgroups) that you want to download for offline use. See
+    <a href="#selecting_items_for_offline_viewing">Selecting Items for Offline
+    Viewing</a> for more information.
+
+    <p>Once set, you don&apos;t need to change these settings. See the sections
+      below for information on setting offline and disk space preferences for
+      <a href="mailnews_account_settings.xhtml#synchronization_and_storage_settings_imap">IMAP</a>,
+      <a href="mailnews_account_settings.xhtml#disk_space_settings_pop">POP</a>,
+      <a href="mailnews_account_settings.xhtml#disk_space_settings_blogs">Blogs</a>, and
+      <a href="mailnews_account_settings.xhtml#synchronization_and_storage_settings_nntp">Newsgroup</a>
+      accounts.</p>
+
+    <p><strong>Tip</strong>: To set the Synchronization &amp; Storage
+      preferences for the current account, open the File menu, choose Offline,
+      and then choose Offline Settings.</p>
+  </li>
+  <li>Open the File menu, choose Offline, and then choose Download/Sync Now
+    from the submenu.</li>
+  <li>Select the type of messages (mail or newsgroup or both) that you want to
+    download.
+
+    <p><strong>Important</strong>: You must select at least one category (mail
+      messages or newsgroup messages) in order for the download to work.</p>
+  </li>
+  <li>Select <q>Work offline once download and/or sync is complete</q>.</li>
+  <li>Click OK to download the selected items and then go offline. See
+    <a href="#downloading_and_synchronizing_your_messages">Downloading and
+    Synchronizing Your Messages</a> for more information.</li>
+</ol>
+
+<p>For subsequent offline sessions, you can skip step 1.</p>
+
+<p>[<a href="#working_offline">Return to beginning of section</a>]</p>
+
+<h2 id="selecting_items_for_offline_viewing">Selecting Items for Offline
+  Viewing</h2>
+
+<p>Before you can read mail and newsgroup messages while offline, you must
+  first select them for downloading. You can set up an entire account for
+  offline use. You can also choose which folders and newsgroups that you
+  want to use offline.</p>
+
+<p><strong>Note</strong>: Keep in mind that selecting more items may increase
+  download time and disk space used.</p>
+
+<p>To select accounts, folders, and newsgroups for offline viewing, begin from
+  the Mail window:</p>
+
+<ol>
+  <li>Open the Edit menu, choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Choose the Synchronization &amp; Storage category for the account you
+    want to change.</li>
+  <li>Click <q>Advanced</q> to see your IMAP folders, or <q>Select newsgroups
+    for offline use</q> for your subscribed newsgroups.
+
+    <p><strong>Note</strong>: You see only the newsgroups and folders that
+      you&apos;ve already <a
+      href="mailnews_newsgroups.xhtml#subscribing_to_newsgroups">subscribed</a>
+      to. POP accounts and local mail folders don&apos;t appear in the
+      list.</p>
+  </li>
+  <li>Select the items (folders, newsgroups) that you want to make available
+    for offline use.</li>
+  <li>Click OK.</li>
+</ol>
+
+<p>Once set, you don&apos;t need to change these settings each time you want to
+  go offline. However, if you do want to change them, you can easily do so
+  before going offline, since the same Select button is available when using
+  the <a href="#downloading_and_synchronizing_your_messages">Download and
+  Sync</a> command.</p>
+
+<p>[<a href="#working_offline">Return to beginning of section</a>]</p>
+
+<h2 id="downloading_and_synchronizing_your_messages">Downloading and
+  Synchronizing Your Messages</h2>
+
+<p>If you have already selected mail folders and newsgroups for offline use,
+  you are now ready to download and synchronize them. If you haven&apos;t yet
+  selected items to download, you can choose them before you go offline.</p>
+
+<p>If you are not already viewing the Download/Sync Now dialog box, follow
+  these steps:</p>
+
+<p>To download and synchronize your messages, begin from the Mail
+ window:</p>
+
+<ol>
+  <li>Open the File menu, choose Offline, and then choose Download/Sync
+    Now.</li>
+  <li>Select the categories (mail messages or newsgroup messages) that you want
+    to download.
+
+    <p><strong>Important</strong>: You must select at least one category (Mail
+      messages, Newsgroup messages) in order for the download to work. If the
+      checkboxes are disabled, it means that you haven&apos;t yet selected
+      items to download. Use the Select button to select items to download.</p>
+  </li>
+  <li>To send messages in your Unsent Messages folder before going offline,
+    check <q>Send Unsent Messages</q>.</li>
+  <li>To go offline immediately after &brandShortName; Mail &amp; Newsgroups
+    finishes downloading, select <q>Work offline once download and/or sync is
+    complete</q>.</li>
+  <li>To set or change the items to download, click Select. See
+    <a href="#selecting_items_for_offline_viewing">Selecting Items for Offline
+    Viewing</a> for more information. You can skip this step if you&apos;ve
+    already selected items for download.</li>
+  <li>Click OK. &brandShortName; Mail &amp; Newsgroups begins downloading the
+    selected items.</li>
+</ol>
+
+<p>If you chose to work offline once the download completes, then
+  &brandShortName; Mail &amp; Newsgroups immediately switches to offline mode.
+  Otherwise, when you are ready to go offline, click the Online/Offline
+  indicator <img src="images/online.png" alt=""/> in the lower right corner of
+  the Mail window to go offline.</p>
+
+<p>[<a href="#working_offline">Return to beginning of section</a>]</p>
+
+<h2 id="working_offline_and_reconnecting_later">Working Offline and
+  Reconnecting Later</h2>
+
+<p>To work offline and reconnect later, begin from the Mail window.</p>
+
+<p>When you are ready to work offline:</p>
+
+<ol>
+  <li>Click the online/offline indicator <img src="images/online.png" alt=""/>
+    in the lower-right corner of the Mail window. Mail &amp; Newsgroups prompts
+    you to download messages, if you want, before going offline.</li>
+  <li>Click Download to download messages before going offline. If you want to
+    work offline without downloading messages, click Don&apos;t Download.</li>
+</ol>
+
+<p><strong>Note</strong>: Message headers that have been downloaded for reading
+  offline display a darker gray envelope or newsgroup icon.</p>
+
+<p><strong>Tip</strong>: To set &brandShortName; Mail &amp; Newsgroups&apos;
+  download behavior when going offline, open the
+  <span class="mac">&brandShortName;</span> <span class="noMac">Edit</span>
+  menu, choose Preferences, and then under the Mail &amp; Newsgroups category,
+  select Network &amp; Storage (if no subcategories are visible, double-click
+  Mail &amp; Newsgroups to expand the list). You can choose to have
+  &brandShortName; Mail &amp; Newsgroups prompt you to download messages when
+  going offline, to automatically download messages, or to not download any
+  messages.</p>
+
+<p>To reconnect and synchronize your messages:</p>
+
+<ol>
+  <li>Click the online/offline indicator <img src="images/offline.png"
+    alt=""/> in the lower-right corner of any &brandShortName; window.</li>
+  <li>Open the File menu, choose Offline, and then choose Download/Sync
+    Now.</li>
+</ol>
+
+<p>&brandShortName; Mail &amp; Newsgroups synchronizes your messages with the
+  server by replicating any changes you made while working offline.</p>
+
+<p><strong>Tip</strong>: To set &brandShortName; Mail &amp; Newsgroups&apos;
+  behavior when going online, open the
+  <span class="mac">&brandShortName;</span> <span class="noMac">Edit</span>
+  menu, choose Preferences, and then choose the Synchronization &amp; Storage
+  category. You can choose to have &brandShortName; Mail &amp; Newsgroups
+  prompt you to send unsent messages, to automatically send unsent messages,
+  or to not send unsent messages.</p>
+
+<p>[<a href="#working_offline">Return to beginning of section</a>]</p>
+</body>
+</html>

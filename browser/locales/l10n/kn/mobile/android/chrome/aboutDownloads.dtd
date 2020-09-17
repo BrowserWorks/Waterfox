@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "ಇಳಿಕೆಗಳು">
+<!ENTITY aboutDownloads.header                     "ನಿಮ್ಮ ಡೌನ್ಲೋಡುಗಳು">
+<!ENTITY aboutDownloads.empty                      "ಡೌನ್ಲೋಡುಗಳು ಇಲ್ಲ">
+
+<!ENTITY aboutDownloads.open                       "ತೆರೆ">
+<!ENTITY aboutDownloads.remove                     "ಅಳಿಸು">
+<!ENTITY aboutDownloads.removeAll                  "ಎಲ್ಲವನ್ನೂ ಅಳಿಸಿ">
+<!ENTITY aboutDownloads.pause                      "ವಿರಾಮ">
+<!ENTITY aboutDownloads.resume                     "ಪುನರಾರಂಭಿಸು">
+<!ENTITY aboutDownloads.cancel                     "ರದ್ದು ಮಾಡು">
+<!ENTITY aboutDownloads.retry                      "ಮರಳಿ ಪ್ರಯತ್ನಿಸು">

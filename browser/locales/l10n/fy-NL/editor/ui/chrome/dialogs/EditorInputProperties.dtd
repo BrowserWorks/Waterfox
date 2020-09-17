@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Formulierfjildeigenskippen">
+<!ENTITY windowTitleImage.label "Formulierôfbyldingseigenskippen">
+
+<!ENTITY InputType.label "Fjildtype">
+<!ENTITY InputType.accesskey "t">
+<!ENTITY text.value "Tekst">
+<!ENTITY password.value "Wachtwurd">
+<!ENTITY checkbox.value "Fakje">
+<!ENTITY radio.value "Radioknop">
+<!ENTITY submit.value "Ferstjoerknop">
+<!ENTITY reset.value "Wiskknop">
+<!ENTITY file.value "Bestân">
+<!ENTITY hidden.value "Ferstoppe">
+<!ENTITY image.value "Ofbylding">
+<!ENTITY button.value "Knop">
+
+<!ENTITY InputSettings.label "Fjildynstellings">
+<!ENTITY InputName.label "Fjildnamme:">
+<!ENTITY InputName.accesskey "d">
+<!ENTITY GroupName.label "Groepsnamme:">
+<!ENTITY GroupName.accesskey "n">
+<!ENTITY InputValue.label "Fjildwearde:">
+<!ENTITY InputValue.accesskey "F">
+<!ENTITY InitialValue.label "Orizjinele wearde:">
+<!ENTITY InitialValue.accesskey "w">
+<!ENTITY InputChecked.label "Orizjineel oanfinkt">
+<!ENTITY InputChecked.accesskey "o">
+<!ENTITY InputSelected.label "Orizjineel selektearre">
+<!ENTITY InputSelected.accesskey "s">
+<!ENTITY InputReadOnly.label "Allinnich lêze">
+<!ENTITY InputReadOnly.accesskey "l">
+<!ENTITY InputDisabled.label "Utskeakele">
+<!ENTITY InputDisabled.accesskey "U">
+<!ENTITY tabIndex.label "Ljepblêdyndeks:">
+<!ENTITY tabIndex.accesskey "y">
+<!ENTITY TextSize.label "Fjildgrutte:">
+<!ENTITY TextSize.accesskey "g">
+<!ENTITY TextLength.label "Maksimumlingte:">
+<!ENTITY TextLength.accesskey "l">
+<!ENTITY AccessKey.label "Fluchtoets:">
+<!ENTITY AccessKey.accesskey "t">
+<!ENTITY Accept.label "Akseptearre typen:">
+<!ENTITY Accept.accesskey "a">
+
+<!ENTITY ImageProperties.label "Ofbyldingseigenskippen...">
+<!ENTITY ImageProperties.accesskey "e">

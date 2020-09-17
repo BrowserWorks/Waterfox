@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Infokapsler">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Tillatelser for infokapsler">
+
+<!ENTITY disableCookies.label           "Blokker infokapsler">
+<!ENTITY disableCookies.accesskey       "B">
+
+<!ENTITY accNo3rdPartyCookies.label     "Tillat infokapsler bare fra opprinnelig nettsted (ingen tredjeparts infokapsler)">
+<!ENTITY accNo3rdPartyCookies.accesskey "T">
+
+<!ENTITY acc3rdPartyVisited.label       "Tillat tredjeparts infokapsler bare fra tidligere besøkte nettsider">
+<!ENTITY acc3rdPartyVisited.accesskey   "l">
+
+<!ENTITY accAllCookies.label            "Tillat alle infokapsler">
+<!ENTITY accAllCookies.accesskey        "a">
+
+<!ENTITY cookieRetentionPolicy.label    "Regler for å beholde av infokapsler">
+
+<!ENTITY acceptNormally.label           "Tillat infokapsler normalt">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "Tillat bare for programøkten">
+<!ENTITY acceptForSession.accesskey     "b">
+
+<!ENTITY acceptforNDays.label           "Tillat infokapsler for">
+<!ENTITY acceptforNDays.accesskey       "f">
+<!ENTITY days.label                     "dager">
+
+<!ENTITY manageCookies.label            "Behandle infokapsler og nettsted">
+<!ENTITY manageCookiesDescription.label "Tillater deg å vise og behandle lagrede infokapsler og innstillinger per-nettsted. Innstillinger per-nettsted vil overstyre innstillingene ovenfor.">
+
+<!ENTITY viewCookies.label              "Infokapselhåndterer">
+<!ENTITY viewCookies.accesskey          "I">
+

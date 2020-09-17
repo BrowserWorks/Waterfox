@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are generic to all or most of the editor's dialogs. -->
+
+<!-- This button is for the progressive disclosure of additional editing functionality -->
+
+<!-- These strings are for use specifically in the editor's link dialog. -->
+<!ENTITY windowTitle.label "અક્ષર સંગ્રહપદ્ધતિ સંગ્રહો અને બદલો">
+<!ENTITY documentTitleTitle.label "પાનાંનુ શીર્ષક">
+<!ENTITY documentCharsetTitle.label "અક્ષર સંગ્રહપદ્ધતિ">
+<!ENTITY documentCharsetDesc.label "તમે દસ્તાવેજ જે સંગ્રહપદ્ધતિમાં સંગ્રહવા માંગો તે પસંદ કરો:">
+<!ENTITY documentExportToText.label "લખાણમાં નિકાસ કરો">
+
+
+

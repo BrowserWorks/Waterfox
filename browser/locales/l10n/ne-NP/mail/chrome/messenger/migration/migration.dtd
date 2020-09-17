@@ -1,0 +1,25 @@
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title "विजार्ड आयात गर्नुहोस्">
+
+<!ENTITY importFromNothing.label "कुनै पनि वस्तु आयात नगर्नुहोस्">
+<!ENTITY importFromNothing.accesskey "D">
+<!ENTITY importFromOutlook.label "रेखदेख">
+<!ENTITY importFromOutlook.accesskey "O">
+
+<!ENTITY importSource.title "यसबाट सेटिङ र मेल फोल्डर आयात गर्नुहोस्">
+<!ENTITY importItems.title "आयात गरिने वस्तु">
+<!ENTITY importItems.label "कुन वस्तु आयात गर्ने चयन गर्नुहोस्:">
+
+<!ENTITY migrating.title "आयात गर्दैछ...">
+<!ENTITY migrating.label "निम्न वस्तु हाल आयात गरिराखेको छ...">
+
+<!ENTITY selectProfile.title "प्रोफाइल चयन गर्नुहोस्">
+<!ENTITY selectProfile.label "यसबाट आयात गर्न निम्न प्रोफाइल उपलब्ध छन्:">
+
+<!ENTITY done.title "आयात समाप्त">
+<!ENTITY done.label "निम्न वस्तु सफलतापूर्वक आयात गरियो:">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Men bu yerdan ketaman!">
+<!ENTITY safeb.palm.decline.label "Ushbu ogohlantirishni rad qilish">
+<!ENTITY safeb.palm.reportPage.label "Nega ushbu sahifa bloklandi?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Ma’lumotlar <a id='advisory_provider'/> tomonidan olingan">
+
+<!ENTITY safeb.blocked.malwarePage.title "Hujum sahifasi sifatida xabar berilgan!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Ushbu veb sahifa <span id='malware_sitename'/>da hujum sayti sifatida xabar berilgan, shu sababli sizning xavfsizligingizni o‘ylab, ushbu sahifa bloklandi.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Hujum saytlari shaxsiy ma’lumotlaringizni o‘g‘irlaydigan dasturlarni o‘rnatishga urinadi. Bu ma’lumotlar orqali kompyuteringizdan boshqalarga hujum qilish uchun yoki tizimingizni buzish uchun foydalaniladi.</p><p>Ba’zi hujum sahifalari zararli dasturlarni tarqatadi, ammo ularning ko‘pchiligini egalari bilmaydi.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Yolg‘on sayt!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Ushbu <span id='phishing_sitename'/> sahifasi yolg‘on sayt sifatida xabar berilgan, shuning uchun xavfsizligingizni o‘ylab, ushbu sahifa bloklandi.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Qalbaki saytlar zararli dasturlarni o‘rnatish kabi xavfli amallarni bajarish uchun va parol, telefon raqamlari yoki kredit karta ma’lumotlari kabi shaxsiy ma’lumotlaringizni o‘g‘irlash uchun yaratiladi.</p><p>Bunday sahifalarga ma’lumotlar kiritsangiz, ularni o‘g‘rilanishi yoki o‘zlashtirilishiga sabab bo‘lishi mumkin.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Keraksiz deb hisoblangan dasturiy ta’minot sayti haqida xabar berildi!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/> veb sahifasi  shubhali dasturiy ta’minot mavjud sayt sifatida xabar berilgan, shu sababli xavfsizlik sozlamalaringizga asoslanib, ushbu sahifa bloklandi.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Keraksiz dasturiy ta’minot sahifalari turli dasturlarni o‘rnatishga harakat qiladi. Ushbu dasturlar aldovchi bo‘lishi va tizimingizga kutilmagan yo‘llar bilan ta’sir qilishi mumkin. ">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Bu saytda zararli dasturlar bo‘lishi mumkin">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; bu sahifani blokladi, chunki u ma’lumotlaringizni (masalan, suratlar, parollar, xabarlar va kredit karta raqamlari) o‘g‘rilaydigan yoki o‘chirib tashlaydigan xavfli dasturlarni o‘rnatishi mumkin.">

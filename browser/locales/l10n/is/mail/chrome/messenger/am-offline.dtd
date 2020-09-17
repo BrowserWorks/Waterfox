@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Til að minnka diskpláss, ekki hlaða niður:">
+<!ENTITY doNotDownloadNntp.label "Til að minnka diskpláss, ekki hlaða niður fyrir ónettengda notkun:">
+<!ENTITY doNotDownloadImap.label "Til að minnka diskpláss, er hægt að takmarka eftir aldri eða stærð hvaða póstum er halað niður og geymdir fyrir ónettengda notkun.">
+<!ENTITY offlineNotDownload.label "Póst stærri en">
+<!ENTITY offlineNotDownload.accesskey "P">
+<!ENTITY autosyncNotDownload.label "Ekki sækja stærri skeyti en">
+<!ENTITY autosyncNotDownload.accesskey "E">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "daga gömlum">
+<!ENTITY message.label "bréfum">
+<!ENTITY nntpNotDownloadRead.label "Lesinn póstur">
+<!ENTITY nntpNotDownloadRead.accesskey "L">
+<!ENTITY nntpDownloadMsg.label "Póstur eldri en">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Til að endurheimta diskpláss, er hægt að eyða gömlum pósti varanlega.">
+<!ENTITY retentionCleanupImap.label "Til að endurheimta diskpláss, er hægt að eyða gömlum pósti varanlega, bæði staðbundnu afriti og upprunalegum pósti á netþjóninum.">
+<!ENTITY retentionCleanupPop.label "Til að endurheimta diskpláss, er hægt að eyða gömlum pósti varanlega, einnig upprunalegum pósti á netþjóninum.">
+<!ENTITY retentionKeepMsg.label "Eyða bréfum eldri en">
+<!ENTITY retentionKeepMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Ekki eyða neinum bréfum">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "Eyða öllu nema nýjustu">
+<!ENTITY retentionKeepRecent.accesskey "E">
+<!ENTITY retentionApplyToFlagged.label "Alltaf geyma stjörnumerktan póst">
+<!ENTITY retentionApplyToFlagged.accesskey "k">
+<!ENTITY nntpRemoveMsgBody.label "Fjarlægja meginmál úr bréfum eldri en">
+<!ENTITY nntpRemoveMsgBody.accesskey "F">
+<!ENTITY offlineSelectNntp.label "Veldu fréttahópa fyrir ónettengda notkun…">
+<!ENTITY offlineSelectNntp.accesskey "V">
+<!ENTITY offlineImapAdvancedOffline.label "Frekari stillingar…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "F">
+<!ENTITY syncGroupTitle.label "Samstilla póst">
+<!ENTITY diskspaceGroupTitle.label "Diskpláss">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label "Samstilla allann póst staðbundið án tillits til aldurs">
+<!ENTITY allAutosync.accesskey "S">
+<!ENTITY ageAutosyncBefore.label "Samstilla nýjustu">
+<!ENTITY ageAutosync.accesskey "t">
+<!ENTITY ageAutosyncMiddle.label "">
+<!ENTITY dayAgeInterval.label "Dagar">
+<!ENTITY weekAgeInterval.label "Vikur">
+<!ENTITY monthAgeInterval.label "Mánuðir">
+<!ENTITY yearAgeInterval.label "Ár">
+<!ENTITY ageAutosyncAfter.label "">

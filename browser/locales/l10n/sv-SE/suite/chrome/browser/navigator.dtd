@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Privat surfning">
+
+<!ENTITY editPageCmd.label "Redigera sida">
+<!ENTITY editPageCmd.accesskey "d">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Navigationsfält">
+<!ENTITY navbarCmd.accesskey "N">
+<!ENTITY bookmarksToolbarCmd.label     "Bokmärkesfältet">
+<!ENTITY bookmarksToolbarCmd.accesskey "m">
+
+<!ENTITY closeWindow.label "Stäng fönstret">
+<!ENTITY closeWindow.accesskey "f">
+
+<!ENTITY minimizeButton.tooltip       "Minimera">
+<!ENTITY restoreButton.tooltip        "Återställ">
+
+<!ENTITY feedsMenu.label "Prenumerera på den här sidan">
+<!ENTITY feedsMenu.accesskey "P">
+
+<!ENTITY menuBar.tooltip                  "Menyrad">
+<!ENTITY bookmarksToolbar.tooltip         "Bokmärkesfältet">
+<!ENTITY navigationToolbar.tooltip        "Navigationsfält">
+
+<!ENTITY editBookmark.done.label "Klar">
+<!ENTITY editBookmark.cancel.label "Avbryt">
+<!ENTITY editBookmark.removeBookmark.accessKey "r">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Bakåt">
+<!ENTITY backButton.tooltip           "Gå bakåt en sida">
+<!ENTITY forwardButton.label          "Framåt">
+<!ENTITY forwardButton.tooltip        "Gå framåt en sida">
+<!ENTITY reloadButton.label           "Uppdatera">
+<!ENTITY reloadButton.tooltip         "Uppdatera aktuell sida">
+<!ENTITY stopButton.label             "Stopp">
+<!ENTITY stopButton.tooltip           "Avbryt inläsningen av denna sida">
+<!ENTITY searchButton.label           "Sök">
+<!ENTITY searchButton.tooltip         "Skriv in ett ord i fältet till vänster och klicka på Sök">
+<!ENTITY goButton.label               "Gå">
+<!ENTITY goButton.tooltip             "Gå direkt till webbsidan i adressfältet">
+<!ENTITY printButton.label            "Skriv ut">
+<!ENTITY printButton.tooltip          "Skriv ut den här sidan">
+
+<!ENTITY throbber.tooltip             "Gå till &vendorShortName;s webbplats">
+
+<!ENTITY throbber.tooltip2            "Gå till &brandShortName;s webbplats">
+
+<!ENTITY locationBar.tooltip          "Adress- och sökfält">
+<!ENTITY locationBar.accesskey        "d">
+<!ENTITY locationBar.title            "Adress">
+<!ENTITY proxyIcon.tooltip            "Dra och släpp den här ikonen för att skapa en länk till den här sidan">
+
+<!ENTITY searchItem.title             "Sök">
+
+<!ENTITY bookmarksButton.label        "Bokmärken">
+<!ENTITY bookmarksButton.tooltip      "Lista över bokmärken">
+<!ENTITY homeButton.label             "Startsida">
+<!ENTITY bookmarksToolbarItem.label   "Bokmärken i verktygsfältet">
+<!ENTITY bookmarksToolbarChevron.tooltip "Visa fler bokmärken">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Dokument: Klart">
+
+<!ENTITY popupIcon.tooltiptext      "Tillåt den här webbplatsens extrafönster">
+
+<!ENTITY viewSecurityInfo.label      "Visa säkerhetsinformation">
+<!ENTITY viewSecurityInfo.accesskey  "s">
+<!ENTITY viewCertificate.label       "Visa certifikat">
+<!ENTITY viewCertificate.accesskey   "c">
+<!ENTITY viewCertManager.label       "Öppna certifikatshanteraren">
+<!ENTITY viewCertManager.accesskey   "h">
+
+<!ENTITY zoomIn.tooltiptext          "Större">
+<!ENTITY zoomOut.tooltiptext         "Mindre">

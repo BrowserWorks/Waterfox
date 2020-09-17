@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "ಆಡ್-ಆನ್‌ಗಳು">
+<!ENTITY aboutAddons.header2                    "ನಿಮ್ಮ ಆಡ್-ಆನ್‌ಗಳು">
+
+<!ENTITY addonAction.enable                     "ಶಕ್ತಗೊಳಿಸು">
+<!ENTITY addonAction.disable                    "ಅಶಕ್ತಗೊಳಿಸಲಾಗಿದೆ">
+<!ENTITY addonAction.uninstall                  "ತೆಗೆದುಹಾಕು">
+<!ENTITY addonAction.undo                       "ರದ್ದು ಮಾಡು">
+<!ENTITY addonAction.update                     "ಪರಿಷ್ಕರಿಸು">
+
+<!ENTITY addonUnsigned.message                  "ಈ ಆಡ್-ಆನ್ ‌ಅನ್ನು &brandShortName; ನಿಂದ ಧೃಡಪಡಿಸಲಾಗಿಲ್ಲ.">
+<!ENTITY addonUnsigned.learnMore                "ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ">

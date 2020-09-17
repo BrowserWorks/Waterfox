@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+
+<!ENTITY editorWindow.titlemodifier "Composer">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+<!-- View menu items -->
+
+
+<!ENTITY viewMenu.label "প্রদর্শন (V)">
+<!ENTITY viewMenu.accesskey "V">
+<!ENTITY compositionToolbarCmd.label "মেইল রচনা টুলবার (C)">
+<!ENTITY compositionToolbarCmd.accesskey "C">
+<!ENTITY formattingToolbarCmd.label "বিন্যাস টুলবার (F)">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "সম্পাদনা মোড টুলবার (E)">
+<!ENTITY editmodeToolbarCmd.accesskey "E">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "বিন্যাস (o)">
+<!ENTITY formatMenu.accesskey "o">

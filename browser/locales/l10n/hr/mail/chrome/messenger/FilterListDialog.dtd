@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filteri poruka">
+<!ENTITY nameColumn.label "Naziv filtera">
+<!ENTITY activeColumn.label "Omogućen">
+<!ENTITY newButton.label "Novi…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Kopiraj…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Uredi…">
+<!ENTITY editButton.accesskey "e">
+<!ENTITY deleteButton.label "Obriši">
+<!ENTITY deleteButton.accesskey "O">
+<!ENTITY reorderTopButton "Pomakni na vrh">
+<!ENTITY reorderTopButton.accessKey "v">
+<!ENTITY reorderTopButton.toolTip "Pomakni filter kako bi se izvršavao prije svih ostalih">
+<!ENTITY reorderUpButton.label "Pomakni gore">
+<!ENTITY reorderUpButton.accesskey "g">
+<!ENTITY reorderDownButton.label "Pomakni dolje">
+<!ENTITY reorderDownButton.accesskey "d">
+<!ENTITY reorderBottomButton "Pomakni na dno">
+<!ENTITY reorderBottomButton.accessKey "m">
+<!ENTITY reorderBottomButton.toolTip "Pomakni filter kako bi se izvršavao nakon svih ostalih">
+<!ENTITY filterHeader.label "Omogućeni filteri se izvršavaju automatski prema niže prikazanim redoslijedom.">
+<!ENTITY filtersForPrefix.label "Filteri za:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Zapisnik filtera">
+<!ENTITY viewLogButton.accesskey "l">
+<!ENTITY runFilters.label "Pokreni">
+<!ENTITY runFilters.accesskey "r">
+<!ENTITY stopFilters.label "Zaustavi">
+<!ENTITY stopFilters.accesskey "s">
+<!ENTITY folderPickerPrefix.label "Pokreni odabrane filtere na:">
+<!ENTITY folderPickerPrefix.accesskey "b">
+<!ENTITY helpButton.label "Pomoć">
+<!ENTITY helpButton.accesskey "P">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Pretraži filtere prema imenu…">
+

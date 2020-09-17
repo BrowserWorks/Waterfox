@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Link Toolbar Title -->
+
+<!ENTITY linkToolbar.label "Svetainės naršymo juosta">
+<!ENTITY linkToolbar.accesskey "S">
+<!ENTITY linkToolbar.tooltip "Svetainės naršymo juosta">
+<!-- Link Toolbar visibility options -->
+
+<!ENTITY linkToolbarAlways.label "Rodyti">
+<!ENTITY linkToolbarAlways.accesskey "R">
+<!ENTITY linkToolbarAsNeeded.label "Rodyti tik prireikus">
+<!ENTITY linkToolbarAsNeeded.accesskey "o">
+<!ENTITY linkToolbarNever.label "Nerodyti">
+<!ENTITY linkToolbarNever.accesskey "N">
+<!-- Toolbar buttons, menus, and menuitems -->
+
+<!ENTITY topButton.label "Į pradžią">
+<!ENTITY upButton.label "Aukštyn">
+<!ENTITY firstButton.label "Pirmas">
+<!ENTITY prevButton.label "Ankstesnis">
+<!ENTITY nextButton.label "Tolesnis">
+<!ENTITY lastButton.label "Paskutinis">
+
+<!ENTITY documentButton.label "Dokumentas">
+
+<!ENTITY tocButton.label "Turinys">
+<!ENTITY chapterButton.label "Dalys">
+<!ENTITY sectionButton.label "Skyriai">
+<!ENTITY subSectionButton.label "Skyreliai">
+<!ENTITY appendixButton.label "Priedai">
+<!ENTITY glossaryButton.label "Aiškinamasis žodynėlis">
+<!ENTITY indexButton.label "Rodyklė">
+
+<!ENTITY moreButton.label "Daugiau">
+
+<!ENTITY helpButton.label "Žinynas">
+<!ENTITY searchButton.label "Ieškoti">
+
+<!ENTITY authorButton.label "Autoriai">
+<!ENTITY copyrightButton.label "Autoriaus teisės">
+
+<!ENTITY bookmarkButton.label "Adresynas">
+
+<!ENTITY alternateButton.label "Kitos versijos">
+
+<!ENTITY feedButton.label "Prenumeruoti">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title "Staðfesting á lestri">
+<!ENTITY useGlobalPrefs.label "Nota aðalstillingu á staðfestingu á lestri fyrir þennan reikning">
+<!ENTITY useGlobalPrefs.accesskey "u">
+<!ENTITY globalReceipts.label "Víðværir valkostir…">
+<!ENTITY globalReceipts.accesskey "V">
+<!ENTITY useCustomPrefs.label "Sérsniða staðfestingar á lestri fyrir þennan reikning">
+<!ENTITY useCustomPrefs.accesskey "S">
+<!ENTITY requestReceipt.label "Þegar póstur er sendur, alltaf krefjast staðfestingar á lestri">
+<!ENTITY requestReceipt.accesskey "e">
+<!ENTITY receiptArrive.label "Ef kvittun er móttekin:">
+<!ENTITY leaveIt.label "Skilja hana eftir í innhólfi">
+<!ENTITY leaveIt.accesskey "i">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label "Færa yfir í &quot;Sent&quot;-möppuna mína">
+<!ENTITY moveToSent.accesskey "m">
+<!ENTITY requestMDN.label "Þegar ég móttek beiðni um staðfestingu á lestri:">
+<!ENTITY returnSome.label "Leyfa staðfestinu á lestri fyrir suman póst">
+<!ENTITY returnSome.accesskey "e">
+<!ENTITY never.label "Aldrei senda staðfestingu á lestri">
+<!ENTITY never.accesskey "n">
+<!ENTITY notInToCc.label "Ef ég er ekki í Til eða Afrit póstsins:">
+<!ENTITY notInToCc.accesskey "T">
+<!ENTITY outsideDomain.label "Ef sendandi er fyrir utan mitt lén:">
+<!ENTITY outsideDomain.accesskey "s">
+<!ENTITY otherCases.label "Í öllum öðrum tilfellum:">
+<!ENTITY otherCases.accesskey "ö">
+<!ENTITY askMe.label "Spyrja mig">
+<!ENTITY alwaysSend.label "Senda alltaf">
+<!ENTITY neverSend.label "Aldrei senda">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!ENTITY MsgSynchronize.label "Prevziať a synchronizovať správy">
+<!ENTITY MsgSelect.label "Položky pre použitie v režime offline">
+<!ENTITY MsgSyncDesc.label "Ak už ste vybrali poštové priečinky alebo diskusné skupiny, môžete ich prevziať a/alebo synchronizovať . Inak kliknite na tlačidlo &quot;Vybrať&quot; a zvoľte priečinky a skupiny, ktoré chcete používať v režime offline.">
+<!ENTITY MsgSyncDirections.label "Prevziať a/alebo synchronizovať:">
+<!ENTITY syncTypeMail.label "E-mailové správy">
+<!ENTITY syncTypeMail.accesskey "E">
+<!ENTITY syncTypeNews.label "Príspevky diskusných skupín">
+<!ENTITY syncTypeNews.accesskey "d">
+<!ENTITY sendMessage.label "Odoslať neodoslané správy">
+<!ENTITY sendMessage.accesskey "n">
+<!ENTITY workOffline.label "Po dokončení prevzatia a/alebo synchronizácie prejsť do režimu offline">
+<!ENTITY workOffline.accesskey "k">
+<!ENTITY selectButton.label "Vybrať…">
+<!ENTITY selectButton.accesskey "V">
+<!ENTITY MsgSelectDesc.label "Vyberte poštové priečinky a diskusné skupiny, ktoré chcete používať v režime offline.">
+<!ENTITY MsgSelectInd.label "Prevziať">
+<!ENTITY MsgSelectItems.label "Priečinky a diskusné skupiny">

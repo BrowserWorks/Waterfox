@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Duguachrá">
+<!ENTITY playButton.pauseLabel "Duyichin' akuan'">
+<!ENTITY muteButton.muteLabel "Dín gahuin">
+<!ENTITY muteButton.unmuteLabel "Naduyingô' nanèe">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Nagi'iaj gachrò' riña aga' sikà' ràa">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Nagi'iaj lij riña aga' sikà' ràa">
+<!ENTITY castingButton.castingLabel "Duguachîn' riña aga' sikà' ràa ané">
+<!ENTITY closedCaption.off "Duna'àj">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Sa natsij nanèj">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Picture-in-Picture">
+
+<!ENTITY error.aborted "Ganikïn' sa ayi'ì bidêo 'iaj sunj.">
+<!ENTITY error.network "Ganikïn' sa ahui bidêo dadin' hua a'nan' red.">
+<!ENTITY error.decode "Na'ue gahui bidêo dadin' hua a'nan' archîbo.">
+<!ENTITY error.srcNotSupported "Formâto bideô MIME nitaj si aran' ngà aga' nan.">
+<!ENTITY error.noSource2 "Nu nari'ij ngà si 'ngo bideô nikaj aran' nga MIME.">
+<!ENTITY error.generic "Ganikïn' sa ahui bidêo dadin' hua sa a'ui' yi'ì.">
+
+<!ENTITY status.pictureInPicture "Nahui bideô nan riña modô Picture-in-Picture.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

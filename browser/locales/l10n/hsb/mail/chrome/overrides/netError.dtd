@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problem při začitowanju strony">
+<!ENTITY retry.label "Hišće raz spytać">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Njeje móžno zwjazać">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Tuta adresa je wobmjezowana">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Serwer njenamakany">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Přepruwujće adresu za zapisowanskimi zmylkami, kaž na př. <strong>ww</strong>.example.com město <strong>www</strong>.example.com</li> <li>Jeli njemóžeće strony začitować, přepruwujće syćowy zwisk wašeho ličaka.</li> <li>Jeli waš ličak abo waša syć so přez wohnjowu murju abo proksy škita, zawěsćće, zo &brandShortName; smě z webom zwjazać.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Dataja njenamakana">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Přepruwujće datajowe mjeno za wulkopisanjom a druhimi zapisowanskimi zmylkami.</li> <li>Pohladajće za tym, hač dataja je so přesunyła, přemjenowała abo zhašała.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Přistup na dataju je so wotpokazał">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Snano je so wotstroniła, přesunyła, abo datajowe prawa zadźěwaju přistupej.</li> </ul>">
+
+<!ENTITY generic.title "Owej.">
+<!ENTITY generic.longDesc "<p>&brandShortName; njemóže tutu stronu z někajkeje přičiny začitać.</p>">
+
+<!ENTITY malformedURI.title "Adresa njeje płaćiwa">
+<!ENTITY malformedURI.longDesc "<ul> <li>Webadresy so zwjetša jako <strong>http://www.example.com</strong> pisaja</li> <li>Zawěsćće, zo normalne nakósne smužki wužiwaće (t.r. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Zwisk bu přetorhnjeny">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokument je spadnył">
+<!ENTITY notCached.longDesc "<p>Požadany dokument w pufrowaku k dispoziciji njesteji.</p><ul><li>Jako wěstnotnu naprawu &brandShortName; sensibelne dokumenty awtomatisce znowa njewotwołuje.</li><li>Klikńće na Hišće raz, zo byšće dokument hišće raz z websydła wotwołał.</li></ul>">
+
+<!ENTITY netOffline.title "Offline-modus">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Klikńće na &quot;Hišće raz&quot;, zo byšće do online-modusa přešoł a stronu znowa začitał.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Zmylk wobsahoweho zaklučowanja">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Prošu stajće so z wobsedźerjemi websydła do zwiska, zo byšće jich wo tutym problemje informowali.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Njewěsty datajowy typ">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Prošu stajće so z wobsedźerjemi websydła do zwiska, zo byšće jich wo tutym problemje informowali.</li> </ul>">
+
+<!ENTITY netReset.title "Zwisk bu wróćo stajeny">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Zwisk je čas překročił">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Adresa njebu zrozumjena">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Je móžno, zo dyrbiće druhu softwaru instalować, zo byšće tutu adresu wočinił.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proksyserwer zwiski wotpokazuje">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Přepruwujće proksynastajenja, zo byšće zawěsćił, zo su korektne.</li> <li>Stajće so ze swojim syćowym administratorom do zwiska, zo byšće zawěsćił, za proksyserwer dźěła.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Proksyserwer njeda so namakać">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Přepruwujće proksynastajenja, zo byšće zawěsćił, zo su korektne.</li> <li>Přepruwujće hač waš ličak ma fungowacy syćowy zwisk.</li> <li>Jeli waš ličak abo waša syć so přez wohnjowu murju abo proksy škita, zawěsćće, zo &brandShortName; smě z webom zwjazać.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Strona so porjadnje dale njesposrědkuje">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Tutón problem so druhdy zawinuje, hdyž so placki znjemóžnjeja abo wotpokazuja.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Njewočakowana wotmołwa wot serwera">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Přepruwujće, hač Personal Security Manager je na wašim systemje instalowany.</li> <li>Přičina za to móhła konfiguracija być, kotraž standardej njewotpowěduje.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Wěsty zwisk je so poradźił">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Strona, kotruž pospytujeće sej wobhladać, njeda so pokazać, dokelž awtentnosć přijatych datow njeda so přepruwować.</li> <li>Prošu stajće so z wobsedźerjemi websydła do zwiska, zo byšće jich wo tutym problemje informował.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Wěsty zwisk njeje so poradźił">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>To móhło problem z konfiguraciju serwera być abo něchtó pospytuje serwer napodobnić.</li> <li>Jeli běšće w zańdźenosći ze serwerom wuspěšnje zwjazany, zmylk móhł nachwilny być, a móžeće pozdźišo hišće raz spytać.</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Sydło snano nachwilu k dispoziciji njesteji abo je přećežene. Spytajće za mało wokomikow hišće raz.</li> <li>Jeli njemóžeće strony začitać, přepruwujće syćowy zwisk wašeho ličaka.</li> <li>Jeli waš ličak abo waša syć so přez wohnjowu murju abo proksy škita, zawěsćće, zo &brandShortName; smě z webom zwjazać.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Přez wěstotne prawidła za wobsah zablokowany">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; je začitanju tuteje strony na tute wašnje zadźěwał, dokelž strona ma wěstotne prawidła za wobsah, kotrež to njedowoleja.</p>">
+
+<!ENTITY xfoBlocked.title "Přez prawidła X-Frame-Options zablokowane">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; je začitanju tuteje strony w tutym konteksće zadźěwał, dokelž strona ma prawidła X-Frame-Options, kotrež to njedowoluja.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Zmylk - wobškodźeny wobsah">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Strona, kotruž chceće sej wobhladać, njeda so pokazać, dokelž je so zmylk při přenošowanju datow namakał.</p><ul><li>Prošu stajće so z wobsedźerjemi websydła do zwiska, zo byšće jich wo tutym problemje informował.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Abo njemóžeš wuwzaće přidać…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Wjedź mje wottud preč!">
+<!ENTITY securityOverride.exceptionButtonLabel "Wuwzaće přidać…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Njepřidajće wuwzaće, jeli wužiwaće internetny zwisk, kotremuž dospołnje njedowěrjeće abo jeli hewak warnowanje za tutón serwer njewidźiće.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Zdaleny XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Prošu stajće so z wobsedźerjemi websydła do zwiska, zo byšće jich wo problemje informował.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Waš zwisk wěsty njeje">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> wužiwa wěstotnu technologiju, kotraž je zestarjena a sensibelna za nadpady. Nadpadowar móhł informacije lochko wotkryć, kotrež za wěste maće. Websydłowy administrator dyrbi problem na serwerje rozrisać, prjedy hač móžeće sydło wopytać.</p><p>Zmylkowy kode: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Zablokowana strona">
+
+<!ENTITY networkProtocolError.title "Zmylk syćoweho protokola">
+<!ENTITY networkProtocolError.longDesc "<p>Strona, kotruž pospytujeće sej wobhladać, njeda so pokazać, dokelž je so zmylk w syćowym protokolu namakał.</p><ul><li>Prošu stajće so z wobsedźerjemi websydła do zwiska, zo byšće jich wo tutym problemje informował.</li></ul>">

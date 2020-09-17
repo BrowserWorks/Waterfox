@@ -1,0 +1,4 @@
+<!ENTITY options.title "Настройки на инструментите за разработчици">
+<!ENTITY options.status.label "Състояние:">
+<!ENTITY options.port.label "Порт:">
+<!ENTITY options.forcelocal.label "Разрешаване на свързване от други компютри">

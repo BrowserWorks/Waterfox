@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeNotification.tooltip "关闭此消息">
+<!-- LOCALIZATION NOTE (closeNotificationItem.label): This entity is used
+     to replace the Toolkit default closeNotificationItem.label ("Not Now")
+     which is ambiguous in some cases. Thus, make sure to select a phrase
+     that clearly relates to closing the current doorhanger. -->
+
+<!ENTITY closeNotificationItem.label "解除通知">
+
+<!ENTITY checkForUpdates "检查更新…">
+
+<!ENTITY learnMore "详细了解.">

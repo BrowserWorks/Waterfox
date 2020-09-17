@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Slapukai">
+<!-- cookies -->
+
+
+<!ENTITY cookiePolicy.label             "Slapukų priėmimo politika">
+
+<!ENTITY disableCookies.label           "Neleisti įrašyti slapukų">
+<!ENTITY disableCookies.accesskey       "N">
+
+<!ENTITY accNo3rdPartyCookies.label     "Leisti įrašyti tik lankomos svetainės slapukus (drausti trečiųjų šalių)">
+<!ENTITY accNo3rdPartyCookies.accesskey "s">
+
+<!ENTITY acc3rdPartyVisited.label       "Leisti įrašyti trečiųjų šalių slapukus tik anksčiau lankytoms svetainėms">
+<!ENTITY acc3rdPartyVisited.accesskey   "t">
+
+<!ENTITY accAllCookies.label            "Leisti visus slapukus">
+<!ENTITY accAllCookies.accesskey        "v">
+
+<!ENTITY cookieRetentionPolicy.label    "Slapukų priėmimo politika">
+
+<!ENTITY acceptNormally.label           "Leisti įrašyti slapukus">
+<!ENTITY acceptNormally.accesskey       "L">
+
+<!ENTITY acceptForSession.label         "Leisti įrašyti slapukus tik vienam seansui">
+<!ENTITY acceptForSession.accesskey     "e">
+
+<!ENTITY acceptforNDays.label           "Leisti įrašyti slapukus ir laikyti juos">
+<!ENTITY acceptforNDays.accesskey       "s">
+<!ENTITY days.label                     "dienų">
+
+<!ENTITY manageCookies.label            "Tvarkyti slapukus">
+<!ENTITY manageCookiesDescription.label "Čia galima tvarkyti slapukus ir parinkti slapukų nuostatas atskiroms svetainėms. Šios nuostatos nustelbia aukščiau parinktas nuostatas.">
+
+<!ENTITY viewCookies.label              "Slapukų tvarkytuvė">
+<!ENTITY viewCookies.accesskey          "S">
+

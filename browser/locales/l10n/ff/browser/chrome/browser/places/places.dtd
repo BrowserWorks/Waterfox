@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Deftordu">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Yuɓɓitin">
+<!ENTITY organize.accesskey    "Y">
+<!ENTITY organize.tooltip      "Yuɓɓitin maantore maa">
+
+<!ENTITY file.close.label               "Uddu">
+<!ENTITY file.close.accesskey           "U">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Jiyte">
+<!ENTITY views.accesskey                "J">
+<!ENTITY views.tooltip                  "Waylu jiytol maa">
+<!ENTITY view.columns.label             "Hollu Dari">
+<!ENTITY view.columns.accesskey         "D">
+<!ENTITY view.sort.label                "Leemto">
+<!ENTITY view.sort.accesskey            "L">
+<!ENTITY view.unsorted.label            "Leemtaaaka">
+<!ENTITY view.unsorted.accesskey        "L">
+<!ENTITY view.sortAscending.label       "Deggondiral leemto A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Deggondiral leemto Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Jiggo Maantore iwɗe e HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "J">
+<!ENTITY exportBookmarksToHTML.label       "Jiggito Maantore to HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "g">
+<!ENTITY importOtherBrowser.label          "Jiggito Keɓe iwde e Wanngorde Woɗnde…">
+<!ENTITY importOtherBrowser.accesskey      "W">
+
+<!ENTITY cmd.backup.label               "Danndito…">
+<!ENTITY cmd.backup.accesskey           "D">
+<!ENTITY cmd.restore2.label             "Artir">
+<!ENTITY cmd.restore2.accesskey         "A">
+<!ENTITY cmd.restoreFromFile.label      "Labo Fiilde…">
+<!ENTITY cmd.restoreFromFile.accesskey  "L">
+
+<!ENTITY col.name.label          "Innde">
+<!ENTITY col.tags.label          "Tage">
+<!ENTITY col.url.label           "Nokkuure">
+<!ENTITY col.mostrecentvisit.label "Njillu Cakkitiingu">
+<!ENTITY col.visitcount.label    "Limoore Njillu">
+<!ENTITY col.dateadded.label     "Ɓeydaa">
+<!ENTITY col.lastmodified.label  "Waylaa Sakket">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Jiggo e Ndannditaa">
+<!ENTITY maintenance.accesskey  "J">
+<!ENTITY maintenance.tooltip    "Jiggo e ndannditaa maantore maa">
+
+<!ENTITY backButton.tooltip  "Rutto">
+
+<!ENTITY forwardButton.tooltip  "Ɓennu">
+
+<!ENTITY detailsPane.selectAnItemText.description "Labo temre ngam yiyde e taƴtaade keeroraaɗi mum">
+

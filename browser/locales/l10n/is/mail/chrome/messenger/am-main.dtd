@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Stillingar reiknings">
+<!ENTITY accountName.label "Heiti reiknings:">
+<!ENTITY accountName.accesskey "H">
+<!ENTITY identityTitle.label "Sjálfgefið auðkenni">
+<!ENTITY identityDesc.label "Hver reikningur er með auðkenni, sem eru þær upplýsingar sem aðrir sjá þegar þeir lesa póstinn frá þér.">
+<!ENTITY name.label "Nafnið þitt:">
+<!ENTITY name.accesskey "N">
+<!ENTITY email.label "Tölvupóstfang:">
+<!ENTITY email.accesskey "T">
+<!ENTITY replyTo.label "Svar-tölvupóstfang:">
+<!ENTITY replyTo.accesskey "S">
+<!ENTITY replyTo.placeholder "Viðtakendur munu svara öðru póstfangi">
+<!ENTITY organization.label "Fyrirtæki/Stofnun:">
+<!ENTITY organization.accesskey "F">
+<!ENTITY signatureText.label "Texti undirritunar:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "Nota HTML (t.d., &lt;b&gt;feitletrað&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Setja inn undirritun sem viðhengi (texti, HTML, eða mynd):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Breyta…">
+<!ENTITY choose.label "Velja…">
+<!ENTITY choose.accesskey "V">
+<!ENTITY editVCard.label "Breyta nafnspjaldi…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Bæta mínu vCard nafnspjaldi við póst">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Stjórna auðkenni…">
+<!ENTITY manageIdentities.accesskey "ð">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Póstþjónn út (SMTP):">
+<!ENTITY smtpName.accesskey "P">
+<!ENTITY smtpDefaultServer.label "Nota sjálfgefin póstþjón">
+

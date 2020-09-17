@@ -1,0 +1,157 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problema ao carregar página">
+<!ENTITY retry.label "Tentar novamente">
+<!ENTITY returnToPreviousPage.label "Retroceder">
+<!ENTITY returnToPreviousPage1.label "Retroceder (recomendado)">
+<!ENTITY advanced2.label "Avançado…">
+<!ENTITY viewCertificate.label "Ver certificado">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Servidor não encontrado">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Se esse endereço está correto, aqui estão outras três coisas que pode tentar:</strong>
+<ul>
+  <li>Tentar novamente mais tarde.</li>
+  <li>Verificar a sua ligação à rede.</li>
+  <li>Se está ligado(a) mas por detrás de uma firewall, verifique que o &brandShortName; tem permissão para aceder à Web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Verifique se existem erros de escrita no nome do ficheiro.</li> <li>Verifique se o ficheiro foi movido, renomeado ou apagado.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Este pode ter sido removido, movido ou as permissões do ficheiro podem estar a impedir o acesso.</li>
+</ul>">
+
+<!ENTITY generic.longDesc "<p>O &brandShortName; não conseguiu carregar a página por alguma razão.</p>">
+
+<!ENTITY captivePortal.title "Iniciar sessão na rede">
+<!ENTITY captivePortal.longDesc2 "<p>Tem de iniciar sessão nesta rede antes de poder aceder à Internet.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Abrir página de início de sessão da rede">
+
+<!ENTITY malformedURI.pageTitle "URL inválido">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>O documento solicitado não está disponível na cache do &brandShortName;.</p><ul><li>Como medida de segurança, o &brandShortName; não solicita novamente e de forma automática documentos sensíveis.</li><li>Clique em Tentar novamente para solicitar novamente o documento do site.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Pressione &quot;Tentar novamente&quot; para trocar para o modo online e recarregar a página.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Por favor, contacte os proprietários do site para os informar deste problema.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Por favor, contacte os proprietários do site para os informar deste problema.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Pode precisar de instalar outro programa para abrir este endereço.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Verifique as definições do proxy.</li> <li>Contacte o administrador de rede para ter a certeza de que o servidor proxy está a funcionar.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Verifique se as definições do proxy estão corretas.</li> <li>Verifique se o seu computador tem uma ligação de rede ativa.</li> <li>Se o seu computador ou rede estiverem protegidos por uma firewall ou um proxy, verifique se o &brandShortName; tem permissão de acesso à Web.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Este problema pode, por vezes, ser causado por desativar ou recusar aceitar cookies.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Verifique se o seu sistema tem o Personal Security Manager instalado.</li> <li>Isto pode ser causado por uma configuração não comum no servidor.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>A página que está a tentar ver não pode ser mostrada porque não foi possível verificar a autenticidade dos dados recebidos.</li>
+  <li>Por favor, contacte os proprietários do site para os informar deste problema.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "O &brandShortName; detetou um potencial risco de segurança e não continuou para <span class='hostname'/>. Se visitar este site, atacantes podem tentar furtar informação como palavras-passe, emails, ou detalhes de cartão de crédito.">
+<!ENTITY certerror.sts.introPara "O &brandShortName; detetou uma potencial ameaça de segurança e não continuou para <span class='hostname'/> porque este site requer uma ligação segura.">
+
+<!ENTITY certerror.expiredCert.introPara "O &brandShortName; detetou um problema e não continuou para <span class='hostname'/>. O site está mal configurado ou o relógio do computador está definido para a hora errada.">
+<!ENTITY certerror.expiredCert.secondPara2 "É provável que o certificado do site tenha expirado, o que impede o &brandShortName; de se ligar com segurança. Se visitar este site, atacantes podem tentar furtar informação como as suas palavras-passe, emails, ou detalhes de cartões de crédito.">
+<!ENTITY certerror.expiredCert.sts.secondPara "É provável que o certificado do site tenha expirado, o que impede o &brandShortName; de se ligar com segurança.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "O que pode fazer quanto a isto?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>O mais provável é que o problema seja do site e não há nada que possa fazer para o resolver.</p>
+<p>Se está numa rede empresarial ou a utilizar software de anti-vírus, pode entrar em contacto com as equipas de apoio para assistência. Pode também notificar o administrador do site sobre o problema.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>O relógio do seu computador está definido para <span id='wrongSystemTime_systemDate2'/>. Certifique-se que o seu computador está definido para a data, hora e fuso horário corretos nas suas definições de sistema, e depois atualize <span class='hostname'/>.</p>
+<p>Se o seu relógio já está definido para a hora correta, o site deve estar mal configurado e não há nada que possa fazer para resolver o problema. Pode notificar o administrador do site sobre o problema.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>O mais provável é que o problema seja do site e não há nada que possa fazer para o resolver. Pode notificar o administrador do site sobre o problema.</p>
+">
+
+<!ENTITY sharedLongDesc "<ul> <li>O site pode estar temporariamente indisponível ou demasiado ocupado. Tente novamente dentro de alguns momentos.</li> <li>Se não conseguir carregar quaisquer páginas, verifique a ligação do seu computador à rede.</li> <li>Se o seu computador ou rede estiverem protegidos por uma firewall ou proxy, certifique-se de que o &brandShortName; tem permissão para aceder à Web.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>O &brandShortName; impediu o carregamento desta página desta forma porque a página tem uma política de segurança de conteúdo que não o permite.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>O &brandShortName; impediu que esta página fosse carregada porque a página possui uma política X-Frame-Options que proíbe o seu carregamento neste contexto.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>A página que está a tentar ver não pode ser mostrada porque foi detetado um erro na transmissão de dados.</p><ul><li>Por favor contacte os proprietários do site para os informar sobre este problema.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Aceitar o risco e continuar">
+
+<!ENTITY errorReporting.automatic2 "Comunicar erros como este para ajudar a Mozilla a identificar e bloquear sites maliciosos">
+<!ENTITY errorReporting.learnMore "Saber mais…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Por favor, contacte os proprietários do site para os informar sobre este problema.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Informação avançada: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Aviso: Potencial risco de segurança à frente">
+<!ENTITY certerror.sts.pagetitle  "Não se ligou: potencial problema de segurança">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> tem uma política de segurança chamada HTTP Strict Transport Security (HSTS), que significa que o &brandShortName; apenas pode ligar-se em segurança. Não pode adicionar uma exceção para visitar este site.">
+<!ENTITY certerror.copyToClipboard.label "Copiar texto para a área de transferência">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> utiliza tecnologia de segurança que está desatualizada e vulnerável a ataques. Um atacante pode facilmente revelar a informação que você achou que estaria segura. O administrador do site necessita de corrigir o problema no servidor antes de poder visitar o site.</p><p>Código de erro: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Página bloqueada">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> é provavelmente um site seguro, mas uma ligação segura não pôde ser estabelecida. O problema é causado por <span class='mitm-name'/>, que é um software no seu computador ou rede.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Se o seu software antivírus inclui uma funcionalidade que verifica ligações encriptadas (geralmente chamado “verificação da web” ou “verificação de https”), pode desativar essa funcionalidade. Se isso não funcionar, pode remover ou reinstalar o software antivírus.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Se está uma rede corporativa, pode contactar o seu departamento de TI.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Se não estiver familiarizado(a) com <span class='mitm-name'/>, então isto pode ser um ataque e não deve continuar para o site.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Se não estiver familiarizado(a) com <span class='mitm-name'/>, então isto pode ser um ataque, e não há nada que possa fazer para aceder ao site.">
+
+<!ENTITY clockSkewError.longDesc "O seu computador pensa que são <span id='wrongSystemTime_systemDate1'/>, o que impede que o &brandShortName; se ligue corretamente. Para visitar <span class='hostname'></span>, atualize o relógio do seu computador nas suas definições de sistema para a data, hora, e fuso horário corretos, e depois atualize <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Parece que as suas definições de segurança de rede podem estar a causar isto. Pretende que as definições predefinidas sejam restauradas?">
+<!ENTITY prefReset.label "Restaurar definições predefinidas">
+
+<!ENTITY enableTls10.longDesc "Este site poderá não suportar o protocolo TLS 1.2, que é a versão mínima suportada pelo &brandShortName;. A ativação do TLS 1.0 e TLS 1.1 poderá permitir que esta ligação seja bem-sucedida.">
+<!ENTITY enableTls10.note "TLS 1.0 e TLS 1.1 serão desativados de forma permanente numa próxima versão.">
+<!ENTITY enableTls10.label "Ativar TLS 1.0 e 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>A página que está a tentar ver não pode ser mostrada porque um erro de protocolo de rede foi detetado.</p><ul><li>Por favor contacte os proprietários do site para os informar sobre este problema.</li></ul>">

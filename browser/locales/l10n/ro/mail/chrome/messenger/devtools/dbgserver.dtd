@@ -1,0 +1,4 @@
+<!ENTITY options.title "Opțiuni unelte de dezvoltare">
+<!ENTITY options.status.label "Stare:">
+<!ENTITY options.port.label "Port:">
+<!ENTITY options.forcelocal.label "Permite conexiuni de la alte calculatoare">

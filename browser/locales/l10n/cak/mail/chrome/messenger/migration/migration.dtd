@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Ruto'onel K'amoj">
+
+<!ENTITY importFromWin.label            "Kejik' taq Cha'oj, Kinuk'ulem Rub'i' Taqoya'l, Kitz'ib'awuj Ochochib'äl, Taq Chayub'äl chuqa' ch'aqa' chik taq rutzij:">
+<!ENTITY importFromNonWin.label         "Kejik' taq Ajowab'äl, Kinuk'ulem Rub'i' Taqoya'l, Kitz'ib'awuj Ochochib'äl, Taq Chayub'äl, chuqa' ch'aqa' chik taq rutzij:">
+<!ENTITY importSourceNotFound.label     "Majun chokoy nilitäj richin yejik' el taq tzij.">
+
+<!ENTITY importFromNothing.label        "Majun tijik' pe">
+<!ENTITY importFromNothing.accesskey    "M">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 o nimalaxel">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Kek'am Kinuk'ulem chuqa' Kiyakwuj Taqoya'l">
+<!ENTITY importItems.title              "Taq ruch'akulal xkek'am">
+<!ENTITY importItems.label              "Ke'acha' achike taq ruch'akulal xekek'am:">
+
+<!ENTITY migrating.title                "Nijik…">
+<!ENTITY migrating.label                "Tajin nik'am re taq ruch'akulal re'…">
+
+<!ENTITY selectProfile.title            "Tichax rub'anikil">
+<!ENTITY selectProfile.label            "Tikirel yek'am taq tzij chi kikojol re taq rub'anikil re':">
+
+<!ENTITY done.title                     "Xtz'aqät ruk'amik">
+<!ENTITY done.label                     "Pa rub'eyal xek'am re jujun taq ruch'akulal re':">

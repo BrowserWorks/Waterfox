@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Symbolowu lajstu přiměrić">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Móžeće zapiski přidać abo wotstronić, ćahajo je do abo ze symbolowych lajstow.">
+<!ENTITY show.label               "Pokazać:">
+<!ENTITY iconsAndText.label       "Wobrazki a tekst">
+<!ENTITY icons.label              "Wobrazki">
+<!ENTITY text.label               "Tekst">
+<!ENTITY iconsBesideText.label    "Symbole a tekst">
+<!ENTITY useSmallIcons.label      "Małe wobrazki wužiwać">
+<!ENTITY restoreDefaultSet.label  "Standard wobnowić">
+<!ENTITY showTitlebar2.label      "Titulowa lajsta">
+<!ENTITY extraDragSpace2.label    "Ćehnity rum">
+<!ENTITY saveChanges.label        "Hotowo">
+<!ENTITY undoChanges.label        "Změny cofnyć">

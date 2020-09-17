@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- File menu items -->
+
+<!ENTITY openFileCmd.label "Oscail Comhad…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Oscail Suíomh Gréasáin…">
+<!ENTITY openRemoteCmd.accesskey "S">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Leathanaigh Dheireanacha">
+<!ENTITY fileRecentMenu.accesskey "r">
+<!ENTITY saveCmd.label "Sábháil">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Sábháil Mar…">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsChangeEncodingCmd2.label "Sábháil agus Athraigh Ionchódú na gCarachtar">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "I">
+<!ENTITY publishCmd.label "Foilsigh">
+<!ENTITY publishCmd.accesskey "s">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Foilsigh Mar…">
+<!ENTITY publishAsCmd.accesskey "h">
+<!ENTITY fileRevert.label "Fill">
+<!ENTITY fileRevert.accesskey "l">
+<!-- Edit menu items -->
+
+<!ENTITY publishSettings.label "Socruithe an tSuímh Fhoilsithe…">
+<!ENTITY publishSettings.accesskey "F">
+<!-- Toolbar buttons/items -->
+
+<!ENTITY newToolbarCmd.label "Nua">
+<!ENTITY newToolbarCmd.tooltip "Cruthaigh leathanach nua Cumadóra">
+<!ENTITY openToolbarCmd.label "Oscail">
+<!ENTITY openToolbarCmd.tooltip "Oscail comhad logánta">
+<!ENTITY saveToolbarCmd.tooltip "Sábháil comhad i suíomh logánta">
+<!ENTITY publishToolbarCmd.tooltip "Uaslódáil comhad go suíomh i gcéin">

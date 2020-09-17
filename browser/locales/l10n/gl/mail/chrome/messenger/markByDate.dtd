@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "Marcar mensaxes como lidas por data">
+<!ENTITY markByDateLower.label "Marcar como lidas as mensaxes desde:">
+<!ENTITY markByDateLower.accesskey "r">
+<!ENTITY markByDateUpper.label "Para:">
+<!ENTITY markByDateUpper.accesskey "a">

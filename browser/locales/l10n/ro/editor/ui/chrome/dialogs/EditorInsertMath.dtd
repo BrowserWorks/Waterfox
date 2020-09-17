@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Inserează o expresie matematică">
+
+<!ENTITY sourceEditField.label "Introdu codul sursă LaTeX:">
+
+<!ENTITY options.label "Opțiuni">
+<!ENTITY optionInline.label "Mod în linie">
+<!ENTITY optionInline.accesskey "n">
+<!ENTITY optionDisplay.label "Mod de afișare">
+<!ENTITY optionDisplay.accesskey "d">
+<!ENTITY optionLTR.label "Direcție de la stânga la dreapta">
+<!ENTITY optionLTR.accesskey "r">
+<!ENTITY optionRTL.label "Direcție de la dreapta la stânga">
+<!ENTITY optionRTL.accesskey "c">
+
+<!ENTITY insertButton.label "Inserează">
+<!ENTITY insertButton.accesskey "I">

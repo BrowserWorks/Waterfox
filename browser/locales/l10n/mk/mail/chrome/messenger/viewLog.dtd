@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Дневник на филтри">
+<!ENTITY viewLogInfo.text "Дневникот на филтри ги евидентира филтрите кој биле користени за оваа сметка. Користете ја кутијата за избор подолу за да овозможите запишување во дневникот.">
+<!ENTITY clearLog.label "Исчисти го дневникот">
+<!ENTITY clearLog.accesskey "с">
+<!ENTITY enableLog.label "Овозможи дневник на филтри">
+<!ENTITY enableLog.accesskey "е">
+<!ENTITY closeLog.label "Затвори">
+<!ENTITY closeLog.accesskey "о">

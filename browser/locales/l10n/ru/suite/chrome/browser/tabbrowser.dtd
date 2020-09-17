@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Без имени)">
+<!ENTITY  newTab.label           "Создать вкладку">
+<!ENTITY  newTab.accesskey       "С">
+<!ENTITY  closeTab.label         "Закрыть вкладку">
+<!ENTITY  closeTab.accesskey         "З">
+<!ENTITY  closeOtherTabs.label   "Закрыть другие вкладки">
+<!ENTITY  closeOtherTabs.accesskey         "д">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Закрыть вкладки справа">
+<!ENTITY  closeTabsToTheEnd.accesskey "п">
+<!ENTITY  reloadAllTabs.label    "Обновить все вкладки">
+<!ENTITY  reloadAllTabs.accesskey         "О">
+<!ENTITY  reloadTab.label        "Обновить вкладку">
+<!ENTITY  reloadTab.accesskey         "в">
+<!ENTITY  bookmarkGroup.label    "Сделать закладку на группу страниц">
+<!ENTITY  bookmarkGroup.accesskey  "г">
+<!ENTITY  closeTabButton.tooltip   "Закрыть текущую вкладку">
+<!ENTITY  newTabButton.tooltip   "Открыть новую вкладку">
+<!ENTITY  listAllTabs.tooltip    "Список всех вкладок">
+<!ENTITY  undoCloseTab.label    "Восстановить закрытую вкладку">
+<!ENTITY  undoCloseTab.accesskey  "В">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "क्षेत्र सेट गुण">
+
+<!ENTITY Legend.label "लिजेंड">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "लिजेंड संपादित करें:">
+<!ENTITY EditLegendText.accesskey "T">
+<!ENTITY LegendAlign.label "लिजेंड समायोजित करें:">
+<!ENTITY LegendAlign.accesskey "A">
+<!ENTITY AlignDefault.label "मूलभूत">
+<!ENTITY AlignLeft.label "बांयां">
+<!ENTITY AlignCenter.label "केंद्र">
+<!ENTITY AlignRight.label "दांयां">
+
+<!ENTITY RemoveFieldSet.label "क्षेत्र सेट हटायें">
+<!ENTITY RemoveFieldSet.accesskey "R">

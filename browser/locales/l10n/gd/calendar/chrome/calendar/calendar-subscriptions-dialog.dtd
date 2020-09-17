@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Subscriptions Dialog -->
+
+<!ENTITY calendar.subscriptions.dialog.title                            "Fo-sgrìobh do mhìosachain">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Seall mìosachain anns a bheil:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Lorg">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Tagh na mìosachain airson fo-sgrìobhadh thuca:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Fo-sgrìobh">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Sguir dhen fho-sgrìobhadh">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Lorg…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Cha deach seise a lorg.">

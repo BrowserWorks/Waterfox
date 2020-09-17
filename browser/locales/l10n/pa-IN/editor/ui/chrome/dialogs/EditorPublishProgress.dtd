@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label         "ਸਾਇਟ URL:">
+<!ENTITY docSubdir.label       "ਪੇਜ਼ ਸਬ-ਡਾਇਰੈਕਟਰੀ:">
+<!ENTITY otherSubdir.label     "ਚਿੱਤਰ ਸਬ-ਡਾਇਰੈਕਟਰੀ:">
+
+<!ENTITY status.label          "ਪਬਲਿਸ਼ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...">
+<!ENTITY fileList.label        "ਪਬਲਿਸ਼ ਸਥਿਤੀ">
+<!ENTITY succeeded.label       "ਸਫ਼ਲ">
+<!ENTITY failed.label          "ਅਸਫ਼ਲ">
+
+<!ENTITY keepOpen              "ਪਬਲਿਸ਼ ਕਰਨ ਉਪਰੰਤ ਇਹ ਵਿੰਡੋ ਖੁੱਲੀ ਰੱਖੋ।">
+<!ENTITY closeButton.label     "ਬੰਦ ਕਰੋ">

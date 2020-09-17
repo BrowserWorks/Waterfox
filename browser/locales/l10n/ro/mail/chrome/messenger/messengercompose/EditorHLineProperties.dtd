@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Proprietăți linie orizontală">
+
+<!ENTITY dimensionsBox.label "Dimensiuni">
+<!ENTITY heightEditField.label "Înălțime:">
+<!ENTITY heightEditField.accessKey "n">
+<!ENTITY widthEditField.label "Lățime:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY pixelsPopup.value "pixeli">
+<!ENTITY alignmentBox.label "Aliniere">
+<!ENTITY leftRadio.label "La stânga">
+<!ENTITY leftRadio.accessKey "S">
+<!ENTITY centerRadio.label "La centru">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.label "La dreapta">
+<!ENTITY rightRadio.accessKey "D">
+
+<!ENTITY threeDShading.label "Umbrire 3-D">
+<!ENTITY threeDShading.accessKey "U">
+<!ENTITY saveSettings.label "Folosește ca implicit">
+<!ENTITY saveSettings.accessKey "i">
+<!ENTITY saveSettings.tooltip "Salvează aceste setări pentru a le folosi la inserarea de linii orizontale noi">

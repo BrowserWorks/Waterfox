@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Ai ales să deschizi:">
+<!ENTITY  from.label                  "De la:">
+<!ENTITY  actionQuestion.label        "Ce să facă &brandShortName; cu acest fișier?">
+
+<!ENTITY  openWith.label              "Deschide cu">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "Altceva…">
+
+<!ENTITY  saveFile.label              "Salvează fișierul">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "Fă la fel în mod automat pentru fișiere ca acesta de acum înainte.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "care este:">
+
+<!ENTITY  chooseHandlerMac.label      "Alege…">
+<!ENTITY  chooseHandlerMac.accesskey  "A">
+<!ENTITY  chooseHandler.label         "Răsfoiește…">
+<!ENTITY  chooseHandler.accesskey     "f">
+
+<!ENTITY  unknownPromptText.label     "Vrei să salvezi acest fișier?">

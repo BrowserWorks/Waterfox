@@ -1,0 +1,345 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Жазу: (тақырыпсыз)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Файл">
+<!ENTITY fileMenu.accesskey "Ф">
+<!ENTITY newMenu.label "Жаңа">
+<!ENTITY newMenu.accesskey "Ж">
+<!ENTITY newMessage.label "Хабарлама">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "Х">
+<!ENTITY newContact.label "Адрестік кітапша контакты…">
+<!ENTITY newContact.accesskey "к">
+<!ENTITY attachMenu.label "Салынымды қосу">
+<!ENTITY attachMenu.accesskey "С">
+<!ENTITY attachFileCmd.label "Файл(дар)…">
+<!ENTITY attachFileCmd.accesskey "Ф">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Файл сілтемесі">
+<!ENTITY attachCloudCmd.accesskey "Ф">
+<!ENTITY attachPageCmd.label "Веб парағы…">
+<!ENTITY attachPageCmd.accesskey "В">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Жеке карта (vCard)">
+<!ENTITY attachVCardCmd.accesskey "Ж">
+<!ENTITY remindLater.label "Кейінірек еске салу">
+<!ENTITY remindLater.accesskey "е">
+<!ENTITY closeCmd.label "Жабу">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "Ж">
+<!ENTITY saveCmd.label "Сақтау">
+<!ENTITY saveCmd.key "с">
+<!ENTITY saveCmd.accesskey "С">
+<!ENTITY saveAsCmd.label "Қалайша сақтау">
+<!ENTITY saveAsCmd.accesskey "й">
+<!ENTITY saveAsFileCmd.label "Файл…">
+<!ENTITY saveAsFileCmd.accesskey "Ф">
+<!ENTITY saveAsDraftCmd.label "Шимай қағаз">
+<!ENTITY saveAsDraftCmd.accesskey "Ш">
+<!ENTITY saveAsTemplateCmd.label "Үлгі">
+<!ENTITY saveAsTemplateCmd.accesskey "Ү">
+<!ENTITY sendNowCmd.label "Қазір жіберу">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "з">
+<!ENTITY sendLaterCmd.label "Кейін жіберу">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "й">
+<!ENTITY printSetupCmd.label "Парақ баптаулары…">
+<!ENTITY printSetupCmd.accesskey "П">
+<!ENTITY printPreviewCmd.label "Алдын-ала қарау">
+<!ENTITY printPreviewCmd.accesskey "А">
+<!ENTITY printCmd.label "Баспаға шығару…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "п">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Түзету">
+<!ENTITY editMenu.accesskey "Т">
+<!ENTITY undoCmd.label "Болдырмау">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "Б">
+<!ENTITY redoCmd.label "Қайталау">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "й">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "а">
+<!ENTITY deleteCmd.label "Өшіру">
+<!ENTITY deleteCmd.accesskey "ш">
+<!ENTITY editRewrapCmd.label "Қайта тасымалдау">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Салынымды қайта атау…">
+<!ENTITY renameAttachmentCmd.accesskey "а">
+<!ENTITY reorderAttachmentsCmd.label "Салынымдарды қайта реттеу…">
+<!ENTITY reorderAttachmentsCmd.accesskey "а">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Салынымдар панелі">
+<!ENTITY toggleAttachmentPaneCmd.accesskey "м">
+<!ENTITY selectAllCmd.accesskey "Б">
+<!ENTITY findBarCmd.label "Табу…">
+<!ENTITY findBarCmd.accesskey "Т">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Табу және алмастыру…">
+<!ENTITY findReplaceCmd.accesskey "ы">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Іздеуді қайталау">
+<!ENTITY findAgainCmd.accesskey "з">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Алдыңғысын табу">
+<!ENTITY findPrevCmd.accesskey "А">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Салынымдарды қайта реттеу">
+<!ENTITY moveAttachmentTopPanelBtn.label "Үстіне жылжыту">
+<!ENTITY moveAttachmentUpPanelBtn.label "Жоғары жылжыту">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Бірге жылжыту">
+<!ENTITY moveAttachmentDownPanelBtn.label "Төмен жылжыту">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Астына жылжыту">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Сұрыптау: А - Я">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Сұрыптау: Я - А">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Таңдалғанды сұрыптау: А - Я">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Таңдалғанды сұрыптау: Я - А">
+<!ENTITY sortAttachmentsPanelBtn.key "ы">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Түрі">
+<!ENTITY viewMenu.accesskey "р">
+<!ENTITY viewToolbarsMenuNew.label "Саймандар панельдері">
+<!ENTITY viewToolbarsMenuNew.accesskey "С">
+<!ENTITY menubarCmd.label "Мәзір жолағы">
+<!ENTITY menubarCmd.accesskey "М">
+<!ENTITY showCompositionToolbarCmd.label "Құрастыру саймандары">
+<!ENTITY showCompositionToolbarCmd.accesskey "р">
+<!ENTITY showFormattingBarCmd.label "Пішімдеу саймандары">
+<!ENTITY showFormattingBarCmd.accesskey "П">
+<!ENTITY showTaskbarCmd.label "Қалып-күй жолағы">
+<!ENTITY showTaskbarCmd.accesskey "а">
+<!ENTITY customizeToolbar.label "Баптау…">
+<!ENTITY customizeToolbar.accesskey "а">
+
+<!ENTITY addressSidebar.label "Контакттар бүйір панелі">
+<!ENTITY addressSidebar.accesskey "о">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Пішім">
+<!ENTITY formatMenu.accesskey "ш">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Баптаулар">
+<!ENTITY optionsMenu.accesskey "а">
+<!ENTITY checkSpellingCmd2.label "Емлені тексеру…">
+<!ENTITY checkSpellingCmd2.key "м">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "Е">
+<!ENTITY enableInlineSpellChecker.label "Теру кезінде емлені тексеру">
+<!ENTITY enableInlineSpellChecker.accesskey "Т">
+<!ENTITY quoteCmd.label "Хабарламаны дәйексөз ретінде алу">
+<!ENTITY quoteCmd.accesskey "д">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Жеке картаны тіркеу (vCard)">
+<!ENTITY attachVCard.accesskey "к">
+
+<!ENTITY returnReceiptMenu.label "Алу есептемесі">
+<!ENTITY returnReceiptMenu.accesskey "т">
+<!ENTITY dsnMenu.label "Жеткізу күйінің хабарлауы">
+<!ENTITY dsnMenu.accesskey "х">
+<!ENTITY deliveryFormatMenu.label "Жеткізу пішімі">
+<!ENTITY deliveryFormatMenu.accesskey "п">
+<!ENTITY autoFormatCmd.label "Автоанықтау">
+<!ENTITY autoFormatCmd.accesskey "А">
+<!ENTITY plainTextFormatCmd.label "Ашық мәтін">
+<!ENTITY plainTextFormatCmd.accesskey "А">
+<!ENTITY htmlFormatCmd.label "Тек пішімделген мәтін (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "ш">
+<!ENTITY bothFormatCmd.label "Ашық және пішімделген (HTML) мәтін">
+<!ENTITY bothFormatCmd.accesskey "ш">
+<!ENTITY priorityMenu.label "Приоритеті">
+<!ENTITY priorityMenu.accesskey "П">
+<!ENTITY priorityButton.title "Приоритеті">
+<!ENTITY priorityButton.tooltiptext "Хабарлама приоритетін өзгерту">
+<!ENTITY priorityButton.label "Приоритет:">
+<!ENTITY lowestPriorityCmd.label "Ең төмен">
+<!ENTITY lowestPriorityCmd.accesskey "т">
+<!ENTITY lowPriorityCmd.label "Төмен">
+<!ENTITY lowPriorityCmd.accesskey "м">
+<!ENTITY normalPriorityCmd.label "Қалыпты">
+<!ENTITY normalPriorityCmd.accesskey "ы">
+<!ENTITY highPriorityCmd.label "Жоғары">
+<!ENTITY highPriorityCmd.accesskey "Ж">
+<!ENTITY highestPriorityCmd.label "Ең жоғары">
+<!ENTITY highestPriorityCmd.accesskey "ж">
+<!ENTITY fileCarbonCopyCmd.label "Көшірмесін қайда жіберу">
+<!ENTITY fileCarbonCopyCmd.accesskey "б">
+<!ENTITY fileHereMenu.label "Осында орналастыру">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Саймандар">
+<!ENTITY tasksMenu.accesskey "С">
+<!ENTITY messengerCmd.label "Пошта және жаңалықтар топтары">
+<!ENTITY messengerCmd.accesskey "П">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Адрестік кітапша">
+<!ENTITY addressBookCmd.accesskey "А">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Тіркелгі баптаулары">
+<!ENTITY accountManagerCmd2.accesskey "п">
+<!ENTITY accountManagerCmdUnix2.accesskey "п">
+<!ENTITY preferencesCmd2.label "Баптаулар">
+<!ENTITY preferencesCmd2.accesskey "а">
+<!ENTITY preferencesCmdUnix.label "Параметрлер">
+<!ENTITY preferencesCmdUnix.accesskey "м">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Қайыру">
+<!ENTITY bringAllToFront.label "Барлығын алдына қою">
+<!ENTITY zoomWindow.label "Масштаб">
+<!ENTITY windowMenu.label "Терезе">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Жіберу">
+<!ENTITY quoteButton.label "Дәйексөз">
+<!ENTITY addressButton.label "Контакттар">
+<!ENTITY attachButton.label "Жалғау">
+<!ENTITY spellingButton.label "Емлені тексеру">
+<!ENTITY saveButton.label "Сақтау">
+<!ENTITY printButton.label "Баспаға шығару">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Бұл хабарламаны қазір жіберу">
+<!ENTITY sendlaterButton.tooltip "Бұл хабарламаны кейін жіберу">
+<!ENTITY quoteButton.tooltip "Алдыңғы хабарламаны дәйексөз ретінде алу">
+<!ENTITY addressButton.tooltip "Адрестік кітапшадан алушыны таңдау">
+<!ENTITY attachButton.tooltip2 "Салынымды қосу">
+<!ENTITY spellingButton.tooltip "Таңдалғанның немесе толық хабарламаның емлесін тексеру">
+<!ENTITY saveButton.tooltip "Бұл хабарламаны сақтау">
+<!ENTITY cutButton.tooltip              "Қиып алу">
+<!ENTITY copyButton.tooltip             "Көшіріп алу">
+<!ENTITY pasteButton.tooltip            "Кірістіру">
+<!ENTITY printButton.tooltip "Ағымдағы хабарламаны баспаға шығару">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style "width: 8em;">
+<!ENTITY extraRecipients.tooltip "Адрестеу өрістерінің басқа түрлері">
+<!ENTITY fromAddr2.label "Кімнен">
+<!ENTITY fromAddr.accesskey "м">
+<!ENTITY toAddr2.label "Кімге">
+<!ENTITY ccAddr2.label "Көшірме">
+<!ENTITY bccAddr2.label "Жасырын көшірме">
+<!ENTITY replyAddr2.label "Кімге жауап беру">
+<!ENTITY newsgroupsAddr2.label "Жаңалықтар тобы">
+<!ENTITY followupAddr2.label "Жаңалықтар тобына жауап беру">
+<!ENTITY subject2.label "Тақырыбы">
+<!ENTITY subject.accesskey "Т">
+<!ENTITY attachmentBucketCloseButton.tooltip "Салыным панелін жасыру">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "Смайликті кірістіру">
+<!ENTITY smiley1Cmd.label "Күлімдеу">
+<!ENTITY smiley2Cmd.label "Қабағын түю">
+<!ENTITY smiley3Cmd.label "Көз қысу">
+<!ENTITY smiley4Cmd.label "Тілді шығару">
+<!ENTITY smiley5Cmd.label "Күлу">
+<!ENTITY smiley6Cmd.label "Сасып қалу">
+<!ENTITY smiley7Cmd.label "Шешпеген">
+<!ENTITY smiley8Cmd.label "Таң қалу">
+<!ENTITY smiley9Cmd.label "Сүю">
+<!ENTITY smiley10Cmd.label "Айғайлау">
+<!ENTITY smiley11Cmd.label "Тамаша">
+<!ENTITY smiley12Cmd.label "Ақша">
+<!ENTITY smiley13Cmd.label "Ауыздағы аяқ">
+<!ENTITY smiley14Cmd.label "Айыпсыз">
+<!ENTITY smiley15Cmd.label "Жылау">
+<!ENTITY smiley16Cmd.label "Үндемеу">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Ұсыныстар табылмады">
+<!ENTITY spellCheckIgnoreWord.label "Сөзді елемеу">
+<!ENTITY spellCheckIgnoreWord.accesskey "е">
+<!ENTITY spellCheckAddToDictionary.label "Сөздікке қосу">
+<!ENTITY spellCheckAddToDictionary.accesskey "к">
+<!ENTITY undo.label "Болдырмау">
+<!ENTITY undo.accesskey "Б">
+<!ENTITY cut.label "Қиып алу">
+<!ENTITY cut.accesskey "и">
+<!ENTITY copy.label "Көшіріп алу">
+<!ENTITY copy.accesskey "К">
+<!ENTITY paste.label "Кірістіру">
+<!ENTITY paste.accesskey "р">
+<!ENTITY pasteQuote.label "Дәйексөз ретінде кірістіру">
+<!ENTITY pasteQuote.accesskey "Д">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Ашу">
+<!ENTITY openAttachment.accesskey "А">
+<!ENTITY delete.label "Өшіру">
+<!ENTITY delete.accesskey "ш">
+<!ENTITY removeAttachment.label "Салынымды өшіру">
+<!ENTITY removeAttachment.accesskey "ш">
+<!ENTITY renameAttachment.label "Атын ауыстыру…">
+<!ENTITY renameAttachment.accesskey "р">
+<!ENTITY reorderAttachments.label "Салынымдарды қайта реттеу…">
+<!ENTITY reorderAttachments.accesskey "т">
+<!ENTITY removeAllAttachments.label "Барлық салынымды өшіру">
+<!ENTITY removeAllAttachments.accesskey "ш">
+<!ENTITY selectAll.label "Барлығын таңдау">
+<!ENTITY selectAll.accesskey "а">
+<!ENTITY attachFile.label "Файл(дар)ды тіркеу…">
+<!ENTITY attachFile.accesskey "Ф">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "Келесіге түрлендіру…">
+<!ENTITY convertCloud.accesskey "т">
+<!ENTITY cancelUpload.label "Жүктеуден бас тарту">
+<!ENTITY cancelUpload.accesskey "с">
+<!ENTITY convertRegularAttachment.label "Қалыпты салыным">
+<!ENTITY convertRegularAttachment.accesskey "а">
+<!ENTITY attachPage.label "Веб парағын тіркеу…">
+<!ENTITY attachPage.accesskey "В">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Басынан бастап салыным панелін көрсету">
+<!ENTITY initiallyShowAttachmentPane.accesskey "с">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Сөздіктерді қосу…">
+<!ENTITY spellAddDictionaries.accesskey "С">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Контакттар">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Жіберуші адресін баптау…">
+<!ENTITY customizeFromAddress.accesskey "а">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Хабарлама денесі">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Емлені тексеру тілі">
+<!ENTITY encodingStatusPanel.tooltip "Мәтін кодталуы">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Sidefarger og -bakgrunn">
+<!ENTITY pageColors.label "Sidefarger">
+<!ENTITY defaultColorsRadio.label "Leserens standardfarger (Ikke sett farger på siden)">
+<!ENTITY defaultColorsRadio.accessKey "L">
+<!ENTITY defaultColorsRadio.tooltip "Bruk kun fargevalgene i leserens nettleser">
+<!ENTITY customColorsRadio.label "Bruk egendefinerte farger:">
+<!ENTITY customColorsRadio.accessKey "e">
+<!ENTITY customColorsRadio.tooltip "Disse fargevalgene overstyrer nettleserens valg">
+
+<!ENTITY normalText.label "Normal tekst">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Tekst for lenker">
+<!ENTITY linkText.accessKey "T">
+<!ENTITY activeLinkText.label "Tekst for aktive lenker">
+<!ENTITY activeLinkText.accessKey "k">
+<!ENTITY visitedLinkText.label "Tekst for besøkte lenker">
+<!ENTITY visitedLinkText.accessKey "f">
+<!ENTITY background.label "Bakgrunn:">
+<!ENTITY background.accessKey "B">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Bakgrunnsbilde:">
+<!ENTITY backgroundImage.accessKey "a">
+<!ENTITY backgroundImage.tooltip "Bruk en bildefil som bakgrunn på siden">
+<!ENTITY backgroundImage.shortenedDataURI "Forkortet data-URI (ved kopiering vil hele URI-en bli plassert på utklippstavlen)">

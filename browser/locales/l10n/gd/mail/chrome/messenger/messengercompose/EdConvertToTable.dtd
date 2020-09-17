@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Tionndaidh 'na chlàr">
+<!ENTITY instructions1.label   "Cruthaichidh an deasaichear sreath ùr sa chlàr airson gach paragraf dhen taghadh.">
+<!ENTITY instructions2.label   "Tagh an caractair a tha 'ga chleachdadh gus an taghadh a sgaradh 'na cholbhan:">
+<!ENTITY commaRadio.label      "Cromag">
+<!ENTITY spaceRadio.label      "Beàrn">
+<!ENTITY otherRadio.label      "Caractair eile:">
+<!ENTITY deleteCharCheck.label "Sguab às an caractair sgaraidh">
+<!ENTITY collapseSpaces.label  "Leig seachad na beàrnan a bharrachd">
+<!ENTITY collapseSpaces.tooltip "Tionndaidh beàrnan a tha taobh ri thaobh 'na sgaradair a-mhàin">

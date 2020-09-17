@@ -1,0 +1,160 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# nicubunu <nicubunu@gmail.com>
+# stas <stas@nerd.ro>
+# Alexandru Szasz <alexxed@gmail.com>
+# janimo <jani@ubuntu.com>
+# turcan <nicturcan@gmail.com>
+# Laudatti <Laudatti@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Redactare mesaj: (fără subiect)">
+
+<!ENTITY fromAddr.label "De la:">
+<!ENTITY fromAddr.accesskey "D">
+<!ENTITY subject.label  "Subiectul:">
+<!ENTITY subject.accesskey "S">
+<!ENTITY attachments.label "Anexe:">
+<!ENTITY attachments.accesskey "A">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Salvare">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Salvează ca">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsFileCmd.label "Fișier…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Mesaj nefinalizat">
+<!ENTITY saveAsDraftCmd.accesskey "M">
+<!ENTITY saveAsTemplateCmd.label "Șablon">
+<!ENTITY saveAsTemplateCmd.accesskey "a">
+<!ENTITY attachMenu.label "Anexează">
+<!ENTITY attachMenu.accesskey "A">
+<!ENTITY attachFileCmd.label "Fișier(e)…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "Pagină web…">
+<!ENTITY attachPageCmd.accesskey "w">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Fișă personală (vCard)">
+<!ENTITY attachVCardCmd.accesskey "p">
+<!ENTITY sendNowCmd.label "Trimite acum">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "T">
+<!ENTITY sendLaterCmd.label "Trimite mai târziu">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "T">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Înfășoară rândurile">
+<!ENTITY editRewrapCmd.key "L">
+<!ENTITY editRewrapCmd.accesskey  "n">
+<!ENTITY findCmd.label "Caută și înlocuiește…">
+<!ENTITY accountManagerCmd.label "Mail &amp; Newsgroups Account Settings…">
+<!ENTITY accountManagerCmd.accesskey "M">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "Bara de unelte">
+<!ENTITY showComposeToolbarCmd.accesskey "B">
+<!ENTITY showFormatToolbarCmd.label "Bara de formatare">
+<!ENTITY showFormatToolbarCmd.accesskey "f">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Opțiuni">
+<!ENTITY optionsMenu.accesskey "p">
+
+<!ENTITY quoteCmd.label "Citează mesajul">
+<!ENTITY quoteCmd.accesskey "C">
+<!ENTITY selectAddressCmd.label "Select Addresses…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "A">
+
+<!ENTITY checkSpellingCmd2.label "Verifică ortografia…">
+<!ENTITY checkSpellingCmd2.accesskey "V">
+<!ENTITY enableInlineSpellChecker.label "Corectare ortografică în timpul tastării">
+<!ENTITY enableInlineSpellChecker.accesskey "s">
+
+<!ENTITY priorityMenu.label "prioritatea">
+<!ENTITY priorityMenu.accesskey "p">
+<!ENTITY lowestPriorityCmd.label "Cea mai mică">
+<!ENTITY lowestPriorityCmd.accesskey "C">
+<!ENTITY lowPriorityCmd.label "Încet">
+<!ENTITY lowPriorityCmd.accesskey "n">
+<!ENTITY normalPriorityCmd.label "Normală">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Tare">
+<!ENTITY highPriorityCmd.accesskey "T">
+<!ENTITY highestPriorityCmd.label "Cea mai mare">
+<!ENTITY highestPriorityCmd.accesskey "C">
+
+<!ENTITY returnReceiptMenu.label "Confirmare de primire">
+<!ENTITY returnReceiptMenu.accesskey "C">
+<!ENTITY outputFormatMenu.label "Format">
+<!ENTITY outputFormatMenu.accesskey  "F">
+<!ENTITY autoFormatCmd.label "Autodetecție">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Doar text">
+<!ENTITY plainTextFormatCmd.accesskey "D">
+<!ENTITY htmlFormatCmd.label "Doar text îmbogățit (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "r">
+<!ENTITY bothFormatCmd.label "Text și HTML">
+<!ENTITY bothFormatCmd.accesskey "L">
+
+<!ENTITY fileCarbonCopyCmd.label "Trimite copie în">
+<!ENTITY fileCarbonCopyCmd.accesskey "T">
+<!ENTITY fileHereMenu.label "Îndosariază aici">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Trimite">
+<!ENTITY addressButton.label "Adresă proprie">
+<!ENTITY attachButton.label "Anexează">
+<!ENTITY spellingButton.label "Spelling">
+<!ENTITY saveButton.label "Salvare">
+<!ENTITY stopButton.label "Stop">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Address Bar">
+<!ENTITY formatToolbar.tooltip "Bara de formatare">
+<!ENTITY sendButton.tooltip "Trimite acum acest mesaj"> 
+<!ENTITY sendlaterButton.tooltip "Trimite acest mesaj mai târziu"> 
+<!ENTITY addressButton.tooltip "Selectați destinatarul din agenda de contacte"> 
+<!ENTITY attachButton.tooltip "Anexează un fișier la acest mesaj"> 
+<!ENTITY saveButton.tooltip "Salvează acest mesaj"> 
+<!ENTITY stopButton.tooltip "Oprește transferul curent"> 
+
+<!-- context menu items -->
+<!ENTITY spellCheckNoSuggestions.label "(nici o sugestie găsită)">
+<!ENTITY spellCheckIgnoreWord.label "Ignoră cuvânt">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "Adaugă la dicționar">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+
+<!ENTITY openAttachment.label "Deschis">
+<!ENTITY openAttachment.accesskey "D">
+<!ENTITY renameAttachment.label "Redenumește…">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY deleteAttachment.accesskey "D">
+<!ENTITY selectAllAttachments.accesskey "A">
+<!ENTITY attachFile.label "Anexează fișier(e)…">
+<!ENTITY attachFile.accesskey "f">
+<!ENTITY attachPage.label "Anexează pagină web…">
+<!ENTITY attachPage.accesskey "w">

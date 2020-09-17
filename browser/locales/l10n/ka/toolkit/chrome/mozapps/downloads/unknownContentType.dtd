@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "თქვენ ხსნით ფაილს:">
+<!ENTITY  from.label                  "წყარო:">
+<!ENTITY  actionQuestion.label        "როგორ მოეპყრას &brandShortName; ამ ფაილს?">
+
+<!ENTITY  openWith.label              "გახსნის პროგრამით">
+<!ENTITY  openWith.accesskey          "გ">
+<!ENTITY  other.label                 "სხვა…">
+
+<!ENTITY  saveFile.label              "შეინახავს">
+<!ENTITY  saveFile.accesskey          "შ">
+
+<!ENTITY  rememberChoice.label        "მოქმედების დამახსოვრება ყველა მსგავსი ფაილისთვის.">
+<!ENTITY  rememberChoice.accesskey    "მ">
+
+<!ENTITY  whichIs.label              "რომელიც არის:">
+
+<!ENTITY  chooseHandlerMac.label      "არჩევა…">
+<!ENTITY  chooseHandlerMac.accesskey  "ა">
+<!ENTITY  chooseHandler.label         "მოძიება…">
+<!ENTITY  chooseHandler.accesskey     "ო">
+
+<!ENTITY  unknownPromptText.label     "გნებავთ ამ ფაილის შენახვა?">

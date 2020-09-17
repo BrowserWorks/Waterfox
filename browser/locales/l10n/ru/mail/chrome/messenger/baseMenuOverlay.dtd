@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Справка">
+<!ENTITY helpMenu.accesskey "С">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Справка">
+<!ENTITY helpMenuWin.accesskey "С">
+<!ENTITY aboutProduct2.label "О &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "О">
+<!ENTITY helpTroubleshootingInfo.label     "Информация для решения проблем">
+<!ENTITY helpTroubleshootingInfo.accesskey "ф">
+<!ENTITY helpSafeMode.label     "Перезапустить с отключёнными дополнениями…">
+<!ENTITY helpSafeMode.accesskey "з">
+
+<!ENTITY helpSafeMode.stop.label     "Перезапустить с дополнениями">
+<!ENTITY helpSafeMode.stop.accesskey "е">
+<!ENTITY productHelp.label "Помощь по &brandShortName;">
+<!ENTITY productHelp.accesskey "м">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Сочетания клавиш">
+<!ENTITY helpKeyboardShortcuts.accesskey "ч">
+
+<!ENTITY helpFeedbackPage.label "Отправить отзыв…">
+<!ENTITY helpFeedbackPage.accesskey "т">
+
+<!ENTITY helpShowTour2.label "Знакомство с &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey "м">
+
+<!ENTITY helpGetInvolvedPage.label "Принять участие">
+<!ENTITY helpGetInvolvedPage.accesskey "я">
+
+<!ENTITY helpDonationsPage.label "Сделать пожертвование">
+<!ENTITY helpDonationsPage.accesskey "ж">

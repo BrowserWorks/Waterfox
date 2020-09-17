@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Адрес кітапшасын импорттау">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Жазба үшін деректер импортталды: ">
+<!ENTITY fieldMapImport.next.label "Келесі">
+<!ENTITY fieldMapImport.next.accesskey "К">
+<!ENTITY fieldMapImport.previous.label "Алдыңғысы">
+<!ENTITY fieldMapImport.previous.accesskey "А">
+<!ENTITY fieldMapImport.text "Сол жақтағы адрестік кітапша өрістерін оң жақтағы импорттау үшін дұрыс деректермен сәйкестеу үшін Жоғары немесе Төмен жылжытуды қолданыңыз. Импорттағыңыз келмейтін нәрселердің белгішесін алып тастаңыз.">
+<!ENTITY fieldMapImport.up.label "Жоғары жылжыту">
+<!ENTITY fieldMapImport.up.accesskey "Ж">
+<!ENTITY fieldMapImport.down.label "Төмен жылжыту">
+<!ENTITY fieldMapImport.down.accesskey "Т">
+<!ENTITY fieldMapImport.fieldListTitle "Адрес кітапша өрістері">
+<!ENTITY fieldMapImport.dataTitle "Импорттау үшін жазба деректері">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Бірінші жазбада - өріс атаулары">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "Б">

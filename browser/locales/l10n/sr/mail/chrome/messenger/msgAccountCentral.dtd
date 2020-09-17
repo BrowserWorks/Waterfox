@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Е-пошта">
+<!ENTITY readMsgsLink.label           "Читај поруке">
+<!ENTITY composeMsgLink.label         "Напиши нову поруку">
+
+<!ENTITY newsSectionHdr.label         "Новинске групе">
+<!ENTITY subscribeNewsLink.label      "Управљај претплатама на новинске групе">
+
+<!ENTITY feedsSectionHdr.label        "Доводи">
+<!ENTITY subscribeFeeds.label         "Управљај претплатама">
+
+<!ENTITY chat.label                   "Ћаскање">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Налози">
+<!ENTITY subscribeImapFolders.label   "Управљај претплатама фасцикли">
+<!ENTITY settingsLink.label           "Погледај подешавања за овај налог">
+<!ENTITY setupNewAcct.label           "Подесите налог:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Напредне могућности">
+<!ENTITY searchMsgsLink.label         "Претражи поруке">
+<!ENTITY filtersLink.label            "Управљај филтерима порука">
+<!ENTITY junkSettings.label           "Подешавања непожељне поште">
+<!ENTITY offlineLink.label            "Подешавања рада ван мреже">

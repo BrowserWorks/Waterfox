@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Ch'ab'enïk">
+<!ENTITY Contact.accesskey               "C">
+<!ENTITY Name.box                        "B'i'aj">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "B'i'aj:">
+<!ENTITY NameField1.accesskey           "B">
+<!ENTITY NameField2.label               "Ruka'n b'i'aj:">
+<!ENTITY NameField2.accesskey           "R">
+<!ENTITY PhoneticField1.label           "Q'ajatz'ib':">
+<!ENTITY PhoneticField2.label           "Q'ajatz'ib':">
+<!ENTITY DisplayName.label              "Tik'ut pe:">
+<!ENTITY DisplayName.accesskey          "T">
+<!ENTITY preferDisplayName.label        "Jantape' ticha' ri b'i'aj niq'alajisäx pa ruk'exel ri rujub'i'aj rutzijol">
+<!ENTITY preferDisplayName.accesskey    "p">
+<!ENTITY NickName.label                 "Tz'ukun b'i'aj:">
+<!ENTITY NickName.accesskey             "T">
+
+<!ENTITY PrimaryEmail.label             "Taqoya'l:">
+<!ENTITY PrimaryEmail.accesskey         "T">
+<!ENTITY SecondEmail.label              "Ruka'n Taqoya'l:">
+<!ENTITY SecondEmail.accesskey          "a">
+<!ENTITY PreferMailFormat.label         "Ticha' yek'ul taq rutzjol eb'anon achi'el:">
+<!ENTITY PreferMailFormat.accesskey     "y">
+<!ENTITY PlainText.label                "Meb'anikil Cholan Tzij">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Man etaman ta">
+<!ENTITY chatName.label                 "Chat B'i'aj:">
+
+<!ENTITY WorkPhone.label                "Samaj:">
+<!ENTITY WorkPhone.accesskey            "m">
+<!ENTITY HomePhone.label                "Tikirib'äl:">
+<!ENTITY HomePhone.accesskey            "b">
+<!ENTITY FaxNumber.label                "Taqowuj:">
+<!ENTITY FaxNumber.accesskey            "w">
+<!ENTITY PagerNumber.label              "Kanöy winäq:">
+<!ENTITY PagerNumber.accesskey          "y">
+<!ENTITY CellularNumber.label           "Oyonib'äl:">
+<!ENTITY CellularNumber.accesskey       "b">
+
+<!ENTITY Home.tab                       "Ichinan">
+<!ENTITY Home.accesskey                 "I">
+<!ENTITY HomeAddress.label              "Ochochib'äl:">
+<!ENTITY HomeAddress.accesskey          "h">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Tinamït:">
+<!ENTITY HomeCity.accesskey             "n">
+<!ENTITY HomeState.label                "Amaq'/Province:">
+<!ENTITY HomeState.accesskey            "A">
+<!ENTITY HomeZipCode.label              "ZIP/Postal B'itz'ib':">
+<!ENTITY HomeZipCode.accesskey          "Z">
+<!ENTITY HomeCountry.label              "Amaq':">
+<!ENTITY HomeCountry.accesskey          "a">
+<!ENTITY HomeWebPage.label              "Ajk'amaya'l Ruxaq:">
+<!ENTITY HomeWebPage.accesskey          "a">
+<!ENTITY Birthday.label                 "Alaxinem q'ij:">
+<!ENTITY Birthday.accesskey             "A">
+<!ENTITY Month.placeholder              "Ik'">
+<!ENTITY Day.placeholder                "Q'ij">
+<!ENTITY Year.placeholder               "Juna'">
+<!ENTITY Age.label                      "Ajuna':">
+<!ENTITY Age.placeholder                "Rujuna'">
+
+<!ENTITY Work.tab                       "Samaj">
+<!ENTITY Work.accesskey                 "S">
+<!ENTITY JobTitle.label                 "B'i'aj:">
+<!ENTITY JobTitle.accesskey             "i">
+<!ENTITY Department.label               "Tinamital:">
+<!ENTITY Department.accesskey           "m">
+<!ENTITY Company.label                  "Moloj:">
+<!ENTITY Company.accesskey              "o">
+<!ENTITY WorkAddress.label              "Ochochib'äl:">
+<!ENTITY WorkAddress.accesskey          "h">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Tinamït:">
+<!ENTITY WorkCity.accesskey             "m">
+<!ENTITY WorkState.label                "Amaq'/Province:">
+<!ENTITY WorkState.accesskey            "A">
+<!ENTITY WorkZipCode.label              "ZIP/Postal B'itz'ib':">
+<!ENTITY WorkZipCode.accesskey          "Z">
+<!ENTITY WorkCountry.label              "Amaq':">
+<!ENTITY WorkCountry.accesskey          "a">
+<!ENTITY WorkWebPage.label              "Ajk'amaya'l Ruxaq:">
+<!ENTITY WorkWebPage.accesskey          "a">
+
+<!ENTITY Other.tab                      "Juley chik">
+<!ENTITY Other.accesskey                "n">
+<!ENTITY Custom1.label                  "Ichinan 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Ichinan 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Ichinan 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Ichinan 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Ch'utitzijol:">
+<!ENTITY Notes.accesskey                "C">
+
+<!ENTITY Chat.tab                       "Chat">
+<!ENTITY Chat.accesskey                 "a">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "Jabber ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "IRC Nick:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Wachiwäch">
+<!ENTITY Photo.accesskey                "a">
+<!ENTITY GenericPhoto.label             "Ajchijun Wachiwäch">
+<!ENTITY GenericPhoto.accesskey         "A">
+<!ENTITY DefaultPhoto.label             "K'o wi">
+<!ENTITY PhotoFile.label                "Pa re Kematz'ib' re'">
+<!ENTITY PhotoFile.accesskey            "a">
+<!ENTITY BrowsePhoto.label              "Tokik'amayin">
+<!ENTITY BrowsePhoto.accesskey          "k">
+<!ENTITY PhotoURL.label                 "Pan Ajk'amaya'l">
+<!ENTITY PhotoURL.accesskey             "l">
+<!ENTITY PhotoURL.placeholder           "Titz'ajb'äx o titz'ib'äx ri rochochib'al rajk'amaya'l jun wachiwäch">
+<!ENTITY UpdatePhoto.label              "Tik'ex">
+<!ENTITY UpdatePhoto.accesskey          "x">
+<!ENTITY PhotoDropTarget.label          "Tiqirirëx wawe' k'ak'a' wachib'äl">

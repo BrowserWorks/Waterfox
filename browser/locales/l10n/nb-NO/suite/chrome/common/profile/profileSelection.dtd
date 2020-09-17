@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Velg brukerprofil">
+<!ENTITY            profileManager.title "&brandShortName; profilbehandling">
+
+<!ENTITY            manage.label     "Behandle profiler …">
+<!ENTITY            manage.accesskey "B">
+<!ENTITY            select.label     "Bruk profil">
+
+<!ENTITY            availableProfiles.label "Tilgjengelige profiler">
+
+<!ENTITY            introStart.label         "For å få tilgang til din personlige profil, som inneholder lagrede meldinger, innstillinger og annen personlig informasjon, velg profilen fra listen og trykk &start.label; for å starte programøkten.">
+<!ENTITY            introSwitch.label        "For å bytte til en annen profil, som inneholder lagrede meldinger, innstillinger og annen personlig informasjon, velg profilen fra listen og trykk &select.label; for å begynne å bruke profilen.">
+<!ENTITY            profileManagerText.label "&brandShortName; lagrer informasjon om dine innstillinger, bokmerker og lagrede meldinger og andre data i brukerprofilen.">
+
+<!ENTITY            autoSelect.label         "Bruk profilen som standard">
+<!ENTITY            autoSelect.accesskey     "B">
+
+<!ENTITY            start.label              "Start &brandShortName;">
+<!ENTITY            exit.label               "Avslutt">
+
+<!ENTITY            newButton.label          "Lag ny profil…">
+<!ENTITY            newButton.accesskey      "L">
+<!ENTITY            renameButton.label       "Endre profilnavn…">
+<!ENTITY            renameButton.accesskey   "r">
+<!ENTITY            deleteButton.label       "Slett profil…">
+<!ENTITY            deleteButton.accesskey   "S">
+
+<!ENTITY            offlineState.label       "Arbeid frakoblet">
+<!ENTITY            offlineState.accesskey   "o">

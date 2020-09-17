@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                    "Namn:">
+<!ENTITY name.accesskey                "N">
+<!ENTITY description.label             "Opprett som undermappe av:">
+<!ENTITY description.accesskey         "O">
+
+
+<!ENTITY folderSelectionCaption.label  "Vel mapper å søkje i: ">
+<!ENTITY chooseFoldersButton.label     "Vel…">
+<!ENTITY chooseFoldersButton.accesskey "V">
+
+<!ENTITY newFolderButton.label         "Opprett">
+<!ENTITY newFolderButton.accesskey     "O">
+<!ENTITY editFolderButton.label        "Oppdater">
+<!ENTITY editFolderButton.accesskey    "d">

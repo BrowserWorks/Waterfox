@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Nuwe vouer">
+<!ENTITY name.label                 "Naam:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Skep as 'n subvouer van:">
+<!ENTITY description.accesskey      "S">
+<!ENTITY folderRestriction1.label   "Hierdie bediener beperk vouers tot twee spesiale soorte.">
+<!ENTITY folderRestriction2.label   "Laat u nuwe vouer toe om dit te bevat:">
+<!ENTITY foldersOnly.label          "Net vouers">
+<!ENTITY messagesOnly.label         "Net boodskappe">
+
+

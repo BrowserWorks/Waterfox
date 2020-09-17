@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Kontoj de Firefox">
+<!ENTITY aboutAccounts.connected.description "Vi estas konektita kiel">
+<!ENTITY aboutAccounts.syncPreferences.label "Tuŝetu tie ĉi por kontroli la agordojn de Speguli">
+
+<!ENTITY aboutAccounts.noConnection.title "Sen retaliro">
+<!ENTITY aboutAccounts.retry.label "Klopodu denove">
+
+<!ENTITY aboutAccounts.restrictedError.title "Limigita">
+<!ENTITY aboutAccounts.restrictedError.description "Vi ne povas administri kontojn de Firefox el tiu ĉi profilo.">

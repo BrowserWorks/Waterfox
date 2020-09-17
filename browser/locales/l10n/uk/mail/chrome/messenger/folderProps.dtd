@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Властивості">
+
+<!ENTITY generalInfo.label                       "Основна інформація">
+<!ENTITY folderCharsetFallback2.label            "Резервне кодування тексту:">
+<!ENTITY folderCharsetFallback2.accesskey        "к">
+<!ENTITY folderCharsetEnforce2.label             "Застосовувати кодування до всіх повідомлень в теці (індивідуальні налаштування кодування тексту і автовизначення будуть ігноруватися)">
+<!ENTITY folderCharsetEnforce2.accesskey         "З">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Перебудувати файл індекса">
+<!ENTITY folderRebuildSummaryFile2.label         "Відремонтувати теку">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "о">
+<!ENTITY folderRebuildSummaryFile.explanation    "Іноді файл індексу теки (.msf) пошкоджується, і повідомлення можуть здаватись зниклими, або видаленими; зневадження теки може розв'язати ці проблеми.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Включати повідомлення цієї теки до результатів Глобального пошуку">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "Г">
+
+<!ENTITY retention.label "Налаштування збереження повідомлень">
+<!ENTITY retentionUseAccount.label  "Використовувати налаштування мого облікового запису">
+<!ENTITY retentionUseAccount.accesskey "м">
+<!ENTITY daysOld.label "днів">
+<!ENTITY message.label "повідомлень">
+<!ENTITY retentionCleanup.label "Для вивільнення місця на диску старі повідомлення можуть бути видалені.">
+<!ENTITY retentionCleanupImap.label "Щоб вивільнити місце на диску, старі повідомлення можуть бути видалені назавжди. Як локальні копії, так і оригінали на віддаленому сервері.">
+<!ENTITY retentionCleanupPop.label "Щоб вивільнити місце на диску, старі повідомлення можуть бути видалені назавжди, включно з оригіналами на віддаленому сервері.">
+<!ENTITY retentionDeleteMsg.label "Видаляти повідомлення старші за">
+<!ENTITY retentionDeleteMsg.accesskey "л">
+<!ENTITY retentionKeepAll.label "Не видаляти повідомлення">
+<!ENTITY retentionKeepAll.accesskey "Н">
+<!ENTITY retentionKeepRecent.label "Видаляти все крім останніх">
+<!ENTITY retentionKeepRecent.accesskey "о">
+<!ENTITY retentionApplyToFlagged.label "Зберігати повідомлення з зірочкою завжди">
+<!ENTITY retentionApplyToFlagged.accesskey "з">
+
+<!ENTITY folderSynchronizationTab.label          "Синхронізація">
+<!ENTITY folderCheckForNewMessages2.label         "При отриманні нових повідомлень для цього облікового запису, завжди перевіряти цю теку">
+<!ENTITY folderCheckForNewMessages2.accesskey     "п">
+
+<!ENTITY offlineFolder.check.label               "Вибрати цю теку для автономної роботи">
+<!ENTITY offlineFolder.check.accesskey           "В">
+<!ENTITY offlineFolder.button.label              "Завантажити">
+<!ENTITY offlineFolder.button.accesskey          "З">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Вибрати цю групу новин для автономної роботи">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "а">
+<!ENTITY offlineNewsgroup.button.label           "Завантажити">
+<!ENTITY offlineNewsgroup.button.accesskey       "З">
+
+<!ENTITY folderProps.name.label                  "Назва:">
+<!ENTITY folderProps.name.accesskey              "а">
+<!ENTITY folderProps.color.label                 "Колір піктограми:">
+<!ENTITY folderProps.color.accesskey             "л">
+<!ENTITY folderProps.reset.tooltip               "Відновити типовий колір">
+<!ENTITY folderProps.location.label              "Розташування:">
+<!ENTITY folderProps.location.accesskey          "о">
+
+<!ENTITY folderSharingTab.label                  "Сумісне використання">
+<!ENTITY privileges.button.label                 "Привілеї…">
+<!ENTITY privileges.button.accesskey             "П">
+<!ENTITY permissionsDesc.label                   "У вас є наступні права:">
+<!ENTITY folderOtherUsers.label                  "Інші, з доступом до цієї теки:">
+<!ENTITY folderType.label                        "Тип теки:">
+
+<!ENTITY folderQuotaTab.label                    "Квота">
+<!ENTITY folderQuotaUsage.label                  "Використано:">
+<!ENTITY folderQuotaStatus.label                 "Стан:">
+
+<!ENTITY numberOfMessages.label                  "Кількість повідомлень:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "невідома">
+<!ENTITY sizeOnDisk.label                        "Розмір на диску:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "невідомо">

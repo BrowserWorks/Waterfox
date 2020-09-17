@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "За отпадната пошта">
+<!ENTITY window.width "450">
+<!ENTITY info1a.label "&brandShortName; автоматски ги открива новите пораки кои личат на отпадна пошта (попознати како спам). Покрај ваквите пораки &brandShortName; ќе прикаже икона за отпад">
+<!ENTITY info1b.label ".">
+<!ENTITY info2.label "Прво, треба да го тренирате &brandShortName; да открива отпадна пошта со означување на пораките како отпад со помош на копчето „Отпад“.">
+<!ENTITY info3.label "Штом &brandShortName; ќе почне правилно да открива отпадна пошта, можете да ги користите контролите за отпадна пошта за новата отпадна пошта автоматски да се пренесува во папката за отпад.">
+<!ENTITY info4.label "За повеќе информации кликнете на Помош.">

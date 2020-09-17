@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Параметры сервера исходящей почты (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "При настройке ваших адресов электронной почты вы можете использовать сервер из этого списка, выбрав его в качестве Сервера исходящей почты (SMTP), или же вы можете использовать сервер по умолчанию из этого списка, выбрав «Использовать сервер по умолчанию».">
+
+<!ENTITY smtpListAdd.label  "Добавить…">
+<!ENTITY smtpListAdd.accesskey  "Д">
+<!ENTITY smtpListEdit.label "Изменить…">
+<!ENTITY smtpListEdit.accesskey "И">
+<!ENTITY smtpListDelete.label "Удалить">
+<!ENTITY smtpListDelete.accesskey "У">
+<!ENTITY smtpListSetDefault.label "По умолчанию">
+<!ENTITY smtpListSetDefault.accesskey "П">
+
+<!ENTITY serverDetails.label "Параметры выделенного сервера:">
+<!ENTITY serverDescription.label "Описание:">
+<!ENTITY serverName.label "Имя сервера">
+<!ENTITY serverPort.label "Порт:">
+<!ENTITY userName.label   "Имя пользователя:">
+<!ENTITY connectionSecurity.label "Защита соединения: ">
+<!ENTITY authMethod.label   "Метод аутентификации:">

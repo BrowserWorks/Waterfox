@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Lehe avaldamine">
+<!ENTITY windowTitleSettings.label    "Avaldamise sätted">
+
+<!ENTITY publishTab.label             "Avaldamine">
+<!ENTITY settingsTab.label            "Sätted">
+
+<!ENTITY publishButton.label          "Avalda">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Veebilehe nimi:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Vali veebileht, millesse soovid avaldada">
+<!ENTITY newSiteButton.label          "Uus veebileht">
+<!ENTITY newSiteButton.accesskey      "U">
+<!ENTITY docDirList.label             "Veebilehe alamkaust selle lehe jaoks:">
+<!ENTITY docDirList.accesskey         "V">
+<!ENTITY docDirList.tooltip           "Vali või sisesta nimi kaugserveris olevale alamkaustale selle lehe jaoks">
+<!ENTITY publishImgCheckbox.label     "Pildid ja muud failid kaasatakse">
+<!ENTITY publishImgCheckbox.accesskey "P">
+<!ENTITY publishImgCheckbox.tooltip   "Avalda pildid ja muud failid, millele on selle lehe poolt viidatud">
+<!ENTITY sameLocationRadio.label      "kasutatakse sama lehega asukohta">
+<!ENTITY sameLocationRadio.accesskey  "k">
+<!ENTITY sameLocationRadio.tooltip    "Failid avaldatakse samas kohas, kus leht ise">
+<!ENTITY useSubdirRadio.label         "Kasutatakse järgnevat alamkasuta:">
+<!ENTITY useSubdirRadio.accesskey     "s">
+<!ENTITY useSubdirRadio.tooltip       "Failid avaldatakse valitud alamkausta kaugserveris">
+<!ENTITY otherDirList.tooltip         "Vali või sisesta nimi kaugserveris olevale alamkaustale failide jaoks">
+<!ENTITY pageTitle.label              "Lehe pealkiri:">
+<!ENTITY pageTitle.accesskey          "L">
+<!ENTITY pageTitle.tooltip            "Sisesta pealkiri, et tuvastada lehte aknas ja järjehoidjates">
+<!ENTITY pageTitleExample.label       "näiteks: &quot;Minu veebileht&quot;">
+<!ENTITY filename.label               "Failinimi:">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip             "Sisesta nimi selle faili jaoks, kaasa arvatud '.html'">
+<!ENTITY filenameExample.label        "näiteks: &quot;minuleht.html&quot;">
+<!ENTITY setDefaultButton.label       "Määra vaikeväärtuseks">
+<!ENTITY setDefaultButton.accesskey   "S">
+<!ENTITY removeButton.label           "Eemalda veebileht">
+<!ENTITY removeButton.accesskey       "E">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Veebilehtede avaldamine">
+<!ENTITY serverInfo.label             "Serveri andmed">
+<!ENTITY loginInfo.label              "Logimise andmed">
+<!ENTITY siteName.label               "Veebilehe nimi:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "Hüüdnimi, mis tuvastab avalikustatava veebilehe (nt: 'MinuLeht')">
+<!ENTITY siteUrl.label                "Avaldamise aadress (nt: 'ftp://ftp.minuteenusepakkuja.com/minukasutajanimi'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "FTP:// või HTTP:// aadress, mille oled saanud majutust pakkuvalt ettevõttelt">
+<!ENTITY browseUrl.label              "Sinu kodulehe HTTP aadress (nt: 'http://www.minuteenusepakkuja.com/minukasutajanimi'):">
+<!ENTITY browseUrl.accesskey          "S">
+<!ENTITY browseUrl.tooltip            "HTTP:// aadress, millel asub sinu kodukaust (ei sisalda failinime)">
+<!ENTITY username.label               "Kasutajanimi:">
+<!ENTITY username.accesskey           "K">
+<!ENTITY username.tooltip             "Kasutajanimi, mida kasutad, et majutust pakkuva teenusepakkuja serverisse logida">
+<!ENTITY password.label               "Parool:">
+<!ENTITY password.accesskey           "P">
+<!ENTITY password.tooltip             "Kasutajanimega seotud parool">
+<!ENTITY savePassword.label           "Parool salvestatakse">
+<!ENTITY savePassword.accesskey       "r">
+<!ENTITY savePassword.tooltip         "Vali see, kui soovid, et sinu parool säilitatakse paroolihalduri poolt">

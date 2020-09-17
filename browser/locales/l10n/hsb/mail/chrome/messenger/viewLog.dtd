@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Protokol filtrow">
+<!ENTITY viewLogInfo.text "Protokol filtrow dokumentuje, kotre filtry buchu za tute konto nałožene. Wužijće kontrolowy kašćik deleka, zo byšće protokolowanje znjemóžnił.">
+<!ENTITY clearLog.label "Protokol zhašeć">
+<!ENTITY clearLog.accesskey "h">
+<!ENTITY enableLog.label "Protokol filtrow zmóžnić">
+<!ENTITY enableLog.accesskey "P">
+<!ENTITY closeLog.label "Začinić">
+<!ENTITY closeLog.accesskey "Z">

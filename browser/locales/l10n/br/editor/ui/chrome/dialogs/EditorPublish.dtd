@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Embann ar bajenn">
+<!ENTITY windowTitleSettings.label    "Arventennoù ar brudañ">
+<!ENTITY publishTab.label             "Brudañ">
+<!ENTITY settingsTab.label            "Arventennoù">
+<!ENTITY publishButton.label          "Brudañ">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Anv al lec'hienn:">
+<!ENTITY siteList.accesskey           "A">
+<!ENTITY siteList.tooltip             "Dibabit da beseurt lec'hienn e fell deoc'h brudañ">
+<!ENTITY newSiteButton.label          "Lec'hienn nevez">
+<!ENTITY newSiteButton.accesskey      "L">
+<!ENTITY docDirList.label             "Kavlec'h al lec'hienn evit ar bajenn-mañ:">
+<!ENTITY docDirList.accesskey         "K">
+<!ENTITY docDirList.tooltip           "Dibabit pe bizskrivit anv ar c'havlec'h a-bell evit ar bajenn-mañ">
+<!ENTITY publishImgCheckbox.label     "Enderc'hel ar skeudennoù hag ar restroù all">
+<!ENTITY publishImgCheckbox.accesskey "E">
+<!ENTITY publishImgCheckbox.tooltip   "Brudañ ar skeudennoù hag ar restroù all meneget er bajenn-mañ">
+<!ENTITY sameLocationRadio.label      "Implijout ar memes lec'hiadur hag ar bajenn">
+<!ENTITY sameLocationRadio.accesskey  "I">
+<!ENTITY sameLocationRadio.tooltip    "Embann ar restroù er memes lec'hiadur hag ar bajenn">
+<!ENTITY useSubdirRadio.label         "Implijout iskavlec'h-mañ al lec'hienn:">
+<!ENTITY useSubdirRadio.accesskey     "m">
+<!ENTITY useSubdirRadio.tooltip       "Embann ar restroù en iskavlec'h a-bell diuzet">
+<!ENTITY otherDirList.tooltip         "Dibabit pe bizskrivit anv ar c'havlec'h a-bell da belec'h e vo brudet ar restroù">
+<!ENTITY pageTitle.label              "Titl ar bajenn:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Bizskrivit un titl evit anavezout ar bajenn e-barzh ar prenestr pe ar sinedoù">
+<!ENTITY pageTitleExample.label       "skouer: &quot;Ma fajenn Web&quot;">
+<!ENTITY filename.label               "Anv ar restr:">
+<!ENTITY filename.accesskey           "n">
+<!ENTITY filename.tooltip             "Bizskrivit un anv evit ar restr-mañ, en ur enderc'hel '.html' evit ur bajenn web">
+<!ENTITY filenameExample.label        "skouer: &quot;mafajenn.html&quot;">
+<!ENTITY setDefaultButton.label       "Arverañ dre ziouer">
+<!ENTITY setDefaultButton.accesskey   "r">
+<!ENTITY removeButton.label           "Dilemel al lec'hienn">
+<!ENTITY removeButton.accesskey       "l">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Brudañ lec'hiennoù">
+<!ENTITY serverInfo.label             "Stlennoù an dafariad">
+<!ENTITY loginInfo.label              "Stlennoù kennask">
+<!ENTITY siteName.label               "Anv al lec'hienn:">
+<!ENTITY siteName.accesskey           "A">
+<!ENTITY siteName.tooltip             "Ul lesanv evit anavezout al lec'hienn-mañ (skouer: 'MaLec'hienn')">
+<!ENTITY siteUrl.label                "Chomlec'h evit ar brudañ (skouer: 'ftp://ftp.maisp.com/maanvarveriad'):">
+<!ENTITY siteUrl.accesskey            "C">
+<!ENTITY siteUrl.tooltip              "Ar chomlec'h FTP:// pe HTTP:// roet gant ho pourvezer servijoù ar genrouedad (ISP) pe ho herberc'hier lec'hienn">
+<!ENTITY browseUrl.label              "Chomlec'h HTTP ho pennbajenn (skouer: 'http://www.maisp.com/maanvarveriad'):">
+<!ENTITY browseUrl.accesskey          "l">
+<!ENTITY browseUrl.tooltip            "Ar chomlec'h HTTP:// ho penngavlec'h (n'endalc'hit ket an anvioù restr)">
+<!ENTITY username.label               "Anv arveriad:">
+<!ENTITY username.accesskey           "n">
+<!ENTITY username.tooltip             "An anv arveriad a implijit evit kennaskañ ouzh ho pourvezer servijoù ar genrouedad (ISP) pe ho herberc'hier lec'hienn">
+<!ENTITY password.label               "Ger-tremen:">
+<!ENTITY password.accesskey           "G">
+<!ENTITY password.tooltip             "Ar ger-tremen kevredet gant hoc'h anv arveriad">
+<!ENTITY savePassword.label           "Enrollañ ar ger-tremen">
+<!ENTITY savePassword.accesskey       "E">
+<!ENTITY savePassword.tooltip         "Diuzit an dra-mañ evit enrollañ diarvar ho ker-tremen gant an ardoer gerioù-tremen">

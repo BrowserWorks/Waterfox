@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Downloads">
+
+<!ENTITY downloadBehavior.label         "Wanneer een download wordt gestart">
+<!ENTITY doNothing.label                "Niets openen">
+<!ENTITY doNothing.accesskey            "N">
+<!ENTITY openProgressDialog.label       "Een voortgangsdialoogvenster openen">
+<!ENTITY openProgressDialog.accesskey   "E">
+<!ENTITY openDM.label                   "De downloadbeheerder openen">
+<!ENTITY openDM.accesskey               "D">
+<!ENTITY flashWhenOpen.label            "Knipper de downloadbeheerder als deze al open is">
+<!ENTITY flashWhenOpen.accesskey        "K">
+
+<!ENTITY downloadLocation.label         "Bij het opslaan van een bestand">
+<!ENTITY saveTo.label                   "Bestanden opslaan in">
+<!ENTITY saveTo.accesskey               "B">
+<!ENTITY chooseDownloadFolder.label     "Map kiezen…">
+<!ENTITY chooseDownloadFolder.accesskey "M">
+<!ENTITY alwaysAsk.label                "Mij altijd vragen waar bestanden moeten worden opgeslagen">
+<!ENTITY alwaysAsk.accesskey            "v">
+
+<!ENTITY finishedBehavior.label         "Wanneer het downloaden van een bestand is voltooid">
+<!ENTITY playSound.label                "Een geluid afspelen">
+<!ENTITY playSound.accesskey            "u">
+<!ENTITY browse.label                   "Bladeren…">
+<!ENTITY browse.accesskey               "B">
+<!ENTITY playButton.label               "Afspelen">
+<!ENTITY playButton.accesskey           "f">

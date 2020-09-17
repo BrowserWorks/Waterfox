@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+   %brandDTD;
+<!ENTITY aboutLogins.title                       "ဝင်ရောက်မှုများ">
+<!ENTITY aboutLogins.update                      "မွမ်းမံချက်">
+<!ENTITY aboutLogins.emptyLoginText              "သင့် ဝင်ရောက်မှုများကို အမြဲ လုံခြုံစေပါ">
+<!ENTITY aboutLogins.emptyLoginHint              "&brandShortName; ကို အသုံးပြုပြီး သင်သိမ်းဆည်းထားသည့် ဝင်ရောက်မှုအချက်အလက်များကို ဒီနေရာတွင် ပြသပါမည်။">

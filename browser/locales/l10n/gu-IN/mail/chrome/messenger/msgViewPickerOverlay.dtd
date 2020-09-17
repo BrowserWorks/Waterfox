@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "દેખાવ:">
+<!ENTITY viewPicker.accesskey "i">
+<!ENTITY viewAll.label "બધા">
+<!ENTITY viewAll.accesskey "A">
+<!ENTITY viewUnread.label "નહિં વંચાયેલ">
+<!ENTITY viewUnread.accesskey "U">
+<!ENTITY viewTags.label "ટેગો">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "વૈવિધ્યપૂર્ણ દેખાવો">
+<!ENTITY viewCustomViews.accesskey "V">
+<!ENTITY viewVirtualFolder.label "દેખાવને ફોલ્ડર તરીકે સંગ્રહો...">
+<!ENTITY viewVirtualFolder.accesskey "S">
+<!ENTITY viewCustomizeView.label "વૈવિધ્યપૂર્ણ બનાવો...">
+<!ENTITY viewCustomizeView.accesskey "C">

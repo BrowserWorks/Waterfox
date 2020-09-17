@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "캘린더">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "이벤트…">
+<!ENTITY lightning.menupopup.new.event.accesskey "E">
+<!ENTITY lightning.menupopup.new.task.label     "태스크…">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "캘린더…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "n">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "열기">
+<!ENTITY lightning.menupopup.open.accesskey           "O">
+<!ENTITY lightning.menupopup.open.message.label       "메시지 저장…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "M">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "캘린더 파일…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "C">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "캘린더">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "태스크">
+<!ENTITY lightning.menu.view.tasks.accesskey           "k">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "이벤트와 태스크">
+<!ENTITY lightning.menu.eventtask.accesskey            "n">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "이메일:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "클라이언트 측 이메일 예약 선호">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "달력 서버가 예약을 다룬다면 이제부터 속성 창에서 이 달력을 설정 한 후에 이것을 활성화 할 수 있습니다.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "이 설정은 달력 서버가 예약을 다룰때에만 사용할 수 있습니다. 활성화 하면 예약을 서버에 남기지 않고 이메일 기반의 표준을 사용할 수 있게 합니다.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "수락">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "초대 수락">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "모두 수락">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "이벤트애 대한 초대를 모두 수락하기">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "추가 ">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "캘린더에 이벤트 추가">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "거절">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "이벤트 초대 거절">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "모두 거절">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "이벤트에 대한 초대를 모두 거절하기">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "거절">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "반대 의견 거절">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "삭제">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "캘린더에서 삭제">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "상세…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "이벤트 상세 보기">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "이 메시지 보여주지 않기">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "달력">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "캘린더 탭으로 이동">
+<!ENTITY lightning.imipbar.btnMore.label                                    "더 보기">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "더 많은 옵션을 보려면 클릭">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "재확인">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "주최자에게 재확인 메일 보내기">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "재스케줄">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "이벤트 재스케줄">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "복사하여 저장하기">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "이 이벤트를 복사하여 저장합니다. 참석자 정보는 모두 지워집니다.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "불확실">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "이벤트 초대에 불확실로 답하기">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "전부 불확실로 답하기">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "이벤트에 대한 초대에 모두 불확실로 답하기">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "업데이트">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "캘린더의 이벤트 업데이트">
+<!ENTITY lightning.imipbar.description                                      "이 메시지는 이벤트에 대한 안내를 포함하고 있습니다.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "지금 응답 보냄">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "초청한 사람에게 응답 보냄">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "전체 시리즈에 대해 초청한 사람에게 응답 보냄">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "응답 보내지 않음">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "초청한 사람에게 답변을 보내지 않고 참석 여부를 변경함">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "초청한 사람에게 답변을 보내지 않고 시리즈의 참석 여부를 변경함">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "새 캘린더 생성">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Mini-Month 보기">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Mini-Day 보기">
+<!ENTITY todaypane.showMiniday.accesskey  "d">
+<!ENTITY todaypane.showNone.label "감추기">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "오늘 일정 보기">
+<!ENTITY todaypane.showTodayPane.accesskey "o">
+<!ENTITY todaypane.statusButton.label "오늘 일정">

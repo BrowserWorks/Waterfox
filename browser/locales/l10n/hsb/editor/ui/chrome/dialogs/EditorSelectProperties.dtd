@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kajkosće wuběranskeje lisćiny">
+
+<!ENTITY Select.label "Wuběranska lisćina">
+<!ENTITY SelectName.label "Mjeno lisćiny:">
+<!ENTITY SelectName.accesskey "l">
+<!ENTITY SelectSize.label "Wysokosć:">
+<!ENTITY SelectSize.accesskey "W">
+<!ENTITY SelectMultiple.label "Wjelekróćne wuběranje">
+<!ENTITY SelectMultiple.accesskey "b">
+<!ENTITY SelectDisabled.label "Znjemóžnjeny">
+<!ENTITY SelectDisabled.accesskey "Z">
+<!ENTITY SelectTabIndex.label "Tab. indeks:">
+<!ENTITY SelectTabIndex.accesskey "i">
+
+<!ENTITY OptGroup.label "Skupina opcijow">
+<!ENTITY OptGroupLabel.label "Popis:">
+<!ENTITY OptGroupLabel.accesskey "P">
+<!ENTITY OptGroupDisabled.label "Znjemóžnjeny">
+<!ENTITY OptGroupDisabled.accesskey "m">
+
+<!ENTITY Option.label "Opcija">
+<!ENTITY OptionText.label "Tekst:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Hódnota:">
+<!ENTITY OptionValue.accesskey "n">
+<!ENTITY OptionSelected.label "Na spočatku wubrany">
+<!ENTITY OptionSelected.accesskey "r">
+<!ENTITY OptionDisabled.label "Znjemóžnjeny">
+<!ENTITY OptionDisabled.accesskey "n">
+
+<!ENTITY TextHeader.label "Tekst">
+<!ENTITY ValueHeader.label "Hódnota">
+<!ENTITY SelectedHeader.label "Wubrany">
+
+<!ENTITY AddOption.label "Opciju přidać">
+<!ENTITY AddOption.accesskey "c">
+<!ENTITY AddOptGroup.label "Skupinu přidać">
+<!ENTITY AddOptGroup.accesskey "u">
+<!ENTITY RemoveElement.label "Wotstronić">
+<!ENTITY RemoveElement.accesskey "s">
+<!ENTITY MoveElementUp.label "Horje">
+<!ENTITY MoveElementUp.accesskey "H">
+<!ENTITY MoveElementDown.label "Dele">
+<!ENTITY MoveElementDown.accesskey "D">

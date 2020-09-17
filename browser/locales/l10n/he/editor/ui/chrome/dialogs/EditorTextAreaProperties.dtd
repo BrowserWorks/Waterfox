@@ -1,0 +1,40 @@
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "מאפייני אזור טקסט">
+
+<!ENTITY Settings.label "הגדרות">
+
+<!ENTITY TextAreaName.label "שם שדה:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "שורות:">
+<!ENTITY TextAreaRows.accessKey "ש">
+<!ENTITY TextAreaCols.label "עמודות:">
+<!ENTITY TextAreaCols.accessKey "ע">
+<!ENTITY TextAreaReadOnly.label "קריאה בלבד">
+<!ENTITY TextAreaReadOnly.accessKey "ב">
+<!ENTITY TextAreaDisabled.label "לא מאופשר">
+<!ENTITY TextAreaDisabled.accessKey "מ">
+<!ENTITY TextAreaTabIndex.label "מפתח אינדקס:">
+<!ENTITY TextAreaTabIndex.accessKey "א">
+<!ENTITY TextAreaAccessKey.label "מקש גישה:">
+<!ENTITY TextAreaAccessKey.accessKey "ג">
+<!ENTITY InitialText.label "טקסט התחלתי:">
+<!ENTITY InitialText.accessKey "ה">
+
+<!ENTITY TextAreaWrap.label "מצב גלישת שורות:">
+<!ENTITY TextAreaWrap.accessKey "ג">
+<!ENTITY WrapDefault.value "ברירת מחדל">
+<!ENTITY WrapOff.value "כבוי">
+<!ENTITY WrapHard.value "קשיחה">
+<!ENTITY WrapSoft.value "רכה">
+<!ENTITY WrapPhysical.value "פיזית">
+<!ENTITY WrapVirtual.value "וירטואלי">
+

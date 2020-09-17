@@ -1,0 +1,120 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "S'ha produït un problema en carregar la pàgina">
+<!ENTITY retry.label "Proveu-ho de nou">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "No s'ha pogut connectar">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Aquesta adreça està restringida">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "No s'ha trobat el servidor">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Comproveu que no s'hagin introduït errors en teclejar l'adreça, p. ex. <strong>ww</strong>.example.com en comptes de <strong>www</strong>.example.com</li> <li>Si no podeu carregar cap pàgina, comproveu la connexió de xarxa del vostre ordinador.</li> <li>Si el vostre ordinador o la vostra xarxa estan protegits amb un tallafoc o servidor intermediari, assegureu-vos que el &brandShortName; té permís per accedir al web.</li> </ul>">
+
+<!ENTITY fileNotFound.title "No s'ha trobat el fitxer">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Comproveu que el nom del fitxer estigui ben escrit i que les majúscules i minúscules siguin correctes.</li> <li>Comproveu que el fitxer no s'hagi mogut o se li hagi canviat el nom o s'hagi esborrat.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "S'ha denegat l'accés al fitxer">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Pot ser que s'hagi eliminat, que s'hagi traslladat o que els permisos del fitxer n'impedeixin l'accés.</li> </ul>">
+
+<!ENTITY generic.title "Ups.">
+<!ENTITY generic.longDesc "<p>El &brandShortName; no ha pogut carregar aquesta pàgina per algun motiu.</p>">
+
+<!ENTITY malformedURI.title "L'adreça no és vàlida">
+<!ENTITY malformedURI.longDesc "<ul> <li>Les adreces web normalment s'escriuen així: <strong>http://www.example.com/</strong></li> <li>Assegureu-vos que utilitzeu les barres inclinades (<strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "S'ha interromput la connexió">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "El document ha caducat">
+<!ENTITY notCached.longDesc "<p>El document que s'ha sol·licitat no està disponible a la memòria cau.</p><ul><li>Com a mesura de precaució el &brandShortName; no tornarà a sol·licitar automàticament els documents sensibles.</li><li>Cliqueu Torna-ho a provar per tornar a sol·licitar el document al web.</li></ul>">
+
+<!ENTITY netOffline.title "Mode fora de línia">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Premeu «Torna-ho a provar» per canviar a mode en línia i recarregar la pàgina.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Error de codificació del contingut">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Tipus de fitxer insegur">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li> </ul>">
+
+<!ENTITY netReset.title "S'ha reiniciat la connexió">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "S'ha esgotat el temps d'espera de la connexió">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "No s'ha entès l'adreça">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Segurament necessiteu instal·lar algun altre programari per obrir aquesta adreça.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "El servidor intermediari està rebutjant les connexions">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Comproveu els paràmetres del servidor intermediari per assegurar-vos que siguin correctes.</li> <li>Poseu-vos en contacte amb l'administrador de la xarxa per assegurar-vos que el servidor intermediari funciona.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "No s'ha pogut trobar el servidor intermediari">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Comproveu els paràmetres del servidor intermediari per assegurar-vos que siguin correctes.</li> <li>Comproveu que el vostre ordinador té una connexió a la xarxa funcional.</li> <li>Si el vostre ordinador o la vostra xarxa estan protegits per un tallafoc o per un servidor intermediari, assegureu-vos que el &brandShortName; tingui permís per accedir al web.</li> </ul>">
+
+<!ENTITY redirectLoop.title "La pàgina no està redirigint correctament">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Això podria passar per haver inhabilitat o rebutjat l'acceptació de galetes.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Resposta inesperada del servidor">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Assegureu-vos que el vostre sistema té un gestor de seguretat personal instal·lat.</li> <li>Això podria ser a causa d'una configuració no estàndard del servidor.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Ha fallat la connexió segura">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>La pàgina que esteu intentant veure no es pot mostrar perquè no s'ha pogut verificar l'autenticitat de les dades rebudes.</li> <li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Ha fallat la connexió segura">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Això podria ser un problema amb la configuració del servidor, o bé podria ser que algú estigués intentant fer-se passar pel servidor.</li> <li>Si us hi heu connectat sense cap problema alguna altra vegada, l'error podria ser temporal i podeu tornar-ho a provar més tard.</li> </ul>">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>El lloc web podria estar temporalment no disponible o massa ocupat. Torneu-ho a provar d'aquí a uns moments.</li>
+  <li>Si no podeu carregar cap pàgina, comproveu la connexió a la xarxa del vostre ordinador.</li>
+  <li>Si el vostre ordinador o la vostra xarxa estan protegits per un tallafoc o per un servidor intermediari, assegureu-vos que el &brandShortName; tingui permís per accedir al web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Blocat per la política de seguretat del contingut">
+<!ENTITY cspBlocked.longDesc "<p>El &brandShortName; ha impedit que la pàgina es carregui d'aquesta manera perquè la pàgina té una política de seguretat del contingut que no ho permet.</p>">
+
+<!ENTITY xfoBlocked.title "Blocat per la política X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>El &brandShortName; ha impedit que la pàgina es carregui en aquest context perquè la pàgina té una política X-Frame-Options que no ho permet.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Error de contingut malmès">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>La pàgina que esteu intentant veure no es pot mostrar perquè s'ha produït un error en la transmissió de les dades.</p><ul><li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li></ul>">
+
+<!ENTITY securityOverride.linkText "O bé, podeu afegir una excepció…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Treu-me d'aquí!">
+<!ENTITY securityOverride.exceptionButtonLabel "Afegeix una excepció…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>No hauríeu d'afegir una excepció si utilitzeu una connexió d'Internet en què no confieu completament, o si habitualment no soleu veure un avís d'aquest servidor.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "XUL remot">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "La connexió no és segura">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> utilitza una tecnologia de seguretat obsoleta i vulnerable a atacs. Un atacant podria veure fàcilment la informació que altrament pensaríeu que és segura. Per tal que pugueu visitar el lloc, abans l'administrador del lloc web haurà d'arreglar el servidor.</p><p>Codi d'error: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Pàgina blocada">
+
+<!ENTITY networkProtocolError.title "Error del protocol de xarxa">
+<!ENTITY networkProtocolError.longDesc "<p>La pàgina que esteu intentant veure no es pot mostrar perquè s'ha produït un error en el protocol de xarxa.</p><ul><li>Poseu-vos en contacte amb els propietaris del lloc web per informar-los del problema.</li></ul>">

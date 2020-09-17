@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Adresár">
+<!ENTITY Addrbook.accesskey                    "A">
+<!ENTITY GeneratedName.label                   "Meno">
+<!ENTITY GeneratedName.accesskey               "M">
+<!ENTITY PrimaryEmail.label                    "E-mailová adresa">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organizácia">
+<!ENTITY Company.accesskey                     "O">
+<!ENTITY _PhoneticName.label                   "Výslovnosť mena">
+<!ENTITY _PhoneticName.accesskey               "n">
+<!ENTITY NickName.label                        "Prezývka">
+<!ENTITY NickName.accesskey                    "r">
+<!ENTITY SecondEmail.label                     "Ďalšia e-mailová adresa">
+<!ENTITY SecondEmail.accesskey                 "a">
+<!ENTITY Department.label                      "Oddelenie">
+<!ENTITY Department.accesskey                  "d">
+<!ENTITY JobTitle.label                        "Titul">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Mobil">
+<!ENTITY CellularNumber.accesskey              "b">
+<!ENTITY PagerNumber.label                     "Pager">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY FaxNumber.accesskey                   "x">
+<!ENTITY HomePhone.label                       "Telefón domov">
+<!ENTITY HomePhone.accesskey                   "f">
+<!ENTITY WorkPhone.label                       "Telefón do zamestnania">
+<!ENTITY WorkPhone.accesskey                   "d">
+<!ENTITY ScreenName.label                      "Účet pre IM">
+<!ENTITY ScreenName.accesskey                  "I">
+<!ENTITY ChatName.label                        "Meno pre konverzácie">
+<!ENTITY ChatName.accesskey                    "M">
+<!ENTITY sortAscending.label                   "Vzostupne">
+<!ENTITY sortAscending.accesskey               "V">
+<!ENTITY sortDescending.label                  "Zostupne">
+<!ENTITY sortDescending.accesskey              "Z">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "Napísať správu pre">
+<!ENTITY composeEmail.accesskey                "N">
+<!ENTITY copyAddress.label                     "Kopírovať e-mailovú adresu">
+<!ENTITY copyAddress.accesskey                 "K">
+<!ENTITY deleteAddrBookCard.label              "Vymazať">
+<!ENTITY deleteAddrBookCard.accesskey          "V">
+<!ENTITY newAddrBookCard.label                 "Nová karta…">
+<!ENTITY newAddrBookCard.accesskey             "N">
+<!ENTITY newAddrBookMailingList.label          "Nový rozosielací zoznam…">
+<!ENTITY newAddrBookMailingList.accesskey      "r">
+<!ENTITY addrBookCardProperties.label          "Vlastnosti">
+<!ENTITY addrBookCardProperties.accesskey      "l">

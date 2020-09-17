@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kakosći formularnego póla">
+<!ENTITY windowTitleImage.label "Kakosći formularnego wobraza">
+
+<!ENTITY InputType.label "Pólowe typ">
+<!ENTITY InputType.accesskey "P">
+<!ENTITY text.value "Tekst">
+<!ENTITY password.value "Gronidło">
+<!ENTITY checkbox.value "Kontrolowa kašćik">
+<!ENTITY radio.value "Opciski tłocašk">
+<!ENTITY submit.value "Tłocašk za wótpósłanje">
+<!ENTITY reset.value "Tłocašk za slědkstajenje">
+<!ENTITY file.value "Dataja">
+<!ENTITY hidden.value "Schowany">
+<!ENTITY image.value "Wobraz">
+<!ENTITY button.value "Tłocašk">
+
+<!ENTITY InputSettings.label "Pólowe nastajenja">
+<!ENTITY InputName.label "Pólowe mě:">
+<!ENTITY InputName.accesskey "l">
+<!ENTITY GroupName.label "Kupkowe mě:">
+<!ENTITY GroupName.accesskey "m">
+<!ENTITY InputValue.label "Pólowa gódnota:">
+<!ENTITY InputValue.accesskey "o">
+<!ENTITY InitialValue.label "Zachopna gódnota:">
+<!ENTITY InitialValue.accesskey "Z">
+<!ENTITY InputChecked.label "Na zachopjeńku wóznamjenjony">
+<!ENTITY InputChecked.accesskey "N">
+<!ENTITY InputSelected.label "Na zachopjeńku wubrany">
+<!ENTITY InputSelected.accesskey "c">
+<!ENTITY InputReadOnly.label "Jano za cytanje">
+<!ENTITY InputReadOnly.accesskey "J">
+<!ENTITY InputDisabled.label "Znjemóžnjony">
+<!ENTITY InputDisabled.accesskey "e">
+<!ENTITY tabIndex.label "Tabulatorowy indeks:">
+<!ENTITY tabIndex.accesskey "l">
+<!ENTITY TextSize.label "Pólowa wjelikosć:">
+<!ENTITY TextSize.accesskey "o">
+<!ENTITY TextLength.label "Maksimalna dłujkosć:">
+<!ENTITY TextLength.accesskey "d">
+<!ENTITY AccessKey.label "Pśistupna tasta:">
+<!ENTITY AccessKey.accesskey "s">
+<!ENTITY Accept.label "Typy akceptěrowaś:">
+<!ENTITY Accept.accesskey "a">
+
+<!ENTITY ImageProperties.label "Wobrazowe kakosći…">
+<!ENTITY ImageProperties.accesskey "W">

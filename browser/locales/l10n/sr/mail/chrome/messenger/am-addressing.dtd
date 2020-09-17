@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Састављање и адресирање">
+<!ENTITY addressingGroupTitle.label "Адресирање">
+<!ENTITY addressingText.label      "Када се потражују адресе:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Користи моје опште поставке LDAP сервера за овај налог">
+<!ENTITY useGlobal.accesskey       "К">
+<!ENTITY editDirectories.label     "Уреди фасцикле…">
+<!ENTITY editDirectories.accesskey "е">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Користи другачији LDAP сервер:">
+<!ENTITY directories.accesskey     "д">
+<!ENTITY directoriesNone.label     "Ништа">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Састављање">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Састављај поруке у HTML формату">
+<!ENTITY useHtml.accesskey                    "т">
+<!ENTITY autoQuote.label                      "Аутоматски цитирај изворну поруку приликом одговарања">
+<!ENTITY autoQuote.accesskey                  "ц">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Када цитирам,">
+<!ENTITY quoting.accesskey                    "ц">
+<!ENTITY aboveQuote.label                     "почни мој одговор изнад цитата">
+<!ENTITY belowQuote.label                     "почни мој одговор испод цитата">
+<!ENTITY selectAndQuote.label                 "изабери цитат">
+<!ENTITY place.label                          "и стави мој потпис">
+<!ENTITY place.accesskey                      "п">
+<!ENTITY belowText.label                      "испод цитата (препоручено)">
+<!ENTITY aboveText.label                      "испод мог одговора (изнад цитата)">
+<!ENTITY includeSigOnReply.label              "Укључи потпис у одговорима">
+<!ENTITY includeSigOnReply.accesskey          "У">
+<!ENTITY includeSigOnForward.label            "Укључи потпис у прослеђивањима">
+<!ENTITY includeSigOnForward.accesskey        "п">
+
+<!ENTITY globalComposingPrefs.label           "Опште поставке састављања…">
+<!ENTITY globalComposingPrefs.accesskey       "О">
+
+<!ENTITY globalAddressingPrefs.label          "Опште поставке адресирања…">
+<!ENTITY globalAddressingPrefs.accesskey      "п">

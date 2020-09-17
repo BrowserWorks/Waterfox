@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(nimetön)">
+<!ENTITY  newTab.label           "Uusi välilehti">
+<!ENTITY  newTab.accesskey       "U">
+<!ENTITY  closeTab.label         "Sulje välilehti">
+<!ENTITY  closeTab.accesskey         "S">
+<!ENTITY  closeOtherTabs.label   "Sulje muut välilehdet">
+<!ENTITY  closeOtherTabs.accesskey         "m">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Sulje välilehdet oikealla">
+<!ENTITY  closeTabsToTheEnd.accesskey "o">
+<!ENTITY  reloadAllTabs.label    "Päivitä kaikki välilehdet">
+<!ENTITY  reloadAllTabs.accesskey         "ä">
+<!ENTITY  reloadTab.label        "Päivitä välilehti">
+<!ENTITY  reloadTab.accesskey         "P">
+<!ENTITY  bookmarkGroup.label    "Lisää välilehdet kirjanmerkkeihin…">
+<!ENTITY  bookmarkGroup.accesskey  "v">
+<!ENTITY  closeTabButton.tooltip   "Sulje avoin välilehti">
+<!ENTITY  newTabButton.tooltip   "Avaa uusi välilehti">
+<!ENTITY  listAllTabs.tooltip    "Luetteloi kaikki välilehdet">
+<!ENTITY  undoCloseTab.label    "Kumoa Sulje välilehti">
+<!ENTITY  undoCloseTab.accesskey  "K">

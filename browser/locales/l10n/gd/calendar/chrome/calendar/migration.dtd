@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Ion-phortadh dàta">
+<!ENTITY migration.welcome "Fàilte ort">
+<!ENTITY migration.importing "Ag ion-phortadh">
+<!ENTITY migration.list.description "'S urrainn do &brandShortName; dàta mìosachain ion-phortadh o iomadh prògram coitcheann. Chaidh dàta a lorg sna prògraman a leanas air a' choimpiutair agad. Saoil an tagh thu a tha thu airson dàta ion-phortadh uapa?">
+<!ENTITY migration.progress.description "Ag ion-phortadh an dàta a thagh thu">

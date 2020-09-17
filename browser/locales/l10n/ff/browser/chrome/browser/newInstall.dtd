@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Kabaruuji teeŋtuɗi">
+<!ENTITY sync "Ngam yahdin'de kabaruuji ɗi ndannduɗaa kisa e Firfox e ngol aafgol &brandShortName; seŋoro &syncBrand.fxAccount.label; maa.">
+<!ENTITY continue-button "Jokku">
+
+<!ENTITY mainText "Ngol aafgol &brandShortName; ina jogii heftinirde hesere. Nde lollintaa maantore, pinle, e cuɓoraaɗe kuutoro e gaafe goɗɗe Firefox (ina jeyaa heen Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition, and Firefox Nightly) e oo ordinateer.">

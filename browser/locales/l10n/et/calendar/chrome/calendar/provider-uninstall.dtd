@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Teenusepakkuja eemaldamine">
+<!ENTITY providerUninstall.accept.label                    "Lõpeta valitute tellimine">
+<!ENTITY providerUninstall.accept.accesskey                "L">
+<!ENTITY providerUninstall.cancel.label                    "Jäta lisa alles">
+<!ENTITY providerUninstall.cancel.accesskey                "J">
+<!ENTITY providerUninstall.preName.label                   "Oled eemaldamiseks või keelamiseks valinud:">
+<!ENTITY providerUninstall.postName.label                  "Seetõttu keelatakse alljärgnevad kalendrid.">
+<!ENTITY providerUninstall.reinstallNote.label             "Kui sa ei kavatse seda teenusepakkujat uuesti paigaldada, võid sellest teenusepakkujast sõltuvate kalendrite tellimise lõpetada.">

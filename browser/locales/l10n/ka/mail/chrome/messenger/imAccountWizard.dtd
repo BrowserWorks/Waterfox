@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "სასაუბროს ანგარიშის მეგზური">
+
+<!ENTITY accountProtocolTitle.label   "სასაუბროს ქსელი">
+<!ENTITY accountProtocolInfo.label    "გთხოვთ შეარჩიოთ ქსელი თქვენი ანგარიშისთვის.">
+<!ENTITY accountProtocolField.label   "ქსელი:">
+<!ENTITY accountProtocolGetMore.label "სხვა…">
+
+<!ENTITY accountUsernameTitle.label   "სახელი">
+<!ENTITY accountUsernameDuplicate.label "ეს ანგარიში უკვე გამართულია!">
+
+<!ENTITY accountPasswordTitle.label   "პაროლი">
+<!ENTITY accountPasswordInfo.label    "გთხოვთ მიუთითოთ თქვენი პაროლი ქვედა დაფაზე.">
+<!ENTITY accountPasswordField.label   "პაროლი:">
+<!ENTITY accountPasswordManager.label "თქვენს მითითებულ პაროლს პაროლიების მმართველი შეინახავს. დატოვეთ ცარიელი, თუ გსურთ პაროლი ყოველ ჯერზე შეიტანოთ ამ ანგარიშით შესვლისას.">
+
+<!ENTITY accountAdvancedTitle.label   "გაფართოებული პარამეტრები">
+<!ENTITY accountAdvancedInfo.label    "სურვილისამებრ, შეგიძლიათ ამ ნაბიჯის გამოტოვება.">
+<!ENTITY accountAdvanced.newMailNotification.label   "შეტყობინება ელფოსტით">
+<!ENTITY accountAliasGroupbox.caption "ლოკალური ფსევდონიმი">
+<!ENTITY accountAliasField.label      "ფსევდონიმი:">
+<!ENTITY accountAliasInfo.label       "იგი მხოლოდ თქვენს საუბრებში გამოჩნდება, გარეშე პირები ვერ იხილავენ.">
+<!ENTITY accountProxySettings.caption "პროქსის პარამეტრები">
+<!ENTITY accountProxySettings.change.label     "შეცვლა…">
+<!ENTITY accountProxySettings.change.accessKey "ც">
+
+<!ENTITY accountSummaryTitle.label   "შეჯამება">
+<!ENTITY accountSummaryInfo.label    "თქვენი მითითებული მონაცემების შეჯამება. გთხოვთ ყურადღებით გადახედოთ ანგარიშის შექმნამდე.">
+<!ENTITY accountSummary.connectNow.label "დაკავშირება ახლავე.">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Invitations Dialog -->
+
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Pozivnice">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Ažuriranje popisa pozivnica.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Nisu pronađene nepotvrđene pozivnice.">
+<!-- Calendar Invitations List -->
+
+<!ENTITY calendar.invitations.list.accept.button.label                  "Prihvati">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Odbij">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Ponavljajući događaj">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Cjelodnevni događaj">
+<!ENTITY calendar.invitations.list.location.text                        "Lokacija: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Organizator: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Sudionik: ">
+<!ENTITY calendar.invitations.list.none.text                            "Nitko">

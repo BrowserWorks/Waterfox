@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "მისამართების წიგნაკი">
+<!ENTITY Addrbook.accesskey                    "წ">
+<!ENTITY GeneratedName.label                   "სახელი">
+<!ENTITY GeneratedName.accesskey               "ს">
+<!ENTITY PrimaryEmail.label                    "ელფოსტა">
+<!ENTITY PrimaryEmail.accesskey                "ე">
+<!ENTITY Company.label                         "დაწესებულება">
+<!ENTITY Company.accesskey                     "ზ">
+<!ENTITY _PhoneticName.label                   "სახელი გამოითქმის">
+<!ENTITY _PhoneticName.accesskey               "ქ">
+<!ENTITY NickName.label                        "მეტსახელი">
+<!ENTITY NickName.accesskey                    "ტ">
+<!ENTITY SecondEmail.label                     "დამატებითი ელფოსტა">
+<!ENTITY SecondEmail.accesskey                 "დ">
+<!ENTITY Department.label                      "განყოფილება">
+<!ENTITY Department.accesskey                  "ყ">
+<!ENTITY JobTitle.label                        "დასახელება">
+<!ENTITY JobTitle.accesskey                    "ხ">
+<!ENTITY CellularNumber.label                  "მობილური">
+<!ENTITY CellularNumber.accesskey              "მ">
+<!ENTITY PagerNumber.label                     "პეიჯერი">
+<!ENTITY PagerNumber.accesskey                 "ჯ">
+<!ENTITY FaxNumber.label                       "ფაქსი">
+<!ENTITY FaxNumber.accesskey                   "ფ">
+<!ENTITY HomePhone.label                       "სახლის ტელეფონი">
+<!ENTITY HomePhone.accesskey                   "ლ">
+<!ENTITY WorkPhone.label                       "სამსახურის ტელეფონი">
+<!ENTITY WorkPhone.accesskey                   "უ">
+<!ENTITY ChatName.label                        "სახელი სასაუბროსთვის">
+<!ENTITY ChatName.accesskey                    "ბ">
+<!ENTITY sortAscending.label                   "აღმავალი">
+<!ENTITY sortAscending.accesskey               "ღ">
+<!ENTITY sortDescending.label                  "დაღმავალი">
+<!ENTITY sortDescending.accesskey              "ვ">

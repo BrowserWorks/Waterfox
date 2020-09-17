@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "מצא והחלף">
+<!ENTITY findField.label "מצא טקסט:">
+<!ENTITY findField.accesskey "מ">
+<!ENTITY replaceField.label "החלף עם:">
+<!ENTITY replaceField.accesskey "ע">
+<!ENTITY caseSensitiveCheckbox.label "התאם אותיות גדולות/קטנות">
+<!ENTITY caseSensitiveCheckbox.accesskey "ת">
+<!ENTITY wrapCheckbox.label "המשך חיפוש מתחילת הדף">
+<!ENTITY wrapCheckbox.accesskey "ת">
+<!ENTITY backwardsCheckbox.label "חפש לאחור">
+<!ENTITY backwardsCheckbox.accesskey "א">
+<!ENTITY findNextButton.label "מצא את הבא">
+<!ENTITY findNextButton.accesskey "ב">
+<!ENTITY replaceButton.label "החלף">
+<!ENTITY replaceButton.accesskey "ח">
+<!ENTITY replaceAndFindButton.label "החלף ומצא">
+<!ENTITY replaceAndFindButton.accesskey "מ">
+<!ENTITY replaceAllButton.label "החלף הכול">
+<!ENTITY replaceAllButton.accesskey "ה">
+<!ENTITY closeButton.label "סגירה">
+<!ENTITY closeButton.accesskey "ס">

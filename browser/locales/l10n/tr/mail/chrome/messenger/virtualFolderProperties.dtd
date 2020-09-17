@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Yeni Kayıtlı Arama Dizini">
+<!ENTITY name.label                 "İsim:">
+<!ENTITY name.accesskey             "s">
+<!ENTITY description.label          "Buranın alt dizini olarak oluştur:">
+<!ENTITY description.accesskey      "d">
+
+<!ENTITY searchTermCaption.label "Arama kriterini bu kayıtlı arama dizini için yapılandır: ">
+
+<!ENTITY folderSelectionCaption.label "Aranacak dizinleri seçin: ">
+<!ENTITY chooseFoldersButton.label "Seçin…">
+<!ENTITY chooseFoldersButton.accesskey "S">
+
+<!ENTITY searchOnline.label "Çevrimiçi ara (IMAP ve haber grubu dizindeki için güncel sonuçlar verir ama dizin açma süresini artırır)">
+<!ENTITY searchOnline.accesskey "A">
+<!ENTITY newFolderButton.label       "Oluştur">
+<!ENTITY newFolderButton.accesskey   "u">
+<!ENTITY editFolderButton.label      "Güncelle">
+<!ENTITY editFolderButton.accesskey  "G">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName; туралы">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; сынама түрі және тұрақсыз болуы мүмкін.">
+<!ENTITY aboutPage.checkForUpdates.link         "Жаңартуларға тексеру »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Жаңартуларды іздеу…">
+<!ENTITY aboutPage.checkForUpdates.none         "Жаңартулар жоқ">
+<!ENTITY aboutPage.checkForUpdates.available2   "Жаңартуды жүктеп алу">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Жаңарту жүктелуде…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Жаңартуды орнату">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "Қолдау">
+<!ENTITY aboutPage.privacyPolicy.label          "Жекелік саясаты">
+<!ENTITY aboutPage.rights.label                 "Құқықтарыңыз жөнінде біліңіз">
+<!ENTITY aboutPage.relNotes.label               "Шығарылым ескертпесі">
+<!ENTITY aboutPage.credits.label                "Жасағандар">
+<!ENTITY aboutPage.license.label                "Лицензиялық ақпарат">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox және Firefox логотипі Mozilla Foundation ұйымының сауда белгілері болып табылады.">

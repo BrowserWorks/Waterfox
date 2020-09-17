@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "HTML मेल प्रश्न">
+
+<!ENTITY recipient.label "केही प्रापक HTML मेल प्राप्त गर्न सक्षम भएको रूपमा सूचीकृत गरिएको छैन ।">
+
+<!ENTITY question.label "तपाईँ सन्देशलाई सादा पाठमा रूपान्तरण गर्न चाहनुहुन्छ वा जे भए पनि यसलाई HTML मा पठाउन चाहनुहुन्छ ?">
+
+<!ENTITY plainTextAndHtml.label "सादा पाठ र HTML मा पठाउनुहोस्">
+<!ENTITY plainTextOnly.label "सादा पाठमा मात्र पठाउनुहोस्">
+<!ENTITY htmlOnly.label "HTML मा मात्र पठाउनुहोस्">
+
+<!ENTITY send.label "पठाउनुहोस्">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Hanternoz" >
+<!ENTITY time.noon "Kreisteiz" >
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+
+<!ENTITY day.1.Ddd "Sul" >
+<!ENTITY day.1.Ddd.accesskey "S">
+<!ENTITY day.2.Ddd "Lun" >
+<!ENTITY day.2.Ddd.accesskey "L">
+<!ENTITY day.3.Ddd "Meu" >
+<!ENTITY day.3.Ddd.accesskey "M">
+<!ENTITY day.4.Ddd "Mer" >
+<!ENTITY day.4.Ddd.accesskey "e">
+<!ENTITY day.5.Ddd "Yao" >
+<!ENTITY day.5.Ddd.accesskey "Y">
+<!ENTITY day.6.Ddd "Gwe" >
+<!ENTITY day.6.Ddd.accesskey "G">
+<!ENTITY day.7.Ddd "Sad" >
+<!ENTITY day.7.Ddd.accesskey "S">
+
+<!ENTITY day.1.name "Sul" >
+<!ENTITY day.2.name "Lun" >
+<!ENTITY day.3.name "Meurzh" >
+<!ENTITY day.4.name "Merc'her" >
+<!ENTITY day.5.name "Yaou" >
+<!ENTITY day.6.name "Gwener" >
+<!ENTITY day.7.name "Sadorn" >
+
+<!ENTITY month.1.name "Genver" >
+<!ENTITY month.2.name "C'hwevrer" >
+<!ENTITY month.3.name "Meurzh" >
+<!ENTITY month.4.name "Ebrel" >
+<!ENTITY month.5.name "Mae" >
+<!ENTITY month.6.name "Even" >
+<!ENTITY month.7.name "Gouere" >
+<!ENTITY month.8.name "Eost" >
+<!ENTITY month.9.name "Gwengolo" >
+<!ENTITY month.10.name "Here" >
+<!ENTITY month.11.name "Du" >
+<!ENTITY month.12.name "Kerzu" >
+
+<!ENTITY onemonthbackward.tooltip "Ur miz kent" >
+<!ENTITY onemonthforward.tooltip "Ur miz war-raok" >
+<!ENTITY showToday.tooltip "Mont da Hiziv">
+<!ENTITY onedayforward.tooltip "Un devezh war-raok">
+<!ENTITY onedaybackward.tooltip "Un devezh kent">
+<!ENTITY showselectedday.tooltip "Diskouez darvoudoù an devezh diuzet">

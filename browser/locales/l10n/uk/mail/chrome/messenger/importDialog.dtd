@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Імпорт">
+<!ENTITY importAll.label          "Імпортувати все">
+<!ENTITY importAll.accesskey      "с">
+<!ENTITY importMail.label         "Пошту">
+<!ENTITY importMail.accesskey     "П">
+<!ENTITY importFeeds.label        "Підписки">
+<!ENTITY importFeeds.accesskey    "і">
+<!ENTITY importAddressbook.label  "Адресні книжки">
+<!ENTITY importAddressbook.accesskey "А">
+<!ENTITY importSettings.label     "Налаштування">
+<!ENTITY importSettings.accesskey "Н">
+<!ENTITY importFilters.label      "Фільтри">
+<!ENTITY importFilters.accesskey  "Ф">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Майстер імпорту пошти &brandShortName;">
+<!ENTITY importShortDesc.label    "Імпорт повідомлень, адресних книг, налаштувань і фільтрів з інших програм">
+
+<!ENTITY importDescription1.label "Цей майстер імпортує повідомлення, адресні книги, налаштування чи/та фільтри з інших поштових програм та поширених форматів адресних книг до &brandShortName;.">
+<!ENTITY importDescription2.label "Імпортована одного разу, ця інформація буде доступна для вас з поштового клієнта &brandShortName; і/або адресної книги.">
+
+<!ENTITY selectDescription.label  "Виберіть програму, з якої хочете провести імпорт:">
+<!ENTITY selectDescriptionB.label "Виберіть існуючий обліковий запис або створіть новий:">
+<!ENTITY selectDescription.accesskey "В">
+<!ENTITY acctName.label           "Назва:">
+<!ENTITY acctName.accesskey       "Н">
+<!ENTITY noModulesFound.label     "Не знайдено програми чи файлу для імпорту даних.">
+
+<!ENTITY back.label               "&lt; Назад">
+<!ENTITY forward.label            "Далі &gt;">
+<!ENTITY finish.label             "Готово">
+<!ENTITY cancel.label             "Скасувати">
+
+<!ENTITY select.label             "Виберіть те, що бажаєте імпортувати:">
+
+<!ENTITY title.label              "Заголовок">
+<!ENTITY processing.label         "Триває імпорт…">

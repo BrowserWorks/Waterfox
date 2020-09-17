@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.proxies.title "Пасярэднікі">
+<!ENTITY pref.proxies.desc "Пасярэднік – гэта сеткавая служба, якая можа сітаваць і паскараць ваша злучэнне з Інтэрнэтам.">
+<!ENTITY proxyTitle.label "Наладка пасярэднікаў дзеля доступу ў Інтэрнэт">
+<!ENTITY directTypeRadio.label "Непасрэднае злучэнне з Інтэрнэтам">
+<!ENTITY directTypeRadio.accesskey "Н">
+<!ENTITY systemTypeRadio.label "Ужываць сістэмныя наладжванні пасярэднікаў">
+<!ENTITY systemTypeRadio.accesskey "У">
+<!ENTITY manualTypeRadio.label "Ручная наладка пасярэднікаў:">
+<!ENTITY manualTypeRadio.accesskey "Р">
+<!ENTITY wpadTypeRadio.label "Самастойна выявіць наладку пасярэдніка">
+<!ENTITY wpadTypeRadio.accesskey "С">
+<!ENTITY autoTypeRadio.label "URL самастойнай наладкі пасярэднікаў:">
+<!ENTITY autoTypeRadio.accesskey "с">
+<!ENTITY reload.label "Абнавіць">
+<!ENTITY reload.accesskey "А">
+<!ENTITY http.label "Пасярэднік:">
+<!ENTITY http.accesskey "я">
+<!ENTITY port.label "Порт:">
+<!ENTITY HTTPPort.accesskey "о">
+<!ENTITY advanced.label "Пашыраны…">
+<!ENTITY advanced.accesskey "П">
+<!ENTITY noproxy.label "Без пасярэдніка:">
+<!ENTITY noproxy.accesskey "Б">
+<!ENTITY noproxyExplain.label "Прыклад: .mozilla.org, .net.nz, 192.168.1.0/24">

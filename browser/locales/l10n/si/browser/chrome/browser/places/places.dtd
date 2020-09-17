@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "පුස්තකාලය">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "පිළිවෙලට සකසන්න">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "ඔබගේ පිටුසළකුණු පෙළගසන්න">
+
+<!ENTITY file.close.label               "වසන්න">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "දර්ශනය">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "දසුන වෙනස් කරන්න">
+<!ENTITY view.columns.label             "තීරු දර්ශනය">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "අනුපිළිවෙලට සැකසු">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "අනුපිළිවෙලට නොසැකසු">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "A > Z පිළිවෙළ">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A පිළිවෙළ">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "HTML වෙතින් පිටුලකුණු ආයාත කිරීම…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "HTML වෙත පිටුලකුණු නිර්යාත කිරීම…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Browser වෙනත් බ්‍රව්සරයකින් දත්ත ආයාත කිරීම…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "රක්‍ෂිතය…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "යාළි පිහිටුවන්න…">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "ගොනුව තෝරන්න…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "නම">
+<!ENTITY col.tags.label          "ලේබල">
+<!ENTITY col.url.label           "පිහිටුම">
+<!ENTITY col.mostrecentvisit.label "වඩා මෑත පිවිසුම">
+<!ENTITY col.visitcount.label    "පිවිසුම් එකතුව">
+<!ENTITY col.dateadded.label     "එක් කළා">
+<!ENTITY col.lastmodified.label  "අවසන් වෙනස්කම">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "ආයාත සහ රක්‍ෂිත">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "ඔබගේ පිටුසළකුණු ආයාතකර ආරක්ෂිත කොපියක් ගන්න">
+
+<!ENTITY backButton.tooltip  "පසුපසට යන්න">
+
+<!ENTITY forwardButton.tooltip  "ඉදිරියට යන්න">
+
+<!ENTITY detailsPane.selectAnItemText.description "වත්කම් දර්ශනයට සහ සැකසීමට අයිතමයක් තෝරන්න">
+

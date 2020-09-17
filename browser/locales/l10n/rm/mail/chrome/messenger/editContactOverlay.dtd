@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Stizzar">
+<!ENTITY editContactPanelDeleteContact.accesskey "z">
+
+<!ENTITY editContactName.label "Num:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "E-mail:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Cudeschet d'adressas:">
+<!ENTITY editContactAddressBook.accesskey "a">
+
+<!ENTITY editContactPanelDone.label "Terminar">
+<!ENTITY editContactPanelDone.accesskey "T">
+
+<!ENTITY contactMoveDisabledWarning.description "Ti na pos betg modifitgar il cudeschet d'adressas perquai ch'il contact figurescha en ina glista d'e-mail.">

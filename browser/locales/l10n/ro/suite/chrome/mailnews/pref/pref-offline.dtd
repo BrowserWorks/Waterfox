@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# nicubunu <nicubunu@gmail.com>
+# janimo <jani@ubuntu.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Network &amp; Storage">
+<!ENTITY pref.offline.caption             "Offline">
+<!ENTITY textStartUp                      "La pornire:">
+<!ENTITY textStartUp.accesskey            "L">
+<!ENTITY menuitemRememberPrevState        "Memorează starea online precedentă">
+<!ENTITY menuitemAskMe                    "Întreabă-mă despre starea online la pornire">
+<!ENTITY menuitemAlwaysOnline             "Pornește întotdeauna online">
+<!ENTITY menuitemAlwaysOffline            "Always start up offline">
+<!ENTITY menuitemAutomatic                "Detect automatically (if available)">
+<!ENTITY textGoingOnline                  "Doriți să se expedieze mesajele netrimise când lucrați online?">
+<!ENTITY radioAutoSend                    "da">
+<!ENTITY radioAutoSend.accesskey          "d">
+<!ENTITY radioNotSend                     "nu">
+<!ENTITY radioNotSend.accesskey           "n">
+<!ENTITY radioAskUnsent                   "Întreabă-mă">
+<!ENTITY radioAskUnsent.accesskey         "n">
+<!ENTITY textGoingOffline                 "Doriți să se descarce mesajele pentru uz offline când alegeți să lucrați offline?">
+<!ENTITY radioAutoDownload                "da">
+<!ENTITY radioAutoDownload.accesskey      "d">
+<!ENTITY radioNotDownload                 "nu">
+<!ENTITY radioNotDownload.accesskey       "n">
+<!ENTITY radioAskDownload                 "Întreabă-mă">
+<!ENTITY radioAskDownload.accesskey       "n">
+<!ENTITY mailConnections.caption          "Mail Connections">
+<!ENTITY mailnewsTimeout.label            "Connection timeout:">
+<!ENTITY mailnewsTimeout.accesskey        "m">
+<!ENTITY mailnewsTimeoutSeconds.label     "seconds">
+<!ENTITY Diskspace                        "Avertizare spațiu de disc">
+<!ENTITY offlineCompact.label             "Compactează dosarele dacă asta economisește peste">
+<!ENTITY offlineCompact.accesskey         "C">
+<!ENTITY mb.label                         "MB">

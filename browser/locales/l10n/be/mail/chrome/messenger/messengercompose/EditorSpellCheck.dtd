@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Праверка правапісу">
+
+<!ENTITY misspelledWord.label "Слова з памылкамі:">
+<!ENTITY wordEditField.label "Замяніць (чым):">
+<!ENTITY wordEditField.accessKey "я">
+<!ENTITY checkwordButton.label "Праверыць слова">
+<!ENTITY checkwordButton.accessKey "л">
+<!ENTITY suggestions.label "Прапановы:">
+<!ENTITY suggestions.accessKey "П">
+<!ENTITY ignoreButton.label "Ігнараваць">
+<!ENTITY ignoreButton.accessKey "І">
+<!ENTITY ignoreAllButton.label "Ігнараваць усе">
+<!ENTITY ignoreAllButton.accessKey "с">
+<!ENTITY replaceButton.label "Замяніць">
+<!ENTITY replaceButton.accessKey "З">
+<!ENTITY replaceAllButton.label "Замяніць усе">
+<!ENTITY replaceAllButton.accessKey "У">
+<!ENTITY stopButton.label "Спыніць">
+<!ENTITY stopButton.accessKey "С">
+<!ENTITY userDictionary.label "Асабісты слоўнік:">
+<!ENTITY moreDictionaries.label "Загрузіць іншыя слоўнікі…">
+<!ENTITY addToUserDictionaryButton.label "Дадаць слова">
+<!ENTITY addToUserDictionaryButton.accessKey "а">
+<!ENTITY editUserDictionaryButton.label "Рэдагаваць…">
+<!ENTITY editUserDictionaryButton.accessKey "Р">
+<!ENTITY recheckButton2.label "Паўторна праверыць тэкст">
+<!ENTITY recheckButton2.accessKey "П">
+<!ENTITY closeButton.label "Зачыніць">
+<!ENTITY closeButton.accessKey "ч">
+<!ENTITY sendButton.label "Даслаць">
+<!ENTITY sendButton.accessKey "Д">
+<!ENTITY languagePopup.label "Мова:">
+<!ENTITY languagePopup.accessKey "М">

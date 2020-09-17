@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName; পরিচিতি">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; হচ্ছে পরীক্ষামূলক সংস্করণ এবং অস্থিতিশীল।">
+<!ENTITY aboutPage.checkForUpdates.link         "হালনাগাদ যাচাই করুন»">
+<!ENTITY aboutPage.checkForUpdates.checking     "হালনাগাদ অনুসন্ধান করা হচ্ছে...">
+<!ENTITY aboutPage.checkForUpdates.none         "কোন হালনাগাদ বিদ্যমান নেই">
+<!ENTITY aboutPage.checkForUpdates.available2   "হালনাগাদ ডাউনলোড করুন">
+<!ENTITY aboutPage.checkForUpdates.downloading  "হালনাগাদ ডাউনলোড করা হচ্ছে...">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "হালনাগাদ ইনস্টল করুন">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "সাপোর্ট">
+<!ENTITY aboutPage.privacyPolicy.label          "গোপনীয়তা নীতিমালা">
+<!ENTITY aboutPage.rights.label                 "আপনার অধিকার জানুন">
+<!ENTITY aboutPage.relNotes.label               "রিলিজ নোট">
+<!ENTITY aboutPage.credits.label                "স্বীকৃতি">
+<!ENTITY aboutPage.license.label                "লাইসেন্সিং তথ্য">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox এবং Firefox লোগোসমূহ Mozilla Foundation এর নিবন্ধনকৃত ট্রেডমার্ক।">

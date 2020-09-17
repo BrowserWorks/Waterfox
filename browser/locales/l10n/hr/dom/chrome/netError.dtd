@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Greška pri učitavanju stranice">
+<!ENTITY retry.label "Pokušaj ponovo">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Neuspjelo povezivanje">
+<!ENTITY connectionFailure.longDesc "<p>Iako je ime stranice ispravno, preglednik nije u stanju uspostaviti vezu.</p><ul><li>Možda je stranica privremeno nedostupna? Pokušaj ponovo kasnije.</li><li>Možeš li pregledati druge stranice? Provjeri mrežne postavke računala.</li><li>Je li tvoje računalo ili mreža zaštićena vatrozidom ili proxyem? Neispravne postavke mogu onemogućiti pregledavanje interneta.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Ulaz zabranjen zbog sigurnosih razloga">
+<!ENTITY deniedPortAccess.longDesc "<p>Zatražena adresa ima definiran ulaz (npr. <q>mozilla.org:80</q> za ulaz 80 na mozilla.org) koji se inače koristi za <em>druge</em> radnje, a ne pretraživanje. Pretraživač je prekinuo zahtjev za tvoje zaštite i sigurnosti.</p>">
+
+<!ENTITY dnsNotFound.title "Adresa nije pronađena">
+<!ENTITY dnsNotFound.longDesc "<p>Preglednik nije pronašao poslužitelja za navedenu adresu.</p><ul><li>Je li adresa krivo upisana? (npr. <q><strong>ww</strong>.mozilla.org</q> umjesto <q><strong>www</strong>mozilla.org</q>)</li><li>Je li ova domena stvarno postoji? Možda joj je istekla registracija.</li><li>Ne možeš pregledati druge stranice? Provjeri mrežne postavke i postavke DNS poslužitelja.</li><li>Je li tvoje računalo zaštićeno vatrozidom ili proxyem? Neispravne postavke mogu onemogućiti pregledavanje.</li></ul>">
+
+<!ENTITY fileNotFound.title "Datoteka nije pronađena">
+<!ENTITY fileNotFound.longDesc "<ul><li>Možda je uklonjena, premještena ili joj je ime promijenjeno?</li><li>Postoji li pravopisna ili nekakva tipografska greška?</li><li>Imate li dovoljna prava za pristup traženoj datoteci?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Pristup datoteci je odbijen">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Možda je uklonjena, premještena ili dozvole za datoteku spriječavaju pristup.</li></ul>">
+
+<!ENTITY generic.title "Nije moguće dovršiti zahtjev">
+<!ENTITY generic.longDesc "<p>Dodatne informacije o ovom problemu ili grešci trenutačno nisu dostupne.</p>">
+
+<!ENTITY malformedURI.title "Neispravna adresa">
+<!ENTITY malformedURI.longDesc "<p>Dana adresa nije u prepoznatljivom obliku. Molim, provjerite postoji li greška u unosu u lokacijskoj traci.</p>">
+
+<!ENTITY netInterrupt.title "Prijenos podataka prekinut">
+<!ENTITY netInterrupt.longDesc "<p>Preglednik se uspješno povezao, ali je veza prekinuta prilikom prijenosa podataka. Pokušaj ponovo.</p><ul><li>Ne možeš pregledati ni druge stranice? Provjeri mrežnu povezanost računala.</li><li>Ako još uvijek imaš problema, za pomoć se obrati svojem administratoru ili pružatelju internet usluga.</li></ul>">
+
+<!ENTITY notCached.title "Dokument je istekao">
+<!ENTITY notCached.longDesc "<p>Traženi dokument nije dostupan u priručnoj memoriji preglednika.</p><ul><li>. Iz sigurnosnih razloga, preglednik neće automatski ponovo zatražiti osjetljive dokumente.</li><li>Pritisni gumb „Pokušaj ponovo” za ponovno traženje dokumenta s web-stranice.</li></ul>">
+
+<!ENTITY netOffline.title "Izvanmrežni način rada">
+<!ENTITY netOffline.longDesc2 "<p>Web preglednik je u izvanmrežnom načinu rada i ne može se spojiti na traženu stavku.</p><ul><li>Je li računalo spojeno na aktivnu mrežu?</li><li>Klikni na „Pokušaj ponovo” za uključivanje mrežnog načina rada i ponovno učitavanje stranice.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Greška dekodiranja sadržaja">
+<!ENTITY contentEncodingError.longDesc "<p>Stranicu koju pokušavaš vidjeti nije moguće prikazati, jer koristi neispravni ili nepodržani oblik komprimiranja.</p><ul><li>Kontaktira vlasnike stranica i obavijesti ih o ovom problemu.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Nesigurni tip datoteke">
+<!ENTITY unsafeContentType.longDesc "<ul>
+  <li>Kontaktiraj vlasnike web-stranice i obavijesti ih o ovom problemu.</li>
+</ul>">
+
+<!ENTITY netReset.title "Veza prekinuta">
+<!ENTITY netReset.longDesc "<p>Mrežna veza je prekinuta prilikom uspostavljanja veze. Pokušaj ponovo.</p>">
+
+<!ENTITY netTimeout.title "Isteklo vrijeme veze">
+<!ENTITY netTimeout.longDesc "<p>Zatražena stranica nije odgovorila na zahtjev te je pretraživač prestao čekati odgovor.</p><ul><li>Možda je poslužitelj opterećen velikom količinom zahtjeva ili je privremeno ostao bez napajanja? Pokušaj ponovo kasnije.</li><li>Možeš li pregledati ostale stranice? Provjeri mrežnu vezu računala.</li><li>Je li tvoje računalo ili mreža zaštićena vatrozidom ili proxyem? Neispravne postavke mogu prouzročiti probleme prilikom pregledavanja weba.</li><li>Ukoliko još uvijek imaš probleme, obrati se administratoru mreže ili pružatelju internet usluge.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Nepoznat protokol">
+<!ENTITY unknownProtocolFound.longDesc "<p>Adresa definira protkol (npr. <q>xyz://</q>) kojeg pretraživač ne poznaje ili se ne može povezati sa zatraženom stranicom.</p><ul><li>Pokušavaš li pristupiti multimedijskim ili drugim netekstualnim uslugama? Provjeri ima li stranica dodatnih zahtjeva.</li><li>Neki protokoli zahtijevaju program ili priključke treće strane, kako bi ih pretraživač mogao prepoznati.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxy poslužitelj odbija povezivanje">
+<!ENTITY proxyConnectFailure.longDesc "<p>Preglednik je postavljen da koristi proxy poslužitelj, ali proxy poslužitelj odbija povezivanje.</p><ul><li>Jesu li proxy postavke ispravne? Provjeri postavke i pokušaj ponovo.</li><li>Dozvoljava li proxy usluga povezivanje iz ove mreže?</li><li>Ukoliko još uvijek imaš problema, obrati se administratoru mreže ili pružatelju internet usluge.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Proxy poslužitelj nije pronađen">
+<!ENTITY proxyResolveFailure.longDesc "<p>Preglednik je postavljen da koristi proxy poslužitelj, ali ga nije moguće naći.</p><ul><li>Jesu li proxy postavke ispravne? Provjeri postavke i pokušaj ponovo.</li><li>Je li računalo povezano na aktivnu mrežu?</li><li>Ako još uvijek imaš problema, obrati se administratoru mreže ili pružatelju internet usluge.</li></ul>">
+
+<!ENTITY redirectLoop.title "Petlja preusmjeravanja">
+<!ENTITY redirectLoop.longDesc "<p>Preglednik je odustao od dohvaćanja zatražene stranice. Stranica preusmjerava zahtjev na takav način, da on nikada ne može biti ispunjen.</p><ul><li>Jesu li kolačići za ovu stranicu deaktivirani ili blokirani?</li><li><em>OPASKA</em>: Ako prihvaćanje kolačića stranice ne riješi problem, vrlo vjerojatno se radi o probleu s konfiguracijom poslužitelja, a ne tvog računala.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Neispravan odgovor">
+<!ENTITY unknownSocketType.longDesc "<p>Stranica je na mreži zahtjev odgovorila na neočekivani način, te stoga pretraživač ne može nastaviti.</p>">
+
+<!ENTITY nssFailure2.title "Sigurna veza nije uspjela">
+<!ENTITY nssFailure2.longDesc2 "<p>Stranicu koju pokušavaš vidjeti nije moguće prikazati, jer nije moguće provjeriti autentičnost primljenih podataka.</p><ul><li>Kontaktiraj vlasnike web-stranice i obavijesti ih o ovom problemu.</li></ul>">
+
+<!ENTITY nssBadCert.title "Sigurna veza nije uspjela">
+<!ENTITY nssBadCert.longDesc2 "<ul>
+<li>Možda se radi o problemu s postavkama na poslužitelju ili možda netko pokušava oponašati ovaj poslužitelj.</li>
+<li>Ako si se na ovaj poslužitelj u prošlosti bez problema spajao/la, moguće je da se radi o privremenoj grešci, stoga pokušaj ponovo kasnije.</li>
+</ul>">
+
+<!ENTITY securityOverride.linkText "Ili možete dodati iznimku…">
+<!ENTITY securityOverride.warningContent "<p>Nemoj dodavati iznimke ako koristiš internetsku vezu kojoj ne vjeruješ u potpunosti ili ako nisi ranije viđao/la upozorenje za ovaj poslužitelj.</p> <p>Ako ipak želiš dodati iznimku za ovu stranicu, to možeš učiniti u naprednim postavkama šifriranja.</p>">
+
+<!ENTITY cspBlocked.title "Blokirala sigurnosna politika sadržaja">
+<!ENTITY cspBlocked.longDesc "<p>Preglednik je zaustavio učitavanje ove stranice na ovaj način jer stranica ima sigurnosnu politiku sadržaja koja to zabranjuje.</p>">
+
+<!ENTITY xfoBlocked.title "Blokiralo X-Frame-Options pravilo">
+<!ENTITY xfoBlocked.longDesc "<p>Preglednik je spriječio učitavanje ove stranice u ovom kontekstu jer ona sadrži X-Frame-Options pravilo koje to ne dopušta.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Greška neispravnog sadržaja">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Stranicu koju pokušavaš vidjeti nije moguće prikazati zbog greške u prijenosu podataka.</p><ul><li>Kontaktiraj vlasnike web-stranice i obavijesti ih o ovom problemu.</li></ul>">
+
+<!ENTITY remoteXUL.title "Udaljeni XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontaktiraj vlasnike web-stranice i obavijesti ih o ovom problemu.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Tvoja veza nije sigurna">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> koristi sigurnosne tehnologije koje su zastarjele i podložne napadima. Napadač može jednostavno otkriti informacije za koje ste smatrali da su sigurne. Administrator web stranice će trebati popraviti poslužitelj prije nego možete posjetiti stranicu.</p><p>Kod greške: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blokirana stranica">
+
+<!ENTITY networkProtocolError.title "Greška mrežnog protokola">
+<!ENTITY networkProtocolError.longDesc "<p>Stranicu koju pokušavaš vidjeti nije moguće prikazati zbog greške u mrežnom protokolu.</p><ul><li>Kontaktiraj vlasnike web-stranice i obavijesti ih o ovom problemu.</li></ul>">

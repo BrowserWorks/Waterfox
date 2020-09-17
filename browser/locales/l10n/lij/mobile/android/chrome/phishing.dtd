@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Pòrtime feua de chi!">
+<!ENTITY safeb.palm.decline.label "Ignòra sto alarme">
+<!ENTITY safeb.palm.reportPage.label "Perché sta pagina a l'é stæta bloca?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Conseggio de <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Pagina de atacco segnala!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "A pagina web<span id='malware_sitename'/> a l'é stæta segnalâ comme 'na pagina de atacco e a l'é stæta blocâ da-e teu preferense de seguessa.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>E pagine de atacco preuvan a instalâ de aplicaçioin che aröban e informaçioin privæ, adeuvian o teu computer pe atacâ i atri ò aroinan o teu computer</p><p>Quarche pagina de atacco a peu mette in gio aplicaçioin peigoze ma tante no fonçionan sensa a conoscensa ò o permisso di propietai.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Scito inganevole!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "A pagina in <span id='phishing_sitename'/> a l'é segnalâ comme 'n scito inganevole a l'é stæta blocâ da-e teu preferense de seguessa.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>I sciti inganevoli son fæti pe inbrogiate e fate fâ quarcösa de pericolozo, comme instalâ programmi ò rivelâ informaçioin personâ comme pòule segrette, numeri de telefono ò carte de credito.</p><p>Se ti scrivi de informaçioin drento sta pagina peu ese che t'aröban l'identitæ ò atri mastrussi.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Segnalou comme scito con software indeziderou!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "O scito <span id='unwanted_sitename'/> o l'é segnalou comme scito con do software indeziderou e o l'é blocou in baze a-e inpostaçioin de seguessa.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "I sciti con do software indeziderou çercan de instalâ programmi che peuan fa de gazibbe e avei de consegoense inaspetæ in sciô scistema.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Sto scito o peu contegnî do malware">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; o l'à blocòu sta pagina perché a peu provâ a instalâ de aplicaçioin pericoloze che aröban ò scancelan e teu informaçioin (prezenpio, föto, paròlle segrete, mesaggi e carte de credito).">

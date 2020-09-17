@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Konto sätted">
+<!ENTITY accountName.label "Konto nimi:">
+<!ENTITY accountName.accesskey "n">
+<!ENTITY identityTitle.label "Vaikeidentiteet">
+<!ENTITY identityDesc.label "Igal kontol on identiteet, mida teised inimesed näevad sinu kirju lugedes.">
+<!ENTITY name.label "Sinu nimi:">
+<!ENTITY name.accesskey "S">
+<!ENTITY email.label "E-posti aadress:">
+<!ENTITY email.accesskey "E">
+<!ENTITY replyTo.label "Vastuse aadress:">
+<!ENTITY replyTo.accesskey "V">
+<!ENTITY replyTo.placeholder "Saajad vastavad sellele teisele aadressile">
+<!ENTITY organization.label "Organisatsioon:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Signatuur:">
+<!ENTITY signatureText.accesskey "t">
+<!ENTITY signatureHtml.label "Kasutatakse HTMLi (näiteks &lt;b&gt;paks kiri&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "K">
+<!ENTITY signatureFile.label "Signatuur lisatakse failist (tekst, HTML või pilt):">
+<!ENTITY signatureFile.accesskey "l">
+<!ENTITY edit.label "Redigeeri...">
+<!ENTITY choose.label "Vali...">
+<!ENTITY choose.accesskey "V">
+<!ENTITY editVCard.label "Redigeeri visiitkaarti...">
+<!ENTITY editVCard.accesskey "i">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Kirjadele lisatakse visiitkaart (vCard)">
+<!ENTITY attachVCard.accesskey "c">
+
+<!ENTITY manageIdentities.label "Halda identiteete...">
+<!ENTITY manageIdentities.accesskey "H">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Väljuva e-posti server (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "kasutatakse vaikimisi serverit">
+
+<!ENTITY smtpServerEdit.label "Redigeeri SMTP-serverit…">
+<!ENTITY smtpServerEdit.accesskey "P">

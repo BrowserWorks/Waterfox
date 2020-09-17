@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Қасиеттері">
+
+<!ENTITY generalInfo.label                       "Жалпы мәлімет">
+<!ENTITY folderCharsetFallback2.label            "Қосалқы мәтін кодталуы:">
+<!ENTITY folderCharsetFallback2.accesskey        "т">
+<!ENTITY folderCharsetEnforce2.label             "Бумадағы барлық хабарламалар үшін кодтауды іске асыру (хабарламалардың жеке кодталу баптаулары және автоанықтауды елемейміз)">
+<!ENTITY folderCharsetEnforce2.accesskey         "а">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Қорытынды файл индексін қайта құрастыру">
+<!ENTITY folderRebuildSummaryFile2.label         "Буманы жөндеу">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "н">
+<!ENTITY folderRebuildSummaryFile.explanation    "Кейде бума индексі файлдары (.msf) зақымдалады, және хабарламалар жоғалған ретінде, немесе өшірілген хабарламалар қайта көрсетілуі мүмкін; буманы жөндеу осындай мәселелелерді шеше алады.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Бұл бумадағы хабарламаларды Глобалды іздеу нәтижелеріне қосу">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "Г">
+
+<!ENTITY retention.label "Сақтау саясаты">
+<!ENTITY retentionUseAccount.label  "Тіркелгімнің баптауларын қолдану">
+<!ENTITY retentionUseAccount.accesskey "а">
+<!ENTITY daysOld.label "күннен ескі">
+<!ENTITY message.label "хабарлама">
+<!ENTITY retentionCleanup.label "Диск орнын босату үшін, ескі хабарламаларды толығымен өшіруге болады.">
+<!ENTITY retentionCleanupImap.label "Диск орнын босату үшін, ескі хабарламаларды толығымен өшіруге болады, соның ішінде жергілікті көшірмелер және қашықтағы сервердегі түпнұсқалар.">
+<!ENTITY retentionCleanupPop.label "Диск орнын босату үшін, ескі хабарламаларды толығымен өшіруге болады, соның ішінде қашықтағы сервердегі түпнұсқалар.">
+<!ENTITY retentionDeleteMsg.label "Келесіден үлкен хабарламаларды өшіру">
+<!ENTITY retentionDeleteMsg.accesskey "м">
+<!ENTITY retentionKeepAll.label "Хабарламаларды өшірмеу">
+<!ENTITY retentionKeepAll.accesskey "м">
+<!ENTITY retentionKeepRecent.label "Барлығын өшіру, тек соңғыларын қалдырып">
+<!ENTITY retentionKeepRecent.accesskey "т">
+<!ENTITY retentionApplyToFlagged.label "Жұлдызшалы хабарламаларды әрқашан сақтау">
+<!ENTITY retentionApplyToFlagged.accesskey "т">
+
+<!ENTITY folderSynchronizationTab.label          "Синхрондау">
+<!ENTITY folderCheckForNewMessages2.label         "Бұл тіркелгі үшін жаңа хабарламаларды алу кезінде, бұл буманы әрқашан тексеру">
+<!ENTITY folderCheckForNewMessages2.accesskey     "к">
+
+<!ENTITY offlineFolder.check.label               "Бұл буманы желіден тыс қолдану үшін таңдау">
+<!ENTITY offlineFolder.check.accesskey           "т">
+<!ENTITY offlineFolder.button.label              "Қазір жүктеп алу">
+<!ENTITY offlineFolder.button.accesskey          "ж">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Бұл жаңалықтар тобын желіден тыс қолдану үшін таңдау">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "ы">
+<!ENTITY offlineNewsgroup.button.label           "Қазір жүктеп алу">
+<!ENTITY offlineNewsgroup.button.accesskey       "ж">
+
+<!ENTITY folderProps.name.label                  "Аты:">
+<!ENTITY folderProps.name.accesskey              "А">
+<!ENTITY folderProps.color.label                 "Таңбаша түсі:">
+<!ENTITY folderProps.color.accesskey             "а">
+<!ENTITY folderProps.reset.tooltip               "Бастапқы түсін қалпына келтіру">
+<!ENTITY folderProps.location.label              "Орналасуы:">
+<!ENTITY folderProps.location.accesskey          "О">
+
+<!ENTITY folderSharingTab.label                  "Бөлісу">
+<!ENTITY privileges.button.label                 "Привилегиялар…">
+<!ENTITY privileges.button.accesskey             "П">
+<!ENTITY permissionsDesc.label                   "Сізде келесі рұқсаттар бар:">
+<!ENTITY folderOtherUsers.label                  "Бұл бумаға қатынай алатын басқа адамдар:">
+<!ENTITY folderType.label                        "Бума түрі:">
+
+<!ENTITY folderQuotaTab.label                    "Квота">
+<!ENTITY folderQuotaUsage.label                  "Қолданылуы:">
+<!ENTITY folderQuotaStatus.label                 "Күйі:">
+
+<!ENTITY numberOfMessages.label                  "Хабарламалар саны:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "белгісіз">
+<!ENTITY sizeOnDisk.label                        "Дискідегі өлшемі:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "белгісіз">

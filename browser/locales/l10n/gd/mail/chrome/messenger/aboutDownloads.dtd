@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Faidhlichean a chaidh a shàbhaladh">
+<!ENTITY aboutDownloads.empty                      "Cha deach faidhle sam bith a shàbhaladh">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Fosgail am pasgan far a bheil e">
+<!ENTITY cmd.show.accesskey                        "F">
+<!ENTITY cmd.showMac.label                         "Seall san lorgair">
+<!ENTITY cmd.showMac.accesskey                     "S">
+<!ENTITY cmd.open.label                            "Fosgail">
+<!ENTITY cmd.open.accesskey                        "o">
+<!ENTITY cmd.removeFromHistory.label               "Thoir air falbh on eachdraidh">
+<!ENTITY cmd.removeFromHistory.accesskey           "e">
+<!ENTITY cmd.clearList.label                       "Falamhaich an liosta">
+<!ENTITY cmd.clearList.accesskey                   "F">
+<!ENTITY cmd.clearList.tooltip                     "Thoir air falbh gach rud air liosta nam faidhlichean a shàbhail thu ach a-mhàin na tha ’ga luchdadh a-nuas.">
+<!ENTITY cmd.searchDownloads.label                 "Lorg…">
+<!ENTITY cmd.searchDownloads.key                   "F">

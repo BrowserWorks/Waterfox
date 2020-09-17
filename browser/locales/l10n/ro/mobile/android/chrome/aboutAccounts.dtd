@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Conturi Firefox">
+<!ENTITY aboutAccounts.connected.description "Ești conectat ca">
+<!ENTITY aboutAccounts.syncPreferences.label "Atinge aici pentru a verifica setările de sincronizare">
+
+<!ENTITY aboutAccounts.noConnection.title "Fără conexiune la internet">
+<!ENTITY aboutAccounts.retry.label "Încearcă din nou">
+
+<!ENTITY aboutAccounts.restrictedError.title "Restricționat">
+<!ENTITY aboutAccounts.restrictedError.description "Nu poți gestiona conturile Firefox de pe acest profil.">

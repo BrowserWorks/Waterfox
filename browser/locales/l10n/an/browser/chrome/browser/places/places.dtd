@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Reposte">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizar">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organice os suyos marcapachinas">
+
+<!ENTITY file.close.label               "Zarrar">
+<!ENTITY file.close.accesskey           "Z">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Vistas">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Cambia la tuya visualización">
+<!ENTITY view.columns.label             "Amostrar as columnas">
+<!ENTITY view.columns.accesskey         "A">
+<!ENTITY view.sort.label                "Ordenar">
+<!ENTITY view.sort.accesskey            "r">
+<!ENTITY view.unsorted.label            "Sin ordenar">
+<!ENTITY view.unsorted.accesskey        "S">
+<!ENTITY view.sortAscending.label       "Ordenar A> Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Ordenar Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Importar marcapachinas de un HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Exportar marcapachinas en HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importar datos de…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Fer una copia de seguranza…">
+<!ENTITY cmd.backup.accesskey           "c">
+<!ENTITY cmd.restore2.label             "Restaurar">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Trigar fichero…">
+<!ENTITY cmd.restoreFromFile.accesskey  "T">
+
+<!ENTITY col.name.label          "Nombre">
+<!ENTITY col.tags.label          "Etiquetas">
+<!ENTITY col.url.label           "Adreza">
+<!ENTITY col.mostrecentvisit.label "Visita mas recient">
+<!ENTITY col.visitcount.label    "Numero de visitas">
+<!ENTITY col.dateadded.label     "Calendata d'adición">
+<!ENTITY col.lastmodified.label  "Zaguera modificación">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importación y copia de seguranza">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Importar y exportar os suyos marcapachinas">
+
+<!ENTITY backButton.tooltip  "Ir enta zaga">
+
+<!ENTITY forwardButton.tooltip  "Ir ta debant">
+
+<!ENTITY detailsPane.selectAnItemText.description "Seleccione un elemento ta veyer y editar as suyas propiedatz">

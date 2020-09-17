@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Veti Butoni">
+
+<!ENTITY Settings.label "Rregullime">
+
+<!ENTITY ButtonType.label "Lloj">
+<!ENTITY ButtonType.accesskey "L">
+<!ENTITY submit.value "Parashtroje">
+<!ENTITY reset.value "Riktheje te parazgjedhjet">
+<!ENTITY button.value "Buton">
+
+<!ENTITY ButtonName.label "Emër:">
+<!ENTITY ButtonName.accesskey "E">
+<!ENTITY ButtonValue.label "Vlerë:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Vlerë Tabulacioni:">
+<!ENTITY tabIndex.accesskey "T">
+<!ENTITY ButtonDisabled.label "I çaktivizuar">
+<!ENTITY ButtonDisabled.accesskey "ç">
+<!ENTITY AccessKey.label "Tast Përdorimi:">
+<!ENTITY AccessKey.accesskey "H">
+
+<!ENTITY RemoveButton.label "Hiqe Butonin">
+<!ENTITY RemoveButton.accesskey "Q">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "Kopie a složky">
+<!ENTITY sendingPrefix.label "Automaticky při odesílání poštovní zprávy: ">
+<!ENTITY fccMailFolder.label "Uložit kopii do složky:">
+<!ENTITY fccMailFolder.accesskey "U">
+<!ENTITY fccReplyFollowsParent.label "Uložit odpovědi do složky obsahující původní zprávu">
+<!ENTITY fccReplyFollowsParent.accesskey "p">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Kopie na další adresy:">
+<!ENTITY ccAddress.accesskey "K">
+<!ENTITY ccAddressList.placeholder "Čárkou oddělený seznam adres">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Skryté kopie na další adresy:">
+<!ENTITY bccAddress.accesskey "S">
+<!ENTITY bccAddressList.placeholder "Čárkou oddělený seznam adres">
+<!ENTITY saveMessageDlg.label "Zobrazit potvrzení při ukládání zpráv">
+<!ENTITY saveMessageDlg.accesskey "Z">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Složka odeslaná pošta v:">
+<!ENTITY sentFolderOn.accesskey "O">
+<!ENTITY sentInOtherFolder.label "Další:">
+<!ENTITY sentInOtherFolder.accesskey "D">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Archiv zpráv">
+<!ENTITY keepArchives.label "Uchovávat archiv zpráv v:">
+<!ENTITY keepArchives.accesskey "r">
+<!ENTITY archiveHierarchyButton.label "Možnosti archivace…">
+<!ENTITY archiveHierarchyButton.accesskey "c">
+<!ENTITY archivesFolderOn.label "Složka „Archiv“ v:">
+<!ENTITY archivesFolderOn.accesskey "h">
+<!ENTITY archiveInOtherFolder.label "Další:">
+<!ENTITY archiveInOtherFolder.accesskey "l">
+<!ENTITY specialFolders.label "Koncepty a šablony">
+<!ENTITY keepDrafts2.label "Uchovávat koncepty zpráv v:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Složka „Koncepty“ v:">
+<!ENTITY draftsFolderOn.accesskey "K">
+<!ENTITY draftInOtherFolder.label "Další:">
+<!ENTITY draftInOtherFolder.accesskey "l">
+<!ENTITY keepTemplates.label "Uchovávat šablony zpráv v:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Složka „Šablony“ v:">
+<!ENTITY templatesFolderOn.accesskey "b">
+<!ENTITY templateInOtherFolder.label "Další:">
+<!ENTITY templateInOtherFolder.accesskey "l">

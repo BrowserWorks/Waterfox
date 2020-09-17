@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; xavfsiz rejimda">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; hozirda xavfsiz usulda ishga tushirilgan. Vaqtinchalik boshqa sozlamalar, mavzular va kengaytmalar o‘chirib qo‘yildi.">
+<!ENTITY safeModeDescription2.label       "Siz hozir ba’zi yoki ushbu o‘zgarishlarni butunlay amalga oshirishingiz mumkin:">
+
+<!ENTITY disableAddons.label              "Barcha qo‘shimcha dasturlarni o‘chirib qo‘yish">
+<!ENTITY disableAddons.accesskey          "o">
+
+<!ENTITY resetToolbars.label              "Asboblar paneli va boshqaruvlarni tiklash">
+<!ENTITY resetToolbars.accesskey          "r">
+
+<!ENTITY changeAndRestartButton.label     "O‘zgarishlarni qo‘llash va qayta ishga tushirish">
+<!ENTITY changeAndRestartButton.accesskey "O">
+
+<!ENTITY continueButton.label             "Xavfsiz rejimda davom etish">
+<!ENTITY continueButton.accesskey         "d">

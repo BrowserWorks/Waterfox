@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Mu &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "Thathar ag obair air &brandShortName; fhathast agus faodaidh nach bi iad buileach seasmhach.">
+<!ENTITY aboutPage.checkForUpdates.link         "Lorg ùrachaidhean »">
+<!ENTITY aboutPage.checkForUpdates.checking     "A' lorg ùrachaidhean…">
+<!ENTITY aboutPage.checkForUpdates.none         "Chan eil ùrachadh ri fhaighinn">
+<!ENTITY aboutPage.checkForUpdates.available2   "Luchdaich a-nuas an t-ùrachadh">
+<!ENTITY aboutPage.checkForUpdates.downloading  "A' luchdadh a-nuas an ùrachaidh…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Stàlaich an t-ùrachadh">
+<!ENTITY aboutPage.faq.label                    "CÀBHA">
+<!ENTITY aboutPage.support.label                "Taic">
+<!ENTITY aboutPage.privacyPolicy.label          "Am Poileasaidh Prìobhaideachd">
+<!ENTITY aboutPage.rights.label                 "Bi eòlach air do chòraichean">
+<!ENTITY aboutPage.relNotes.label               "Nòtaichean sgaoilidh">
+<!ENTITY aboutPage.credits.label                "Creideisean">
+<!ENTITY aboutPage.license.label                "Fiosrachadh ceadachais">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "'S e comharran-malairt aig Fonndas Mozilla a tha ann am Firefox agus sna suaicheantasan Firefox.">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!ENTITY MsgSynchronize.label "Descargar y sincronizar mensaches">
+<!ENTITY MsgSelect.label "Elementos ta usar sin connexión">
+<!ENTITY MsgSyncDesc.label "If you have already selected mail folders or newsgroups for offline use, you can download and/or sync them now. Otherwise, use the &quot;Select&quot; button to choose mail folders and newsgroups for offline use.">
+<!ENTITY MsgSyncDirections.label "Descargar y/u sincronizar as siguients:">
+<!ENTITY syncTypeMail.label "Mensaches de correu">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "Mensajes de noticias">
+<!ENTITY syncTypeNews.accesskey "n">
+<!ENTITY sendMessage.label "Ninviar mensajes pendients">
+<!ENTITY sendMessage.accesskey "s">
+<!ENTITY workOffline.label "Treballar sin connexión en acabar la descarga y/u sincronización">
+<!ENTITY workOffline.accesskey "T">
+<!ENTITY selectButton.label "Seleccionar…">
+<!ENTITY selectButton.accesskey "e">
+<!ENTITY MsgSelectDesc.label "Trigar as carpetas de correu y noticias ta usar sin connexión.">
+<!ENTITY MsgSelectInd.label "Descargar">
+<!ENTITY MsgSelectItems.label "Carpetas y grupos de noticias">

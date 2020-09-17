@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Taq qasanïk">
+<!ENTITY aboutDownloads.header                     "Taq aqasanik">
+<!ENTITY aboutDownloads.empty                      "Majun taq qasanïk">
+
+<!ENTITY aboutDownloads.open                       "Tijaq">
+<!ENTITY aboutDownloads.remove                     "Tik'am el">
+<!ENTITY aboutDownloads.removeAll                  "Tiyuj el ronojel">
+<!ENTITY aboutDownloads.pause                      "Tuxlan">
+<!ENTITY aboutDownloads.resume                     "Titikïr chik el">
+<!ENTITY aboutDownloads.cancel                     "Jumul tiq'at">
+<!ENTITY aboutDownloads.retry                      "Titojtob'ëx chik">

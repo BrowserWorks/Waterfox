@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "முக்கிய செய்திகள்">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "ஏற்கனவே நீங்கள் பயர்பாஃசில் சேமித்திருந்த தகவலை தற்போது நிறுவிய &brandShortName; செயலியுடன் ஒத்திசைக்க, &syncBrand.fxAccount.label; உடன் உள்நுழைய வேண்டும்.">
+<!ENTITY continue-button "தொடர்க">
+
+<!ENTITY mainText "&brandShortName; நிறுவல் புதிய சுயவிவரத்துடன் உள்ளது. இந்தக் கணினியில் அது புத்தகக்குறிகள், கடவுச்சொற்கள் மற்றும் பயனர் விருப்பங்களைப் பிற நிறுவல்களுடன்(பயா்பாஃசு, பயா்பாஃசு ESR, பயா்பாஃசு பீட்டா, பயா்பாஃசு உரவாகுநர் பதிப்பு மற்றும் இராக்கால பயா்பாஃசு உட்பட) பகிர்ந்துக் கொள்ளாது.">

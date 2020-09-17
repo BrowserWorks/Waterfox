@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!-- extracted from am-addressing.xul -->
+<!ENTITY addressingGroupTitle.label "Adresbediener">
+<!ENTITY addressingText.label      "Wanneer adresse deursoek word:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Gebruik die algemene LDAP-bedienervoorkeure vir hierdie rekening">
+<!ENTITY useGlobal.accesskey       "G">
+<!ENTITY editDirectories.label     "Wysig gidse…">
+<!ENTITY editDirectories.accesskey "W">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+
+<!ENTITY directoriesNone.label     "Geen">
+
+<!-- am-addressing.xul -->
+
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Opstelling">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Skryf boodskappe in HTML-formaat">
+<!ENTITY useHtml.accesskey                    "S">
+<!ENTITY autoQuote.label                      "Haal outomaties die oorspronklike boodskap aan wanneer antwoord">
+<!ENTITY autoQuote.accesskey                  "m">
+<!ENTITY aboveQuote.label                     "begin my antwoord bo die aangehaalde teks">
+<!ENTITY belowQuote.label                     "begin my antwoord onder die aangehaalde teks">
+<!ENTITY selectAndQuote.label                 "merk die aangehaalde teks">
+<!ENTITY place.label                          "en plaas my handtekening">
+<!ENTITY place.accesskey                      "h">
+<!ENTITY belowText.label                      "onder die aangehaalde teks (aanbeveel)">
+<!ENTITY aboveText.label                      "onder my antwoord (bokant aangehaalde teks)">
+
+
+<!ENTITY includeSigOnForward.label            "Sluit handtekening in vir aanstuur">
+<!ENTITY includeSigOnForward.accesskey        "a">
+
+
+
+

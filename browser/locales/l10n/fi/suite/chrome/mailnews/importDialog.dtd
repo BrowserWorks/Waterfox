@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Tuo">
+<!ENTITY importAll.label          "Tuo kaikki">
+<!ENTITY importAll.accesskey      "T">
+<!ENTITY importMail.label         "Viestit">
+<!ENTITY importMail.accesskey     "V">
+<!ENTITY importFeeds.label        "Syötetilaukset">
+<!ENTITY importFeeds.accesskey    "S">
+<!ENTITY importAddressbook.label  "Osoitekirjat">
+<!ENTITY importAddressbook.accesskey "O">
+<!ENTITY importSettings.label     "Asetukset">
+<!ENTITY importSettings.accesskey "A">
+<!ENTITY importFilters.label      "Suodattimet">
+<!ENTITY importFilters.accesskey  "u">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName;n ohjattu tietojen tuonti">
+<!ENTITY importShortDesc.label    "Tuo postit, osoitekirjat, asetukset ja suodattimet toisesta ohjelmasta">
+
+<!ENTITY importDescription1.label "Tämä ohjattu toiminto tuo sähköpostiviestit, osoitekirjan, viestisuodattimet ja asetukset muista sähköpostiohjelmista ja yleisistä osoitekirjamuodoista &brandShortName;hin.">
+<!ENTITY importDescription2.label "Tuonnin valmistuttua, tuodut kohteet ovat käytettävissä &brandShortName;ssä.">
+
+<!ENTITY selectDescription.label  "Valitse ohjelma, josta haluat tuoda tietoja:">
+<!ENTITY selectDescriptionB.label "Valitse olemassaoleva tili tai luo uusi tili:">
+<!ENTITY selectDescription.accesskey "V">
+<!ENTITY acctName.label           "Nimi:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Ei löytynyt yhtään ohjelmaa tai tiedostoa, josta olisi voitu tuoda tietoja.">
+
+<!ENTITY back.label               "&lt; Edellinen">
+<!ENTITY forward.label            "Seuraava &gt;">
+<!ENTITY finish.label             "Valmis">
+<!ENTITY cancel.label             "Peruuta">
+
+<!ENTITY select.label             "tai valitse tuotavan aineiston tyyppi:">
+
+<!ENTITY title.label              "Otsikko">
+<!ENTITY processing.label         "Tuodaan…">

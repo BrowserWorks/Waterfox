@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Powěsćowe filtry">
+<!ENTITY nameColumn.label "Mjeno filtra">
+<!ENTITY activeColumn.label "Zmóžnjeny">
+<!ENTITY newButton.label "Nowy…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Kopěrować…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Wobdźěłać…">
+<!ENTITY editButton.accesskey "b">
+<!ENTITY deleteButton.label "Zhašeć">
+<!ENTITY deleteButton.accesskey "Z">
+<!ENTITY reorderTopButton "Do spočatka přesunyć">
+<!ENTITY reorderTopButton.accessKey "s">
+<!ENTITY reorderTopButton.toolTip "Filter takle přerjadować, zo by so před wšěmi druhimi wuwjedł">
+<!ENTITY reorderUpButton.label "Horje">
+<!ENTITY reorderUpButton.accesskey "H">
+<!ENTITY reorderDownButton.label "Dele">
+<!ENTITY reorderDownButton.accesskey "D">
+<!ENTITY reorderBottomButton "Do kónca přesunyć">
+<!ENTITY reorderBottomButton.accessKey "k">
+<!ENTITY reorderBottomButton.toolTip "Filter takle přerjadować, zo by so po wšěch druhich wuwjedł">
+<!ENTITY filterHeader.label "Zmóžnjene filtry so awtomatisce w deleka podatym porjedźe nałožuja.">
+<!ENTITY filtersForPrefix.label "Filtry za:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Protokol filtrow">
+<!ENTITY viewLogButton.accesskey "P">
+<!ENTITY runFilters.label "Nětko nałožić">
+<!ENTITY runFilters.accesskey "N">
+<!ENTITY stopFilters.label "Stój">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Wubrane filtry nałožić na:">
+<!ENTITY folderPickerPrefix.accesskey "u">
+<!ENTITY helpButton.label "Pomoc">
+<!ENTITY helpButton.accesskey "P">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Filtry po mjenje přepytać…">
+

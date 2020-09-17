@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Luchdaich a-nuas is sioncronaich teachdaireachdan">
+<!ENTITY MsgSelect.label "Rudan a chum cleachdaidh far loidhne">
+<!ENTITY MsgSyncDesc.label "Ma thagh thu pasgain puist no buidhnean-naidheachd a chum cleachdaidh far loidhne mu thràth, &apos;s urrainn dhut an luchdadh a-nuas agus/no an sioncronachadh an-dràsta. Air neo, cleachd am putan &quot;Tagh&quot; gus pasgain puist is buidhnean-naidheachd a chum cleachdaidh far loidhne.">
+<!ENTITY MsgSyncDirections.label "Luchdaich a-nuas agus/no sioncronaich na leanas:">
+<!ENTITY syncTypeMail.label "Teachdaireachdan puist">
+<!ENTITY syncTypeMail.accesskey "T">
+<!ENTITY syncTypeNews.label "Teachdaireachdan bhuidhnean-naidheachd">
+<!ENTITY syncTypeNews.accesskey "n">
+<!ENTITY sendMessage.label "Cuir na teachdaireachdan nach deach an cur roimhe">
+<!ENTITY sendMessage.accesskey "C">
+<!ENTITY workOffline.label "Obraich far loidhne nuair a bhios an luchdadh a-nuas agus/no an sioncronachadh deiseil">
+<!ENTITY workOffline.accesskey "O">
+<!ENTITY selectButton.label "Tagh…">
+<!ENTITY selectButton.accesskey "T">
+<!ENTITY MsgSelectDesc.label "Tagh pasgain puist is buidhnean-naidheachd a chum cleachdaidh far loidhne.">
+<!ENTITY MsgSelectInd.label "Luchdaich a-nuas">
+<!ENTITY MsgSelectItems.label "Pasgain is buidhnean-naidheachd">

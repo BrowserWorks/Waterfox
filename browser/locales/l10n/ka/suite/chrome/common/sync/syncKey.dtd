@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "თქვენი &syncBrand.fullName.label; კოდი">
+<!ENTITY syncKey.page.description         "ეს კოდი თქვენი &syncBrand.fullName.label; ანგარიშის დასაშიფრად გამოიყენება. ამ კოდის მითითება მოგიწევთ &syncBrand.fullName.label; კონფიგურაციისას ახალ კომპიუტერში ან მოწყობილობაზე.">
+<!ENTITY syncKey.keepItSecret.heading     "შეინახეთ საიდუმლოდ">
+<!ENTITY syncKey.keepItSecret.description "პირადი მონაცემების უსაფრთხოებისთვის, თქვენი &syncBrand.fullName.label; ანგარიში დაშიფრულია. ამ კოდის გარეშე თქვენი პირადი მონაცემების გაშიფვრას წლები დასჭირდება. თქვენ ხართ კოდის ერთადერთი მფლობელი. ეს ნიშნავს, რომ მხოლოდ თქვენ შეძლებთ &syncBrand.fullName.label; ანგარიშის მონაცემებთან წვდომას.">
+<!ENTITY syncKey.keepItSafe.heading       "შეინახეთ საიმედოდ">
+<!ENTITY syncKey.keepItSafe1.description  "არ დაკარგოთ ეს კოდი.">
+<!ENTITY syncKey.keepItSafe2.description  " თქვენი კოდი არსად ინახება (ასეთ შემთხვევაში დაუცველი იქნებოდა!), ასე რომ, ">
+<!ENTITY syncKey.keepItSafe3.description  "ვერავინ დაგეხმარებათ მის აღდგენაში">
+<!ENTITY syncKey.keepItSafe4.description  " თი იგი დაკარგეთ. ამ კოდის მითითება მოგიწევთ ყოველთვის ახალი კომპიუტერის ან მოწყობილობის და &syncBrand.fullName.label; დაკავშირებისას.">
+<!ENTITY syncKey.findOutMore1.label       "ვრცლად, &syncBrand.fullName.label; და პირადი მონაცემების უსაფრთხოების შესახებ იხილეთ: ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "&syncBrand.fullName.label; მომსახურების პირობები მისაწვდომია საიტზე: ">
+<!ENTITY syncKey.footer2.label            ". პირადი მონაცემების დაცვის შესახებ იხილეთ ბმული: ">
+<!ENTITY syncKey.footer3.label            ".">

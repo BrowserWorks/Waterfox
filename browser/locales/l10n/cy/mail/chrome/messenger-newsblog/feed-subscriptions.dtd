@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Tanysgrifiad Llif">
+<!ENTITY learnMore.label             "Dysgu rhagor am Llif">
+
+<!ENTITY feedTitle.label             "Teitl:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL Llif:">
+<!ENTITY feedLocation.accesskey      "L">
+<!ENTITY feedLocation2.placeholder   "Rhowch URL llif dilys">
+<!ENTITY locationValidate.label      "Dilysu">
+<!ENTITY validateText.label          "Gwirio dilysiad ac estyn url dilys.">
+
+<!ENTITY feedFolder.label            "Cadw erthyglau yn:">
+<!ENTITY feedFolder.accesskey        "e">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Gwirio am erthyglau newydd bob ">
+<!ENTITY biffStart.accesskey         "e">
+<!ENTITY biffMinutes.label           "munud">
+<!ENTITY biffMinutes.accesskey       "m">
+<!ENTITY biffDays.label              "diwrnod">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Argymhelliad y cyhoeddwr:">
+
+<!ENTITY quickMode.label             "Dangos crynodeb erthygl yn lle llwytho tudalen gwe">
+<!ENTITY quickMode.accesskey         "c">
+
+<!ENTITY autotagEnable.label         "Creu tagiau'n awtomatig o enwau &lt;categorïau&gt; llif">
+<!ENTITY autotagEnable.accesskey     "a">
+<!ENTITY autotagUsePrefix.label      "Rhagosod tagiau gyda:">
+<!ENTITY autotagUsePrefix.accesskey  "R">
+<!ENTITY autoTagPrefix.placeholder   "Rhoi rhagosodiad tag">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Ychwanegu">
+<!ENTITY button.addFeed.accesskey    "Y">
+<!ENTITY button.verifyFeed.label     "Dilysu">
+<!ENTITY button.verifyFeed.accesskey "D">
+<!ENTITY button.updateFeed.label     "Diweddaru">
+<!ENTITY button.updateFeed.accesskey "D">
+<!ENTITY button.removeFeed.label     "Tynnu">
+<!ENTITY button.removeFeed.accesskey "T">
+<!ENTITY button.importOPML.label     "Mewnforio">
+<!ENTITY button.importOPML.accesskey "M">
+<!ENTITY button.exportOPML.label     "Allforio">
+<!ENTITY button.exportOPML.accesskey "A">
+<!ENTITY button.exportOPML.tooltip   "Allforiwch Llif gyda strwythur ffolderi; ctrl clic neu ctrl enter i allforio Llif fel rhestr">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Cau">

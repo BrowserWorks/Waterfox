@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Zingela imiyalezo apha:">
+<!ENTITY searchHeading.accesskey     "l">
+<!ENTITY searchSubfolders.label      "Zingela iziqulathi zeefayili ezonganyelweyo">
+<!ENTITY searchSubfolders.accesskey  "i">
+<!ENTITY searchOnServer.label        "Run search on server">
+<!ENTITY searchOnServer.accesskey    "u">
+<!ENTITY resetButton.label           "Sula">
+<!ENTITY resetButton.accesskey       "S">
+<!ENTITY openButton.label            "Vula">
+<!ENTITY openButton.accesskey        "a">
+<!ENTITY deleteButton.label          "Cima">
+<!ENTITY deleteButton.accesskey      "C">
+<!ENTITY searchDialogTitle.label     "Zingela Imiyalezo">
+<!ENTITY results.label               "Iziphumo">
+<!ENTITY moveButton.label            "Move To">
+<!ENTITY moveButton.accesskey        "T">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Open in Folder">
+<!ENTITY openInFolder.accesskey      "r">
+<!ENTITY saveAsVFButton.label        "Gcina Njengesiqulathi Seefayili Sokuzingela">
+<!ENTITY saveAsVFButton.accesskey    "n">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Zingela apha:">
+<!ENTITY abSearchHeading.accesskey   "a">
+<!ENTITY propertiesButton.label      "Iinkcazelo ngeempawu">
+<!ENTITY propertiesButton.accesskey  "I">
+<!ENTITY composeButton.label         "Bhala">
+<!ENTITY composeButton.accesskey     "B">
+<!ENTITY deleteCardButton.label      "Delete">
+<!ENTITY deleteCardButton.accesskey  "D">
+<!ENTITY abSearchDialogTitle.label   "Uzingelo Lwencwadi Yeedilesi Ekwinqanaba Eliphambili">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

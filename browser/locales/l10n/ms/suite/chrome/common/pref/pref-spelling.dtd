@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Ejaan">
+<!ENTITY generalSpelling.label                "Umum">
+<!ENTITY checkSpellingWhenTyping.label        "Semak ejaan semasa saya menaip:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "S">
+<!ENTITY dontCheckSpelling.label              "Jangan sesekali">
+<!ENTITY multilineCheckSpelling.label         "Dalam berbilang kotak">
+<!ENTITY alwaysCheckSpelling.label            "Semua kotak">
+<!ENTITY spellForMailAndNews.label            "Mel &amp; Kumpulan berita">
+<!ENTITY checkSpellingBeforeSend.label        "Semak ejaan sebelum hantar">
+<!ENTITY checkSpellingBeforeSend.accesskey    "S">
+<!ENTITY spellCheckInline.label               "Semak ejaan ketika saya menaip">
+<!ENTITY spellCheckInline.accesskey           "e">
+<!ENTITY languagePopup.label                  "Bahasa:">
+<!ENTITY languagePopup.accessKey              "B">
+<!ENTITY moreDictionaries.label               "Muat turun kamus lain&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "Tiada kamus tersedia.">

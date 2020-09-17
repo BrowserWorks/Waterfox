@@ -1,0 +1,973 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY titledefault.label "&brandFullName;">
+<!ENTITY titleSeparator.label " - ">
+
+<!-- File Menu -->
+<!ENTITY newFolderCmd.label "Ffolder…">
+<!ENTITY newFolderCmd.accesskey "F">
+<!ENTITY closeTabCmd2.label "Cau'r Tab">
+<!ENTITY closeTabCmd2.accesskey "C">
+<!ENTITY closeOtherTabsCmd2.label "Cau Tabiau Eraill">
+<!ENTITY closeOtherTabsCmd2.accesskey "E">
+<!ENTITY recentlyClosedTabsCmd.label "Tabiau Wedi'u Cau'n Ddiweddar">
+<!ENTITY recentlyClosedTabsCmd.accesskey "D">
+
+<!ENTITY undoCloseTabCmd.commandkey "T">
+<!-- LOCALIZATION NOTE (moveToNewWindow.label):
+     Menu option to cause the current tab to be migrated to a new Thunderbird
+     window.
+     -->
+<!ENTITY moveToNewWindow.label "Symud i Ffenestr Newydd">
+<!ENTITY moveToNewWindow.accesskey "S">
+<!ENTITY newVirtualFolderCmd.label "Chwilio a Gadwyd…">
+<!ENTITY newVirtualFolderCmd.accesskey "w">
+<!ENTITY newOtherAccountsCmd.label "Cyfrifon Eraill…">
+<!ENTITY newOtherAccountsCmd.accesskey "y">
+<!ENTITY newCreateEmailAccountCmd.label "Estyn Cyfrif E-bost Newydd…">
+<!ENTITY newCreateEmailAccountCmd.accesskey "E">
+<!ENTITY newExistingEmailAccountCmd.label "Cyfrif E-bost Cyfredol…">
+<!ENTITY newExistingEmailAccountCmd.accesskey "C">
+<!ENTITY newIMAccountCmd.label "Cyfrif Sgwrsio…">
+<!ENTITY newIMAccountCmd.accesskey "S">
+<!ENTITY newFeedAccountCmd.label "Cyfrif Llif…">
+<!ENTITY newFeedAccountCmd.accesskey "y">
+<!ENTITY newIMContactCmd.label "Cysylltiad Sgwrsio…">
+<!ENTITY newIMContactCmd.accesskey "S">
+<!ENTITY  newMessageCmd2.key "E">
+<!ENTITY  newMessageCmd.key "N">
+<!ENTITY  newMessageCmd.label "Neges">
+<!ENTITY  newMessageCmd.accesskey "n">
+<!ENTITY  newContactCmd.label "Cysylltiad Llyfr Cyfeiriadau…">
+<!ENTITY  newContactCmd.accesskey "C">
+<!ENTITY openMenuCmd.label "Agor">
+<!ENTITY openMenuCmd.accesskey "A">
+<!ENTITY openMessageFileCmd.label "Agor Neges Wedi'i Chadw…">
+<!ENTITY openMessageFileCmd.accesskey "s">
+<!ENTITY saveAsMenu.label "Cadw Fel">
+<!ENTITY saveAsMenu.accesskey "C">
+<!ENTITY saveAsFileCmd.label "Ffeil">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsFileCmd.key "s">
+<!ENTITY saveAsTemplateCmd.label "Templed">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY getNewMsgForCmd.label "Estyn Negeseuon Newydd">
+<!ENTITY getNewMsgForCmd.accesskey "E">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "Pob Cyfrif">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "P">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.label "Cyfrif Cyfredol">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.accesskey "y">
+<!ENTITY getNextNMsgCmd2.label "Estyn y Negeseuon Newyddion Nesaf">
+<!ENTITY getNextNMsgCmd2.accesskey "E">
+<!ENTITY sendUnsentCmd.label "Anfon Negeseuon heb eu Hanfon">
+<!ENTITY sendUnsentCmd.accesskey "H">
+<!ENTITY subscribeCmd.label "Tanysgrifio…">
+<!ENTITY subscribeCmd.accesskey "T">
+<!ENTITY deleteFolder.label "Dileu Ffolder">
+<!ENTITY deleteFolder.accesskey "D">
+<!ENTITY renameFolder.label "Ailenwi Ffolder…">
+<!ENTITY renameFolder.accesskey "F">
+<!ENTITY renameFolder.key "VK_F2">
+<!ENTITY compactFolders.label "Cywasgu'r Ffolderi">
+<!ENTITY compactFolders.accesskey "w">
+<!ENTITY emptyTrashCmd.label "Gwagio'r Sbwriel">
+<!ENTITY emptyTrashCmd.accesskey "w">
+<!ENTITY offlineMenu.label "All-lein">
+<!ENTITY offlineMenu.accesskey "l">
+<!ENTITY offlineGoOfflineCmd.label "Gweithio All-lein">
+<!ENTITY offlineGoOfflineCmd.accesskey "w">
+<!ENTITY synchronizeOfflineCmd.label "Llwytho i Lawr/Cydweddu Nawr…">
+<!ENTITY synchronizeOfflineCmd.accesskey "L">
+<!ENTITY settingsOfflineCmd2.label "Gosodiadau All-lein">
+<!ENTITY settingsOfflineCmd2.accesskey "G">
+<!ENTITY downloadSelectedCmd.label "Estyn y Negeseuon Hyn">
+<!ENTITY downloadSelectedCmd.accesskey "H">
+<!ENTITY downloadStarredCmd.label "Estyn Negeseuon Serennog">
+<!ENTITY downloadStarredCmd.accesskey "S">
+<!ENTITY printCmd.label "Argraffu…">
+<!ENTITY printCmd.accesskey "A">
+<!ENTITY printCmd.key "p">
+<!ENTITY printPreviewCmd.label "Rhagolwg Argraffu">
+<!ENTITY printPreviewCmd.accesskey "R">
+<!ENTITY printSetupCmd.label "Gosodiad Tudalen…">
+<!ENTITY printSetupCmd.accesskey "o">
+
+<!-- Edit Menu -->
+<!ENTITY deleteMsgCmd.label "Dileu Neges">
+<!ENTITY deleteMsgCmd.accesskey "N">
+<!ENTITY undeleteMsgCmd.label "Dad-ddileu Neges">
+<!ENTITY undeleteMsgCmd.accesskey "a">
+<!ENTITY deleteMsgsCmd.label "Dileu'r Negeseuon Hyn">
+<!ENTITY deleteMsgsCmd.accesskey "i">
+<!ENTITY undeleteMsgsCmd.label "Dad-ddileu'r Negeseuon Hyn">
+<!ENTITY undeleteMsgsCmd.accesskey "a">
+<!ENTITY deleteFolderCmd.label "Dileu Ffolder">
+<!ENTITY deleteFolderCmd.accesskey "F">
+<!ENTITY unsubscribeNewsgroupCmd.label "Dad-danysgrifio">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "y">
+<!ENTITY selectMenu.label "Dewis">
+<!ENTITY selectMenu.accesskey "w">
+<!ENTITY all.label "Popeth">
+<!ENTITY all.accesskey "P">
+<!ENTITY selectThreadCmd.label "Edefyn">
+<!ENTITY selectThreadCmd.accesskey "E">
+<!ENTITY selectThreadCmd.key "a">
+<!ENTITY selectFlaggedCmd.label "Negeseuon Serennog">
+<!ENTITY selectFlaggedCmd.accesskey "S">
+<!ENTITY menuFavoriteFolder.label "Hoff Ffolder">
+<!ENTITY menuFavoriteFolder.accesskey "H">
+<!ENTITY folderPropsCmd2.label "Priodweddau">
+<!ENTITY folderPropsFolderCmd2.label "Priodweddau Ffolder">
+<!ENTITY folderPropsNewsgroupCmd2.label "Priodweddau Grŵp Newyddion">
+<!ENTITY folderPropsCmd.accesskey "o">
+<!ENTITY undoDeleteMsgCmd.label "Dadwneud Dileu Negeseuon">
+<!ENTITY redoDeleteMsgCmd.label "Ail-wneud Dileu Neges">
+<!ENTITY undoMoveMsgCmd.label "Dadwneud Symud Neges">
+<!ENTITY redoMoveMsgCmd.label "Ailwneud Symud Neges">
+<!ENTITY undoCopyMsgCmd.label "Dadwneud Copïo Neges">
+<!ENTITY redoCopyMsgCmd.label "Ail-wneud Copïo Neges">
+<!ENTITY undoMarkAllCmd.label "Dadwneud Marcio Pob Un Wedi ei Ddarllen">
+<!ENTITY redoMarkAllCmd.label "Ail-wneud Marcio Popeth Wedi'i Ddarllen">
+<!ENTITY undoDefaultCmd.label "Dadwneud">
+<!ENTITY undoDefaultCmd.accesskey "u">
+<!ENTITY redoDefaultCmd.label "Ailwneud">
+<!ENTITY redoDefaultCmd.accesskey "A">
+
+<!-- View Menu -->
+<!ENTITY menubarCmd.label "Bar Dewislen">
+<!ENTITY menubarCmd.accesskey "D">
+<!ENTITY showMessengerToolbarCmd.label "Bar Offer E-bost">
+<!ENTITY showMessengerToolbarCmd.accesskey "O">
+<!ENTITY customizeToolbar.label "Cyfaddasu…">
+<!ENTITY customizeToolbar.accesskey "C">
+
+<!ENTITY messagePaneLayoutStyle.label "Cynllun">
+<!ENTITY messagePaneLayoutStyle.accesskey "C">
+<!ENTITY messagePaneClassic.label "Golwg Glasurol">
+<!ENTITY messagePaneClassic.accesskey "l">
+<!ENTITY messagePaneWide.label "Golwg Lydan">
+<!ENTITY messagePaneWide.accesskey "L">
+<!ENTITY messagePaneVertical.label "Golwr Fertigol">
+<!ENTITY messagePaneVertical.accesskey "F">
+<!ENTITY showFolderPaneCmd.label "Paen Ffolder">
+<!ENTITY showFolderPaneCmd.accesskey "F">
+<!ENTITY showFolderPaneColsCmd.label "Colofnau Paenau Ffolderi">
+<!ENTITY showFolderPaneColsCmd.accesskey "P">
+<!ENTITY showMessageCmd.label "Paen Neges">
+<!ENTITY showMessageCmd.accesskey "N">
+
+<!ENTITY folderView.label "Ffolderi">
+<!ENTITY folderView.accesskey "F">
+<!ENTITY unifiedFolders.label "Unedig">
+<!ENTITY unifiedFolders.accesskey "U">
+<!ENTITY allFolders.label "Popeth">
+<!ENTITY allFolders.accesskey "P">
+<!ENTITY unreadFolders.label "Heb ei Ddarllen">
+<!ENTITY unreadFolders.accesskey "H">
+<!ENTITY favoriteFolders.label "Ffefryn">
+<!ENTITY favoriteFolders.accesskey "F">
+<!ENTITY recentFolders.label "Diweddar">
+<!ENTITY recentFolders.accesskey "D">
+<!ENTITY compactVersion.label "Golwg Cryno">
+<!ENTITY compactVersion.accesskey "G">
+<!ENTITY folderPaneBar.label "Bar Offer Paen Ffolder">
+<!ENTITY folderPaneBar.accesskey "B">
+
+<!-- Sort Menu -->
+<!ENTITY sortMenu.label "Trefnu yn ôl">
+<!ENTITY sortMenu.accesskey "T">
+<!ENTITY sortByDateCmd.label "Dyddiad">
+<!ENTITY sortByDateCmd.accesskey "D">
+<!ENTITY sortByReceivedCmd.label "Derbyn">
+<!ENTITY sortByReceivedCmd.accesskey "e">
+<!ENTITY sortByStarCmd.label "Seren">
+<!ENTITY sortByStarCmd.accesskey "S">
+<!ENTITY sortByAttachmentsCmd.label "Atodiadau">
+<!ENTITY sortByAttachmentsCmd.accesskey "A">
+<!ENTITY sortByPriorityCmd.label "Blaenoriaeth">
+<!ENTITY sortByPriorityCmd.accesskey "B">
+<!ENTITY sortBySizeCmd.label "Maint">
+<!ENTITY sortBySizeCmd.accesskey "M">
+<!ENTITY sortByStatusCmd.label "Statws">
+<!ENTITY sortByStatusCmd.accesskey "S">
+<!ENTITY sortByTagsCmd.label "Tagiau">
+<!ENTITY sortByTagsCmd.accesskey "g">
+<!ENTITY sortByJunkStatusCmd.label "Statws Sbam">
+<!ENTITY sortByJunkStatusCmd.accesskey "S">
+<!ENTITY sortBySubjectCmd.label "Pwnc">
+<!ENTITY sortBySubjectCmd.accesskey "P">
+<!ENTITY sortByFromCmd.label "Oddi wrth">
+<!ENTITY sortByFromCmd.accesskey "O">
+<!ENTITY sortByRecipientCmd.label "Derbynnydd">
+<!ENTITY sortByRecipientCmd.accesskey "D">
+<!ENTITY sortByCorrespondentCmd.label "Cyfathrebwyr">
+<!ENTITY sortByCorrespondentCmd.accesskey "f">
+<!ENTITY sortByUnreadCmd.label "Darllenwyd">
+<!ENTITY sortByUnreadCmd.accesskey "D">
+<!ENTITY sortByOrderReceivedCmd.label "Trefn Derbyn">
+<!ENTITY sortByOrderReceivedCmd.accesskey "T">
+<!ENTITY sortAscending.label "Esgyn">
+<!ENTITY sortAscending.accesskey "E">
+<!ENTITY sortDescending.label "Disgyn">
+<!ENTITY sortDescending.accesskey "D">
+<!ENTITY sortThreaded.label "Edafwyd">
+<!ENTITY sortThreaded.accesskey "d">
+<!ENTITY sortUnthreaded.label "Dim edefyn">
+<!ENTITY sortUnthreaded.accesskey "i">
+<!ENTITY groupBySort.label "Grwpio yn ôl Trefnu">
+<!ENTITY groupBySort.accesskey "G">
+<!ENTITY msgsMenu.label "Negeseuon">
+<!ENTITY msgsMenu.accesskey "N">
+<!ENTITY threads.label "Edafedd">
+<!ENTITY threads.accesskey "d">
+<!ENTITY allMsgsCmd.label "Popeth">
+<!ENTITY allMsgsCmd.accesskey "P">
+<!ENTITY expandAllThreadsCmd.label "Ehangu Pob Edefyn">
+<!ENTITY expandAllThreadsCmd.accesskey "E">
+<!ENTITY expandAllThreadsCmd.key "*">
+<!ENTITY collapseAllThreadsCmd.label "Cau Pob Edefyn">
+<!ENTITY collapseAllThreadsCmd.accesskey "C">
+<!ENTITY collapseAllThreadsCmd.key "\">
+<!ENTITY unreadMsgsCmd.label "Heb ei Ddarllen">
+<!ENTITY unreadMsgsCmd.accesskey "H">
+<!ENTITY threadsWithUnreadCmd.label "Edafedd gyda rhai Heb eu Darllen">
+<!ENTITY threadsWithUnreadCmd.accesskey "H">
+<!ENTITY watchedThreadsWithUnreadCmd.label "Gwylio Edafedd gyda rhai Heb eu Darllen">
+<!ENTITY watchedThreadsWithUnreadCmd.accesskey "G">
+<!ENTITY ignoredThreadsCmd.label "Edafedd Anwybyddwyd">
+<!ENTITY ignoredThreadsCmd.accesskey "n">
+
+<!ENTITY headersMenu.label "Penynnau">
+<!ENTITY headersMenu.accesskey "P">
+<!ENTITY headersAllCmd.label "Popeth">
+<!ENTITY headersAllCmd.accesskey "P">
+<!ENTITY headersNormalCmd.label "Arferol">
+<!ENTITY headersNormalCmd.accesskey "A">
+<!ENTITY bodyMenu.label "Corff y Neges Fel">
+<!ENTITY bodyMenu.accesskey "o">
+<!ENTITY bodyAllowHTML.label "HTML Gwreiddiol">
+<!ENTITY bodyAllowHTML.accesskey "H">
+<!ENTITY bodySanitized.label "HTML Syml">
+<!ENTITY bodySanitized.accesskey "S">
+<!ENTITY bodyAsPlaintext.label "Testun Plaen">
+<!ENTITY bodyAsPlaintext.accesskey "P">
+<!ENTITY bodyAllParts.label "Pob Rhan o'r Corff">
+<!ENTITY bodyAllParts.accesskey "P">
+
+<!ENTITY bodyMenuFeed.label "Corff Neges Llif Fel">
+<!ENTITY bodyMenuFeed.accesskey "L">
+<!ENTITY viewFeedWebPage.label "Tudalen Gwe">
+<!ENTITY viewFeedWebPage.accesskey "G">
+<!ENTITY viewFeedSummary.label "Crynodeb">
+<!ENTITY viewFeedSummary.accesskey "r">
+<!ENTITY viewFeedSummaryFeedPropsPref.label "Fformat Rhagosodedig">
+<!ENTITY viewFeedSummaryFeedPropsPref.accesskey "R">
+
+<!ENTITY viewAttachmentsInlineCmd.label "Dangos Atodiadau Mewnlin">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "D">
+
+<!ENTITY pageSourceCmd.label "Ffynhonnell y Neges">
+<!ENTITY pageSourceCmd.accesskey "F">
+<!ENTITY pageSourceCmd.key "u">
+<!ENTITY getNewMessagesCmd.key "y">
+<!ENTITY getAllNewMessagesCmd.key "Y">
+
+<!-- Search Menu -->
+<!ENTITY findMenu.label "Canfod">
+<!ENTITY findMenu.accesskey "f">
+<!ENTITY findCmd.label "Canfod yn y Neges…">
+<!ENTITY findCmd.accesskey "a">
+<!ENTITY findCmd.key "f">
+<!ENTITY findAgainCmd.label "Canfod Eto">
+<!ENTITY findAgainCmd.accesskey "E">
+<!ENTITY findAgainCmd.key "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.key "g">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY searchMailCmd.label "Chwilio Negeseuon…">
+<!ENTITY searchMailCmd.accesskey "N">
+<!ENTITY searchMailCmd.key "f">
+<!ENTITY glodaSearchCmd.label "Chwilio Eang…">
+<!ENTITY glodaSearchCmd.accesskey "C">
+<!ENTITY searchAddressesCmd.label "Chwilio Cyfeiriadau…">
+<!ENTITY searchAddressesCmd.accesskey "y">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Mynd">
+<!ENTITY goMenu.accesskey "M">
+<!ENTITY nextMenu.label "Nesaf">
+<!ENTITY nextMenu.accesskey "N">
+<!ENTITY nextMsgCmd.label "Neges">
+<!ENTITY nextMsgCmd.accesskey "N">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "Neges Heb ei Darllen">
+<!ENTITY nextUnreadMsgCmd.accesskey "H">
+<!ENTITY nextUnreadMsgCmd.key "n">
+<!ENTITY nextStarredMsgCmd.label "Neges Serenog">
+<!ENTITY nextStarredMsgCmd.accesskey "S">
+<!ENTITY nextUnreadThread.label "Edafedd Heb eu Darllen">
+<!ENTITY nextUnreadThread.accesskey "D">
+<!ENTITY nextUnreadThread.key "t">
+<!ENTITY prevMenu.label "Blaenorol">
+<!ENTITY prevMenu.accesskey "B">
+<!ENTITY prevMsgCmd.label "Neges">
+<!ENTITY prevMsgCmd.accesskey "N">
+<!ENTITY prevMsgCmd.key "b">
+<!ENTITY prevUnreadMsgCmd.label "Neges Heb ei Darllen">
+<!ENTITY prevUnreadMsgCmd.accesskey "D">
+<!ENTITY prevUnreadMsgCmd.key "p">
+<!ENTITY goForwardCmd.label "Ymlaen">
+<!ENTITY goForwardCmd.accesskey "Y">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goBackCmd.label "Nôl">
+<!ENTITY goBackCmd.accesskey "N">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goChatCmd.label "Sgwrsio">
+<!ENTITY goChatCmd.accesskey "g">
+<!ENTITY goChatCmd2.key "g">
+<!ENTITY prevStarredMsgCmd.label "Neges Serennog">
+<!ENTITY prevStarredMsgCmd.accesskey "S">
+<!ENTITY folderMenu.label "Ffolder">
+<!ENTITY folderMenu.accesskey "o">
+<!ENTITY goRecentlyClosedTabs.label "Tabiau Wedi'u Cau'n Ddiweddar">
+<!ENTITY goRecentlyClosedTabs.accesskey "T">
+<!ENTITY startPageCmd.label "Tudalen Cychwyn E-bost">
+<!ENTITY startPageCmd.accesskey "T">
+
+<!-- Message Menu -->
+<!ENTITY msgMenu.label "Neges">
+<!ENTITY msgMenu.accesskey "N">
+<!ENTITY newMsgCmd.label "Neges Newydd">
+<!ENTITY newMsgCmd.accesskey "N">
+<!ENTITY newNewMsgCmd.label "Neges">
+<!ENTITY newNewMsgCmd.accesskey "e">
+<!ENTITY archiveMsgCmd.label "Archif">
+<!ENTITY archiveMsgCmd.accesskey "A">
+<!ENTITY archiveMsgCmd.key "a">
+<!ENTITY cancelNewsMsgCmd.label "Diddymu Neges">
+<!ENTITY cancelNewsMsgCmd.accesskey "D">
+<!ENTITY replyMsgCmd.label "Ateb">
+<!ENTITY replyMsgCmd.accesskey "A">
+<!ENTITY replyMsgCmd.key "r">
+<!ENTITY replySenderCmd.label "Ateb i'r Anfonwr yn Unig">
+<!ENTITY replySenderCmd.accesskey "t">
+<!ENTITY replyNewsgroupCmd2.label "Dilyn Grŵp Newyddion">
+<!ENTITY replyNewsgroupCmd2.accesskey "D">
+<!ENTITY replyToAllMsgCmd.label "Ateb i Bawb">
+<!ENTITY replyToAllMsgCmd.accesskey "B">
+<!ENTITY replyToAllMsgCmd.key "r">
+<!ENTITY replyToListMsgCmd.label "Ateb i'r Rhestr">
+<!ENTITY replyToListMsgCmd.accesskey "R">
+<!ENTITY replyToListMsgCmd.key "l">
+<!ENTITY forwardMsgCmd.label "Ymlaen">
+<!ENTITY forwardMsgCmd.accesskey "Y">
+<!ENTITY forwardMsgCmd.key "l">
+<!ENTITY forwardAsMenu.label "Ymlaen Fel">
+<!ENTITY forwardAsMenu.accesskey "Y">
+<!ENTITY forwardAsInline.label "Mewnlin">
+<!ENTITY forwardAsInline.accesskey "M">
+<!ENTITY forwardAsAttachmentCmd.label "Atodiad">
+<!ENTITY forwardAsAttachmentCmd.accesskey "A">
+<!ENTITY editAsNewMsgCmd.label "Golygu fel Neges Newydd">
+<!ENTITY editAsNewMsgCmd.accesskey "G">
+<!ENTITY editAsNewMsgCmd.key "g">
+<!ENTITY editDraftMsgCmd.label "Golygu Neges Ddrafft">
+<!ENTITY editDraftMsgCmd.accesskey "D">
+<!ENTITY editTemplateMsgCmd.label "Golygu Templed">
+<!ENTITY editTemplateMsgCmd.accesskey "T">
+<!ENTITY newMsgFromTemplateCmd.label "Neges Newydd o Dempled">
+<!ENTITY newMsgFromTemplateCmd.keycode "VK_RETURN"><!-- do not change "VK_RETURN" -->
+<!ENTITY createFilter.label "Creu Hidl o'r Neges…">
+<!ENTITY createFilter.accesskey "H">
+<!ENTITY moveMsgToMenu.label "Symud i">
+<!ENTITY moveMsgToMenu.accesskey "S">
+<!ENTITY moveCopyMsgRecentMenu.label "Diweddar">
+<!ENTITY moveCopyMsgRecentMenu.accesskey "D">
+<!ENTITY copyMessageLocation.label "Copïo Lleoliad Neges">
+<!ENTITY copyMessageLocation.accesskey "L">
+<!ENTITY copyMsgToMenu.label "Copïo i">
+<!ENTITY copyMsgToMenu.accesskey "C">
+<!ENTITY moveToFolderAgain.label "Symud Eto">
+<!ENTITY moveToFolderAgain.accesskey "y">
+<!ENTITY moveToFolderAgainCmd.key "m">
+<!ENTITY killThreadMenu.label "Anwybyddu'r Edefyn">
+<!ENTITY killThreadMenu.accesskey "A">
+<!ENTITY killThreadMenu.key "k">
+<!ENTITY killSubthreadMenu.label "Anwybyddu'r Is-Edefyn">
+<!ENTITY killSubthreadMenu.accesskey "I">
+<!ENTITY killSubthreadMenu.key "k">
+<!ENTITY watchThreadMenu.label "Gwylio'r Edefyn">
+<!ENTITY watchThreadMenu.accesskey "w">
+<!ENTITY watchThreadMenu.key "w">
+<!ENTITY tagMenu.label "Tag">
+<!ENTITY tagMenu.accesskey "g">
+<!ENTITY tagCmd0.key "0">
+<!ENTITY tagCmd1.key "1">
+<!ENTITY tagCmd2.key "2">
+<!ENTITY tagCmd3.key "3">
+<!ENTITY tagCmd4.key "4">
+<!ENTITY tagCmd5.key "5">
+<!ENTITY tagCmd6.key "6">
+<!ENTITY tagCmd7.key "7">
+<!ENTITY tagCmd8.key "8">
+<!ENTITY tagCmd9.key "9">
+<!ENTITY markMenu.label "Marcio">
+<!ENTITY markMenu.accesskey "M">
+<!ENTITY toggleReadCmd.key "m">
+<!ENTITY markAsReadCmd.label "Wedi ei Ddarllen">
+<!ENTITY markAsReadCmd.accesskey "W">
+<!ENTITY markAsUnreadCmd.label "Heb ei Ddarllen">
+<!ENTITY markAsUnreadCmd.accesskey "H">
+<!ENTITY markThreadAsReadCmd.label "Edefyn wedi'i Ddarllen">
+<!ENTITY markThreadAsReadCmd.accesskey "D">
+<!ENTITY markThreadAsReadCmd.key "r">
+<!ENTITY markReadByDateCmd.label "Wedi Darllen yn ôl Dyddiad…">
+<!ENTITY markReadByDateCmd.accesskey "D">
+<!ENTITY markReadByDateCmd.key "c">
+<!ENTITY markAllReadCmd.label "Popeth Wedi ei Ddarllen">
+<!ENTITY markAllReadCmd.accesskey "P">
+<!ENTITY markAllReadCmd.key "c">
+<!ENTITY markStarredCmd.label "Ychwanegu Seren">
+<!ENTITY markStarredCmd.accesskey "S">
+<!ENTITY markStarredCmd.key "S">
+<!ENTITY markAsJunkCmd.label "Fel Sbam">
+<!ENTITY markAsJunkCmd.accesskey "b">
+<!ENTITY markAsJunkCmd.key "j">
+<!ENTITY markAsNotJunkCmd.label "Fel Nid Sbam">
+<!ENTITY markAsNotJunkCmd.accesskey "N">
+<!ENTITY markAsNotJunkCmd.key "j">
+<!ENTITY recalculateJunkScoreCmd.label "Rhedeg Rheolydd E-bost Sbam">
+<!ENTITY recalculateJunkScoreCmd.accesskey "R">
+<!ENTITY openMessageWindowCmd.label "Agor Neges">
+<!ENTITY openMessageWindowCmd.accesskey "A">
+<!ENTITY openMessageWindowCmd.key "o">
+<!ENTITY openInConversationCmd.label "Agor mewn Sgwrs">
+<!ENTITY openInConversationCmd.accesskey "s">
+<!ENTITY openInConversationCmd.key "o">
+<!ENTITY openAttachmentListCmd.label "Atodiadau">
+<!ENTITY openAttachmentListCmd.accesskey "t">
+<!ENTITY openFeedMessage1.label "Wrth Agor Negeseuon Llif">
+<!ENTITY openFeedMessage1.accesskey "L">
+<!ENTITY openFeedWebPage.label "Agor fel Tudalen Gwe">
+<!ENTITY openFeedWebPage.accesskey "G">
+<!ENTITY openFeedSummary.label "Agor fel Crynodeb">
+<!ENTITY openFeedSummary.accesskey "C">
+<!ENTITY openFeedWebPageInMP.label "Toglo Tudalen We a Chrynodeb mewn Paen Neges">
+<!ENTITY openFeedWebPageInMP.accesskey "T">
+
+<!-- Windows Menu -->
+<!ENTITY windowMenu.label "Ffenestr">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Offer">
+<!ENTITY tasksMenu.accesskey "O">
+<!ENTITY messengerCmd.label "E-bost a Grwpiau Newyddion">
+<!ENTITY messengerCmd.accesskey "E">
+<!ENTITY addressBookCmd.label "Llyfr Cyfeiriadau">
+<!ENTITY addressBookCmd.accesskey "L">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY addons.label "Ychwanegion">
+<!ENTITY addons.accesskey "a">
+<!ENTITY addonPrefs.label "Dewisiadau Ychwanegion">
+<!ENTITY addonPrefs.accesskey "Y">
+<!ENTITY addonPrefsUnix.label "Dewisiadau Ychwanegion">
+<!ENTITY addonPrefsUnix.accesskey "D">
+<!ENTITY addonNoPrefs.label "Heb ganfod gosodiadau Ychwanegion.">
+<!ENTITY activitymanager.label "Rheolwr Gweithgaredd">
+<!ENTITY activitymanager.accesskey "R">
+<!ENTITY imAccountsStatus.label "Statws Sgwrsio">
+<!ENTITY imAccountsStatus.accesskey "t">
+<!ENTITY imStatus.available          "Ar Gael">
+<!ENTITY imStatus.unavailable        "Ddim ar Gael">
+<!ENTITY imStatus.offline            "All-lein">
+<!ENTITY imStatus.showAccounts       "Dangos Cyfrifon…">
+<!ENTITY joinChatCmd.label "Ymuno â Sgwrs…">
+<!ENTITY joinChatCmd.accesskey "Y">
+<!ENTITY savedFiles.label "Ffeiliau wedi'u Cadw">
+<!ENTITY savedFiles.accesskey "F">
+<!ENTITY savedFiles.key "j">
+<!ENTITY filtersCmd2.label "Hidlau Negeseuon">
+<!ENTITY filtersCmd2.accesskey "H">
+<!ENTITY filtersApply.label "Rhedeg Hidlau ar Ffolder">
+<!ENTITY filtersApply.accesskey "R">
+<!ENTITY filtersApplyToSelection.label "Rhedeg Hidlau ar Negeseuon Penodol">
+<!ENTITY filtersApplyToSelection.accesskey "P">
+<!ENTITY filtersApplyToMessage.label "Rhedeg Hidlau ar Neges">
+<!ENTITY filtersApplyToMessage.accesskey "N">
+<!ENTITY runJunkControls.label "Rhedeg Rheolydd Sbam ar Ffolder">
+<!ENTITY runJunkControls.accesskey "R">
+<!ENTITY deleteJunk.label "Dileu E-bost wedi'i Nodi fel Sbam yn y Ffolder">
+<!ENTITY deleteJunk.accesskey "D">
+<!ENTITY importCmd.label "Mewnforio…">
+<!ENTITY importCmd.accesskey "M">
+<!ENTITY clearRecentHistory.label "Clirio Hanes Diweddar…">
+<!ENTITY clearRecentHistory.accesskey "H">
+<!ENTITY accountManagerCmd2.label "Gosodiadau'r Cyfrif">
+<!ENTITY accountManagerCmd2.accesskey "G">
+<!-- LOCALIZATION NOTE (accountManagerCmdUnix.accesskey):
+     Belongs to accountManagerCmd.label, which is placed under the Edit menu
+     on Unix systems
+  -->
+<!ENTITY accountManagerCmdUnix2.accesskey "A">
+
+<!-- Developer Tools Submenu -->
+<!ENTITY devtoolsMenu.label "Offer Datblygwyr">
+<!ENTITY devtoolsMenu.accesskey "D">
+<!ENTITY devToolboxCmd.label "Blwch Offer Datblygwyr">
+<!ENTITY devToolboxCmd.accesskey "B">
+<!ENTITY devToolboxCmd.commandkey "i">
+<!ENTITY debugAddonsCmd.label "Ychwanegion Dadfygio">
+<!ENTITY debugAddonsCmd.accesskey "Y">
+<!ENTITY tabsDebugCmd.label "Dadfygiwr Cynnwys Ffrâm">
+<!ENTITY tabsDebugCmd.accesskey "F">
+<!ENTITY errorConsoleCmd.label "Consol Gwall">
+<!ENTITY errorConsoleCmd.accesskey "C">
+<!ENTITY errorConsoleCmd.commandkey "j">
+
+<!-- Mail Toolbar -->
+<!ENTITY getMsgButton1.label "Estyn Negeseuon">
+<!ENTITY newMsgButton.label "Ysgrifennu">
+<!ENTITY replyButton.label "Ateb">
+<!ENTITY replyAllButton.label "Ateb Pawb">
+<!ENTITY replyListButton.label "Ateb i'r Rhestr">
+<!ENTITY forwardButton.label "Ymlaen">
+<!ENTITY fileButton.label "Ffeil">
+<!ENTITY archiveButton.label "Archifo">
+<!ENTITY openConversationButton.label "Sgwrs">
+<!ENTITY nextButton.label "Nesaf">
+<!ENTITY nextButtonToolbarItem.label "Nesaf Heb ei Ddarllen">
+<!ENTITY nextMsgButton.label "Nesaf">
+<!ENTITY previousButton.label "Blaenorol">
+<!ENTITY previousButtonToolbarItem.label "Blaenorol Heb ei Ddarllen">
+<!ENTITY previousMsgButton.label "Blaenorol">
+<!ENTITY backButton1.label "Nôl">
+<!ENTITY goForwardButton1.label "Ymlaen">
+<!ENTITY deleteItem.title "Dileu">
+<!ENTITY deleteButton.label "Dileu">
+<!ENTITY undeleteButton.label "Dad-ddileu">
+<!ENTITY markButton.label "Marcio">
+<!ENTITY printButton.label "Argraffu">
+<!ENTITY stopButton.label "Atal">
+<!ENTITY throbberItem.title "Dangosydd Gweithgaredd">
+<!ENTITY junkItem.title "Sbam">
+<!ENTITY junkButton.label "Sbam">
+<!ENTITY notJunkButton.label "Nid Sbam">
+<!ENTITY addressBookButton.label "Llyfr Cyfeiriadau">
+<!ENTITY chatButton.label "Sgwrsio">
+<!ENTITY glodaSearch.title "Chwilio Eang">
+<!ENTITY searchItem.title "Chwilio Cyflym">
+<!ENTITY mailViewsToolbarItem.title "Golwg E-bost">
+<!ENTITY folderLocationToolbarItem.title "Lleoliad Ffolder">
+<!ENTITY tagButton.label "Tag">
+<!ENTITY compactButton.label "Cywasgu">
+<!ENTITY appmenuButton.label "AppMenu">
+
+<!-- Mail Toolbar Tooltips-->
+<!ENTITY advancedButton.tooltip "Chwilio neges uwch">
+<!ENTITY getMsgButton.tooltip "Estyn negeseuon newydd">
+<!ENTITY getAllNewMsgCmd.label "Estyn Pob Neges Newydd">
+<!ENTITY getAllNewMsgCmd.accesskey "E">
+<!ENTITY newMsgButton.tooltip "Creu neges newydd">
+<!ENTITY replyButton.tooltip "Ateb y neges">
+<!ENTITY replyAllButton.tooltip "Ateb yr anfonwr a phob derbyniwr">
+<!ENTITY replyListButton.tooltip "Ateb i'r rhestr e-bost">
+<!ENTITY forwardButton.tooltip "Anfon y neges ymlaen">
+<!ENTITY forwardAsInline.tooltip "Anfon neges dewiswyd ymlaen fel testun mewnlin">
+<!ENTITY forwardAsAttachment.tooltip "Anfon neges dewiswyd ymlaen fel atodiad">
+<!ENTITY fileButton.tooltip "Ffeilio'r neges">
+<!ENTITY archiveButton.tooltip "Archifo'r negeseuon">
+<!ENTITY openMsgConversationButton.tooltip "Dangos sgwrs neges sydd wedi ei dewis">
+<!ENTITY nextButton.tooltip "Symud i'r neges nesaf heb ei darllen">
+<!ENTITY nextMsgButton.tooltip "Symud i'r neges nesaf">
+<!ENTITY previousButton.tooltip "Symud i'r neges heb ei darllen diwethaf">
+<!ENTITY previousMsgButton.tooltip "Symud i'r neges flaenorol">
+<!ENTITY goForwardButton.tooltip "Mynd ymlaen un neges">
+<!ENTITY goBackButton.tooltip "Mynd nôl un neges">
+<!ENTITY deleteButton.tooltip "Dileu'r neges neu'r ffolder">
+<!ENTITY undeleteButton.tooltip "Dad-ddileu'r neges">
+<!ENTITY markButton.tooltip "Marcio negeseuon">
+<!ENTITY printButton.tooltip "Argraffu'r neges">
+<!ENTITY stopButton.tooltip "Atal y trosglwyddiad cyfredol">
+<!ENTITY junkButton.tooltip "Marcio'r neges fel sbam">
+<!ENTITY notJunkButton.tooltip "Marcio'r neges fel nid sbam">
+<!ENTITY addressBookButton.tooltip "Mynd i'r llyfr cyfeiriadau">
+<!ENTITY chatButton.tooltip "Dangos y tab Sgwrsio">
+<!ENTITY tagButton.tooltip "Tagio negeseuon">
+<!ENTITY compactButton.tooltip "Tynnu negeseuon wedi'u dileu o'r ffolder">
+<!ENTITY appmenuButton1.tooltip "Dangos Dewislen &brandShortName;">
+<!ENTITY addonsButton.tooltip "Rheoli eich ychwanegion">
+
+<!-- Toolbar Button Popup -->
+<!ENTITY buttonMenuForwardAsInline.label "Anfon Ymlaen fel Mewnlin">
+<!ENTITY buttonMenuForwardAsAttachment.label "Anfon Ymlaen fel Atodiad">
+
+<!-- Remote Content Button Popup -->
+<!ENTITY remoteContentOptionsAllowForMsg.label "Dangos cynnwys pell o fewn y neges hon">
+<!ENTITY remoteContentOptionsAllowForMsg.accesskey "D">
+<!ENTITY editRemoteContentSettings.label "Golygu dewisiadau cynnwys pell…">
+<!ENTITY editRemoteContentSettings.accesskey "G">
+<!ENTITY editRemoteContentSettingsUnix.label "Golygu dewisiadau cynnwys pell…">
+<!ENTITY editRemoteContentSettingsUnix.accesskey "d">
+
+<!-- Phishing Button Popup -->
+<!ENTITY phishingOptionIgnore.label "Anwybyddu rhybudd am y neges hon">
+<!ENTITY phishingOptionIgnore.accesskey "A">
+<!ENTITY phishingOptionSettings.label "Golygu dewisiadau canfod twyll…">
+<!ENTITY phishingOptionSettings.accesskey "o">
+<!ENTITY phishingOptionSettingsUnix.label "Golygu dewisiadau canfod twyll…">
+<!ENTITY phishingOptionSettingsUnix.accesskey "o">
+
+<!-- AppMenu Popup -->
+<!ENTITY appmenuNewMsgCmd.label "Neges Newydd">
+<!ENTITY appmenuNewContactCmd.label "Cysylltiad Llyfr Cyfeiriadau…">
+<!ENTITY appmenuEditMenu.label "Golygu">
+<!ENTITY appmenuToolbarLayout.label "Cynllun Bar Offer…">
+<!ENTITY appmenuSelectThread.label "Dewis Edefyn">
+<!ENTITY appmenuSelectFlagged.label "Estyn Negeseuon Serennog">
+
+<!-- Tags Menu Popup -->
+<!ENTITY addNewTag.label "Tag Newydd…">
+<!ENTITY addNewTag.accesskey "T">
+<!ENTITY manageTags.label "Rheoli Tagiau…">
+<!ENTITY manageTags.accesskey "T">
+
+<!-- Folder Pane -->
+<!ENTITY folderNameColumn.label "Enw">
+<!ENTITY folderUnreadColumn.label "Heb ei Ddarllen">
+<!ENTITY folderTotalColumn.label "Cyfanswm">
+<!ENTITY folderSizeColumn.label "Maint">
+
+<!-- Folder Pane Context Menu -->
+<!ENTITY folderContextGetMessages.label "Estyn Negeseuon">
+<!ENTITY folderContextGetMessages.accesskey "s">
+<!ENTITY folderContextMarkAllFoldersRead.label "Marcio Pob Ffolder Wedi'u Darllen">
+<!ENTITY folderContextPauseAllUpdates.label "Oedi Pob Diweddariad">
+<!ENTITY folderContextPauseUpdates.label "Oedi Diweddariadau">
+<!ENTITY folderContextPauseUpdates.accesskey "D">
+<!ENTITY folderContextOpenInNewWindow.label "Agor mewn Ffenestr Newydd">
+<!ENTITY folderContextOpenInNewWindow.accesskey "N">
+<!ENTITY folderContextOpenNewTab.label "Agor mewn Tab Newydd">
+<!ENTITY folderContextOpenNewTab.accesskey "T">
+<!ENTITY folderContextNew.label "Is ffolder Newydd…">
+<!ENTITY folderContextNew.accesskey "I">
+<!ENTITY folderContextRename.label "Ailenwi">
+<!ENTITY folderContextRename.accesskey "A">
+<!ENTITY folderContextRemove.label "Dileu">
+<!ENTITY folderContextRemove.accesskey "D">
+<!ENTITY folderContextCompact.label "Cywasgu">
+<!ENTITY folderContextCompact.accesskey "C">
+<!ENTITY folderContextEmptyTrash.label "Gwagio'r Sbwriel">
+<!ENTITY folderContextEmptyTrash.accesskey "G">
+<!ENTITY folderContextEmptyJunk.label "Gwagio'r Sbam">
+<!ENTITY folderContextEmptyJunk.accesskey "S">
+<!ENTITY folderContextSendUnsentMessages.label "Anfon Negeseuon heb eu Hanfon">
+<!ENTITY folderContextSendUnsentMessages.accesskey "A">
+<!ENTITY folderContextUnsubscribe.label "Dad-danysgrifio">
+<!ENTITY folderContextUnsubscribe.accesskey "D">
+<!ENTITY folderContextMarkNewsgroupRead.label "Marcio Grŵp Newyddion Wedi'i Ddarllen">
+<!ENTITY folderContextMarkNewsgroupRead.accesskey "G">
+<!ENTITY folderContextMarkMailFolderRead.label "Marcio Ffolder Wedi'i Ddarllen">
+<!ENTITY folderContextMarkMailFolderRead.accesskey "W">
+<!ENTITY folderContextSubscribe.label "Tanysgrifio…">
+<!ENTITY folderContextSubscribe.accesskey "T">
+<!ENTITY folderContextSearchForMessages.label "Chwilio Negeseuon…">
+<!ENTITY folderContextSearchForMessages.accesskey "C">
+<!ENTITY folderContextProperties2.label "Priodweddau">
+<!ENTITY folderContextProperties2.accesskey "P">
+<!ENTITY folderContextFavoriteFolder.label "Hoff Ffolder">
+<!ENTITY folderContextFavoriteFolder.accesskey "H">
+<!ENTITY folderContextSettings2.label "Gosodiadau">
+<!ENTITY folderContextSettings2.accesskey "o">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label "Mae'r Enw neu E-bost yn cynnwys:">
+<!ENTITY SearchNameOrEmail.accesskey "E">
+
+<!-- Gloda Search Bar -->
+<!ENTITY glodaSearchBar.placeholder "Chwilio negeseuon…">
+
+<!-- Quick Search Menu Bar -->
+<!ENTITY searchSubjectMenu.label "Pwnc">
+<!ENTITY searchFromMenu.label "Oddi wrth">
+<!ENTITY searchSubjectOrFromMenu.label "Pwnc neu Oddi wrth">
+<!ENTITY searchRecipient.label "At neu Cc">
+<!ENTITY searchSubjectOrRecipientMenu.label "Pwnc, At neu Cc">
+<!ENTITY searchMessageBody.label "Neges Gyfan">
+<!ENTITY saveAsVirtualFolderMenu.label "Cadw'r Chwilio fel Ffolder…">
+
+<!-- Thread Pane -->
+<!ENTITY selectColumn.label "Dewis Negeseuon">
+<!ENTITY threadColumn.label "Edefyn">
+<!ENTITY fromColumn.label "Oddi wrth">
+<!ENTITY recipientColumn.label "Derbynnydd">
+<!ENTITY correspondentColumn.label "Cyfathrebwyr">
+<!ENTITY subjectColumn.label "Pwnc">
+<!ENTITY dateColumn.label "Dyddiad">
+<!ENTITY priorityColumn.label "Blaenoriaeth">
+<!ENTITY tagsColumn.label "Tag">
+<!ENTITY accountColumn.label "Cyfrif">
+<!ENTITY statusColumn.label "Statws">
+<!ENTITY sizeColumn.label "Maint">
+<!ENTITY junkStatusColumn.label "Statws Sbam">
+<!ENTITY unreadColumn.label "Heb ei Ddarllen">
+<!ENTITY totalColumn.label "Cyfanswm">
+<!ENTITY readColumn.label "Darllenwyd">
+<!ENTITY receivedColumn.label "Derbyniwyd">
+<!ENTITY starredColumn.label "Serennog">
+<!ENTITY locationColumn.label "Lleoliad">
+<!ENTITY idColumn.label "Trefn Derbyn">
+<!ENTITY attachmentColumn.label "Atodiadau">
+
+<!ENTITY deleteColumn.label "Dileu">
+
+<!-- Thread Pane Tooltips -->
+<!ENTITY columnChooser2.tooltip "Dewis colofnau i'w dangos">
+<!ENTITY selectColumn.tooltip "Toglo dewis pob neges">
+<!ENTITY threadColumn2.tooltip "Dangos edafedd negeseuon">
+<!ENTITY fromColumn2.tooltip "Trefnu yn ôl anfonwr">
+<!ENTITY recipientColumn2.tooltip "Trefnu yn ôl derbyniwr">
+<!ENTITY correspondentColumn2.tooltip "Trefnu yn ôl cyfathrebwyr">
+<!ENTITY subjectColumn2.tooltip "Trefnu yn ôl pwnc">
+<!ENTITY dateColumn2.tooltip "Trefnu yn ôl dyddiad">
+<!ENTITY priorityColumn2.tooltip "Trefnu yn ôl blaenoriaeth">
+<!ENTITY tagsColumn2.tooltip "Trefnu yn ôl tagiau">
+<!ENTITY accountColumn2.tooltip "Trefnu yn ôl cyfrif">
+<!ENTITY statusColumn2.tooltip "Trefnu yn ôl statws">
+<!ENTITY sizeColumn2.tooltip "Trefnu yn ôl maint">
+<!ENTITY junkStatusColumn2.tooltip "Trefnu yn ôl statws sbam">
+<!ENTITY unreadColumn2.tooltip "Nifer y negeseuon heb eu darllen yn yr edafedd">
+<!ENTITY totalColumn2.tooltip "Cyfanswm y nifer o negeseuon yn yr edafedd">
+<!ENTITY readColumn2.tooltip "Trefnu yn ôl darllenwyd">
+<!ENTITY receivedColumn2.tooltip "Trefnu yn ôl dyddiad derbyniwyd">
+<!ENTITY starredColumn2.tooltip "Trefnu yn ôl sêr">
+<!ENTITY locationColumn2.tooltip "Trefnu yn ôl lleoliad">
+<!ENTITY idColumn2.tooltip "Trefnu yn ôl y drefn derbyniwyd">
+<!ENTITY attachmentColumn2.tooltip "Trefnu yn ôl atodiad">
+
+<!ENTITY deleteColumn.tooltip "Dileu neges">
+
+<!-- Thread Pane Context Menu -->
+<!ENTITY contextNewMsgFromTemplate.label "Neges Newydd o Dempled">
+<!ENTITY contextOpenNewWindow.label "Agor Neges mewn Ffenestr Newydd">
+<!ENTITY contextOpenNewWindow.accesskey "F">
+<!-- The contextOpenNewTab.accesskey ("T") potentially conflicts with
+     cutCmd.accessKey which is defined in textcontext.dtd from toolkit. Right
+     now, both menu items can't be visible at the same time, but should someone
+     enable copy/paste of message, this key would probably need to be changed. -->
+<!ENTITY contextOpenNewTab.label "Agor Neges mewn Tab Newydd">
+<!ENTITY contextOpenNewTab.accesskey "T">
+<!ENTITY contextOpenConversation.label "Agor Neges mewn Sgwrs">
+<!ENTITY contextOpenConversation.accesskey "s">
+<!ENTITY contextOpenContainingFolder.label "Agor Neges yn y Ffolder Cynnwys">
+<!ENTITY contextOpenContainingFolder.accesskey "A">
+<!ENTITY contextEditMsgAsNew.label "Golygu fel Neges Newydd">
+<!ENTITY contextEditMsgAsNew.accesskey "N">
+<!ENTITY contextEditDraftMsg.label "Golygu Neges Ddrafft">
+<!ENTITY contextEditTemplate.label "Golygu Templed">
+<!ENTITY contextEditTemplate.accesskey "T">
+<!ENTITY contextArchive.label "Archifo">
+<!ENTITY contextArchive.accesskey "A">
+<!ENTITY contextReplySender.label "Ateb i'r Anfonwr yn Unig">
+<!ENTITY contextReplySender.accesskey "n">
+<!ENTITY contextReplyNewsgroup2.label "Dilyn Grŵp Newyddion">
+<!ENTITY contextReplyNewsgroup2.accesskey "D">
+<!ENTITY contextReplyAll.label "Ateb i Bawb">
+<!ENTITY contextReplyAll.accesskey "B">
+<!ENTITY contextReplyList.label "Ateb i'r Rhestr">
+<!ENTITY contextReplyList.accesskey "R">
+<!ENTITY contextForward.label "Ymlaen">
+<!ENTITY contextForward.accesskey "Y">
+<!ENTITY contextForwardAsMenu.label "Ymlaen Fel">
+<!ENTITY contextForwardAsMenu.accesskey "Y">
+<!ENTITY contextForwardAsInline.label "Mewnlin">
+<!ENTITY contextForwardAsInline.accesskey "M">
+<!ENTITY contextForwardAsAttachmentItem.label "Atodiad">
+<!ENTITY contextForwardAsAttachmentItem.accesskey "A">
+<!ENTITY contextMultiForwardAsAttachment.label "Ymlaen fel Atodiadau">
+<!ENTITY contextMultiForwardAsAttachment.accesskey "A">
+<!ENTITY contextMoveMsgMenu.label "Symud i">
+<!ENTITY contextMoveMsgMenu.accesskey "S">
+<!ENTITY contextMoveCopyMsgRecentMenu.label "Diweddar">
+<!ENTITY contextMoveCopyMsgRecentMenu.accesskey "D">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.label "Ffefrynnau">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.accesskey "F">
+<!ENTITY contextCopyMsgMenu.label "Copïo i">
+<!ENTITY contextCopyMsgMenu.accesskey "C">
+<!ENTITY contextKillThreadMenu.label "Anwybyddu'r Edefyn">
+<!ENTITY contextKillSubthreadMenu.accesskey "I">
+<!ENTITY contextKillThreadMenu.accesskey "A">
+<!ENTITY contextKillSubthreadMenu.label "Anwybyddu'r Is-Edefyn">
+<!ENTITY contextWatchThreadMenu.label "Gwylio'r Edefyn">
+<!-- LOCALIZATION NOTE (contextWatchThreadMenu.accesskey):
+     In the en-US locale we ran out of access keys, so there is an empty access key for
+     Watch Thread. Localizers can pick a suitable key
+  -->
+<!ENTITY contextWatchThreadMenu.accesskey "">
+<!ENTITY contextSaveAs.label "Cadw Fel…">
+<!ENTITY contextSaveAs.accesskey "a">
+<!ENTITY contextPrint.label "Argraffu…">
+<!ENTITY contextPrint.accesskey "A">
+<!ENTITY contextPrintPreview.label "Rhagolwg Argraffu">
+<!ENTITY contextPrintPreview.accesskey "R">
+
+<!-- LOCALIZATION NOTE (columnPicker.applyTo.label):
+     This option in the thread pane column picker pops up a sub-menu containing
+     the "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" options. This item indicates
+     a desire to apply the currently displayed set of columns to some other
+     folder(s). The sub-menu items indicate whether we want to apply it to just
+     a folder or also its children.
+  -->
+<!ENTITY columnPicker.applyTo.label "Gosod y colofnau yn y…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolder.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolderAndChildren.label". It indicates a desire to
+     apply the currently display thread pane column settings to a single folder
+     that the user selects using the same widget as the move to/copy to
+     mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolder.label "Ffolder…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolderAndChildren.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolder.label". It indicates a desire to
+     apply the currently display thread pane column settings to a folder and all
+     of its descendents. The user selects the folder using the same widget as the
+     move to/copy to mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolderAndChildren.label "Ffolder a'i blant…">
+<!-- LOCALIZATION NOTE (columnPicker.thisFolder.label):
+     This is used in the folder selection widget for the
+     "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" menu options. Whenever
+     a folder has children, it results in a menu popup; the first menu item
+     in that popup is given this label to indicate that that folder should be
+     selected. For example, if folder "A" has two children, "B" and "C", then
+     when the user hovers over "A", a new popup menu will be displayed whose
+     items are "This folder", "B", and "C". This is the equivalent of the
+     "File here" option for the move to/copy to widget.
+  -->
+<!ENTITY columnPicker.thisFolder.label "Y ffolder hwn">
+
+<!-- Media (video/audio) controls -->
+<!ENTITY contextPlay.label "Chwarae">
+<!ENTITY contextPlay.accesskey "h">
+<!ENTITY contextPause.label "Oedi">
+<!ENTITY contextPause.accesskey "O">
+<!ENTITY contextMute.label "Tewi">
+<!ENTITY contextMute.accesskey "T">
+<!ENTITY contextUnmute.label "Dad-dewi">
+<!ENTITY contextUnmute.accesskey "D">
+
+<!-- Quick Search Bar -->
+<!-- LOCALIZATION NOTE (quickSearchCmd.key):
+     This is actually the key used for the global message search box; we have
+     not changed
+  -->
+<!ENTITY quickSearchCmd.key "k">
+<!-- LOCALIZATION NOTE (search.label.base1):
+     This is the base of the empty text for the global search box. We replace
+     #1 with the contents of the appropriate search.keyLabel.* value for the
+     platform.
+     The goal is to convey to the user that typing in the box will allow them
+     to search for messages globally and that there is a hotkey they can press
+     to get to the box faster. If the global indexer is disabled, the search
+     box will be collapsed and the user will never see this message.
+  -->
+<!ENTITY search.label.base1 "Chwilio #1">
+<!-- LOCALIZATION NOTE (search.keyLabel.nonmac):
+     The description of the key-binding to get into the global search box on
+     windows and linux (which use the control key). We use the key defined in
+     the quickSearchCmd.key entity defined above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.nonmac "&lt;Ctrl+K&gt;">
+<!-- LOCALIZATION NOTE (search.keyLabel.mac):
+     The description of the key-binding to get into the global search box on mac
+     systems. We use the key defined in the quickSearchCmd.key entity defined
+     above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.mac "&lt;&#x2318;K&gt;">
+
+<!-- Message Header Context Menu -->
+<!ENTITY AddToAddressBook.label "Ychwanegu i'r Llyfr Cyfeiriadau…">
+<!ENTITY AddToAddressBook.accesskey "L">
+<!ENTITY AddDirectlyToAddressBook.label "Ychwanegu i'r Llyfr Cyfeiriadau">
+<!ENTITY AddDirectlyToAddressBook.accesskey "C">
+<!ENTITY EditContact1.label "Golygu Cysylltiad">
+<!ENTITY EditContact1.accesskey "G">
+<!ENTITY ViewContact.label "Gweld Cysylltiad">
+<!ENTITY ViewContact.accesskey "w">
+<!ENTITY SubscribeToNewsgroup.label "Tanysgrifio i Grŵp Newyddion">
+<!ENTITY SubscribeToNewsgroup.accesskey "N">
+<!ENTITY SendMessageTo.label "Ysgrifennu Neges At">
+<!ENTITY SendMessageTo.accesskey "Y">
+<!ENTITY CopyEmailAddress.label "Copïo Cyfeiriad E-bost">
+<!ENTITY CopyEmailAddress.accesskey "C">
+<!ENTITY CopyNameAndEmailAddress.label "Copïo Enw a Chyfeiriad E-bost">
+<!ENTITY CopyNameAndEmailAddress.accesskey "E">
+<!ENTITY CopyNewsgroupName.label "Copïo Enw Grŵp Newyddion">
+<!ENTITY CopyNewsgroupName.accesskey "N">
+<!ENTITY CopyNewsgroupURL.label "Copïo URL Grŵp Newyddion">
+<!ENTITY CopyNewsgroupURL.accesskey "U">
+<!ENTITY CreateFilterFrom.label "Creu Hidl o…">
+<!ENTITY CreateFilterFrom.accesskey "H">
+<!ENTITY reportPhishingURL.label "Adrodd ar Dwyll E-bost">
+<!ENTITY reportPhishingURL.accesskey "A">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Ychwanegu Geiriaduron…">
+<!ENTITY spellAddDictionaries.accesskey "Y">
+
+<!-- Content Pane Context Menu -->
+<!ENTITY saveLinkAsCmd.label "Cadw Dolen Fel…">
+<!ENTITY saveLinkAsCmd.accesskey "D">
+<!ENTITY saveImageAsCmd.label "Cadw Delwedd Fel…">
+<!ENTITY saveImageAsCmd.accesskey "D">
+<!ENTITY copyLinkCmd.label "Copïo Lleoliad Dolen">
+<!ENTITY copyLinkCmd.accesskey "C">
+<!ENTITY copyImageAllCmd.label "Copïo Delwedd">
+<!ENTITY copyImageAllCmd.accesskey "p">
+<!ENTITY copyEmailCmd.label "Copïo Cyfeiriad E-bost">
+<!ENTITY copyEmailCmd.accesskey "E">
+<!ENTITY stopCmd.label "Atal">
+<!ENTITY stopCmd.accesskey "A">
+<!ENTITY reloadCmd.label "Ail-lwytho">
+<!ENTITY reloadCmd.accesskey "A">
+<!ENTITY openInBrowser.label "Agor yn y Porwr">
+<!ENTITY openInBrowser.accesskey "A">
+<!ENTITY openLinkInBrowser.label "Agor Dolen yn y Porwr">
+<!ENTITY openLinkInBrowser.accesskey "D">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label "Gorffen">
+
+<!-- Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.label "Lleihau">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "Dwyn y Cyfan i'r Blaen">
+<!ENTITY zoomWindow.label "Chwyddo">
+
+<!-- Mac OS X Application Menu (Cocoa widgets) -->
+<!ENTITY preferencesCmdMac2.label       "Dewisiadau">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+<!ENTITY preferencesCmdMac.modifiers    "accel">
+<!ENTITY servicesMenuMac.label          "Gwasanaethau">
+<!ENTITY hideThisAppCmdMac.label        "Cuddio &brandShortName;">
+<!ENTITY hideThisAppCmdMac.commandkey   "H">
+<!ENTITY hideThisAppCmdMac.modifiers    "accel">
+<!ENTITY hideOtherAppsCmdMac.label      "Cuddio Eraill">
+<!ENTITY hideOtherAppsCmdMac.commandkey "E">
+<!ENTITY hideOtherAppsCmdMac.modifiers  "accel,alt">
+<!ENTITY showAllAppsCmdMac.label        "Dangos Popeth">
+
+<!-- Mac OS X Dock Icon pop-up menu -->
+<!ENTITY dockOptions.label              "Dewisiadau Eicon Ap…">
+<!ENTITY writeNewMessageDock.label      "Ysgrifennu Neges Newydd">
+<!ENTITY openAddressBookDock.label      "Agor y Llyfr Cyfeiriadau">
+
+<!-- Content tab Navigation buttons -->
+<!ENTITY browseBackButton.tooltip    "Nôl un tudalen">
+<!ENTITY browseForwardButton.tooltip "Mynd ymlaen un tudalen">

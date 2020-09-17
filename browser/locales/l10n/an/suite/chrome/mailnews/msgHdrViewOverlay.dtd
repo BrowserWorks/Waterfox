@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Para: ">
+<!ENTITY fromField.label "De: ">
+<!ENTITY senderField.label "Remitente: ">
+<!ENTITY organizationField.label "Organización: ">
+<!ENTITY replyToField.label "Responder a: ">
+
+<!ENTITY subjectField.label "Afer: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "Bcc: ">
+<!ENTITY newsgroupsField.label "Grupos de noticias: ">
+<!ENTITY followupToField.label "Reendrezar a: ">
+
+<!ENTITY tagsHdr.label "Etiquetas: ">
+<!ENTITY dateField.label "Calendata: ">
+<!ENTITY userAgentField.label "Achent d'usuario: ">
+<!ENTITY referencesField.label "Referencias: ">
+<!ENTITY messageIdField.label "Message-ITZ: ">
+<!ENTITY inReplyToField.label "In-Reply-To: ">
+<!ENTITY originalWebsite.label "Puesto web: ">
+
+<!ENTITY editMessage.label                 "Yditar borrador…">
+<!ENTITY editMessage.accesskey             "d">
+
+<!ENTITY attachmentsTree.label             "Adjuntos:">
+<!ENTITY attachmentsTree.accesskey         "d">
+<!ENTITY openAttachmentCmd.label           "Abrir">
+<!ENTITY openAttachmentCmd.accesskey       "b">
+<!ENTITY viewAttachmentCmd.label           "Veyer codigo fuent">
+<!ENTITY viewAttachmentCmd.accesskey       "V">
+<!ENTITY saveAsAttachmentCmd.label         "Guardar como…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "u">
+<!ENTITY detachAttachmentCmd.label         "Separar…">
+<!ENTITY detachAttachmentCmd.accesskey     "e">
+<!ENTITY deleteAttachmentCmd.label         "Eliminar">
+<!ENTITY deleteAttachmentCmd.accesskey     "E">
+<!ENTITY saveAllAttachmentsCmd.label       "Alzar tot…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "A">
+<!ENTITY detachAllAttachmentsCmd.label     "Deseparar totz…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "D">
+<!ENTITY deleteAllAttachmentsCmd.label     "Eliminar todos…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "o">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountSetupTitle.label "Наладка &syncBrand.fullName.label;">
+<!ENTITY setup.pickSetupType.description "Сардэчна запрашаем! Калі вы не ўжывалі &syncBrand.fullName.label; раней, вы мусіце стварыць новы рахунак.">
+<!ENTITY button.createNewAccount.label "Стварыць новы рахунак">
+<!ENTITY setup.haveAccount.label "Я ўжо маю рахунак &syncBrand.fullName.label;.">
+<!ENTITY button.connect.label "Злучыцца">
+<!ENTITY setup.choicePage.title.label "Ужывалі &syncBrand.fullName.label; раней?">
+<!ENTITY setup.choicePage.new.label "Я ніколі не ўжываў &syncBrand.shortName.label; раней">
+<!ENTITY setup.choicePage.existing.label "Я ўжо ўжываю &syncBrand.shortName.label; на іншым кампутары">
+<!ENTITY server.label "Паслугач">
+<!ENTITY server.accesskey "П">
+<!ENTITY serverType.main.label "паслугач &syncBrand.fullName.label;">
+<!ENTITY serverType.custom2.label "Ужываць іншы паслугач…">
+<!ENTITY signIn.account2.label "Рахунак">
+<!ENTITY signIn.account2.accesskey "Р">
+<!ENTITY signIn.password.label "Пароль">
+<!ENTITY signIn.password.accesskey "П">
+<!ENTITY signIn.recoveryKey.label "Адноўны ключ">
+<!ENTITY signIn.recoveryKey.accesskey "к">
+<!ENTITY setup.newAccountDetailsPage.title.label "Падрабязнасці рахунку">
+<!ENTITY setup.confirmPassword.label "Пацвердзіць пароль">
+<!ENTITY setup.confirmPassword.accesskey "ц">
+<!ENTITY setup.emailAddress.label "Э-паштовы адрас">
+<!ENTITY setup.emailAddress.accesskey "Э">
+<!ENTITY setup.tosAgree1.label "Я згодны з">
+<!ENTITY setup.tosAgree1.accesskey "з">
+<!ENTITY setup.tosLink.label "умовамі абслугоўвання">
+<!ENTITY setup.tosAgree2.label "і">
+<!ENTITY setup.ppLink.label "палітыкай адасаблення">
+<!ENTITY setup.tosAgree3.label "">
+<!ENTITY setup.tosAgree2.accesskey "">
+<!ENTITY setup.newRecoveryKeyPage.title.label "&brandShortName; дбае пра ваша адасабленне">
+<!ENTITY setup.newRecoveryKeyPage.description.label "Каб захаваць вашу бяспеку, усе вашы здаткі шыфруюцца перад зацягваннем. Адноўны ключ, неабходны для расшыфравання вашых здаткаў, не зацягваецца.">
+<!ENTITY recoveryKeyEntry.label "Ваш адноўны ключ">
+<!ENTITY recoveryKeyEntry.accesskey "к">
+<!ENTITY recoveryGenerateNewKey.label "Вырабіць новы ключ">
+<!ENTITY recoveryKeyBackup.description "Ваш адноўны ключ патрэбны для дасягання &syncBrand.fullName.label; на іншых машынах. Стварыце, калі ласка, яго адноўную копію. Мы не зможам дапамагчы вам аднавіць адноўны ключ.">
+<!ENTITY button.syncKeyBackup.print.label "Друкаваць…">
+<!ENTITY button.syncKeyBackup.print.accesskey "Д">
+<!ENTITY button.syncKeyBackup.save.label "Захаваць…">
+<!ENTITY button.syncKeyBackup.save.accesskey "З">
+<!ENTITY setup.captchaPage2.title.label "Пацвердзіце, калі ласка, што вы не робат">
+<!ENTITY addDevice.title.label "Дадаць збудову">
+<!ENTITY addDevice.showMeHow.label "Паказаць мне як.">
+<!ENTITY addDevice.dontHaveDevice.label "Я не маю збудову з сабой">
+<!ENTITY addDevice.setup.description.label 'Каб задзейнічаць, перайдзіце ў Перавагі/Наладжванні &syncBrand.shortName.label; на вашай іншай збудове і выберыце "Дадаць збудову".'>
+<!ENTITY addDevice.setup.enterCode.label "Тады ўвядзіце гэты код:">
+<!ENTITY addDevice.dialog.description.label 'Каб задзейнічаць вашую новую збудову, перайдзіце ў Перавагі/Наладжванні &syncBrand.shortName.label; на вашай збудове і выберыце "Злучыцца".'>
+<!ENTITY addDevice.dialog.enterCode.label "Увядзіце код, які быў атрыманы на збудове:">
+<!ENTITY addDevice.dialog.tryAgain.label "Паспрабуйце, калі ласка, зноў.">
+<!ENTITY addDevice.dialog.successful.label "Збудова паспяхова дададзена. Пачатковая сінхранізацыя працягнецца некалькі хвілінаў і будзе фонава здзяйсняцца.">
+<!ENTITY addDevice.dialog.recoveryKey.label "Каб задзейничаць вашу збудову, вы мусіце ўвесці ваш адноўны ключ. Калі ласка, надрукуйце або захавайце гэты ключ і трымайце яго ў сябе.">
+<!ENTITY addDevice.dialog.connected.label "Збудова злучана">
+<!ENTITY setup.signInPage.title.label "Увайсці">
+<!ENTITY existingRecoveryKey.description 'Вы можаце атрымаць падвой вашага адноўнага ключа ў перавагах/наладжваннях &syncBrand.shortName.label; на іншай вашай збудове, выберыце "Мой адноўны ключ" у "Кіраваць рахункам".'>
+<!ENTITY verifying.label "Праверка…">
+<!ENTITY resetPassword.label "Скінуць пароль">
+<!ENTITY resetSyncKey.label "Я згубіў маю іншую збудову.">
+<!ENTITY setup.optionsPage.title "Наладжванні Sync">
+<!ENTITY syncComputerName.label "Назва кампутара:">
+<!ENTITY syncComputerName.accesskey "Н">
+<!ENTITY syncMy.label "Сінхранізаваць мае">
+<!ENTITY engine.addons.label "Дадаткі">
+<!ENTITY engine.addons.accesskey "Д">
+<!ENTITY engine.bookmarks.label "Закладкі">
+<!ENTITY engine.bookmarks.accesskey "З">
+<!ENTITY engine.tabs.label "Устаўкі">
+<!ENTITY engine.tabs.accesskey "У">
+<!ENTITY engine.history.label "Гісторыя">
+<!ENTITY engine.history.accesskey "Г">
+<!ENTITY engine.passwords.label "Паролі">
+<!ENTITY engine.passwords.accesskey "П">
+<!ENTITY engine.prefs.label "Перавагі">
+<!ENTITY engine.prefs.accesskey "в">
+<!ENTITY choice2.merge.main.label "Зліць усе здаткі на гэтым кампутары з маімі здаткамі &syncBrand.shortName.label;">
+<!ENTITY choice2.merge.recommended.label "(раіцца)">
+<!ENTITY choice2.client.main.label "Замяніць усе здаткі на гэтым кампутары маімі здаткамі &syncBrand.shortName.label;">
+<!ENTITY choice2.server.main.label "Замяніць усе здаткі на іншых збудовах здаткамі з гэтага кампутара">
+<!ENTITY setup.optionsConfirmPage.title "Сцвярджэнне">
+<!ENTITY confirm.merge.label "&syncBrand.fullName.label; зараз зліе ўсе здаткі азіральніка на гэтым кампутары ў ваш рахунак Sync.">
+<!ENTITY confirm.client2.label "Увага: наступныя здаткі &brandShortName; будуць выдалены на гэтым кампутары:">
+<!ENTITY confirm.client.moreinfo.label "&brandShortName; скапіруе здаткі &syncBrand.fullName.label; на гэты кампутар.">
+<!ENTITY confirm.server2.label "Увага: здаткі на наступных збудовах будуць перазапісаны мясцовымі здаткамі:">
+<!ENTITY setup.successPage.title "Уладкаванне скончана">
+<!ENTITY changeOptions.label "Вы можаце змяніць гэтую перавагу з дапамогаю наладжванняў Sync.">
+<!ENTITY continueUsing.label "Зараз вы можаце працягнуць працаваць з &brandShortName;.">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "Verkkohaut">
+<!ENTITY legendHeader                     "Oletushakukone">
+<!ENTITY defaultSearchEngine.label        "Hakukone:">
+<!ENTITY defaultSearchEngine.accesskey    "H">
+
+<!-- Will be used by bug 595246 -->
+<!ENTITY engineManager.label              "Muokkaa hakukoneita…">
+
+<!ENTITY searchResults.label              "Haun tulokset">
+
+<!ENTITY openInTab.label                  "Avaa uusi välilehti sivupaneelista tehdyn haun tuloksille">
+<!ENTITY openInTab.accesskey              "v">
+<!ENTITY openContextSearchTab.label       "Avaa ponnahdusvalikosta tehty haku uuteen välilehteen ikkunan sijaan">
+<!ENTITY openContextSearchTab.accesskey   "A">
+<!ENTITY openSidebarSearchPanel.label     "Avaa sivupaneelin Haku-välilehti hakua tehtäessä">
+<!ENTITY openSidebarSearchPanel.accesskey "s">

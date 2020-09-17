@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Peraturan Tapisan">
+<!ENTITY filterEditorDialog.dimensions "width: 105ch;">
+<!ENTITY filterName.label "Nama penapis:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY recentFolders.label "Terbaru">
+
+<!ENTITY junk.label "Mel Remeh">
+<!ENTITY notJunk.label "Bukan Mel Remeh">
+
+<!ENTITY lowestPriorityCmd.label "Paling rendah">
+<!ENTITY lowPriorityCmd.label "Rendah">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY highPriorityCmd.label "Tinggi">
+<!ENTITY highestPriorityCmd.label "Paling tinggi">
+
+<!ENTITY contextDesc.label "Laksanakan tapisan apabila:">
+<!ENTITY contextIncomingMail.label "Mendapatkan Mel Baru:">
+<!ENTITY contextIncomingMail.accesskey "M">
+<!ENTITY contextManual.label "Laksanakan secara Manual">
+<!ENTITY contextManual.accesskey "L">
+<!ENTITY contextBeforeCls.label "Tapis sebelum Pengelasan Mel Remeh">
+<!ENTITY contextAfterCls.label "Tapis selepas Pengelasan Mel Remeh">
+<!ENTITY contextOutgoing.label "Selepas Menghantar">
+<!ENTITY contextOutgoing.accesskey "S">
+<!ENTITY contextArchive.label "Arkib">
+<!ENTITY contextArchive.accesskey "A">
+
+<!ENTITY filterActionDesc.label "Laksanakan tindakan ini:">
+<!ENTITY filterActionDesc.accesskey "L">
+
+<!ENTITY filterActionOrderWarning.label "Nota: Tindakan tapisan akan dilaksanakan dalam turutan berbeza.">
+<!ENTITY filterActionOrder.label "Lihat pelaksanaan perintah">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Pindah Mesej ke">
+<!ENTITY copyMessage.label "Salin Mesej ke">
+<!ENTITY forwardTo.label "Kirim semula Mesej kepada">
+<!ENTITY replyWithTemplate.label "Balas menggunakan Templat">
+<!ENTITY markMessageRead.label "Tandakan sebagai telah Dibaca">
+<!ENTITY markMessageUnread.label "Tandakan sebagai Belum Dibaca">
+<!ENTITY markMessageStarred.label "Tandakan sebagai Bertanda">
+<!ENTITY setPriority.label "Tetapkan Prioriti ke">
+<!ENTITY addTag.label "Tag Mesej">
+<!ENTITY setJunkScore.label "Tetapkan Status Mel Remeh ke">
+<!ENTITY deleteMessage.label "Buang Mesej">
+<!ENTITY deleteFromPOP.label "Buang Daripada Pelayan POP">
+<!ENTITY fetchFromPOP.label "Ambil Daripada Pelayan POP">
+<!ENTITY ignoreThread.label "Abaikan Thread">
+<!ENTITY ignoreSubthread.label "Abaikan Sub-thread">
+<!ENTITY watchThread.label "Ikuti Thread">
+<!ENTITY stopExecution.label "Henti Pelaksanaan Tapisan">
+
+<!ENTITY addAction.tooltip "Tambah tindakan baru">
+<!ENTITY removeAction.tooltip "Batal tindakan ini">
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

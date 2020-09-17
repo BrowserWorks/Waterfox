@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "Безбедност на пораката">
+<!ENTITY signatureCert.label "Прикажи го сертификатот на потписот">
+<!ENTITY encryptionCert.label "Прикажи го сертификатот за енкрипција">
+
+<!ENTITY signer.name "Потпишано од:">
+<!ENTITY recipient.name "Енкриптирано за:">
+<!ENTITY email.address "Адреса за е-пошта:">
+<!ENTITY issuer.name "Сертификатот е издаден од:">
+

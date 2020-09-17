@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Subscripcions RSS">
+<!ENTITY learnMore.label             "Més informació sobre els canals RSS">
+
+<!ENTITY feedTitle.label             "Títol:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL del canal:">
+<!ENTITY feedLocation.accesskey      "L">
+<!ENTITY feedLocation2.placeholder   "Introduïu un URL de canal vàlid">
+<!ENTITY locationValidate.label      "Valida">
+<!ENTITY validateText.label          "Comprova la validació i recupera un URL vàlid.">
+
+<!ENTITY feedFolder.label            "Emmagatzema els articles en:">
+<!ENTITY feedFolder.accesskey        "g">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Comprova si hi ha articles nous cada ">
+<!ENTITY biffStart.accesskey         "a">
+<!ENTITY biffMinutes.label           "minuts">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "dies">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Recomanats per l'editor:">
+
+<!ENTITY quickMode.label             "Mostra el resum de l'article en comptes de carregar la pàgina web">
+<!ENTITY quickMode.accesskey         "M">
+
+<!ENTITY autotagEnable.label         "Crea automàticament etiquetes a partir dels noms de les &lt;categories&gt;">
+<!ENTITY autotagEnable.accesskey     "C">
+<!ENTITY autotagUsePrefix.label      "Afegeix aquest prefix a les etiquetes:">
+<!ENTITY autotagUsePrefix.accesskey  "p">
+<!ENTITY autoTagPrefix.placeholder   "Introduïu un prefix per a l'etiqueta">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Afegeix">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.verifyFeed.label     "Verifica">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "Actualitza">
+<!ENTITY button.updateFeed.accesskey "u">
+<!ENTITY button.removeFeed.label     "Suprimeix">
+<!ENTITY button.removeFeed.accesskey "r">
+<!ENTITY button.importOPML.label     "Importa">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exporta">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "Premeu Ctrl+clic per exportar els canals amb l'estructura de carpetes o Ctrl+Retorn per exportar-los com a llista">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Tanca">

@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "D' ainm:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY name.text                       "D' ainm, mar a chì daoine eile e">
+<!ENTITY email.label                     "Seòladh a' phuist-dhealain:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY email.text                      "An seòladh puist-d a th’ agad">
+<!ENTITY password.label                  "Facal-faire:">
+<!ENTITY password.accesskey              "F">
+<!ENTITY password.placeholder            "Facal-faire">
+<!ENTITY password.text                   "Roghainneil, cha dèid a chleachdadh ach a chum dearbhadh an ainm-chleachdaiche">
+<!ENTITY rememberPassword.label          "Cum am facal-faire an cuimhne">
+<!ENTITY rememberPassword.accesskey      "m">
+<!ENTITY usernameEx.label                "An clàradh a-steach agad:">
+<!ENTITY usernameEx.accesskey            "l">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "AN_ÀRAINN_AGAD\an_t-ainm-cleachdaiche_agad">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Clàradh a-steach àrainn">
+
+<!ENTITY imapLong.label                  "IMAP (pasgain chèin)">
+<!ENTITY pop3Long.label                  "POP 3 (cum teachdaireachdan air a' choimpiutair agad)">
+
+<!ENTITY incoming.label                  "A-steach:">
+<!ENTITY outgoing.label                  "A-mach:">
+<!ENTITY username.label                  "Ainm-cleachdaiche:">
+<!ENTITY auth.label                      "Dearbhachadh">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Fèin-mhothaich">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Chan eil gin">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Am frithealaiche Exchange:">
+
+<!ENTITY advancedSetup.label             "Rèiteachadh adhartach">
+<!ENTITY advancedSetup.accesskey         "a">
+<!ENTITY cancel.label                    "Sguir dheth">
+<!ENTITY cancel.accesskey                "S">
+<!ENTITY continue.label                  "Lean air adhart">
+<!ENTITY continue.accesskey              "L">
+<!ENTITY stop.label                      "Sguir dheth">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Ath-dheuchainn">
+<!ENTITY half-manual-test.accesskey      "t">
+<!ENTITY open-provisioner.label          "Faigh seòladh puist-d ùr…">
+<!ENTITY open-provisioner.accesskey      "g">
+
+
+<!ENTITY warning.label                   "Rabhadh!">
+<!ENTITY incomingSettings.label          "Roghainnean a-steach:">
+<!ENTITY outgoingSettings.label          "Roghainnean a-mach:">
+<!ENTITY technicaldetails.label          "Mion-fhiosrachadh teicnigeach">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Tuigidh mi an cunnart.">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Deiseil">
+<!ENTITY doneAccount.accesskey           "D">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Atharraich roghainnean">
+<!ENTITY changeSettings.accesskey        "A">
+
+<!ENTITY contactYourProvider.description "'S urrainn do &brandShortName; cead a thoirt dhut am post agad fhaighinn leis na roghainnean a thagh thu. Ge-tà, bu chòir dhut fios a leigeil dhan rianadair agad no do sholaraiche a' phuist-dhealain agad a thaobh nan ceanglaichean neo-iomchaidh seo. Cuir sùil air na CÀBHA aig Thunderbird airson barrachd fiosrachaidh.">
+
+<!ENTITY insecureServer.tooltip.title    "Rabhadh! 'S e frithealaiche neo-thèarainte a tha seo.">
+<!ENTITY insecureServer.tooltip.details  "Briog air a' chearcall airson barrachd fiosrachaidh.">
+
+<!ENTITY insecureUnencrypted.description "Thèid am post-d is an dearbhadh agad a sheòladh gun chrioptachadh agus mar sin, bhiodh e furasta gu leòr do dhaoine eile am facal-faire (agus am post) agad a leughadh. Leigidh &brandShortName; leat am post agad fhaighinn ach bu chòir dhut iarraidh air solaraiche a' phuist-d agad ceangal tèarainte a chur air dòigh air an fhrithealaiche.">
+<!ENTITY insecureSelfSigned.description  "Tha am frithealaiche seo a' cleachdadh teisteanas nach urrainn dhuinn earbsa a chur ann agus chan urrainn dhuinn a bhith cinnteach mar sin nach eil cuideigin a' còmhlachadh na trafaige eadar &brandShortName; agus am frithealaiche agad. Leigidh &brandShortName; leat am post agad fhaighinn ach bu chòir dhut gu mòr iarraidh air solaraiche a' phuist-dhealain agad teisteanas earbsach a chur air an fhrithealaiche.">
+<!ENTITY secureServer.description        "Meal do naidheachd! 'S e frithealaiche tèarainte a tha seo.">

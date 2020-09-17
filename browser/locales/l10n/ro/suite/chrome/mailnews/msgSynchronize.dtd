@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# toffee <daniel@toffee.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!ENTITY MsgSynchronize.label "Descărcare și sincronizare mesaje">
+<!ENTITY MsgSelect.label "Ce se utilizează în modul offline">
+<!ENTITY MsgSyncDesc.label "Dacă ați selectat deja dosare de email sau grupuri de news pentru utilizare în mod deconectat, le puteți descărca și/sau sincroniza acum. Altfel, folosiți butonul &quot;Selectează&quot; pentru a alege dosare de email și grupuri de news.">
+<!ENTITY MsgSyncDirections.label "Descarcă și sincronizează:">
+<!ENTITY syncTypeMail.label "Mesajele email">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "Mesajele news">
+<!ENTITY syncTypeNews.accesskey "n">
+<!ENTITY sendMessage.label "Trimite mesajele netrimise">
+<!ENTITY sendMessage.accesskey "s">
+<!ENTITY workOffline.label "Deconectează imediat ce se termină descărcarea și sincronizarea">
+<!ENTITY workOffline.accesskey "D">
+<!ENTITY selectButton.label "Selectează…">
+<!ENTITY selectButton.accesskey "S">
+<!ENTITY MsgSelectDesc.label "Alegeți dosarele de email și grupurile de news pentru utilizare în mod deconectat.">
+<!ENTITY MsgSelectInd.label "Descărcare">
+<!ENTITY MsgSelectItems.label "Dosare și grupuri de news">

@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from am-server-top.xul -->
+
+
+<!ENTITY messageStorage.label "Xabar ombori">
+<!ENTITY securitySettings.label "Xavfsizlik sozlamalari">
+<!ENTITY serverSettings.label "Server sozlamalari">
+<!ENTITY serverType.label "Server turi:">
+<!ENTITY serverName.label "Server nomi:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "Foydalanuvchi nomi:">
+<!ENTITY userName.accesskey "n">
+<!ENTITY port.label "Port:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Standart:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Yangi xabarlarni har">
+<!ENTITY biffStart.accesskey "y">
+<!ENTITY biffEnd.label "daqiqada ko‘rish">
+<!ENTITY useIdleNotifications.label "Yangi xabarlar yetib borganda serverdan tezda ogohlantirish xabarlari ko‘rsatilishiga ruxsat berilsin">
+<!ENTITY useIdleNotifications.accesskey "r">
+<!ENTITY connectionSecurity.label "XXavfsiz ulanish:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "Yo‘q">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, agar mavjud bo‘lsa">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Tasdiqdan o‘tish usuli:">
+<!ENTITY authMethod.accesskey "T">
+<!ENTITY leaveOnServer.label "Serverda xabarlar qoldirish">
+<!ENTITY leaveOnServer.accesskey "x">
+<!ENTITY headersOnly.label "Faqat bosh qatorlar olinsin">
+<!ENTITY headersOnly.accesskey "o">
+<!ENTITY deleteByAgeFromServer.label "Ko‘pincha ">
+<!ENTITY deleteByAgeFromServer.accesskey "K">
+<!ENTITY daysEnd.label "kun uchun">
+<!ENTITY deleteOnServer2.label "Ularni o‘chirgunimga qadar">
+<!ENTITY deleteOnServer2.accesskey "o">
+<!ENTITY downloadOnBiff.label "Yangi xabarlarni avtomatik yuklab olkish">
+<!ENTITY downloadOnBiff.accesskey "a">
+<!ENTITY deleteMessagePrefix.label "Xabarni o‘chirganimda:">
+<!ENTITY modelMoveToTrash.label "Uni bu jildga ko‘chirish:">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "Uni o‘chirilgan deb belgilash">
+<!ENTITY modelMarkDeleted.accesskey "b">
+<!ENTITY modelDeleteImmediately.label "Uni tezda o‘chirish">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Chiqish vaqtida Kiruvchi xatlarni (&quot;Expunge&quot;) tozalash">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "Chiqishda chiqitdoni bo‘shatish">
+<!ENTITY emptyTrashOnExit.accesskey "C">
+<!ENTITY loginAtStartup.label "Kompyuter yuklanganda yangi xabarlar uchun tekshirish">
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+   of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Ushbudan ko‘proq yuklab olishdan oldin mendan so‘ralsin">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "xabarlar">
+<!ENTITY alwaysAuthenticate.label "Serverga ulanganda doimo shaxsni tasdiqlash so‘ralsin">
+<!ENTITY alwaysAuthenticate.accesskey "d">
+<!ENTITY abbreviate.label "Yangiliklar to‘plami nomlarini xat jildida yon oyna sifatida ko‘rsatish:">
+<!ENTITY abbreviateOn.label "To‘liq nomlari (Masalan, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Qisqartma nomlari (Masalan, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Qoʻshimcha…">
+<!ENTITY advancedButton.accesskey "Q">
+<!ENTITY serverDefaultCharset2.label "Asosiy matnni kodlash usuli:">
+<!ENTITY localFolderPicker.label "Kompyuterdagi jildni tanlash">
+<!ENTITY browseFolder.label "Ko‘rish…">
+<!ENTITY browseFolder.accesskey "r">
+<!ENTITY browseNewsrc.label "Ko‘rish…">
+<!ENTITY browseNewsrc.accesskey "r">
+
+<!ENTITY accountTitle.label "Hisob sozlamalari">
+<!ENTITY accountSettingsDesc.label "Quyidagi – maxsus hisob.  Hech qanday shaxsiyat bilan bog‘lanmagan.">
+<!ENTITY storeType.label "Xabarni saqlash turi:">
+<!ENTITY storeType.accesskey "t">
+<!ENTITY mboxStore2.label "Har bir jilddagi fayl (mbox)">
+<!ENTITY maildirStore.label "Har bir xabardagi fayl (maildir)">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Invitations Dialog -->
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Kutsed">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Kutsete nimekirja uuendamine.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Ei leitud ühtki kinnitamata kutset.">
+
+<!-- Calendar Invitations List -->
+<!ENTITY calendar.invitations.list.accept.button.label                  "Nõustu">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Keeldu">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Korduv sündmus">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Kogu päeva kestev sündmus">
+<!ENTITY calendar.invitations.list.location.text                        "Asukoht: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Korraldaja: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Osaleja: ">
+<!ENTITY calendar.invitations.list.none.text                            "Puudub"> 

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+
+
+<!ENTITY activity.title                  "Aktiwiteitbestuurder">
+
+<!ENTITY cmd.pause.label                  "Laat wag">
+<!ENTITY cmd.pause.accesskey              "L">
+<!ENTITY cmd.resume.label                 "Hervat">
+<!ENTITY cmd.resume.accesskey             "r">
+<!ENTITY cmd.cancel.label                 "Kanselleer">
+<!ENTITY cmd.cancel.accesskey             "K">
+<!ENTITY cmd.undo.label                   "Ontdoen">
+<!ENTITY cmd.undo.accesskey               "O">
+<!ENTITY cmd.recover.label                "Herwin">
+<!ENTITY cmd.recover.accesskey            "H">
+<!ENTITY cmd.retry.label                  "Probeer weer">
+<!ENTITY cmd.retry.accesskey              "P">
+<!ENTITY cmd.removeFromList.label         "Verwyder uit lys">
+<!ENTITY cmd.removeFromList.accesskey     "e">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "Maak lys skoon">
+<!ENTITY cmd.clearList.tooltip            "Verwyder afgehandelde, gekanselleerde of mislukte items uit die lys">
+<!ENTITY cmd.clearList.accesskey          "M">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "Soek…">

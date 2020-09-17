@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ਖੇਤਰ ਸੈਟ ਵਿਸ਼ੇਸ਼ਤਾ">
+
+<!ENTITY Legend.label "ਸੰਕੇਤ">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "ਸੰਕੇਤ ਸੋਧ:">
+<!ENTITY EditLegendText.accesskey "T">
+<!ENTITY LegendAlign.label "ਸੰਕੇਤ ਇਕਸਾਰ:">
+<!ENTITY LegendAlign.accesskey "A">
+<!ENTITY AlignDefault.label "ਡਿਫਾਲਟ">
+<!ENTITY AlignLeft.label "ਖੱਬੇ">
+<!ENTITY AlignCenter.label "ਕੇਂਦਰ">
+<!ENTITY AlignRight.label "ਸੱਜੇ">
+
+<!ENTITY RemoveFieldSet.label "ਖੇਤਰ ਸੈੱਟ ਹਟਾਓ">
+<!ENTITY RemoveFieldSet.accesskey "R">

@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Kajkosće">
+
+<!ENTITY generalInfo.label                       "Powšitkowne informacije">
+<!ENTITY folderCharsetFallback2.label            "Narunanje za tekstowe kodowanje:">
+<!ENTITY folderCharsetFallback2.accesskey        "t">
+<!ENTITY folderCharsetEnforce2.label             "Kodowanje na wšě powěsće w rjadowaku nałožić (indiwiduelne nastajenja tekstoweho kodowanja a awtomatiske zwěsćenje budźe so ignorować)">
+<!ENTITY folderCharsetEnforce2.accesskey         "d">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Indeks zjimanskeje dataje zaso natwarić">
+<!ENTITY folderRebuildSummaryFile2.label         "Rjadowak porjedźić">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Druhdy so dataja rjadowakoweho indeksa (.msf) so poškodźa a powěsće móhli so zhubić abo zhašene powěsće so dale pokazuja; porjedźenje rjadowaka móže tute problemy wotstronić.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Powěsće z tutoho rjadowaka do wuslědki globalneho pytanje zapřijeć">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "P">
+
+<!ENTITY retention.label "Prawidła wobchowanja">
+<!ENTITY retentionUseAccount.label  "Moje kontowe nastajenja wužiwać">
+<!ENTITY retentionUseAccount.accesskey "k">
+<!ENTITY daysOld.label "dnjow stare">
+<!ENTITY message.label "powěsćow">
+<!ENTITY retentionCleanup.label "Zo by tačelowy rum zaso dóstało, dadźa so stare powěsće na přeco zhašeć.">
+<!ENTITY retentionCleanupImap.label "Zo by tačelowy rum zaso dóstało, dadźa so stare powěsće na přeco zhašeć, lokalne kopije kaž tež originale na zdalenym serwerje.">
+<!ENTITY retentionCleanupPop.label "Zo byšće rum na tačeli wobnowił, hodźa so stare powěsće na přeoo zhašeć, inkluziwnje originale na zdalenym serwerje.">
+<!ENTITY retentionDeleteMsg.label "Powěsće zhašeć, kotrež su wjace hač">
+<!ENTITY retentionDeleteMsg.accesskey "h">
+<!ENTITY retentionKeepAll.label "Powěsće njezhašeć">
+<!ENTITY retentionKeepAll.accesskey "h">
+<!ENTITY retentionKeepRecent.label "Wšě zhašeć, nimo najnowšich">
+<!ENTITY retentionKeepRecent.accesskey "z">
+<!ENTITY retentionApplyToFlagged.label "Powěsće z hwěžku přeco wobchować">
+<!ENTITY retentionApplyToFlagged.accesskey "c">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronizacija">
+<!ENTITY folderCheckForNewMessages2.label         "Při přijeću nowych powěsćow za tute konto, přepruwujće přeco tutón rjadowak">
+<!ENTITY folderCheckForNewMessages2.accesskey     "P">
+
+<!ENTITY offlineFolder.check.label               "Tutón rjadowak za wužiwanje offline wubrać">
+<!ENTITY offlineFolder.check.accesskey           "r">
+<!ENTITY offlineFolder.button.label              "Nětko sćahnyć">
+<!ENTITY offlineFolder.button.accesskey          "N">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Tutu diskusijnu skupinu za wužiwanje offline wubrać">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Nětko sćahnyć">
+<!ENTITY offlineNewsgroup.button.accesskey       "N">
+
+<!ENTITY folderProps.name.label                  "Mjeno:">
+<!ENTITY folderProps.name.accesskey              "M">
+<!ENTITY folderProps.color.label                 "Symbolowa barba:">
+<!ENTITY folderProps.color.accesskey             "S">
+<!ENTITY folderProps.reset.tooltip               "Standardnu barbu wobnowić">
+<!ENTITY folderProps.location.label              "Městno:">
+<!ENTITY folderProps.location.accesskey          "s">
+
+<!ENTITY folderSharingTab.label                  "Zhromadne wužiwanje">
+<!ENTITY privileges.button.label                 "Prawa…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Maće slědowace prawa:">
+<!ENTITY folderOtherUsers.label                  "Druzy z přistupom k tutomu rjadowakej:">
+<!ENTITY folderType.label                        "Typ rjadowaka:">
+
+<!ENTITY folderQuotaTab.label                    "Kwota">
+<!ENTITY folderQuotaUsage.label                  "Wužiće:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Ličba powěsćow:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "njeznata">
+<!ENTITY sizeOnDisk.label                        "Wulkosć na tačeli:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "njeznata">

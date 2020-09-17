@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label "Tengdir tengiliðir">
+<!ENTITY offlineContactsHeader.label "Ótengdir tengiliðir">
+<!ENTITY conversationsHeader.label "Samtal">
+<!ENTITY searchResultConversation.label "Leitarniðurstöður">
+<!ENTITY chat.noConv.title "Samtöl eru birt hér.">
+<!ENTITY chat.noConv.description "Notaðu tengiliðalistann í vinstra flipa til að byrja samtal.">
+<!ENTITY chat.noPreviousConv.description "&brandShortName; er ekki með vistuð fyrri samtöl fyrir þennan tengilið.">
+<!ENTITY chat.noAccount.title "Þú hefur ekki ennþá sett upp spjallreikning.">
+<!ENTITY chat.noAccount.description "Láttu &brandShortName; hjálpa þér með að setja upp spjallaðgang.">
+<!ENTITY chat.accountWizard.button "Til að byrja">
+<!ENTITY chat.noConnectedAccount.title "Spjallreikningar eru ekki tengdir.">
+<!ENTITY chat.noConnectedAccount.description "Þú getur tengst við reikningana frá 'Staða spjalls' glugga:">
+<!ENTITY chat.showAccountManager.button "Sýna stöðu spjalls">
+
+<!ENTITY chat.participants "Þátttakendur:">
+<!ENTITY chat.previousConversations "Fyrri samtöl:">
+<!ENTITY chat.ongoingConversation "Áframhaldandi samtal">
+
+<!ENTITY openConversationCmd.label "Byrja samtal">
+<!ENTITY openConversationCmd.accesskey "s">
+<!ENTITY closeConversationCmd.label "Loka samtali">
+<!ENTITY closeConversationCmd.accesskey "s">
+<!ENTITY aliasCmd.label "Endurnefna">
+<!ENTITY aliasCmd.accesskey "r">
+<!ENTITY deleteCmd.label "Fjarlægja tengilið">
+<!ENTITY deleteCmd.accesskey "æ">
+
+<!ENTITY openConversationButton.tooltip "Byrja samtal">
+<!ENTITY closeConversationButton.tooltip "Loka samtali">
+
+<!ENTITY addBuddyButton.label "Bæta við tengilið">
+<!ENTITY joinChatButton.label "Taka þátt í spjalli">
+<!ENTITY chatAccountsButton.label "Sýna reikninga">
+
+<!ENTITY status.available "Tiltækt">
+<!ENTITY status.unavailable "Ófáanlegt">
+<!ENTITY status.offline "Ónettengdur">
+
+<!ENTITY openLinkCmd.label "Opna tengil…">
+<!ENTITY openLinkCmd.accesskey "O">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Файлды ашу…">
+<!ENTITY openFileCmd.accesskey "Ф">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Интернет адресін ашу…">
+<!ENTITY openRemoteCmd.accesskey "д">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Соңғы белгілер">
+<!ENTITY fileRecentMenu.accesskey "С">
+<!ENTITY saveCmd.label "Сақтау">
+<!ENTITY saveCmd.accesskey "С">
+<!ENTITY saveAsCmd.label "Қалайша сақтау…">
+<!ENTITY saveAsCmd.accesskey "й">
+<!ENTITY saveAsChangeEncodingCmd2.label "Сақтау және мәтін кодталуын өзгерту">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "к">
+<!ENTITY publishCmd.label "Жариялау">
+<!ENTITY publishCmd.accesskey "и">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Қалайша жариялау…">
+<!ENTITY publishAsCmd.accesskey "и">
+<!ENTITY fileRevert.label "Қайтару">
+<!ENTITY fileRevert.accesskey "т">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Сайт баптауларын жариялау…">
+<!ENTITY publishSettings.accesskey "р">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Жаңа">
+<!ENTITY newToolbarCmd.tooltip "Жаңа құрастырушы панелін жасау">
+<!ENTITY openToolbarCmd.label "Ашу">
+<!ENTITY openToolbarCmd.tooltip "Жергілікті файлды ашу">
+<!ENTITY saveToolbarCmd.tooltip "Файлды жергілікті орналасуға сақтау">
+<!ENTITY publishToolbarCmd.tooltip "Файлды қашықтағы орналасуға жүктеу">
+<!ENTITY printToolbarCmd.label "Баспаға шығару">
+<!ENTITY printToolbarCmd.tooltip "Бұл бетті баспаға шығару">

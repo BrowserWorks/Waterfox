@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Aangaande gemorspos">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; bespeur outomaties inkomende boodskappe wat na gemorspos lyk (ook genoem strooipos of spam). Boodskappe wat &brandShortName; dink gemorspos is, sal 'n gemorspos-ikoon vertoon">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Aan die begin moet u eers &brandShortName; oplei om gemorspos te herken deur met die Gemorspos-nutsbalkknoppie boodskappe as gemors of nie gemors nie te merk.">
+<!ENTITY info3.label   "Sodra &brandShortName; gemorspos korrek kan identifiseer, kan u die Gemorspos-kontroles gebruik om inkomende gemorspos outomaties na die Gemorspos-vouer te verskuif.">
+<!ENTITY info4.label   "Kliek Hulp vir meer inligting.">

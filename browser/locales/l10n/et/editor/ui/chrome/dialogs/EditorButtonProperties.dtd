@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label        "Nupu sätted">
+
+<!ENTITY Settings.label           "Seaded">
+
+<!ENTITY ButtonType.label         "Tüüp">
+<!ENTITY ButtonType.accesskey     "T">
+<!ENTITY submit.value             "Sisesta">
+<!ENTITY reset.value              "Lähtesta">
+<!ENTITY button.value             "Nupp">
+
+<!ENTITY ButtonName.label         "Nimi:">
+<!ENTITY ButtonName.accesskey     "N">
+<!ENTITY ButtonValue.label        "Väärtus:">
+<!ENTITY ButtonValue.accesskey    "V">
+<!ENTITY tabIndex.label           "Kaardi indeks:">
+<!ENTITY tabIndex.accesskey       "K">
+<!ENTITY ButtonDisabled.label     "Keelatud">
+<!ENTITY ButtonDisabled.accesskey "e">
+<!ENTITY AccessKey.label          "Kiirklahv:">
+<!ENTITY AccessKey.accesskey      "i">
+
+<!ENTITY RemoveButton.label       "Eemalda nupp">
+<!ENTITY RemoveButton.accesskey   "m">

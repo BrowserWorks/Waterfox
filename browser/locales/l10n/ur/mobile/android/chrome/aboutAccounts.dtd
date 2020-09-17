@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox اکاؤنٹس">
+<!ENTITY aboutAccounts.connected.description "آپ کے طور پر جڑے ہوئے ہیں">
+<!ENTITY aboutAccounts.syncPreferences.label "ہم ساز سیٹکگیں کی پڑتال کے لئے ٹیپ کرے">
+
+<!ENTITY aboutAccounts.noConnection.title "کوئی انٹرنیٹ کنکشن نہیں">
+<!ENTITY aboutAccounts.retry.label "پھر کوشش کریں">
+
+<!ENTITY aboutAccounts.restrictedError.title "ممنوعہ">
+<!ENTITY aboutAccounts.restrictedError.description "آپ اس پروفائل سے Firefox اکاؤنٹس کا بندوبست نہیں کرسکتے۔">

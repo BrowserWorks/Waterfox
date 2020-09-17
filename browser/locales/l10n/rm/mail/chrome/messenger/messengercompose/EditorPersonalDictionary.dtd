@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Dicziunari persunal">
+
+<!ENTITY wordEditField.label "Nov pled:">
+<!ENTITY wordEditField.accessKey "D">
+<!ENTITY AddButton.label "Agiuntar">
+<!ENTITY AddButton.accessKey "Ü">
+<!ENTITY DictionaryList.label "Pleds en il dicziunari:">
+<!ENTITY DictionaryList.accessKey "W">
+<!ENTITY RemoveButton.label "Allontanar">
+<!ENTITY RemoveButton.accessKey "r">
+
+<!ENTITY CloseButton.label "Serrar">
+<!ENTITY CloseButton.accessKey "M">

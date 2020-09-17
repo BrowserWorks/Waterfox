@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Adres defteri">
+<!ENTITY Addrbook.accesskey                    "d">
+<!ENTITY GeneratedName.label                   "Adı">
+<!ENTITY GeneratedName.accesskey               "d">
+<!ENTITY PrimaryEmail.label                    "E-posta">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Kurum">
+<!ENTITY Company.accesskey                     "r">
+<!ENTITY _PhoneticName.label                   "Fonetik ad">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Takma ad">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "Ek e-posta">
+<!ENTITY SecondEmail.accesskey                 "o">
+<!ENTITY Department.label                      "Bölüm">
+<!ENTITY Department.accesskey                  "m">
+<!ENTITY JobTitle.label                        "Unvan">
+<!ENTITY JobTitle.accesskey                    "U">
+<!ENTITY CellularNumber.label                  "Cep">
+<!ENTITY CellularNumber.accesskey              "C">
+<!ENTITY PagerNumber.label                     "Çağrı cihazı">
+<!ENTITY PagerNumber.accesskey                 "h">
+<!ENTITY FaxNumber.label                       "Faks">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Ev telefonu">
+<!ENTITY HomePhone.accesskey                   "E">
+<!ENTITY WorkPhone.label                       "İş telefonu">
+<!ENTITY WorkPhone.accesskey                   "İ">
+<!ENTITY ChatName.label                        "Sohbet adı">
+<!ENTITY ChatName.accesskey                    "S">
+<!ENTITY sortAscending.label                   "Artan">
+<!ENTITY sortAscending.accesskey               "A">
+<!ENTITY sortDescending.label                  "Azalan">
+<!ENTITY sortDescending.accesskey              "z">

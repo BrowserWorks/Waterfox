@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Perzhioù ar gont">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Hollek">
+<!ENTITY account.advanced              "Dibarzhioù kempleshoc'h">
+<!ENTITY account.name                  "Anv arveriad :">
+<!ENTITY account.password              "Ger-tremen :">
+<!ENTITY account.alias                 "Lesanv :">
+<!ENTITY account.newMailNotification   "Rebuziñ ar c'hemennadennoù nevez">
+<!ENTITY account.autojoin              "Sanelloù kevreet ent emgefreek :">
+<!ENTITY account.proxySettings.caption "Arventennoù ar proksi :">
+<!ENTITY account.proxySettings.change.label     "Kemmañ…">
+<!ENTITY account.proxySettings.change.accessKey "K">

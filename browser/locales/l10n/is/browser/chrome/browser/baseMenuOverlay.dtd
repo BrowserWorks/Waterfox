@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Um &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "U">
+
+<!ENTITY preferencesCmdMac.label        "Valkostir…">
+
+<!ENTITY servicesMenuMac.label          "Þjónustur">
+
+<!ENTITY hideThisAppCmdMac2.label       "Fela &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Fela aðra">
+
+<!ENTITY showAllAppsCmdMac.label        "Sýna allt">
+

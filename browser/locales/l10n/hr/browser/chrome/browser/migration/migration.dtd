@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Čarobnjak uvoza">
+
+<!ENTITY importFrom.label               "Uvezi opcije, zabilješke, povijest pretraživanja, lozinke i ostale podatke iz:">
+<!ENTITY importFromUnix.label           "Uvezi postavke, zabilješke, povijest, lozinke i ostale podatke iz:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromEdgeLegacy.label     "Microsoft Edge Legacy">
+<!ENTITY importFromEdgeLegacy.accesskey "L">
+<!ENTITY importFromEdgeBeta.label       "Microsoft Edge beta">
+<!ENTITY importFromEdgeBeta.accesskey   "d">
+<!ENTITY importFromNothing.label        "Ne uvozi ništa">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromeBeta.label     "Chrome Beta">
+<!ENTITY importFromChromeBeta.accesskey "B">
+<!ENTITY importFromChromeDev.label      "Chrome Dev">
+<!ENTITY importFromChromeDev.accesskey  "D">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 siguran preglednik">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Niti jedan program koji sadrži zabilješke, povijest pretraživanja ili lozinke nije pronađen.">
+
+<!ENTITY importSource.title             "Uvezi postavke i podatke">
+<!ENTITY importItems.title              "Stavke za uvoz">
+<!ENTITY importItems.label              "Odaberi stavke za uvoz:">
+
+<!ENTITY migrating.title                "Uvozi se …">
+<!ENTITY migrating.label                "Sljedeće stavke se trenutačno uvoze …">
+
+<!ENTITY selectProfile.title            "Odaberi profil">
+<!ENTITY selectProfile.label            "Uvoz je moguć iz sljedećih profila:">
+
+<!ENTITY done.title                     "Uvoz završen">
+<!ENTITY done.label                     "Sljedeće stavke su uspješno uvezene:">
+
+<!ENTITY closeSourceBrowser.label       "Prije nastavka, provjeri je li odabrani preglednik zatvoren.">

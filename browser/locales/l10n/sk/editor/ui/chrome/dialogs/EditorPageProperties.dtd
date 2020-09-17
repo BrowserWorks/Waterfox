@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Window title -->
+<!ENTITY windowTitle.label "Vlastnosti stránky">
+<!ENTITY location.label "Umiestnenie:">
+<!ENTITY lastModified.label "Naposledy upravená:">
+<!ENTITY titleInput.label "Titulok:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Autor:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "Popis:">
+<!ENTITY descriptionInput.accessKey "P">
+<!ENTITY locationNewPage.label "[Nová stránka, zatiaľ neuložená]">
+<!ENTITY EditHEADSource1.label "Pokročilí používatelia:">
+<!ENTITY EditHEADSource2.label "Ak chcete upraviť ďalšie parametre hlavičky &lt;head&gt;, použite voľbu &quot;Zdrojový kód HTML&quot; v ponuke Zobraziť alebo kliknite na &quot;Zdroj HTML&quot; na paneli Režim úpravy">

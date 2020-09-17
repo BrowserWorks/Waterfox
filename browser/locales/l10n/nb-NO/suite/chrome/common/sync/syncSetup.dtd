@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountSetupTitle.label    "Innstillinger for &syncBrand.fullName.label;">
+
+<!-- First page of the wizard -->
+
+<!ENTITY setup.pickSetupType.description "Velkommen, dersom du ikke har brukt &syncBrand.fullName.label; før, må du opprette en ny konto.">
+<!ENTITY button.createNewAccount.label "Opprett ny konto">
+<!ENTITY setup.haveAccount.label "Jeg har allerede en &syncBrand.fullName.label;-konto">
+<!ENTITY button.connect.label "Koble til">
+
+<!ENTITY setup.choicePage.title.label     "Har du brukt &syncBrand.fullName.label; før?">
+<!ENTITY setup.choicePage.new.label       "Jeg har aldri brukt &syncBrand.shortName.label; før">
+<!ENTITY setup.choicePage.existing.label  "Jeg bruker &syncBrand.shortName.label; på en annen datamaskin">
+
+<!-- New Account AND Existing Account -->
+<!ENTITY server.label               "Server">
+<!ENTITY server.accesskey           "S">
+<!ENTITY serverType.main.label      "&syncBrand.fullName.label;">
+<!ENTITY serverType.custom2.label   "Bruk en annen server …">
+<!ENTITY signIn.account2.label      "Konto">
+<!ENTITY signIn.account2.accesskey  "K">
+<!ENTITY signIn.password.label      "Passord">
+<!ENTITY signIn.password.accesskey  "P">
+<!ENTITY signIn.recoveryKey.label     "Gjenopprettingsnøkkel">
+<!ENTITY signIn.recoveryKey.accesskey "G">
+
+<!-- New Account Page 1: Basic Account Info -->
+<!ENTITY setup.newAccountDetailsPage.title.label "Kontodetaljer">
+<!ENTITY setup.confirmPassword.label             "Bekreft passord">
+<!ENTITY setup.confirmPassword.accesskey         "e">
+<!ENTITY setup.emailAddress.label                "E-postadresse">
+<!ENTITY setup.emailAddress.accesskey            "E">
+<!-- LOCALIZATION NOTE: tosAgree1, tosLink, tosAgree2, ppLink, tosAgree3 are
+     joined with implicit white space, so spaces in the strings aren't necessary -->
+<!ENTITY setup.tosAgree1.label      "Jeg godtar">
+<!ENTITY setup.tosAgree1.accesskey  "J">
+<!ENTITY setup.tosLink.label        "tjenestevilkårene">
+<!ENTITY setup.tosAgree2.label      "og">
+<!ENTITY setup.ppLink.label         "personvernbestemmelsene">
+<!ENTITY setup.tosAgree3.label      "">
+<!ENTITY setup.tosAgree2.accesskey  "">
+
+<!-- New Account Page 2: Recovery Key -->
+<!ENTITY setup.newRecoveryKeyPage.title.label "&brandShortName; bryr seg om sikkerheten din">
+<!ENTITY setup.newRecoveryKeyPage.description.label "For å beskytte personvernet ditt vil alle data krypteres før den lastes opp. Gjenopprettingsnøkkelen som er nødvendig for å dekryptere dine data vil ikke lastes opp.">
+<!ENTITY recoveryKeyEntry.label        "Gjenopprettingsnøkkel">
+<!ENTITY recoveryKeyEntry.accesskey    "n">
+<!ENTITY recoveryGenerateNewKey.label  "Generer en ny nøkkel">
+<!ENTITY recoveryKeyBackup.description "Gjenopprettingsnøkkelen din er påkrevd for å få tilgang til &syncBrand.fullName.label; på flere maskiner. Lag en sikkerhetskopi. Vi kan ikke hjelpe deg å finne tilbake en glemt gjenopprettingsnøkkel.">
+
+<!ENTITY button.syncKeyBackup.print.label     "Skriv ut …">
+<!ENTITY button.syncKeyBackup.print.accesskey "S">
+<!ENTITY button.syncKeyBackup.save.label      "Lagre …">
+<!ENTITY button.syncKeyBackup.save.accesskey  "L">
+
+<!-- New Account Page 3: Captcha -->
+<!ENTITY setup.captchaPage2.title.label     "Bekreft at du ikke er en robot">
+
+<!-- Existing Account Page 1: Add Device (incl. Add a Device dialog strings) -->
+<!ENTITY addDevice.title.label              "Legg til en enhet">
+<!ENTITY addDevice.showMeHow.label          "Vis meg hvordan.">
+<!ENTITY addDevice.dontHaveDevice.label     "Jeg har ikke enheten med meg">
+<!ENTITY addDevice.setup.description.label  "For å aktivere, gå til &syncBrand.shortName.label; Innstillinger på den andre enheten, og velg &#x0022;Legg til enhet&#x0022;.">
+<!ENTITY addDevice.setup.enterCode.label    "Skriv deretter inn denne koden:">
+<!ENTITY addDevice.dialog.description.label "For å aktivere den nye enheten, gå til &syncBrand.shortName.label; Innstillinger på enheten og velg &#x0022;Koble til.&#x0022;">
+<!ENTITY addDevice.dialog.enterCode.label   "Skriv inn koden som enheten oppgir:">
+<!ENTITY addDevice.dialog.tryAgain.label    "Prøv igjen.">
+<!ENTITY addDevice.dialog.successful.label  "Enheten ble lagt til. Den første synkroniseringen kan ta flere minutter, og vil fullføre i bakgrunnen.">
+<!ENTITY addDevice.dialog.recoveryKey.label "For å aktivere enheten må du skrive inn gjenopprettingsnøkkelen. Gjerne skriv ut eller lagre denne nøkkelen og ta den med deg.">
+<!ENTITY addDevice.dialog.connected.label   "Enhet tilkoblet">
+
+<!-- Existing Account Page 2: Manual Login -->
+<!ENTITY setup.signInPage.title.label "Logg inn">
+<!ENTITY existingRecoveryKey.description "Du kan skaffe en kopi av gjenopprettingsnøkkelen din ved å gå til &syncBrand.shortName.label; Innstillinger på den andre enheten, og velge &#x0022;Min gjenopprettingsnøkkel&#x0022; under &#x0022;Behandle konto&#x0022;.">
+<!ENTITY verifying.label              "Bekrefter …">
+<!ENTITY resetPassword.label          "Tilbakestill passord">
+<!ENTITY resetSyncKey.label           "Jeg har mistet den andre enheten min.">
+
+<!-- Sync Options -->
+<!ENTITY setup.optionsPage.title      "Sync-innstillinger">
+<!ENTITY syncComputerName.label       "Datamaskinnavn:">
+<!ENTITY syncComputerName.accesskey   "D">
+
+<!ENTITY syncMy.label               "Synkroniser">
+<!ENTITY engine.addons.label        "Utvidelser">
+<!ENTITY engine.addons.accesskey    "U">
+<!ENTITY engine.bookmarks.label     "Bokmerker">
+<!ENTITY engine.bookmarks.accesskey "B">
+<!ENTITY engine.tabs.label          "Faner">
+<!ENTITY engine.tabs.accesskey      "F">
+<!ENTITY engine.history.label       "Historikk">
+<!ENTITY engine.history.accesskey   "H">
+<!ENTITY engine.passwords.label     "Passord">
+<!ENTITY engine.passwords.accesskey "P">
+<!ENTITY engine.prefs.label         "Innstillinger">
+<!ENTITY engine.prefs.accesskey     "n">
+
+<!ENTITY choice2.merge.main.label      "Flett sammen denne datamaskinens data med &syncBrand.shortName.label;-data">
+<!ENTITY choice2.merge.recommended.label "Anbefalt:">
+<!ENTITY choice2.client.main.label     "Erstatt alle data på denne datamaskinen med data fra &syncBrand.shortName.label;">
+<!ENTITY choice2.server.main.label     "Erstatt alle andre enheters data med denne datamaskinens data">
+
+<!-- Confirm Merge Options -->
+<!ENTITY setup.optionsConfirmPage.title "Bekreft">
+<!ENTITY confirm.merge.label    "Du har valgt å flette sammen data fra denne datamaskinen med data i Sync-kontoen.">
+<!ENTITY confirm.client2.label         "Advarsel: Følgende &brandShortName;-data på denne datamaskinen vil slettes:">
+<!ENTITY confirm.client.moreinfo.label "&brandShortName; vil deretter kopiere dine &syncBrand.fullName.label;-data til denne datamaskinen.">
+<!ENTITY confirm.server2.label         "Advarsel: Følgende enheter vil overskrives med lokale data:">
+
+<!-- New & Existing Account: Setup Complete -->
+<!ENTITY setup.successPage.title "Konfigurasjonen er fullført!">
+<!ENTITY changeOptions.label "Du kan endre denne innstillingen ved å velge Sync-innstillinger nedenfor.">
+<!ENTITY continueUsing.label "Du kan nå fortsette å bruke &brandShortName;.">

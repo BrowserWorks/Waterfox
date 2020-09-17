@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Отворите датотеку…">
+<!ENTITY openFileCmd.accesskey "О">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Отворите мрежно место…">
+<!ENTITY openRemoteCmd.accesskey "М">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Скорашње странице">
+<!ENTITY fileRecentMenu.accesskey "Р">
+<!ENTITY saveCmd.label "Сачувај">
+<!ENTITY saveCmd.accesskey "С">
+<!ENTITY saveAsCmd.label "Сачувај као…">
+<!ENTITY saveAsCmd.accesskey "А">
+<!ENTITY saveAsChangeEncodingCmd2.label "Сачувај и промени кодирање текста">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "Е">
+<!ENTITY publishCmd.label "Објави">
+<!ENTITY publishCmd.accesskey "б">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Објави као…">
+<!ENTITY publishAsCmd.accesskey "к">
+<!ENTITY fileRevert.label "Опозови">
+<!ENTITY fileRevert.accesskey "п">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Подешавања објаве сајта…">
+<!ENTITY publishSettings.accesskey "б">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Ново">
+<!ENTITY newToolbarCmd.tooltip "Направи Композер страницу">
+<!ENTITY openToolbarCmd.label "Отвори">
+<!ENTITY openToolbarCmd.tooltip "Отвори локалну датотеку">
+<!ENTITY saveToolbarCmd.tooltip "Сачувај датотеку у локално место">
+<!ENTITY publishToolbarCmd.tooltip "Отпреми датотеку у удаљено место">
+<!ENTITY printToolbarCmd.label "Штампај">
+<!ENTITY printToolbarCmd.tooltip "Штампај ову страницу">

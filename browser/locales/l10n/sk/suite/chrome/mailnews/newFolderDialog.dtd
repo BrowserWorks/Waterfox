@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Nový priečinok">
+<!ENTITY name.label                 "Názov:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Vytvoriť ako podpriečinok v:">
+<!ENTITY description.accesskey      "o">
+<!ENTITY folderRestriction1.label   "Tento server rozdeľuje priečinky na dva špeciálne typy.">
+<!ENTITY folderRestriction2.label   "Nový priečinok môže obsahovať:">
+<!ENTITY foldersOnly.label          "Len priečinky">
+<!ENTITY messagesOnly.label         "Len správy">
+<!ENTITY accept.label               "Vytvoriť priečinok">
+<!ENTITY accept.accesskey           "V">

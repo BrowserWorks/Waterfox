@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Kanalowe abonementy">
+<!ENTITY learnMore.label             "Zgóńśo wěcej wó kanalach">
+
+<!ENTITY feedTitle.label             "Titel:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL kanala:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Zapódajśo płaśiwy URL kanala">
+<!ENTITY locationValidate.label      "Płaśiwosć pśespytaś">
+<!ENTITY validateText.label          "Płaśiwosć pśespytaś a płaśiwy URL wótwołaś.">
+
+<!ENTITY feedFolder.label            "Nastawki składowaś w:">
+<!ENTITY feedFolder.accesskey        "N">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Za nowymi nastawkami pytaś kužde ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "minutow">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "dnjow">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Wudawaŕ pórucujo:">
+
+<!ENTITY quickMode.label             "Nastawkowe zespominanje pokazaś, město aby webbok zacytało">
+<!ENTITY quickMode.accesskey         "z">
+
+<!ENTITY autotagEnable.label         "Wobznamjenja awtomatiski z kanalowych &lt;kategorjowych&gt; mjenjow napóraś">
+<!ENTITY autotagEnable.accesskey     "z">
+<!ENTITY autotagUsePrefix.label      "Wobznamjenja prefigěrowaś z:">
+<!ENTITY autotagUsePrefix.accesskey  "f">
+<!ENTITY autoTagPrefix.placeholder   "Zapódajśo wobznamjenjowy prefiks">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Pśidaś">
+<!ENTITY button.addFeed.accesskey    "P">
+<!ENTITY button.verifyFeed.label     "Pśespytowaś">
+<!ENTITY button.verifyFeed.accesskey "P">
+<!ENTITY button.updateFeed.label     "Aktualizěrowaś">
+<!ENTITY button.updateFeed.accesskey "A">
+<!ENTITY button.removeFeed.label     "Wótpóraś">
+<!ENTITY button.removeFeed.accesskey "W">
+<!ENTITY button.importOPML.label     "Importěrowaś">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Eksportěrowaś">
+<!ENTITY button.exportOPML.accesskey "E">
+<!ENTITY button.exportOPML.tooltip   "Kanale ze zarědnikoweju strukturu eksportěrowaś; Strg+kliknjenje abo Strg+enter, aby kanale ako lisćinu eksportěrowało">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Zacyniś">

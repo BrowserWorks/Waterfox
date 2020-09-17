@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Tervetuloa &brandShortName;n sähköposti- ja keskusteluryhmäohjelmaan">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Tervetuloa <a id="vendorURL" href="">&brandShortName;n</a> sähköposti- ja keskusteluryhmäohjelmaan!'>
+<!ENTITY description.label
+"&brandShortName;n sähköposti- ja keskusteluryhmäohjelma on avointa lähdekoodia.
+Siinä on kehittynyt roskapostin tunnistus ja muita hyödyllisiä ominaisuuksia.">
+<!ENTITY features.title "Ominaisuudet">
+<!ENTITY feat_multiacc.label "Tukee useita tilejä">
+<!ENTITY feat_junk.label "Roskapostin tunnistus">
+<!ENTITY feat_feeds.label "Syötteen lukija">
+<!ENTITY feat_filters.label "Viestisuodattimet">
+<!ENTITY feat_htmlmsg.label "Tukee HTML-viestejä">
+<!ENTITY feat_abook.label "Osoitekirja">
+<!ENTITY feat_tags.label "Muokattavat tunnukset ja viestinäkymät">
+<!ENTITY feat_integration.label
+"Tiivis integraatio muiden &brandShortName;-sovellusten kanssa">
+<!ENTITY dict.title "Sanakirjat">
+<!ENTITY dict_intro.label "Sanakirjojen avulla tarkistetaan viestien oikeinkirjoitus.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label2
+'Muita kieliä voi asentaa <a id="dictURL" href="">sanakirjat</a>-ryhmästä 
+<a href="https://addons.thunderbird.net/seamonkey/"> SeaMonkey ja Thunderbird-lisäosat</a>-palvelussa.'>
+<!ENTITY info.title "Lisätietoja">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="http://www.mozilla.org/mailnews/">Me</a> toivotamme tervetulleeksi ohjelmointivirheraportit ja ominaisuuspyynnöt, mutta lue <a id="releaseNotesURL" href="">julkaisutiedot</a> ja tarkasta <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> ensin.'>

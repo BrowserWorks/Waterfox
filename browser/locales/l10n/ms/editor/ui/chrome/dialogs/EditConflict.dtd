@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Pilih Edit Perubahan">
+<!ENTITY conflictWarning.label "Halaman ini telah diubah oleh atur cara lain, tapi anda masih ada perubahan yang belum disimpan dalam Composer.">
+<!ENTITY conflictResolve.label "Pilih versi untuk dikekalkan:">
+<!ENTITY keepCurrentPageButton.label "Kekalkan perubahan halaman semasa">
+<!ENTITY useOtherPageButton.label "Ganti halaman semasa dengan perubahan lain">

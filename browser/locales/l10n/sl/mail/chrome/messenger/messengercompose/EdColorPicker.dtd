@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Barva">
+<!ENTITY lastPickedColor.label "Nazadnje izbrana barva">
+<!ENTITY lastPickedColor.accessKey "N">
+<!ENTITY chooseColor1.label "Izberite barvo:">
+<!ENTITY chooseColor2.label "Vnesite oznako HTML za barvo">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(na primer: &quot;#0000ff&quot; ali &quot;blue&quot;):">
+<!ENTITY default.label "Privzeto">
+<!ENTITY default.accessKey "P">
+<!ENTITY palette.label "Paleta:">
+<!ENTITY standardPalette.label "Običajno">
+<!ENTITY webPalette.label "Vse spletne barve">
+<!ENTITY background.label "Ozadje za:">
+<!ENTITY background.accessKey "O">
+<!ENTITY table.label "Tabela">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Celice">
+<!ENTITY cell.accessKey "C">

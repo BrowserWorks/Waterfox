@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Iskočni prozori">
+
+<!ENTITY pref.popups.caption            "Iskočni prozori">
+
+<!ENTITY popupBlock.label               "Blokiraj nezahtjevane iskočne prozore">
+
+<!ENTITY viewPermissions.label          "Upravljanje dozvolama">
+
+<!ENTITY whenBlock.description          "Kada je iskočni prozor blokiran:">
+<!ENTITY playSound.label                "Pusti zvuk:">
+<!ENTITY systemSound.label              "Zvuk sistema">
+<!ENTITY customSound.label              "Prilagođenu zvučnu datoteku">
+
+<!ENTITY selectSound.label              "Odaberi…">
+<!ENTITY playSoundButton.label          "Pokreni">
+
+<!ENTITY displayIcon.label              "Prikaži ikonu u statusnoj traci browsera">
+
+<!ENTITY displayNotification.label      "Prikaži traku obavijesti na vehu područja sadržaja">
+
+<!ENTITY popupNote.description          "Napomena: Blokiranje svih iskočnih prozora može spriječiti važne mogućnosti nekih web stranica od rada, kao što su prozori za prijavu za banke i web stranice za kupovinu. Za detalje kako dozvoliti određenim web stranicama da koriste iskočne prozore dok su druge blokirane, kliknite na Pomoć. Iako blokirane, web stranice mogu koristiti druge metode da prikažu iskočne prozore.">
+

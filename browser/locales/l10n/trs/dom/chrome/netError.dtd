@@ -1,0 +1,72 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Gire' ma 'nga na'ninj pajinâ">
+<!ENTITY retry.label "A'ngô ñû">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Na'ue gatu ma">
+<!ENTITY connectionFailure.longDesc "<p>Antaj si hua hue'è sitio na ruhuat, sani na'ue gi'iaj sunj.</p><ul><li>¿Hua daj nitaj si 'iaj sun sitio na anj? Sisī dàdanj huin ni garahue ñunt.</li><li>¿A'ngo sitio na'ue gini'iaj ra'? Nachij hua hue'è si conexión râ.</li><li>¿Hua daj firewall nej proxy si aga't naran ma'an nej sitio na anj? 'Nga nitaj si nagi'iaj hue'è' nej da'nga' raj sun aga' ni dure'ej internet.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Nitaj si huaj gatut dàdin' hua àhi ma">
+<!ENTITY deniedPortAccess.longDesc "<p>Riña nū 'ngo puerto a'nîn ma gu' (p.e. <q>mozilla.org:80</q> guenda puerto 80 riña mozilla.org) ma riña garasun' ma huin <em>diferentes</em> 'ngà aché nun' riña Web. duna'kin' àkuanj radón' hua ai ma.</p>">
+
+<!ENTITY dnsNotFound.title "Nū nari'ij direksiôn">
+<!ENTITY dnsNotFound.longDesc "<p>Navegador na nu ganari' sa nana'uit 'ngà direksion dugutujt.</p><ul><li>Gachrun daj ga su direksion (p.e. <q><strong>ww</strong>.mozilla-mexico.org</q> si luga <q><strong>www</strong>.mozilla-mexico.org</q>)</li><li>Ya'nga' hua direksion na án? Gahuin ni 'ngà gire'ej.</li><li>¿Hua 'nga sa na'e gi'iaj sun 'ngà aché nunt riña sitio web na anj? Ni'iaj si hua hue'uè si internet  ni si servidot DNS.</li><li>¿Hua 'ngo firewall àsi proxy si agat nu dugumin ma anj? 'Ngà nitaj si nagi'iaj hue'uet ma ni si ga'ue gache nut riña web.</li></ul>">
+
+<!ENTITY fileNotFound.title "Nu narì'ij fichero">
+<!ENTITY fileNotFound.longDesc "<ul><li>¿Nadunat si yugui ma ni' así naduret ma sâ'?</li><li>¿Hua 'nga sa machin ni' asi 'ngo letra gachón riña direksion sâ'?</li><li>¿Girit permisu da' ga'ue gatut ñuna ve'ej?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Nun raj yinaj gun' aa atû'">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li> Ga'ue si ganare'ej nej si guisikïj dadin' na'ue gun ña atû'.</li> </ul>">
+
+<!ENTITY generic.title "Na'ue garayinaj sa achín ni'iat">
+<!ENTITY generic.longDesc "<p>Nitaj ni'īn nùhuin san gire' ma.</p>">
+
+<!ENTITY malformedURI.title "Nitaj si hua hue'è direksion">
+<!ENTITY malformedURI.longDesc "<p>Nitaj si hua hue'è direksion. Ni'iaj sintaxis nī garahuē nut.</p>">
+
+<!ENTITY netInterrupt.title "Gire' sa duguchin nugua'an">
+<!ENTITY netInterrupt.longDesc "<p>'Iaj sun hue'è navegador sani 'ngà gayi'ij duguchinj ñanj ni gire' ma.  garahue huē ñunt.</p><ul><li>¿Na'ue na'nī a'ngo sitio web a'? Ni'iaj ni' si hua hue'ej riña si agat.</li><li>¿Hua nano na'e a'? Girina'naj 'nga nej dugui' du'uej internet riña raj.</li></ul>">
+
+<!ENTITY notCached.title "Ngà gire' ñanj na">
+<!ENTITY notCached.longDesc "<p>Nitaj ñanj nana'uit nu riña si cachê navegador na.</p><ul><li>Da' dugumint ma ni, si ga'ue gachinj ma'ān navegador nej nuguan' nitaj si huaj gini'īn dara' huìi.</li><li>Guru'ma ra'à ñun da' ni'iajt ñanj na.</li></ul>">
+
+<!ENTITY netOffline.title "Si gida'aj internet">
+<!ENTITY netOffline.longDesc2 "<p>Nitaj si 'iaj sun navegador 'ngà internet. yi'î dan nī na'ue nari'ij sa nana'uit.</p><ul><li>¿Yuma internet riña si paga' ve'ej?</li><li>Ga'ui' &quot;A'ngo ñun&quot; da' gā internet ni ga'ue ni'iajt pagina na.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Gire' 'ngo chrej nana'uij sa gachrûnt">
+<!ENTITY contentEncodingError.longDesc "<p>Si ga'ue nayi'nin pagina huin ruhuat ni'iaj dadin hua 'ngo sa nitaj si 'iaj sun hue'è.</p><ul><li>gaat guni nej dugui' nikaj ñu'unj sitio na.</li></ul>">
+
+<!ENTITY unsafeContentType.title "'Ngo archivo hua ahii huin">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Gi'iaj 'ngo sunnuj ni, nanà'uì' ahui si si'iaj huin sitiô na ni gachinj na'anjt nuj huin saj gire'ej.</li> </ul>">
+
+<!ENTITY netReset.title "Gire' conexión">
+<!ENTITY netReset.longDesc "<p>Gire' ma, na'e na'nin. IGarahue nun.</p>">
+
+<!ENTITY netTimeout.title "Ganahuij diu ana'uijt">
+
+
+
+
+<!ENTITY redirectLoop.title "Dàj na’nïn nikā ñunj">
+
+<!ENTITY unknownSocketType.title "Nitāj si huā hue’ê nuguan’ dunanikàjt">
+
+<!ENTITY nssFailure2.title "Gire' conexión hia">
+
+<!ENTITY nssBadCert.title "Gire' conexión hia">
+
+<!ENTITY securityOverride.linkText "Ga’ue nutà’t ‘ngō sa sê sa anïn ruhuât…">
+
+<!ENTITY cspBlocked.title "'Ngō narán aga' na riña sitiô na yi'ì sa mà riñaj">
+
+
+
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+

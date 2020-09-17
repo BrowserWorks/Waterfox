@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.network.title "Сетка і захоўванне">
+<!ENTITY pref.offline.caption "Па-за сеткай">
+<!ENTITY textStartUp "Пры запуску:">
+<!ENTITY textStartUp.accesskey "П">
+<!ENTITY menuitemRememberPrevState "Памятаць папярэдні сеткавы статус">
+<!ENTITY menuitemAskMe "Пры запуску спытаць мяне, ці ўваходзіць у сетку">
+<!ENTITY menuitemAlwaysOnline "Заўсёды ўваходзіць у сетку пры запуску">
+<!ENTITY menuitemAlwaysOffline "Ніколі не ўваходзіць у сетку пры запуску">
+<!ENTITY menuitemAutomatic "Вызначаць самастойна (калі даступна)">
+<!ENTITY textGoingOnline "Адаслаць неадпраўленыя лісты пасля ўвахода ў сетку?">
+<!ENTITY radioAutoSend "Так">
+<!ENTITY radioAutoSend.accesskey "Т">
+<!ENTITY radioNotSend "Не">
+<!ENTITY radioNotSend.accesskey "Н">
+<!ENTITY radioAskUnsent "Спытаць мяне">
+<!ENTITY radioAskUnsent.accesskey "ы">
+<!ENTITY textGoingOffline "Загружаць лісты для карыстання па-за сеткаю перад адлучэннем ад сеткі?">
+<!ENTITY radioAutoDownload "Так">
+<!ENTITY radioAutoDownload.accesskey "а">
+<!ENTITY radioNotDownload "Не">
+<!ENTITY radioNotDownload.accesskey "е">
+<!ENTITY radioAskDownload "Спытаць мяне">
+<!ENTITY radioAskDownload.accesskey "С">
+<!ENTITY mailConnections.caption "Паштовыя злучэнні">
+<!ENTITY mailnewsTimeout.label "Часаспын злучэння:">
+<!ENTITY mailnewsTimeout.accesskey "Ч">
+<!ENTITY mailnewsTimeoutSeconds.label "секундаў">
+<!ENTITY Diskspace "Дыскавая прастора">
+<!ENTITY offlineCompactFolders.label "Ушчыльняць усе папкі, калі я захоўваю больш">
+<!ENTITY offlineCompactFolders.accesskey "У">
+<!ENTITY offlineCompactFoldersMB.label "МБ">

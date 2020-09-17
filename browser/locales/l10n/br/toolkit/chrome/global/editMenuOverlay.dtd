@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY findCmd.label             "Klask">
+<!ENTITY findCmd.key               "f">
+<!ENTITY findCmd.accesskey         "K">
+<!ENTITY findAgainCmd.label        "Klask en-dro">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "n">

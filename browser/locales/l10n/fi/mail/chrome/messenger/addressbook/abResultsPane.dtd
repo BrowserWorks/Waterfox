@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Osoitekirja">
+<!ENTITY Addrbook.accesskey                    "O">
+<!ENTITY GeneratedName.label                   "Nimi">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "Sähköpostiosoite">
+<!ENTITY PrimaryEmail.accesskey                "S">
+<!ENTITY Company.label                         "Organisaatio">
+<!ENTITY Company.accesskey                     "r">
+<!ENTITY _PhoneticName.label                   "Foneettinen nimi">
+<!ENTITY _PhoneticName.accesskey               "F">
+<!ENTITY NickName.label                        "Lempinimi">
+<!ENTITY NickName.accesskey                    "L">
+<!ENTITY SecondEmail.label                     "Toissijainen sähköposti">
+<!ENTITY SecondEmail.accesskey                 "T">
+<!ENTITY Department.label                      "Osasto">
+<!ENTITY Department.accesskey                  "s">
+<!ENTITY JobTitle.label                        "Työnimike">
+<!ENTITY JobTitle.accesskey                    "ö">
+<!ENTITY CellularNumber.label                  "Matkapuhelin">
+<!ENTITY CellularNumber.accesskey              "p">
+<!ENTITY PagerNumber.label                     "Hakulaite">
+<!ENTITY PagerNumber.accesskey                 "H">
+<!ENTITY FaxNumber.label                       "Faksi">
+<!ENTITY FaxNumber.accesskey                   "k">
+<!ENTITY HomePhone.label                       "Kotipuhelin">
+<!ENTITY HomePhone.accesskey                   "i">
+<!ENTITY WorkPhone.label                       "Työpuhelin">
+<!ENTITY WorkPhone.accesskey                   "y">
+<!ENTITY ChatName.label                        "Chat-nimi">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "Nouseva">
+<!ENTITY sortAscending.accesskey               "N">
+<!ENTITY sortDescending.label                  "Laskeva">
+<!ENTITY sortDescending.accesskey              "L">

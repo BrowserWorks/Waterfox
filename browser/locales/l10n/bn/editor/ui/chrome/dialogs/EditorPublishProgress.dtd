@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label "সাইট URL:">
+<!ENTITY docSubdir.label "পৃষ্ঠার সাবডিরেক্টরি:">
+<!ENTITY otherSubdir.label "ছবির সাবডিরেক্টরি:">
+
+<!ENTITY status.label "প্রকাশ করা হচ্ছে...">
+<!ENTITY fileList.label "প্রকাশের অবস্থা">
+<!ENTITY succeeded.label "সফল">
+<!ENTITY failed.label "ব্যর্থ">
+
+<!ENTITY keepOpen "প্রকাশ সম্পন্ন হওয়ার পর এই উইন্ডোটি খোলা রাখা হবে।">
+<!ENTITY closeButton.label "বন্ধ করুন">

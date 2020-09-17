@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Päästä päähän -salaus">
+<!ENTITY e2eLearnMore.label "Lue lisää">
+
+<!ENTITY e2eEnc.description "Ilman päästä päähän -salausta viestien sisältö altistuu helposti sähköpostipalveluntarjoajallesi ja joukkovalvonnalle.">
+<!ENTITY e2eeReqWarning.description "Jos lähettämäsi viesti pitää salata, viestin lähettämiseksi sinulla on oltava jokaisen vastaanottajan julkinen avain tai varmenne.">
+
+<!ENTITY e2eSigning.description "Digitaalinen allekirjoitus varmistaa vastaanottajille, että viesti on sinun lähettämäsi ja että sen sisältöä ei ole muutettu.">
+<!ENTITY e2eTechPref.description "Suositeltava salaustekniikka:">
+
+<!ENTITY doNotEncrypt.label "Älä ota salausta käyttöön oletusarvoisesti">
+<!ENTITY doNotEncrypt.accesskey "K">
+<!ENTITY requireEncryptMessage.label "Vaadi salaus oletuksena">
+<!ENTITY requireEncryptMessage.accesskey "V">
+<!ENTITY encryptionCert2.message "Henkilökohtainen varmenne salausta varten:">
+<!ENTITY digitalSign.certificate.button "Valitse…">
+<!ENTITY digitalSign.certificate.accesskey "V">
+<!ENTITY digitalSign.certificate_clear.button "Tyhjennä">
+<!ENTITY digitalSign.certificate_clear.accesskey "T">
+<!ENTITY encryption.certificate.button "Valitse…">
+<!ENTITY encryption.certificate.accesskey "a">
+<!ENTITY encryption.certificate_clear.button "Tyhjennä">
+<!ENTITY encryption.certificate_clear.accesskey "y">
+<!ENTITY signingGroupTitle.label "Digitaalinen allekirjoittaminen">
+<!ENTITY signMessage2.label "Lisää digitaalinen allekirjoitukseni oletusarvoisesti">
+<!ENTITY signMessage.accesskey "A">
+
+<!ENTITY signingCert2.message "Henkilökohtainen varmenne digitaaliseen allekirjoittamiseen:">
+
+<!ENTITY sendingDefaults.label "Viestien lähettämisen oletusasetukset">
+
+<!ENTITY technologyAutomatic.label "Valitse automaattisesti käytettävissä olevien avainten tai varmenteiden perusteella">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Hallinnoi S/MIME-varmenteita">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "S/MIME-suojauslaitteet">
+<!ENTITY manageDevices2.accesskey "u">
+
+<!ENTITY technologySMIME.label "Suosi S/MIME:ä">
+<!ENTITY technologyOpenPGP.label "Suosi OpenPGP:tä">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Valitse varmenne">
+<!ENTITY certPicker.info  "Varmenne:">
+<!ENTITY certPicker.detailsLabel "Valitun varmenteen yksityiskohdat:">
+
+<!ENTITY openpgpKey.message "Henkilökohtainen avain salaukseen ja digitaaliseen allekirjoittamiseen:">
+<!ENTITY openpgpKey.button "Aseta henkilökohtainen avain…">
+<!ENTITY openpgpKey.accesskey "h">

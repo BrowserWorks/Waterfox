@@ -1,0 +1,206 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Sivun lataamisvirhe">
+<!ENTITY retry.label "Yritä uudestaan">
+<!ENTITY returnToPreviousPage.label "Palaa">
+<!ENTITY returnToPreviousPage1.label "Palaa (suositellaan)">
+<!ENTITY advanced2.label "Lisätietoja…">
+<!ENTITY viewCertificate.label "Näytä varmenne">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Palvelinta ei löytynyt">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Jos osoite on oikea, voit</strong>
+<ul>
+  <li>yrittää uudestaan myöhemmin</li>
+  <li>tarkistaa verkkoyhteytesi</li>
+  <li>tai jos olet verkkoyhteydessä mutta palomuurin takana, voit tarkistaa, että &brandShortName;illa on oikeus olla yhteydessä verkkoon.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Tarkista, että tiedostonimi on kirjoitettu virheettömästi ja oikealla kirjainkoolla.</li>
+  <li>Tarkista, ettei tiedostoa ole poistettu, siirretty tai nimetty uudelleen.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Tiedosto on voitu poistaa tai siirtää, tai ehkä siihen ei ole käyttöoikeutta.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; ei kykene lataamaan sivua jostain syystä.</p>
+">
+
+<!ENTITY captivePortal.title "Kirjaudu verkkoon">
+<!ENTITY captivePortal.longDesc2 "<p>Tähän verkkoon täytyy kirjautua ennen internetin käyttämistä.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Avaa verkon kirjautumissivu">
+
+<!ENTITY malformedURI.pageTitle "Virheellinen osoite">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Pyydettyä dokumenttia ei ole tallennettu &brandShortName;in väliaikaistiedostoihin.</p><ul><li>Turvallisuusvarotoimena &brandShortName; ei automaattisesti lataa uudelleen luottamuksellisia dokumentteja.</li><li>Napsauta alta Yritä uudestaan ladataksesi dokumentin sivustolta uudestaan.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Siirry yhteystilaan ja lataa sivu uudestaan valitsemalla &quot;Yritä uudelleen&quot;.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Ilmoita sivuston omistajalle tästä ongelmasta.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Ilmoita sivuston omistajalle tästä ongelmasta.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Osoitteen avaaminen voi vaatia uuden ohjelman asentamista.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Tarkista, että välityspalvelinasetukset ovat oikein.</li>
+  <li>Varmista verkon ylläpidolta, että välityspalvelin on
+    toimintakunnossa.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Tarkista, että välityspalvelinasetukset ovat oikein.</li>
+  <li>Varmista, että tietokoneesi verkkoyhteys on toimintakunnossa.</li>
+  <li>Jos tietokone tai verkko on suojattu palomuurilla tai välityspalvelin on
+    käytössä, tarkista että &brandShortName;in verkkoyhteyttä ei estetä.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Tämä virhe johtuu joskus siitä, että evästeiden asettamista ei ole
+    sallittu tai että se on erityisesti estetty tältä sivustolta.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Tarkista, että tietokoneelle on asennettu Mozillan Personal Security
+    Manager.</li>
+  <li>Virhe voi johtua palvelimen epästandardeista asetuksista.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Avattavaa sivua ei voida näyttää, koska vastaanotetun datan alkuperää ei kyetty varmentamaan.</li>
+  <li>Ilmoitathan ongelmasta sivuston omistajalle.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; havaitsi mahdollisen turvallisuusuhan, eikä jatkanut sivustolle <span class='hostname'/>. Jos käyt tällä sivustolla, henkilökohtaisia tietojasi kuten salasanoja, sähköpostiviestejä tai luottokorttitietoja saatetaan yrittää varastaa.">
+<!ENTITY certerror.sts.introPara "&brandShortName; havaitsi mahdollisen turvallisuusuhan, eikä jatkanut sivustolle <span class='hostname'/>, koska tämä sivusto vaatii salatun yhteyden.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; havaitsi ongelman, eikä jatkanut sivustolle <span class='hostname'/>. Sivuston asetukset on määritetty väärin tai tietokoneesi kello on asetettu väärään aikaan.">
+<!ENTITY certerror.expiredCert.secondPara2 "On todennäköistä, että verkkosivuston varmenne on vanhentunut, mikä estää &brandShortName;ia muodostamasta suojattua yhteyttä. Jos vierailet tällä sivustolla, hyökkääjät voivat yrittää varastaa esimerkiksi salasanoja, sähköposteja tai luottokorttitietoja.">
+<!ENTITY certerror.expiredCert.sts.secondPara "On todennäköistä, että verkkosivuston varmenne on vanhentunut, mikä estää &brandShortName;ia muodostamasta suojattua yhteyttä.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Mitä voit tehdä?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Ongelma johtuu todennäköisesti sivustosta, etkä voi korjata sitä itse.</p>
+<p>Jos olet yritysverkossa tai käytät virustorjuntaohjelmaa, voit ottaa yhteyttä tukeen. Voit myös ilmoittaa ongelmasta sivuston ylläpitäjälle.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Tietokoneesi mukaan nyt on <span id='wrongSystemTime_systemDate2'/>. Tarkista asetuksista, että tietokoneesi päivämäärä, kellonaika ja aikavyöhyke ovat oikeat, ja lataa sitten <span class='hostname'/> uudestaan.</p>
+<p>Jos kello on jo oikeassa ajassa,  vika on luultavasti sivustossa etkä voi korjata ongelmaa itse. Voit ilmoittaa ongelmasta sivuston ylläpitäjälle.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Ongelma johtuu todennäköisesti sivustosta, etkä voi korjata sitä itse. Voit ilmoittaa ongelmasta sivuston ylläpitäjälle.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Sivusto voi olla väliaikaisesti saavuttamattomissa tai kovan rasituksen
+    alaisena. Yritä hetken kuluttua uudestaan.</li>
+  <li>Jos mitkään sivustot eivät toimi, tarkista tietokoneen
+    verkkoasetukset.</li>
+  <li>Jos tietokone tai verkko on suojattu palomuurilla tai välityspalvelin on
+    käytössä, tarkista että &brandShortName;in verkkoyhteyttä ei estetä.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; esti tämän sivun latautumisen tässä yhteydessä, koska sivun sisällön tietosuojakäytäntö kieltää sen.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; esti tätä sivua latautumasta tässä yhteydessä, koska sivun X-Frame-Options-käytäntö estää lataamisen.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Avattavaa sivua ei voida näyttää, koska tiedonsiirrossa tapahtui virhe.</p><ul><li>Ilmoitathan ongelmasta sivuston omistajalle.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Ota riski ja jatka">
+
+<!ENTITY errorReporting.automatic2 "Auta Mozillaa tunnistamaan ja estämään haitallisia sivustoja ilmoittamalla tällaisista virheistä">
+<!ENTITY errorReporting.learnMore "Lue lisää…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Ilmoitathan ongelmasta sivuston omistajalle.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Lisätiedot: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Varoitus: mahdollinen tietoturvariski">
+<!ENTITY certerror.sts.pagetitle  "Ei yhdistetty: mahdollinen turvallisuusongelma">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "Sivusto <span class='hostname'></span> noudattaa tietoturvakäytäntöä nimeltään HTTP Strict Transport Security (HSTS), mikä tarkoittaa, että &brandShortName; voi muodostaa siihen vain suojatun yhteyden. Tälle sivustolle siirtymistä varten ei voi lisätä poikkeusta.">
+<!ENTITY certerror.copyToClipboard.label "Kopioi teksti leikepöydälle">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> käyttää suojaustekniikkaa, joka on vanhentunut ja haavoittuvainen hyökkäyksille. Hyökkääjä voisi helposti lukea tietoja, joiden luulit olevan suojattuja. Sivuston ylläpitäjän täytyy korjata tämä ongelma ennen kuin voit käydä sivustolla.</p><p>Virhekoodi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Estetty sivu">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> on mitä luultavimmin turvallinen sivusto, mutta salattua yhteyttä ei voitu muodostaa. Tämän ongelman aiheuttaa <span class='mitm-name'/>, mikä on ohjelmisto tietokoneellasi tai verkossasi.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Jos käyttämäsi virustorjuntaohjelma skannaa salattuja yhteyksiä (kutsutaan usein ”verkon skannaukseksi”, ”web-skannaukseksi” tai ”HTTPS-skannaukseksi”), voit poistaa kyseisen ominaisuuden käytöstä. Jos se ei auta, voit poistaa virustorjunnan ja asentaa sen uudestaan.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Jos käytät työnantajasi verkkoyhteyttä, voit olla yhteydessä IT-tukeen.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Jos et tunne <span class='mitm-name'/>-ohjelmaa, kyseessä voi olla huijaus eikä sivustolle tulisi jatkaa.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Jos et tunne <span class='mitm-name'/>-ohjelmaa, kyseessä voi olla hyökkäys etkä voi tehdä mitään.">
+
+<!ENTITY clockSkewError.longDesc "Tietokoneesi mukaan nyt on <span id='wrongSystemTime_systemDate1'/>, minkä takia &brandShortName; ei voi muodostaa suojattua yhteyttä. Jotta voit siirtyä sivustolle <span class='hostname'></span>, avaa järjestelmäasetukset ja päivitä sieltä tietokoneen kello nykyiseen päivään, aikaan ja aikavyöhykkeeseen. Lopuksi lataa <span class='hostname'></span> uudestaan.">
+
+<!ENTITY prefReset.longDesc "Vaikuttaa siltä, että verkon turvallisuusasetukset aiheuttavat tämän. Haluatko palauttaa oletusasetukset?">
+<!ENTITY prefReset.label "Palauta oletusasetukset">
+
+<!ENTITY enableTls10.longDesc "Sivusto ei välttämättä tue TLS 1.2 -yhteyskäytäntöä, joka on vanhin &brandShortName;in tukema versio. TLS 1.0:n ja TLS 1.1:n ottaminen käyttöön saattaa mahdollistaa yhteyden muodostamisen.">
+<!ENTITY enableTls10.note "TLS 1.0 ja TLS 1.1 poistetaan pysyvästi käytöstä tulevassa julkaisussa.">
+<!ENTITY enableTls10.label "Ota käyttöön TLS 1.0 ja 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Avattavaa sivua ei voida näyttää, koska verkkoyhteyskäytännössä havaittiin virhe.</p><ul><li>Ilmoitathan ongelmasta sivuston omistajalle.</li></ul>">

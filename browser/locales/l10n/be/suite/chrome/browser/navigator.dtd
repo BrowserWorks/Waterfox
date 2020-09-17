@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY mainWindow.title "&brandShortName;">
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!ENTITY mainWindow.titleprivate "Адасобленае азіранне">
+<!ENTITY editPageCmd.label "Рэдагаваць старонку">
+<!ENTITY editPageCmd.accesskey "Р">
+<!ENTITY editPageCmd.commandkey "e">
+<!ENTITY navbarCmd.label "Паліца з прыладамі Навігацыі">
+<!ENTITY navbarCmd.accesskey "Н">
+<!ENTITY bookmarksToolbarCmd.label "Прыладапаліца закладак">
+<!ENTITY bookmarksToolbarCmd.accesskey "з">
+<!ENTITY closeWindow.label "Зачыніць акно">
+<!ENTITY closeWindow.accesskey "а">
+<!ENTITY minimizeButton.tooltip "Мінімізаваць">
+<!ENTITY restoreButton.tooltip "Аднавіць">
+<!ENTITY feedsMenu.label "Падпісацца на гэтую старонку">
+<!ENTITY feedsMenu.accesskey "П">
+<!ENTITY menuBar.tooltip "Паліца з меню">
+<!ENTITY bookmarksToolbar.tooltip "Прыладапаліца закладак">
+<!ENTITY navigationToolbar.tooltip "Паліца з прыладамі навігацыі">
+<!ENTITY backButton.label "Назад">
+<!ENTITY backButton.tooltip "Папярэдняя старонка">
+<!ENTITY forwardButton.label "Наперад">
+<!ENTITY forwardButton.tooltip "Наступная старонка">
+<!ENTITY reloadButton.label "Абнавіць">
+<!ENTITY reloadButton.tooltip "Абнавіць гэтую старонку">
+<!ENTITY stopButton.label "Спыніць">
+<!ENTITY stopButton.tooltip "Прыпыніць загрузку гэтай старонкі">
+<!ENTITY searchButton.label "Пошук">
+<!ENTITY searchButton.tooltip "Увядзіце слова ў поле злева і пстрыкніце Пошук">
+<!ENTITY goButton.label "Пайсці">
+<!ENTITY goButton.tooltip "Увядзіце адрас месца ў поле злева і пстрыкніце Пайсці">
+<!ENTITY printButton.label "Друкаваць">
+<!ENTITY printButton.tooltip "Друкаваць гэту старонку">
+<!ENTITY throbber.tooltip "Пайсці на хатнюю старонку &vendorShortName;">
+<!ENTITY locationBar.tooltip "Увядзіце тэрмін, ключавое слова для пошуку ці адрас у сеціве">
+<!ENTITY locationBar.accesskey "в">
+<!ENTITY locationBar.title "Месцазнаходжанне">
+<!ENTITY proxyIcon.tooltip "Перацягніце і ўпусціце гэты значок, каб стварыць спасылку на гэту старонку">
+<!ENTITY searchItem.title "Пошук">
+<!ENTITY bookmarksButton.label "Закладкі">
+<!ENTITY bookmarksButton.tooltip "Спіс закладак">
+<!ENTITY homeButton.label "Дадому">
+<!ENTITY bookmarksToolbarItem.label "Адзінкі прыладапаліцы закладак">
+<!ENTITY bookmarksToolbarChevron.tooltip "Паказаць больш закладак">
+<!ENTITY statusText.label "Гатова">
+<!ENTITY popupIcon.tooltiptext "Не затрымліваць вынырцы з гэтай сеціўнай пляцоўкі">
+<!ENTITY viewSecurityInfo.label "Праглядзець звесткі пра бяспеку">
+<!ENTITY viewSecurityInfo.accesskey "б">
+<!ENTITY viewCertificate.label "Пабачыць пасведчанне">
+<!ENTITY viewCertificate.accesskey "п">
+<!ENTITY viewCertManager.label "Адчыніць кіраўнік пасведчанняў">
+<!ENTITY viewCertManager.accesskey "к">

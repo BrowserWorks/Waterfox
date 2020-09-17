@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Configuración avanzada das contas">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Directorio do servidor IMAP:">
+<!ENTITY serverDirectory.accesskey "D">
+<!ENTITY usingSubscription.label "Amosar só os cartafoles subscritos">
+<!ENTITY usingSubscription.accesskey "r">
+<!ENTITY dualUseFolders.label "O servidor admite cartafoles que conteñan subcartafoles e mensaxes">
+<!ENTITY dualUseFolders.accesskey "e">
+<!ENTITY maximumConnectionsNumber.label "Número máximo de conexións do servidor na caché">
+<!ENTITY maximumConnectionsNumber.accesskey "m">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Estas preferencias especifican os espazos de nome no servidor IMAP.">
+<!ENTITY personalNamespace.label "Espazo de nome persoal:">
+<!ENTITY personalNamespace.accesskey "s">
+<!ENTITY publicNamespace.label "Público (compartido):">
+<!ENTITY publicNamespace.accesskey "c">
+<!ENTITY otherUsersNamespace.label "Outros usuarios:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "Permitir que o servidor ignore estes espazos de nome">
+<!ENTITY overrideNamespaces.accesskey "n">
+<!ENTITY pop3DeferringDesc.label "Ao descargar correos deste servidor da conta, usar o cartafol seguinte para gardar as novas mensaxes:" >
+<!ENTITY accountInbox.label "Caixa de entrada desta conta">
+<!ENTITY accountInbox.accesskey "t">
+<!ENTITY deferToServer.label "Caixa de entrada para outra conta">
+<!ENTITY deferToServer.accesskey "x">
+<!ENTITY deferGetNewMail.label "Incluír este servidor cando obteña correo novo">
+<!ENTITY deferGetNewMail.accesskey "I">

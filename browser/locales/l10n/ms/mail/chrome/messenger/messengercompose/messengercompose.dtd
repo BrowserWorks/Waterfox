@@ -1,0 +1,336 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Tulis: (tiada subjek)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Fail">
+<!ENTITY fileMenu.accesskey "l">
+<!ENTITY newMenu.label "Baru">
+<!ENTITY newMenu.accesskey "B">
+<!ENTITY newMessage.label "Mesej">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "M">
+<!ENTITY newContact.label "Kenalan Buku Alamat…">
+<!ENTITY newContact.accesskey "K">
+<!ENTITY attachMenu.label "Lampir">
+<!ENTITY attachMenu.accesskey "r">
+<!ENTITY attachFileCmd.label "Fail…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Halaman Web…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Kad Peribadi (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY remindLater.label "Ingatkan Saya Nanti">
+<!ENTITY remindLater.accesskey "N">
+<!ENTITY closeCmd.label "Tutup">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "t">
+<!ENTITY saveCmd.label "Simpan">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "p">
+<!ENTITY saveAsCmd.label "Simpan Sebagai">
+<!ENTITY saveAsCmd.accesskey "S">
+<!ENTITY saveAsFileCmd.label "Fail…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Draf">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "Templat">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY sendNowCmd.label "Hantar Sekarang">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "r">
+<!ENTITY sendLaterCmd.label "Hantar Kemudian">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "K">
+<!ENTITY printSetupCmd.label "Penetapan Halaman…">
+<!ENTITY printSetupCmd.accesskey "e">
+<!ENTITY printPreviewCmd.label "Previu Cetakan">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Cetak…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "C">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Edit">
+<!ENTITY editMenu.accesskey "d">
+<!ENTITY undoCmd.label "Batal">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "l">
+<!ENTITY redoCmd.label "Ulang">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "l">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "a">
+<!ENTITY deleteCmd.label "Buang">
+<!ENTITY deleteCmd.accesskey "g">
+<!ENTITY editRewrapCmd.label "Balut semula">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Namakan semula Lampiran…">
+<!ENTITY renameAttachmentCmd.accesskey "e">
+<!ENTITY reorderAttachmentsCmd.label "Susun semula Lampiran…">
+<!ENTITY reorderAttachmentsCmd.accesskey "s">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Anak Tetingkap Lampiran">
+<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
+     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
+     as attachments.accesskey. -->
+<!ENTITY toggleAttachmentPaneCmd.accesskey "m">
+<!ENTITY selectAllCmd.accesskey "a">
+<!ENTITY findBarCmd.label "Cari…">
+<!ENTITY findBarCmd.accesskey "C">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Cari dan Ganti…">
+<!ENTITY findReplaceCmd.accesskey "t">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Cari Lagi">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Cari Dahulu">
+<!ENTITY findPrevCmd.accesskey "d">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Susun semula Lampiran">
+<!ENTITY moveAttachmentTopPanelBtn.label "Pindah ke Atas">
+<!ENTITY moveAttachmentUpPanelBtn.label "Pindah Atas">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Pindah bersama">
+<!ENTITY moveAttachmentDownPanelBtn.label "Pindah Bawah">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Pindah ke Bawah">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Susun: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Susun: Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Susun Pilihan: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Susun Pilihan: Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Papar">
+<!ENTITY viewMenu.accesskey "p">
+<!ENTITY viewToolbarsMenuNew.label "Bar alatan">
+<!ENTITY viewToolbarsMenuNew.accesskey "B">
+<!ENTITY menubarCmd.label "Bar Menu">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY showCompositionToolbarCmd.label "Bar alatan Karangan">
+<!ENTITY showCompositionToolbarCmd.accesskey "t">
+<!ENTITY showFormattingBarCmd.label "Bar Pemformatan">
+<!ENTITY showFormattingBarCmd.accesskey "P">
+<!ENTITY showTaskbarCmd.label "Bar Status">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "Penyesuaian…">
+<!ENTITY customizeToolbar.accesskey "P">
+
+<!ENTITY addressSidebar.label "Bar sisi Kenalan">
+<!ENTITY addressSidebar.accesskey "s">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Pilihan">
+<!ENTITY optionsMenu.accesskey "l">
+<!ENTITY checkSpellingCmd2.label "Semak Ejaan…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "j">
+<!ENTITY enableInlineSpellChecker.label "Semak ejaan Semasa Menaip">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY quoteCmd.label "Mesej Petikan">
+<!ENTITY quoteCmd.accesskey "P">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Lampir Kad Peribadi (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Resit Pemberitahu Serahan">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Notifikasi Status Penghantaran">
+<!ENTITY dsnMenu.accesskey "N">
+<!ENTITY deliveryFormatMenu.label "Format Penghantaran">
+<!ENTITY deliveryFormatMenu.accesskey "F">
+<!ENTITY autoFormatCmd.label "Auto-Kesan">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "Teks Biasa Sahaja">
+<!ENTITY plainTextFormatCmd.accesskey "a">
+<!ENTITY htmlFormatCmd.label "Teks Beraneka (HTML) Sahaja">
+<!ENTITY htmlFormatCmd.accesskey "a">
+<!ENTITY bothFormatCmd.label "Teks Biasa dan Beraneka (HTML)">
+<!ENTITY bothFormatCmd.accesskey "s">
+<!ENTITY priorityMenu.label "Prioriti">
+<!ENTITY priorityMenu.accesskey "i">
+<!ENTITY priorityButton.title "Prioriti">
+<!ENTITY priorityButton.tooltiptext "Tukar prioriti mesej">
+<!ENTITY priorityButton.label "Prioriti:">
+<!ENTITY lowestPriorityCmd.label "Paling rendah">
+<!ENTITY lowestPriorityCmd.accesskey "r">
+<!ENTITY lowPriorityCmd.label "Rendah">
+<!ENTITY lowPriorityCmd.accesskey "d">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY normalPriorityCmd.accesskey "m">
+<!ENTITY highPriorityCmd.label "Tinggi">
+<!ENTITY highPriorityCmd.accesskey "i">
+<!ENTITY highestPriorityCmd.label "Paling tinggi">
+<!ENTITY highestPriorityCmd.accesskey "T">
+<!ENTITY fileCarbonCopyCmd.label "Hantar satu Salinan Kepada">
+<!ENTITY fileCarbonCopyCmd.accesskey "r">
+<!ENTITY fileHereMenu.label "Failkan Di sini">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Alatan">
+<!ENTITY tasksMenu.accesskey "A">
+<!ENTITY messengerCmd.label "Mel &amp; Kumpulan berita">
+<!ENTITY messengerCmd.accesskey "m">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Buku Alamat">
+<!ENTITY addressBookCmd.accesskey "a">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Tetapan Akaun">
+<!ENTITY accountManagerCmd2.accesskey "T">
+<!ENTITY accountManagerCmdUnix2.accesskey "T">
+<!ENTITY preferencesCmd2.label "Pilihan">
+<!ENTITY preferencesCmd2.accesskey "P">
+<!ENTITY preferencesCmdUnix.label "Keutamaan">
+<!ENTITY preferencesCmdUnix.accesskey "n">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Minimum">
+<!ENTITY bringAllToFront.label "Bawa Semua ke Hadapan">
+<!ENTITY zoomWindow.label "Zum">
+<!ENTITY windowMenu.label "Tetingkap">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Hantar">
+<!ENTITY quoteButton.label "Petikan">
+<!ENTITY addressButton.label "Kenalan">
+<!ENTITY attachButton.label "Lampir">
+<!ENTITY spellingButton.label "Ejaan">
+<!ENTITY saveButton.label "Simpan">
+<!ENTITY printButton.label "Cetak">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Hantar mesej ini sekarang">
+<!ENTITY sendlaterButton.tooltip "Hantar mesej ini kemudian">
+<!ENTITY quoteButton.tooltip "Petik mesej terdahulu">
+<!ENTITY addressButton.tooltip "Pilih penerima dalam Buku Alamat">
+<!ENTITY attachButton.tooltip2 "Tambah lampiran">
+<!ENTITY spellingButton.tooltip "Semak ejaan pilihan atau seluruh mesej">
+<!ENTITY saveButton.tooltip "Simpan mesej ini">
+<!ENTITY cutButton.tooltip              "Potong">
+<!ENTITY copyButton.tooltip             "Salin">
+<!ENTITY pasteButton.tooltip            "Tampal">
+<!ENTITY printButton.tooltip "Cetak mesej ini">
+
+<!-- Headers -->
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY subject.accesskey "S">
+<!ENTITY attachmentBucketCloseButton.tooltip "Sorok anak tetingkap lampiran">
+
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+<!ENTITY SmileButton.tooltip "Sisip wajah senyuman">
+<!ENTITY smiley1Cmd.label "Senyum">
+<!ENTITY smiley2Cmd.label "Berkerut">
+<!ENTITY smiley3Cmd.label "Kenyit">
+<!ENTITY smiley4Cmd.label "Jelir lidah">
+<!ENTITY smiley5Cmd.label "Ketawa">
+<!ENTITY smiley6Cmd.label "Sipu">
+<!ENTITY smiley7Cmd.label "Tak pasti">
+<!ENTITY smiley8Cmd.label "Terkejut">
+<!ENTITY smiley9Cmd.label "Cium">
+<!ENTITY smiley10Cmd.label "Jerit">
+<!ENTITY smiley11Cmd.label "Selamba">
+<!ENTITY smiley12Cmd.label "Mulut-berwang">
+<!ENTITY smiley13Cmd.label "Kaki-dalam-Mulut">
+<!ENTITY smiley14Cmd.label "Polos">
+<!ENTITY smiley15Cmd.label "Menangis">
+<!ENTITY smiley16Cmd.label "Bibir-Terkatup">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Tiada Cadangan Ditemui">
+<!ENTITY spellCheckIgnoreWord.label "Abaikan Perkataan">
+<!ENTITY spellCheckIgnoreWord.accesskey "A">
+<!ENTITY spellCheckAddToDictionary.label "Tambah dalam Kamus">
+<!ENTITY spellCheckAddToDictionary.accesskey "m">
+<!ENTITY undo.label "Batal">
+<!ENTITY undo.accesskey "B">
+<!ENTITY cut.label "Potong">
+<!ENTITY cut.accesskey "t">
+<!ENTITY copy.label "Salin">
+<!ENTITY copy.accesskey "S">
+<!ENTITY paste.label "Tampal">
+<!ENTITY paste.accesskey "T">
+<!ENTITY pasteQuote.label "Tampal Sebagai Petikan">
+<!ENTITY pasteQuote.accesskey "P">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Buka">
+<!ENTITY openAttachment.accesskey "B">
+<!ENTITY delete.label "Buang">
+<!ENTITY delete.accesskey "B">
+<!ENTITY removeAttachment.label "Buang Lampiran">
+<!ENTITY removeAttachment.accesskey "L">
+<!ENTITY renameAttachment.label "Namakan semula…">
+<!ENTITY renameAttachment.accesskey "S">
+<!ENTITY reorderAttachments.label "Susun semula Lampiran…">
+<!ENTITY reorderAttachments.accesskey "s">
+<!ENTITY removeAllAttachments.label "Buang Semua Lampiran">
+<!ENTITY removeAllAttachments.accesskey "g">
+<!ENTITY selectAll.label "Pilih Semua">
+<!ENTITY selectAll.accesskey "S">
+<!ENTITY attachFile.label "Lampirkan Fail…">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "Tukar ke…">
+<!ENTITY convertCloud.accesskey "T">
+<!ENTITY cancelUpload.label "Batal Muat naik">
+<!ENTITY cancelUpload.accesskey "n">
+<!ENTITY convertRegularAttachment.label "Lampiran Lazim">
+<!ENTITY convertRegularAttachment.accesskey "L">
+<!ENTITY attachPage.label "Lampir Halaman Web…">
+<!ENTITY attachPage.accesskey "W">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Papar Anak Tetingkap Lampiran Permulaan">
+<!ENTITY initiallyShowAttachmentPane.accesskey "P">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Tambah Kamus…">
+<!ENTITY spellAddDictionaries.accesskey "T">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Kenalan">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Sesuaikan Daripada Alamat…">
+<!ENTITY customizeFromAddress.accesskey "A">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Kandungan mesej">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Bahasa semakan ejaan">
+<!ENTITY encodingStatusPanel.tooltip "Pengekodan teks">

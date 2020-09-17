@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Flik">
+<!ENTITY tabCmd.accesskey "l">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Öppna webbplats…">
+<!ENTITY openCmd.accesskey "w">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Öppna fil…">
+<!ENTITY openFileCmd.accesskey "p">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Stäng alla andra flikar">
+<!ENTITY closeOtherTabs.accesskey "a">
+
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Stäng flikar till höger">
+<!ENTITY  closeTabsToTheEnd.accesskey "h">
+
+<!ENTITY uploadFile.label "Lägg upp fil…">
+<!ENTITY uploadFile.accesskey "g">
+
+<!ENTITY printSetupCmd.label "Utskriftsformat…">
+<!ENTITY printSetupCmd.accesskey "o">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Sök på sidan…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Visa/Dölj">
+<!ENTITY toolbarsCmd.accesskey "i">
+<!ENTITY tabbarCmd.label "Flikfält">
+<!ENTITY tabbarCmd.accesskey "l">
+<!ENTITY taskbarCmd.label "Statusfält">
+<!ENTITY taskbarCmd.accesskey "t">
+<!ENTITY componentbarCmd.label "Komponentfält">
+<!ENTITY componentbarCmd.accesskey "K">
+
+<!ENTITY fullScreenCmd.label "Helskärm">
+<!ENTITY fullScreenCmd.accesskey "H">
+
+<!ENTITY useStyleSheetMenu.label "Använd formatmall">
+<!ENTITY useStyleSheetMenu.accesskey "v">
+<!ENTITY useStyleSheetNone.label "Ingen">
+<!ENTITY useStyleSheetNone.accesskey "I">
+<!ENTITY useStyleSheetPersistentOnly.label "(Basformatering)">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "B">
+<!ENTITY bidiSwitchPageDirectionItem.label "Byt sidriktning">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "y">
+<!ENTITY pageSourceCmd.label "Källkod">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Sidinformation">
+<!ENTITY pageInfoCmd.accesskey "s">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Gå till">
+<!ENTITY goMenu.accesskey "G">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goHomeCmd.label "Startsidan">
+<!ENTITY goHomeCmd.accesskey "S">
+<!ENTITY historyCmd.label "Historik">
+<!ENTITY historyCmd.accesskey "i">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Nyligen stängda flikar">
+<!ENTITY recentTabs.accesskey "y">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Nyligen stängda fönster">
+<!ENTITY recentWindows.accesskey "r">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Återställ föregående session">
+<!ENTITY historyRestoreLastSession.accesskey "Å">
+<!ENTITY syncTabsMenu.label "Flikar från andra datorer">
+<!ENTITY syncTabsMenu.accesskey "F">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Bokmärken">
+<!ENTITY bookmarksMenu.accesskey "B">
+<!ENTITY addCurPageCmd.label "Bokmärk denna sida">
+<!ENTITY addCurPageCmd.accesskey "a">
+<!ENTITY addCurPageAsCmd.label "Lägg till bokmärke…">
+<!ENTITY addCurPageAsCmd.accesskey "g">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Bokmärk alla flikar…">
+<!ENTITY addCurTabsAsCmd.accesskey "f">
+<!ENTITY manBookmarksCmd.label "Hantera bokmärken…">
+<!ENTITY manBookmarksCmd.accesskey "m">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Sök på Internet">
+<!ENTITY searchInternetCmd.accesskey "p">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Översätt">
+<!ENTITY translateMenu.accesskey "t">
+
+<!ENTITY cookieMessageTitle.label "Inställningar för kakor ändrade">
+<!ENTITY cookieDisplayCookiesCmd.label "Hantera lagrade kakor">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "H">
+<!ENTITY cookieAllowCookiesCmd.label "Tillåt kakor från denna webbplats">
+<!ENTITY cookieAllowCookiesCmd.accesskey "T">
+<!ENTITY cookieAllowCookiesMsg.label "Tillåt alltid kakor från denna webbplats.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Tillåt tillfälliga kakor från denna webbplats">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "ä">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Denna webbplats kommer bara kunna spara kakor tills webbläsaren avslutas.">
+<!ENTITY cookieCookiesDefaultCmd.label "Använd förinställningar för kakor">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "A">
+<!ENTITY cookieCookiesDefaultMsg.label "Kakor från denna webbplats kommer att tillåtas eller avvisas enligt förinställningarna.">
+<!ENTITY cookieBlockCookiesCmd.label "Blockera kakor från denna webbplats">
+<!ENTITY cookieBlockCookiesCmd.accesskey "B">
+<!ENTITY cookieBlockCookiesMsg.label "Kakor från denna webbplats kommer alltid att avvisas.">
+
+<!ENTITY cookieImageMessageTitle.label "Inställningar för bilder ändrade">
+<!ENTITY cookieDisplayImagesCmd.label "Hantera bildinställningar">
+<!ENTITY cookieDisplayImagesCmd.accesskey "H">
+<!ENTITY cookieAllowImagesCmd.label "Tillåt bilder från denna webbplats">
+<!ENTITY cookieAllowImagesCmd.accesskey "T">
+<!ENTITY cookieAllowImagesMsg.label "Bilder från denna webbplats kommer alltid hämtas.">
+<!ENTITY cookieImagesDefaultCmd.label "Använd förinställningar för bilder">
+<!ENTITY cookieImagesDefaultCmd.accesskey "A">
+<!ENTITY cookieImagesDefaultMsg.label "Bilder från denna webbplats kommer att hämtas enligt förinställningarna.">
+<!ENTITY cookieBlockImagesCmd.label "Blockera bilder från denna webbplats">
+<!ENTITY cookieBlockImagesCmd.accesskey "B">
+<!ENTITY cookieBlockImagesMsg.label "Bilder från denna webbplats kommer aldrig hämtas.">
+
+<!ENTITY popupsMessageChangeTitle.label "Inställningar för popupfönster ändrade">
+<!ENTITY popupAllowCmd.label "Tillåt popupfönster från denna webbplats">
+<!ENTITY popupAllowCmd.accesskey "T">
+<!ENTITY popupAllowMsg.label "Popupfönster från denna webbplats kommer alltid att visas.">
+<!ENTITY popupDefaultCmd.label "Använd förinställningar för popupfönster">
+<!ENTITY popupDefaultCmd.accesskey "A">
+<!ENTITY popupDefaultMsg.label "Popupsfönster från denna webbplats kommer att hämtas enligt förinställningarna.">
+<!ENTITY popupBlockCmd.label "Blockera popupfönster från denna webbplats">
+<!ENTITY popupBlockCmd.accesskey "B">
+<!ENTITY popupBlockMsg.label "Popupfönster från denna webbplats kommer aldrig visas.">
+<!ENTITY popupsManage.label "Hantera popupfönster">
+<!ENTITY popupsManage.accesskey "H">
+
+<!ENTITY cookieCookieManager.label "Hantera kakor">
+<!ENTITY cookieCookieManager.accesskey "k">
+<!ENTITY cookieImageManager.label "Hantera bilder">
+<!ENTITY cookieImageManager.accesskey "b">
+<!ENTITY popupsManager.label "Hantera popupfönster">
+<!ENTITY popupsManager.accesskey "p">
+
+<!ENTITY clearPrivateDataCmd.label "Rensa ut personliga uppgifter…">
+<!ENTITY clearPrivateDataCmd.accesskey "a">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "f">

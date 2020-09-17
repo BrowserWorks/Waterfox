@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label         "URL del lloc:">
+<!ENTITY docSubdir.label       "Subdirectori de la pàgina:">
+<!ENTITY otherSubdir.label     "Imatge del subdirectori:">
+
+<!ENTITY status.label          "S'està publicant…">
+<!ENTITY fileList.label        "Estat de la publicació">
+<!ENTITY succeeded.label       "Ha finalitzat">
+<!ENTITY failed.label          "Ha fallat">
+
+<!ENTITY keepOpen              "Conserva aquesta finestra oberta una vegada la publicació hagi acabat.">
+<!ENTITY closeButton.label     "Tanca">

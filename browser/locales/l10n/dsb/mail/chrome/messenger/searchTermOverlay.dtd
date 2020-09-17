@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY matchAll.label     "Wše wuměnjenja docyniś">
+<!ENTITY matchAll.accesskey "d">
+<!ENTITY matchAny.label     "Nanejmjenjej wuměnjenje docyniś">
+<!ENTITY matchAny.accesskey "N">
+<!ENTITY matchAllMsgs.label     "Wše powěsći">
+<!ENTITY matchAllMsgs.accesskey "W">
+<!-- LOCALIZATION NOTE
+  The values below are used to control the widths of the search widgets.
+  Change the values only when the localized strings in the popup menus
+  are truncated in the widgets.
+ -->
+
+<!ENTITY searchTermListAttributesFlexValue "1">
+<!ENTITY searchTermListOperatorsFlexValue "1">
+<!ENTITY searchTermListValueFlexValue "3">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Keluarkan saya dari sini!">
+<!ENTITY safeb.palm.decline.label "Abaikan amaran ini">
+<!ENTITY safeb.palm.reportPage.label "Mengapa halaman ini disekat?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Khidmat nasihat disediakan oleh <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Ini Halaman Penyerang!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Halaman web <span id='malware_sitename'/> telah dilaporkan sebagai halaman penyerang dan telah disekat berdasarkan tetapan keselamatan anda.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Halaman penyerang akan cuba memasang atur cara yang mencuri maklumat peribadi, menggunakan komputer anda untuk menyerang pihak lain, atau merosakkan sistem anda.</p><p>Sesetengah halaman penyerang dengan sengaja merebakkan perisian berbahaya, tapi kebanyakkannya menceroboh tanpa pengetahuan atau keizinan pemilik halaman.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Laman Mengelirukan!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Halaman web <span id='phishing_sitename'/> telah dilaporkan sebagai laman mengelirukan dan telah disekat berdasarkan keutamaan keselamatan anda.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Laman mengelirukan direka untuk memperdayakan anda melakukan perkara yang berbahaya, seperti memasang perisian, atau mendedahkan maklumat peribadi, seperti kata laluan, nombor telefon atau maklumat kad kredit.</p><p>Sebarang maklumat yang dimasukkan dalam halaman web ini boleh mengakibatkan kecurian identiti atau penipuan lain.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Ini Laman Perisian Yang Tidak Diingini!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Halaman web <span id='unwanted_sitename'/> telah dilaporkan sebagai halaman yang mengandungi perisian tidak diingini dan telah disekat berdasarkan keutamaan keselamatan anda.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Halaman perisian yang tidak diingini cuba memasang perisian yang mengelirukan dan boleh mengganggu sistem anda.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Laman berikut mungkin ada perisian hasad">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; menyekat halaman ini kerana cuba memasang aplikasi yang mencuri data atau menghapuskan data anda (sebagai contoh, foto, kata laluan, mesej dan kad kredit).">

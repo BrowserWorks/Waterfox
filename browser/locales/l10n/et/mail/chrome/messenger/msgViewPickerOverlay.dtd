@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label            "Vaade:">
+<!ENTITY viewPicker.accesskey        "a">
+<!ENTITY viewAll.label               "Kõik">
+<!ENTITY viewAll.accesskey           "K">
+<!ENTITY viewUnread.label            "Lugemata">
+<!ENTITY viewUnread.accesskey        "g">
+<!ENTITY viewNotDeleted.label        "Pole kustutatud">
+<!ENTITY viewNotDeleted.accesskey    "P">
+<!ENTITY viewTags.label              "Sildid">
+<!ENTITY viewTags.accesskey          "S">
+<!ENTITY viewCustomViews.label       "Kohandatud vaated">
+<!ENTITY viewCustomViews.accesskey   "h">
+<!ENTITY viewVirtualFolder.label     "Salvesta vaade kaustana...">
+<!ENTITY viewVirtualFolder.accesskey "k">
+<!ENTITY viewCustomizeView.label     "Kohanda...">
+<!ENTITY viewCustomizeView.accesskey "K">

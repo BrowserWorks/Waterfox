@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Brabhsadh prìobhaideach">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ Dìon o thracadh">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Chan eil thu a’ dèanamh brabhsadh prìobhaideach">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "Tha &brandShortName; a’ bacadh pìosan dhen duilleag seo a tha a’ tracadh na bhrabhsas tu ma dh’fhaoidte.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Cha chum sinn gin dhen eachdraidh ’nar cuimhne ach thèid faidhlichean a luchdaicheas tu a-nuas is comharran-lìn ùra a shàbhaladh air an uidheam agad fhathast.">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "Cha chum sinn gin dhen eachdraidh bhrabhsaidh no na briosgaidean agad ann am brabhsadh prìobhaideach. Thèid faidhlichean a luchdaicheas tu a-nuas is comharran-lìn a chuireas tu ris a shàbhaladh air an uidheam agad fhathast.">
+
+<!ENTITY privatebrowsingpage.link.private "A bheil thu ag iarraidh barrachd fiosrachaidh?">
+<!ENTITY privatebrowsingpage.link.normal "Fosgail taba prìobhaideach ùr">

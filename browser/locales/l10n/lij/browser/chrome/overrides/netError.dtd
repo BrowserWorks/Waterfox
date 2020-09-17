@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Erô into caregamento da pagina">
+<!ENTITY retry.label "Preuva Torna">
+<!ENTITY returnToPreviousPage.label "Vanni inderê">
+<!ENTITY returnToPreviousPage1.label "Vanni inderê (Racomandou)">
+<!ENTITY advanced2.label "Avansæ…">
+<!ENTITY viewCertificate.label "Amia certificato">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Server no atrovou">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Se l'indirisso o l'é giusto, chi gh'é træ atre cöse che ti peu fâ:</strong>
+<ul>
+  <li>Preuva torna dòppo.</li>
+  <li>Contròlla a conescion de ræ.</li>
+  <li>Se ti ê conesso derê a 'n firewall, contròlla ch'o &brandShortName; o l'agge o permisso de acede a-a Ræ.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul><li>Peu ese che l'ògetto o segge stæto rinominou, scancelou ò mesciou?</li><li>Gh'é quarche erô inte l'indirisso?</li><li>Ti ghe l'æ i permissi pe acede a l'ògetto?</li></ul>">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>O peu ese stæto scancelou,mesciou, ò i permissi de acesso a-i file peuan proibine l'acesso.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; o no peu caregâ sta pagina pe quarche caxon.</p>
+">
+
+<!ENTITY captivePortal.title "Intra inta ræ">
+<!ENTITY captivePortal.longDesc2 "
+<p>Ti devi intrâ in sta ræ prima che ti pòsse acede a l'internet.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Arvi a pagina de intrâ da ræ">
+
+<!ENTITY malformedURI.pageTitle "URL grammo">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>O documento domandou o no l'é disponibile inta cache de &brandShortName;.</p><ul><li>Comme mezua de seguessa, o &brandShortName; o no te domanda torna documenti senscibili in aotomatico.</li><li>Sciacca Preuva torna pe domandâ torna o documento a-o scito.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul>
+ <li>Sciacca &quot;Preuva ancon&quot; pe pasâ a-o mòddo in linea e caregâ torna a pagina.</li>
+</ul>  
+">
+
+<!ENTITY contentEncodingError.longDesc "<p>A pagina che t'eu vedde a no se peu mostrâ perché a gh'à 'na conprescion ch'a no l'é soportâ.</p><ul><li>Pe piaxei ciamma o propietaio do scito pe informalo do problema.</li></ul>">
+
+<!ENTITY unsafeContentType.longDesc "<p>A pagina che t'eu vedde a no se peu mostrâ perché a gh'à 'na conprescion ch'a no l'é soportâ.</p><ul><li>Pe piaxei ciamma o propietaio do scito pe informalo do problema.</li></ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Bezeugna instalâ do software in ciù pe arvî st'indirisso.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "<p>O navegatô o l'é inpostou pe uzâ un server proxy ma o proxy refua e conescioin.</p><ul><li>E inpostaçioin proxy do navegatô en giuste? Contròlla e preuva torna.</li><li>O proxy permette e conescioin da sta ræ?</li><li>Ti gh'æ ancon di problemi? Ciamma o teu aministratô da ræ ò fornitô de serviççi internet pe ascistensa.</li></ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul>
+  <li>Contròlla se e inpostaçioin do proxy son giuste.</li>
+  <li>Contròlla se o teu computer o l'agge 'na conescion che bonn-a.</li>
+  <li>Se o teu computer ò ræ son protezui da un firewall ò proxy verifica se &brandShortName; o peu acede a ræ</li>
+</ul>
+ ">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Sto problema o peu ese caozòu da l'avei dizabilitòu ò refuòu i cookie.</li>
+</ul>">
+
+<!ENTITY unknownSocketType.longDesc "<p>O scito risponde inte 'n mòddo strano e-o navegatô o no peu continoâ.</p>">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>A pagina che ti veu vedde a no peu ese mostrâ perché no l'é poscibile verificâ l’aotenticitæ di dæti riçevui.</li>
+  <li>Ciamma o responsabile do scito web pe informalo do problema.</li>
+</ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "E aloa cöse ti peu fâ?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>O problema o l'é corpa do scito e no ti ghe peu fâ ninte.</p>
+<p>Se t'ê inte na ræ aziendale ò ti deuvi 'n software anti-viros, ti peu vedde se l'ascistensa peu agiutate. Ti peu anche informâ i aministratoî do scito che gh'é sto problema chi.</p>
+">
+
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Me sa che sto problema o l'é do scito e ti no ti ghe peu fâninte. Diggou a l'aministratô do scito che ti gh'æ sto problema.</p>
+">
+
+<!ENTITY sharedLongDesc "<ul>
+  <li>O scito o porieiva ese tenporaneamente inacesibile ò tròppo traficou. Preuva torna tra quarche momento.</li>
+  <li>Se no ti riesci a caregâ nisciunn-a pagina, preuva a controlâ a conescion do teu computer.</li>
+  <li>Se o teu computer ò a teu conescion en protezui da 'n firewall ò proxy, açertite che &brandShortName; o l'agge o permisso de acede a-a Ræ.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; o l'à blocòu o caregamento da pagina con sta modalitæ perché a gh'à di critei de seguessa di contegnui ch'òu inpediscian.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>A pagina che ti veu vedde a no peu ese mostrâ perché gh'é 'n erô inta trasmiscion di dæti.</p><ul><li>Pe piaxei, ciamma o responsabile do scito pe informalo do problema.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButton1Label "Acetta o reizego e vanni avanti">
+
+<!ENTITY errorReporting.automatic2 "Segnala eroî comme sto chi pe agiutâ Mozilla a identificâ e blocâ sciti danozi">
+<!ENTITY errorReporting.learnMore "Atre informaçioin…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Pe piaxei ciamma o propietaio do scito pe informalo do problema.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Informaçion avansæ: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Atençion: gh'é 'n reizego de seguessa potensiâ">
+<!ENTITY certerror.sts.pagetitle  "Conescion fermâ: reizego potensiâ de seguessa">
+<!ENTITY certerror.copyToClipboard.label "Còpia testo inti aponti">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> o deuvia 'na tecnòlogia de seguessa vegia ch'a l'é debole . Un mascarson o peu pigiâ con façiliæ e teu informaçioin che ti pensi segian a-o seguo. L'aministratô do scito o deve dâ recatto a-o server primma che ti ti posse vixitâ sta pagina.</p><p>Còdice d'erô: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Pagina blocâ">
+
+
+<!ENTITY prefReset.longDesc "Pâ che segian e teu inpostaçioin de seguessa a caozâ questo. Ti veu repigiâ e inpostaçioin predefinie?">
+<!ENTITY prefReset.label "Repiggia inpostaçioin predefinie">
+

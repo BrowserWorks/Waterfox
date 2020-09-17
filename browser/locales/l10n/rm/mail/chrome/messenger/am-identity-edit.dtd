@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Definir ils parameters da questa identitad:">
+
+<!ENTITY settingsTab.label       "Parameters">
+<!ENTITY copiesFoldersTab.label "Copias &amp; ordinaturs">
+<!ENTITY addressingTab.label    "Scriver &amp; adressar">
+
+<!ENTITY publicData.label        "Datas publicas">
+<!ENTITY privateData.label       "Datas privatas">
+<!ENTITY identityAlias.label     "Etichetta d'identitad:">
+<!ENTITY identityAlias.accesskey "d">

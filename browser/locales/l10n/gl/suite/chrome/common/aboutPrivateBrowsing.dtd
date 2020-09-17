@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title        "Navegación privada">
+<!-- LOCALIZATION NOTE: The experimental title is temporary -->
+<!ENTITY privatebrowsingpage.experimental "Nestes momentos a &privatebrowsingpage.title; é unha funcionalidade experimental.">
+<!ENTITY privatebrowsingpage.description  "Nunha xanela de &privatebrowsingpage.title;, &brandShortName; non conservará calquera caché de disco, cookies do navegador, buscas ou o historial de formularios web. Porén, gardaranse os ficheiros descargados e os marcadoress.">
+<!ENTITY privatebrowsingpage.moreinfo     "Lembre que aínda que este computador non manteña un rexistro do seu historial de navegación, o seu fornecedor de internet pode saber as páxinas que vostede visita.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Obter máis información ">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "O">
+<!ENTITY privatebrowsingpage.private      "&brandShortName; non lembrará ningún historial desta sesión. Peche a xanela para deter a &privatebrowsingpage.title;.">
+<!ENTITY privatebrowsingpage.switch.label        "Cambiar a unha xanela normal">
+<!ENTITY privatebrowsingpage.switch.accesskey    "C">
+<!ENTITY privatebrowsingpage.normal       "Nestes momentos non está usando a &privatebrowsingpage.title;.">
+<!ENTITY privatebrowsingpage.private.label       "Abrir unha nova xanela privada">
+<!ENTITY privatebrowsingpage.private.accesskey   "A">
+<!ENTITY privatebrowsingpage.info         "Para iniciar a &privatebrowsingpage.title;, pode seleccionar Ficheiro ― Nova ― Xanela privada.">

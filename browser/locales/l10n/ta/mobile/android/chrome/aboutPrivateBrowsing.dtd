@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "கமுக்க உலாவல்">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ தடமறியல் பாதுகாப்பு">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "நீங்கள் கமுக்க உலாவலில் இல்லை">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; உங்கள் உலாவல் செயல்பாடைத் தடமறியும் பக்கத்தின் பகுதிகள் முடக்கப்பட்டுள்ளது.">
+<!ENTITY privatebrowsingpage.description.privateDetails "நாங்கள் எந்த வரலாற்றையும் நினைவில் கொள்ள மாட்டோம், ஆனால் பதிவிறக்கப்பட்ட கோப்புகள் மற்றும் புதிய புத்தககுறிகள் கருவியில் சேமிக்கப்படும்.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "கமுக்க உலாவலில், நாங்கள் எந்த வரலாறு அல்லது நினைவிகளை வைத்துக் கொள்ள மாட்டோம். ஆனால் நீங்கள் சேர்க்கும் புத்தககுறிகள் மற்றும் பதிவிறக்கிய கோப்புகள் கருவியில் சேமிக்கப்படும்.">
+
+<!ENTITY privatebrowsingpage.link.private "மேலும் அறிய ஆவளா?">
+<!ENTITY privatebrowsingpage.link.normal "புதிய கமுக்க கீற்றைத் திற">

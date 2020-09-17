@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Pretplatite se">
+<!ENTITY subscribeButton.label        "Pretplatite se">
+<!ENTITY subscribeButton.accesskey    "P">
+<!ENTITY unsubscribeButton.label      "Otkažite pretplatu">
+<!ENTITY unsubscribeButton.accesskey  "O">
+<!ENTITY newGroupsTab.label           "Nove grupe">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Osvježi">
+<!ENTITY refreshButton.accesskey      "O">
+<!ENTITY stopButton.label             "Zaustavi">
+<!ENTITY stopButton.accesskey         "t">
+<!ENTITY server.label                 "Račun:">
+<!ENTITY server.accesskey             "a">
+<!ENTITY subscribedHeader.label       "Pretplatite se">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Prikaži stavke koje sadrže:">
+<!ENTITY namefield.accesskey          "o">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "ძიება ინტერნეტში">
+<!ENTITY legendHeader                     "ძირითადი საძიებო ძრავი">
+<!ENTITY defaultSearchEngine.label        "ძიების მეთოდი:">
+<!ENTITY defaultSearchEngine.accesskey    "S">
+
+<!ENTITY engineManager.label              "საძიებო სისტემების მართვა…">
+
+<!ENTITY searchResults.label              "ძიების შედეგები">
+
+<!ENTITY openInTab.label                  "გვერდითი ზოლის ძიების შედეგების ახალ ჩანართიხზე გახსნა">
+<!ENTITY openInTab.accesskey              "ზ">
+<!ENTITY openContextSearchTab.label       "კონტექსტური მენიუდან ძიების შედეგების ჩანართზე გახსნა სარკმლის ნაცვლად">
+<!ENTITY openContextSearchTab.accesskey   "მ">
+<!ENTITY openSidebarSearchPanel.label     "ძიების დაწყებისას ძიების ჩანართის გვერდითი ზოლზე გახსნა">
+<!ENTITY openSidebarSearchPanel.accesskey "O">

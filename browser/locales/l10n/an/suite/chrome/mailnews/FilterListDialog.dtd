@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Filtros de mensaches">
+<!ENTITY nameColumn.label "Nombre d'o filtro">
+<!ENTITY activeColumn.label "Activado">
+<!ENTITY newButton.label "Nuevo…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "Editar…">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "Eliminar">
+<!ENTITY deleteButton.accesskey "m">
+<!ENTITY reorderUpButton.label "Puyar">
+<!ENTITY reorderUpButton.accesskey "P">
+<!ENTITY reorderDownButton.label "Baixar">
+<!ENTITY reorderDownButton.accesskey "B">
+<!ENTITY filterHeader.label "Os filtros activos s'aplican automaticament en l'orden d'a lista.">
+<!ENTITY filtersForPrefix.label "Filtros para:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Rechistro de filtros">
+<!ENTITY viewLogButton.accesskey "R">
+<!ENTITY runFilters.label "Eixecutar agora">
+<!ENTITY runFilters.accesskey "c">
+<!ENTITY stopFilters.label "Aturar">
+<!ENTITY stopFilters.accesskey "A">
+<!ENTITY folderPickerPrefix.label "Aplicar filtros selecc. en:">
+<!ENTITY folderPickerPrefix.accesskey "A">
+<!ENTITY choosethis.label "esleir ista carpeta">
+<!ENTITY choosethisnewsserver.label "esleir iste servidor de noticias">

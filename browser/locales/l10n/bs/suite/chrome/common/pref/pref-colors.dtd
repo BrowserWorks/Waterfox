@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "Boje">
+<!ENTITY color                             "Tekst i pozadina">
+<!ENTITY textColor.label                   "Tekst:">
+<!ENTITY backgroundColor.label             "Pozadina:">
+<!ENTITY useSystemColors.label             "Koristi sistemske boje">
+
+<!ENTITY underlineLinks.label              "Podvuci linkove">
+<!ENTITY links                             "Boje linkova">
+<!ENTITY linkColor.label                   "Neposjećeni linkovi:">
+<!ENTITY activeLinkColor.label             "Aktivni linkovi:">
+<!ENTITY visitedLinkColor.label            "Posjećeni linkovi:">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Kada web stranica pruža svoje boje i pozadine">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Uvijek koristite boje i pozadine određene od web stranice">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Koristite moje izabrane boje, ignorišući određene boje i pozadinske slike">
+<!ENTITY automaticColors.label             "Ignoriši boje stranice samo kada koristi temu visokog kontrasta">

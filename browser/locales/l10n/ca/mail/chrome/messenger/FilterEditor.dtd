@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Regles de filtratge">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Nom del filtre:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Correu brossa">
+<!ENTITY notJunk.label "No és correu brossa">
+
+<!ENTITY lowestPriorityCmd.label "Mínima">
+<!ENTITY lowPriorityCmd.label "Baixa">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY highPriorityCmd.label "Alta">
+<!ENTITY highestPriorityCmd.label "Màxima">
+
+<!ENTITY contextDesc.label "Aplica el filtre:">
+<!ENTITY contextIncomingMail.label "En rebre missatges nous:">
+<!ENTITY contextIncomingMail.accesskey "g">
+<!ENTITY contextManual.label "En executar-lo manualment">
+<!ENTITY contextManual.accesskey "x">
+<!ENTITY contextBeforeCls.label "Filtra abans de comprovar si és correu brossa">
+<!ENTITY contextAfterCls.label "Filtra després de comprovar si és correu brossa">
+<!ENTITY contextOutgoing.label "Després d'enviar">
+<!ENTITY contextOutgoing.accesskey "e">
+<!ENTITY contextArchive.label "En arxivar">
+<!ENTITY contextArchive.accesskey "a">
+
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Realitza les següents accions:">
+<!ENTITY filterActionDesc.accesskey "z">
+
+<!ENTITY filterActionOrderWarning.label "Nota: les accions del filtre s'executaran en un altre ordre.">
+<!ENTITY filterActionOrder.label "Mostra l'ordre d'execució">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Mou el missatge a">
+<!ENTITY copyMessage.label "Copia el missatge a">
+<!ENTITY forwardTo.label "Reenvia el missatge a">
+<!ENTITY replyWithTemplate.label "Respon amb plantilla">
+<!ENTITY markMessageRead.label "Marca'l com a llegit">
+<!ENTITY markMessageUnread.label "Marca'l com a no llegit">
+<!ENTITY markMessageStarred.label "Destaca'l">
+<!ENTITY setPriority.label "Defineix la prioritat a">
+<!ENTITY addTag.label "Etiqueta el missatge">
+<!ENTITY setJunkScore.label "Defineix l'estat de correu brossa com a">
+<!ENTITY deleteMessage.label "Suprimeix el missatge">
+<!ENTITY deleteFromPOP.label "Suprimeix-lo del servidor POP">
+<!ENTITY fetchFromPOP.label "Baixa'l del servidor POP">
+<!ENTITY ignoreThread.label "Ignora la conversa">
+<!ENTITY ignoreSubthread.label "Ignora la subconversa">
+<!ENTITY watchThread.label "Vigila la conversa">
+<!ENTITY stopExecution.label "Atura l'execució del filtre">
+
+<!ENTITY addAction.tooltip "Afegeix una acció nova">
+<!ENTITY removeAction.tooltip "Suprimeix aquesta acció">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

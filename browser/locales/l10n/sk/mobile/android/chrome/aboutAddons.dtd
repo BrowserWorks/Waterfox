@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Doplnky">
+<!ENTITY aboutAddons.header2                    "Vaše doplnky">
+
+<!ENTITY addonAction.enable                     "Povoliť">
+<!ENTITY addonAction.disable                    "Zakázať">
+<!ENTITY addonAction.uninstall                  "Odinštalovať">
+<!ENTITY addonAction.undo                       "Späť">
+<!ENTITY addonAction.update                     "Aktualizovať">
+
+<!ENTITY addonUnsigned.message                  "Tento doplnok nemohol byť overený prehliadačom &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "Ďalšie informácie">

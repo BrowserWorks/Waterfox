@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Predvolený klient">
+<!ENTITY defaultClient.intro  "Použiť &brandShortName; ako predvolený klient pre:">
+
+<!ENTITY browser.label "Prehliadač">
+<!ENTITY email.label "Pošta">
+<!ENTITY newsgroups.label "Diskusné skupiny">
+<!ENTITY feeds.label "Informačné kanály (RSS)">
+
+<!ENTITY checkOnStartup.label "Vždy vykonať túto kontrolu pri spustení &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "V">

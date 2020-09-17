@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Přidatki">
+<!ENTITY aboutAddons.header2                    "Waše přidatki">
+
+<!ENTITY addonAction.enable                     "Zmóžnić">
+<!ENTITY addonAction.disable                    "Znjemóžnić">
+<!ENTITY addonAction.uninstall                  "Wotinstalować">
+<!ENTITY addonAction.undo                       "Cofnyć">
+<!ENTITY addonAction.update                     "Aktualizować">
+
+<!ENTITY addonUnsigned.message                  "Tutón přidatk njeda so přez &brandShortName; přepruwować.">
+<!ENTITY addonUnsigned.learnMore                "Dalše informacije">

@@ -1,0 +1,274 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is Mozilla Communicator client code, released
+   - March 31, 1998.
+   -
+   - The Initial Developer of the Original Code is
+   - Netscape Communications Corporation.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2000
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -   Sammy Ford
+   -   Blake Ross
+   -   Ryan Cassin (rcassin@supernova.org)
+   -   Daniel Glazman (glazman@netscape.com)
+   -   Stephen Donner (technutz@netscape.net)
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either of the GNU General Public License Version 2 or later (the "GPL"),
+   - or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the GPL or the LGPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+<!-- File menu items -->
+
+
+<!-- Edit menu items -->
+
+<!ENTITY pasteNoFormatting.label "ढाँचाबद्ध नगरि टाँस्नुहोस्">
+<!ENTITY pasteNoFormatting.accesskey "o">
+<!-- For a "Paste" submenu when more than 1 
+     clipboard formats are available -->
+
+<!ENTITY pasteAsQuotationCmd.label "उद्धरणका रूपमा टाँस्नुहोस्">
+<!-- View menu items -->
+
+<!-- Insert menu items -->
+
+<!ENTITY insertMenu.label "घुसाउनुहोस्">
+<!ENTITY insertAnchorCmd.label "नामकरण गरिएका एङ्कर...">
+<!ENTITY insertImageCmd.label "छवि...">
+<!ENTITY insertHLineCmd.label "तेर्सो रेखा">
+<!ENTITY insertTableCmd.label "तालिका...">
+<!ENTITY insertHTMLCmd.label "एचटीएमएल...">
+<!ENTITY insertHTMLCmd.accesskey "h">
+<!ENTITY insertCharsCmd.label "क्यारेक्टर र प्रतीक...">
+<!ENTITY insertBreakAllCmd.label "छवि(हरू) तल विच्छेद गर्नुहोस्">
+<!-- Insert form menu items -->
+
+<!-- Used just in context popup. -->
+
+<!ENTITY createLinkCmd.label "लिङ्क सिर्जना गर्नुहोस्...">
+<!ENTITY editLinkCmd.label "नयाँ कम्पोजरमा लिङ्क सम्पादन गर्नुहोस्">
+<!-- Font Face SubMenu -->
+
+<!ENTITY FontFaceSelect.tooltip "एउटा फन्ट रोज्नुहोस्">
+<!ENTITY fontfaceMenu.label "फन्ट">
+<!ENTITY fontVarWidth.label "चल चौडाइ">
+<!ENTITY fontFixedWidth.label "किटान गरिएको चौडाइ">
+<!ENTITY fontTimes.label "टाइम्स">
+<!ENTITY fontCourier.label "कुरियर">
+<!-- Font Size SubMenu -->
+
+<!ENTITY FontSizeSelect.tooltip "फन्ट साइज रोज्नुहोस्">
+<!ENTITY decreaseFontSize.label "सानो">
+<!ENTITY increaseFontSize.label "ठूलो">
+
+<!-- > is above this key on many keyboards -->
+
+<!ENTITY size-smallCmd.label "सानो">
+<!ENTITY size-mediumCmd.label "मध्यम">
+<!ENTITY size-largeCmd.label "ठूलो">
+<!-- Font Style SubMenu -->
+
+<!ENTITY fontStyleMenu.label "पाठ शैली">
+<!ENTITY styleBoldCmd.label "बाक्लो">
+<!ENTITY styleItalicCmd.label "छड्के">
+<!ENTITY styleUnderlineCmd.label "अधोरेखा">
+<!ENTITY styleStrikeThruCmd.label "स्ट्राइकथ्रु">
+<!ENTITY styleSuperscriptCmd.label "सुपरस्क्रिप्ट">
+<!ENTITY styleSubscriptCmd.label "सबस्क्रिप्ट">
+<!ENTITY styleNonbreakingCmd.label "विच्छेद विहिन">
+<!ENTITY styleEm.label "महत्व दिनु">
+<!ENTITY styleEm.accesskey "e">
+<!ENTITY styleStrong.label "धेरै महत्व दिनु">
+<!ENTITY styleStrong.accesskey "t">
+<!ENTITY styleCite.label "दृष्टान्त">
+<!ENTITY styleCite.accesskey "c">
+<!ENTITY styleAbbr.label "संक्षेप">
+<!ENTITY styleAbbr.accesskey "A">
+<!ENTITY styleAcronym.label "एक्रोनिम">
+<!ENTITY styleAcronym.accesskey "r">
+<!ENTITY styleCode.label "सङ्केत">
+<!ENTITY styleCode.accesskey "o">
+<!ENTITY styleSamp.label "नमूना निर्गत">
+<!ENTITY styleSamp.accesskey "m">
+<!ENTITY styleVar.label "चल">
+<!ENTITY styleVar.accesskey "v">
+
+<!ENTITY formatFontColor.label "पाठ रङ...">
+<!ENTITY tableOrCellColor.label "तालिका वा कक्ष पृष्ठभूमि रङ...">
+<!ENTITY tableOrCellColor.accesskey "B">
+
+<!ENTITY formatRemoveNamedAnchors.label "नामकरण गरिएका एङ्कर हटाउनुहोस्">
+<!ENTITY formatRemoveNamedAnchors.accesskey "R">
+
+<!ENTITY paragraphMenu.label "अनुच्छेद">
+<!ENTITY paragraphParagraphCmd.label "अनुच्छेद">
+<!ENTITY heading1Cmd.label "शीर्षक १">
+<!ENTITY heading2Cmd.label "शीर्षक २">
+<!ENTITY heading3Cmd.label "शीर्षक ३">
+<!ENTITY heading4Cmd.label "शीर्षक ४">
+<!ENTITY heading5Cmd.label "शीर्षक ५">
+<!ENTITY heading6Cmd.label "शीर्षक ६">
+<!ENTITY paragraphAddressCmd.label "ठेगाना">
+<!ENTITY paragraphPreformatCmd.label "पूर्वढाँचा">
+<!-- List menu items -->
+
+<!ENTITY formatlistMenu.label "सूची">
+<!ENTITY noneCmd.label "कुनै पनि होइन">
+<!ENTITY listBulletCmd.label "गोली राखिएका">
+<!ENTITY listNumberedCmd.label "नम्बर दिइएका">
+<!ENTITY listTermCmd.label "अबधि">
+<!ENTITY listDefinitionCmd.label "परिभाषा">
+
+<!ENTITY ParagraphSelect.tooltip "अनुच्छेद ढाँचा रोज्नुहोस्">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "मुख्य भाग पाठ">
+
+<!-- Style Sheet submenu NOT IMPLEMENTED -->
+
+<!-- Align menu items -->
+
+<!ENTITY alignMenu.label "पङ्क्तिबद्ध गर्नुहोस्">
+<!ENTITY alignLeft.label "बायाँ">
+<!ENTITY alignLeft.tooltip "बायाँ पङ्क्तिबद्ध गर्नुहोस्">
+<!ENTITY alignCenter.label "केन्द्र">
+<!ENTITY alignCenter.tooltip "बीचमा पङ्क्तिबद्ध गर्नुहोस्">
+<!ENTITY alignRight.label "दायाँ">
+<!ENTITY alignRight.tooltip "दायाँ पङ्क्तिबद्ध गर्नुहोस्">
+<!ENTITY alignJustify.label "समरेखन गर्नुहोस्">
+<!ENTITY alignJustify.tooltip "समरेखित पङ्क्तिबद्ध गर्नुहोस्">
+<!-- Layer toolbar items -->
+
+<!ENTITY increaseIndent.label "इन्डेन्ट बढाउनुहोस्">
+<!ENTITY decreaseIndent.label "इन्डेन्ट घटाउनुहोस्">
+
+<!ENTITY colorsAndBackground.label "पृष्ठ रङ र पृष्ठभूमि...">
+<!-- Table Menu -->
+
+<!ENTITY tableMenu.label "तालिका">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "चयन गर्नुहोस्">
+
+<!ENTITY tableSelectMenu2.label "तालिका चयन गर्नुहोस्">
+<!ENTITY tableInsertMenu2.label "तालिका घुसाउनुहोस्">
+<!ENTITY tableDeleteMenu2.label "तालिका मेट्नुहोस्">
+<!-- Insert SubMenu -->
+
+<!ENTITY tableInsertMenu.label "घुसाउनुहोस्">
+<!ENTITY tableTable.label "तालिका">
+<!ENTITY tableRow.label "पङ्क्ति">
+<!ENTITY tableRows.label "पङ्क्ति(हरू)">
+<!ENTITY tableRowAbove.label "पङ्क्ति माथि">
+<!-- uses tablerow.accesskey -->
+<!ENTITY tableRowBelow.label "पङ्क्ति तल">
+<!ENTITY tableColumn.label "स्तम्भ">
+<!ENTITY tableColumns.label "स्तम्भ(हरू)">
+<!ENTITY tableColumnBefore.label "स्तम्भ अगाडि">
+<!-- uses tablecolumn.accesskey -->
+<!ENTITY tableColumnAfter.label "स्तम्भ पछाडि">
+<!ENTITY tableCell.label "कक्ष">
+<!ENTITY tableCells.label "कक्ष(हरू)">
+<!ENTITY tableCellContents.label "कक्ष सामग्री">
+<!ENTITY tableAllCells.label "सबै कक्ष">
+<!ENTITY tableCellBefore.label "कक्ष अगाडि">
+<!-- uses tablecell.accesskey -->
+<!ENTITY tableCellAfter.label "कक्ष पछाडि">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "मेट्नुहोस्">
+
+<!-- text for "Join Cells" is in editor.properties 
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "j">
+<!ENTITY tableSplitCell.label "कक्ष विभाजन गर्नुहोस्">
+<!ENTITY convertToTable.label "चयनबाट तालिका सिर्जना गर्नुहोस्">
+<!ENTITY tableProperties.label "तालिका गुण...">
+<!ENTITY tableProperties.accesskey "o">
+<!-- Tools menu -->
+
+<!-- Debug menu items -->
+
+<!-- Toolbar-only items -->
+
+<!ENTITY imageToolbarCmd.label "छवि">
+<!ENTITY imageToolbarCmd.tooltip "नयाँ छवि घुसाउनुहोस् वा चयन गरिएका छविको गुण सम्पादन गर्नुहोस्">
+<!ENTITY hruleToolbarCmd.label "H रेखा">
+<!ENTITY hruleToolbarCmd.tooltip "तेर्सो रेखा घुसाउनुहोस् वा चयन गरिएका लाइनको गुण सम्पादन गर्नुहोस्">
+<!ENTITY tableToolbarCmd.label "तालिका">
+<!ENTITY tableToolbarCmd.tooltip "नयाँ तालिका घुसाउनुहोस् वा चयन गरिएका तालिकाको गुण सम्पादन गर्नुहोस्">
+<!ENTITY linkToolbarCmd.label "लिङ्क">
+<!ENTITY linkToolbarCmd.tooltip "नयाँ लिङ्क घुसाउनुहोस् वा चयन गरिएका लिङ्कको गुण सम्पादन गर्नुहोस्">
+<!ENTITY anchorToolbarCmd.label "एङ्कर">
+<!ENTITY anchorToolbarCmd.tooltip "नयाँ नामकरण गरिएको एङ्कर घुसाउनुहोस् वा चयन गरिएका एङ्करको गुण सम्पादन गर्नुहोस्">
+<!ENTITY TextColorButton.tooltip "पाठका लागि रङ रोज्नुहोस्">
+<!ENTITY BackgroundColorButton.tooltip "पृष्ठभूमिका लागि रङ रोज्नुहोस्">
+<!-- Editor toolbar -->
+
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "सानो फन्ट साइज">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "ठूलो फन्ट साइज">
+<!ENTITY boldToolbarCmd.tooltip "बाक्लो">
+<!ENTITY italicToolbarCmd.tooltip "छड्के">
+<!ENTITY underlineToolbarCmd.tooltip "अधोरेखा">
+<!ENTITY bulletListToolbarCmd.tooltip "गोली चिन्ह लगाइएका सूची लागू गर्नुहोस् वा हटाउनुहोस्">
+<!ENTITY numberListToolbarCmd.tooltip "सङ्ख्या दिइएका सूची लागू गर्नुहोस् वा हटाउनुहोस्">
+<!ENTITY outdentToolbarCmd.tooltip "आउट डेन्ट पाठ (बायाँ सार्नुहोस्)">
+<!ENTITY indentToolbarCmd.tooltip "इन्डेन्ट पाठ (दायाँ सार्नुहोस्)">
+<!ENTITY AlignPopupButton.tooltip "पाठ पङ्क्तिबद्धता रोज्नुहोस्">
+<!ENTITY InsertPopupButton.tooltip "लिङ्क, एङ्कर, छवि, तेर्सो रेखा, वा तालिका घुसाउनुहोस्">
+<!ENTITY alignLeftButton.tooltip "बायाँ सीमान्तको सुरुबाट पाठ पङ्क्तिबद्ध गर्नुहोस्">
+<!ENTITY alignCenterButton.tooltip "पाठ बीचमा पङ्क्तिबद्ध गर्नुहोस्">
+<!ENTITY alignRightButton.tooltip "दायाँ सीमान्तको सुरुबाट पाठ पङ्क्तिबद्ध गर्नुहोस्">
+<!-- Formatting toolbar not used, but may be in future -->
+
+<!-- Used with color pickers in Format toolbar and Format Menu -->
+
+<!-- Display Mode toolbar and View menu items -->
+
+<!-- LOCALIZATION NOTE: Do NOT translate text for 'SourceTabDirection'
+     Use latin "ltr" if you want the <html> image to left of the 
+     'SourceMode.label' text defined above,
+     or use latin "rtl" if you want this image to the right of text
+     This is the value of the HTML 'dir' attribute
+-->
+
+<!-- Structure Toolbar Context Menu items -->
+
+<!-- TOC manipulation -->
+
+<!ENTITY insertTOC.label "घुसाउनुहोस्">
+<!ENTITY insertTOC.accesskey "i">
+<!ENTITY updateTOC.label "अद्यावधिक गर्नुहोस्">
+<!ENTITY updateTOC.accesskey "u">
+<!ENTITY removeTOC.label "हटाउनुहोस्">
+<!ENTITY removeTOC.accesskey "r">
+<!ENTITY tocMenu.label "सामाग्रीको सूची...">
+<!ENTITY tocMenu.accesskey "b">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Konfiguratu identitate honen ezarpenak:">
+
+<!ENTITY settingsTab.label       "Ezarpenak">
+<!ENTITY copiesFoldersTab.label "Kopiak eta karpetak">
+<!ENTITY addressingTab.label    "Mezuak prestatzea eta helbideratzea">
+
+<!ENTITY publicData.label        "Datu publikoak">
+<!ENTITY privateData.label       "Datu pribatuak">
+<!ENTITY identityAlias.label     "Identitate etiketa:">
+<!ENTITY identityAlias.accesskey "I">

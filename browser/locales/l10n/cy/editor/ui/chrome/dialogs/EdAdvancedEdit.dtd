@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Golygydd Priodwedd Uwch">
+<!ENTITY AttName.label                  "Priodoledd: ">
+<!ENTITY AttValue.label                 "Gwerth: ">
+<!ENTITY PropertyName.label             "Priodwedd: ">
+<!ENTITY currentattributesfor.label     "Priodweddau cyfredol: ">
+<!ENTITY tree.attributeHeader.label     "Priodoledd">
+<!ENTITY tree.propertyHeader.label      "Priodwedd">
+<!ENTITY tree.valueHeader.label         "Gwerth">
+<!ENTITY tabHTML.label                  "Priodweddau HTML">
+<!ENTITY tabCSS.label                   "Arddull Mewn-lein">
+<!ENTITY tabJSE.label                   "Digwyddiadau JavaScript">
+
+<!ENTITY editAttribute.label    "Cliciwch ar eitem i olygu ei gwerth">
+<!ENTITY removeAttribute.label  "Tynnu">

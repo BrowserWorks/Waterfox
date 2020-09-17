@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Kërko për mesazhe në:">
+<!ENTITY searchHeading.accesskey     "o">
+<!ENTITY searchSubfolders.label      "Kërko në nëndosje">
+<!ENTITY searchSubfolders.accesskey  "n">
+<!ENTITY searchOnServer.label        "Xhiroje kërkimin në shërbyes">
+<!ENTITY searchOnServer.accesskey    "X">
+<!ENTITY resetButton.label           "Spastroje">
+<!ENTITY resetButton.accesskey       "P">
+<!ENTITY openButton.label            "Hape">
+<!ENTITY openButton.accesskey        "H">
+<!ENTITY deleteButton.label          "Fshije">
+<!ENTITY deleteButton.accesskey      "F">
+<!ENTITY searchDialogTitle.label     "Kërko në Mesazhe">
+<!ENTITY results.label               "Përfundime">
+<!ENTITY moveButton.label            "Kaloje Te">
+<!ENTITY moveButton.accesskey        "T">
+<!ENTITY closeCmd.key                "W">
+<!ENTITY openInFolder.label          "Hape në Dosje">
+<!ENTITY openInFolder.accesskey      "H">
+<!ENTITY saveAsVFButton.label        "Ruaje si Dosje Kërkimi">
+<!ENTITY saveAsVFButton.accesskey    "R">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Kërko në:">
+<!ENTITY abSearchHeading.accesskey   "o">
+<!ENTITY propertiesButton.label      "Veti">
+<!ENTITY propertiesButton.accesskey  "V">
+<!ENTITY composeButton.label         "Shkruani">
+<!ENTITY composeButton.accesskey     "S">
+<!ENTITY deleteCardButton.label      "Fshije">
+<!ENTITY deleteCardButton.accesskey  "F">
+<!ENTITY abSearchDialogTitle.label   "Kërkim i Mëtejshëm në Libër Adresash">

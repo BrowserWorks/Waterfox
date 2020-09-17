@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Desinstalar un proveedor">
+<!ENTITY providerUninstall.accept.label                    "Desuscribir seleccionados">
+<!ENTITY providerUninstall.accept.accesskey                "U">
+<!ENTITY providerUninstall.cancel.label                    "Mantener complemento">
+<!ENTITY providerUninstall.cancel.accesskey                "M">
+<!ENTITY providerUninstall.preName.label                   "Ha solicitado desinstalar o deshabilitar:">
+<!ENTITY providerUninstall.postName.label                  "Ésto causará que los calendarios mencionados sean deshabilitados.">
+<!ENTITY providerUninstall.reinstallNote.label             "A menos que esté pensando reinstalar este proveedor, podría seleccionar desuscribirse de los calendarios de este proveedor.">

@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "메시지 필터">
+<!ENTITY nameColumn.label "필터 이름">
+<!ENTITY activeColumn.label "선택">
+<!ENTITY newButton.label "새 필터 추가…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "복사…">
+<!ENTITY newButton.popupCopy.accesskey "C">
+<!ENTITY editButton.label "편집…">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "삭제">
+<!ENTITY deleteButton.accesskey "t">
+<!ENTITY reorderTopButton "처음으로 이동">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "이 필터를 가장 먼저 실행하도록 재배치">
+<!ENTITY reorderUpButton.label "위로 이동">
+<!ENTITY reorderUpButton.accesskey "U">
+<!ENTITY reorderDownButton.label "아래로 이동">
+<!ENTITY reorderDownButton.accesskey "D">
+<!ENTITY reorderBottomButton "끝으로 이동">
+<!ENTITY reorderBottomButton.accessKey "B">
+<!ENTITY reorderBottomButton.toolTip "필터를 가장 나중에 실행하도록 재배치">
+<!ENTITY filterHeader.label "아래 순서로 필터를 자동으로 실행합니다.">
+<!ENTITY filtersForPrefix.label "필터:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "필터 로그">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "지금 실행">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "중지">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "폴더에 선택한 필터 실행:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "도움말">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "이름으로 검색하기…">
+
+
+

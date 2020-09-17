@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Infoga tabell">
+
+<!ENTITY size.label "Storlek">
+<!ENTITY numRowsEditField.label "Rader:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "Kolumner:">
+<!ENTITY numColumnsEditField.accessKey "K">
+<!ENTITY widthEditField.label "Bredd:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY borderEditField.label "Ram:">
+<!ENTITY borderEditField.accessKey "a">
+<!ENTITY borderEditField.tooltip "Ange en siffra för tabellens ram eller ange noll (0) för ingen ram.">
+<!ENTITY pixels.label "pixlar">

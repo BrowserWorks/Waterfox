@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "পাঠ্য এলাকার বৈশিষ্ট্য">
+
+<!ENTITY Settings.label "সেটিং">
+
+<!ENTITY TextAreaName.label "ক্ষেত্রের নাম (N):">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "সারি (R):">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "কলাম (C):">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "শুধুমাত্র পাঠযোগ্য (O)">
+<!ENTITY TextAreaReadOnly.accessKey "O">
+<!ENTITY TextAreaDisabled.label "নিষ্ক্রিয় (D)">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "ট্যাব সূচী (I):">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "প্রবেশ কী (K):">
+<!ENTITY TextAreaAccessKey.accessKey "K">
+<!ENTITY InitialText.label "প্রাথমিক পাঠ্য (T):">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "মোড়ানোর মোড (W):">
+<!ENTITY TextAreaWrap.accessKey "W">
+<!ENTITY WrapDefault.value "পূর্বনির্ধারিত">
+<!ENTITY WrapOff.value "বন্ধ">
+<!ENTITY WrapHard.value "শক্ত">
+<!ENTITY WrapSoft.value "হালকা">
+<!ENTITY WrapPhysical.value "বাস্তবিক">
+<!ENTITY WrapVirtual.value "ভার্চুয়াল">

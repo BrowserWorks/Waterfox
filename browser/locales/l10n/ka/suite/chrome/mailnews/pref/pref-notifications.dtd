@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "გაფრთხილებები">
+<!ENTITY notifications.caption            "გაფრთხილებები">
+<!ENTITY newMessagesArrive.label          "ახალი წერილების მოსვლისას:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "გაფრთხილების ჩვენება">
+<!ENTITY showAlertFor.accesskey           "S">
+<!ENTITY showAlertTimeEnd.label           "წამით">
+
+<!ENTITY showAlertPreviewText.label       "გზავნილის ტექსტის შეთვალიერება">
+<!ENTITY showAlertPreviewText.accesskey   "v">
+<!ENTITY showAlertSubject.label           "თემის ჩვენება">
+<!ENTITY showAlertSubject.accesskey       "u">
+<!ENTITY showAlertSender.label            "ავტორის ჩვენება">
+<!ENTITY showAlertSender.accesskey        "n">
+<!ENTITY useSystemAlert.label             "საოპერაციო სისტემის, ეკრანის შეტყობინებების გამოყენება">
+<!ENTITY useSystemAlert.accesskey         "კ">
+<!ENTITY useBuiltInAlert.label            "&brandShortName;-ს საკუთარი შეტყობინების ფანჯრების გამოყენება">
+<!ENTITY useBuiltInAlert.accesskey        "ფ">
+
+<!ENTITY showTrayIcon.label               "ხატულას ქვედა ზოლში ჩვენება">
+<!ENTITY showTrayIcon.accesskey           "t">
+<!ENTITY showBalloon.label                "გაფრთხილების დაფაზე ჩვენება">
+<!ENTITY showBalloon.accesskey            "o">
+<!ENTITY bounceSystemDockIcon.label       "ხატულას ანიმაცია">
+<!ENTITY bounceSystemDockIcon.accesskey   "A">
+
+<!ENTITY playSound.label                  "გახმოვანება">
+<!ENTITY playSound.accesskey              "P">
+<!ENTITY playButton.label                 "გახმოვანება">
+<!ENTITY playButton.accesskey             "l">
+<!ENTITY systemsound.label                "თქვენი სისტემის სიგნალი">
+<!ENTITY systemsound.accesskey            "M">
+<!ENTITY customsound.label                "საკუთარი ხმოვანი ფაილი">
+<!ENTITY customsound.accesskey            "C">
+<!ENTITY browse.label                     "ნუსხა…">
+<!ENTITY browse.accesskey                 "B">
+<!ENTITY browse.title                     "ფაილის არჩევა">

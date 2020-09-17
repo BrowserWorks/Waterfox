@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Vstavi tabelo">
+
+<!ENTITY size.label "Velikost">
+<!ENTITY numRowsEditField.label "Vrstice:">
+<!ENTITY numRowsEditField.accessKey "V">
+<!ENTITY numColumnsEditField.label "Stolpci:">
+<!ENTITY numColumnsEditField.accessKey "S">
+<!ENTITY widthEditField.label "Širina:">
+<!ENTITY widthEditField.accessKey "Š">
+<!ENTITY borderEditField.label "Obroba:">
+<!ENTITY borderEditField.accessKey "O">
+<!ENTITY borderEditField.tooltip "Vnesite število za velikost obrobe, oziroma nič (0) za brez obrobe">
+<!ENTITY pixels.label "slikovnih točk">

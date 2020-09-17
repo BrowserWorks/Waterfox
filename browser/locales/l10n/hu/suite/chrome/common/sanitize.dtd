@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Személyes adatok törlése">
+<!ENTITY sanitizeItems.label             "A következő elemek azonnali törlése:">
+
+<!ENTITY itemHistory.label               "Böngészés előzményei">
+<!ENTITY itemHistory.accesskey           "B">
+<!ENTITY itemUrlBar.label                "Címsor előzményei">
+<!ENTITY itemUrlBar.accesskey            "l">
+<!ENTITY itemDownloads.label             "Letöltési előzmények">
+<!ENTITY itemDownloads.accesskey         "L">
+<!ENTITY itemFormSearchHistory.label     "Mentett űrlapadatok és keresési előzmények">
+<!ENTITY itemFormSearchHistory.accesskey "M">
+<!ENTITY itemCache.label                 "Gyorsítótár">
+<!ENTITY itemCache.accesskey             "G">
+<!ENTITY itemCookies.label               "Sütik">
+<!ENTITY itemCookies.accesskey           "S">
+<!ENTITY itemOfflineApps.label           "Kapcsolat nélküli webhelyadatok">
+<!ENTITY itemOfflineApps.accesskey       "o">
+<!ENTITY itemPasswords.label             "Elmentett jelszavak">
+<!ENTITY itemPasswords.accesskey         "E">
+<!ENTITY itemSessions.label              "Hitelesített munkamenetek">
+<!ENTITY itemSessions.accesskey          "H">
+
+<!ENTITY sanitizeButton.label            "Személyes adatok törlése">

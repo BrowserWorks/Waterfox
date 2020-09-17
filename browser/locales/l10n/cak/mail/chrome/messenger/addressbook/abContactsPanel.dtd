@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Taq ichinil">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Kichinil Kiwujil taq Ochochib'äl">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Kichinil Rub'i' Achib'il">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Kichinil Rucholajem Taqoya'l">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Tik'ut pe ri Ruk'utsamaj Rokem ri Kitz'ib'awuj Ochochib'äl">
+<!ENTITY addressbookPicker.label            "Kiwujil taq Ochochib'äl:">
+<!ENTITY addressbookPicker.accesskey        "t">
+<!ENTITY searchContacts.label               "Kekanöx Kib'i' Achib'il:">
+<!ENTITY searchContacts.accesskey           "b">
+<!ENTITY SearchNameOrEmail.label            "B'i'aj o Taqoya'l">
+
+<!ENTITY addtoToFieldMenu.label             "Titz'aqatisäx pa Richin K'ojlem">
+<!ENTITY addtoToFieldMenu.accesskey         "T">
+<!ENTITY addtoCcFieldMenu.label             "Titz'aqatisäx pa Cc k'ojlem">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Titz'aqatisäx pa Bcc k'ojlem">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Tiyuj">
+<!ENTITY deleteAddrBookCard.accesskey       "y">
+<!ENTITY propertiesContext.label            "Taq ichinil">
+<!ENTITY propertiesContext.accesskey        "i">
+<!ENTITY abPropertiesContext.label          "Taq ichinil">
+<!ENTITY abPropertiesContext.accesskey      "i">
+<!ENTITY editContactContext.label           "Tinuk' Rub'i' Achib'il">
+<!ENTITY editContactContext.accesskey       "T">
+<!ENTITY editMailingListContext.label       "Tinuk' ri Cholb'äl">
+<!ENTITY editMailingListContext.accesskey   "n">
+
+<!ENTITY newContactAbContext.label          "K'ak'a' Rub'i' Achib'il">
+<!ENTITY newContactAbContext.accesskey      "R">
+<!ENTITY newListAbContext.label             "K'ak'a' Cholb'äl">
+<!ENTITY newListAbContext.accesskey         "C">
+
+<!ENTITY toButton.label                     "Titz'aqatisäx pa Chi Re:">
+<!ENTITY toButton.accesskey                 "t">
+<!ENTITY ccButton.label                     "Titz'aqatisäx pa Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Titz'aqatisäx pa Bcc:">
+<!ENTITY bccButton.accesskey                "B">

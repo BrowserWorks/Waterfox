@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Futje Shkronjash">
+<!ENTITY category.label "Kategori">
+<!ENTITY letter.label "Shkronjë:">
+<!ENTITY letter.accessKey "S">
+<!ENTITY character.label "Shkronjë me shenjë:">
+<!ENTITY character.accessKey "s">
+<!ENTITY accentUpper.label "Të mëdha me Theks">
+<!ENTITY accentLower.label "Të vogla me Theks">
+<!ENTITY otherUpper.label "Të tjera të Mëdha">
+<!ENTITY otherLower.label "Të tjera të Vogla">
+<!ENTITY commonSymbols.label "Simbole të Rëndomtë">
+<!ENTITY insertButton.label "Fute">
+<!ENTITY closeButton.label "Mbylleni">

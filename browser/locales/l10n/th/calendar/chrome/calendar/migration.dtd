@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: การนำเข้าข้อมูล">
+<!ENTITY migration.welcome "ยินดีต้อนรับ">
+<!ENTITY migration.importing "กำลังนำเข้า">
+<!ENTITY migration.list.description "&brandShortName; สามารถนำเข้าข้อมูลปฏิทินจากหลายแอปพลิเคชันยอดนิยมได้ พบข้อมูลจากแอปพลิเคชันดังต่อไปนี้บนคอมพิวเตอร์ของคุณ โปรดเลือกแอปพลิเคชันที่คุณต้องการนำเข้าข้อมูล">
+<!ENTITY migration.progress.description "กำลังนำเข้าข้อมูลที่เลือก">

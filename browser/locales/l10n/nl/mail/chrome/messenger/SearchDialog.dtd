@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Berichten zoeken in:">
+<!ENTITY searchHeading.accesskey     "k">
+<!ENTITY searchSubfolders.label      "Submappen doorzoeken">
+<!ENTITY searchSubfolders.accesskey  "u">
+<!ENTITY searchOnServer.label        "Op de server zoeken">
+<!ENTITY searchOnServer.accesskey    "r">
+<!ENTITY resetButton.label           "Wissen">
+<!ENTITY resetButton.accesskey       "W">
+<!ENTITY openButton.label            "Openen">
+<!ENTITY openButton.accesskey        "O">
+<!ENTITY deleteButton.label          "Verwijderen">
+<!ENTITY deleteButton.accesskey      "V">
+<!ENTITY searchDialogTitle.label     "Berichten zoeken">
+<!ENTITY results.label               "Resultaten">
+<!ENTITY moveButton.label            "Verplaatsen naar">
+<!ENTITY moveButton.accesskey        "n">
+<!ENTITY closeCmd.key                "W">
+<!ENTITY openInFolder.label          "Openen in map">
+<!ENTITY openInFolder.accesskey      "m">
+<!ENTITY saveAsVFButton.label        "Opslaan als zoekmap">
+<!ENTITY saveAsVFButton.accesskey    "s">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Zoeken in:">
+<!ENTITY abSearchHeading.accesskey   "k">
+<!ENTITY propertiesButton.label      "Eigenschappen">
+<!ENTITY propertiesButton.accesskey  "E">
+<!ENTITY composeButton.label         "Opstellen">
+<!ENTITY composeButton.accesskey     "O">
+<!ENTITY deleteCardButton.label      "Verwijderen">
+<!ENTITY deleteCardButton.accesskey  "V">
+<!ENTITY abSearchDialogTitle.label   "Adresboek uitgebreid doorzoeken">
+

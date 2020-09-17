@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Thread">
+<!ENTITY fromColumn.label "Daripada">
+<!ENTITY recipientColumn.label "Penerima">
+<!ENTITY attachmentColumn.label "Lampiran">
+<!ENTITY subjectColumn.label "Subjek">
+<!ENTITY dateColumn.label "Tarikh">
+<!ENTITY priorityColumn.label "Prioriti">
+<!ENTITY tagsColumn.label "Tag">
+<!ENTITY accountColumn.label "Akaun">
+<!ENTITY statusColumn.label "Status">
+<!ENTITY sizeColumn.label "Saiz">
+<!ENTITY junkStatusColumn.label "Status Mel remeh">
+<!ENTITY unreadColumn.label "Thread Belum Dibaca">
+<!ENTITY totalColumn.label "Jumlah dalam Thread">
+<!ENTITY readColumn.label "Dibaca">
+<!ENTITY receivedColumn.label "Diterima">
+<!ENTITY flagColumn.label "Tanda">
+<!ENTITY locationColumn.label "Lokasi">
+<!ENTITY idColumn.label "Susunan Diterima">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Pilih lajur paparan">
+<!ENTITY threadColumn2.tooltip "Papar thread mesej">
+<!ENTITY fromColumn2.tooltip "Susun mengikut daripada">
+<!ENTITY recipientColumn2.tooltip "Susun mengikut penerima">
+<!ENTITY attachmentColumn2.tooltip "Susun mengikut lampiran">
+<!ENTITY subjectColumn2.tooltip "Susun mengikut subjek">
+<!ENTITY dateColumn2.tooltip "Susun mengikut tarikh">
+<!ENTITY priorityColumn2.tooltip "Susun mengikut prioriti">
+<!ENTITY tagsColumn2.tooltip "Susun mengikut tag">
+<!ENTITY accountColumn2.tooltip "Susun mengikut akaun">
+<!ENTITY statusColumn2.tooltip "Susun mengikut status">
+<!ENTITY sizeColumn2.tooltip "Susun mengikut saiz">
+<!ENTITY junkStatusColumn2.tooltip "Susun mengikut status mel remeh">
+<!ENTITY unreadColumn2.tooltip "Bilangan mesej belum dibaca dalam thread">
+<!ENTITY totalColumn2.tooltip "Bilangan mesej dalam thread">
+<!ENTITY readColumn2.tooltip "Susun mengikut sudah dibaca">
+<!ENTITY receivedColumn2.tooltip "Susun mengikut tarikh diterima">
+<!ENTITY flagColumn2.tooltip "Susun mengikut ditanda">
+<!ENTITY locationColumn2.tooltip "Susun mengikut lokasi">
+<!ENTITY idColumn2.tooltip "Susun mengikut susunan diterima">

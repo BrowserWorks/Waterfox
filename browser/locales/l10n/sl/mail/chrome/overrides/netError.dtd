@@ -1,0 +1,186 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Napaka pri nalaganju strani">
+<!ENTITY retry.label "Poskusi znova">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Povezava neuspešna">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Ta naslov je omejen">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Strežnika ni mogoče najti">
+<!ENTITY dnsNotFound.longDesc "<ul> 
+<li>Preverite vtipkani naslov, da ni v njem napak, kot na primer 
+<strong>ww</strong>.example.com namesto 
+<strong>www</strong>.example.com</li> 
+<li>Če ni mogoče naložiti ničesar, preverite povezavo svojega računalnika 
+z omrežjem.</li> 
+<li>Če se vaš računalnik ali omrežje nahaja za požarnim zidom ali uporablja posrednika, se prepričajte, 
+da ima &brandShortName; pravico dostopati do spleta.</li> 
+</ul>">
+
+<!ENTITY fileNotFound.title "Datoteke ni mogoče najti">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Preverite, ali so bile velike in male črke v imenu datoteke pravilno uporabljene in da ni drugih tipkarskih napak.</li>
+  <li>Preverite, ali je bila datoteka premaknjena, preimenovana ali izbrisana.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Dostop do datoteke je bil zavrnjen">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Morda je bila odstranjena, premaknjena ali pa dovoljenja preprečujejo dostop do nje.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Opla.">
+<!ENTITY generic.longDesc "<p>&brandShortName; iz neznanega razloga strani ne more naložiti.</p>">
+
+<!ENTITY malformedURI.title "Neveljaven naslov">
+<!ENTITY malformedURI.longDesc "<ul> 
+<li>Spletne naslove se običajno piše takole: 
+<strong>http://www.example.com/</strong></li> 
+<li>Pazite, da boste uporabljali poševnico (t.j. 
+<strong>/</strong>).</li> 
+</ul>">
+
+<!ENTITY netInterrupt.title "Povezava je bila prekinjena">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokument je potekel">
+<!ENTITY notCached.longDesc "<p>Zahtevani dokument v medpomnilniku brskalnika ni več na razpolago.</p><ul><li>Iz varnostnih razlogov &brandShortName; občutljivih dokumentov ne zahteva ponovno.</li><li>Kliknite na poskusi znova, da se dokument ponovno zahteva s spletne strani.</li></ul>">
+
+<!ENTITY netOffline.title "Brez povezave">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Kliknite &quot;Poskusi znova&quot; za preklop v povezan način in ponovno naložite stran.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Napaka pri kodiranju vsebine">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>O napaki obvestite lastnike spletne strani.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Nevarna vrsta datoteke">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>O napaki obvestite lastnike spletne strani.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Povezava je bila obnovljena">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Povezava je potekla">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Naslova ni bilo mogoče razumeti">
+<!ENTITY unknownProtocolFound.longDesc "<ul> 
+<li>Za odpiranje tega naslova boste morda morali namestiti dodaten program.</li> 
+</ul>">
+
+<!ENTITY proxyConnectFailure.title "Posrednik zavrača povezave">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Preverite nastavitve posrednika in se prepričajte, da so pravilne.</li>
+  <li>Pri skrbniku svojega omrežja preverite, da posrednik deluje.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Posrednika ni mogoče najti">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Preverite nastavitve posrednika in se prepričajte, da so pravilne.</li>
+  <li>Prepričajte se, da ima vaš računalnik delujočo omrežno povezavo.</li>
+  <li>Če uporabljate posrednika ali požarni zid, se prepričajte, 
+    da ima &brandShortName; dovoljenja za dostop do spleta.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Stran se ne preusmerja pravilno">
+<!ENTITY redirectLoop.longDesc "<ul> 
+<li>Ta težava lahko včasih nastane zaradi onemogočanja ali zavračanja 
+piškotkov.</li> 
+</ul>">
+
+<!ENTITY unknownSocketType.title "Nepričakovan odgovor strežnika">
+<!ENTITY unknownSocketType.longDesc "
+<ul> 
+<li>Preverite, ali je na vašem sistemu nameščen upravitelj osebne varnosti.</li> 
+<li>To je lahko posledica nestandardnih nastavitev na strežniku.</li> 
+</ul>">
+
+<!ENTITY nssFailure2.title "Varna povezava ni uspela">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Strani, ki si jo želite ogledati, ni mogoče prikazati, ker ni mogoče preveriti pristnosti sprejetih podatkov.</li>
+  <li>O napaki obvestite lastnike spletne strani.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Varna povezava ni uspela">
+<!ENTITY nssBadCert.longDesc2 "<ul> 
+<li>To je lahko težava z nastavitvami strežnika ali pa se 
+nekdo poskuša predstaviti kot strežnik.</li> 
+<li>Če ste se s tem strežnikom uspešno povezovali v preteklosti, gre lahko 
+da začasno napako, tako da lahko ponovno poskusite kasneje.</li> 
+</ul>">
+
+<!ENTITY sharedLongDesc "<ul> 
+<li>Spletna stran je trenutno nedosegljiva ali pa zasedena. Poskusite malo 
+kasneje.</li> 
+<li>Če ni mogoče naložiti ničesar, preverite povezavo svojega računalnika 
+z omrežjem.</li> 
+<li>Če se vaš računalnik ali omrežje nahaja za požarnim zidom ali uporablja posrednika, se prepričajte, 
+da ima &brandShortName; pravico dostopati do omrežja.</li> 
+</ul>">
+
+<!ENTITY cspBlocked.title "Zavrnjeno zaradi varnostne politike vsebine">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; je preprečil nalaganje strani v taki obliki, ker tako določa varnostna politika vsebine strani.</p>">
+
+<!ENTITY xfoBlocked.title "Zavrnjeno po pravilniku X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; je preprečil nalaganje te strani, ker le-ta vsebuje pravilnik X-Frame-Options, ki ne dovoljuje nalaganja na ta način.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Napaka pokvarjene vsebine">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Strani, ki si jo želite ogledati, ni mogoče prikazati, ker je bila zaznana napaka pri prenosu podatkov.</p><ul><li>O napaki obvestite lastnike spletne strani.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Lahko pa dodate izjemo …">
+<!ENTITY securityOverride.getMeOutOfHereButton "Hočem stran!">
+<!ENTITY securityOverride.exceptionButtonLabel "Dodaj izjemo …">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Ne dodajajte izjeme, če uporabljate povezavo, ki ji ne zaupate popolnoma, ali če od tega strežnika običajno ne prejemate takšnih opozoril.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Oddaljeni XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>O napaki obvestite lastnike spletne strani.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Vaša povezava ni varna">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uporablja varnostno tehnologijo, ki je zastarela in ranljiva na napade. Napadalec lahko enostavno razkrije podatke, ki naj bi bili zaščiteni. Skrbnik spletne strani bo moral najprej popraviti strežnik, preden lahko obiščete stran.</p><p>Koda napake: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Zavrnjena stran">
+
+<!ENTITY networkProtocolError.title "Napaka omrežnega protokola">
+<!ENTITY networkProtocolError.longDesc "<p>Strani, ki si jo poskušate ogledati, ni mogoče prikazati, ker je bila zaznana napaka omrežnega protokola.</p><ul><li>O napaki obvestite lastnike spletne strani.</li></ul>">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Ukloni račun i podatke">
+<!ENTITY removeButton.label           "Ukloni">
+<!ENTITY removeButton.accesskey       "U">
+<!ENTITY removeAccount.label          "Ukloni podatke računa">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "Uklanja samo &brandShortName; znanje o ovom računu. Ne utiče na račun na serveru.">
+<!ENTITY removeData.label             "Ukloni podatke poruka">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Ukloni podatke o razgovorima">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Uklanja sve poruke, direktorije i filtere povezane s ovim računom s vašeg lokalnog diska. Ovo ne utiče na poruke koje se možda još nalaze na serveru. Nemojte ovo izabrati ukoliko planirate arhivirati lokalne podatke ili ih ponovo koristiti kasnije u &brandShortName;u.">
+<!ENTITY removeDataServerAccount.desc "Uklanja sve poruke, direktorije i filtere povezane s ovim računom s vašeg lokalnog diska. Vaše poruke i direktoriji se još uvijek čuvaju na serveru.">
+<!ENTITY removeDataChatAccount.desc   "Ukloni sve sačuvane zapise razgovora na ovom nalogu, sa vašeg lokalnog diska.">
+<!ENTITY showData.label               "Prikaži lokaciju podataka">
+<!ENTITY showData.accesskey           "l">
+<!ENTITY progressPending              "Uklanjanje izabranih podataka…">
+<!ENTITY progressSuccess              "Uklanjanje je uspjelo.">
+<!ENTITY progressFailure              "Uklanjanje nije uspjelo.">

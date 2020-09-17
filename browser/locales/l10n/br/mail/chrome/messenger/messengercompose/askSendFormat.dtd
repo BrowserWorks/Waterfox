@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "Goulenn postel HTML">
+
+<!ENTITY recipient.label "Degemererien zo ha n'emaint ket war roll ar re gouest da resev posteloù e HTML.">
+
+<!ENTITY question.label "Ha fellout a ra deoc'h amdreiñ ar postel e testenn eeun pe gas anezhañ evel m'emañ e HTML ?">
+
+<!ENTITY plainTextAndHtml.label "Kas gant testenn eeun ha HTML">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Kas gant testenn eeun hepken">
+<!ENTITY plainTextOnly.accesskey "e">
+<!ENTITY htmlOnly.label "Kas gant HTML hepken">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Kas">
+<!ENTITY send.accesskey "K">

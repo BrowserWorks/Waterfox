@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Pääsalasana">
+<!ENTITY  managepassword.caption                 "Pääsalasanan aikakatkaisu">
+<!ENTITY  managepassword.text                    "&brandShortName; kysyy pääsalasanaa:">
+<!ENTITY  managepassword.askfirsttime            "Kun sitä tarvitaan ensimmäisen kerran">
+<!ENTITY  managepassword.askfirsttime.accesskey  "K">
+<!ENTITY  managepassword.askeverytime            "Joka kerta, kun sitä tarvitaan">
+<!ENTITY  managepassword.askeverytime.accesskey  "o">
+<!ENTITY  managepassword.asktimeout              "Kun sitä on viimeksi käytetty yli ">
+<!ENTITY  managepassword.asktimeout.accesskey    "u">
+<!ENTITY  managepassword.timeout.unit            "minuuttia sitten">
+
+<!ENTITY  changepassword.caption                 "Vaihda pääsalasana">
+<!ENTITY  changepassword.text                    "Pääsalasana suojaa arkaluontoista tietoa, kuten verkkosivujen salasanoja ja varmenteita.">
+<!ENTITY  changepassword.button                  "Vaihda salasana…">
+<!ENTITY  changepassword.accesskey               "V">
+
+<!ENTITY  resetpassword.caption                  "Poista pääsalasana">
+<!ENTITY  resetpassword.text                     "Jos pääsalasana poistetaan, kaikki tallennetut sivusto- ja sähköpostisalasanat, lomaketiedot, henkilökohtaiset varmenteet sekä salaiset salausavaimet menetetään.">
+<!ENTITY  resetpassword.button                   "Poista salasana">
+<!ENTITY  resetpassword.accesskey                "P">

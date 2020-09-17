@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Shranjene datoteke">
+<!ENTITY aboutDownloads.empty                      "Ni shranjenih datotek">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Odpri vsebujočo mapo">
+<!ENTITY cmd.show.accesskey                        "O">
+<!ENTITY cmd.showMac.label                         "Prikaži v Finderju">
+<!ENTITY cmd.showMac.accesskey                     "P">
+<!ENTITY cmd.open.label                            "Odpri">
+<!ENTITY cmd.open.accesskey                        "O">
+<!ENTITY cmd.removeFromHistory.label               "Odstrani iz zgodovine">
+<!ENTITY cmd.removeFromHistory.accesskey           "d">
+<!ENTITY cmd.clearList.label                       "Počisti seznam">
+<!ENTITY cmd.clearList.accesskey                   "P">
+<!ENTITY cmd.clearList.tooltip                     "Odstrani vse vnose s seznama shranjenih datotek razen prenosov v teku.">
+<!ENTITY cmd.searchDownloads.label                 "Išči …">
+<!ENTITY cmd.searchDownloads.key                   "š">

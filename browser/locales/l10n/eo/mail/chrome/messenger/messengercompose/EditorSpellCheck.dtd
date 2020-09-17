@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Kontroli literumadon">
+
+<!ENTITY misspelledWord.label "Erara vorto:">
+<!ENTITY wordEditField.label "Anstataŭigi per:">
+<!ENTITY wordEditField.accessKey "p">
+<!ENTITY checkwordButton.label "Kontroli vorton">
+<!ENTITY checkwordButton.accessKey "K">
+<!ENTITY suggestions.label "Sugestoj:">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "Ignori">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "Ignori ćiujn">
+<!ENTITY ignoreAllButton.accessKey "g">
+<!ENTITY replaceButton.label "Anstataŭigi">
+<!ENTITY replaceButton.accessKey "A">
+<!ENTITY replaceAllButton.label "Anstataŭigi ĉiujn">
+<!ENTITY replaceAllButton.accessKey "j">
+<!ENTITY stopButton.label "Ne sendi">
+<!ENTITY stopButton.accessKey "N">
+<!ENTITY userDictionary.label "Persona vortaro:">
+<!ENTITY moreDictionaries.label "Elŝuti pliajn vortarojn…">
+<!ENTITY addToUserDictionaryButton.label "Aldoni vorton">
+<!ENTITY addToUserDictionaryButton.accessKey "d">
+<!ENTITY editUserDictionaryButton.label "Redakti…">
+<!ENTITY editUserDictionaryButton.accessKey "R">
+<!ENTITY recheckButton2.label "Kontroli denove">
+<!ENTITY recheckButton2.accessKey "e">
+<!ENTITY closeButton.label "Fermi">
+<!ENTITY closeButton.accessKey "F">
+<!ENTITY sendButton.label "Sendi">
+<!ENTITY sendButton.accessKey "S">
+<!ENTITY languagePopup.label "Lingvo:">
+<!ENTITY languagePopup.accessKey "L">

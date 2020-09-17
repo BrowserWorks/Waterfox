@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "लाइब्रे‌री">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "व्यवस्थित करें">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "अपने बुकमार्कों‌ को व्यवस्थित करें">
+
+<!ENTITY file.close.label               "बंद करें">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "दृश्य">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "अपना दृश्य बद‌लें">
+<!ENTITY view.columns.label             "‌स्तंभ दिखाएँ">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "छाँटें‌">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "असंयोजित">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "A > Z संयोजन क्रम">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A छाँटन क्रम">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     " HTML में बुकमार्क आयात करें…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "HTML में बुकमार्क‌ निर्यात करें…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "दूसरे ब्राउज़र से आँकड़ा आयात करें…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "बैकअप…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "पुनर्संग्रहित करें">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "फ़ाइल चुनें…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "नाम">
+<!ENTITY col.tags.label          " टैग">
+<!ENTITY col.url.label           " स्थान">
+<!ENTITY col.mostrecentvisit.label "सबसे हाल का विजिट">
+<!ENTITY col.visitcount.label    " देखने की संख्या">
+<!ENTITY col.dateadded.label     "जोड़ा गया">
+<!ENTITY col.lastmodified.label  "अंतिम रूपांतरित">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "आयात और बैकअप">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "अपने बुकमार्कों को आयात और बैकअप करें">
+
+<!ENTITY backButton.tooltip  "वापस जाएँ">
+
+<!ENTITY forwardButton.tooltip  " आगे जाएँ">
+
+<!ENTITY detailsPane.selectAnItemText.description " किसी मद की विशेषताओं को देखने के लिए इसे चुनें और संपादित करें">
+

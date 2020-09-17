@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Soek vir boodskappe in:">
+<!ENTITY searchHeading.accesskey     "k">
+<!ENTITY searchSubfolders.label      "Deursoek subvouers">
+<!ENTITY searchSubfolders.accesskey  "u">
+<!ENTITY searchOnServer.label        "Doen soektog op bediener">
+<!ENTITY searchOnServer.accesskey    "D">
+<!ENTITY resetButton.label           "Maak skoon">
+<!ENTITY resetButton.accesskey       "M">
+<!ENTITY openButton.label            "Open">
+<!ENTITY openButton.accesskey        "n">
+
+
+<!ENTITY searchDialogTitle.label     "Deursoek boodskappe">
+<!ENTITY results.label               "Resultate">
+
+
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Open in vouer">
+<!ENTITY openInFolder.accesskey      "v">
+<!ENTITY saveAsVFButton.label        "Stoor as soekvouer">
+<!ENTITY saveAsVFButton.accesskey    "t">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Soek in:">
+<!ENTITY abSearchHeading.accesskey   "e">
+<!ENTITY propertiesButton.label      "Eienskappe">
+<!ENTITY propertiesButton.accesskey  "E">
+<!ENTITY composeButton.label         "Skryf">
+<!ENTITY composeButton.accesskey     "S">
+
+
+<!ENTITY abSearchDialogTitle.label   "Gevorderde adresboeksoektog">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+
+
+
+
+
+
+
+
+
+
+
+

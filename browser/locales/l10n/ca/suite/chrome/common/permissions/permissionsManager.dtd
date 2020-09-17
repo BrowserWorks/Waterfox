@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "Excepcions">
+<!ENTITY treehead.sitename.label        "Lloc web">
+<!ENTITY treehead.status.label          "Estat">
+<!ENTITY remove.label                   "Suprimeix el lloc web">
+<!ENTITY remove.accesskey               "r">
+<!ENTITY removeall.label                "Suprimeix tots els llocs web">
+<!ENTITY removeall.accesskey            "e">
+<!ENTITY address.label                  "Adreça del lloc web:">
+<!ENTITY address.accesskey              "d">
+<!ENTITY block.label                    "Bloca">
+<!ENTITY block.accesskey                "B">
+<!ENTITY session.label                  "Permet durant la sessió">
+<!ENTITY session.accesskey              "s">
+<!ENTITY allow.label                    "Permet">
+<!ENTITY allow.accesskey                "P">

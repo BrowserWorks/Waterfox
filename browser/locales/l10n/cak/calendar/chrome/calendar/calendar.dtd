@@ -1,0 +1,210 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- General -->
+<!ENTITY calendar.calendar.label     "Cholb'äl q'ij">
+<!ENTITY calendar.calendar.accesskey "C">
+
+<!ENTITY calendar.newevent.button.tooltip         "Titz'uk jun k'ak'a' molojri'ïl" >
+<!ENTITY calendar.newtask.button.tooltip          "Titz'uk jun k'ak'a' samaj" >
+
+<!ENTITY calendar.unifinder.todoitems.label       "Taq samaj" >
+
+<!ENTITY calendar.unifinder.showcompletedtodos.label "Kek'ut etz'aqatisan Samaj">
+
+<!ENTITY calendar.today.button.label          "Wakami">
+<!ENTITY calendar.tomorrow.button.label       "Chwa'q">
+<!ENTITY calendar.upcoming.button.label       "Yepe yan">
+
+<!ENTITY calendar.events.filter.all.label "Ronojel Molojri'ïl">
+<!ENTITY calendar.events.filter.today.label "Taq Molojri'ïl Wakami">
+<!ENTITY calendar.events.filter.future.label "Ronojel taq Molojri'ïl Chwa'q Kab'ij">
+<!ENTITY calendar.events.filter.current.label "Q'ij Cha'on Wakam">
+
+<!-- LOCALIZATION NOTE(calendar.unifinder.tree.done.tooltip)
+   - This label and tooltip is used for the column with the checkbox in the
+   - task tree view. -->
+<!ENTITY calendar.unifinder.tree.done.label                "Xk'is">
+<!ENTITY calendar.unifinder.tree.priority.label            "Ya'on ruq'ij">
+<!ENTITY calendar.unifinder.tree.priority.tooltip2         "Tinuk' chi ya'on ruq'ij">
+<!ENTITY calendar.unifinder.tree.title.label               "B'i'aj">
+<!ENTITY calendar.unifinder.tree.title.tooltip2            "Tinuk' chi b'i'aj">
+<!ENTITY calendar.unifinder.tree.percentcomplete.label     "&#37; Tz'aqät">
+<!ENTITY calendar.unifinder.tree.percentcomplete.tooltip2  "Tinuk' chi &#37; tz'aqät">
+<!ENTITY calendar.unifinder.tree.startdate.label           "Titikirisäx">
+<!ENTITY calendar.unifinder.tree.startdate.tooltip2        "Tinuk' chi rutikirib'al q'ijul">
+<!ENTITY calendar.unifinder.tree.enddate.label             "K'isib'äl">
+<!ENTITY calendar.unifinder.tree.enddate.tooltip2          "Tinuk' chi ruk'isib'äl q'ijul">
+<!ENTITY calendar.unifinder.tree.completeddate.label       "Tz'aqatisan">
+<!ENTITY calendar.unifinder.tree.categories.label          "Ruwäch">
+<!ENTITY calendar.unifinder.tree.location.label            "K'ojlib'äl">
+<!ENTITY calendar.unifinder.tree.location.tooltip2         "Tinuk' chi k'ojlib'äl">
+<!ENTITY calendar.unifinder.tree.status.label              "B'anikil">
+<!ENTITY calendar.unifinder.tree.status.tooltip2           "Tinuk' chi rub'anikil">
+
+
+
+<!ENTITY calendar.nextday.label                 "Jun chik Q'ij" >
+<!ENTITY calendar.prevday.label                 "Jun Kan Q'ij" >
+<!ENTITY calendar.nextday.accesskey             "u" >
+<!ENTITY calendar.prevday.accesskey             "K" >
+<!ENTITY calendar.nextweek.label                "Jun Chik Apo Wuqq'ij" >
+<!ENTITY calendar.prevweek.label                "Jun Kan Wuqq'ij" >
+<!ENTITY calendar.nextweek.accesskey            "h" >
+<!ENTITY calendar.prevweek.accesskey            "k" >
+<!ENTITY calendar.nextmonth.label               "Ri Jun Chik Ik'" >
+<!ENTITY calendar.prevmonth.label               "Jun Kan Ik'" >
+<!ENTITY calendar.nextmonth.accesskey           "h" >
+<!ENTITY calendar.prevmonth.accesskey           "K" >
+
+
+<!ENTITY calendar.newevent.button.label         "K'ak'a' Molojri'ïl" >
+<!ENTITY calendar.newtask.button.label          "K'ak'a' Samaj" >
+<!ENTITY calendar.print.button.label            "Titz'ajb'äx" >
+<!ENTITY calendar.print.button.accesskey        "b">
+
+<!ENTITY calendar.day.button.label              "Q'ij" >
+<!ENTITY calendar.week.button.label             "Wuqq'ij" >
+<!ENTITY calendar.month.button.label            "Ik'" >
+<!ENTITY calendar.multiweek.button.label        "K'ïy wuq'ij" >
+
+
+
+<!ENTITY calendar.list.header.label                 "Cholb'äl q'ij">
+
+<!ENTITY calendar.task.filter.title.label           "Tik'ut">
+<!ENTITY calendar.task.filter.all.label             "Ronojel">
+<!ENTITY calendar.task.filter.all.accesskey         "R">
+<!ENTITY calendar.task.filter.today.label           "Wakami">
+<!ENTITY calendar.task.filter.today.accesskey       "W">
+
+<!-- LOCALIZATION NOTE(calendar.task.filter.current.label)
+     "Current Tasks" will show all tasks, except those with a start date set
+     that is after today and after the selected date. If a task repeats, a
+     separate entry will be shown for each of the occurrences that happen on or
+     before today (or the selected date, whichever is later). -->
+
+<!ENTITY calendar.task-details.title.label           "b'i'aj">
+<!ENTITY calendar.task-details.organizer.label       "richin">
+<!ENTITY calendar.task-details.priority.label        "ya'on ruq'ij">
+<!ENTITY calendar.task-details.priority.low.label    "Ko'öl">
+<!ENTITY calendar.task-details.priority.normal.label "Relik">
+<!ENTITY calendar.task-details.priority.high.label   "Nïm">
+<!ENTITY calendar.task-details.status.label          "b'anikil">
+<!ENTITY calendar.task-details.category.label        "ruwäch">
+<!ENTITY calendar.task-details.attachments.label     "taq taqoj">
+
+
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.nonmac "&lt;Ctrl+Shift+K&gt;">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.mac    "&lt;&#x21E7;&#x2318;K&gt;">
+
+<!-- Context Menu -->
+<!ENTITY calendar.context.modifyorviewitem.label      "Tijaq">
+<!ENTITY calendar.context.cutevent.label              "Tiqupïx">
+<!ENTITY calendar.context.copyevent.label             "Tiwachib'ëx">
+<!ENTITY calendar.context.pasteevent.label            "Titz'ajb'äx">
+
+
+
+
+<!-- Task Context Menu -->
+<!ENTITY calendar.context.progress.label              "Tajin">
+<!ENTITY calendar.context.priority.label              "Ya'on ruq'ij">
+
+<!--=percent sign-->
+
+
+
+<!ENTITY priority.level.none                "Man jikib'an ta">
+<!ENTITY priority.level.normal              "Relik">
+
+<!ENTITY calendar.context.postpone.1hour.label      "1 Ramaj">
+<!ENTITY calendar.context.postpone.1day.label       "1 Q'ij">
+<!ENTITY calendar.context.postpone.1week.label      "1 Wuqq'ij">
+
+<!ENTITY calendar.copylink.label       "Tiwachib'ëx Ruk'ojlib'al Ximonel">
+<!ENTITY calendar.copylink.accesskey   "C">
+
+<!-- Task View -->
+<!-- Note that the above *.context.* strings are currently used for the other
+     task action buttons -->
+<!ENTITY calendar.taskview.delete.label     "Tiyuj">
+
+<!-- Server Context Menu -->
+
+<!-- LOCALIZATION NOTE (calendar.context.removeserver.label): Removing the
+      calendar is the general action of removing it, while deleting means to
+      clear the data and unsubscribing means just taking it out of the calendar
+      list. -->
+<!ENTITY calendar.context.properties.label             "Taq ichinil">
+
+<!-- LOCALIZATION NOTE (calendar.context.showcalendar.accesskey)
+     This is the access key used for the showCalendar string -->
+
+<!-- LOCALIZATION NOTE (calendar.context.hidecalendar.accesskey)
+     This is the access key used for the hideCalendar string -->
+
+<!-- LOCALIZATION NOTE (calendar.context.showonly.accesskey)
+     This is the access key used for the showOnlyCalendar string -->
+
+<!ENTITY calendar.context.convertmenu.event.label        "Molojri'ïl…">
+<!ENTITY calendar.context.convertmenu.message.label      "Tzijol…">
+
+
+
+
+<!-- Calendar Alarm Dialog -->
+
+<!ENTITY calendar.alarm.location.label              "Ochochib'al:" >
+<!ENTITY calendar.alarm.details.label               "Kib'anikil…" >
+
+<!ENTITY calendar.alarm.dismiss.label               "Tichup ruwäch" >
+<!ENTITY calendar.alarm.dismissall.label            "Tichup Ruwäch Ronojel" >
+
+<!ENTITY calendar.alarm.snooze.5minutes.label       "5 Ch'utiramaj" >
+<!ENTITY calendar.alarm.snooze.10minutes.label      "10 Ch'utiramaj" >
+<!ENTITY calendar.alarm.snooze.15minutes.label      "15 Ch'utiramaj" >
+<!ENTITY calendar.alarm.snooze.30minutes.label      "30 Ch'utiramaj" >
+<!ENTITY calendar.alarm.snooze.45minutes.label      "45 Ch'utiramaj" >
+<!ENTITY calendar.alarm.snooze.1hour.label          "1 Ramaj" >
+<!ENTITY calendar.alarm.snooze.2hours.label         "2 Ramaj" >
+<!ENTITY calendar.alarm.snooze.1day.label           "1 Q'ij" >
+
+<!-- LOCALIZATION NOTE (calendar.alarm.snooze.cancel)
+     This string is not seen in the UI, it is read by screen readers when the
+     user focuses the "Cancel" button in the "Snooze for..." popup of the alarm
+     dialog. -->
+
+<!-- Calendar Server Dialog -->
+
+<!-- Calendar Properties -->
+<!ENTITY calendarproperties.color.label                    "B'onil:">
+<!ENTITY calendarproperties.caldav.label                   "CalDAV">
+<!ENTITY calendarproperties.format.label                   "B'anikil:">
+<!ENTITY calendarproperties.location.label                 "Ochochib'al:">
+<!ENTITY calendarproperties.name.label                     "B'i'aj:">
+<!ENTITY calendarproperties.readonly.label                 "Xa xe Sik'inïk">
+<!ENTITY calendarproperties.unsubscribe.label              "Tiq'at rutz'ib'axik b'i'aj">
+
+<!-- Calendar Publish Dialog -->
+<!ENTITY calendar.publish.publish.button      "Titalüx rutzijol">
+<!ENTITY calendar.publish.close.button      "Titz'apïx">
+
+
+<!-- Select Calendar Dialog -->
+
+<!-- Calendar Printing -->
+<!ENTITY calendar.print.title.label "B'i'aj:">
+<!ENTITY calendar.print.layout.label "Wachib'enïk:">
+<!ENTITY calendar.print.currentView2.label "Rutzub'al Wakami">
+<!ENTITY calendar.print.events.label "Taq Nimaq'ij">
+<!ENTITY calendar.print.from.label "Richin:">
+<!ENTITY calendar.print.to.label "Chi re:">
+<!ENTITY calendar.print.optionsGroup.label "Taq cha'oj">
+
+<!-- Error reporting -->
+<!ENTITY calendar.error.detail "Kib'anikil…">
+<!ENTITY calendar.error.description "Tzijoxkil:">
+
+<!-- Extract buttons in message header -->

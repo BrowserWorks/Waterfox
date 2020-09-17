@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Bestari Akaun Sembang">
+
+<!ENTITY accountProtocolTitle.label   "Rangkaian sembang">
+<!ENTITY accountProtocolInfo.label    "Sila pilih rangkaian akaun sembang anda.">
+<!ENTITY accountProtocolField.label   "Rangkaian:">
+<!ENTITY accountProtocolGetMore.label "Lihat selanjutnya…">
+
+<!ENTITY accountUsernameTitle.label   "Nama pengguna">
+<!ENTITY accountUsernameDuplicate.label "Akaun ini sudah dikonfigurasi!">
+
+<!ENTITY accountPasswordTitle.label   "Kata laluan">
+<!ENTITY accountPasswordInfo.label    "Sila masukkan kata laluan anda dalam kotak di bawah.">
+<!ENTITY accountPasswordField.label   "Kata laluan:">
+<!ENTITY accountPasswordManager.label "Kata laluan yang dimasukkan si sini akan disimpan dalam Pengurus Kata laluan. Biarkan kotak ini kosong jika anda mahu masukkan kata laluan setiap kali akaun ini disambung.">
+
+<!ENTITY accountAdvancedTitle.label   "Pilihan Lanjutan">
+<!ENTITY accountAdvancedInfo.label    "Anda boleh langkau langkah ini, jika anda mahu.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Maklumkan Mel baru">
+<!ENTITY accountAliasGroupbox.caption "Alias Lokal">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Ini hanya akan dipaparkan dalam perbualan semasa anda bercakap, kenalan jauh tidak dapat melihatnya.">
+<!ENTITY accountProxySettings.caption "Tetapan Proksi">
+<!ENTITY accountProxySettings.change.label     "Tukar…">
+<!ENTITY accountProxySettings.change.accessKey "T">
+
+<!ENTITY accountSummaryTitle.label   "Ringkasan">
+<!ENTITY accountSummaryInfo.label    "Ringkasan maklumat yang anda masukkan akan dipaparkan di bawah. Sila semak sebelum mencipta akaun.">
+<!ENTITY accountSummary.connectNow.label "Sambung akaun ini sekarang.">

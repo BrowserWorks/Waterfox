@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Socruithe">
+<!ENTITY security.caption "Slándáil agus Fíordheimhniú">
+<!ENTITY serverName.label "Ainm an fhreastalaí:">
+<!ENTITY serverName.accesskey "s">
+<!ENTITY serverDescription.label "Cur Síos:">
+<!ENTITY serverDescription.accesskey "C">
+<!ENTITY serverPort.label "Port:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "Ainm an Úsáideora:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "Slándáil an cheangail:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "Gan sonrú">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, má tá sé ar fáil">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Freastalaí SMTP">
+<!ENTITY serverPortDefault.label "Réamhshocrú:">
+<!ENTITY authMethod.label "Modh fíordheimhnithe:">
+<!ENTITY authMethod.accesskey "i">

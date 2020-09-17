@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Cuir Mata Isteach">
+
+<!ENTITY sourceEditField.label "Cuir cód LaTeX isteach:">
+
+<!ENTITY options.label "Roghanna">
+<!ENTITY optionInline.label "Mód inlíne">
+<!ENTITY optionInline.accesskey "n">
+<!ENTITY optionDisplay.label "Mód taispeána">
+<!ENTITY optionDisplay.accesskey "t">
+<!ENTITY optionLTR.label "Clé-go-deas">
+<!ENTITY optionLTR.accesskey "C">
+<!ENTITY optionRTL.label "Deas-go-clé">
+<!ENTITY optionRTL.accesskey "D">
+
+<!ENTITY insertButton.label "Ionsáigh">
+<!ENTITY insertButton.accesskey "I">

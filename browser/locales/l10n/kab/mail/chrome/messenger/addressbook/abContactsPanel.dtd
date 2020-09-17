@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Timeẓliyin">
+<!ENTITY propertiesMenu.accesskey           "T">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Timeẓliyin n imedlis n tensa">
+<!ENTITY abPropertiesMenu.accesskey         "ẓ">
+<!ENTITY contactPropertiesMenu.label        "Timeẓliyin n unermis">
+<!ENTITY contactPropertiesMenu.accesskey    "m">
+<!ENTITY mailingListPropertiesMenu.label    "Timeẓliyin n tebdart n telɣut">
+<!ENTITY mailingListPropertiesMenu.accesskey "ɣ">
+
+<!ENTITY abContextMenuButton.tooltip        "Sken-d umuγ n umnaḍ n imedlis n tansiwin">
+<!ENTITY addressbookPicker.label            "Imedlis n tensa:">
+<!ENTITY addressbookPicker.accesskey        "m">
+<!ENTITY searchContacts.label               "Nadi inermisen:">
+<!ENTITY searchContacts.accesskey           "m">
+<!ENTITY SearchNameOrEmail.label            "Isem neɣ imayl">
+
+<!ENTITY addtoToFieldMenu.label             "Rnu ɣeṛ wurti">
+<!ENTITY addtoToFieldMenu.accesskey         "R">
+<!ENTITY addtoCcFieldMenu.label             "Rnu ɣeṛ wurti Anɣ.Uff">
+<!ENTITY addtoCcFieldMenu.accesskey         "A">
+<!ENTITY addtoBccFieldMenu.label            "Ranu ɣeṛ wurti Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Kkes">
+<!ENTITY deleteAddrBookCard.accesskey       "K">
+<!ENTITY propertiesContext.label            "Timeẓliyin">
+<!ENTITY propertiesContext.accesskey        "T">
+<!ENTITY abPropertiesContext.label          "Timeẓliyin">
+<!ENTITY abPropertiesContext.accesskey      "T">
+<!ENTITY editContactContext.label           "Ẓreg anermis">
+<!ENTITY editContactContext.accesskey       "Ẓ">
+<!ENTITY editMailingListContext.label       "Ẓreg tabdart">
+<!ENTITY editMailingListContext.accesskey   "Ẓ">
+
+<!ENTITY newContactAbContext.label          "Anermis amaynut">
+<!ENTITY newContactAbContext.accesskey      "G">
+<!ENTITY newListAbContext.label             "Tabdart tamaynut">
+<!ENTITY newListAbContext.accesskey         "T">
+
+<!ENTITY toButton.label                     "Rnu ɣeṛ I:">
+<!ENTITY toButton.accesskey                 "u">
+<!ENTITY ccButton.label                     "Rnu ɣeṛ Anɣ.Uff:">
+<!ENTITY ccButton.accesskey                 "A">
+<!ENTITY bccButton.label                    "Ranu ɣeṛ Bcc:">
+<!ENTITY bccButton.accesskey                "B">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label "Ítarlegur eiginda ritill">
+<!ENTITY AttName.label "Eigindi: ">
+<!ENTITY AttValue.label "Gildi: ">
+<!ENTITY PropertyName.label "Eiginleiki: ">
+<!ENTITY currentattributesfor.label "Núverandi eigindi fyrir: ">
+<!ENTITY tree.attributeHeader.label "Eigindi">
+<!ENTITY tree.propertyHeader.label "Eiginleiki">
+<!ENTITY tree.valueHeader.label "Gildi">
+<!ENTITY tabHTML.label "HTML eigindi">
+<!ENTITY tabCSS.label "Innfellt snið">
+<!ENTITY tabJSE.label "JavaScript atburðir">
+
+<!ENTITY editAttribute.label "Smelltu á hlut hér fyrir ofan til að skoða hvaða gildi hann inniheldur">
+<!ENTITY removeAttribute.label "Fjarlægja">

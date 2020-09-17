@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Verktygsfältet Skrivverktyg">
+<!ENTITY previewToolbarCmd.label "Surfa till">
+<!ENTITY previewToolbarCmd.tooltip "Surfa till den här sidan i webbläsaren">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Exportera som text...">
+<!ENTITY exportToTextCmd.accesskey "x">
+<!ENTITY previewCmd.label "Surfa till sidan">
+<!ENTITY previewCmd.accesskey "d">
+<!ENTITY sendPageCmd.label "Skicka sidan...">
+<!ENTITY sendPageCmd.accesskey "c">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Skrivverktyg">
+<!ENTITY compositionToolbarCmd.accesskey "k">
+<!ENTITY formattingToolbarCmd.label "Formatverktyg">
+<!ENTITY formattingToolbarCmd.accesskey "o">
+<!ENTITY editmodeToolbarCmd.label "Redigeringsverktyg">
+<!ENTITY editmodeToolbarCmd.accesskey "R">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "Positioneringsnät">
+<!ENTITY grid.accesskey "P">
+<!ENTITY pageProperties.label "Titel och egenskaper för sida…">
+<!ENTITY pageProperties.accesskey "h">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Validera HTML">
+<!ENTITY validateCmd.accesskey "V">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normal">
+<!ENTITY NormalMode.label "Normalt redigeringsläge">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Visar tabellramar och namngivna ankare">
+<!ENTITY AllTagsModeTab.label "HTML-taggar">
+<!ENTITY AllTagsMode.label "HTML-taggar">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Visar ikoner för alla HTML-taggar">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Källkod">
+<!ENTITY HTMLSourceMode.label "HTML-kod">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Redigera HTML-koden">
+<!ENTITY PreviewModeTab.label "Förhandsgranska">
+<!ENTITY PreviewMode.label "Förhandsgranska">
+<!ENTITY PreviewMode.accesskey "F">
+<!ENTITY PreviewMode.tooltip "Visar WYSIWYG (som i webbläsaren)">

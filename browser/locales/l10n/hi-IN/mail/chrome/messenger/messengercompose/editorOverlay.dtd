@@ -1,0 +1,199 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!ENTITY pasteNoFormatting.label "संरूपण के बिना चिपकायें">
+<!ENTITY pasteNoFormatting.accesskey "o">
+
+<!ENTITY pasteAsQuotationCmd.label "उद्धरण के रूप में चिपकायें">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "अंदर डालें">
+<!ENTITY insertAnchorCmd.label "नामित एंकर...">
+<!ENTITY insertImageCmd.label "चित्र...">
+<!ENTITY insertHLineCmd.label "क्षैतिज रेखा">
+<!ENTITY insertTableCmd.label "तालिका...">
+<!ENTITY insertHTMLCmd.label "HTML...">
+<!ENTITY insertHTMLCmd.accesskey "h">
+<!ENTITY insertCharsCmd.label "संप्रतीक व संकेत...">
+<!ENTITY insertBreakAllCmd.label "चित्र के नीचे तोड़ें">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "लिंक बनायें...">
+<!ENTITY editLinkCmd.label "नये कंपोजर में लिंक संपादित करें">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "एक फंट चुनें">
+<!ENTITY fontfaceMenu.label "फंट">
+<!ENTITY fontVarWidth.label "चर चौड़ाई">
+<!ENTITY fontFixedWidth.label "निर्धारित चौड़ाई">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontCourier.label "Courier">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "एक फंट आकार चुनें">
+<!ENTITY decreaseFontSize.label "छोटा">
+<!ENTITY increaseFontSize.label "बड़ा">
+<!-- + is above this key on many keyboards -->
+
+<!-- > is above this key on many keyboards -->
+
+<!ENTITY size-smallCmd.label "छोटा">
+<!ENTITY size-mediumCmd.label "मध्यम">
+<!ENTITY size-largeCmd.label "बड़ा">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "पाठ शैली">
+<!ENTITY styleBoldCmd.label "बोल्ड">
+<!ENTITY styleItalicCmd.label "इटालिक">
+<!ENTITY styleUnderlineCmd.label "रेखांकित करें">
+<!ENTITY styleStrikeThruCmd.label "काटें">
+<!ENTITY styleSuperscriptCmd.label "सुपरस्क्रिप्ट">
+<!ENTITY styleSubscriptCmd.label "सब स्क्रिप्ट">
+<!ENTITY styleNonbreakingCmd.label "गैर खंडित">
+<!ENTITY styleEm.label "महत्व">
+<!ENTITY styleEm.accesskey "e">
+<!ENTITY styleStrong.label "ज्यादा महत्व">
+<!ENTITY styleStrong.accesskey "t">
+<!ENTITY styleCite.label "प्रशस्तिपत्र">
+<!ENTITY styleCite.accesskey "c">
+<!ENTITY styleAbbr.label "संक्षिप्ताक्षर">
+<!ENTITY styleAbbr.accesskey "A">
+<!ENTITY styleAcronym.label "Acronym">
+<!ENTITY styleAcronym.accesskey "r">
+<!ENTITY styleCode.label "कोड">
+<!ENTITY styleCode.accesskey "o">
+<!ENTITY styleSamp.label "नमूना आउटपुट">
+<!ENTITY styleSamp.accesskey "m">
+<!ENTITY styleVar.label "चर">
+<!ENTITY styleVar.accesskey "v">
+
+<!ENTITY formatFontColor.label "पाठ रंग...">
+<!ENTITY tableOrCellColor.label "तालिका या सेल पृष्ठभूमि रंग...">
+<!ENTITY tableOrCellColor.accesskey "B">
+
+<!ENTITY formatRemoveNamedAnchors.label "नामित एंकर हटायें">
+<!ENTITY formatRemoveNamedAnchors.accesskey "R">
+
+<!ENTITY paragraphMenu.label "अनुच्छेद">
+<!ENTITY paragraphParagraphCmd.label "अनुच्छेद">  
+<!ENTITY heading1Cmd.label "शीर्षक 1">
+<!ENTITY heading2Cmd.label "शीर्षक 2">
+<!ENTITY heading3Cmd.label "शीर्षक 3">
+<!ENTITY heading4Cmd.label "शीर्षक 4">
+<!ENTITY heading5Cmd.label "शीर्षक 5">
+<!ENTITY heading6Cmd.label "शीर्षक 6">
+<!ENTITY paragraphAddressCmd.label "पता">
+<!ENTITY paragraphPreformatCmd.label "पूर्वसंरूपित">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "सूची">
+<!ENTITY noneCmd.label "कोई नहीं">
+<!ENTITY listBulletCmd.label "बुलेट किया">
+<!ENTITY listNumberedCmd.label "संख्या दिया हुआ">
+<!ENTITY listTermCmd.label "पद">
+<!ENTITY listDefinitionCmd.label "परिभाषा">
+
+<!ENTITY ParagraphSelect.tooltip "एक अनुच्छेद प्रारूप चुनें">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "शरीर पाठ">  
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "पंक्तिबद्ध करें">
+<!ENTITY alignLeft.label "बांयां">
+<!ENTITY alignLeft.tooltip "बांये रखें">
+<!ENTITY alignCenter.label "केंद्र">
+<!ENTITY alignCenter.tooltip "केद्र में रखें">
+<!ENTITY alignRight.label "दांयें">
+<!ENTITY alignRight.tooltip "दांयें रखें">
+<!ENTITY alignJustify.label "जस्टिफाई">
+<!ENTITY alignJustify.tooltip "जस्टिफाई रखें">
+
+<!ENTITY increaseIndent.label "किनारा बढायें">
+<!ENTITY decreaseIndent.label "किनारा घटायें">
+
+<!ENTITY colorsAndBackground.label "पृष्ठ रंग व पृष्ठभूमि...">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "तालिका">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "चुनें">
+
+<!ENTITY tableSelectMenu2.label "तालिका चुनें">
+<!ENTITY tableInsertMenu2.label "तालिका डालें">
+<!ENTITY tableDeleteMenu2.label "तालिका मिटायें">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "डालें">
+<!ENTITY tableTable.label "तालिका">
+<!ENTITY tableRow.label "पंक्ति">
+<!ENTITY tableRows.label "पंक्ति">
+<!ENTITY tableRowAbove.label "ऊपर पंक्ति">
+<!-- uses tablerow.accesskey -->
+<!ENTITY tableRowBelow.label "नीचे पंक्ति">
+<!ENTITY tableColumn.label "कॉलम">
+<!ENTITY tableColumns.label "कॉलम">
+<!ENTITY tableColumnBefore.label "पहले कॉलम">
+<!-- uses tablecolumn.accesskey -->
+<!ENTITY tableColumnAfter.label "कॉलम बाद में">
+<!ENTITY tableCell.label "सेल">
+<!ENTITY tableCells.label "सेल">
+<!ENTITY tableCellContents.label "सेल सामग्री">
+<!ENTITY tableAllCells.label "सारा सेल">
+<!ENTITY tableCellBefore.label "पहले सेल">
+<!-- uses tablecell.accesskey -->
+<!ENTITY tableCellAfter.label "सेल बाद में">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "मिटायें">
+
+<!-- text for "Join Cells" is in editor.properties 
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "j">
+<!ENTITY tableSplitCell.label "सेल विभाजित करें">
+<!ENTITY convertToTable.label "चयन से तालिका बनायें">
+<!ENTITY tableProperties.label "तालिका गुण...">
+<!ENTITY tableProperties.accesskey "o">
+
+<!ENTITY imageToolbarCmd.label "चित्र">
+<!ENTITY imageToolbarCmd.tooltip "नया चित्र डालें या चयनित चित्र गुण संपादित करें">
+<!ENTITY hruleToolbarCmd.label "H.रेखा">
+<!ENTITY hruleToolbarCmd.tooltip "क्षैतिज पंक्ति डालें या चयनित पंक्ति के गुण संपादित करें">
+<!ENTITY tableToolbarCmd.label "तालिका">
+<!ENTITY tableToolbarCmd.tooltip "नयी तालिका डालें या चयनित तालिका के गुण संपादित करें">
+<!ENTITY linkToolbarCmd.label "लिंक">
+<!ENTITY linkToolbarCmd.tooltip "नया लिंक डालें या चयनित पंक्ति के गुण संपादित करें">
+<!ENTITY anchorToolbarCmd.label "एंकर">
+<!ENTITY anchorToolbarCmd.tooltip "नामित एंकर डालें या चयनित एंकर के गुण संपादित करें">
+<!ENTITY TextColorButton.tooltip "पाठ के लिये रंग चुनें">
+<!ENTITY BackgroundColorButton.tooltip "पृष्ठभूमि के लिये रंग चुनें">
+
+<!-- Editor toolbar -->
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "छोटा फंट आकार">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "बड़ा फंट आकार">
+<!ENTITY boldToolbarCmd.tooltip "बोल्ड">
+<!ENTITY italicToolbarCmd.tooltip "इटालिक">
+<!ENTITY underlineToolbarCmd.tooltip "रेखांकित करें">
+<!ENTITY bulletListToolbarCmd.tooltip "बुलेटेड सूची को लागू करें या हटायें">
+<!ENTITY numberListToolbarCmd.tooltip "क्रमांकित सूची को लागू करें या हटायें">
+<!ENTITY outdentToolbarCmd.tooltip "हाशिया के बाहर का पाठ (बांयें जायें)">
+<!ENTITY indentToolbarCmd.tooltip  "हाशिया पाठ (दायें जायें)">
+<!ENTITY AlignPopupButton.tooltip "पाठ पंक्तिबद्धता चुनें">
+<!ENTITY InsertPopupButton.tooltip "एक लिंक, एंकर, चित्र, क्षैतिज रेखा, या तालिका डालें">
+<!ENTITY alignLeftButton.tooltip "बांयें हाशिया के गिर्द पाठ समायोजित करें">
+<!ENTITY alignCenterButton.tooltip "केंद्र के गिर्द पाठ समायोजित करें">
+<!ENTITY alignRightButton.tooltip "दायें हाशिया के गिर्द पाठ समायोजित करें">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "डालें">
+<!ENTITY insertTOC.accesskey      "i">
+<!ENTITY updateTOC.label          "अद्यतन करें">
+<!ENTITY updateTOC.accesskey      "u">
+<!ENTITY removeTOC.label          "हटायें">
+<!ENTITY removeTOC.accesskey      "r">
+<!ENTITY tocMenu.label            "सामग्री की तालिका...">
+<!ENTITY tocMenu.accesskey        "b">

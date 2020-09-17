@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "Питання про пошту HTML">
+
+<!ENTITY recipient.label "Деякі з адресатів не можуть одержувати повідомлення у форматі HTML.">
+
+<!ENTITY question.label "Перетворити повідомлення у простий текст чи надіслати в HTML?">
+
+<!ENTITY plainTextAndHtml.label "Надіслати у вигляді простого тексту і в HTML">
+<!ENTITY plainTextAndHtml.accesskey "і">
+<!ENTITY plainTextOnly.label "Надіслати тільки у вигляді простого тексту">
+<!ENTITY plainTextOnly.accesskey "т">
+<!ENTITY htmlOnly.label "Надіслати тільки в HTML">
+<!ENTITY htmlOnly.accesskey "л">
+
+<!ENTITY send.label "Надіслати">
+<!ENTITY send.accesskey "с">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Viestien säilytys">
+<!ENTITY securitySettings.label "Turva-asetukset">
+<!ENTITY serverSettings.label "Palvelimen asetukset">
+<!ENTITY serverType.label "Palvelintyyppi:">
+<!ENTITY serverName.label "Palvelin:">
+<!ENTITY serverName.accesskey "P">
+<!ENTITY userName.label "Käyttäjätunnus:">
+<!ENTITY userName.accesskey "K">
+<!ENTITY port.label "Portti:">
+<!ENTITY port.accesskey "o">
+<!ENTITY serverPortDefault.label "Oletus:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Hae uusia viestejä">
+<!ENTITY biffStart.accesskey "H">
+<!ENTITY biffEnd.label "minuutin välein">
+<!ENTITY useIdleNotifications.label "Ilmoita uusien viestien saapumisesta välittömästi">
+<!ENTITY useIdleNotifications.accesskey "u">
+<!ENTITY connectionSecurity.label "Yhteyden suojaus:">
+<!ENTITY connectionSecurity.accesskey "Y">
+<!ENTITY connectionSecurityType-0.label "Ei mitään">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, jos mahdollista">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Todennustapa:">
+<!ENTITY authMethod.accesskey "T">
+<!ENTITY leaveOnServer.label "Jätä viestit palvelimelle">
+<!ENTITY leaveOnServer.accesskey "J">
+<!ENTITY headersOnly.label "Nouda vain otsakkeet">
+<!ENTITY headersOnly.accesskey "o">
+<!ENTITY deleteByAgeFromServer.label "Poista viestit palvelimelta kun ne ovat">
+<!ENTITY deleteByAgeFromServer.accesskey "s">
+<!ENTITY daysEnd.label "päivän ikäisiä">
+<!ENTITY deleteOnServer2.label "Poista viestit palvelimelta, kun ne poistetaan saapuneet-kansiosta">
+<!ENTITY deleteOnServer2.accesskey "a">
+<!ENTITY downloadOnBiff.label "Nouda uudet viestit automaattisesti">
+<!ENTITY downloadOnBiff.accesskey "N">
+<!ENTITY deleteMessagePrefix.label "Kun viesti poistetaan:">
+<!ENTITY modelMoveToTrash.label "Siirrä viesti roskakoriin">
+<!ENTITY modelMoveToTrash.accesskey "i">
+<!ENTITY modelMarkDeleted.label "Merkitse viesti poistetuksi">
+<!ENTITY modelMarkDeleted.accesskey "p">
+<!ENTITY modelDeleteImmediately.label "Poista viesti heti">
+<!ENTITY modelDeleteImmediately.accesskey "h">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Lopetettaessa poista poistettavaksi merkityt viestit lopullisesti saapuneet-kansiosta">
+<!ENTITY expungeOnExit.accesskey "L">
+<!ENTITY emptyTrashOnExit.label "Tyhjennä roskakori kun ohjelma lopetetaan">
+<!ENTITY emptyTrashOnExit.accesskey "e">
+<!ENTITY loginAtStartup.label "Tarkista saapunut posti käynnistyksen yhteydessä">
+<!ENTITY loginAtStartup.accesskey "s">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Kysy ennen kuin noudetaan yli">
+<!ENTITY maxMessagesStart.accesskey "K">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "viestiä">
+<!ENTITY alwaysAuthenticate.label "Vaadi todennusta otettaessa yhteyttä tähän palvelimeen">
+<!ENTITY alwaysAuthenticate.accesskey "V">
+<!ENTITY newsrcFilePath1.label "News.rc-tiedosto:">
+<!ENTITY newsrcPicker1.label "Valitse News.rc-tiedosto">
+<!ENTITY abbreviate.label "Näytä keskusteluryhmien nimet Postikansiot-paneelissa">
+<!ENTITY abbreviateOn.label "Kokonaisina (esimerkiksi netscape.public.mozilla.mail-news)">
+<!ENTITY abbreviateOff.label "Lyhennä nimet (esimerkiksi &quot;n.p.m.mail-news&quot;)">
+<!ENTITY advancedButton.label "Lisäasetukset…">
+<!ENTITY advancedButton.accesskey "L">
+<!ENTITY serverDefaultCharset2.label "Oletusmerkistökoodaus:">
+<!ENTITY localPath1.label "Paikallinen hakemisto:">
+<!ENTITY localFolderPicker.label "Valitse paikalliskansioiden sijainti">
+<!ENTITY browseFolder.label "Selaa…">
+<!ENTITY browseFolder.accesskey "e">
+<!ENTITY browseNewsrc.label "Selaa…">
+<!ENTITY browseNewsrc.accesskey "S">
+
+<!ENTITY accountTitle.label "Tilien asetukset">
+<!ENTITY accountSettingsDesc.label "Seuraava tili on erikoistapaus. Siihen ei liity käyttäjätietoja.">
+<!ENTITY storeType.label "Viestisäilötyyppi:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "Tiedosto jokaiselle kansiolle (mbox)">
+<!ENTITY maildirStore.label "Tiedosto jokaiselle viestille (maildir)">

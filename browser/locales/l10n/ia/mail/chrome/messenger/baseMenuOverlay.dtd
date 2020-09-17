@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Adjuta">
+<!ENTITY helpMenu.accesskey "A">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Adjuta">
+<!ENTITY helpMenuWin.accesskey "A">
+<!ENTITY aboutProduct2.label "A proposito de &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "A">
+<!ENTITY helpTroubleshootingInfo.label     "Informationes de diagnostico">
+<!ENTITY helpTroubleshootingInfo.accesskey "d">
+<!ENTITY helpSafeMode.label     "Reinitiar con le additivos inactive…">
+<!ENTITY helpSafeMode.accesskey "R">
+<!ENTITY helpSafeMode.stop.label     "Reinitiar con le additivos active">
+<!ENTITY helpSafeMode.stop.accesskey "R">
+<!ENTITY productHelp.label "Adjuta de &brandShortName;">
+<!ENTITY productHelp.accesskey "A">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Vias breve de claviero">
+<!ENTITY helpKeyboardShortcuts.accesskey "c">
+
+<!ENTITY helpFeedbackPage.label "Inviar opinion…">
+<!ENTITY helpFeedbackPage.accesskey "I">
+
+<!ENTITY helpShowTour2.label "Tour de &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey "o">
+
+<!ENTITY helpGetInvolvedPage.label "Collabora">
+<!ENTITY helpGetInvolvedPage.accesskey "C">
+
+<!ENTITY helpDonationsPage.label "Face un donation">
+<!ENTITY helpDonationsPage.accesskey "F">

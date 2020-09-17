@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+
+<!ENTITY pref.content.title                     "Conteniu">
+<!ENTITY pref.content.description               "Istas opciones influyen en cómo s'amuestra o conteniu de puestos web y mensaches en &brandShortName;.">
+<!ENTITY siteIcons.label                        "Iconos de puestos web">
+<!ENTITY useSiteIcons.label                     "Amostrar iconos de puestos web">
+<!ENTITY useSiteIcons.accesskey                 "A">
+<!ENTITY useFavIcons.label                      "Buscar de modo agresivo iconos de puesto web si a pachina no indica un">
+<!ENTITY useFavIcons.accesskey                  "B">
+<!ENTITY enableAutomaticImageResizing.label     "Reajustar imachens grans a la finestra d'o navegador">
+<!ENTITY enableAutomaticImageResizing.accesskey "R">
+<!ENTITY useSmoothScroll.label                  "Usar desplazamiento suau">
+<!ENTITY useSmoothScroll.accesskey              "U">
+<!ENTITY allowHWAccel.label                     "Usar aceleración hardware quan sía disponible">
+<!ENTITY allowHWAccel.accesskey                 "c">
+<!ENTITY textZoomOnly.label                     "Yscalar solament o texto en cuenta d'a pachina completa">
+<!ENTITY textZoomOnly.accesskey                 "s">
+<!ENTITY blockAutoRefresh.label                 "Warn me when websites try to redirect or reload the page">
+<!ENTITY blockAutoRefresh.accesskey             "W">
+<!ENTITY siteSpecific.label                     "Recordar os rans d'ampliación ta cada puesto">
+<!ENTITY siteSpecific.accesskey                 "d">

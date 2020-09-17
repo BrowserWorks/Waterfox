@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+
+<!ENTITY messageStorage.label "Spremište poruka">
+<!ENTITY securitySettings.label "Sigurnosne postavke">
+<!ENTITY serverSettings.label "Postavke servera">
+<!ENTITY serverType.label "Vrsta servera:">
+<!ENTITY serverName.label "Naziv servera:">
+<!ENTITY userName.label "Korisničko ime:">
+<!ENTITY port.label "Port:">
+<!ENTITY serverPortDefault.label "Izvorno:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Provjeri dostupnost novih poruka svakih ">
+<!ENTITY biffEnd.label "minuta">
+<!ENTITY useIdleNotifications.label "Dozvoli trenutna obavještenja servera kada stigne nova poruka">
+<!ENTITY connectionSecurity.label "Sigurnost veze:">
+<!ENTITY connectionSecurityType-0.label "Nijedan">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ako je dostupan">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Metoda autentikacije:">
+<!ENTITY leaveOnServer.label "Ostavi poruke na serveru">
+<!ENTITY headersOnly.label "Dobavi samo zaglavlja">
+<!ENTITY deleteByAgeFromServer.label "Najduže">
+<!ENTITY daysEnd.label "dana">
+<!ENTITY deleteOnServer2.label "Dok ih ne izbrišem">
+<!ENTITY downloadOnBiff.label "Automatski preuzmi nove poruke">
+<!ENTITY username.label "Vaše ime za prijavu">
+<!ENTITY deleteMessagePrefix.label "Kada obrišem poruku:">
+<!ENTITY modelMoveToTrash.label "Premjesti je u ovaj direktorij:">
+<!ENTITY modelMarkDeleted.label "Samo je označi kao izbrisanu">
+<!ENTITY modelDeleteImmediately.label "Odmah je ukloni">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Počisti (&quot;Izbriši&quot;) Primljenu poštu prilikom izlaza">
+<!ENTITY emptyTrashOnExit.label "Isprazni smeće prilikom izlaza">
+<!ENTITY loginAtStartup.label "Provjeri dostupnost novih poruka pri pokretanju">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+	 of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Upitaj me prije preuzimanja više od">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "poruke">
+<!ENTITY alwaysAuthenticate.label "Uvijek zahtijevaj autentikaciju prilikom povezivanja na ovaj server">
+<!ENTITY newsrcFilePath.label "newsrc datoteka:">
+<!ENTITY newsrcPicker.label "Izaberi newsrc datoteku">
+<!ENTITY abbreviate.label "Prikaži imena novih grupa u direktoriju za poruke kao:">
+<!ENTITY abbreviateOn.label "Puni naziv (naprimjer, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Skraćeni naziv (naprimjer, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Napredno…">
+<!ENTITY serverDefaultCharset2.label "Izvorno enkodiranje teksta:">
+<!ENTITY localPath.label "Lokalni direktorij:">
+<!ENTITY localFolderPicker.label "Izaberite lokalni direktorij">
+<!ENTITY browseFolder.label "Odaberi…">
+<!ENTITY browseNewsrc.label "Odaberi…">
+
+<!ENTITY accountTitle.label "Postavke računa">
+<!ENTITY accountSettingsDesc.label "Sljedeći račun je poseban. Nijedan identitet nije povezan s njim.">
+<!ENTITY storeType.label "Tip pohrane poruka:">
+<!ENTITY mboxStore2.label "Datoteka po direktoriju (mbox)">
+<!ENTITY maildirStore.label "Datoteka po poruci (maildir)">

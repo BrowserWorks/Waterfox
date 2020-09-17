@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Az érvényesítés beállításai</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="validation_settings">Az érvényesítés beállításai</h1>
+
+<p>Ez a fejezet az Érvényesítés beállítópanel használatát, és a visszavont tanúsítványok listájának (CRL) kezelését ismerteti.
+</p>
+
+<p>Az érvényesítéssel és a visszavont tanúsítványok listájával (CRL) kapcsolatos teendők lépésről-lépésre le vannak írva <a href="using_certs_help.xhtml#controlling_validation">Az érvényesség ellenőrzése</a> fejezetben</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#privacy_and_security_preferences_validation">Adatvédelmi és biztonsági beállítások - Érvényesítés</a></li>
+    <li><a href="#manage_crls">CRL-ek kezelése</a></li>
+    <li><a href="#crl_import_status">A CRL-importálás állapota</a></li>
+    <li><a href="#automatic_crl_update_preferences">Az automatikus CRL-frissítés beállításai</a></li>
+  </ul>
+</div>
+
+<h2 id="privacy_and_security_preferences_validation">Adatvédelmi és biztonsági beállítások – Érvényesítés</h2>
+
+<p>Ez a fejezet az Érvényesítés beállítópanel használatát mutatja be. A párbeszédpanel a következő lépésekkel hívható elő:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Az Adatvédelem és biztonság kategóriában kattintsunk az Érvényesítésre. (Ha nem láthatóak az alkategóriák, az alkategóriák kibontásához kattintsunk duplán az Adatvédelem és biztonság kategóriára.</li>
+</ol>
+
+<p>A tanúsítványok érvényesítéséről <a href="using_certs_help.xhtml#controlling_validation">Az érvényesség ellenőrzése</a> fejezet ad háttérinformációkat.</p>
+
+<h3 id="crl">CRL</h3>
+
+<p>A visszavont tanúsítványok listája (CRL, Certificate Revocation List) egy <a href="glossary.xhtml#certificate_authority">hitelesítésszolgáltató</a> által készített és aláírt lista a visszavont tanúsítványokról. A CRL letölthető a böngészővel, és ellenőrizhetjük vele a tanúsítványok érvényességét, mielőtt hitelesítésre használnánk őket. </p>
+
+<p>A Tanúsítványkezelő számára elérhető CRL-ek megtekintéséhez kattintsunk a CRL-ek kezelése gombra.
+</p>
+
+<p>A CRL-ek kezeléséről többet tudhatunk meg a <a href="using_certs_help.xhtml#managing_crls">CRL-ek kezelése</a> fejezetből.</p>
+
+<h3 id="ocsp">OCSP</h3>
+
+<p>Az OCSP protokoll lehetővé teszi a Tanúsítványkezelő számára, hogy a tanúsítványok érvényességét on-line módon ellenőrizze. Ez az ellenőrzés magában foglalja a tanúsítvány összevetését egy megadott webhelyen található visszavont tanúsítványok listájával. Az OCS protokoll működéséhez a számítógépnek online állapotban kell lennie.</p>
+
+<p>Az Érvényesítés beállítópanel OCSP részén megadhatjuk, hogy a Tanúsítványkezelő hogyan használja az OCSP-t.</p>
+
+<ul>
+  <li><strong>Nincs OCSP-használat a tanúsítványok ellenőrzésekor</strong>: akkor válasszuk ezt a beállítást, ha nem akarjuk, hogy a Tanúsítványkezelő minden alkalommal online állapotellenőrzést hajtson végre, amikor egy tanúsítványt ellenőriz. Ehelyett a Tanúsítványkezelő minden <a href="glossary.xhtml#certificate_verification">tanúsítványellenőrzésnél</a> csak a tanúsítvány érvényességének kezdetét és lejáratát figyeli, valamint azt, hogy olyan hitelesítésszolgáltató írta-e alá, amelynek a saját tanúsítványa fel van sorolva a Tanúsítványkezelő főablakának Hitelesítésszolgáltatók panellapján, és megbízunk benne az ilyen típusú tanúsítványok kiadásával kapcsolatban.</li>
+  <li><strong>Csak azokat a tanúsítványokat ellenőrizze OCSP-vel, amelyek tartalmazzák az OCSP szolgáltatás webcímét</strong>: akkor válasszuk ezt a beállítást, ha azt szeretnénk, hogy a Tanúsítványkezelő minden tanúsítványellenőrzésnél hajtsa végre az online állapotellenőrzést, ha a tanúsítvány megadta az ilyen ellenőrzés céljára szolgáló URL-t. Ha a tanúsítvány megad egy URL-t, a Tanúsítványkezelő meggyőződik arról, hogy a tanúsítvány ott érvényesként van-e nyilvántartva, valamint ellenőrzi az érvényesség kezdetét és lejáratát, valamint a bizalmi beállításokat.</li>
+  <li><strong>Minden tanúsítványt ellenőrizzen OCSP-vel a következő szolgáltatási címen és aláíróval</strong>: akkor válasszuk ezt a beállítást, ha azt akarjuk, hogy a Tanúsítványkezelő minden alkalommal on-line állapotellenőrzést hajtson végre, amikor egy tanúsítványt ellenőriz. Ha ezt a beállítást választjuk, ki kell választanunk egy tanúsítványt ?A válasz aláírója? legördülő listából, amely azonosítja az OCSP-válaszok aláíróját. Ezzel a beállítással a Tanúsítványkezelő csak azokat a tanúsítványokat ismeri fel, amelyek ellenőrizhetőek a válasz aláírója által aláírt OCSP-válasszal (vagy olyan tanúsítvány használatával írták alá, amely ehhez láncolódik).
+
+    <p>A válasz aláírójának kiválasztásakor a Tanúsítványkezelő automatikusan kitölti a Szolgáltatási URL mezőt (ha rendelkezésre áll) az adott aláíróhoz. Ha a Szolgáltatási URL mező nem töltődik ki automatikusan, nekünk kell az URL-t megadnunk. Kérdezzük meg a rendszergazdát!</p>
+  </li>
+  <li><strong>Ha a kapcsolat az OCSP-kiszolgálóval nem jön létre, akkor a tanúsítvány érvénytelenként kezelése</strong>: akkor válassza ki ezt a lehetőséget, ha azt szeretné, hogy tanúsítvány érvénytelennek legyen tekintve, ha az OCSP kiszolgáló nem érhető el.</li>
+</ul>
+
+<h2 id="manage_crls">CRL-ek kezelése</h2>
+
+<p>Ez a fejezet CRL-ek kezelése párbeszédpanel használatát írja le. A párbeszédpanel a következő lépésekkel érhető el:
+</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Az Adatvédelem és biztonság kategóriában kattintsunk az Érvényesítésre. (Ha nem láthatóak az alkategóriák, az alkategóriák kibontásához kattintsunk duplán az Adatvédelem és biztonság kategóriára.</li>
+  <li>Kattintsunk a CRL-ek kezelése gombra.
+</li>
+</ol>
+
+<p>A párbeszédpanel megjeleníti a böngésző által letöltött
+  <a href="glossary.xhtml#crl">CRL</a>-ek listáját. Általában egy URL-re kattintva lehet letölteni egy CRL-t. A CRL-ek működéséről többet tudhatunk meg a 
+  <a href="using_certs_help.xhtml#managing_crls">CRL-ek kezelése</a> fejezetből.</p>
+
+<p>A CRL kijelöléséhez kattintsunk rá. A következő műveleteket hajthatjuk végre:</p>
+
+<ul>
+  <li><strong>Törlés</strong>: véglegesen törli a CRL-t a merevlemezről. Ne tegyük ezt, hacsak nem vagyunk biztosak abban, hogy nincs szükségünk erre a CRL-re a tanúsítványok érvényesítéséhez. Ha kétségeink vannak, kérdezzük meg a rendszergazdát.
+</li>
+  <li><strong>Beállítások</strong>: megnyitja az <a href="#automatic_crl_update_preferences">Automatikus CRL-frissítés beállításai</a> párbeszédpanelt, amelyen engedélyezhetjük a kijelölt CRL automatikus frissítését, és azt is megadhatjuk, hogy ez milyen gyakran történjen.
+	</li>
+  <li><strong>Frissítés</strong>: azonnal frissíti a kijelölt CRL-t (ha lehetséges).</li>
+</ul>
+
+<p>A CRL-ek kezelése párbeszédpanel a következő információkat tartalmazza minden CRL-ről:</p>
+
+<ul>
+  <li><strong>Szervezet (O)</strong>: a CRL-t kiadó szervezet neve</li>
+  <li><strong>Szervezeti egység (OU)</strong>: a CRL-t kiadó szervezeti egység neve (mint például a legfelső szintű hitelesítésszolgáltató egy bizonyos tanúsítványfajtánál).</li>
+  <li><strong>Utolsó frissítés</strong>: az a dátum, amikor a böngésző utoljára frissítette az adott CRL-t.</li>
+  <li><strong>Következő frissítés</strong>: az a dátum, amikor a CRL kiadója legközelebb frissíteni fogja a CRL-t.</li>
+  <li><strong>Automatikus frissítés</strong>: azt jelzi, hogy engedélyeztük-e az adott CRL automatikus frissítését. Az automatikus frissítés beállításaihoz jelöljük ki a CRL-t, és kattintsunk a Beállítások gombra.</li>
+  <li><strong>Automatikus frissítés állapota</strong>:
+    <ul>
+      <li>Ha nem engedélyeztük az automatikus frissítést, vagy engedélyeztük, de a következő tervezett frissítés még nem következett be, akkor ez a mező üres.</li>
+      <li>Ha már legalább egy automatikus frissítés megtörtént, akkor a mező értéke <q>sikertelen</q>, ha a legutóbbi automatikus frissítés sikertelen volt, <q>OK</q>, ha a legutóbbi automatikus frissítés sikeres volt.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="crl_import_status">A CRL-importálás állapota</h2>
+
+<p>Ez a fejezet leírja, hogy hogyan használható a CRL-importálás állapota párbeszédpanel, amely akkor jelenik meg, amikor először kíséreljük meg egy CRL importálását, vagy amikor sikeresen frissítjük kézzel.</p>
+
+<p>A párbeszédpanel az alábbiakról tájékoztat:</p>
+
+<ul>
+  <li>sikeres volt-e a CRL importálása, illetve frissítése</li>
+  <li>melyik szervezet adta ki a CRL-t</li>
+  <li>mikor jelenik meg a CRL következő frissített változata</li>
+  <li>engedélyezve van-e ehhez a CRL-hez az automatikus frissítés</li>
+</ul>
+
+<p>Ha az automatikus frissítés nincs engedélyezve, bekapcsolhatjuk itt is.</p>
+
+<ul>
+  <li><strong>Igen</strong>: ha szeretnénk a CRL-t automatikusan frissíteni, kattintsunk az Igen gombra.
+    Ha ezt választjuk, akkor megjelenik az Automatikus CRL-frissítés párbeszédpanel. Ennek a beállításait a következő fejezet írja le.</li>
+  <li><strong>Nem</strong>: ha nem akarjuk az automatikus frissítést, akkor kattintsunk a Nem gombra.</li>
+</ul>
+
+<h2 id="automatic_crl_update_preferences">Az automatikus CRL-frissítés beállításai</h2>
+
+<p>Ez a fejezet az Automatikus CRL-frissítés párbeszédpanel használatát ismerteti. A párbeszédpanel a következő lépésekkel hívható elő:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Az Adatvédelem és biztonság kategóriában kattintsunk az Érvényesítésre. (Ha nem láthatóak az alkategóriák, az alkategóriák kibontásához kattintsunk duplán az Adatvédelem és biztonság kategóriára.</li>
+  <li>Kattintsunk a CRL-ek kezelése gombra, ezután jelöljük ki azt a CRL-t, amelynek a frissítési beállításait meg szeretnénk változtatni.</li>
+  <li>Kattintsunk a Beállítások gombra.</li>
+</ol>
+
+<p>A párbeszédpanel a következő beállítási lehetőségeket nyújtja:</p>
+
+<ul>
+  <li><strong>Automatikus frissítés engedélyezése erre a CRL-re</strong>: válasszuk ezt a lehetőséget, ha azt szeretnék, hogy a kijelölt CRL az itt megadott ütemezés szerint automatikusan frissüljön. (Megjegyzendő, hogy nem választhatjuk ezt a lehetőséget, ha a CRL nem adja meg a következő frissítés idejét.)
+    <p>Automatikus frissítés választásakor a következő két lehetőség közül kell választanunk:</p>
+      <ul>
+        <li><strong>Frissítés X nappal a következő frissítés dátuma előtt</strong>: válasszuk ezt a lehetőséget, ha a frissítés gyakoriságát a CRL új változatai kiadásának gyakoriságához szeretnénk igazítani. </li>
+        <li><strong>Frissítés X naponként</strong>: válasszuk ezt a lehetőséget, ha a CRL következő frissítésének dátumától függetlenül szeretnénk a frissítést elvégezni.</li>
+      </ul>
+  </li>
+  <li><strong>A CRL-t a következő helyről importálja</strong>: megadja azt az URL-t, ahonnan a böngésző eredetileg importálta a CRL-t. Ezt a beállítást nem lehet megváltoztatni. Másik hely megadásához először töröljük a CRL-t, majd importáljuk ismét az új helyről.</li>
+  <li><strong>Eddigi frissítési hibák</strong>: azt jelzi, hogy hány egymást követő CRL-frissítés nem sikerült eddig, beleértve a legutóbbi sikertelen próbálkozást is.
+    <ul>
+      <li>Ha a legutóbbi kísérlet sikeres volt, a mező értéke
+        <q>nincs</q> akkor is, ha voltak régebben sikertelen kísérletek.</li>
+      <li>Ha a legutóbbi kísérlet sikertelen volt, a mező értéke az egymást követő sikertelen kísérletek száma, és a legutóbbi kísérlet során kapott hibaüzenet.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>A változtatások érvényesítéséhez kattintsunk az OK gombra.</p>
+
+</body>
+</html>

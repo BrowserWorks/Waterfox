@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Anpassa verktygsfält">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Du kan lägga till eller ta bort objekt genom att dra dem till eller från verktygsfälten.">
+<!ENTITY show.label               "Visa:">
+<!ENTITY iconsAndText.label       "Ikoner och text">
+<!ENTITY icons.label              "Ikoner">
+<!ENTITY text.label               "Text">
+<!ENTITY iconsBesideText.label    "Text bredvid ikoner">
+<!ENTITY useSmallIcons.label      "Använd små ikoner">
+<!ENTITY restoreDefaultSet.label  "Återställ standardvärden">
+<!ENTITY showTitlebar2.label      "Titelfältet">
+<!ENTITY extraDragSpace2.label    "Extra utrymme">
+<!ENTITY saveChanges.label        "Klar">
+<!ENTITY undoChanges.label        "Ångra ändringar">

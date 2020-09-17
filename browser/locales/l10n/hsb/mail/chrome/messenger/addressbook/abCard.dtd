@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kontakt">
+<!ENTITY Contact.accesskey               "K">
+<!ENTITY Name.box                        "Mjeno">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Předmjeno:">
+<!ENTITY NameField1.accesskey           "P">
+<!ENTITY NameField2.label               "Swójbne mjeno:">
+<!ENTITY NameField2.accesskey           "S">
+<!ENTITY PhoneticField1.label           "Fonetiske:">
+<!ENTITY PhoneticField2.label           "Fonetiske:">
+<!ENTITY DisplayName.label              "Zwobraznjene mjeno:">
+<!ENTITY DisplayName.accesskey          "Z">
+<!ENTITY preferDisplayName.label        "Mjeno přeco skerje nad hłowu powěsće pokazać">
+<!ENTITY preferDisplayName.accesskey    "c">
+<!ENTITY NickName.label                 "Přimjeno:">
+<!ENTITY NickName.accesskey             "P">
+
+<!ENTITY PrimaryEmail.label             "E-mejlowa adresa:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "Přidatna e-mejlowa adresa:">
+<!ENTITY SecondEmail.accesskey          "d">
+<!ENTITY PreferMailFormat.label         "Preferuje powěsće přijimać formatowane jako:">
+<!ENTITY PreferMailFormat.accesskey     "f">
+<!ENTITY PlainText.label                "Luty tekst">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Njeznaty">
+<!ENTITY chatName.label                 "Chattowe mjeno:">
+
+<!ENTITY WorkPhone.label                "Dźěło:">
+<!ENTITY WorkPhone.accesskey            "o">
+<!ENTITY HomePhone.label                "Priwatny:">
+<!ENTITY HomePhone.accesskey            "w">
+<!ENTITY FaxNumber.label                "Faks:">
+<!ENTITY FaxNumber.accesskey            "k">
+<!ENTITY PagerNumber.label              "Pager:">
+<!ENTITY PagerNumber.accesskey          "g">
+<!ENTITY CellularNumber.label           "Mobilny telefon:">
+<!ENTITY CellularNumber.accesskey       "b">
+
+<!ENTITY Home.tab                       "Priwatny">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Adresa:">
+<!ENTITY HomeAddress.accesskey          "d">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Městno:">
+<!ENTITY HomeCity.accesskey             "s">
+<!ENTITY HomeState.label                "Zwjazkowy kraj:">
+<!ENTITY HomeState.accesskey            "Z">
+<!ENTITY HomeZipCode.label              "PWČ:">
+<!ENTITY HomeZipCode.accesskey          "W">
+<!ENTITY HomeCountry.label              "Kraj:">
+<!ENTITY HomeCountry.accesskey          "r">
+<!ENTITY HomeWebPage.label              "Webstrona:">
+<!ENTITY HomeWebPage.accesskey          "e">
+<!ENTITY Birthday.label                 "Narodniny:">
+<!ENTITY Birthday.accesskey             "N">
+<!ENTITY Month.placeholder              "Měsac">
+<!ENTITY Day.placeholder                "Dźeń">
+<!ENTITY Year.placeholder               "Lěto">
+<!ENTITY Age.label                      "Staroba:">
+<!ENTITY Age.placeholder                "Staroba">
+
+<!ENTITY Work.tab                       "Dźěło">
+<!ENTITY Work.accesskey                 "D">
+<!ENTITY JobTitle.label                 "Titul:">
+<!ENTITY JobTitle.accesskey             "i">
+<!ENTITY Department.label               "Wotrjad:">
+<!ENTITY Department.accesskey           "r">
+<!ENTITY Company.label                  "Organizacija:">
+<!ENTITY Company.accesskey              "n">
+<!ENTITY WorkAddress.label              "Adresa:">
+<!ENTITY WorkAddress.accesskey          "d">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Městno:">
+<!ENTITY WorkCity.accesskey             "t">
+<!ENTITY WorkState.label                "Zwjazkowy kraj:">
+<!ENTITY WorkState.accesskey            "Z">
+<!ENTITY WorkZipCode.label              "PWČ:">
+<!ENTITY WorkZipCode.accesskey          "P">
+<!ENTITY WorkCountry.label              "Kraj:">
+<!ENTITY WorkCountry.accesskey          "r">
+<!ENTITY WorkWebPage.label              "Webstrona:">
+<!ENTITY WorkWebPage.accesskey          "e">
+
+<!ENTITY Other.tab                      "Druhe">
+<!ENTITY Other.accesskey                "h">
+<!ENTITY Custom1.label                  "Swójski 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Swójski 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Swójski 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Swójski 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Přispomnjenki:">
+<!ENTITY Notes.accesskey                "P">
+
+<!ENTITY Chat.tab                       "Chat">
+<!ENTITY Chat.accesskey                 "a">
+<!ENTITY Gtalk.label                    "Diskusija pola Google:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "Jabber ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "Přimjeno IRC:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Foto">
+<!ENTITY Photo.accesskey                "o">
+<!ENTITY GenericPhoto.label             "Powšitkowne foto">
+<!ENTITY GenericPhoto.accesskey         "P">
+<!ENTITY DefaultPhoto.label             "Standard">
+<!ENTITY PhotoFile.label                "Na tutym ličaku">
+<!ENTITY PhotoFile.accesskey            "t">
+<!ENTITY BrowsePhoto.label              "Přepytać">
+<!ENTITY BrowsePhoto.accesskey          "e">
+<!ENTITY PhotoURL.label                 "W syći">
+<!ENTITY PhotoURL.accesskey             "s">
+<!ENTITY PhotoURL.placeholder           "Webadresu fota zasadźić abo zapisać">
+<!ENTITY UpdatePhoto.label              "Aktualizować">
+<!ENTITY UpdatePhoto.accesskey          "u">
+<!ENTITY PhotoDropTarget.label          "Nowe foto sem ćahnyć">

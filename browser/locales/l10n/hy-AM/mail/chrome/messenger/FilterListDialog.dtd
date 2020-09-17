@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Նամակի զտիչներ">
+<!ENTITY nameColumn.label "Զտիչի անունը">
+<!ENTITY activeColumn.label "Միացված">
+<!ENTITY newButton.label "Նոր...">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Պատճենել...">
+<!ENTITY newButton.popupCopy.accesskey "Պ">
+<!ENTITY editButton.label "Խմբագրել...">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "Ջնջել">
+<!ENTITY deleteButton.accesskey "t">
+<!ENTITY reorderTopButton "Տեղափոխել առջև">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "Վերադասավորել զտիչը, որ այն իրականացվի բոլորից առաջ">
+<!ENTITY reorderUpButton.label "Վեր">
+<!ENTITY reorderUpButton.accesskey "U">
+<!ENTITY reorderDownButton.label "Վար">
+<!ENTITY reorderDownButton.accesskey "D">
+<!ENTITY reorderBottomButton "Move to Bottom">
+<!ENTITY reorderBottomButton.accessKey "B">
+<!ENTITY reorderBottomButton.toolTip "Վերադասավորել զտիչը, որ այն իրականացվի բոլորից հետո">
+<!ENTITY filterHeader.label "Միացված զտիչները կգործարկվեն միանգամից։">
+<!ENTITY filtersForPrefix.label "Զտիչներ՝">
+<!ENTITY filtersForPrefix.accesskey "Զ">
+<!ENTITY viewLogButton.label "Զտիչի մատյանը">
+<!ENTITY viewLogButton.accesskey "մ">
+<!ENTITY runFilters.label "Բացել">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "Կանգնեցնել">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Աշխատեցնել ընտրված զտիչները.">
+<!ENTITY folderPickerPrefix.accesskey "ր">
+<!ENTITY helpButton.label "Օգնություն">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Search filters by name…">
+

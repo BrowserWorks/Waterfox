@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "מאפייני רשימת בחירה">
+
+<!ENTITY Select.label "רשימת בחירה">
+<!ENTITY SelectName.label "שם רשימה:">
+<!ENTITY SelectName.accesskey "ר">
+<!ENTITY SelectSize.label "גובה:">
+<!ENTITY SelectSize.accesskey "ג">
+<!ENTITY SelectMultiple.label "בחירה מרובה">
+<!ENTITY SelectMultiple.accesskey "ר">
+<!ENTITY SelectDisabled.label "לא מאופשר">
+<!ENTITY SelectDisabled.accesskey "מ">
+<!ENTITY SelectTabIndex.label "מפתח אינדקס:">
+<!ENTITY SelectTabIndex.accesskey "א">
+
+<!ENTITY OptGroup.label "קבוצת אפשרויות">
+<!ENTITY OptGroupLabel.label "תווית:">
+<!ENTITY OptGroupLabel.accesskey "ת">
+<!ENTITY OptGroupDisabled.label "לא מאופשר">
+<!ENTITY OptGroupDisabled.accesskey "מ">
+
+<!ENTITY Option.label "אפשרות">
+<!ENTITY OptionText.label "טקסט:">
+<!ENTITY OptionText.accesskey "ט">
+<!ENTITY OptionValue.label "ערך:">
+<!ENTITY OptionValue.accesskey "ע">
+<!ENTITY OptionSelected.label "נבחר מההתחלה">
+<!ENTITY OptionSelected.accesskey "נ">
+<!ENTITY OptionDisabled.label "לא מאופשר">
+<!ENTITY OptionDisabled.accesskey "א">
+
+<!ENTITY TextHeader.label "טקסט">
+<!ENTITY ValueHeader.label "ערך">
+<!ENTITY SelectedHeader.label "נבחר">
+
+<!ENTITY AddOption.label "הוסף אפשרות">
+<!ENTITY AddOption.accesskey "א">
+<!ENTITY AddOptGroup.label "הוסף קבוצה">
+<!ENTITY AddOptGroup.accesskey "ק">
+<!ENTITY RemoveElement.label "הסרה">
+<!ENTITY RemoveElement.accesskey "ס">
+<!ENTITY MoveElementUp.label "הזז למעלה">
+<!ENTITY MoveElementUp.accesskey "ע">
+<!ENTITY MoveElementDown.label "הזז למטה">
+<!ENTITY MoveElementDown.accesskey "ט">
+
+

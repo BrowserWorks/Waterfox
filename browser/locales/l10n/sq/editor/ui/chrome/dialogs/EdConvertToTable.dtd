@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Shndërrim Në Tabelë">
+<!ENTITY instructions1.label   "Hartuesi krijon një rresht të ri tabele për çdo paragraf në përzgjedhjen.">
+<!ENTITY instructions2.label   "Zgjidhni shenjën e përdorur për të ndarë zgjedhjen në shtylla:">
+<!ENTITY commaRadio.label      "Presje">
+<!ENTITY spaceRadio.label      "Hapësirë">
+<!ENTITY otherRadio.label      "Shenjë Tjetër:">
+<!ENTITY deleteCharCheck.label "Fshi shenjën ndarëse">
+<!ENTITY collapseSpaces.label  "Shpërfill hapësira ekstra">
+<!ENTITY collapseSpaces.tooltip "Shndërrojini hapësirat ngjitur në ndarës">
+

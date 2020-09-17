@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title.label "Sicurezza messaggio">
+<!ENTITY subject.plaintextWarning "Nota: il testo nell'oggetto del messaggio non verrà cifrato.">
+<!ENTITY status.heading "I contenuti del messaggio verranno spediti come segue:">
+<!ENTITY status.signed "Firma digitale apposta:">
+<!ENTITY status.encrypted "Cifrato:">
+<!ENTITY status.certificates "Certificati:">
+<!ENTITY view.label "Visualizza">
+<!ENTITY view.accesskey "V">
+<!ENTITY tree.recipient "Destinatario">
+<!ENTITY tree.status "Stato">
+<!ENTITY tree.issuedDate "Rilasciato il">
+<!ENTITY tree.expiresDate "Scade">

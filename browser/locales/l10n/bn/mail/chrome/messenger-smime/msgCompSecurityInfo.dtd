@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "বার্তা নিরাপত্তা">
+<!ENTITY subject.plaintextWarning "অনুগ্রহ করে নোট রাখুন: ই-মেইল বার্তার বিষয় লাইন কখনো এনক্রিপ্ট করা হয় না।">
+<!ENTITY status.heading "আপনার বার্তার বিষয়বস্তু নিম্নরূপে প্রেরণ করা হবে:">
+<!ENTITY status.signed "ডিজিটালভাবে স্বাক্ষরিত:">
+<!ENTITY status.encrypted "এনক্রিপ্টকৃত:">
+<!ENTITY status.certificates "সার্টিফিকেট:">
+<!ENTITY view.label "প্রদর্শন (V)">
+<!ENTITY view.accesskey "V">
+<!ENTITY tree.recipient "প্রাপক">
+<!ENTITY tree.status "অবস্থা">
+<!ENTITY tree.issuedDate "প্রদত্ত">
+<!ENTITY tree.expiresDate "মেয়াদ উত্তীর্ণ">

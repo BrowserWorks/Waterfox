@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Preferenzas">
+<!ENTITY security.caption "Segirezza ed autentificaziun">
+<!ENTITY serverName.label "Num dal server:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "Descripziun:">
+<!ENTITY serverDescription.accesskey "D">
+<!ENTITY serverPort.label "Port:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "Num d'utilisader:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "Segirezza da connexiun:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "Nagina">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, sche disponibel">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Server SMTP">
+<!ENTITY serverPortDefault.label "Predefinì:">
+<!ENTITY authMethod.label "Metoda d'autentificaziun:">
+<!ENTITY authMethod.accesskey "i">

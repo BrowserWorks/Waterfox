@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Zizdeg amazray">
+<!ENTITY viewLogInfo.text "Aɣmis n imzizdig ad d-imudd talɣut ɣef imzizdigen i yettwaselkamen i wemiḍan-agi. Seqdec taxxam n urcam daw-agi akken ad tremdeḍ asniɣmes.">
+<!ENTITY clearLog.label "Sfeḍ amazray">
+<!ENTITY clearLog.accesskey "f">
+<!ENTITY enableLog.label "Rmed amazray n umzizdeg">
+<!ENTITY enableLog.accesskey "R">
+<!ENTITY closeLog.label "Mdel">
+<!ENTITY closeLog.accesskey "M">

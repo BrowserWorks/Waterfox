@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Navegació amb teclat">
+<!ENTITY tabNavigationBehavior.label "Navegació amb la tecla de tabulació">
+<!ENTITY tabNavigationLinks.label "Enllaços">
+<!ENTITY tabNavigationLinks.accesskey "E">
+<!ENTITY tabNavigationForms.label "Botons, botons d'opció, caselles de selecció i llistes de selecció">
+<!ENTITY tabNavigationForms.accesskey "B">
+<!ENTITY tabNavigationTextboxes.label "Nota: els quadres de text i les àrees desplaçables sempre formen part de l'ordre de desplaçament amb el tabulador.">
+<!ENTITY tabNavigationDesc.label "Quan es premi Tab o Maj+Tab, mou entre:">
+<!ENTITY accessibilityBrowseWithCaret.label "Navega amb cursor">
+<!ENTITY browseWithCaretDesc.label "La navegació amb cursor fa que es mostri un cursor mòbil a les pàgines que us permet navegar i seleccionar text amb les tecles de cursor.">
+<!ENTITY browseWithCaretUse.label "Utilitza la navegació amb cursor">
+<!ENTITY browseWithCaretUse.accesskey "U">
+<!ENTITY browseWithCaretShortCut.label "Utilitza la drecera F7 per activar i desactivar la navegació amb cursor">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "Avisa'm en activar la navegació amb cursor">
+<!ENTITY browseWithCaretWarn.accesskey "v">

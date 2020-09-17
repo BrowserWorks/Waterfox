@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Tikanöx chuqa' Tijal">
+<!ENTITY findField.label "Tikanöx rucholajem tzij:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY replaceField.label "Tijal rik'in:">
+<!ENTITY replaceField.accesskey "j">
+<!ENTITY caseSensitiveCheckbox.label "Kijunamaxik nimatz'ib' chuqa' taq ch'utitz'ib'">
+<!ENTITY caseSensitiveCheckbox.accesskey "K">
+<!ENTITY wrapCheckbox.label "Tik'al">
+<!ENTITY wrapCheckbox.accesskey "T">
+<!ENTITY backwardsCheckbox.label "Kekanöx chi rij">
+<!ENTITY backwardsCheckbox.accesskey "c">
+<!ENTITY findNextButton.label "Tikanöx Jun Chik">
+<!ENTITY findNextButton.accesskey "k">
+<!ENTITY replaceButton.label "Tijal">
+<!ENTITY replaceButton.accesskey "j">
+<!ENTITY replaceAndFindButton.label "Tijal chuqa' Tikanöx">
+<!ENTITY replaceAndFindButton.accesskey "k">
+<!ENTITY replaceAllButton.label "Tijal Ronojel">
+<!ENTITY replaceAllButton.accesskey "R">
+<!ENTITY closeButton.label "Titz'apïx">
+<!ENTITY closeButton.accesskey "t">

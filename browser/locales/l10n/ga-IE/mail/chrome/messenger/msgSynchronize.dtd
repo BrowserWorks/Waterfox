@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Íoslódáil agus Sioncronaigh Teachtaireachtaí">
+<!ENTITY MsgSelect.label "Míreanna le húsáid as líne">
+<!ENTITY MsgSyncDesc.label "Má tá fillteáin ríomhphoist nó grúpaí nuachta roghnaithe agat cheana le haghaidh úsáide as líne, is féidir iad a íoslódáil nó a shioncronú anois. Nó úsáid an cnaipe &quot;Roghnaigh&quot; chun fillteáin ríomhphoist agus grúpaí nuachta a roghnú le haghaidh úsáide as líne.">
+<!ENTITY MsgSyncDirections.label "Íoslódáil agus/nó sioncronaigh iad seo a leanas:">
+<!ENTITY syncTypeMail.label "Teachtaireachtaí ríomhphoist">
+<!ENTITY syncTypeMail.accesskey "r">
+<!ENTITY syncTypeNews.label "Teachtaireachtaí na ngrúpaí nuachta">
+<!ENTITY syncTypeNews.accesskey "n">
+<!ENTITY sendMessage.label "Seol na teachtaireachtaí gan seoladh">
+<!ENTITY sendMessage.accesskey "e">
+<!ENTITY workOffline.label "Oibrigh as líne nuair a bheidh íoslódáil agus/nó sioncronú críochnaithe">
+<!ENTITY workOffline.accesskey "O">
+<!ENTITY selectButton.label "Roghnaigh…">
+<!ENTITY selectButton.accesskey "o">
+<!ENTITY MsgSelectDesc.label "Roghnaigh fillteáin ríomhphoist agus grúpaí nuachta le haghaidh úsáide as líne.">
+<!ENTITY MsgSelectInd.label "Íoslódáil">
+<!ENTITY MsgSelectItems.label "Fillteáin agus Grúpaí Nuachta">

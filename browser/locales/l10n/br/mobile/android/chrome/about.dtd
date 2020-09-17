@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "A-zivout &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "Arnodel eo &brandShortName; ha marteze e vo distabil.">
+<!ENTITY aboutPage.checkForUpdates.link         "Klask hizivadennoù »">
+<!ENTITY aboutPage.checkForUpdates.checking     "O klask hizivadennoù…">
+<!ENTITY aboutPage.checkForUpdates.none         "Hizivadenn ebet hegerz">
+<!ENTITY aboutPage.checkForUpdates.available2   "Pellgargañ an hizivadenn">
+<!ENTITY aboutPage.checkForUpdates.downloading  "O pellgargañ an hizivadenn…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Staliañ na hizivadenn">
+<!ENTITY aboutPage.faq.label                    "FAG">
+<!ENTITY aboutPage.support.label                "Skor">
+<!ENTITY aboutPage.privacyPolicy.label          "Reolenn a-fet buhez prevez">
+<!ENTITY aboutPage.rights.label                 "Gouzout ho kwirioù…">
+<!ENTITY aboutPage.relNotes.label               "Notennoù an handelv">
+<!ENTITY aboutPage.credits.label                "Perzhidi">
+<!ENTITY aboutPage.license.label                "Titouroù a-fet lañvaz">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Merkoù marilhet eus Diazezadenn Mozilla eo Firefox ha sielloù Firefox.">

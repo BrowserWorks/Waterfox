@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "Cunntasan – &brandShortName;">
+<!ENTITY accountManager.width                "460">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Staid nan grad-theachdaireachdan">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Cunntas ùr">
+<!ENTITY accountManager.newAccount.accesskey "n">
+<!ENTITY accountManager.close.label          "Dùin">
+<!ENTITY accountManager.close.accesskey      "D">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Gun chunntas air a rèiteachadh">
+<!ENTITY accountManager.noAccount.description "Briog air a’ phutan &accountManager.newAccount.label; gus leigeil le &brandShortName; do stiùireadh tron rèiteachadh.">
+<!ENTITY account.autoSignOn.label     "Clàraich a-steach nuair a thòisicheas an coimpiutair agam">
+<!ENTITY account.autoSignOn.accesskey "l">
+<!ENTITY account.connect.label        "Ceangail">
+<!ENTITY account.connect.accesskey    "e">
+<!ENTITY account.disconnect.label     "Dì-cheangail">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "Sguab às">
+<!ENTITY account.delete.accesskey     "S">
+<!ENTITY account.edit.label           "Roghainnean">
+<!ENTITY account.edit.accesskey       "R">
+<!ENTITY account.moveup.label         "Gluais suas">
+<!ENTITY account.movedown.label       "Gluais sìos">
+<!ENTITY account.cancelReconnection.label         "Sguir dhen ath-cheangal">
+<!ENTITY account.cancelReconnection.accesskey     "S">
+<!ENTITY account.copyDebugLog.label     "Dèan lethbhreac de loga an dì-bhugachaidh">
+<!ENTITY account.copyDebugLog.accesskey "c">
+<!ENTITY account.showDebugLog.label     "Seall loga an dì-bhugachaidh">
+<!ENTITY account.showDebugLog.accesskey "h">
+<!ENTITY account.connecting           "A’ ceangal…">
+<!ENTITY account.disconnecting        "A’ dì-cheangal…">
+<!ENTITY account.disconnected         "Gun cheangal">

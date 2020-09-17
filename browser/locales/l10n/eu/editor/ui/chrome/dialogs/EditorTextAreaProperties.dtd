@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Testu-eremuaren propietateak">
+
+<!ENTITY Settings.label "Ezarpenak">
+
+<!ENTITY TextAreaName.label "Eremuaren izena:">
+<!ENTITY TextAreaName.accessKey "n">
+<!ENTITY TextAreaRows.label "Errenkadak:">
+<!ENTITY TextAreaRows.accessKey "r">
+<!ENTITY TextAreaCols.label "Zutabeak:">
+<!ENTITY TextAreaCols.accessKey "Z">
+<!ENTITY TextAreaReadOnly.label "Irakurtzeko soilik">
+<!ENTITY TextAreaReadOnly.accessKey "o">
+<!ENTITY TextAreaDisabled.label "Ezgaituta">
+<!ENTITY TextAreaDisabled.accessKey "E">
+<!ENTITY TextAreaTabIndex.label "Tabulazio-indizea:">
+<!ENTITY TextAreaTabIndex.accessKey "i">
+<!ENTITY TextAreaAccessKey.label "Laster-tekla:">
+<!ENTITY TextAreaAccessKey.accessKey "k">
+<!ENTITY InitialText.label "Hasierako testua:">
+<!ENTITY InitialText.accessKey "t">
+
+<!ENTITY TextAreaWrap.label "Egokitze modua:">
+<!ENTITY TextAreaWrap.accessKey "E">
+<!ENTITY WrapDefault.value "Lehenetsia">
+<!ENTITY WrapOff.value "Ezgaitua">
+<!ENTITY WrapHard.value "Gogorra">
+<!ENTITY WrapSoft.value "Leuna">
+<!ENTITY WrapPhysical.value "Fisikoa">
+<!ENTITY WrapVirtual.value "Birtuala">

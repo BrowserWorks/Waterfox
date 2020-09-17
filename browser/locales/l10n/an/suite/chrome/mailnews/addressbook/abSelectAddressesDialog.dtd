@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY selectAddressWindow.title           "Trigar adrezas">
+<!-- Buttons -->
+
+<!ENTITY toButton.label                      "Para:"> 
+<!ENTITY toButton.accesskey                  "P"> 
+<!ENTITY ccButton.label                      "Cc->"> 
+<!ENTITY ccButton.accesskey                  "C"> 
+<!ENTITY bccButton.label                     "Bcc->">  
+<!ENTITY bccButton.accesskey                 "B">  
+<!ENTITY newButton.label                     "Nuevo…"> 
+<!ENTITY newButton.accesskey                 "N"> 
+<!ENTITY editButton.label                    "Editar…"> 
+<!ENTITY editButton.accesskey                "E">
+<!ENTITY removeButton.label                  "Eliminar"> 
+<!ENTITY removeButton.accesskey              "r"> 
+<!ENTITY lookIn.label                        "Buscar en:"> 
+<!ENTITY lookIn.accesskey                    "u"> 
+<!ENTITY for.label                           "por:"> 
+<!ENTITY for.accesskey                       "o"> 
+<!ENTITY for.placeholder                     "Nombre u adreza de correu">
+<!ENTITY addressMessageTo.label              "Mandar mensache a:"> 
+<!-- Tooltips items -->  
+
+<!ENTITY addressPickerNewButton.tooltip      "Creyar una nueva tarcheta en a libreta d'adrezas"> 
+<!ENTITY addressPickerEditButton.tooltip     "Editar a tarcheta trigada"> 
+

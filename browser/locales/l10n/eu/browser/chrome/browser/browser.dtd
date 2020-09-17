@@ -1,0 +1,291 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Ireki menua">
+<!ENTITY navbarOverflow.label                "Tresna gehiago…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Ainguratu fitxa">
+<!ENTITY  unpinTab.label                     "Desainguratu fitxa">
+
+<!ENTITY  listAllTabs.label      "Zerrendatu fitxa guztiak">
+
+<!ENTITY tabCmd.label "Fitxa berria">
+<!ENTITY openFileCmd.label "Ireki fitxategia…">
+<!ENTITY printCmd.label "Inprimatu…">
+
+<!ENTITY taskManagerCmd.label "Ataza-kudeatzailea">
+
+<!ENTITY menubarCmd.label "Menu-barra">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Nabigazioa">
+<!ENTITY personalbarCmd.label "Laster-marken tresna-barra">
+<!ENTITY personalbarCmd.accesskey "b">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Laster-markak">
+<!ENTITY bookmarksToolbarItem.label "Laster-marken tresna-barraren osagaiak">
+
+<!ENTITY fullScreenCmd.label "Pantaila osoa">
+
+
+<!ENTITY pictureInPictureHideToggle.label "Ezkutatu bideoa beste leiho batean txandakatzeko botoia">
+<!ENTITY pictureInPictureHideToggle.accesskey "E">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; ezarpenak">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Konektatu beste gailu bat…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Hasi saioa &brandProductName;(e)n">
+<!ENTITY fxa.menu.turnOnSync.label "Aktibatu &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "&brandProductName; zerbitzuak">
+<!ENTITY fxa.menu.account.label "Kontua">
+<!ENTITY fxa.menu.settings.label "Ezarpenak">
+<!ENTITY fxa.menu.accountSettings.label "Kontuaren ezarpenak">
+<!ENTITY fxa.menu.manageAccount2.label "Kudeatu kontua">
+<!ENTITY fxa.menu.signOut.label "Amaitu saioa…">
+<!ENTITY fxa.menu.setupSync.label "Konfiguratu &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Bidali fitxa bat berehala saioa hasita duzun edozein gailutara.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "pantaila osoan dago orain">
+<!ENTITY fullscreenWarning.generic.label "Dokumentua pantaila osoan dago orain">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Irten pantaila osotik (Esk)">
+<!ENTITY exitDOMFullscreenMac.button "Irten pantaila osotik (esk)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "(e)k zure erakuslearen kontrola dauka. Kontrola berreskuratzeko, sakatu eskape tekla.">
+<!ENTITY pointerlockWarning.generic.label "Dokumentu honek zure erakuslearen kontrola dauka. Kontrola berreskuratzeko, sakatu eskape tekla.">
+
+<!ENTITY showAllBookmarks2.label "Erakutsi laster-marka guztiak">
+<!ENTITY recentBookmarks.label "Azken laster-markak">
+<!ENTITY bookmarksToolbarChevron.tooltip "Erakutsi laster-marka gehiago">
+
+<!ENTITY printButton.label            "Inprimatu">
+<!ENTITY printButton.tooltip          "Inprimatu orri hau">
+
+
+<!ENTITY searchItem.title             "Bilatu">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Etxea">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; hasiera-orria">
+
+<!ENTITY bookmarksButton.label          "Laster-markak">
+
+<!ENTITY bookmarksSubview.label             "Laster-markak">
+<!ENTITY bookmarksMenuButton2.label         "Laster-marken menua">
+<!ENTITY bookmarksMenuButton.other.label    "Beste laster-markak">
+<!ENTITY bookmarksMenuButton.mobile.label   "Mugikorreko laster-markak">
+<!ENTITY viewBookmarksSidebar2.label        "Ikusi laster-marken tresna-barra">
+<!ENTITY hideBookmarksSidebar.label         "Ezkutatu laster-marken alboko barra">
+<!ENTITY viewBookmarksToolbar.label         "Ikusi laster-marken tresna-barra">
+<!ENTITY hideBookmarksToolbar.label         "Ezkutatu laster-marken tresna-barra">
+<!ENTITY searchBookmarks.label              "Bilatu laster-markak">
+<!ENTITY bookmarkingTools.label             "Laster-marken tresnak">
+<!ENTITY addBookmarksMenu.label             "Gehitu laster-marken menua tresna-barran">
+<!ENTITY removeBookmarksMenu.label          "Kendu laster-marken menua tresna-barratik">
+
+<!ENTITY historyButton.label            "Historia">
+
+<!ENTITY downloads.label              "Deskargak">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Deskargak">
+<!ENTITY addons.label                 "Gehigarriak">
+
+<!ENTITY webDeveloperMenu.label       "Web garapena">
+
+<!ENTITY newNavigatorCmd.label        "Leiho berria">
+<!ENTITY newPrivateWindow.label     "Leiho pribatu berria">
+
+<!ENTITY editMenu.label         "Editatu">
+<!ENTITY preferencesCmd2.label       "Aukerak">
+<!ENTITY preferencesCmdUnix.label       "Hobespenak">
+<!ENTITY logins.label                           "Saio-hasierak eta pasahitzak">
+
+<!ENTITY overflowCustomizeToolbar.label       "Pertsonalizatu tresna-barra…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "P">
+
+<!ENTITY historyMenu.label "Historia">
+<!ENTITY historyUndoMenu.label "Itxitako azken fitxak">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Itxitako azken leihoak">
+
+<!ENTITY appMenuHistory.showAll.label "Erakutsi historia guztia">
+<!ENTITY appMenuHistory.clearRecent.label "Garbitu azken historia…">
+<!ENTITY appMenuHistory.restoreSession.label "Berreskuratu aurreko saioa">
+<!ENTITY appMenuHistory.viewSidebar.label "Ikusi historiaren alboko barra">
+<!ENTITY appMenuHistory.hideSidebar.label "Ezkutatu historiaren alboko barra">
+<!ENTITY appMenuHistory.recentHistory.label "Azken historia">
+<!ENTITY appMenuHelp.label "Laguntza">
+
+<!ENTITY appMenuRemoteTabs.label "Sinkronizatutako fitxak">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Irekitako fitxarik ez">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Erakutsi gehiago">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Erakutsi gailu honetako fitxa gehiago">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Erakutsi denak">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Erakutsi gailu honetako fitxa guztiak">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Aktibatu fitxak sinkronizatzea zure beste gailuetako fitxen zerrenda ikusteko.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Beste gailuetako zure fitxak hemen ikusi nahi dituzu?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Ireki Sinkronizazio-hobespenak">
+<!ENTITY appMenuRemoteTabs.welcome.label "Ikusi zure beste gailuetako fitxen zerrenda.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Zure kontua egiaztatu egin behar da.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Hasi saioa &syncBrand.shortName.label;(e)n…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Aktibatu &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Kudeatu gailuak…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Ikusi sinkronizatutako fitxen alboko barra">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Ezkutatu sinkronizatutako fitxen alboko barra">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Konektatu beste gailu bat">
+
+<!ENTITY appMenuRecentHighlights.label "Nabarmendutako azkenak">
+
+<!ENTITY customizeMenu.addToToolbar.label "Gehitu tresna-barran">
+<!ENTITY customizeMenu.addToToolbar.accesskey "G">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Gehitu gainezkatzearen menuan">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "m">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Desainguratu gainezkatzearen menutik">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "D">
+<!ENTITY customizeMenu.removeFromToolbar.label "Kendu tresna-barratik">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "K">
+<!ENTITY customizeMenu.addMoreItems.label "Gehitu elementu gehiago…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "G">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Gehiago">
+
+<!ENTITY contentSearchSubmit.tooltip  "Bidali bilaketa">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Bilatu">
+<!ENTITY searchIcon.tooltip           "Bilatu">
+
+<!ENTITY openLinkCmdInTab.accesskey   "t">
+
+<!ENTITY pageAction.copyLink.label    "Kopiatu lotura">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "Gorde orria Pocket-en">
+<!ENTITY pocketMenuitem.label         "Ikusi Pocket zerrenda">
+
+<!ENTITY emailPageCmd.label           "Bidali lotura postaz…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Zooma">
+
+<!ENTITY sidebarCloseButton.tooltip     "Itxi alboko barra">
+
+<!ENTITY quitApplicationCmdWin2.label       "Irten">
+<!ENTITY quitApplicationCmdWin2.accesskey   "I">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Irten &brandShorterName;(e)tik">
+<!ENTITY quitApplicationCmd.label       "Irten">
+<!ENTITY quitApplicationCmd.accesskey   "I">
+<!ENTITY quitApplicationCmdMac2.label   "Irten &brandShorterName;(e)tik">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Aldatu popup blokeatzailearen hobespenak…">
+<!ENTITY editPopupSettings.label "Aldatu popup blokeatzailearen aukerak…">
+<!ENTITY editPopupSettings.accesskey "A">
+<!ENTITY dontShowMessage.accesskey "z">
+
+<!ENTITY findOnCmd.label     "Bilatu orri honetan…">
+
+<!ENTITY spellAddDictionaries.label "Gehitu hiztegiak…">
+<!ENTITY spellAddDictionaries.accesskey "G">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Nabigatzailearen fitxak">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Ezkutatu automatikoki">
+
+
+<!ENTITY uiTour.infoPanel.close "Itxi">
+
+<!ENTITY panicButton.thankyou.msg1                "Azken historia garbitu egin da.">
+<!ENTITY panicButton.thankyou.msg2                "Nabigatu seguru!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Eskerrik asko!">
+
+<!ENTITY updateAvailable.panelUI.label "Deskargatu &brandShorterName; eguneraketa">
+<!ENTITY updateManual.panelUI.label "Deskargatu &brandShorterName; nabigatzailearen kopia berri bat">
+<!ENTITY updateUnsupported.panelUI.label "Ezin duzu eguneraketa gehiagorik burutu">
+<!ENTITY updateRestart.panelUI.label2 "Berrabiarazi &brandShorterName; eguneratzeko">
+
+<!ENTITY sendToDevice.syncNotReady.label "Gailuak sinkronizatzen…">
+
+<!ENTITY pageAction.shareUrl.label "Partekatu">
+<!ENTITY pageAction.shareMore.label "Gehiago…">
+
+<!ENTITY libraryButton.tooltip "Ikusi historia, gordetako laster-markak eta gehiago">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Erabilgarritasun-eginbideak gaituta">

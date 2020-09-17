@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Filteri poruke">
+<!ENTITY nameColumn.label "Naziv filtera">
+<!ENTITY activeColumn.label "Omogućeno">
+<!ENTITY newButton.label "Nova…">
+<!ENTITY editButton.label "Uredi…">
+<!ENTITY deleteButton.label "Izbriši">
+<!ENTITY reorderUpButton.label "Pomjeri gore">
+<!ENTITY reorderDownButton.label "Pomjeri dole">
+<!ENTITY filterHeader.label "Omogućeni filteri se izvršavaju automatski prema niže prikazanom redoslijedu.">
+<!ENTITY filtersForPrefix.label "Filteri za:">
+<!ENTITY viewLogButton.label "Zapisnik filtera">
+<!ENTITY runFilters.label "Pokreni sada">
+<!ENTITY stopFilters.label "Zaustavi">
+<!ENTITY folderPickerPrefix.label "Pokreni izabrane filtere na:">
+<!ENTITY choosethis.label "odaberite ovaj folder">
+<!ENTITY choosethisnewsserver.label "odaberite ovaj server interesnih grupa">

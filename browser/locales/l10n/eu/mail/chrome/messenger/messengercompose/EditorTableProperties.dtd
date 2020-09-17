@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Taularen propietateak">
+<!ENTITY applyButton.label                "Aplikatu">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "Itxi">
+<!ENTITY tableTab.label                   "Taula">
+<!ENTITY cellTab.label                    "Gelaxkak">
+<!ENTITY tableRows.label                  "Errenkadak:">
+<!ENTITY tableRows.accessKey              "r">
+<!ENTITY tableColumns.label               "Zutabeak:">
+<!ENTITY tableColumns.accessKey           "Z">
+<!ENTITY tableHeight.label                "Altuera:">
+<!ENTITY tableHeight.accessKey            "t">
+<!ENTITY tableWidth.label                 "Zabalera:">
+<!ENTITY tableWidth.accessKey             "Z">
+<!ENTITY tableBorderSpacing.label         "Ertzak eta tartekatzea">
+<!ENTITY tableBorderWidth.label           "Ertza:">
+<!ENTITY tableBorderWidth.accessKey       "E">
+<!ENTITY tableSpacing.label               "Tartekatzea:">
+<!ENTITY tableSpacing.accessKey           "T">
+<!ENTITY tablePadding.label               "Betegarria:">
+<!ENTITY tablePadding.accessKey           "B">
+<!ENTITY tablePxBetwCells.label           "gelaxken arteko pixelak">
+<!ENTITY tablePxBetwBrdrCellContent.label "gelaxkaren ertza eta edukiaren arteko pixelak">
+<!ENTITY tableAlignment.label             "Taularen lerrokatzea:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "Goiburukoa:">
+<!ENTITY tableCaption.accessKey           "G">
+<!ENTITY tableCaptionAbove.label          "Taularen goian">
+<!ENTITY tableCaptionBelow.label          "Taularen behean">
+<!ENTITY tableCaptionLeft.label           "Taularen ezkerraldean">
+<!ENTITY tableCaptionRight.label          "Taularen eskuinaldean">
+<!ENTITY tableCaptionNone.label           "Bat ere ez">
+<!ENTITY tableInheritColor.label           "(Hedatu orriaren kolorea)">
+
+<!ENTITY cellSelection.label              "Aukera">
+<!ENTITY cellSelectCell.label             "Gelaxka">
+<!ENTITY cellSelectRow.label              "Errenkada">
+<!ENTITY cellSelectColumn.label           "Zutabea">
+<!ENTITY cellSelectNext.label             "Hurrengoa">
+<!ENTITY cellSelectNext.accessKey         "H">
+<!ENTITY cellSelectPrevious.label         "Aurrekoa">
+<!ENTITY cellSelectPrevious.accessKey     "A">
+<!ENTITY applyBeforeChange.label          "Uneko aldakate hautapena aldatu eta gero ezarriko dira.">
+<!ENTITY cellContentAlignment.label       "Edukiaren lerrokatzea">
+<!ENTITY cellHorizontal.label             "Horizontala:">
+<!ENTITY cellHorizontal.accessKey         "z">
+<!ENTITY cellVertical.label               "Bertikala:">
+<!ENTITY cellVertical.accessKey           "B">
+<!ENTITY cellStyle.label                  "Gelaxkaren estiloa:">
+<!ENTITY cellStyle.accessKey              "G">
+<!ENTITY cellNormal.label                 "Arrunta">
+<!ENTITY cellHeader.label                 "Goiburua">
+<!ENTITY cellTextWrap.label               "Testua bildu:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "Bildu">
+<!ENTITY cellNoWrap.label                 "Ez bildu">
+<!ENTITY cellAlignTop.label               "Goian">
+<!ENTITY cellAlignMiddle.label            "Erdian">
+<!ENTITY cellAlignBottom.label            "Behean">
+<!ENTITY cellAlignJustify.label           "Justifikatu">
+<!ENTITY cellInheritColor.label           "(Utzi taularen kolorea zeharkatzea)">
+<!ENTITY cellUseCheckboxHelp.label        "Hautatutako gelaxken propietateak zehazteko kontrol-laukiak erabili">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label                       "Tamaina">
+<!ENTITY pixels.label                     "pixel">
+<!ENTITY backgroundColor.label            "Atzeko planoko kolorea:">
+<!ENTITY backgroundColor.accessKey        "A">
+<!ENTITY AlignLeft.label                  "Ezkerra">
+<!ENTITY AlignCenter.label                "Erdia">
+<!ENTITY AlignRight.label                 "Eskuina">

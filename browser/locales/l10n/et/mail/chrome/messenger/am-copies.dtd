@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label        "Koopiad ja kaustad">
+<!ENTITY sendingPrefix.label             "Kirja saatmisel: ">
+<!ENTITY fccMailFolder.label             "Paigutatakse koopia automaatselt kausta:">
+<!ENTITY fccMailFolder.accesskey         "P">
+<!ENTITY fccReplyFollowsParent.label     "Paigutatakse vastused vastatava kirjaga samasse kausta">
+<!ENTITY fccReplyFollowsParent.accesskey "s">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label                 "Koopia saadetakse:">
+<!ENTITY ccAddress.accesskey             "K">
+<!ENTITY ccAddressList.placeholder       "eralda aadressid komadega">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label                "Pimekoopia saadetakse:">
+<!ENTITY bccAddress.accesskey            "P">
+<!ENTITY bccAddressList.placeholder      "eralda aadressid komadega">
+<!ENTITY saveMessageDlg.label            "Kirjade salvestamisel küsitakse kinnitust">
+<!ENTITY saveMessageDlg.accesskey        "j">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label              "&quot;Saadetud&quot; kontos:">
+<!ENTITY sentFolderOn.accesskey          "d">
+<!ENTITY sentInOtherFolder.label         "Muu:">
+<!ENTITY sentInOtherFolder.accesskey     "M">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label             "Kirjade arhiiv">
+<!ENTITY keepArchives.label              "Arhiveeritud kirju hoitakse kaustas:">
+<!ENTITY keepArchives.accesskey          "K">
+<!ENTITY archiveHierarchyButton.label    "Arhiivi sätted…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label          "&quot;Arhiiv&quot; kontos:">
+<!ENTITY archivesFolderOn.accesskey      "A">
+<!ENTITY archiveInOtherFolder.label      "Muu:">
+<!ENTITY archiveInOtherFolder.accesskey  "M">
+<!ENTITY specialFolders.label            "Mustandid ja mallid">
+<!ENTITY keepDrafts2.label               "Mustandeid hoitakse kaustas:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label            "&quot;Mustandid&quot; kontos:">
+<!ENTITY draftsFolderOn.accesskey        "N">
+<!ENTITY draftInOtherFolder.label        "Muu:">
+<!ENTITY draftInOtherFolder.accesskey    "M">
+<!ENTITY keepTemplates.label             "Kirja malle hoitakse kaustas:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label         "&quot;Mallid&quot; kontos:">
+<!ENTITY templatesFolderOn.accesskey     "l">
+<!ENTITY templateInOtherFolder.label     "Muu:">
+<!ENTITY templateInOtherFolder.accesskey "u">

@@ -1,0 +1,333 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "חבר הודעה: (ללא נושא)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "קובץ">
+<!ENTITY fileMenu.accesskey "ק">
+<!ENTITY newMenu.label "חדש">
+<!ENTITY newMenu.accesskey "ח">
+<!ENTITY newMessage.label "הודעה">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "ה">
+<!ENTITY newContact.label "איש קשר בספר הכתובות…">
+<!ENTITY newContact.accesskey "א">
+<!ENTITY attachMenu.label "צרף">
+<!ENTITY attachMenu.accesskey "ר">
+<!ENTITY attachFileCmd.label "קובץ (קבצים)…">
+<!ENTITY attachFileCmd.accesskey "ק">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "קישור לקובץ">
+<!ENTITY attachCloudCmd.accesskey "ק">
+<!ENTITY attachPageCmd.label "דף אינטרנט…">
+<!ENTITY attachPageCmd.accesskey "א">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "כרטיס אישי (vCard)">
+<!ENTITY attachVCardCmd.accesskey "כ">
+<!ENTITY remindLater.label "להזכיר לי מאוחר יותר">
+<!ENTITY remindLater.accesskey "ז">
+<!ENTITY closeCmd.label "סגירה">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "ג">
+<!ENTITY saveCmd.label "שמירה">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "ש">
+<!ENTITY saveAsCmd.label "שמירה">
+<!ENTITY saveAsCmd.accesskey "מ">
+<!ENTITY saveAsFileCmd.label "כקובץ…">
+<!ENTITY saveAsFileCmd.accesskey "כ">
+<!ENTITY saveAsDraftCmd.label "כטיוטה">
+<!ENTITY saveAsDraftCmd.accesskey "ט">
+<!ENTITY saveAsTemplateCmd.label "כתבנית">
+<!ENTITY saveAsTemplateCmd.accesskey "ת">
+<!ENTITY sendNowCmd.label "שלח כעת">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "ע">
+<!ENTITY sendLaterCmd.label "שלח מאוחר יותר">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "א">
+<!ENTITY printSetupCmd.label "הגדרת עמוד…">
+<!ENTITY printSetupCmd.accesskey "ה">
+<!ENTITY printPreviewCmd.label "תצוגה מקדימה להדפסה">
+<!ENTITY printPreviewCmd.accesskey "ד">
+<!ENTITY printCmd.label "הדפסה…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "ד">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "עריכה">
+<!ENTITY editMenu.accesskey "ע">
+<!ENTITY undoCmd.label "בטל">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "ט">
+<!ENTITY redoCmd.label "בצע שוב">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "ש">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "w">
+<!ENTITY deleteCmd.label "מחק">
+<!ENTITY deleteCmd.accesskey "ח">
+<!ENTITY editRewrapCmd.label "בצע מחדש גלישת שורות">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "שינוי שם קובץ מצורף…">
+<!ENTITY renameAttachmentCmd.accesskey "ש">
+<!ENTITY reorderAttachmentsCmd.label "סידור קבצים מצורפים מחדש…">
+<!ENTITY reorderAttachmentsCmd.accesskey "צ">
+<!ENTITY reorderAttachmentsCmd.key "ח">
+<!ENTITY toggleAttachmentPaneCmd.label "לוח קבצים מצורפים">
+<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
+     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
+     as attachments.accesskey. -->
+<!ENTITY selectAllCmd.accesskey "ב">
+<!ENTITY findBarCmd.label "חיפוש…">
+<!ENTITY findBarCmd.accesskey "ח">
+<!ENTITY findBarCmd.key "ח">
+<!ENTITY findReplaceCmd.label "חיפוש והחלפה…">
+<!ENTITY findReplaceCmd.accesskey "ל">
+<!ENTITY findReplaceCmd.key "ל">
+<!ENTITY findAgainCmd.label "מצא שוב">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "מצא את הקודם">
+<!ENTITY findPrevCmd.accesskey "v">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "סידור קבצים מצורפים מחדש">
+<!ENTITY moveAttachmentTopPanelBtn.label "הצבה כעליון">
+<!ENTITY moveAttachmentUpPanelBtn.label "העברה למעלה">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "העברה יחד">
+<!ENTITY moveAttachmentDownPanelBtn.label "העברה למטה">
+<!ENTITY moveAttachmentBottomPanelBtn.label "הצבה בתחתית">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "סידור: א - ת">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "סידור: ת - א">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "סידור הבחירה: א - ת">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "סידור הבחירה: ת - א">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "תצוגה">
+<!ENTITY viewMenu.accesskey "ת">
+<!ENTITY viewToolbarsMenuNew.label "סרגלי כלים">
+<!ENTITY viewToolbarsMenuNew.accesskey "כ">
+<!ENTITY menubarCmd.label "סרגל תפריטים">
+<!ENTITY menubarCmd.accesskey "ת">
+<!ENTITY showCompositionToolbarCmd.label "סרגל כלים כתיבה">
+<!ENTITY showCompositionToolbarCmd.accesskey "כ">
+<!ENTITY showFormattingBarCmd.label "סרגל עיצוב">
+<!ENTITY showFormattingBarCmd.accesskey "ע">
+<!ENTITY showTaskbarCmd.label "שורת מצב">
+<!ENTITY showTaskbarCmd.accesskey "ש">
+<!ENTITY customizeToolbar.label "התאמה אישית…">
+<!ENTITY customizeToolbar.accesskey "ה">
+
+<!ENTITY addressSidebar.label "סרגל צד אנשי קשר">
+<!ENTITY addressSidebar.accesskey "o">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "תבנית">
+<!ENTITY formatMenu.accesskey "ב">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "אפשרויות">
+<!ENTITY optionsMenu.accesskey "א">
+<!ENTITY checkSpellingCmd2.label "בדוק איות…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "א">
+<!ENTITY enableInlineSpellChecker.label "בדוק איות תוך כדי הקלדה">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY quoteCmd.label "לצטט הודעה">
+<!ENTITY quoteCmd.accesskey "Q">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "צרף כרטיס אישי (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "קבלה חוזרת">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "יידוע מצב קבלה">
+<!ENTITY dsnMenu.accesskey "י">
+<!ENTITY deliveryFormatMenu.label "תבנית העברה">
+<!ENTITY deliveryFormatMenu.accesskey "ב">
+<!ENTITY autoFormatCmd.label "זיהוי אוטומטי">
+<!ENTITY autoFormatCmd.accesskey "א">
+<!ENTITY plainTextFormatCmd.label "טקסט פשוט בלבד">
+<!ENTITY plainTextFormatCmd.accesskey "פ">
+<!ENTITY htmlFormatCmd.label "טקסט עשיר (HTML) בלבד">
+<!ENTITY htmlFormatCmd.accesskey "ע">
+<!ENTITY bothFormatCmd.label "טקסט פשוט וגם עשיר (HTML)">
+<!ENTITY bothFormatCmd.accesskey "ג">
+<!ENTITY priorityMenu.label "עדיפות">
+<!ENTITY priorityMenu.accesskey "ע">
+<!ENTITY priorityButton.title "עדיפות">
+<!ENTITY priorityButton.tooltiptext "שינוי עדיפות ההודעה">
+<!ENTITY priorityButton.label "עדיפות:">
+<!ENTITY lowestPriorityCmd.label "הכי נמוכה">
+<!ENTITY lowestPriorityCmd.accesskey "נ">
+<!ENTITY lowPriorityCmd.label "נמוכה">
+<!ENTITY lowPriorityCmd.accesskey "נ">
+<!ENTITY normalPriorityCmd.label "רגילה">
+<!ENTITY normalPriorityCmd.accesskey "ר">
+<!ENTITY highPriorityCmd.label "גבוהה">
+<!ENTITY highPriorityCmd.accesskey "ג">
+<!ENTITY highestPriorityCmd.label "הכי גבוהה">
+<!ENTITY highestPriorityCmd.accesskey "ה">
+<!ENTITY fileCarbonCopyCmd.label "שלח עותק אל">
+<!ENTITY fileCarbonCopyCmd.accesskey "ע">
+<!ENTITY fileHereMenu.label "תייק כאן">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "כלים">
+<!ENTITY tasksMenu.accesskey "כ">
+<!ENTITY messengerCmd.label "דואר וקבוצות דיון">
+<!ENTITY messengerCmd.accesskey "ד">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "ספר כתובות">
+<!ENTITY addressBookCmd.accesskey "כ">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "הגדרות חשבון">
+<!ENTITY accountManagerCmd2.accesskey "ג">
+<!ENTITY accountManagerCmdUnix2.accesskey "ג">
+<!ENTITY preferencesCmd2.label "אפשרויות">
+<!ENTITY preferencesCmd2.accesskey "א">
+<!ENTITY preferencesCmdUnix.label "העדפות">
+<!ENTITY preferencesCmdUnix.accesskey "פ">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "מזער">
+<!ENTITY bringAllToFront.label "הבא הכול לקדמה">
+<!ENTITY zoomWindow.label "הגדל חלון">
+<!ENTITY windowMenu.label "חלון">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "שלח">
+<!ENTITY quoteButton.label "צטט">
+<!ENTITY addressButton.label "אנשי קשר">
+<!ENTITY attachButton.label "צרף">
+<!ENTITY spellingButton.label "איות">
+<!ENTITY saveButton.label "שמור">
+<!ENTITY printButton.label "הדפסה">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "שלח הודעה זו כעת">
+<!ENTITY sendlaterButton.tooltip "שלח הודעה זו מאוחר יותר">
+<!ENTITY quoteButton.tooltip "צטט הודעה קודמת">
+<!ENTITY addressButton.tooltip "בחר נמען מפנקס כתובות">
+<!ENTITY attachButton.tooltip2 "הוספת קובץ">
+<!ENTITY spellingButton.tooltip "בדיקת איות בבחירה או בהודעה כולה">
+<!ENTITY saveButton.tooltip "שמור הודעה זו">
+<!ENTITY cutButton.tooltip              "גזירה">
+<!ENTITY copyButton.tooltip             "העתקה">
+<!ENTITY pasteButton.tooltip            "הדבקה">
+<!ENTITY printButton.tooltip "הדפסת הודעה זו">
+
+<!-- Headers -->
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY subject.accesskey "נ">
+<!ENTITY attachmentBucketCloseButton.tooltip "הסתרת לוח קבצים מצורפים">
+
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+<!ENTITY SmileButton.tooltip "הכנס פרצוף מחייך">
+<!ENTITY smiley1Cmd.label "חיוך">
+<!ENTITY smiley2Cmd.label "זועף">
+<!ENTITY smiley3Cmd.label "קורץ">
+<!ENTITY smiley4Cmd.label "חורץ־לשון">
+<!ENTITY smiley5Cmd.label "צוחק">
+<!ENTITY smiley6Cmd.label "נבוך">
+<!ENTITY smiley7Cmd.label "הססן">
+<!ENTITY smiley8Cmd.label "הפתעה">
+<!ENTITY smiley9Cmd.label "נשיקה">
+<!ENTITY smiley10Cmd.label "צעק">
+<!ENTITY smiley11Cmd.label "'קול'">
+<!ENTITY smiley12Cmd.label "פה־כסף">
+<!ENTITY smiley13Cmd.label "יד־לפה">
+<!ENTITY smiley14Cmd.label "תמים">
+<!ENTITY smiley15Cmd.label "בכי">
+<!ENTITY smiley16Cmd.label "שפתיים־חתומות">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "לא נמצאו הצעות">
+<!ENTITY spellCheckIgnoreWord.label "התעלם ממילה">
+<!ENTITY spellCheckIgnoreWord.accesskey "ת">
+<!ENTITY spellCheckAddToDictionary.label "הוספה למילון">
+<!ENTITY spellCheckAddToDictionary.accesskey "ס">
+<!ENTITY undo.label "ביטול">
+<!ENTITY undo.accesskey "ט">
+<!ENTITY cut.label "גזירה">
+<!ENTITY cut.accesskey "ג">
+<!ENTITY copy.label "העתקה">
+<!ENTITY copy.accesskey "ת">
+<!ENTITY paste.label "הדבקה">
+<!ENTITY paste.accesskey "ה">
+<!ENTITY pasteQuote.label "הדבקה כציטוט">
+<!ENTITY pasteQuote.accesskey "צ">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "פתיחה">
+<!ENTITY openAttachment.accesskey "פ">
+<!ENTITY delete.label "מחק">
+<!ENTITY delete.accesskey "ח">
+<!ENTITY removeAttachment.label "הסר קובץ מצורף">
+<!ENTITY removeAttachment.accesskey "מ">
+<!ENTITY renameAttachment.label "שנה שם…">
+<!ENTITY renameAttachment.accesskey "ש">
+<!ENTITY reorderAttachments.label "סידור קבצים מצורפים מחדש…">
+<!ENTITY reorderAttachments.accesskey "צ">
+<!ENTITY removeAllAttachments.label "הסרת כל הקבצים המצורפים">
+<!ENTITY removeAllAttachments.accesskey "כ">
+<!ENTITY selectAll.label "בחר הכול">
+<!ENTITY selectAll.accesskey "ב">
+<!ENTITY attachFile.label "צירוף קובץ או קבצים)…">
+<!ENTITY attachFile.accesskey "ק">
+<!ENTITY attachCloud.label "קישור קובץ…">
+<!ENTITY attachCloud.accesskey "ק">
+<!ENTITY convertCloud.label "המרה אל…">
+<!ENTITY convertCloud.accesskey "ר">
+<!ENTITY cancelUpload.label "ביטול העלאה">
+<!ENTITY cancelUpload.accesskey "ע">
+<!ENTITY convertRegularAttachment.label "קובץ מצורף רגיל">
+<!ENTITY convertRegularAttachment.accesskey "צ">
+<!ENTITY attachPage.label "צירוף דף אינטרנט…">
+<!ENTITY attachPage.accesskey "א">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "הצגת חלונית הקבצים המצורפים כבר בהתחלה">
+<!ENTITY initiallyShowAttachmentPane.accesskey "צ">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "הוספת מילונים…">
+<!ENTITY spellAddDictionaries.accesskey "מ">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "אנשי קשר">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "התאמה מכתובת…">
+<!ENTITY customizeFromAddress.accesskey "כ">
+
+<!-- Accessibility name for the document -->
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "שפת בדיקת האיות">
+<!ENTITY encodingStatusPanel.tooltip "קידוד טקסט">

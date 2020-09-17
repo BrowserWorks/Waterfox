@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "E-Mail"> 
+<!ENTITY readMsgsLink.label           "Lese Nachrichten"> 
+<!ENTITY composeMsgLink.label         "Neue Nachricht verfassen"> 
+
+<!ENTITY newsSectionHdr.label         "Newsgroups"> 
+<!ENTITY subscribeNewsLink.label      "Newsgroup-Abonnements verwalten"> 
+
+<!ENTITY accountsSectionHdr.label     "Accounts"> 
+<!ENTITY subscribeImapFolders.label   "Ordner-Abonnements verwalten"> 
+<!ENTITY settingsLink.label           "Account-Einstellungen ansehen"> 
+<!ENTITY newAcctLink.label            "Neuen Account erstellen"> 
+
+<!ENTITY advFeaturesSectionHdr.label  "Erweiterte Funktionen"> 
+<!ENTITY searchMsgsLink.label         "Nachrichten durchsuchen"> 
+<!ENTITY filtersLink.label            "Nachrichtenfilter verwalten">
+<!ENTITY junkSettings.label           "Junk-Mail-Einstellungen">
+<!ENTITY offlineLink.label            "Offline-Einstellungen">
+
+<!ENTITY feedsSectionHdr.label        "Feeds">
+<!ENTITY subscribeFeeds.label         "Abonnements verwalten">
+

@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Уласцівасці спіса для вылучэння">
+<!ENTITY Select.label "Спіс для вылучэння">
+<!ENTITY SelectName.label "Назва спіса:">
+<!ENTITY SelectName.accesskey "Н">
+<!ENTITY SelectSize.label "Вышыня:">
+<!ENTITY SelectSize.accesskey "В">
+<!ENTITY SelectMultiple.label "Множнае вылучэнне">
+<!ENTITY SelectMultiple.accesskey "М">
+<!ENTITY SelectDisabled.label "Забаронены">
+<!ENTITY SelectDisabled.accesskey "З">
+<!ENTITY SelectTabIndex.label "Паказальнік зруху:">
+<!ENTITY SelectTabIndex.accesskey "р">
+<!ENTITY OptGroup.label "Група наладжванняў">
+<!ENTITY OptGroupLabel.label "Метка:">
+<!ENTITY OptGroupLabel.accesskey "М">
+<!ENTITY OptGroupDisabled.label "Забаронена">
+<!ENTITY OptGroupDisabled.accesskey "З">
+<!ENTITY Option.label "Наладжванне">
+<!ENTITY OptionText.label "Тэкст:">
+<!ENTITY OptionText.accesskey "Т">
+<!ENTITY OptionValue.label "Значэнне:">
+<!ENTITY OptionValue.accesskey "н">
+<!ENTITY OptionSelected.label "Вылучаны спярша">
+<!ENTITY OptionSelected.accesskey "В">
+<!ENTITY OptionDisabled.label "Забаронены">
+<!ENTITY OptionDisabled.accesskey "З">
+<!ENTITY TextHeader.label "Тэкст">
+<!ENTITY ValueHeader.label "Значэнне">
+<!ENTITY SelectedHeader.label "Вылучаны">
+<!ENTITY AddOption.label "Дадаць наладжванне">
+<!ENTITY AddOption.accesskey "н">
+<!ENTITY AddOptGroup.label "Дадаць групу">
+<!ENTITY AddOptGroup.accesskey "Г">
+<!ENTITY RemoveElement.label "Выдаліць">
+<!ENTITY RemoveElement.accesskey "д">
+<!ENTITY MoveElementUp.label "Рухаць угору">
+<!ENTITY MoveElementUp.accesskey "г">
+<!ENTITY MoveElementDown.label "Рухаць уніз">
+<!ENTITY MoveElementDown.accesskey "У">

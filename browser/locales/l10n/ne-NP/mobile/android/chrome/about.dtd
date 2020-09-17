@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName; बारे थप जानकारी ">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; परिक्षणमा रहेको र अस्थिर हुन सक्ने।">
+<!ENTITY aboutPage.checkForUpdates.link         "अद्यावधिकहरूका लागि जाँच गर्नुहोस्»">
+<!ENTITY aboutPage.checkForUpdates.checking     "अद्यावधिकहरू खोजदैछ...">
+<!ENTITY aboutPage.checkForUpdates.none         "कुनै अधावधिकहरू उपलब्ध छैन">
+<!ENTITY aboutPage.checkForUpdates.available2   "अद्यावधिक डाउनलोड गर्नुहोस्">
+<!ENTITY aboutPage.checkForUpdates.downloading  "अद्यावधिकहरू डाउनलोड हुदैँछ…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "अद्यावधिहरू स्थापना गर्नुहोस्">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "सहायता">
+<!ENTITY aboutPage.privacyPolicy.label          "गोपनीयता निति">
+<!ENTITY aboutPage.rights.label                 "आफ्नो अधिकार जान्नुहोस्">
+<!ENTITY aboutPage.relNotes.label               "जारी द्रष्टब्यहरू">
+<!ENTITY aboutPage.credits.label                "श्रेयहरू">
+<!ENTITY aboutPage.license.label                "इजाजतपत्र सूचना">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox र Firefox लोगो Mozilla Foundation को ट्रेडमार्कहरू हुन्।">

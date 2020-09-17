@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Viestisuodattimet">
+<!ENTITY nameColumn.label "Suodattimen nimi">
+<!ENTITY activeColumn.label "Käytössä">
+<!ENTITY newButton.label "Uusi…">
+<!ENTITY newButton.accesskey "U">
+<!ENTITY editButton.label "Muokkaa…">
+<!ENTITY editButton.accesskey "M">
+<!ENTITY deleteButton.label "Poista">
+<!ENTITY deleteButton.accesskey "o">
+<!ENTITY reorderUpButton.label "Siirrä ylös">
+<!ENTITY reorderUpButton.accesskey "y">
+<!ENTITY reorderDownButton.label "Siirrä alas">
+<!ENTITY reorderDownButton.accesskey "a">
+<!ENTITY filterHeader.label "Käytössä olevat suodattimet suoritetaan alla olevassa järjestyksessä.">
+<!ENTITY filtersForPrefix.label "Suodattimet kohteelle:">
+<!ENTITY filtersForPrefix.accesskey "S">
+<!ENTITY viewLogButton.label "Suodatinloki">
+<!ENTITY viewLogButton.accesskey "l">
+<!ENTITY runFilters.label "Suorita">
+<!ENTITY runFilters.accesskey "S">
+<!ENTITY stopFilters.label "Pysäytä">
+<!ENTITY stopFilters.accesskey "y">
+<!ENTITY folderPickerPrefix.label "Suorita valitut suodattimet kansiolle:">
+<!ENTITY folderPickerPrefix.accesskey "v">
+<!ENTITY choosethis.label "valitse tämä kansio">
+<!ENTITY choosethisnewsserver.label "valitse tämä keskusteluryhmäpalvelin">

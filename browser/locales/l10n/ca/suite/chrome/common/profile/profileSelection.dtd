@@ -1,0 +1,23 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Seleccioneu el perfil d'usuari">
+<!ENTITY            profileManager.title "Gestor de perfils del &brandShortName;">
+
+<!ENTITY            manage.label     "Gestiona els perfils…">
+<!ENTITY            manage.accesskey "G">
+<!ENTITY            select.label     "Utilitza el perfil">
+
+<!ENTITY            availableProfiles.label "Perfils disponibles">
+
+<!ENTITY            introStart.label         "Per accedir al vostre perfil personal, que conté els vostres missatges emmagatzemats, paràmetres i altra informació personal, trieu-lo de la llista, i feu clic a &start.label; per iniciar la vostra sessió.">
+<!ENTITY            introSwitch.label        "Per canviar a un altre perfil, que conté els missatges emmagatzemats, paràmetres i altra informació personal, trieu-lo de la llista, i feu clic a &select.label; per començar a utilitzar-lo.">
+<!ENTITY            profileManagerText.label "El &brandShortName; emmagatzema informació dels vostres paràmetres, preferències, adreces d'interès, missatges emmagatzemats i altres elements de l'usuari en el vostre perfil.">
+
+<!ENTITY            autoSelect.label         "Utilitza aquest perfil per defecte">
+<!ENTITY            autoSelect.accesskey     "U">
+

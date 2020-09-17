@@ -1,0 +1,7 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removeDataChat.label         "داده‌های گفت‌وگو را حذف کنید">
+<!ENTITY removeDataChat.accesskey     "د">
+<!ENTITY removeDataChatAccount.desc   "تمام سیاهه‌های ثبت شده مربوط به مکالمات ذخیره شده برای این حساب را بر روی دیسک محلی شما حذف می‌کند.">

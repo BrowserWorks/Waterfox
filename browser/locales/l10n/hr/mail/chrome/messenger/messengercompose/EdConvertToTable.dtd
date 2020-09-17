@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Prebaci u tablicu">
+<!ENTITY instructions1.label   "Composer stvara novi tablični redak za svaki odlomak iz odabira.">
+<!ENTITY instructions2.label   "Odaberite znak za odvajanje odabira u stupce:">
+<!ENTITY commaRadio.label      "Zarez">
+<!ENTITY spaceRadio.label      "Razmak">
+<!ENTITY otherRadio.label      "Ostali znaci:">
+<!ENTITY deleteCharCheck.label "Obriši znak odvajanja">
+<!ENTITY collapseSpaces.label  "Zanemari dodatne razmake">
+<!ENTITY collapseSpaces.tooltip "Pretvori uzastopne razmake u jedan znak odvajanja">

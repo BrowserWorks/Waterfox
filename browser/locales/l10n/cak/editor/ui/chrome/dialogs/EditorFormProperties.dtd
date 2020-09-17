@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Taq Richinil Nojwuj">
+
+<!ENTITY Settings.label "Taq nuk'ulem">
+
+<!ENTITY FormName.label "Rub'anikil B'i'aj:">
+<!ENTITY FormName.accesskey "B">
+<!ENTITY FormAction.label "B'anoj URL:">
+<!ENTITY FormAction.accesskey "B">
+<!ENTITY FormMethod.label "B'eyal:">
+<!ENTITY FormMethod.accesskey "B">
+<!ENTITY FormEncType.label "Cholajinïk:">
+<!ENTITY FormEncType.accesskey "o">
+<!ENTITY FormTarget.label "Ruchi' Rub'ey:">
+<!ENTITY FormTarget.accesskey "R">
+
+<!ENTITY RemoveForm.label "Tiyuj Nojwuj">
+<!ENTITY RemoveForm.accesskey "y">

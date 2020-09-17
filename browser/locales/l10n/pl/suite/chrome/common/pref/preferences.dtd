@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY prefWindow.title "Preferencje">
+<!ENTITY categoryHeader "Kategoria">
+
+<!ENTITY appear.label "Wygląd">
+<!ENTITY content.label "Zawartość">
+<!ENTITY fonts.label "Czcionki">
+<!ENTITY colors.label "Kolory">
+<!ENTITY spellingPane.label "Pisownia">
+
+<!ENTITY navigator.label "Przeglądarka">
+<!ENTITY history.label "Historia">
+<!ENTITY languages.label "Języki">
+<!ENTITY applications.label "Aplikacje">
+<!ENTITY locationBar.label "Pasek adresu">
+<!ENTITY search.label "Wyszukiwanie">
+<!ENTITY tabWindows.label "Karty">
+<!ENTITY links.label "Odnośniki">
+<!ENTITY download.label "Pobieranie plików">
+
+<!ENTITY security.label "Prywatność i zabezpieczenia">
+<!ENTITY privatedata.label "Prywatne dane">
+<!ENTITY cookies.label "Ciasteczka">
+<!ENTITY images.label "Obrazy">
+<!ENTITY popups.label "Wyskakujące okna">
+<!ENTITY passwords.label "Hasła">
+<!ENTITY masterpass.label "Hasło główne">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "Certyfikaty">
+
+<!ENTITY sync.label "Sync">
+
+<!ENTITY advance.label "Zaawansowane">
+<!ENTITY scriptsAndWindows.label "Skrypty i wtyczki">
+<!ENTITY keynav.label "Nawigacja">
+<!ENTITY findAsYouType.label "Znajdź wprowadzając">
+<!ENTITY cache.label "Pamięć podręczna">
+<!ENTITY offlineApps.label "Aplikacje trybu offline">
+<!ENTITY proxies.label "Serwery proxy">
+<!ENTITY httpnetworking.label "Protokół HTTP">
+<!ENTITY smart.label "Instalacja">
+<!ENTITY mousewheel.label "Przewijanie">
+
+<!ENTITY focusSearch.key "f">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ცვლილებების ჩასწორება">
+<!ENTITY conflictWarning.label "გვერდი შეიცვალა სხვა პროგრამის მიერ, ამავე დროს თქვენ მიერ შეტანილი ცვლილებებიც არ დამახსოვრებულა.">
+<!ENTITY conflictResolve.label "სასურველი ვერსიის არჩევა:">
+<!ENTITY keepCurrentPageButton.label "მიმდინარე ცვლილებების შენარჩუნება">
+<!ENTITY useOtherPageButton.label "მიმდინარე ცვლილებების სხვა ცვლილებებით შეცვლა">

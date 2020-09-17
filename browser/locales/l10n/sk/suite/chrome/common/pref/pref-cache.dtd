@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Vyrovnávacia pamäť">
+<!ENTITY pref.cache.caption              "Nastavenia pre vyrovnávaciu pamäť">
+<!ENTITY cachePara                       "Vyrovnávacia pamäť uchováva kópie najčastejšie navštevovaných webových stránok na vašom pevnom disku. (Kliknutím na tlačidlo Obnoviť sa vždy načíta aktuálna verzia stránky)">
+<!ENTITY cacheCheck.label                "Nechať &brandShortName; spravovať veľkosť vyrovnávacej pamäte">
+<!ENTITY cacheCheck.accesskey            "e">
+<!ENTITY diskCacheUpTo.label             "Vyhradiť">
+<!ENTITY diskCacheUpTo.accesskey         "h">
+<!ENTITY spaceMbytes                     "MB diskového priestoru">
+<!ENTITY diskCacheFolder.label           "Priečinok pre vyrovnávaciu pamäť:">
+<!ENTITY clearDiskCache.label            "Vymazať vyrovnávaciu pamäť">
+<!ENTITY clearDiskCache.accesskey        "m">
+<!ENTITY chooseDiskCacheFolder.label     "Vybrať priečinok…">
+<!ENTITY chooseDiskCacheFolder.accesskey "V">
+<!ENTITY diskCacheFolderExplanation      "Súbory vyrovnávacej pamäte budú uložené ako podpriečinok s názvom &quot;Cache&quot; v priečinku, ktorý určíte. Zmeny sa prejavia až po reštartovaní &brandShortName;.">
+<!ENTITY docCache.label                  "Porovnať stránku vo vyrovnávacej pamäti so stránkou na webe:">
+<!ENTITY docCache.accesskey              "o">
+<!ENTITY checkOncePerSession.label       "raz za reláciu">
+<!ENTITY checkEveryTime.label            "vždy pri zobrazení stránky">
+<!ENTITY checkNever.label                "nikdy">
+<!ENTITY checkAutomatically.label        "keď je stránka zastaraná">
+
+<!ENTITY prefetchTitle.label             "Načítavanie odkazov dopredu">
+<!ENTITY enablePrefetch.label            "Pri nečinnosti načítavať odkazy dopredu, takže sa po kliknutí budú načítavať oveľa rýchlejšie.">
+<!ENTITY enablePrefetch.accesskey        "r">

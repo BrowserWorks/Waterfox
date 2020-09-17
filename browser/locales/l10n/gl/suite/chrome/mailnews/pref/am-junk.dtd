@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Configuración de correo lixo">
+<!ENTITY trainingDescription.label "Se activa esta opción, debe adestrar &brandShortName; para que identifique o lixo co botón Correo lixo da barra de ferramentas. É necesario identificar tanto mensaxes que son lixo como as que non o son. Despois disto, &brandShortName; poderá marcalas automaticamente.">
+<!ENTITY level.label "Activar os controis adaptábeis de correo lixo nesta conta">
+<!ENTITY level.accesskey "e">
+
+<!ENTITY move.label "Mover os novos correos lixo para:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "Cartafol &quot;Correo lixo&quot; en:">
+<!ENTITY junkFolderOn.accesskey "x">
+<!ENTITY otherFolder.label "Outro:">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "Eliminar automaticamente o lixo con máis de ">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "días">
+
+<!ENTITY whitelistHeader.label "Non marcar automaticamente como lixo os correos enviados por: ">
+<!ENTITY whitelistHeader.accesskey "d">
+
+<!ENTITY ispHeadersWarning.label "Se activa esta opción, automaticamente o &brandShortName; considerará as mensaxes marcadas por este clasificador externo como lixo.">
+<!ENTITY ispHeaders.label "Confiar nas cabeceiras definidas como lixo por: ">
+<!ENTITY ispHeaders.accesskey "C">
+
+<!ENTITY junkClassification.label "Selección">
+<!ENTITY junkActions.label "Destino e retención">
+
+<!ENTITY globalJunkPrefs.label "Preferencias globais do correo lixo…">
+<!ENTITY globalJunkPrefs.accesskey "g">

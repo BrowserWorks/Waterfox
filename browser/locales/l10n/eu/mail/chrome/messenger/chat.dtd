@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Konektatutako kontaktuak">
+<!ENTITY offlineContactsHeader.label   "Konektatu gabeko kontaktuak">
+<!ENTITY conversationsHeader.label     "Berriketak">
+<!ENTITY searchResultConversation.label "Bilaketaren emaitza">
+<!ENTITY chat.noConv.title             "Berriketak hemen bistaratuko dira.">
+<!ENTITY chat.noConv.description       "Erabili ezkerreko paneleko kontaktuen zerrenda berriketa bat hasteko.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName;(e)k ez dauka aurreko berriketarik gordeta kontaktu honentzat.">
+<!ENTITY chat.noAccount.title             "Ez duzu txat-konturik konfiguratu oraindik.">
+<!ENTITY chat.noAccount.description       "Utzi &brandShortName;(r)i zure txat-kontua konfiguratzeko prozesuan gidatzen.">
+<!ENTITY chat.accountWizard.button       "Hasi">
+<!ENTITY chat.noConnectedAccount.title             "Zure txat-kontuak ez daude konektatuta.">
+<!ENTITY chat.noConnectedAccount.description       "'Txataren egoera' elkarrizketatik konekta ditzakezu.">
+<!ENTITY chat.showAccountManager.button       "Erakutsi txataren egoera">
+
+<!ENTITY chat.participants             "Partaideak">
+<!ENTITY chat.previousConversations    "Aurreko berriketak:">
+<!ENTITY chat.ongoingConversation      "Berriketak aribidean">
+
+<!ENTITY openConversationCmd.label     "Hasi berriketa">
+<!ENTITY openConversationCmd.accesskey "b">
+<!ENTITY closeConversationCmd.label    "Itxi berriketa">
+<!ENTITY closeConversationCmd.accesskey "I">
+<!ENTITY aliasCmd.label                "Aldatu izena">
+<!ENTITY aliasCmd.accesskey            "i">
+<!ENTITY deleteCmd.label               "Kendu kontaktua">
+<!ENTITY deleteCmd.accesskey           "d">
+
+<!ENTITY openConversationButton.tooltip  "Hasi berriketa">
+<!ENTITY closeConversationButton.tooltip "Itxi berriketa">
+
+<!ENTITY addBuddyButton.label          "Gehitu kontaktua">
+<!ENTITY joinChatButton.label          "Sartu txatera">
+<!ENTITY chatAccountsButton.label      "Erakutsi kontuak">
+
+<!ENTITY status.available          "Erabilgarri">
+<!ENTITY status.unavailable        "Ez dago erabilgarri">
+<!ENTITY status.offline            "Lineaz kanpo">
+
+<!ENTITY openLinkCmd.label            "Ireki lotura…">
+<!ENTITY openLinkCmd.accesskey        "I">

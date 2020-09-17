@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Kwanyo">
+<!ENTITY aboutDownloads.header                     "Kwany Mamegi">
+<!ENTITY aboutDownloads.empty                      "Kwanyo Peke">
+
+<!ENTITY aboutDownloads.open                       "Yab">
+<!ENTITY aboutDownloads.remove                     "Kwany woko">
+<!ENTITY aboutDownloads.removeAll                  "Kwany weng">
+<!ENTITY aboutDownloads.pause                      "Cung manok">
+<!ENTITY aboutDownloads.resume                     "Dwogo">
+<!ENTITY aboutDownloads.cancel                     "Juki">
+<!ENTITY aboutDownloads.retry                      "Tem odoco">

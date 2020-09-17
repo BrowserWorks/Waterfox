@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Satura rādītājs">
+
+
+<!ENTITY class.label         "Klase:">
+<!ENTITY header1.label       "Līmenis 1">
+<!ENTITY header2.label       "Līmenis 2">
+<!ENTITY header3.label       "Līmenis 3">
+<!ENTITY header4.label       "Līmenis 4">
+<!ENTITY header5.label       "Līmenis 5">
+<!ENTITY header6.label       "Līmenis 6">
+
+

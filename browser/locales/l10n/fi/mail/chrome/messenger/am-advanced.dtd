@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Lähtevän postin palvelimen asetukset">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Valitse käyttäjätiedolle lähtevän postin palvelin (SMTP) listasta tai käytä oletuspalvelinta valitsemalla &quot;Käytä oletuspalvelinta&quot;.">
+
+<!ENTITY smtpListAdd.label  "Lisää…">
+<!ENTITY smtpListAdd.accesskey  "L">
+<!ENTITY smtpListEdit.label "Muokkaa…">
+<!ENTITY smtpListEdit.accesskey "M">
+<!ENTITY smtpListDelete.label "Poista">
+<!ENTITY smtpListDelete.accesskey "o">
+<!ENTITY smtpListSetDefault.label "Aseta oletukseksi">
+<!ENTITY smtpListSetDefault.accesskey "A">
+
+<!ENTITY serverDetails.label "Valitun palvelimen tiedot:">
+<!ENTITY serverDescription.label "Kuvaus:">
+<!ENTITY serverName.label "Palvelin:">
+<!ENTITY serverPort.label "Portti:">
+<!ENTITY userName.label   "Käyttäjätunnus:">
+<!ENTITY connectionSecurity.label "Yhteyden suojaus: ">
+<!ENTITY authMethod.label   "Todennustapa: ">

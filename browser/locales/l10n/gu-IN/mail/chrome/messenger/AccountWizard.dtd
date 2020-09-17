@@ -1,0 +1,99 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "ખાતા વિઝાર્ડ">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountTypeTitle.label "નવું ખાતા સુયોજન">
+<!ENTITY accountTypeDirections.label "તમે સુયોજિત કરવા માંગતા હોય તેવા ખાતાનો પ્રકાર પસંદ કરો:">
+<!ENTITY accountTypeMail.label "ઈમેલ ખાતુ">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "સમાચાર જૂથ ખાતુ">
+<!ENTITY accountTypeNews.accesskey "w">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "ઓળખ">
+<!ENTITY identityDesc.label "દરેક ખાતા પાસે ઓળખ હોય છે, જે જાણકારી છે કે જે જ્યારે તમારા સંદેશાઓ બીજાને મળે ત્યારે તમને ઓળખાવે છે.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "તમારા જતા સંદેશાઓના &quot;From&quot; ક્ષેત્રમાં તમે જે નામ જોવા માંગતા હોય તે દાખલ કરો">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+	1, do not translate two of "&quot;"
+	2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(ઉદાહરણ તરીકે, &quot;જ્હોન સ્મીથ&quot;).">
+<!ENTITY fullnameLabel.label "તમારું નામ:">
+<!ENTITY fullnameLabel.accesskey "Y">
+
+<!ENTITY emailLabel.label "ઈમેલ સરનામુ:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Server page -->
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingServerTypeDesc.label "તમે જે વાપરી રહ્યા હોય તે ઈનકમીંગ સર્વરનો પ્રકાર દાખલ કરો.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+
+<!-- for when the user has an SMTP server pre-configured -->
+<!-- LOCALIZATION NOTE (currentSmtpBefore.label) : Do not translate "SMTP" and "&quot;" in
+     this variable. Also, translate currentSmtpBefore.label and currentSmtpAfter.label as a single sentence,
+	  inserting text after the "&quot;" entity in currentSmtpAfter.label, if required grammatically
+-->
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "તમારા સમાચાર (NNTP) સર્વરનું નામ દાખલ કરો (ઉદાહરણ તરીકે, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "સમાચાર જુથ સર્વર:">
+<!ENTITY newsServerLabel.accesskey "N">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "તમારું હાલનું આઉટગોઈંગ સર્વર (SMTP), &quot;">
+
+<!-- Entities for Login page -->
+
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "તમારું હાલનું આઉટગોઈંગ (SMTP) વપરાશકર્તા નામ, &quot;">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "તમારું આઉટગોઈંગ (SMTP) સર્વર, &quot;">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "ખાતા નામ">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "નામ દાખલ કરો કે જેના દ્વારા તમે આ ખાતાનો સંદર્ભ કરવા માંગો (ઉદાહરણ તરીકે, &quot;કામનું ખાતુ&quot;, &quot;ઘર ખાતુ&quot; અથવા &quot;સમાચાર ખાતુ&quot;).">
+<!ENTITY accnameLabel.label "ખાતા નામ:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "અભિનંદન!">
+<!ENTITY completionText.label "મહેરબાની કરીને ચકાસો કે નીચેની જાણકારી સાચી છે ને.">
+<!ENTITY serverTypePrefix.label "ઈનકમીંગ સર્વર પ્રકાર:">
+<!ENTITY serverNamePrefix.label "ઈનકમીંગ સર્વર નામ:">
+<!ENTITY smtpServerNamePrefix.label "આઉટગોઈંગ સર્વર નામ (SMTP):">
+<!ENTITY newsServerNamePrefix.label "સમાચાર સર્વર નામ (NNTP):">
+<!ENTITY downloadOnLogin.label "સંદેશાઓ હમણાં ડાઉનલોડ કરો">
+<!ENTITY deferStorageDesc.label "આ ખાતાના તેની પોતાની ડિરેક્ટરીમાં જ મેલ સંગ્રહવા માટે ચકાસણીબોક્સની ચકાસણી દૂર કરો. આ ખાતાને ઉચ્ચ-સ્તરમાં દેખાતું ખાતું બનાવશે. નહિંતર, તે ઈનબોક્સ ખાતાના સ્થાનિક ફોલ્ડરોનો ભાગ બનશે.">
+<!ENTITY deferStorage.label "ઉમદા ઈનબોક્સ વાપરો (સ્થાનિક ફોલ્ડરોમાં મેલ સંગ્રહો)">
+<!ENTITY clickFinish.label "આ સુયોજનોનો સંગ્રહ કરવા માટે પૂર્ણ કરો પર ક્લિક કરો અને ખાતા વિઝાર્ડમાંથી બહાર નીકળો.">

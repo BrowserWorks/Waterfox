@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Свойства на поле във формуляр">
+<!ENTITY windowTitleImage.label "Свойства на изображение във формуляр">
+
+<!ENTITY InputType.label "Тип на поле">
+<!ENTITY InputType.accesskey "е">
+<!ENTITY text.value "Текст">
+<!ENTITY password.value "Парола">
+<!ENTITY checkbox.value "Кутийка за отметка">
+<!ENTITY radio.value "Радиобутон">
+<!ENTITY submit.value "Бутон изпращане">
+<!ENTITY reset.value "Бутон нулиране">
+<!ENTITY file.value "Файл">
+<!ENTITY hidden.value "Скрит">
+<!ENTITY image.value "Изображение">
+<!ENTITY button.value "Бутон">
+
+<!ENTITY InputSettings.label "Настройки на поле">
+<!ENTITY InputName.label "Име на поле:">
+<!ENTITY InputName.accesskey "И">
+<!ENTITY GroupName.label "Име на група:">
+<!ENTITY GroupName.accesskey "И">
+<!ENTITY InputValue.label "Стойност на поле:">
+<!ENTITY InputValue.accesskey "С">
+<!ENTITY InitialValue.label "Първоначална стойност:">
+<!ENTITY InitialValue.accesskey "с">
+<!ENTITY InputChecked.label "Първоначално отметнато">
+<!ENTITY InputChecked.accesskey "о">
+<!ENTITY InputSelected.label "Първоначално избрано">
+<!ENTITY InputSelected.accesskey "б">
+<!ENTITY InputReadOnly.label "Само за четене">
+<!ENTITY InputReadOnly.accesskey "ч">
+<!ENTITY InputDisabled.label "Неактивен">
+<!ENTITY InputDisabled.accesskey "Н">
+<!ENTITY tabIndex.label "Отместване при табулиране:">
+<!ENTITY tabIndex.accesskey "И">
+<!ENTITY TextSize.label "Размер на поле:">
+<!ENTITY TextSize.accesskey "п">
+<!ENTITY TextLength.label "Максимална дължина:">
+<!ENTITY TextLength.accesskey "ж">
+<!ENTITY AccessKey.label "Клавиш за достъп:">
+<!ENTITY AccessKey.accesskey "ш">
+<!ENTITY Accept.label "Приемани типове:">
+<!ENTITY Accept.accesskey "и">
+
+<!ENTITY ImageProperties.label "Свойства на изображение…">
+<!ENTITY ImageProperties.accesskey "з">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Відкрити файл…">
+<!ENTITY openFileCmd.accesskey "В">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Відкрити веб розташування…">
+<!ENTITY openRemoteCmd.accesskey "р">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Недавні сторінки">
+<!ENTITY fileRecentMenu.accesskey "Н">
+<!ENTITY saveCmd.label "Зберегти">
+<!ENTITY saveCmd.accesskey "З">
+<!ENTITY saveAsCmd.label "Зберегти як…">
+<!ENTITY saveAsCmd.accesskey "я">
+<!ENTITY saveAsChangeEncodingCmd2.label "Зберегти та змінити кодування символів">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "к">
+<!ENTITY publishCmd.label "Опублікувати">
+<!ENTITY publishCmd.accesskey "п">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Опублікувати як…">
+<!ENTITY publishAsCmd.accesskey "б">
+<!ENTITY fileRevert.label "Повернути">
+<!ENTITY fileRevert.accesskey "р">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Налаштування публікації сайту…">
+<!ENTITY publishSettings.accesskey "Н">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Новий">
+<!ENTITY newToolbarCmd.tooltip "Створити нову сторінку">
+<!ENTITY openToolbarCmd.label "Відкрити">
+<!ENTITY openToolbarCmd.tooltip "Відкрити локальний файл">
+<!ENTITY saveToolbarCmd.tooltip "Зберегти файл до локального розташування">
+<!ENTITY publishToolbarCmd.tooltip "Вивантажити файл до віддаленого розташування">
+<!ENTITY printToolbarCmd.label "Друк">
+<!ENTITY printToolbarCmd.tooltip "Надрукувати цю сторінку">

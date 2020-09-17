@@ -1,0 +1,78 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "Ismingiz:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY name.text                       "Ismingiz (boshqalarga ko‘rinadigan)">
+<!ENTITY email.label                     "E-pochta manzili:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY password.label                  "Parol:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "Parol">
+<!ENTITY password.text                   "Ixtiyoriy, foydalanuvchi nomini tasdiqlash uchun foydalaniladi.">
+<!ENTITY rememberPassword.label          "Parolni eslab qolish">
+<!ENTITY rememberPassword.accesskey      "P">
+
+<!ENTITY imapLong.label                  "IMAP (masofadagi jildlar)">
+<!ENTITY pop3Long.label                  "POP3 (xatlarni kompyuterda saqlash)">
+
+<!ENTITY incoming.label                  "Kiruvchi:">
+<!ENTITY outgoing.label                  "Chiquvchi:">
+<!ENTITY username.label                  "Foydalanuvchi nomi:">
+<!ENTITY auth.label                      "Tasdiqdan o‘tkazish">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                       "POP3">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Avtoaniqlash">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Yo‘q">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!ENTITY advancedSetup.label             "Qo‘shimcha moslash">
+<!ENTITY advancedSetup.accesskey         "Q">
+<!ENTITY cancel.label                    "Bekor qilish">
+<!ENTITY cancel.accesskey                "B">
+<!ENTITY continue.label                  "Davom etish">
+<!ENTITY continue.accesskey              "D">
+<!ENTITY stop.label                      "To‘xtatish">
+<!ENTITY stop.accesskey                  "T">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Qayta sinash">
+<!ENTITY half-manual-test.accesskey      "s">
+
+
+<!ENTITY warning.label                   "Diqqat!">
+<!ENTITY incomingSettings.label          "Kiruvchi xatlar sozlamalari:">
+<!ENTITY outgoingSettings.label          "Chiquvchi xatlar sozlamalari:">
+<!ENTITY technicaldetails.label          "Texnik ma’lumotlar">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Men xavfni tushundim">
+<!ENTITY confirmWarning.accesskey        "t">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Tayyor">
+<!ENTITY doneAccount.accesskey           "T">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Sozlamalarni o‘zgartirish">
+<!ENTITY changeSettings.accesskey        "S">
+
+<!ENTITY contactYourProvider.description "&brandShortName; kelgirilgan moslashlardan foydalanib xat olishga ruxsat berishi mumkin, lekin siz administrator yoki e-pochta xizmatini ko‘rsatuvchi tashkilot bilan bog‘lanishingiz kerak. Batafsil ma’lumot olish uchun Thunderbird FAQ savol-javoblarini ko‘rb chiqing.">
+
+<!ENTITY insecureServer.tooltip.title    "Diqqat! Bu xavfli server.">
+<!ENTITY insecureServer.tooltip.details  "Batafsil ma’lumot uchun halqaga bosing.">
+
+<!ENTITY insecureUnencrypted.description "Xatingiz va haqiqiyligini tasdiqlsh shifrlanmasdan jo‘natildi, bunday holda boshqalar osongina parolingizni (xabaringizni ham) ko‘rishi mumkin. &brandShortName; xatni olishingizni ta’minlaydi, lekin siz e-pochta ta’miotchisi bilan serverda xavfsiz ulanishni sozlashi uchun bog‘lanishingiz kerak.">
+<!ENTITY insecureSelfSigned.description  "Bu server ishonchsiz sertifikatdan foydalanadi, shuning uchun &brandShortName; va serveringiz o‘rtasidagi traffikdan foydalanishi mumkin. &brandShortName; xatni olishingizni ta’minlaydi, ammo siz e-pochta ta’minotchisi bilan serverni ishonchli sertifikat bilan sozlashi haqida gaplashib ko‘rishingiz kerak.">
+<!ENTITY secureServer.description        "Tabriklaymiz! Bu xavfsiz server.">

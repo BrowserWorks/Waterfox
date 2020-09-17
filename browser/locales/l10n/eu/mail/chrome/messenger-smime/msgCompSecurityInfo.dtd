@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Mezuaren segurtasuna">
+<!ENTITY subject.plaintextWarning "Gogoan izan: e-posta mezuetako gaietan dakarrena ez da inoiz zifratzen.">
+<!ENTITY status.heading "Zure mezuaren edukiak horrela bidaliko dira:">
+<!ENTITY status.signed "Digitalki sinatua:">
+<!ENTITY status.encrypted "Zifratuta:">
+<!ENTITY status.certificates "Ziurtagiriak:">
+<!ENTITY view.label "Ikusi">
+<!ENTITY view.accesskey "I">
+<!ENTITY tree.recipient "Hartzailea:">
+<!ENTITY tree.status "Egoera">
+<!ENTITY tree.issuedDate "Emana:">
+<!ENTITY tree.expiresDate "Iraungitze-data:">

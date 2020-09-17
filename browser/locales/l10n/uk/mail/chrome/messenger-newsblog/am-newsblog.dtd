@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Увімкнути оновлення для всіх стрічок новин">
+<!ENTITY biffAll.accesskey             "У">
+
+<!ENTITY newFeedSettings.label         "Типові налаштування для нових стрічок новин">
+
+<!ENTITY manageSubscriptions.label     "Упорядкувати підписки…">
+<!ENTITY manageSubscriptions.accesskey "У">
+
+<!ENTITY feedWindowTitle.label         "Майстер стрічок новин">
+<!ENTITY feeds.accountName             "Блоги та стрічки новин">

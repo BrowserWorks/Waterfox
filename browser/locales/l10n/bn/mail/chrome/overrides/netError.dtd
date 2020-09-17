@@ -1,0 +1,129 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "পৃষ্ঠা লোড করতে ত্রুটি">
+<!ENTITY retry.label "আবার চেষ্টা করুন">
+
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "সংযুক্ত হতে ব্যর্থ">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "এই ঠিকানাটি সীমাবদ্ধ">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "সার্ভার পাওয়া যায়নি">
+<!ENTITY dnsNotFound.longDesc "<ul> 
+<li>আপনার দেয়া ঠিকানাটি ভুল হয়েছে কিনা পরীক্ষা করে দেখুন। 
+<strong>www</strong>.example.com এর পরিবর্তে 
+<strong>ww</strong>.example.com লিখেছেন কিনা</li> 
+<li>আপনি যদি কোন পৃষ্ঠাই লোড করতে না পারেন, তবে আপনার কম্পিউটারের 
+নেটওয়ার্ক সংযোগ পরীক্ষা করুন।</li> 
+<li>আপনার নেটওয়ার্ক যদি ফায়ারওয়াল বা প্রক্সি দিয়ে সুরক্ষিত থাকে, নিশ্চিত করুন 
+&brandShortName; এর নেটওয়ার্কে প্রবেশ অনুমোদিত কিনা।</li> 
+</ul>">
+
+<!ENTITY fileNotFound.title "ফাইল পাওয়া যায়নি">
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>ফাইলের নামে অক্ষরের ছাঁদ বা টাইপিং এ কোন ভুল আছে কিনা পরীক্ষা করুন।</li> <li>এও পরীক্ষা করুন ফাইলটি নামান্তর, স্থানান্তর, বা অপসারণ করা হয়েছে কিনা।</li> 
+</ul>">
+
+<!ENTITY generic.title "ওহো!">
+<!ENTITY generic.longDesc "<p>&brandShortName; কোন কারনে পৃষ্ঠাটি লোড করতে পারেনি।</p>">
+
+<!ENTITY malformedURI.title "ঠিকানাটি কার্যকর নয়">
+<!ENTITY malformedURI.longDesc "<ul> 
+<li>ওয়েব অ্যাড্রেস সাধারণত লেখা হয় এভাবে 
+<strong>http://www.example.com/</strong></li> 
+<li>আপনি কি ফরোয়ার্ড স্ল্যাশ (তথা, <strong>/</strong>) 
+সঠিকভাবে ব্যবহার করছেন?</li> 
+</ul>">
+
+<!ENTITY netInterrupt.title "সংযোগটি বিঘ্নিত হয়েছিল">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY netOffline.title "অফলাইন মোড">
+
+<!ENTITY contentEncodingError.title "বিষয়বস্তু এনকোড করতে ত্রুটি">
+<!ENTITY contentEncodingError.longDesc "<ul> 
+<li>ওয়েবসাইটের কতৃপক্ষকে এই সমস্যা সম্পর্কে অবহিত করুন।</li> 
+</ul>">
+
+<!ENTITY unsafeContentType.title "ঝুঁকিপুর্ণ ধরণের ফাইল">
+<!ENTITY unsafeContentType.longDesc "<ul> 
+<li>ওয়েবসাইটের কতৃপক্ষকে এই সমস্যা সম্পর্কে অবহিত করুন।</li> 
+</ul>">
+
+<!ENTITY netReset.title "সংযোগটি পুনঃনির্ধারণ হয়েছিল">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "সংযোগটির সময়উত্তীর্ন হয়ে গেছে">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY proxyConnectFailure.title "প্রক্সি সার্ভারটি সংযোগ প্রত্যাখ্যান করছে">
+<!ENTITY proxyConnectFailure.longDesc "<ul> 
+<li>প্রক্সি সেটিং ঠিক আছে কিনা পরীক্ষা করুন।</li> 
+<li>আপনার নেটওয়ার্ক ব্যবস্থাপকের সাথে যোগাযোগ করে জেনে নিন প্রক্সি সার্ভার ঠিক মতো 
+কাজ করছে কিনা।</li> 
+</ul>">
+
+<!ENTITY proxyResolveFailure.title "প্রক্সি সার্ভার খুঁজে পাওয়া যায়নি">
+<!ENTITY proxyResolveFailure.longDesc "<ul> 
+<li>প্রক্সি সেটিং ঠিক আছে কিনা পরীক্ষা করুন।</li> 
+<li>নেটওয়ার্ক সংযোগ সক্রিয় আছে কিনা পরীক্ষা করুন।</li> 
+<li>আপনার নেটওয়ার্ক যদি ফায়ারওয়াল বা প্রক্সি দিয়ে সুরক্ষিত থাকে, নিশ্চিত করুন 
+&brandShortName; এর নেটওয়ার্কে প্রবেশ অনুমোদিত কিনা।</li> 
+</ul>">
+
+<!ENTITY redirectLoop.title "পৃষ্ঠাটি সঠিকভাবে রিডিরেক্ট করছে না">
+<!ENTITY redirectLoop.longDesc "<ul> 
+<li>কুকি নিষ্ক্রিয় বা গ্রহণ না করার ফলেও এই ত্রুটি দেখা দেয়া 
+সম্ভব।</li> 
+</ul>">
+
+<!ENTITY unknownSocketType.title "সার্ভার থেকে অপ্রত্যাশিত উত্তর">
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>নিশ্চিত করুন যে আপনার সিস্টেমে ব্যক্তিগত নিরাপত্তা ব্যবস্থাপক ইনস্টল 
+করা আছে।</li> 
+<li>সার্ভারে আদর্শ কনফিগারেশন না থাকার ফলে এটি হবার সম্ভবনা আছে।</li> 
+</ul>">
+
+<!ENTITY nssFailure2.title "সুরক্ষিত সংযোগ ব্যর্থ">
+
+<!ENTITY nssBadCert.title "সুরক্ষিত সংযোগ ব্যর্থ">
+<!ENTITY nssBadCert.longDesc2 "<ul> 
+<li>এটি সার্ভারের কনফিগারেশন সমস্যার কারনে হতে পারে, অথবা এমন হতে পারে 
+কেউ সার্ভারটির রূপ ধারণ করার চেষ্টা করছে।</li> 
+<li>আপনি যদি পূর্বে এই সার্ভারের সাথে সফলভাবে সংযুক্ত হয়ে থাকেন, এটি একটি অস্থায়ী 
+ত্রুটি হতে পারে, অতএব কিছুক্ষণ পর আবার চেষ্টা করুন।</li> 
+</ul>">
+
+<!ENTITY sharedLongDesc "<ul> 
+<li>সাইটটি অস্থায়ীভাবে অনুপস্থিত বা ব্যস্ত হতে পারে। কিছুক্ষণ পর আবার 
+চেষ্টা করুন।</li> 
+<li>আপনি যদি কোন পৃষ্ঠাই লোড করতে না পারেন, তবে আপনার কম্পিউটারের 
+নেটওয়ার্ক সংযোগ পরীক্ষা করুন।</li> 
+<li>আপনার নেটওয়ার্ক যদি ফায়ারওয়াল বা প্রক্সি দিয়ে সুরক্ষিত থাকে, নিশ্চিত করুন 
+&brandShortName; এর নেটওয়ার্কে প্রবেশ অনুমোদিত কিনা।</li> 
+</ul>">
+
+<!ENTITY securityOverride.linkText "অথবা একটি এক্সেপশন যোগ করতে পারেন...">
+<!ENTITY securityOverride.getMeOutOfHereButton "আমাকে এখান থেকে উদ্ধার করো!">
+<!ENTITY securityOverride.exceptionButtonLabel "এক্সেপশন যোগ...">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+
+<!ENTITY securityOverride.warningContent "<p>যেই ইন্টারনেট সংযোগ সম্পূর্নরূপে বিস্বস্ত নয় অথবা সার্ভারে সতর্কীকরণ দেখতে অভ্যস্ত নন সেখানে একটি ব্যতিক্রম যুক্ত করা উচিত নয় </p> 
+ 
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> 
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+

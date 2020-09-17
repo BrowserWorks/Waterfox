@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Spertula redakto…">
+<!ENTITY AdvancedEditButton.accessKey "S">
+<!ENTITY AdvancedEditButton.tooltip "Aldoni aŭ modifi atributojn HTML, de stiloj kaj de ĝavoskripto">
+<!ENTITY chooseFileButton.label "Elekti dosieron…">
+<!ENTITY chooseFileButton.accessKey "d">
+<!ENTITY chooseFileLinkButton.label "Elekti dosieron…">
+<!ENTITY chooseFileLinkButton.accessKey "E">
+<!ENTITY makeUrlRelative.label "Ligilo estas relativa al adreso de paĝo">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Ŝanĝi inter relativa kaj absoluta ligilo. Vi devas unue konservi la paĝon por ŝanĝi tion.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label "Entajpu adreson de retpaĝo, nomon de loka dosiero, aŭ elektu ankron aŭ kapon el la kunteksta menuo de kampo:">
+<!ENTITY LinkURLEditField2.accessKey "a">

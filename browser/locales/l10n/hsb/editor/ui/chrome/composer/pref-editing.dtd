@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Nastajenja noweje strony">
+
+<!ENTITY  authorName.label          "Awtor:">
+<!ENTITY  authorName.accesskey      "t">
+<!ENTITY  pageColorHeader           "Standardny napohlad strony">
+
+<!ENTITY defaultColors.label        "Standardne barby čitarja (Žane barby na stronje njenastajić)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "Swójske barby wužić:">
+<!ENTITY customColors.accesskey     "w">
+
+<!ENTITY normalText.label           "Normalny tekst">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "Tekst wotkaza">
+<!ENTITY linkText.accesskey         "k">
+<!ENTITY activeLinkText.label       "Tekst aktiwneho wotkaza">
+<!ENTITY activeLinkText.accesskey   "a">
+<!ENTITY visitedLinkText.label      "Tekst wopytaneho wotkaza">
+<!ENTITY visitedLinkText.accesskey  "o">
+<!ENTITY background.label           "Pozadk:">
+<!ENTITY background.accesskey       "P">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Pozadkowy wobraz:">
+<!ENTITY backgroundImage.accesskey  "b">
+<!ENTITY chooseFile.label           "Dataju wubrać…">
+<!ENTITY chooseFile.accesskey       "b">
+

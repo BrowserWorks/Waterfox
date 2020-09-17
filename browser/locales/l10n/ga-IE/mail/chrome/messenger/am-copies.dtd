@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Cóipeanna agus Fillteáin">
+<!ENTITY sendingPrefix.label "Agus teachtaireachtaí á seoladh:">
+<!ENTITY fccMailFolder.label "Cuir cóip i:">
+<!ENTITY fccMailFolder.accesskey "p">
+<!ENTITY fccReplyFollowsParent.label "Cuir freagraí i bhfillteán na teachtaireachta atá á freagairt">
+<!ENTITY fccReplyFollowsParent.accesskey "r">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Seol cóip chuig na seoltaí ríomhphoist seo:">
+<!ENTITY ccAddress.accesskey "c">
+<!ENTITY ccAddressList.placeholder "Seoltaí scartha ag camóga">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc na seoltaí ríomhphoist seo:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Seoltaí scartha ag camóga">
+<!ENTITY saveMessageDlg.label "Taispeáin dialóg dhearbhaithe agus teachtaireachtaí á sábháil">
+<!ENTITY saveMessageDlg.accesskey "T">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Fillteán &quot;Seolta&quot; ar:">
+<!ENTITY sentFolderOn.accesskey "S">
+<!ENTITY sentInOtherFolder.label "Eile:">
+<!ENTITY sentInOtherFolder.accesskey "E">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Cartlanna Teachtaireachtaí">
+<!ENTITY keepArchives.label "Coimeád cartlanna teachtaireachta i:">
+<!ENTITY keepArchives.accesskey "C">
+<!ENTITY archiveHierarchyButton.label "Roghanna cartlannaithe…">
+<!ENTITY archiveHierarchyButton.accesskey "R">
+<!ENTITY archivesFolderOn.label "Fillteán &quot;Cartlanna&quot; ar:">
+<!ENTITY archivesFolderOn.accesskey "r">
+<!ENTITY archiveInOtherFolder.label "Eile:">
+<!ENTITY archiveInOtherFolder.accesskey "E">
+<!ENTITY specialFolders.label "Dréachtaí agus Teimpléid">
+<!ENTITY keepDrafts2.label "Coimeád na dréachtaí i: ">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Fillteán &quot;Dréachtaí&quot; ar:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "Eile:">
+<!ENTITY draftInOtherFolder.accesskey "E">
+<!ENTITY keepTemplates.label "Coimeád teimpléid i:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Fillteán &quot;Teimpléid&quot; ar:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "Eile:">
+<!ENTITY templateInOtherFolder.accesskey "E">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Kib'i' Achib'il pa K'amab'ey">
+<!ENTITY offlineContactsHeader.label   "Chupun Kib'i' Achib'il">
+<!ENTITY conversationsHeader.label     "Taq tzijonem">
+<!ENTITY searchResultConversation.label "Taq ruq'i'oj kanoxïk">
+<!ENTITY chat.noConv.title             "Wawe' xkek'ut pe ri taq tzijonem.">
+<!ENTITY chat.noConv.description       "Tokisäx ri kicholajem kib'i' achib'il pa ri ajxokon pas richin nitikirisäx jun tzijonem.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; wakami majun tzijonem ayakon richin re rub'i' achib'il re'.">
+<!ENTITY chat.noAccount.title             "K'a man ab'anon ta runuk'ulem jun rub'i' ataqoya'l richin chat.">
+<!ENTITY chat.noAccount.description       "Taya' q'ij chi re ri &brandShortName; yatrub'inisaj pa rub'eyal richin nab'än runuk'ulem ri rub'i' ataqoya'l richin chat.">
+<!ENTITY chat.accountWizard.button       "Titikirisäx">
+<!ENTITY chat.noConnectedAccount.title             "Chupun ri rub'i' ataqoya'l richin chat.">
+<!ENTITY chat.noConnectedAccount.description       "Yatikïr ye'awokisaj pa ri 'Rub'anikil chat' tzijonem:">
+<!ENTITY chat.showAccountManager.button       "Tik'ut pe ri rub'anikil chat">
+
+<!ENTITY chat.participants             "To'onela':">
+<!ENTITY chat.previousConversations    "Chuwäch taq Tzijonem:">
+<!ENTITY chat.ongoingConversation      "Tzijonem wakami">
+
+<!ENTITY openConversationCmd.label     "Titikirisäx jun Tzijonem">
+<!ENTITY openConversationCmd.accesskey "j">
+<!ENTITY closeConversationCmd.label    "Titz'apïx Tzijonem">
+<!ENTITY closeConversationCmd.accesskey "t">
+<!ENTITY aliasCmd.label                "Tisik'ïx chik">
+<!ENTITY aliasCmd.accesskey            "c">
+<!ENTITY deleteCmd.label               "Tiyuj Rub'i' Achib'il">
+<!ENTITY deleteCmd.accesskey           "y">
+
+<!ENTITY openConversationButton.tooltip  "Titikirisäx jun tzijonem">
+<!ENTITY closeConversationButton.tooltip "Titz'apïx tzijonem">
+
+<!ENTITY addBuddyButton.label          "Titz'aqatisäx Rub'i' Achib'il">
+<!ENTITY joinChatButton.label          "Tatunu' awi' pa Chat">
+<!ENTITY chatAccountsButton.label      "Kek'ut taq Rub'i' Taqoya'l">
+
+<!ENTITY status.available          "Wachel">
+<!ENTITY status.unavailable        "Man wachel ta">
+<!ENTITY status.offline            "Chupül">
+
+<!ENTITY openLinkCmd.label            "Tijaq Ximonel…">
+<!ENTITY openLinkCmd.accesskey        "j">

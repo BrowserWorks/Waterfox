@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY mailListWindow.title "Posta listesi">
+<!-- Labels -->
+<!ENTITY addToAddressBook.label "Buraya ekle: ">
+
+<!ENTITY ListName.label "Liste adı: ">
+<!ENTITY ListNickName.label "Liste takma adı: ">
+<!ENTITY ListDescription.label "Tanımlama: ">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label "Aşağıda posta listesine isimleri yazın veya adresleri sürükleyin:">
+<!-- Access Keys -->
+
+<!ENTITY addToAddressBook.accesskey "B">
+<!ENTITY ListName.accesskey "a">
+<!ENTITY ListNickName.accesskey "L">
+<!ENTITY ListDescription.accesskey "T">
+

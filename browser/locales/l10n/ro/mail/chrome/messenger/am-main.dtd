@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Setări pentru cont">
+<!ENTITY accountName.label "Denumirea contului:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Identitate implicită">
+<!ENTITY identityDesc.label "Fiecare cont are propria identitate, adică datele prin care te identifici față de ceilalți care primesc mesaje de la tine.">
+<!ENTITY name.label "Numele tău:">
+<!ENTITY name.accesskey "N">
+<!ENTITY email.label "Adresa de e-mail:">
+<!ENTITY email.accesskey "d">
+<!ENTITY catchAll.label "Răspunde de pe această identitate atunci când antetele de livrare se potrivesc cu:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Adresă pentru răspuns:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Destinatarii vor răspunde acestei adrese">
+<!ENTITY organization.label "Organizație:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Textul semnăturii:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "Folosește HTML (ex: &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "A&amp;tașează semnătura dintr-un fișier (text, HTML sau imagine):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Editează…">
+<!ENTITY choose.label "Alege…">
+<!ENTITY choose.accesskey "A">
+<!ENTITY editVCard.label "Editează fișă…">
+<!ENTITY editVCard.accesskey "f">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Atașează vCardul meu la mesaje">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Gestionează identitățile…">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Server de trimitere (SMTP):">
+<!ENTITY smtpName.accesskey "T">
+<!ENTITY smtpDefaultServer.label "Folosește serverul implicit">
+
+<!ENTITY smtpServerEdit.label "Editează serverul SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

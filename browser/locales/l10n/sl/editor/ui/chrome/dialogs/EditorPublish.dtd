@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Objavi stran">
+<!ENTITY windowTitleSettings.label    "Nastavitve za objavo">
+<!ENTITY publishTab.label             "Objavi">
+<!ENTITY settingsTab.label            "Nastavitve">
+<!ENTITY publishButton.label          "Objavi">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Ime spletne strani:">
+<!ENTITY siteList.accesskey           "s">
+<!ENTITY siteList.tooltip             "Izberite spletno stran, kamor želite objaviti">
+<!ENTITY newSiteButton.label          "Novo spletno mesto">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Podmapa spletne strani za to stran:">
+<!ENTITY docDirList.accesskey         "s">
+<!ENTITY docDirList.tooltip           "Izberite ali vnesite ime oddaljene podmape za to stran">
+<!ENTITY publishImgCheckbox.label     "Vključi slike in druge datoteke">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip   "Objavi slike in druge datoteke, na katere se ta stran sklicuje">
+<!ENTITY sameLocationRadio.label      "Uporabi isto mesto kot za stran">
+<!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip    "Objavi datoteke na isto mesto kot stran">
+<!ENTITY useSubdirRadio.label         "Uporabi to podmapo spletne strani:">
+<!ENTITY useSubdirRadio.accesskey     "p">
+<!ENTITY useSubdirRadio.tooltip       "Objavi datoteke v izbrano oddaljeno podmapo">
+<!ENTITY otherDirList.tooltip         "Izberite ali vnesite ime oddaljene podmape, kjer bodo datoteke objavljene">
+<!ENTITY pageTitle.label              "Naziv strani:">
+<!ENTITY pageTitle.accesskey          "r">
+<!ENTITY pageTitle.tooltip            "Vnesite naziv, ki bo prepoznal stran v oknu in zaznamkih">
+<!ENTITY pageTitleExample.label       "npr.: &quot;Moja spletna stran&quot;">
+<!ENTITY filename.label               "Ime datoteke:">
+<!ENTITY filename.accesskey           "d">
+<!ENTITY filename.tooltip             "Vnesite ime za to datoteko, vključno s '.html' za spletno stran">
+<!ENTITY filenameExample.label        "npr.: &quot;mojastran.html&quot;">
+<!ENTITY setDefaultButton.label       "Nastavi kot privzeto">
+<!ENTITY setDefaultButton.accesskey   "r">
+<!ENTITY removeButton.label           "Odstrani stran">
+<!ENTITY removeButton.accesskey       "O">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Spletne strani za objavo">
+<!ENTITY serverInfo.label             "Podatki o strežniku">
+<!ENTITY loginInfo.label              "Podatki za prijavo">
+<!ENTITY siteName.label               "Ime spletne strani:">
+<!ENTITY siteName.accesskey           "s">
+<!ENTITY siteName.tooltip             "Vzdevek za prepoznavo te spletne strani objave (npr.: 'MojSplet')">
+<!ENTITY siteUrl.label                "Naslov za objavo (e.g.: 'ftp://ftp.mojponudnik.com/mojeime'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "Naslov FTP:// ali HTTP://, ki ste ga dobili od svojega ponudnika internetnih storitev ali storitve spletnega gostovanja">
+<!ENTITY browseUrl.label              'Naslov HTTP vaše domače strani (npr.: "http://www.mojponudnik.com/mojeime"):'>
+<!ENTITY browseUrl.accesskey          "r">
+<!ENTITY browseUrl.tooltip            "Naslov HTTP:// vaše domače mape (ne vključite imena datoteke)">
+<!ENTITY username.label               "Uporabniško ime:">
+<!ENTITY username.accesskey           "U">
+<!ENTITY username.tooltip             "Uporabniško ime, s katerim se prijavljate pri svojem ISP-ju ali storitvi spletnega gostovanja">
+<!ENTITY password.label               "Geslo:">
+<!ENTITY password.accesskey           "G">
+<!ENTITY password.tooltip             "Geslo, ki je povezano z vašim uporabniškim imenom">
+<!ENTITY savePassword.label           "Shrani geslo">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Izberite varno shranjevanje gesla z uporabo Upravitelja gesel">

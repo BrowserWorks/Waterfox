@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Bilatu eta ordeztu">
+<!ENTITY findField.label "Bilatu testua:">
+<!ENTITY findField.accesskey "B">
+<!ENTITY replaceField.label "Ordeztu honekin:">
+<!ENTITY replaceField.accesskey "r">
+<!ENTITY caseSensitiveCheckbox.label "Bereizi maiuskula/minuskula">
+<!ENTITY caseSensitiveCheckbox.accesskey "M">
+<!ENTITY wrapCheckbox.label "Ingurukoak bildu">
+<!ENTITY wrapCheckbox.accesskey "b">
+<!ENTITY backwardsCheckbox.label "Bilatu atzeraka">
+<!ENTITY backwardsCheckbox.accesskey "B">
+<!ENTITY findNextButton.label "Bilatu hurrengoa">
+<!ENTITY findNextButton.accesskey "B">
+<!ENTITY replaceButton.label "Ordeztu">
+<!ENTITY replaceButton.accesskey "r">
+<!ENTITY replaceAndFindButton.label "Ordeztu eta bilatu">
+<!ENTITY replaceAndFindButton.accesskey "t">
+<!ENTITY replaceAllButton.label "Ordeztu denak">
+<!ENTITY replaceAllButton.accesskey "d">
+<!ENTITY closeButton.label "Itxi">
+<!ENTITY closeButton.accesskey "I">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/openLocation.xul -->
+
+<!ENTITY enter.label "Zadajte webovú adresu (URL) alebo lokálny súbor, ktorý chcete zobraziť:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "e">
+<!ENTITY chooseFile.label "Vybrať súbor…">
+<!ENTITY chooseFile.accesskey "V">
+<!ENTITY newPrivate.label "Nové Súkromné okno">
+<!ENTITY newWindow.label "Nové okno prehliadača">
+<!ENTITY newTab.label "Nová karta prehliadača">
+<!ENTITY currentTab.label "Aktuálna karta prehliadača">
+<!ENTITY editNewWindow.label "Nové okno Composera">
+<!ENTITY open.label "Otvoriť">
+<!ENTITY caption.label "Otvoriť webovú adresu">
+<!ENTITY openWhere.label "Otvoriť v:">
+<!ENTITY openWhere.accesskey "O">

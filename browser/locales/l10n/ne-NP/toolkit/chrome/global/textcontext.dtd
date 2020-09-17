@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "शब्दकोशमा थप्नुहोस्">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "शब्दकोशमा थप्न पूर्वस्थितिमा फर्काउनुहोस्">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "हिज्जे जाँच गर्नुहोस्">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(कुनै हिज्जे सुझाबहरू छैन)">
+<!ENTITY spellDictionaries.label "भाषाहरू">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "खाली गर्नुहोस्">
+
+<!ENTITY fillLoginMenu.label          "लगइन भर्नुहोस्">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "गोप्यशब्द भर्नुहोस्">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "प्रयोगकर्ता नाम भर्नुहोस्">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(कुनै लगइन सुझावहरू छैनन्)">
+<!ENTITY viewSavedLogins.label        "सङ्ग्रहित .लग-इनहरू हेर्नुहोस्">

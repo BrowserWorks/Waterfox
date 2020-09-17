@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Importim të Dhënash">
+<!ENTITY migration.welcome "Mirë se vini">
+<!ENTITY migration.importing "Importim">
+<!ENTITY migration.list.description "&brandShortName;-i mund të importojë të dhëna kalendarësh nga mjaft aplikacione popullore. Në kompjuterin tuaj u gjetën të dhëna nga aplikacionet vijuese. Ju lutemi, përzgjidhni cilin do të donit të përdoret për t’i importuar të dhënat.">
+<!ENTITY migration.progress.description "Të dhënat e përzgjedhura po importohen">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "નવા પાનાં સેટીંગ">
+
+<!ENTITY  authorName.label          "લેખક:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "પાનાનો મૂળભુત દેખાવ">
+
+<!ENTITY defaultColorsRadio.label   "વાંચકના મૂળભુત રંગો (પાનાંમાં રંગો સુયોજિત કરશો નંહિ)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColorsRadio.label    "વૈવિધ્યપૂર્ણ રંગો વાપરો:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "સામાન્ય લખાણ">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "કડીનું લખાણ">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "સક્રિય કડી લખાણ">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "મુલાકાત લીધેલ કડી લખાણ">
+<!ENTITY visitedLinkText.accesskey  "V">
+<!ENTITY background.label           "પાશ્વ ભાગ:">
+<!ENTITY background.accesskey       "B">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "પાશ્વ ભાગ ઈમેજો:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "ફાઈલ પસંદ કરો...">
+<!ENTITY chooseFile.accesskey       "o">

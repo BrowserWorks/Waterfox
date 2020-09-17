@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "অপ্রয়োজনীয় মেইল সেটিংসমূহ">
+<!ENTITY level.label "এই অ্যাকাউন্টটির জন্য উপযুক্ত অপ্রয়োজনীয় কন্ট্রোল সক্রিয় করা হবে (E)">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "যেখানে নতুন অপ্রয়োজনীয় বার্তা সরানো হবে: (M)">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "যার &quot;Junk&quot; ফোল্ডার:">
+<!ENTITY junkFolderOn.accesskey "J">
+<!ENTITY otherFolder.label "অন্যান্য: (O)">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "স্বয়ংক্রিয়ভাবে অপ্রয়োজনীয় মেইল মুছে ফেলা হবে, অপেক্ষাকৃত পুরনো (u)">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "দিন">
+
+<!ENTITY ispHeaders.label "যার দ্বারা নির্ধারিত অপ্রয়োজনীয় মেইল শীর্ষচরণে বিশ্বাস করা হবে: (T)">
+<!ENTITY ispHeaders.accesskey "T">
+

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+
+<!ENTITY  pref.proxies.advanced.title "Papildomos įgaliotųjų serverių nuostatos">
+<!ENTITY  protocols.caption           "Įgaliotieji serveriai skirtingiems protokolams">
+<!ENTITY  protocols.description       "Įprastiniu atveju su visais šiais protokolais gali dirbti tas pats įgaliotasis serveris.">
+<!ENTITY  http.label                  "HTTP įgaliotasis serveris:">
+<!ENTITY  http.accesskey              "H">
+<!ENTITY  ssl.label                   "SSL įgaliotasis serveris">
+<!ENTITY  ssl.accesskey               "S">
+<!ENTITY  ftp.label                   "FTP įgaliotasis serveris:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "HTTP įgaliotąjį serverį naudoti visiems protokolams">
+<!ENTITY  reuseProxy.accesskey        "v">
+<!ENTITY  port.label                  "Prievadas:">
+
+
+
+
+<!ENTITY  socks.caption               "Bendrojo pobūdžio įgaliotasis serveris">
+<!ENTITY  socks.description           "SOCKS kompiuteris – tai bendrojo pobūdžio įgaliotasis serveris, kartais naudojamas įstaigose ar pan.">
+<!ENTITY  socks.label                 "SOCKS kompiuteris:">
+<!ENTITY  socks.accesskey             "O">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "4">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "5">
+<!ENTITY  socksRemoteDNS.label        "Naudoti vardų išrišimui (rekomenduojama, jei naudojate SOCKS v5)">
+<!ENTITY  socksRemoteDNS.accesskey    "N">
+

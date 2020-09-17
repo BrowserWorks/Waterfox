@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "პარამეტრები">
+<!ENTITY  preferencesDefaultTitleWin.title "პარამეტრები">
+<!ENTITY  preferencesCloseButton.label "დახურვა">
+<!ENTITY  preferencesCloseButton.accesskey "დ">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "პარამეტრები">
+<!ENTITY prefWindow.size "width: 102ch; height: 44em;">
+<!ENTITY prefWindowMac.size "width: 62em; height: 41em;">
+<!ENTITY prefWindowWin.size "width: 115ch; height: 43em;">
+<!ENTITY categoryHeader "კატეგორია">
+
+<!ENTITY appear.label "იერსახე">
+<!ENTITY content.label "შიგთავსი">
+<!ENTITY fonts.label "შრიფტები">
+<!ENTITY colors.label "ფერები">
+<!ENTITY media.label "მედიაფაილი">
+<!ENTITY spellingPane.label "მართლწერა">
+
+<!ENTITY navigator.label "ბრაუზერი">
+<!ENTITY history.label "ისტორია">
+<!ENTITY languages.label "ენები">
+<!ENTITY applications.label "დახმარების პროგრამები">
+<!ENTITY locationBar.label "მისამართის პანელი">
+<!ENTITY search.label "ძიება ინტერნეტში">
+<!ENTITY tabWindows.label "გახსნა ჩანართებზე">
+<!ENTITY links.label "ბმების ქცევა">
+<!ENTITY download.label "ჩამოტვირთვები">
+
+<!ENTITY security.label "პირადულობა და უსაფრთხოება">
+<!ENTITY privatedata.label "პირადი მონაცემები">
+<!ENTITY cookies.label "ფუნთუშები">
+<!ENTITY images.label "გამოსახულებები">
+<!ENTITY popups.label "ამომხტომი ფანჯრები">
+<!ENTITY passwords.label "პაროლები">
+<!ENTITY masterpass.label "მთავარი პაროლები">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "სერტიფიკატები">
+
+<!ENTITY sync.label "სინქრონიზაცია">
+
+<!ENTITY advance.label "დამატებით">
+<!ENTITY scriptsAndWindows.label "სცენარები და მოდულები">
+<!ENTITY keynav.label "კლავიატურა">
+<!ENTITY findAsYouType.label "ძიება ტექსტის შეტანისას">
+<!ENTITY cache.label "ბუფერი">
+<!ENTITY offlineApps.label "ლოკალური პროგრამა">
+<!ENTITY proxies.label "პროქსი სერვერები">
+<!ENTITY httpnetworking.label "HTTP პარამეტრები">
+<!ENTITY smart.label "პროგრამების ჩადგმა">
+<!ENTITY mousewheel.label "თაგუნას ბორბალი">
+
+<!ENTITY focusSearch.key "f">

@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "A">
+<!ENTITY fromField4.label "De">
+<!ENTITY senderField4.label "Remitente">
+<!ENTITY author.label "Autor">
+<!ENTITY organizationField4.label "Organización">
+<!ENTITY replyToField4.label "Responder a">
+
+<!ENTITY subjectField4.label "Asuntu">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Cct">
+<!ENTITY newsgroupsField4.label "Grupos de noticies">
+<!ENTITY followupToField4.label "Continuación en">
+<!ENTITY tagsHdr4.label "Etiquetes">
+<!ENTITY dateField4.label "Data">
+<!ENTITY userAgentField4.label "Axente d'usuariu">
+<!ENTITY referencesField4.label "Referencies">
+<!ENTITY messageIdField4.label "Message ID">
+<!ENTITY inReplyToField4.label "En rempuesta a">
+<!ENTITY originalWebsite4.label "Sitiu web">
+
+<!ENTITY hdrArchiveButton1.label "Archivar">
+<!ENTITY hdrArchiveButton1.tooltip "Archivar esti mensaxe">
+<!ENTITY hdrSmartReplyButton1.label "Responder a interesaos">
+<!ENTITY hdrReplyButton1.label "Responder">
+<!ENTITY hdrReplyButton2.tooltip "Responder al remitente d'esti mensaxe">
+<!ENTITY hdrReplyAllButton1.label "Responder a toos">
+<!ENTITY hdrReplyAllButton1.tooltip "Responder al remitente y a tolos destinatarios">
+<!ENTITY hdrReplyListButton1.label "Responder a la llista">
+<!ENTITY hdrReplyListButton1.tooltip "Responder a la llista de corréu">
+<!ENTITY hdrFollowupButton1.label "Responder">
+<!ENTITY hdrFollowupButton1.tooltip "Espublizar una rempuesta a la conversación nesti grupu de noticies">
+<!ENTITY hdrForwardButton1.label "Reunviar">
+<!ENTITY hdrForwardButton1.tooltip "Reunviar esti mensaxe">
+<!ENTITY hdrJunkButton1.label "Puxarra">
+<!ENTITY hdrJunkButton1.tooltip "Conseñar esti mensaxe como corréu puxarra">
+<!ENTITY hdrTrashButton1.label "Desaniciar">
+<!ENTITY hdrTrashButton1.tooltip "Desaniciar esti mensaxe">
+
+<!ENTITY hdrViewToolbarShowFull.label "Amosar iconos y testu">
+<!ENTITY hdrViewToolbarShowFull.accesskey "M">
+<!ENTITY hdrViewToolbarShowIcons.label "Amosar namái iconos">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "a">
+<!ENTITY hdrViewToolbarShowText.label "Amosar namái testu">
+<!ENTITY hdrViewToolbarShowText.accesskey "e">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Amosar siempre Responder al remitente">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY otherActionsButton2.label "Más">
+<!ENTITY otherActionsButton.tooltip "Más aiciones">
+<!ENTITY otherActionsOpenConversation1.label "Abrir na conversación">
+<!ENTITY otherActionsOpenConversation1.accesskey "c">
+<!ENTITY otherActionsOpenInNewWindow1.label "Abrir nuna ventana nueva">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "v">
+<!ENTITY otherActionsOpenInNewTab1.label "Abrir nuna llingüeta nueva">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "t">
+<!ENTITY markAsReadMenuItem1.label "Conseñar como lleíu">
+<!ENTITY markAsReadMenuItem1.accesskey "r">
+<!ENTITY markAsUnreadMenuItem1.label "Conseñar como non lleíu">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "Guardar como…">
+<!ENTITY saveAsMenuItem1.accesskey "G">
+<!ENTITY viewSourceMenuItem1.label "Ver códigu fonte">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "Imprentar…">
+<!ENTITY otherActionsPrint1.accesskey "I">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Al abrir, amosar el panel d'axuntos">
+<!ENTITY startExpandedCmd.accesskey    "b">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Abrir">
+<!ENTITY openAttachmentCmd.accesskey    "b">
+<!ENTITY saveAsAttachmentCmd.label    "Guardar como…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "G">
+<!ENTITY detachAttachmentCmd.label    "Separtar axuntos…">
+<!ENTITY detachAttachmentCmd.accesskey    "S">
+<!ENTITY deleteAttachmentCmd.label    "Desaniciar">
+<!ENTITY deleteAttachmentCmd.accesskey    "D">
+<!ENTITY openAllAttachmentsCmd.label    "Abrir too…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "o">
+<!ENTITY saveAllAttachmentsCmd.label    "Guardar too…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "G">
+<!ENTITY detachAllAttachmentsCmd.label    "Separtar tolos axuntos…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "D">
+<!ENTITY deleteAllAttachmentsCmd.label    "Desaniciar toos…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "n">
+
+<!ENTITY openAttachment.tooltip "Abrir el ficheru axuntu">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Guardar">
+<!ENTITY saveAttachmentButton1.tooltip     "Guardar el ficheru axuntu">
+<!ENTITY saveAllAttachmentsButton1.label   "Guardar too">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Guardar tolos ficheros axuntos">
+
+<!ENTITY copyLinkCmd.label        "Copiar la direición del enllaz">
+<!ENTITY copyLinkCmd.accesskey    "C">
+
+<!ENTITY CopyMessageId.label "Copiar Message-ID">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "Abrir mensaxe pal Message-ID">
+<!ENTITY OpenMessageForMsgId.accesskey "m">
+<!ENTITY OpenBrowserWithMsgId.label "Abrir restolador web col Message-ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey "A">

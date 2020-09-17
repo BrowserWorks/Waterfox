@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Подеси подсетнике">
+<!ENTITY reminder.add.label                                "Додај">
+<!ENTITY reminder.add.accesskey                            "ј">
+<!ENTITY reminder.remove.label                             "Уклони">
+<!ENTITY reminder.remove.accesskey                         "л">
+
+<!ENTITY reminder.reminderDetails.label                    "Појединости подсетника">
+<!ENTITY reminder.action.label                             "Изабери радњу подсетника">
+
+<!ENTITY reminder.action.alert.label                       "Прикажи узбуну">
+<!ENTITY reminder.action.email.label                       "Пошаљи поруку">
+
+<!ENTITY alarm.units.minutes                               "минута" >
+<!ENTITY alarm.units.hours                                 "сати" >
+<!ENTITY alarm.units.days                                  "дана" >

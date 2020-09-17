@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Адрестік кітапша">
+<!ENTITY blankResultsPaneMessage.label                  "Бұл адрестік кітапша контакттарды тек іздеуден кейін көрсетеді">
+<!ENTITY localResultsOnlyMessage.label                  "Қашықтағы адрестік кітапшалардан контакттар іздеу басталмаса, көрсетілмейді">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Файл">
+<!ENTITY fileMenu.accesskey                             "Ф">
+<!ENTITY newMenu.label                                  "Жаңа">
+<!ENTITY newMenu.accesskey                              "Ж">
+<!ENTITY newContact.label                               "Адрестік кітапша контакты…">
+<!ENTITY newContact.accesskey                           "к">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Хаттарды тарату тізімі…">
+<!ENTITY newListCmd.accesskey                           "м">
+<!ENTITY newAddressBookCmd.label                        "Адрестік кітапша…">
+<!ENTITY newAddressBookCmd.accesskey                    "к">
+<!ENTITY newCardDAVBookCmd.label                        "CardDAV адрестік кітапшасы…">
+<!ENTITY newCardDAVBookCmd.accesskey                    "п">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP бумасы…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "м">
+<!ENTITY newMessageCmd.label                            "Хабарлама">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "Х">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Mac OS X адрестік кітапшаны қолдану">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Жабу">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "Ж">
+<!ENTITY printSetupCmd.label                            "Парақ баптаулары…">
+<!ENTITY printSetupCmd.accesskey                        "П">
+<!ENTITY printPreviewContactCmd.label                   "Контактты баспа алдында алдын-ала қарау">
+<!ENTITY printPreviewContactCmd.accesskey               "а">
+<!ENTITY printPreviewAddressBook.label                  "Адрестік кітапшаны баспа алдында алдын-ала қарау">
+<!ENTITY printPreviewAddressBook.accesskey              "к">
+<!ENTITY printContactCmd.label                          "Контактты баспаға шығару…">
+<!ENTITY printContactCmd.accesskey                      "п">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Адрестік кітапшаны баспаға шығару…">
+<!ENTITY printAddressBook.accesskey                     "А">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Түзету">
+<!ENTITY editMenu.accesskey                             "Т">
+<!ENTITY deleteCmd.label                                "Өшіру">
+<!ENTITY deleteAbCmd.label                              "Адрестік кітапшаны өшіру">
+<!ENTITY deleteContactCmd.label                         "Контактты өшіру">
+<!ENTITY deleteContactsCmd.label                        "Контакттарды өшіру">
+<!ENTITY deleteListCmd.label                            "Тізімді өшіру">
+<!ENTITY deleteListsCmd.label                           "Тізімдерді өшіру">
+<!ENTITY deleteItemsCmd.label                           "Нәрселерді өшіру">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!ENTITY propertiesMenu.label                           "Қасиеттері">
+<!ENTITY propertiesMenu.accesskey                       "и">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Адрестік кітапша қасиеттері">
+<!ENTITY abPropertiesMenu.accesskey                     "и">
+<!ENTITY contactPropertiesMenu.label                    "Контакт қасиеттері">
+<!ENTITY contactPropertiesMenu.accesskey                "и">
+<!ENTITY mailingListPropertiesMenu.label                "Хаттарды тарату тізімінің қасиеттері">
+<!ENTITY mailingListPropertiesMenu.accesskey            "т">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Түрі">
+<!ENTITY viewMenu.accesskey                             "р">
+<!ENTITY viewToolbarsMenu.label                         "Саймандар панельдері">
+<!ENTITY viewToolbarsMenu.accesskey                     "С">
+<!ENTITY menubarCmd.label                               "Мәзір жолағы">
+<!ENTITY menubarCmd.accesskey                           "М">
+<!ENTITY showAbToolbarCmd.label                         "Адрестік кітапшаның панелі">
+<!ENTITY showAbToolbarCmd.accesskey                     "а">
+<!ENTITY showTaskbarCmd.label                           "Қалып-күй жолағы">
+<!ENTITY showTaskbarCmd.accesskey                       "а">
+<!ENTITY customizeToolbar.label                         "Баптау…">
+<!ENTITY customizeToolbar.accesskey                     "а">
+<!ENTITY layoutMenu.label                               "Жайма">
+<!ENTITY layoutMenu.accesskey                           "й">
+<!ENTITY showDirectoryPane.label                        "Бумалар панелі">
+<!ENTITY showDirectoryPane.accesskey                    "Б">
+<!ENTITY showContactPane2.label                         "Контакт панелі">
+<!ENTITY showContactPane2.accesskey                     "К">
+<!ENTITY menu_ShowNameAs.label                          "Атын қалайша көрсету">
+<!ENTITY menu_ShowNameAs.accesskey                      "н">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Аты Жөні">
+<!ENTITY firstLastCmd2.accesskey                        "А">
+<!ENTITY lastFirstCmd.label                             "Аты, Фамилиясы">
+<!ENTITY lastFirstCmd.accesskey                         "А">
+<!ENTITY displayNameCmd.label                           "Көрсетілетін аты">
+<!ENTITY displayNameCmd.accesskey                       "К">
+<!ENTITY sortMenu.label                                 "Бойынша сұрыптау">
+<!ENTITY sortMenu.accesskey                             "Б">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Саймандар">
+<!ENTITY tasksMenu.accesskey                            "С">
+<!ENTITY messengerCmd.label                             "Пошта және жаңалықтар топтары">
+<!ENTITY messengerCmd.accesskey                         "П">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Адрестерді іздеу…">
+<!ENTITY searchAddressesCmd.accesskey                   "з">
+<!ENTITY importCmd.label                                "Импорттау…">
+<!ENTITY importCmd.accesskey                            "И">
+<!ENTITY exportCmd.label                                "Экспорттау…">
+<!ENTITY exportCmd.accesskey                            "Э">
+<!ENTITY preferencesCmd2.label                          "Опциялар">
+<!ENTITY preferencesCmd2.accesskey                      "О">
+<!ENTITY preferencesCmdUnix.label                       "Параметрлер">
+<!ENTITY preferencesCmdUnix.accesskey                   "м">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Жаңа контакт">
+<!ENTITY newContactButton.accesskey                     "к">
+<!ENTITY newlistButton.label                            "Жаңа тізім">
+<!ENTITY newlistButton.accesskey                        "т">
+<!ENTITY showAsDefault.label                            "Ашу кезінде негізгі бума">
+<!ENTITY showAsDefault.accesskey                        "ш">
+<!ENTITY editPropertiesButton.label                     "Түзету">
+<!ENTITY propertiesContext.label                        "Қасиеттері">
+<!ENTITY propertiesContext.accesskey                    "и">
+<!ENTITY abPropertiesContext.label                      "Қасиеттері">
+<!ENTITY abPropertiesContext.accesskey                  "и">
+<!ENTITY syncContext.label                              "Синхрондау">
+<!ENTITY syncContext.accesskey                          "и">
+<!ENTITY editContactContext.label                       "Контактты түзету">
+<!ENTITY editContactContext.accesskey                   "е">
+<!ENTITY editMailingListContext.label                   "Тізімді түзету">
+<!ENTITY editMailingListContext.accesskey               "е">
+<!ENTITY newmsgButton.label                             "Жазу">
+<!ENTITY newmsgButton.accesskey                         "Ж">
+<!ENTITY newIM.label                                    "Лезде хабарлама">
+<!ENTITY newIM.accesskey                                "Л">
+<!ENTITY printButton.label                              "Баспаға шығару…">
+<!ENTITY printButton.accesskey                          "с">
+<!ENTITY deleteButton2.label                            "Өшіру">
+<!ENTITY deleteButton2.accesskey                        "Ө">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Көрсетілетін бағандарды таңдау">
+<!ENTITY newContactButton.tooltip                       "Жаңа адрестік кітапша контактын жасау">
+<!ENTITY newlistButton.tooltip                          "Жаңа тізімді жасау">
+<!ENTITY editPropertiesButton.tooltip                   "Таңдалған нәрсені түзету">
+<!ENTITY editAbPropertiesButton.tooltip                 "Таңдалған адрестік кітапшаның қасиеттерін түзету">
+<!ENTITY editContactPropertiesButton.tooltip            "Таңдалған контактты түзету">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Таңдалған хаттарды тарату тізімін түзету">
+<!ENTITY newmsgButton.tooltip                           "Пошта хабарламасын жіберу">
+<!ENTITY newIM.tooltip                                  "Лезде хабарламаны немесе чатты жіберу">
+<!ENTITY deleteButton2.tooltip                          "Таңдалған нәрсені өшіру">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Аты немесе эл. поштасы">
+<!ENTITY SearchNameOrEmail.accesskey                    "т">
+<!ENTITY advancedButton.tooltip                         "Кеңейтілген адресті іздеу">
+<!ENTITY quickSearchCmd.key                             "з">
+<!ENTITY searchItem.title "Жылдам іздеу">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Адрестік кітапша">
+<!ENTITY Addrbook.accesskey                             "к">
+<!ENTITY GeneratedName.label                            "Аты">
+<!ENTITY GeneratedName.accesskey                        "А">
+<!ENTITY PrimaryEmail.label                             "Эл.пошта">
+<!ENTITY PrimaryEmail.accesskey                         "Э">
+<!ENTITY ChatName.label                                 "Чат аты">
+<!ENTITY ChatName.accesskey                             "Ч">
+<!ENTITY Company.label                                  "Мекеме">
+<!ENTITY Company.accesskey                              "М">
+<!ENTITY NickName.label                                 "Бүркеншік аты">
+<!ENTITY NickName.accesskey                             "р">
+<!ENTITY SecondEmail.label                              "Қосымша эл.пошта">
+<!ENTITY SecondEmail.accesskey                          "ы">
+<!ENTITY Department.label                               "Бөлім">
+<!ENTITY Department.accesskey                           "л">
+<!ENTITY JobTitle.label                                 "Атағы">
+<!ENTITY JobTitle.accesskey                             "А">
+<!ENTITY CellularNumber.label                           "Мобильді">
+<!ENTITY CellularNumber.accesskey                       "М">
+<!ENTITY PagerNumber.label                              "Пейджер">
+<!ENTITY PagerNumber.accesskey                          "П">
+<!ENTITY FaxNumber.label                                "Факс">
+<!ENTITY FaxNumber.accesskey                            "Ф">
+<!ENTITY HomePhone.label                                "Үй телефоны">
+<!ENTITY HomePhone.accesskey                            "Ү">
+<!ENTITY WorkPhone.label                                "Жұмыс телефоны">
+<!ENTITY WorkPhone.accesskey                            "Ж">
+<!ENTITY sortAscending.label                            "Өсу ретімен">
+<!ENTITY sortAscending.accesskey                        "с">
+<!ENTITY sortDescending.label                           "Кему ретімен">
+<!ENTITY sortDescending.accesskey                       "К">
+<!ENTITY _PhoneticName.label                            "Қалайша айтылады">
+<!ENTITY _PhoneticName.accesskey                        "й">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Контакт">
+<!ENTITY home.heading                                   "Үй">
+<!ENTITY other.heading                                  "Басқа">
+<!ENTITY chat.heading                                   "Чат">
+<!ENTITY phone.heading                                  "Телефоны">
+<!ENTITY work.heading                                   "Жұмыс">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Анықтамасы">
+<!ENTITY addresses.heading                              "Адрестер">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Картаны алу">
+<!ENTITY mapIt.tooltip                                  "Бұл адрес үшін интернеттен картаны көрсету">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Терезе">
+<!ENTITY minimizeWindow.label                           "Шақтау">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Барлығын алдына қою">
+<!ENTITY zoomWindow.label                               "Үлкейту">

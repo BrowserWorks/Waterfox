@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nova pasta de pesquisa">
+<!ENTITY name.label                    "Nome:">
+<!ENTITY name.accesskey                "N">
+<!ENTITY description.label             "Criar como subpasta de:">
+<!ENTITY description.accesskey         "C">
+
+<!ENTITY searchTermCaption.label       "Configurar os critérios de pesquisa usados nesta pasta de pesquisa:">
+
+<!ENTITY folderSelectionCaption.label  "Selecionar em quais pastas pesquisar: ">
+<!ENTITY chooseFoldersButton.label     "Selecionar...">
+<!ENTITY chooseFoldersButton.accesskey "S">
+
+<!ENTITY searchOnline.label            "Pesquisa Online (Fornece resultados atualizados de pastas IMAP e grupos de notícias, mas aumenta o tempo para abrir a pasta)">
+<!ENTITY searchOnline.accesskey        "O">
+<!ENTITY newFolderButton.label         "Criar">
+<!ENTITY newFolderButton.accesskey     "r">
+<!ENTITY editFolderButton.label        "Editar">
+<!ENTITY editFolderButton.accesskey    "E">

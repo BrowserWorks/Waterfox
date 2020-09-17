@@ -1,0 +1,348 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Pisaś: (žedna tema)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Dataja">
+<!ENTITY fileMenu.accesskey "D">
+<!ENTITY newMenu.label "Nowy">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "Powěsć">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "w">
+<!ENTITY newContact.label "Adresnikowy kontakt…">
+<!ENTITY newContact.accesskey "A">
+<!ENTITY attachMenu.label "Pśipowjesyś">
+<!ENTITY attachMenu.accesskey "w">
+<!ENTITY attachFileCmd.label "Dataje…">
+<!ENTITY attachFileCmd.accesskey "D">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Webowy bok…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Wósobinsku kórtku (vCard)">
+<!ENTITY attachVCardCmd.accesskey "b">
+<!ENTITY remindLater.label "Pózdźej dopomnjeś">
+<!ENTITY remindLater.accesskey "P">
+<!ENTITY closeCmd.label "Zacyniś">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "c">
+<!ENTITY saveCmd.label "Składowaś">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Składowaś ako">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsFileCmd.label "Dataju…">
+<!ENTITY saveAsFileCmd.accesskey "D">
+<!ENTITY saveAsDraftCmd.label "Nacerjenje">
+<!ENTITY saveAsDraftCmd.accesskey "N">
+<!ENTITY saveAsTemplateCmd.label "Pśedłogu">
+<!ENTITY saveAsTemplateCmd.accesskey "P">
+<!ENTITY sendNowCmd.label "Něnto pósłaś">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "N">
+<!ENTITY sendLaterCmd.label "Pózdźej pósłaś">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "z">
+<!ENTITY printSetupCmd.label "Bok pśigótowaś…">
+<!ENTITY printSetupCmd.accesskey "B">
+<!ENTITY printPreviewCmd.label "Śišćarski pśeglěd">
+<!ENTITY printPreviewCmd.accesskey "a">
+<!ENTITY printCmd.label "Śišćaś…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "i">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Wobźěłaś">
+<!ENTITY editMenu.accesskey "W">
+<!ENTITY undoCmd.label "Slědk wześ">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "l">
+<!ENTITY redoCmd.label "Wóspjetowaś">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "e">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "w">
+<!ENTITY deleteCmd.label "Wulašowaś">
+<!ENTITY deleteCmd.accesskey "l">
+<!ENTITY editRewrapCmd.label "Znowego łamaś">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Pśidank pśemjeniś…">
+<!ENTITY renameAttachmentCmd.accesskey "m">
+<!ENTITY reorderAttachmentsCmd.label "Pśidanki pśerědowaś…">
+<!ENTITY reorderAttachmentsCmd.accesskey "r">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Pśidankowe wokno">
+<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
+     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
+     as attachments.accesskey. -->
+<!ENTITY toggleAttachmentPaneCmd.accesskey "d">
+<!ENTITY selectAllCmd.accesskey "b">
+<!ENTITY findBarCmd.label "Pytaś…">
+<!ENTITY findBarCmd.accesskey "P">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Pytaś a wuměniś…">
+<!ENTITY findReplaceCmd.accesskey "m">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Dalej pytaś">
+<!ENTITY findAgainCmd.accesskey "D">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Pśedchadny pytaś">
+<!ENTITY findPrevCmd.accesskey "h">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Pśidanki pśerědowaś">
+<!ENTITY moveAttachmentTopPanelBtn.label "Do zachopjeńka pśesunuś">
+<!ENTITY moveAttachmentUpPanelBtn.label "Górjej">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Gromaźe pśesunuś">
+<!ENTITY moveAttachmentDownPanelBtn.label "Dołoj">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Do kóńca pśesunuś">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Sortěrowaś: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Sortěrowaś: Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Sortěrowański wuběrk: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Sortěrowański wuběrk: Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Naglěd">
+<!ENTITY viewMenu.accesskey "N">
+<!ENTITY viewToolbarsMenuNew.label "Symbolowe rědki">
+<!ENTITY viewToolbarsMenuNew.accesskey "S">
+<!ENTITY menubarCmd.label "Menijowa rědka">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY showCompositionToolbarCmd.label "Wobźěłowańska rědka">
+<!ENTITY showCompositionToolbarCmd.accesskey "o">
+<!ENTITY showFormattingBarCmd.label "Formatěrowańska rědka">
+<!ENTITY showFormattingBarCmd.accesskey "F">
+<!ENTITY showTaskbarCmd.label "Statusowa rědka">
+<!ENTITY showTaskbarCmd.accesskey "t">
+<!ENTITY customizeToolbar.label "Pśiměriś…">
+<!ENTITY customizeToolbar.accesskey "P">
+
+<!ENTITY addressSidebar.label "Kontaktowa bócnica">
+<!ENTITY addressSidebar.accesskey "o">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "F">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Opcije">
+<!ENTITY optionsMenu.accesskey "O">
+<!ENTITY checkSpellingCmd2.label "Pšawopis kontrolěrowaś…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "P">
+<!ENTITY enableInlineSpellChecker.label "Pšawopis pśi zapódaśu kontrolěrowaś">
+<!ENTITY enableInlineSpellChecker.accesskey "z">
+<!ENTITY quoteCmd.label "Powěsć citěrowaś">
+<!ENTITY quoteCmd.accesskey "c">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Wósobinsku kórtu pśipowjesyś (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Wobtwarźenje dostaśa">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Zdźělenje librowańskego statusa">
+<!ENTITY dsnMenu.accesskey "Z">
+<!ENTITY deliveryFormatMenu.label "Librowański format">
+<!ENTITY deliveryFormatMenu.accesskey "L">
+<!ENTITY autoFormatCmd.label "Awtomatiski zwěsćiś">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "Jano lutny tekst">
+<!ENTITY plainTextFormatCmd.accesskey "l">
+<!ENTITY htmlFormatCmd.label "Jano rich text (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "r">
+<!ENTITY bothFormatCmd.label "Lutny a rich tekst (HTML)">
+<!ENTITY bothFormatCmd.accesskey "k">
+<!ENTITY priorityMenu.label "Priorita">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY priorityButton.title "Priorita">
+<!ENTITY priorityButton.tooltiptext "Powěsćowu prioritu změniś">
+<!ENTITY priorityButton.label "Priorita:">
+<!ENTITY lowestPriorityCmd.label "Nejniša">
+<!ENTITY lowestPriorityCmd.accesskey "N">
+<!ENTITY lowPriorityCmd.label "Niska">
+<!ENTITY lowPriorityCmd.accesskey "i">
+<!ENTITY normalPriorityCmd.label "Normalna">
+<!ENTITY normalPriorityCmd.accesskey "m">
+<!ENTITY highPriorityCmd.label "Wusoka">
+<!ENTITY highPriorityCmd.accesskey "u">
+<!ENTITY highestPriorityCmd.label "Nejwuša">
+<!ENTITY highestPriorityCmd.accesskey "w">
+<!ENTITY fileCarbonCopyCmd.label "Kopiju pósłaś na">
+<!ENTITY fileCarbonCopyCmd.accesskey "K">
+<!ENTITY fileHereMenu.label "How wótpołožyś">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Rědy">
+<!ENTITY tasksMenu.accesskey "R">
+<!ENTITY messengerCmd.label "Post &amp; diskusijne kupki">
+<!ENTITY messengerCmd.accesskey "p">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Adresnik">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Kontowe nastajenja">
+<!ENTITY accountManagerCmd2.accesskey "K">
+<!ENTITY accountManagerCmdUnix2.accesskey "s">
+<!ENTITY preferencesCmd2.label "Nastajenja">
+<!ENTITY preferencesCmd2.accesskey "N">
+<!ENTITY preferencesCmdUnix.label "Nastajenja">
+<!ENTITY preferencesCmdUnix.accesskey "N">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Miniměrowaś">
+<!ENTITY bringAllToFront.label "Do prědka stajiś">
+<!ENTITY zoomWindow.label "Wokno skalěrowaś">
+<!ENTITY windowMenu.label "Wokno">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Pósłaś">
+<!ENTITY quoteButton.label "Citěrowaś">
+<!ENTITY addressButton.label "Kontakty">
+<!ENTITY attachButton.label "Pśipowjesyś">
+<!ENTITY spellingButton.label "Pšawopis">
+<!ENTITY saveButton.label "Składowaś">
+<!ENTITY printButton.label "Śišćaś">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Toś tu powěsć něnto wótpósłaś">
+<!ENTITY sendlaterButton.tooltip "Toś tu powěsć pózdźej wótpósłaś">
+<!ENTITY quoteButton.tooltip "Pśedchadnu powěsć citěrowaś">
+<!ENTITY addressButton.tooltip "Dostawarja z adresnika wubraś">
+<!ENTITY attachButton.tooltip2 "Pśidank pśidaś">
+<!ENTITY spellingButton.tooltip "Pšawopis wubranego teksta abo cełeje powěsći kontrolěrowaś">
+<!ENTITY saveButton.tooltip "Toś tu powěsć składowaś">
+<!ENTITY cutButton.tooltip              "Wurězaś">
+<!ENTITY copyButton.tooltip             "Kopěrowaś">
+<!ENTITY pasteButton.tooltip            "Zasajźiś">
+<!ENTITY printButton.tooltip "Toś tu powěsć śišćaś">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style "width: 8em;">
+<!ENTITY extraRecipients.tooltip "Druge typy adresowych pólow">
+<!ENTITY fromAddr2.label "Wót">
+<!ENTITY fromAddr.accesskey "t">
+<!ENTITY toAddr2.label "Komu">
+<!ENTITY ccAddr2.label "Kopija">
+<!ENTITY bccAddr2.label "Schowana kopija">
+<!ENTITY replyAddr2.label "Wótegrono - komu">
+<!ENTITY newsgroupsAddr2.label "Diskusijna kupka">
+<!ENTITY followupAddr2.label "Wótegrono do">
+<!ENTITY subject2.label "Tema">
+<!ENTITY subject.accesskey "T">
+<!ENTITY attachmentBucketCloseButton.tooltip "Pśidankowe wokno schowaś">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "Smjejkotak zasajźiś">
+<!ENTITY smiley1Cmd.label "Smjejkotaś">
+<!ENTITY smiley2Cmd.label "Coło maršćiś">
+<!ENTITY smiley3Cmd.label "Zmyrknjenje">
+<!ENTITY smiley4Cmd.label "Jězyk wen">
+<!ENTITY smiley5Cmd.label "Smjaśe">
+<!ENTITY smiley6Cmd.label "Tšuchły">
+<!ENTITY smiley7Cmd.label "Njerozsuźony">
+<!ENTITY smiley8Cmd.label "Pśechwatany">
+<!ENTITY smiley9Cmd.label "Póškaś">
+<!ENTITY smiley10Cmd.label "Drěśe">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley12Cmd.label "Pjenjezna guba">
+<!ENTITY smiley13Cmd.label "Noga w gubje">
+<!ENTITY smiley14Cmd.label "Njewinowaty">
+<!ENTITY smiley15Cmd.label "Płakaś">
+<!ENTITY smiley16Cmd.label "Mjelcaty">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Žedne naraźenja namakane">
+<!ENTITY spellCheckIgnoreWord.label "Słowo ignorěrowaś">
+<!ENTITY spellCheckIgnoreWord.accesskey "i">
+<!ENTITY spellCheckAddToDictionary.label "Słownikoju pśidaś">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "Slědk wześ">
+<!ENTITY undo.accesskey "S">
+<!ENTITY cut.label "Wurězaś">
+<!ENTITY cut.accesskey "r">
+<!ENTITY copy.label "Kopěrowaś">
+<!ENTITY copy.accesskey "K">
+<!ENTITY paste.label "Zasunuś">
+<!ENTITY paste.accesskey "Z">
+<!ENTITY pasteQuote.label "Ako citat zasunuś">
+<!ENTITY pasteQuote.accesskey "c">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Wócyniś">
+<!ENTITY openAttachment.accesskey "W">
+<!ENTITY delete.label "Wulašowaś">
+<!ENTITY delete.accesskey "l">
+<!ENTITY removeAttachment.label "Pśidank wótpóraś">
+<!ENTITY removeAttachment.accesskey "w">
+<!ENTITY renameAttachment.label "Pśemjeniś…">
+<!ENTITY renameAttachment.accesskey "m">
+<!ENTITY reorderAttachments.label "Pśidanki pśerědowaś…">
+<!ENTITY reorderAttachments.accesskey "r">
+<!ENTITY removeAllAttachments.label "Wšykne pśidanki wótwónoźeś">
+<!ENTITY removeAllAttachments.accesskey "k">
+<!ENTITY selectAll.label "Wšo wubraś">
+<!ENTITY selectAll.accesskey "b">
+<!ENTITY attachFile.label "Dataje pśipowjesyś…">
+<!ENTITY attachFile.accesskey "D">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "Konwertěrowaś do…">
+<!ENTITY convertCloud.accesskey "K">
+<!ENTITY cancelUpload.label "Nagraśe pśetergnuś">
+<!ENTITY cancelUpload.accesskey "N">
+<!ENTITY convertRegularAttachment.label "Regularny pśidank">
+<!ENTITY convertRegularAttachment.accesskey "R">
+<!ENTITY attachPage.label "Webbok pśipowjesyś…">
+<!ENTITY attachPage.accesskey "W">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Wokno pśidankow zachopnje pokazaś">
+<!ENTITY initiallyShowAttachmentPane.accesskey "W">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Słowniki pśidaś…">
+<!ENTITY spellAddDictionaries.accesskey "S">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Kontakty">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Z adrese pśiměriś…">
+<!ENTITY customizeFromAddress.accesskey "a">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Wopśimjeśe powěsći">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Pšawopisna rěc">
+<!ENTITY encodingStatusPanel.tooltip "Tekstowe koděrowanje">

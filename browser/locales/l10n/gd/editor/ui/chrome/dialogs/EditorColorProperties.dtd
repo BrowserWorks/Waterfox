@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Dathan is cùlaibh na duilleige">
+<!ENTITY pageColors.label "Dathan na duilleige">
+<!ENTITY defaultColorsRadio.label "Dathan bunaiteach an leughadair (Na suidhich dathan san duilleag)">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "Cleachd roghainnean nan dath o bhrabhsair an leughadair a-mhàin">
+<!ENTITY customColorsRadio.label "Cleachd dathan gnàthaichte:">
+<!ENTITY customColorsRadio.accessKey "C">
+<!ENTITY customColorsRadio.tooltip "Brisidh roghainnean nan dath seo na roghainnean a tha ann am brabhsair an leughadair">
+
+<!ENTITY normalText.label "Teacsa àbhaisteach">
+<!ENTITY normalText.accessKey "T">
+<!ENTITY linkText.label "Teacsa a' cheangail">
+<!ENTITY linkText.accessKey "l">
+<!ENTITY activeLinkText.label "Teacsa ceangail ghnìomaich">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Teacsa ceangail a chaidh a chleachdadh">
+<!ENTITY visitedLinkText.accessKey "c">
+<!ENTITY background.label "Cùlaibh:">
+<!ENTITY background.accessKey "b">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Dealbh a' chùlaibh:">
+<!ENTITY backgroundImage.accessKey "c">
+<!ENTITY backgroundImage.tooltip "Cleachd faidhle deilbh mar chùlaibh na duilleige agad">
+<!ENTITY backgroundImage.shortenedDataURI "URI dàta giorraichte (cuiridh lethbhreac an URI slàn air an stòr-bhòrd)">

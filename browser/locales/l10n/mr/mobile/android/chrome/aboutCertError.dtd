@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!-- These strings are used by Firefox's custom about:certerror page,
+a replacement for the standard security certificate errors produced
+by NSS/PSM via netError.xhtml. -->
+
+<!ENTITY certerror.pagetitle  "अविश्वासार्ह जोडणी">
+<!ENTITY certerror.longpagetitle "ही जोडणी अविश्वासार्ह आहे">
+
+<!-- Localization note (certerror.introPara1) - The string "#1" will
+be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara1 "आपण &brandShortName; ला <b>#1</b>शी सुरक्षितपणे जोडण्यास सांगितले आहे,
+पण आम्ही आपली जोडणी सुरक्षित असल्याची पुष्टी करू शकत नाही.">
+
+<!ENTITY certerror.whatShouldIDo.heading "मी काय करावे?">
+<!ENTITY certerror.whatShouldIDo.content "जर आपण या संकेतस्थळाशी समस्यांविना सारखे जोडणी करता, तर या त्रुटीचा अर्थ असा होऊ शकतो की हे संकेतस्थळ योग्य नसून, आपणास पुढे जाणे अनुचित राहील.">
+<!ENTITY certerror.getMeOutOfHere.label "मला येथून बाहेर काढा!">
+
+<!ENTITY certerror.expert.heading "मला यातील धोके कळतात">
+<!ENTITY certerror.expert.content "आपणाला काय होते हे कळत असल्यास, आपण &brandShortName;ला हे स्थळ विश्वासार्ह आहे असे सांगु शकता. <b>तरी आपणाला हे स्थळ विश्वासार्ह वाटत असेल, तर याचा अर्थ कुणीतरी आपल्या जुळवणीचा गैर वापर करीत आहे.</b>">
+<!ENTITY certerror.expert.contentPara2 "जोपर्यंत आपणास हे स्थळ विश्वासार्ह ओळख का वापरत नाही याचे कारण माहित असल्याशिवाय अपवाद यादीत जोडू नका.">
+<!ENTITY certerror.addTemporaryException.label "संकेतस्थळास भेट द्या">
+<!ENTITY certerror.addPermanentException.label "अपवाद यादीत कायमचे समाविष्ठ करा">
+
+<!ENTITY certerror.technical.heading "तांत्रिक तपशील">

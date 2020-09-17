@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Імпарт">
+<!ENTITY importAll.label "Імпартаваць усё">
+<!ENTITY importAll.accesskey "ё">
+<!ENTITY importMail.label "Пошту">
+<!ENTITY importMail.accesskey "П">
+<!ENTITY importFeeds.label "Падпіскі на жывільнікі">
+<!ENTITY importFeeds.accesskey "ж">
+<!ENTITY importAddressbook.label "Адрасныя кнігі">
+<!ENTITY importAddressbook.accesskey "А">
+<!ENTITY importSettings.label "Наладжванні">
+<!ENTITY importSettings.accesskey "Н">
+<!ENTITY importFilters.label "Сіты">
+<!ENTITY importFilters.accesskey "С">
+<!ENTITY window.width "45em">
+<!ENTITY window.macWidth "50em">
+<!ENTITY importTitle.label "&brandShortName;: Чарадзей Імпарту">
+<!ENTITY importShortDesc.label "Імпарт пошты, адрасных кнігаў, наладжванняў і сітаў з іншых праграмаў">
+<!ENTITY importDescription1.label "Гэты чарадзей імпартуе лісты пошты, запісы адраснай кнігі, падпіскі на жывільнікі, перавагі і/ці сіты з іншых паштовых праграмаў і агульных фарматаў адрасных кніг у &brandShortName;.">
+<!ENTITY importDescription2.label "Як толькі яны будуць імпартаваны, вы будзеце здольны зварочвацца да іх у Пошце і/ці Адраснай Кнізе &brandShortName;.">
+<!ENTITY selectDescription.label "Выберыце, калі ласка, тып файла, з якой вы жадаеце імпартаваць:">
+<!ENTITY selectDescriptionB.label "Вылучыце, калі ласка, існы рахунак або стварыце новы:">
+<!ENTITY selectDescription.accesskey "В">
+<!ENTITY acctName.label "Назва:">
+<!ENTITY acctName.accesskey "Н">
+<!ENTITY back.label "&lt; Назад">
+<!ENTITY forward.label "Наперад &gt;">
+<!ENTITY finish.label "Скончыць">
+<!ENTITY cancel.label "Скасаваць">
+<!ENTITY select.label "ці выберыце тып даных для імпарту:">
+<!ENTITY title.label "Загаловак">
+<!ENTITY processing.label "Імпартаванне…">

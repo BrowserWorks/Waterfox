@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName; 정보">
+<!ENTITY aboutPage.warningVersion               "&brandShortName;는 시험 버전으로 불안정할 수 있습니다.">
+<!ENTITY aboutPage.checkForUpdates.link         "최신 버전 확인">
+
+<!ENTITY aboutPage.checkForUpdates.checking     "확인 중…">
+<!ENTITY aboutPage.checkForUpdates.none         "업데이트 없음">
+<!ENTITY aboutPage.checkForUpdates.available2   "업데이트 다운로드">
+<!ENTITY aboutPage.checkForUpdates.downloading  "업데이트 다운로드 중…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "업데이트 설치">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "고객 지원">
+<!ENTITY aboutPage.privacyPolicy.label          "개인 정보 정책">
+<!ENTITY aboutPage.rights.label                 "권리 읽기">
+<!ENTITY aboutPage.relNotes.label               "제품 소개서">
+<!ENTITY aboutPage.credits.label                "정보">
+<!ENTITY aboutPage.license.label 				"라이선스 정보">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox와 Firefox 로고는 Mozilla 재단의 상표입니다.">
+

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Descargar y sincronizar mensajes">
+<!ENTITY MsgSelect.label "Elementos para usar sin conexión">
+<!ENTITY MsgSyncDesc.label "Si ya ha seleccionado las carpetas de correo o grupos de noticias para uso sin conexión, puede descargarlos y/o sincronizarlos ahora. Si no, utilice el botón &quot;Seleccionar&quot; para escoger las carpetas de correo y noticias que quiere utilizar sin conexión.">
+<!ENTITY MsgSyncDirections.label "Descargar y/o sincronizar las siguientes:">
+<!ENTITY syncTypeMail.label "Mensajes de correo">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "Mensajes de noticias">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "Enviar mensajes pendientes">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "Trabajar sin conexión al acabar la descarga y/o sincronización">
+<!ENTITY workOffline.accesskey "r">
+<!ENTITY selectButton.label "Seleccionar…">
+<!ENTITY selectButton.accesskey "E">
+<!ENTITY MsgSelectDesc.label "Seleccionar las carpetas de correo y noticias para usar sin conexión.">
+<!ENTITY MsgSelectInd.label "Descargar">
+<!ENTITY MsgSelectItems.label "Carpetas y grupos de noticias">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietăți câmpuri formular">
+<!ENTITY windowTitleImage.label "Proprietăți imagine formular">
+
+<!ENTITY InputType.label "Tip de câmp">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Text">
+<!ENTITY password.value "Parolă">
+<!ENTITY checkbox.value "Casetă de validare">
+<!ENTITY radio.value "Buton de opțiuni">
+<!ENTITY submit.value "Buton de trimitere">
+<!ENTITY reset.value "Buton de resetare">
+<!ENTITY file.value "Fișier">
+<!ENTITY hidden.value "Ascuns">
+<!ENTITY image.value "Imagine">
+<!ENTITY button.value "Buton">
+
+<!ENTITY InputSettings.label "Setări câmp">
+<!ENTITY InputName.label "Denumire câmp:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Denumire grup:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Valoare câmp:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "Valoare inițială:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "Inițial bifat">
+<!ENTITY InputChecked.accesskey "b">
+<!ENTITY InputSelected.label "Inițial selectat">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "Doar citire">
+<!ENTITY InputReadOnly.accesskey "D">
+<!ENTITY InputDisabled.label "Dezactivat">
+<!ENTITY InputDisabled.accesskey "I">
+<!ENTITY tabIndex.label "Index file:">
+<!ENTITY tabIndex.accesskey "t">
+<!ENTITY TextSize.label "Mărime câmp:">
+<!ENTITY TextSize.accesskey "M">
+<!ENTITY TextLength.label "Lungime maximă:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "Tastă de acces:">
+<!ENTITY AccessKey.accesskey "a">
+<!ENTITY Accept.label "Acceptă tipurile:">
+<!ENTITY Accept.accesskey "p">
+
+<!ENTITY ImageProperties.label "Proprietăți imagine…">
+<!ENTITY ImageProperties.accesskey "e">

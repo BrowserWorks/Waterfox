@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Porta me foras de hic!">
+<!ENTITY safeb.palm.decline.label "Ignorar iste advertentia">
+<!ENTITY safeb.palm.reportPage.label "Perque iste pagina ha essite blocate?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Aviso providite per <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Pagina denunciate como attaccante!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Iste pagina web <span id='malware_sitename'/> ha essite denunciate como attaccante e ha essite blocate basate in vostre preferentias de securitate.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Le paginas de attacco essaya installar programmas que roba informationes private, usa vostre computator attaccar alteres, o damnifica vostre systema.</p><p>Alcun paginas de attacco intentionalmente distribue software malefic, ma multe son compromittite  sin cognoscimento o permission de lor maestros.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Sito fraudulente!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Iste sito web <span id='phishing_sitename'/> ha essite denunciate como fraudulente e ha essite blocate basate in vostre preferentias de securitate.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Le paginas fraudulente son designate mystificar vos facer alicun cosa periculose, como installar software o revelar vostre informationes personal, como contrsignos, numeros de telephone o cartas de credito.</p><p>Inserer alicun information in iste pagina de web pote resultar in robamento de identitate o fraude altere.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Sito denunciate como portator de software indesirabile!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Iste pagina web <span id='unwanted_sitename'/> ha essite denunciate pro continer software indesirabile e ha essite blocate basate in vostre preferentias de securitate.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Paginas con softwares indesirabile tenta installar software que pote esser malfaciente e affectar vostre systema de manieras inexpectate.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Iste sito pote continer malware">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; ha blocate iste pagina perque illo poterea tentar installar applicationes periculose que roba o dele vostre informationes (pro exemplo, photos, contrasignos, messages e cartas de credito).">

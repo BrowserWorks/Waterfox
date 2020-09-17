@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Selection List Properties">
+
+<!ENTITY Select.label "Selection List">
+<!ENTITY SelectName.label "List Name:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Height:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "Multiple Selection">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "غیر فعال">
+<!ENTITY SelectDisabled.accesskey "غ">
+<!ENTITY SelectTabIndex.label "Tab Index:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "Option Group">
+<!ENTITY OptGroupLabel.label "Label:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "غیر فعال">
+<!ENTITY OptGroupDisabled.accesskey "غ">
+
+<!ENTITY Option.label "Option">
+<!ENTITY OptionText.label "متن:">
+<!ENTITY OptionText.accesskey "م">
+<!ENTITY OptionValue.label "Value:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "Initially Selected">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "غیر فعال">
+<!ENTITY OptionDisabled.accesskey "غ">
+
+<!ENTITY TextHeader.label "متن">
+<!ENTITY ValueHeader.label "مقدار">
+<!ENTITY SelectedHeader.label "Selected">
+
+<!ENTITY AddOption.label "Add Option">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "افزودن گروه">
+<!ENTITY AddOptGroup.accesskey "ا">
+<!ENTITY RemoveElement.label "حذف">
+<!ENTITY RemoveElement.accesskey "ح">
+<!ENTITY MoveElementUp.label "انتقال به بالا">
+<!ENTITY MoveElementUp.accesskey "ا">
+<!ENTITY MoveElementDown.label "انتقال به پایین">
+<!ENTITY MoveElementDown.accesskey "ا">

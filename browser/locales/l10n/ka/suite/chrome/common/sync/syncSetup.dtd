@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountSetupTitle.label    "&syncBrand.fullName.label; გამართვა">
+
+<!-- First page of the wizard -->
+
+<!ENTITY setup.pickSetupType.description "მოგესალმებით, თუ არასოდეს გისარგებლიათ &syncBrand.fullName.label; ბრაუზერით, ახალი ანგარიშის შექმნა დაგჭირდებათ.">
+<!ENTITY button.createNewAccount.label "ახალი ანგარიშის შექმნა">
+<!ENTITY setup.haveAccount.label "უკვე მაქვს ანგარიში">
+<!ENTITY button.connect.label "დაკავშირება">
+
+<!ENTITY setup.choicePage.title.label     "გისარგებლიათ ადრე &syncBrand.fullName.label; ბრაუზერით?">
+<!ENTITY setup.choicePage.new.label       "აქამდე &syncBrand.shortName.label; ბრაუზერით არ მისარგებლია">
+<!ENTITY setup.choicePage.existing.label  "უკვე მისარგებლია &syncBrand.shortName.label; სხვა კომპიუტერზე">
+
+<!-- New Account AND Existing Account -->
+<!ENTITY server.label               "სერვერი">
+<!ENTITY server.accesskey           "S">
+<!ENTITY serverType.main.label      "&syncBrand.fullName.label; სერვერი">
+<!ENTITY serverType.custom2.label   "საკუთარი სერვერით სარგებლობა…">
+<!ENTITY signIn.account2.label      "ანგარიში">
+<!ENTITY signIn.account2.accesskey  "A">
+<!ENTITY signIn.password.label      "პაროლი">
+<!ENTITY signIn.password.accesskey  "P">
+<!ENTITY signIn.recoveryKey.label     "აღდგენის კოდი">
+<!ENTITY signIn.recoveryKey.accesskey "K">
+
+<!-- New Account Page 1: Basic Account Info -->
+<!ENTITY setup.newAccountDetailsPage.title.label "ანგარიშის პარამეტრები">
+<!ENTITY setup.confirmPassword.label             "პაროლი ხელახლა">
+<!ENTITY setup.confirmPassword.accesskey         "C">
+<!ENTITY setup.emailAddress.label                "ელფოსტის მისამართი">
+<!ENTITY setup.emailAddress.accesskey            "E">
+<!-- LOCALIZATION NOTE: tosAgree1, tosLink, tosAgree2, ppLink, tosAgree3 are
+     joined with implicit white space, so spaces in the strings aren't necessary -->
+<!ENTITY setup.tosAgree1.label      "ვეთანხმები">
+<!ENTITY setup.tosAgree1.accesskey  "a">
+<!ENTITY setup.tosLink.label        "მომსახურების">
+<!ENTITY setup.tosAgree2.label      "და">
+<!ENTITY setup.ppLink.label         "პირადი მონაცემების დაცვის დებულება">
+<!ENTITY setup.tosAgree3.label      "">
+<!ENTITY setup.tosAgree2.accesskey  "">
+
+<!-- New Account Page 2: Recovery Key -->
+<!ENTITY setup.newRecoveryKeyPage.title.label "&brandShortName; ზრუნავს თქვენი პირადი მონაცემების უსაფრთხოებაზე">
+<!ENTITY setup.newRecoveryKeyPage.description.label "პირადი ინფორმაციის სრულად დასაცავად, ატვირთვის წინ, თქვენი მონაცემები იშიფრება. აღდგენის გასაღები, რომელიც ამ მონაცემების გასაშიფრადაა საჭირო, არ აიტვირთება.">
+<!ENTITY recoveryKeyEntry.label        "თქვენი აღდგენის კოდი">
+<!ENTITY recoveryKeyEntry.accesskey    "K">
+<!ENTITY recoveryGenerateNewKey.label  "ახალი კოდის გენერაცია">
+<!ENTITY recoveryKeyBackup.description "თქვენი აღდგენის კოდი აუცილებელია &syncBrand.fullName.label; წვდომისთვის სხვა მოწყობილობებზე. გთხოვთ შექმნათ და საიმედოდ შეინახოთ ასლი. მის აღდგენაში ვერავინ დაგეხმარებათ.">
+
+<!ENTITY button.syncKeyBackup.print.label     "ამობეჭდვა…">
+<!ENTITY button.syncKeyBackup.print.accesskey "P">
+<!ENTITY button.syncKeyBackup.save.label      "შენახვა…">
+<!ENTITY button.syncKeyBackup.save.accesskey  "S">
+
+<!-- New Account Page 3: Captcha -->
+<!ENTITY setup.captchaPage2.title.label     "დაგვიდასტურეთ თქვენი სულიერება">
+
+<!-- Existing Account Page 1: Add Device (incl. Add a Device dialog strings) -->
+<!ENTITY addDevice.title.label              "მოწყობილობის დამატება">
+<!ENTITY addDevice.showMeHow.label          "მაჩვენე როგორ.">
+<!ENTITY addDevice.dontHaveDevice.label     "არ მაქვს თან რაიმე მოწყობილობა">
+<!ENTITY addDevice.setup.description.label  "ასამოქმედებლად, გადადით სხვა მოწყობილობაზე და &syncBrand.shortName.label; პარამეტრებში მიუთითეთ „მოწყობილობის დაწყვილება“.">
+<!ENTITY addDevice.setup.enterCode.label    "შემდეგ მიუთოთეთ ეს კოდი:">
+<!ENTITY addDevice.dialog.description.label "თქვენი ახალი მოწყობილობის ასამოქმედებლად გადადით სხვა მოწყობილობაზე და &syncBrand.shortName.label; პარამეტრებში მიუთითეთ „დაკავშირება“">
+<!ENTITY addDevice.dialog.enterCode.label   "შეიტანეთ მოწყობილობის მოწოდებული კოდი:">
+<!ENTITY addDevice.dialog.tryAgain.label    "გთხოვთ სცადოთ ხელახლა.">
+<!ENTITY addDevice.dialog.successful.label  "მოწყობილობა დაემატა. პირველად სინქრონიზაციას რამდენიმე წუთი დასჭირდება და ფონურ რეჟიმში დასრულდება.">
+<!ENTITY addDevice.dialog.recoveryKey.label "თქვენი მოწყობილობის გასააქტივებლად აღდგენის კოდის მითითებაა საჭირო. გთხოვთ ამობეჭდოთ ან შეინახოთ ეს კოდი და თან იქონიოთ.">
+<!ENTITY addDevice.dialog.connected.label   "მოწყობილობა მიერთებულია">
+
+<!-- Existing Account Page 2: Manual Login -->
+<!ENTITY setup.signInPage.title.label "რეგისტრაცია">
+<!ENTITY existingRecoveryKey.description "თქვენი აღდგენის კოდის მიღება შეგიძლიათ თუ &syncBrand.shortName.label; პარამეტრებიდან თქვენს სხვა მოწყობილობებზე  „ანაგრიშის მართვიდან“ გახსნით „ჩემი აღდგენის კოდს“.">
+<!ENTITY verifying.label              "შემოწმება…">
+<!ENTITY resetPassword.label          "პაროლის აღდგენა">
+<!ENTITY resetSyncKey.label           "დამეკარგა სხვა მოწყობილობები.">
+
+<!-- Sync Options -->
+<!ENTITY setup.optionsPage.title      "სინქრონიზაციის პარამეტრები">
+<!ENTITY syncComputerName.label       "კომპიუტერის სახელი:">
+<!ENTITY syncComputerName.accesskey   "C">
+
+<!ENTITY syncMy.label               "სინქრონიზაცია">
+<!ENTITY engine.addons.label        "მოდულები">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.bookmarks.label     "სანიშნები">
+<!ENTITY engine.bookmarks.accesskey "B">
+<!ENTITY engine.tabs.label          "ჩანართები">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "ისტორია">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.passwords.label     "პაროლები">
+<!ENTITY engine.passwords.accesskey "P">
+<!ENTITY engine.prefs.label         "პარამეტრები">
+<!ENTITY engine.prefs.accesskey     "e">
+
+<!ENTITY choice2.merge.main.label      "ამ კომპიუტერის მონაცემთა ჩემს &syncBrand.shortName.label; მონაცემებთან შერწყმა">
+<!ENTITY choice2.merge.recommended.label "(სასურველია)">
+<!ENTITY choice2.client.main.label     "ამ კომპიუტერის ყველა მონაცემთა ჩემი &syncBrand.shortName.label; მონაცემებით ჩანაცვლება">
+<!ENTITY choice2.server.main.label     "ყველა სხვა მოწყობილობის ამ კომპიუტერის მონაცემებით ჩანაცვლება">
+
+<!-- Confirm Merge Options -->
+<!ENTITY setup.optionsConfirmPage.title "Confirm">
+<!ENTITY confirm.merge.label    "&syncBrand.fullName.label; ახლა ამ კომპიუტერის ბრაუზერისა და თქვენი ანგარიშის მონაცემების შერწყმას განახორციელებს.">
+<!ENTITY confirm.client2.label         "გაფრთხილება: წაიშლება ამ კომპიუტერის შემდეგი &brandShortName; მონაცემები:">
+<!ENTITY confirm.client.moreinfo.label "შემდეგ კი თქვენი &syncBrand.fullName.label; მონაცემებს ამ კომპიუტერზე გადაიწერება.">
+<!ENTITY confirm.server2.label         "გაფრთხილება: შემდეგი მოწყობილობები ჩანაცვლდება თქვენი ლოკალური მონაცემებით:">
+
+<!-- New & Existing Account: Setup Complete -->
+<!ENTITY setup.successPage.title "ჩადგმა დასრულდა">
+<!ENTITY changeOptions.label "ამ პარამეტრების შეცვლა შეგიძლიათ ქვემოთ განთავსებული სინქრონიზაციის პარამეტრებიდან.">
+<!ENTITY continueUsing.label "შეგიძლიათ გააგრძელოთ &brandShortName; ბრაუზერით სარგებლობა.">

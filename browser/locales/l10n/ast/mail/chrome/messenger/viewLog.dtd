@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Rexistru de filtros">
+<!ENTITY viewLogInfo.text "El rexistru de filtros ye un ficheru que documenta qué filtros s'executaron. Usa la caxella de seleición que hai debaxo p'habilitar el rexistru.">
+<!ENTITY clearLog.label "Llimpiar registru">
+<!ENTITY clearLog.accesskey "L">
+<!ENTITY enableLog.label "Habilitar el rexistro de filtráu">
+<!ENTITY enableLog.accesskey "E">
+<!ENTITY closeLog.label "Zarrar">
+<!ENTITY closeLog.accesskey "z">

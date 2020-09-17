@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Perihal &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; masih dalam percubaan dan mungkin tidak stabil.">
+<!ENTITY aboutPage.checkForUpdates.link         "Semak Kemaskini »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Mencari kemaskini…">
+<!ENTITY aboutPage.checkForUpdates.none         "Tiada kemaskini tersedia">
+<!ENTITY aboutPage.checkForUpdates.available2   "Muat turun kemaskini">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Memuat turun kemaskini…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Pasang kemaskini">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "Sokongan">
+<!ENTITY aboutPage.privacyPolicy.label          "Polisi Privasi">
+<!ENTITY aboutPage.rights.label                 "Ketahui Hak Anda">
+<!ENTITY aboutPage.relNotes.label               "Nota Keluaran">
+<!ENTITY aboutPage.credits.label                "Kredit">
+<!ENTITY aboutPage.license.label                "Maklumat Perlesenan">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox dan logo Firefox adalah cap dagangan Mozilla Foundation.">

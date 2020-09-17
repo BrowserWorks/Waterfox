@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Boodskapfilters">
+<!ENTITY nameColumn.label "Filternaam">
+<!ENTITY activeColumn.label "Geaktiveer">
+<!ENTITY newButton.label "Nuwe…">
+<!ENTITY newButton.accesskey "N">
+
+
+<!ENTITY editButton.label "Redigeer…">
+<!ENTITY editButton.accesskey "e">
+<!ENTITY deleteButton.label "Skrap">
+<!ENTITY deleteButton.accesskey "a">
+
+
+
+<!ENTITY reorderUpButton.label "Skuif op">
+<!ENTITY reorderUpButton.accesskey "o">
+<!ENTITY reorderDownButton.label "Skuif af">
+<!ENTITY reorderDownButton.accesskey "a">
+
+
+
+<!ENTITY filterHeader.label "Geaktiveerde filters loop outomaties in die volgorde hieronder.">
+<!ENTITY filtersForPrefix.label "Filters vir:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Filterstaaflêer">
+<!ENTITY viewLogButton.accesskey "s">
+<!ENTITY runFilters.label "Laat loop nou">
+<!ENTITY runFilters.accesskey "L">
+<!ENTITY stopFilters.label "Stop">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Laat gemêrkte filter(s) loop op:">
+<!ENTITY folderPickerPrefix.accesskey "k">
+<!ENTITY helpButton.label "Hulp">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W"> 
+
+

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "K'ak'a' Molojri'ïl…">
+<!ENTITY event.new.event.accesskey              "K">
+
+<!ENTITY event.new.task                         "K'ak'a' Samaj…">
+<!ENTITY event.new.task.accesskey               "k">
+
+<!ENTITY calendar.import.label                  "Tijik' pe…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Tik'wäx el…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Titalüx rutzijol…">
+<!ENTITY calendar.publish.accesskey             "a">
+
+<!ENTITY calendar.deletecalendar.label          "Keyuj Cha'on Cholq'ij…">
+<!ENTITY calendar.deletecalendar.accesskey      "y">
+<!ENTITY calendar.unsubscribecalendar.label     "Tiq'at ri rutz'ib'axik ri Cholq'ij...">
+<!ENTITY calendar.unsubscribecalendar.accesskey "U">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Tiyuj ri Cholq'ij Cha'on">
+<!ENTITY calendar.removecalendar.accesskey      "R">
+
+
+<!ENTITY calendar.menu.customize.label          "Tichinäx…">
+<!ENTITY calendar.menu.customize.accesskey      "C">
+
+<!ENTITY showUnifinderCmd.label                 "Kekanöx taq Molojri'ïl">
+<!ENTITY showUnifinderCmd.accesskey             "n">
+<!ENTITY showUnifinderCmd.tooltip               "Tijalwachij ri panel richin tikanoj molojri'ïl">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Tik'ut taq Samaj pa ri Cholq'ij">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "T">
+
+<!ENTITY goTodayCmd.label                       "Wakami">
+<!ENTITY goTodayCmd.accesskey                   "W">
+
+<!ENTITY showCurrentView.label                  "Rutzub'al Wakami">
+<!ENTITY showCurrentView.accesskey              "R">
+
+<!ENTITY calendar.properties.label              "Cholq'ij Kichinil Yakwuj…">
+<!ENTITY calendar.properties.accesskey          "a">

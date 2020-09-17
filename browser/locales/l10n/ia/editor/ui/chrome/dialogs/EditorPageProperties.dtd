@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Proprietates del pagina">
+<!ENTITY location.label "Loco:">
+<!ENTITY lastModified.label "Ultime modification:">
+<!ENTITY titleInput.label "Titulo:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Autor:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "Description:">
+<!ENTITY descriptionInput.accessKey "D">
+<!ENTITY locationNewPage.label "[Nove pagina, non ancora salvate]">
+<!ENTITY EditHEADSource1.label "Usatores avantiate:">
+<!ENTITY EditHEADSource2.label "Pro rediger altere contentos del region &lt;head&gt; usa &quot;HTML Source&quot; in le Menu vider o le barra del instrumentos in modo rediger.">

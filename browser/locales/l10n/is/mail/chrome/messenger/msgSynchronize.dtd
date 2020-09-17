@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Niðurhala og samstilla póst">
+<!ENTITY MsgSelect.label "Hlutir sem eru notaðir fyrir ónettengda notkun">
+<!ENTITY MsgSyncDesc.label "Ef þú hefur þegar valið póstmöppur eða fréttahópa fyrir ónettengda notkun, geturðu niðurhalað og/eða samstillt þá núna. Annars geturðu notað &quot;Velja&quot; takkann til að velja póstmöppur og fréttahópa fyrir ónettengda notkun.">
+<!ENTITY MsgSyncDirections.label "Niðurhala og/eða samstilla eftirfarandi:">
+<!ENTITY syncTypeMail.label "Tölvupóstur">
+<!ENTITY syncTypeMail.accesskey "p">
+<!ENTITY syncTypeNews.label "Póstur fréttahóps">
+<!ENTITY syncTypeNews.accesskey "f">
+<!ENTITY sendMessage.label "Senda ósendan póst">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "Skipta yfir í að vera án nettengingar um leið og niðurhal og/eða afritun er búin">
+<!ENTITY workOffline.accesskey "S">
+<!ENTITY selectButton.label "Velja…">
+<!ENTITY selectButton.accesskey "e">
+<!ENTITY MsgSelectDesc.label "Veldu póstmöppur og fréttahópa fyrir ónettengda notkun.">
+<!ENTITY MsgSelectInd.label "Hala niður">
+<!ENTITY MsgSelectItems.label "Möppur og fréttahópar">

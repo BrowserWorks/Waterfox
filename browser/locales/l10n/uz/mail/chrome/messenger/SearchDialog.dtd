@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Xabarlarni izlash:">
+<!ENTITY searchHeading.accesskey     "i">
+<!ENTITY searchSubfolders.label      "Qyi jildlarni izlash">
+<!ENTITY searchSubfolders.accesskey  "i">
+<!ENTITY searchOnServer.label        "Serverda qidiruvni ishga tushirish">
+<!ENTITY searchOnServer.accesskey    "u">
+<!ENTITY resetButton.label           "Tozalash">
+<!ENTITY resetButton.accesskey       "T">
+<!ENTITY openButton.label            "Ochish">
+<!ENTITY openButton.accesskey        "O">
+<!ENTITY deleteButton.label          "O‘chirish">
+<!ENTITY deleteButton.accesskey      "O">
+<!ENTITY searchDialogTitle.label     "Xabarlarni izlash">
+<!ENTITY results.label               "Natijalar">
+<!ENTITY moveButton.label            "Ko‘chirish">
+<!ENTITY moveButton.accesskey        "K">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Jildda ochish">
+<!ENTITY openInFolder.accesskey      "J">
+<!ENTITY saveAsVFButton.label        "Qidiruv jildi sifatida saqlash">
+<!ENTITY saveAsVFButton.accesskey    "s">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Izlash:">
+<!ENTITY abSearchHeading.accesskey   "I">
+<!ENTITY propertiesButton.label      "Xossalari">
+<!ENTITY propertiesButton.accesskey  "X">
+<!ENTITY composeButton.label         "Yozish">
+<!ENTITY composeButton.accesskey     "Y">
+<!ENTITY deleteCardButton.label      "O‘chirish">
+<!ENTITY deleteCardButton.accesskey  "O">
+<!ENTITY abSearchDialogTitle.label   "Qo‘shimcha manzillar kitobidan izlash">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

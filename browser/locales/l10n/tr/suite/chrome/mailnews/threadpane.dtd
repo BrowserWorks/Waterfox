@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Dizilim">
+<!ENTITY fromColumn.label "Gönderen">
+<!ENTITY recipientColumn.label "Alıcı">
+<!ENTITY attachmentColumn.label "Ekler">
+<!ENTITY subjectColumn.label "Konu">
+<!ENTITY dateColumn.label "Tarih">
+<!ENTITY priorityColumn.label "Öncelik">
+<!ENTITY tagsColumn.label "Etiketler">
+<!ENTITY accountColumn.label "Hesap">
+<!ENTITY statusColumn.label "Durum">
+<!ENTITY sizeColumn.label "Boyut">
+<!ENTITY junkStatusColumn.label "Gereksiz durumu">
+<!ENTITY unreadColumn.label "Dizilimde okunmamış">
+<!ENTITY totalColumn.label "Dizilimdeki toplam">
+<!ENTITY readColumn.label "Okunmuş">
+<!ENTITY receivedColumn.label "Tarih">
+<!ENTITY flagColumn.label "Flag">
+<!ENTITY locationColumn.label "Konum">
+<!ENTITY idColumn.label "Alındı sırası">
+<!--Tooltips-->
+
+<!ENTITY columnChooser.tooltip "Görüntülenecek sütunları tıklayın">
+<!ENTITY threadColumn.tooltip "Posta dizilimlerini görmek için tıklayın">
+<!ENTITY fromColumn.tooltip "Gönderene göre sıralamak için tıklayın">
+<!ENTITY recipientColumn.tooltip "Alıcıya göre sıralamak için tıklayın">
+<!ENTITY attachmentColumn.tooltip "Eklere göre sırala">
+<!ENTITY subjectColumn.tooltip "Konuya göre sıralamak için tıklayın">
+<!ENTITY dateColumn.tooltip "Tarihe göre sıralamak için tıklayın">
+<!ENTITY priorityColumn.tooltip "Önceliğe göre sıralamak için tıklayın">
+<!ENTITY tagsColumn.tooltip "Etikete göre sıralamak için tıklayın">
+<!ENTITY accountColumn.tooltip "Hesaba göre sırala">
+<!ENTITY statusColumn.tooltip "Duruma göre sıralamak için tıklayın">
+<!ENTITY sizeColumn.tooltip "Boyuta göre sırala">
+<!ENTITY junkStatusColumn.tooltip "Gereksiz durumuna göre sıralamak için tıklayın">
+<!ENTITY unreadColumn.tooltip "Okunmayan iletilerin sayısı">
+<!ENTITY totalColumn.tooltip "İletilerin toplam sayısı">
+<!ENTITY readColumn.tooltip "Okunanlara göre sıralamak için tıklayın">
+<!ENTITY receivedColumn.tooltip "Alış tarihine göre sıralamak için tıklayın">
+<!ENTITY flagColumn.tooltip "Yıldızlılığa göre sıralamak için tıklayın">
+<!ENTITY locationColumn.tooltip "Konuma göre sırala">
+<!ENTITY idColumn.tooltip "İstek alınmasına göre sıralamak için tıklayın">

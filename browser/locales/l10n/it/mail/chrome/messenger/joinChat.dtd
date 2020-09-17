@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title "Entra in chat">
+<!ENTITY name.label "Stanza">
+<!ENTITY optional.label "(opzionale)">
+<!ENTITY account.label "Account">
+<!ENTITY autojoin.label "Collegamento automatico a questa stanza di chat">
+<!ENTITY autojoin.accesskey "C">

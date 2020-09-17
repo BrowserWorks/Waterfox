@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "Roghnaigh…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Glan">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "Roghnaigh…">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "Glan">
+<!ENTITY encryption.certificate_clear.accesskey "l">
+<!ENTITY signingGroupTitle.label "Síniú Digiteach">
+<!ENTITY signMessage.accesskey "d">
+
+<!-- Strings for the cert picker dialog -->
+
+<!ENTITY certPicker.title "Roghnaigh Teastas">
+<!ENTITY certPicker.info  "Teastas:">
+<!ENTITY certPicker.detailsLabel "Mionsonraí an teastais roghnaithe:">
+

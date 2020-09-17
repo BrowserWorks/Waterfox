@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Adresna traka">
+
+<!ENTITY autoComplete.label                    "Automatsko završavanje">
+<!ENTITY autoCompleteMatchHistory.label        "Automatski predloži web stranice iz historije">
+<!ENTITY autoCompleteMatchBookmarks.label      "Automatski predloži web stranice iz zabilješki">
+<!ENTITY autoCompleteAutoFill.label            "Automatski završi s najboljom opcijom">
+<!ENTITY autoCompleteShowPopup.label           "Prikaži listu odgovarajućih rezultata">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Pokazuje samo web stranice koje ste ranije kucali">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Podudaranje">
+<!ENTITY autoCompleteMatchAnywhere             "Bilo gdje u adresi ili naslovu stranice">
+<!ENTITY autoCompleteMatchWordsFirst           "Bilo gdje, ali poželjno u granicama riječi">
+<!ENTITY autoCompleteMatchWords                "Samo u granicama riječi">
+<!ENTITY autoCompleteMatchStart                "Samo na početku adrese ili naslova">
+<!ENTITY showInternetSearch.label              "Prikaži izvorni internet pretraživač">
+
+<!ENTITY formatting.label                      "Formatiranje">
+<!ENTITY domainFormatting.label                "Istakni učinkovite domene za web stranice i FTP servere">
+<!ENTITY highlightSecure.label                 "Istakni web stranice s visokim nivoom sigurnosnog povezivanja">
+
+<!ENTITY unknownLocations.label                "Nepoznate lokacije">
+<!ENTITY domainGuessing.label                  "Dodajte &quot;www.&quot; i &quot;.com&quot; u adresu ako web stranica nije pronađena">
+<!ENTITY keywords.label                        "Izvršite web pretragu kada uneseni tekst nije web lokacija">

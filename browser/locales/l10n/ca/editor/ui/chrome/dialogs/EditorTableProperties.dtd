@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Propietats de la taula">
+<!ENTITY applyButton.label                "Aplica">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "Tanca">
+<!ENTITY tableTab.label                   "Taula">
+<!ENTITY cellTab.label                    "Cel·les">
+<!ENTITY tableRows.label                  "Files:">
+<!ENTITY tableRows.accessKey              "F">
+<!ENTITY tableColumns.label               "Columnes:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "Alçada:">
+<!ENTITY tableHeight.accessKey            "d">
+<!ENTITY tableWidth.label                 "Amplada:">
+<!ENTITY tableWidth.accessKey             "m">
+<!ENTITY tableBorderSpacing.label         "Contorns i espaiat">
+<!ENTITY tableBorderWidth.label           "Contorn:">
+<!ENTITY tableBorderWidth.accessKey       "C">
+<!ENTITY tableSpacing.label               "Espaiat:">
+<!ENTITY tableSpacing.accessKey           "s">
+<!ENTITY tablePadding.label               "Encoixinament:">
+<!ENTITY tablePadding.accessKey           "x">
+<!ENTITY tablePxBetwCells.label           "píxels entre les cel·les">
+<!ENTITY tablePxBetwBrdrCellContent.label "píxels entre el contorn de la cel·la i el seu contingut">
+<!ENTITY tableAlignment.label             "Alineació de la taula:">
+<!ENTITY tableAlignment.accessKey         "t">
+<!ENTITY tableCaption.label               "Llegenda:">
+<!ENTITY tableCaption.accessKey           "n">
+<!ENTITY tableCaptionAbove.label          "Sobre la taula">
+<!ENTITY tableCaptionBelow.label          "Sota la taula">
+<!ENTITY tableCaptionLeft.label           "Esquerra de la taula">
+<!ENTITY tableCaptionRight.label          "Dreta de la taula">
+<!ENTITY tableCaptionNone.label           "Cap">
+<!ENTITY tableInheritColor.label           "(Permet que el color de la pàgina es transparenti)">
+
+<!ENTITY cellSelection.label              "Selecció">
+<!ENTITY cellSelectCell.label             "Cel·la">
+<!ENTITY cellSelectRow.label              "Fila">
+<!ENTITY cellSelectColumn.label           "Columna">
+<!ENTITY cellSelectNext.label             "Següent">
+<!ENTITY cellSelectNext.accessKey         "n">
+<!ENTITY cellSelectPrevious.label         "Anterior">
+<!ENTITY cellSelectPrevious.accessKey     "o">
+<!ENTITY applyBeforeChange.label          "Els canvis actuals s'aplicaran abans de canviar la selecció.">
+<!ENTITY cellContentAlignment.label       "Alineació del contingut:">
+<!ENTITY cellHorizontal.label             "Horitzontal:">
+<!ENTITY cellHorizontal.accessKey         "z">
+<!ENTITY cellVertical.label               "Vertical:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Estil de la cel·la:">
+<!ENTITY cellStyle.accessKey              "l">
+<!ENTITY cellNormal.label                 "Normal">
+<!ENTITY cellHeader.label                 "Capçalera">
+<!ENTITY cellTextWrap.label               "Ajustament de text:">
+<!ENTITY cellTextWrap.accessKey           "t">
+<!ENTITY cellWrap.label                   "Ajusta">
+<!ENTITY cellNoWrap.label                 "No ajustis">
+<!ENTITY cellAlignTop.label               "Superior">
+<!ENTITY cellAlignMiddle.label            "Mitjà">
+<!ENTITY cellAlignBottom.label            "Inferior">
+<!ENTITY cellAlignJustify.label           "Justifica">
+<!ENTITY cellInheritColor.label           "(Permet que el color de la taula sigui transparent)">
+<!ENTITY cellUseCheckboxHelp.label        "Utilitza caselles de selecció per determinar quines propietats s'apliquen a totes les cel·les seleccionades ">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label                       "Mida">
+<!ENTITY pixels.label                     "píxels">
+<!ENTITY backgroundColor.label            "Color de fons:">
+<!ENTITY backgroundColor.accessKey        "f">
+<!ENTITY AlignLeft.label                  "Esquerra">
+<!ENTITY AlignCenter.label                "Centre">
+<!ENTITY AlignRight.label                 "Dreta">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Okukhutshelweyo">
+<!ENTITY aboutDownloads.header                     "Okukhutshelweyo kwakho">
+<!ENTITY aboutDownloads.empty                      "Akukho zinto zikhutshelweyo">
+
+<!ENTITY aboutDownloads.open                       "Vula">
+<!ENTITY aboutDownloads.remove                     "Cima">
+<!ENTITY aboutDownloads.removeAll                  "Cima Konke">
+<!ENTITY aboutDownloads.pause                      "Nqumama">
+<!ENTITY aboutDownloads.resume                     "Buyela enkomeni">
+<!ENTITY aboutDownloads.cancel                     "Rhoxisa">
+<!ENTITY aboutDownloads.retry                      "Phinda uzame">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Звіти про прочитання">
+<!ENTITY useGlobalPrefs.label         "Використовувати глобальні параметри звітів для цього облікового запису">
+<!ENTITY useGlobalPrefs.accesskey     "В">
+<!ENTITY globalReceipts.label         "Глобальні параметри…">
+<!ENTITY globalReceipts.accesskey     "Г">
+<!ENTITY useCustomPrefs.label         "Налаштувати звіти про прочитання для цього облікового запису">
+<!ENTITY useCustomPrefs.accesskey     "Н">
+<!ENTITY requestReceipt.label         "Завжди вимагати звіт про прочитання під час надсилання повідомлень">
+<!ENTITY requestReceipt.accesskey     "П">
+<!ENTITY receiptArrive.label          "Коли звіт прибуває:">
+<!ENTITY leaveIt.label                "Залишати його в теці «Вхідні»">
+<!ENTITY leaveIt.accesskey            "З">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Перемістити його до теки &quot;Надіслані&quot;">
+<!ENTITY moveToSent.accesskey         "е">
+<!ENTITY requestMDN.label             "Коли я отримую вимогу звіту про прочитання:">
+<!ENTITY returnSome.label             "Дозволити звіти для деяких повідомлень">
+<!ENTITY returnSome.accesskey         "Д">
+<!ENTITY never.label                  "Ніколи не повертати звіт про прочитання">
+<!ENTITY never.accesskey              "і">
+<!ENTITY notInToCc.label              "Якщо я відсутній у списках «Кому» чи «Копія»:">
+<!ENTITY notInToCc.accesskey          "Я">
+<!ENTITY outsideDomain.label          "Якщо відправник перебуває поза моїм доменом:">
+<!ENTITY outsideDomain.accesskey      "к">
+<!ENTITY otherCases.label             "В інших випадках:">
+<!ENTITY otherCases.accesskey         "ш">
+<!ENTITY askMe.label                  "Питати мене">
+<!ENTITY alwaysSend.label             "Завжди повертати">
+<!ENTITY neverSend.label              "Ніколи не повертати">

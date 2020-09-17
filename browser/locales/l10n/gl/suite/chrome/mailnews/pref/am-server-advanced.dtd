@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Configuración avanzada das contas">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "Cartafol do servidor IMAP:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Mostrar só os cartafoles subscritos">
+<!ENTITY usingSubscription.accesskey "M">
+<!ENTITY dualUseFolders.label "O servidor admite cartafoles que conteñan subcartafoles e mensaxes">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY useIdle.label "Utilice a orde IDLE se o servidor a admite">
+<!ENTITY useIdle.accesskey "I">
+<!ENTITY maximumConnectionsNumber.label "Número máximo de conexións do servidor na caché">
+<!ENTITY maximumConnectionsNumber.accesskey "m">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "Estas preferencias especifican os espazos de nome no servidor IMAP.">
+<!ENTITY personalNamespace.label "Espazo de nome persoal:">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Público (compartido):">
+<!ENTITY publicNamespace.accesskey "P">
+<!ENTITY otherUsersNamespace.label "Outros usuarios:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "Permitir que o servidor ignore estes espazos de nome">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3Desc.label "Ao descargar correo pop deste servidor, utilizar o seguinte cartafol para o correo novo:" >
+<!ENTITY globalInbox.label "Caixa de entrada global (conta de cartafoles locais)">
+<!ENTITY globalInbox.accesskey "g">
+<!ENTITY accountDirectory.label "Caixa de entrada para esta conta do servidor">
+<!ENTITY accountDirectory.accesskey "s">
+<!ENTITY deferToServer.label "Caixa de entrada para outra conta">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "Incluír este servidor ao obter o correo novo">
+<!ENTITY deferGetNewMail.accesskey "I">

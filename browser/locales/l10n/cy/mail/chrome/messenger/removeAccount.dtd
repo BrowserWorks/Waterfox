@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Tynnu Cyfrif a Data">
+<!ENTITY removeButton.label           "Tynnu">
+<!ENTITY removeButton.accesskey       "T">
+<!ENTITY removeAccount.label          "Tynnu manylion cyfrif">
+<!ENTITY removeAccount.accesskey      "c">
+<!ENTITY removeAccount.desc           "Bydd yn tynnu gwybodaeth &brandShortName; am y cyfrif hwn, yn unig. Nid yw'n effeithio ar y cyfrif ei hun ar y gweinydd.">
+<!ENTITY removeData.label             "Tynnu data negeseuon">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Tynnu data sgwrs">
+<!ENTITY removeDataChat.accesskey     "s">
+<!ENTITY removeDataLocalAccount.desc  "Bydd yn tynnu'r holl negeseuon, ffolderi a hidlau sy'n gysylltiedig â'r cyfrif hwn o'ch disg lleol. Nid yw hyn yn effeithio ar rhai negeseuon sy'n cael eu cadw ar y gweinydd. Peidiwch â dewis hwn os ydych yn bwriadu archifo'r data lleol neu ei ailddefnyddio yn ddiweddarach o fewn &brandShortName;.">
+<!ENTITY removeDataServerAccount.desc "Bydd yn tynnu'r holl negeseuon, ffolderi a hidlau sy'n gysylltiedig â'r cyfrif hwn o'ch disg. Bydd eich negeseuon a'ch ffolderi yn cael eu cadw ar y gweinydd.">
+<!ENTITY removeDataChatAccount.desc   "Yn tynnu pob cofnod o sgyrsiau sydd wedi eu cadw ar gyfer y cyfrif hwn ar eich disg lleol.">
+<!ENTITY showData.label               "Dangos lleoliad y data">
+<!ENTITY showData.accesskey           "l">
+<!ENTITY progressPending              "Tynnu data penodol…">
+<!ENTITY progressSuccess              "Llwyddodd y tynnu.">
+<!ENTITY progressFailure              "Methodd y tynnu.">

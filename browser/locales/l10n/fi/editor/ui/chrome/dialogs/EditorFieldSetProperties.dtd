@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label  "Kenttäryhmän ominaisuudet">
+
+<!ENTITY Legend.label  "selite">
+<!ENTITY Legend.accesskey  "s">
+
+<!ENTITY EditLegendText.label  "Muokkaa selitettä:">
+<!ENTITY EditLegendText.accesskey  "M">
+<!ENTITY LegendAlign.label  "Selitteen tasaus:">
+<!ENTITY LegendAlign.accesskey  "n">
+<!ENTITY AlignDefault.label  "Oletus">
+<!ENTITY AlignLeft.label  "Vasemmalle">
+<!ENTITY AlignCenter.label  "Keskitetty">
+<!ENTITY AlignRight.label  "Oikealle">
+
+<!ENTITY RemoveFieldSet.label  "Poista kenttäryhmä">
+<!ENTITY RemoveFieldSet.accesskey  "k">

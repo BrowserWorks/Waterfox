@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title       "Filtri logi">
+<!ENTITY viewLogInfo.text    "Filtri logi dokumenteerib filtrid, mida on kasutatud selle konto jaoks. Kasuta allolevat märkeruutu, et lubada filtri logimine.">
+<!ENTITY clearLog.label      "Puhasta logi">
+<!ENTITY clearLog.accesskey  "P">
+<!ENTITY enableLog.label     "Filtri logimine lubatakse">
+<!ENTITY enableLog.accesskey "F">
+<!ENTITY closeLog.label      "Sulge">
+<!ENTITY closeLog.accesskey  "l">

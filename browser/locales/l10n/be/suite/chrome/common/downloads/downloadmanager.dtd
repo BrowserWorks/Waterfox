@@ -1,0 +1,83 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title "Кіраўнік загрузак">
+<!ENTITY menuBar.tooltip "Паліца меню">
+<!ENTITY searchBar.tooltip "Паліца пошуку">
+<!ENTITY search.placeholder "Пошук загрузак">
+<!ENTITY search.label "Пошук загрузак">
+<!ENTITY search.accesskey "ш">
+<!ENTITY search.key "f">
+<!ENTITY cmd.clearList.label "Ачысціць спіс">
+<!ENTITY cmd.clearList.tooltip "Выдаляе выкананыя, скасаваныя і няўдачныя загрузкі з спіса">
+<!ENTITY cmd.clearList.accesskey "А">
+<!ENTITY col.name.label "Назва">
+<!ENTITY col.name.accesskey "Н">
+<!ENTITY col.name.tooltip "Назва файла">
+<!ENTITY col.status.label "Статус">
+<!ENTITY col.status.accesskey "С">
+<!ENTITY col.status.tooltip "Статус">
+<!ENTITY col.actionPlay.label "Прыпыніць/Працягнуць/Паўтарыць">
+<!ENTITY col.actionPlay.accesskey "ы">
+<!ENTITY col.actionPlay.tooltip "Прыпыніць/Працягнуць/Паўтарыць">
+<!ENTITY col.actionStop.label "Скасаваць/Выдаліць">
+<!ENTITY col.actionStop.accesskey "С">
+<!ENTITY col.actionStop.tooltip "Скасаваць/Выдаліць">
+<!ENTITY col.progress.label "Развіццё">
+<!ENTITY col.progress.accesskey "Р">
+<!ENTITY col.progress.tooltip "Развіццё">
+<!ENTITY col.timeremaining.label "Засталося:">
+<!ENTITY col.timeremaining.accesskey "З">
+<!ENTITY col.timeremaining.tooltip "Засталося:">
+<!ENTITY col.transferred.label "Сцягнута">
+<!ENTITY col.transferred.accesskey "ц">
+<!ENTITY col.transferred.tooltip "Сцягнута">
+<!ENTITY col.transferrate.label "Хуткасць">
+<!ENTITY col.transferrate.accesskey "Х">
+<!ENTITY col.transferrate.tooltip "Хуткасць">
+<!ENTITY col.timeelapsed.label "Мінула:">
+<!ENTITY col.timeelapsed.accesskey "М">
+<!ENTITY col.timeelapsed.tooltip "Мінула:">
+<!ENTITY col.starttime.label "Час пачатку">
+<!ENTITY col.starttime.accesskey "а">
+<!ENTITY col.starttime.tooltip "Час пачатку">
+<!ENTITY col.endtime.label "Час канца">
+<!ENTITY col.endtime.accesskey "к">
+<!ENTITY col.endtime.tooltip "Час канца">
+<!ENTITY col.progresstext.label "&#037;">
+<!ENTITY col.progresstext.accesskey "&#037;">
+<!ENTITY col.progresstext.tooltip "Развіццё (&#037;)">
+<!ENTITY col.source.label "Зыходнік">
+<!ENTITY col.source.accesskey "З">
+<!ENTITY col.source.tooltip "Зыходнік">
+<!ENTITY view.columns.label "Паказаць слупкі">
+<!ENTITY view.columns.accesskey "П">
+<!ENTITY view.sortBy.label "Размеркаваць па">
+<!ENTITY view.sortBy.accesskey "Р">
+<!ENTITY view.unsorted.label "Неразмеркаваныя">
+<!ENTITY view.unsorted.accesskey "Н">
+<!ENTITY view.sortAscending.label "Размеркаваць ад А да Я">
+<!ENTITY view.sortAscending.accesskey "А">
+<!ENTITY view.sortDescending.label "Размеркаваць ад Я да А">
+<!ENTITY view.sortDescending.accesskey "Я">
+<!ENTITY cmd.pause.label "Прыпыніць">
+<!ENTITY cmd.pause.accesskey "П">
+<!ENTITY cmd.resume.label "Працягнуць">
+<!ENTITY cmd.resume.accesskey "а">
+<!ENTITY cmd.retry.label "Паўтарыць">
+<!ENTITY cmd.retry.accesskey "ў">
+<!ENTITY cmd.cancel.label "Скасаваць">
+<!ENTITY cmd.cancel.accesskey "С">
+<!ENTITY cmd.remove.label "Выдаліць з спіса">
+<!ENTITY cmd.remove.accesskey "В">
+<!ENTITY cmd.open.label "Адчыніць">
+<!ENTITY cmd.open.accesskey "А">
+<!ENTITY cmd.show.label "Адчыніць змяшчальную папку">
+<!ENTITY cmd.show.accesskey "м">
+<!ENTITY cmd.goToDownloadPage.label "Паказаць старонку загрузкі">
+<!ENTITY cmd.goToDownloadPage.accesskey "з">
+<!ENTITY cmd.copyDownloadLink.label "Капіяваць спасылку загрузкі">
+<!ENTITY cmd.copyDownloadLink.accesskey "К">
+<!ENTITY cmd.properties.label "Уласцівасці…">
+<!ENTITY cmd.properties.accesskey "У">

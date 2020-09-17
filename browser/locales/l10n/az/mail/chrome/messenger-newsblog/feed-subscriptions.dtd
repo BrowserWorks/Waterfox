@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Subscription Dialog -->
+
+<!ENTITY feedSubscriptions.label     "Axın abunəlikləri">
+<!ENTITY learnMore.label             "Axınlar haqqında ətraflı öyrənin">
+
+<!ENTITY feedTitle.label             "Başlıq:">
+<!ENTITY feedTitle.accesskey         "B">
+
+<!ENTITY feedLocation.label          "Axın ünvanı:">
+<!ENTITY feedLocation.accesskey      "n">
+<!ENTITY locationValidate.label      "Təsdiqlə">
+<!ENTITY validateText.label          "Təsdiqləməni yoxla və düzgün ünvan al">
+
+<!ENTITY feedFolder.label            "Məqalələrin saxlanacağı yer:">
+<!ENTITY feedFolder.accesskey        "s">
+
+<!ENTITY quickMode.label             "Sayt səhifəsini yükləmək yerinə məqalə məzmununu göstər">
+<!ENTITY quickMode.accesskey         "g">
+
+<!ENTITY autotagEnable.label         "Axın &lt;kateqoriya&gt; adlarından avtomatik olaraq etiket yarat">
+<!ENTITY autotagEnable.accesskey     "k">
+<!ENTITY autotagUsePrefix.label      "Etiketlərə prefiks əlavə et:">
+<!ENTITY autotagUsePrefix.accesskey  "p">
+<!ENTITY autoTagPrefix.placeholder   "Etiket prefiksi daxil edin">
+
+<!ENTITY button.addFeed.label        "Əlavə et">
+<!ENTITY button.addFeed.accesskey    "e">
+<!ENTITY button.updateFeed.label     "Yenilə">
+<!ENTITY button.updateFeed.accesskey "Y">
+<!ENTITY button.removeFeed.label     "Sil">
+<!ENTITY button.removeFeed.accesskey "S">
+<!ENTITY button.importOPML.label     "İdxal et">
+<!ENTITY button.importOPML.accesskey "l">
+<!ENTITY button.exportOPML.label     "İxrac et">
+<!ENTITY button.exportOPML.accesskey "x">
+
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Qapat">

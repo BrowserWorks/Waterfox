@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Hjálp fyrir spjallreikning">
+
+<!ENTITY accountProtocolTitle.label "Spjallnetkerfi">
+<!ENTITY accountProtocolInfo.label "Veldu það netkerfi sem er notað fyrir spjallaðganginn.">
+<!ENTITY accountProtocolField.label "Netumhverfi:">
+<!ENTITY accountProtocolGetMore.label "Ná í meira…">
+
+<!ENTITY accountUsernameTitle.label "Notandanafn">
+<!ENTITY accountUsernameDuplicate.label "Þegar er búið að stilla þennan reikning!">
+
+<!ENTITY accountPasswordTitle.label "Lykilorð">
+<!ENTITY accountPasswordInfo.label "Sláðu lykilorðið í svæðið hér fyrir neðan.">
+<!ENTITY accountPasswordField.label "Lykilorð:">
+<!ENTITY accountPasswordManager.label "Innslegið lykilorð verður geymt í lykilorðageymslu. Hafðu þetta svæði tómt ef þú vilt alltaf verða spurður um lykilorð í hvert sinn sem tengst er þessum reikningi.">
+
+<!ENTITY accountAdvancedTitle.label "Ítarlegir valkostir">
+<!ENTITY accountAdvancedInfo.label "Ef þú vilt geturðu sleppt þessu skrefi.">
+<!ENTITY accountAdvanced.newMailNotification.label "Tilkynna nýjan póst">
+<!ENTITY accountAliasGroupbox.caption "Staðbundið auðkenni">
+<!ENTITY accountAliasField.label "Auðkenni:">
+<!ENTITY accountAliasInfo.label "Þetta mun aðeins birtast á þínum skjá þegar þú spjallar, aðrir aðilar munu ekki sjá það.">
+<!ENTITY accountProxySettings.caption "Stillingar staðgengilsþjóns">
+<!ENTITY accountProxySettings.change.label "Breyta…">
+<!ENTITY accountProxySettings.change.accessKey "B">
+
+<!ENTITY accountSummaryTitle.label "Samantekt">
+<!ENTITY accountSummaryInfo.label "Yfirlit yfir upplýsingar sem þú slóst inn eru hér fyrir neðan. Farðu yfir upplýsingarnar áður en reikningurinn er búinn til.">
+<!ENTITY accountSummary.connectNow.label "Tengja þennan reikning núna.">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Private Data' prefs settings
+    These entities go on top of the sanitize.dtd definitions
+-->
+<!ENTITY pref.privatedata.title           "Datos privados">
+
+
+<!ENTITY clearPrivateData.label           "Borrar datos privados">
+
+<!ENTITY alwaysClear.label                "Siempre borrar mis datos privados cuando cierre &brandShortName;">
+<!ENTITY alwaysClear.accesskey            "S">
+
+<!ENTITY askBeforeClear.label             "Preguntarme antes de borrar datos privados">
+<!ENTITY askBeforeClear.accesskey         "P">
+
+<!ENTITY clearDataSettings.label          "Cuando pida a &brandShortName; que borre miss datos privados, debería borrar:">
+
+<!--LOCALIZATION NOTE (clearDataDialog.label, clearDataSilent.label, clearDataDialog.accesskey):
+  The only difference bettween the two labels is that one calls a dialog, the other doesn't.
+  The same accesskey is used for both labels.
+-->
+<!ENTITY clearDataDialog.label            "Borrar ahora…">
+<!ENTITY clearDataSilent.label            "Borrar ahora">
+<!ENTITY clearDataDialog.accesskey        "B">

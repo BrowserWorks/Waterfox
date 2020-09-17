@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "Modd Diogel &brandShortName;">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "Mae &brandShortName; yn rhedeg yn y Modd Diogel, sy'n anablu dros dro eich gosodiadau cyfaddas personol, themâu a'ch estyniadau dros dro.">
+<!ENTITY safeModeDescription2.label       "Mae modd gwneud rhai neu'r holl newidiadau'n rhai parhaol:">
+
+<!ENTITY disableAddons.label              "Atal pob ychwanegyn">
+<!ENTITY disableAddons.accesskey          "t">
+
+<!ENTITY resetToolbars.label              "Ailosod barau offer a rheolyddion">
+<!ENTITY resetToolbars.accesskey          "i">
+
+<!ENTITY changeAndRestartButton.label     "Gosod Newidiadau ac Ailgychwyn">
+<!ENTITY changeAndRestartButton.accesskey "G">
+
+<!ENTITY continueButton.label             "Parhau yn y Modd Diogel">
+<!ENTITY continueButton.accesskey         "D">

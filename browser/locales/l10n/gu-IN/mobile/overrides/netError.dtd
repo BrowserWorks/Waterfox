@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "પાનું લાવવામાં સમસ્યા">
+<!ENTITY retry.label "ફરી પ્રયાસ કરો">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "જોડાવામાં અસમર્થ">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "આ સરનામું પ્રતિબંધિત છે">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "સર્વર મળ્યું નહિં">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul>
+  <li>ટાઈપિંગ ભૂલો માટે સરનામું તપાસો જેમ કે
+   <strong>ww</strong>.example.com ની જગ્યાએ 
+    <strong>www</strong>.example.com</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>શોધો</button>
+    </div>
+  <li> જો તમે કોઈપણ પાનાંઓને લોડ કરવામાં અસમર્થ હોવ, તો તમારા ઉપકરણનો ડેટા અથવા Wi-Fi કનેક્શન તપાસો.
+<button id='wifi'>WiFi સક્ષમ કરો</button>
+  </li> 
+  </ul>">
+
+<!ENTITY fileNotFound.title "ફાઇલ મળી નહિં">
+<!ENTITY fileNotFound.longDesc "<ul> <li>કેપીટલ અક્ષરોના ઉપયોગ માટે અથવા અન્ય લખતી વખતની ક્ષતિઓ માટે ફાઇલનું નામ ચકાસો.</li> <li>ફાઇલને ખસેડવામાં આવી હતી, તેનું નામ બદલવામાં આવ્યું હતુ કે તેને કાઢી મૂકવામાં આવી હતી તે જોવા માટે ચકાસો.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "ફાઇલની પ્રવેશ માટે નકારવામાં આવી હતી">
+<!ENTITY fileAccessDenied.longDesc "<ul>
+  <li>તે દૂર, ખસેડાયેલી અથવા ફાઇલ પરવાનગીઓ હોઈ શકે છે ઍક્સેસ અટકાવી શકે છે.</li>
+</ul>">
+
+<!ENTITY generic.title "અરર.">
+<!ENTITY generic.longDesc "<p>&brandShortName; અમુક કારણોસર આ પાનું લાવી શકતા નથી.</p>">
+
+<!ENTITY malformedURI.title "સરનામું માન્ય નથી">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul>
+  <li>વેબ એડ્રેસ સામાન્ય રીતે આના જેવી જ લખવામાં આવે છે
+<strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>શોધો</button>
+    </div>
+  <li>ખાતરી કરો કે તમે આગળ સ્લેશનો ઉપયોગ કરી રહ્યાં છો (દા.ત.
+    <strong>/</strong>).</li>
+    </ul>">
+
+<!ENTITY netInterrupt.title "જોડાણ તૂટી ગયું હતુ">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "દસ્તાવેજ નિવૃત્ત થઇ ગયું">
+<!ENTITY notCached.longDesc "<p>વિનંતી કરેલો દસ્તાવેજ &brandShortName;ના કામચલાઉ સંગ્રહમાં ઉપલબ્ધ નથી.</p><ul><li>સુરક્ષા સાવચેતી તરીકે, &brandShortName; સ્વયંચાલિત પ્રતિબંધિત દસ્તાવેજોને ફરીથી વિનંતિ કરતું નથી.</li><li>વેબસાઇટ પરથી દસ્તાવેજની ફરી વિનંતી કરવા માટે ફરી પ્રયાસ કરો ક્લિક કરો.</li></ul>">
+
+<!ENTITY netOffline.title "ઑફલાઇન સ્થિતિ">
+
+<!ENTITY contentEncodingError.title "વસ્તુ સંગ્રહપદ્ધતિ ક્ષતિ">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>મહેરબાની કરીને આ સમસ્યાની વેબસાઇટના માલિકોને જાણ કરો.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "અસુરક્ષિત ફાઇલ પ્રકાર">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>મહેરબાની કરીને આ સમસ્યાની વેબસાઇટના માલિકોને જાણ કરો.</li> </ul>">
+
+<!ENTITY netReset.title "જોડાણ રીસેટ થઇ ગયું હતુ">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "જોડાણનો સમય સમાપ્ત થઇ ગયો">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "સરનામું સમજાયું ન હતું">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>આ સરનામું ખોલવા માટે તમારે અન્ય સૉફ્ટવેર ઇન્સ્ટોલ કરવાની જરૂર પડી શકે.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "પ્રૉક્સી સર્વર જોડાણો નકારી રહ્યું છે">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>પ્રૉક્સી સેટીંગ બરાબર છે કે નથી તેની ખાતરી કરો.</li> <li>પ્રૉક્સી સેટીંગ ચાલુ છે કે નથી તેની ખાતરી કરવા માટે તમારા નેટવર્ક સંચાલકનો સંપર્ક કરો.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "પ્રૉક્સી સર્વર શોધવામાં અસમર્થ">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul>
+  <li>પ્રોક્સી સેટિંગ્સ તપાસો કે જેથી તેઓ સાચા છે.</li>
+  <li>ખાતરી કરો કે તમારા ઉપકરણમાં કામ કરતી ડેટા અથવા Wi-Fi જોડાણ છે.
+    <button id='wifi'>WiFi સક્ષમ કરો</button>
+  </li>
+  </ul>">
+
+<!ENTITY redirectLoop.title "પૃષ્ઠ યોગ્ય રીતે પુનઃનિર્દેશિત નથી">
+<!ENTITY redirectLoop.longDesc "<ul> <li>આ સમસ્યા અમુક વાર કુકીઓ સ્વીકારવાનું નિષ્ક્રિય કરવાથી કે નકારવાથી પણ આવી શકે.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "સર્વર તરફથી અનિચ્છનિય પ્રત્યુત્તર">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>ખાતરી કરો કે તમારી સિસ્ટમમાં વ્યક્તિગત સુરક્ષા વ્યવસ્થાપક સ્થાપિત થયેલ છે.</li> <li>આ સર્વર પરના બિન-પ્રમાણિત રૂપરેખાંકનને કારણે હોઇ શકે.</li> </ul>">
+
+<!ENTITY nssFailure2.title "સુરક્ષિત જોડાણ નિષ્ફળ">
+<!ENTITY nssFailure2.longDesc2 "<ul>
+  <li>તમે જે પૃષ્ઠને જોવાનો પ્રયાસ કરી રહ્યા છો તે બતાવી શકાતું નથી કારણ કે પ્રાપ્ત ડેટાની અધિકૃતતાની ચકાસણી કરી શકાઈ નથી.</li>
+  <li>આ સમસ્યાની જાણ કરવા માટે વેબસાઇટ માલિકોનો સંપર્ક કરો.</li>
+  </ul>">
+
+<!ENTITY nssBadCert.title "સુરક્ષિત જોડાણ નિષ્ફળ">
+<!ENTITY nssBadCert.longDesc2 "<ul>
+  <li>આ સર્વરની ગોઠવણીમાં સમસ્યા હોઈ શકે છે, અથવા તે હોઈ શકે છે
+કોઈ વ્યક્તિ સર્વરનો ઢોંગ કરે છે.</li>
+  <li> જો તમે અગાઉ આ સર્વર સાથે સફળતાપૂર્વક કનેક્ટ કર્યું છે, તો ભૂલ થઈ શકે છે
+કામચલાઉ રહો, અને તમે પછીથી ફરી પ્રયત્ન કરી શકો છો.</li>
+</ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul>
+  <li>સાઇટ અસ્થાયી રૂપે અનુપલબ્ધ અથવા ખૂબ વ્યસ્ત હોઈ શકે છે. થોડીક ક્ષણોમાં ફરી પ્રયાસ કરો.</li>
+  <li>જો તમે કોઈપણ પાનાંને લોડ કરવામાં અસમર્થ હોવ, તો તમારા મોબાઇલ ઉપકરણનો ડેટા અથવા Wi-Fi કનેક્શન તપાસો.
+    <button id='wifi'>Wi-Fi સક્ષમ કરો</button>
+  </li>
+</ul>">
+
+<!ENTITY cspBlocked.title "સામગ્રી સુરક્ષા નીતિ દ્વારા અવરોધિત">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; આ પૃષ્ઠને આ રીતે લોડ થવાથી અટકાવેલ છે કારણ કે પૃષ્ઠની એવી સામગ્રી સુરક્ષા નીતિ છે જે તેને નામંજૂર કરે છે.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "બગડેલ વસ્તુ ક્ષતિ">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>તમે જે પાનું જોવાનો પ્રયાસ કરી રહ્યા છો તે ડૅટા ટ્રાન્સમિશનમાં મળી આવેલી ક્ષતિના કારણે બતાવી શકાશે નહિ.</p><ul><li>મહેરબાની કરીને આ સમસ્યાની વેબસાઇટના માલિકોને જાણ કરો.</li></ul>">
+
+<!ENTITY securityOverride.linkText "અથવા તમે અપવાદ ઉમેરી શકો…">
+<!ENTITY securityOverride.getMeOutOfHereButton "મને અહીંથી બહાર કાઢો!">
+<!ENTITY securityOverride.exceptionButtonLabel "અપવાદ ઉમેરો…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>જો તમે એવું ઇન્ટરનેટ જોડાણ વાપરી રહ્યા હોય જેના પર તમને સંપૂર્ણ વિશ્વાસ નહિ હોય અથવા જો તમને આ સર્વર પર આવી ચેતવણી જોવાની આદત નહિ હોય તો તમારે અપવાદ ઉમેરવો જોઇએ નહિ.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "દૂરસ્થ XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>મહેરબાની કરીને આ સમસ્યાની વેબસાઇટના માલિકોને જાણ કરો.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "સુરક્ષિત રીતે જોડાણ કરવામાં અસમર્થ">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "વિગતવાર માહિતી: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "તમારું જોડાણ સુરક્ષિત નથી">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "વિગતવાર માહિતી: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "તમારું જોડાણ સુરક્ષિત નથી">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> સુરક્ષા ટેકનોલોજીનો ઉપયોગ કરે છે જે જૂની અને હુમલો કરવા માટે સંવેદનશીલ છે. કોઈ હુમલાખોર સરળતાથી એવી માહિતી ઉઘાડી શકે છે જે તમે સુરક્ષિત હોવાનું માનતા હતા. વેબસાઇટ સંચાલકને તમારે સાઇટની મુલાકાત લઈને પહેલાં સર્વરને ઠીક કરવાની જરૂર પડશે.</p><p>ભૂલ કોડ: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "નેટવર્ક પ્રોટોકોલ ભૂલ">
+<!ENTITY networkProtocolError.longDesc "<p>તમે જે પૃષ્ઠને જોવાનો પ્રયાસ કરી રહ્યા છો તે બતાવી શકાતું નથી કારણ કે નેટવર્ક પ્રોટોકોલમાં ભૂલ આવી હતી.</p><ul><li>કૃપા કરીને આ સમસ્યાની જાણ કરવા માટે વેબસાઇટ માલિકોનો સંપર્ક કરો.</li></ul>">

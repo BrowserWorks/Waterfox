@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Bez naslova)">
+<!ENTITY  newTab.label           "Novi tab">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Zatvori tab">
+<!ENTITY  closeTab.accesskey         "Z">
+<!ENTITY  closeOtherTabs.label   "Zatvori ostale tabove">
+<!ENTITY  reloadAllTabs.label    "Ponovo učitaj sve tabove">
+<!ENTITY  reloadTab.label        "Ponovo učitaj tab">
+<!ENTITY  bookmarkGroup.label    "Zabilježi ovu grupu tabova">
+<!ENTITY  closeTabButton.tooltip   "Zatvori trenutni tab">
+<!ENTITY  newTabButton.tooltip   "Otvori novi tab">
+<!ENTITY  listAllTabs.tooltip    "Izlistaj sve tabove">
+<!ENTITY  undoCloseTab.label    "Vrati zatvoreni tab">

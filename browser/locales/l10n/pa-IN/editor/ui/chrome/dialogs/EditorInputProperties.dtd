@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ਫਾਰਮ ਖੇਤਰ ਵਿਸ਼ੇਸ਼ਤਾ">
+<!ENTITY windowTitleImage.label "ਫਾਰਮ ਚਿੱਤਰ ਵਿਸ਼ੇਸ਼ਤਾ">
+
+<!ENTITY InputType.label "ਖੇਤਰ ਟਾਈਪ">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "ਟੈਕਸਟ">
+<!ENTITY password.value "ਪਾਸਵਰਡ">
+<!ENTITY checkbox.value "ਚੋਣ ਬਕਸਾ">
+<!ENTITY radio.value "ਰੇਡੀਓ ਬਟਨ">
+<!ENTITY submit.value "ਭੇਜਣ ਭਟਨ">
+<!ENTITY reset.value "ਮੁੜ-ਸੈੱਟ ਬਟਨ">
+<!ENTITY file.value "ਫਾਇਲ">
+<!ENTITY hidden.value "ਓਹਲੇ">
+<!ENTITY image.value "ਚਿੱਤਰ">
+<!ENTITY button.value "ਬਟਨ">
+
+<!ENTITY InputSettings.label "ਖੇਤਰ ਸੈਟਿੰਗ">
+<!ENTITY InputName.label "ਖੇਤਰ ਨਾਂ:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "ਗਰੁੱਪ ਨਾਂ:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "ਖੇਤਰ ਮੁੱਲ:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "ਸ਼ੁਰੂਆਤੀ ਮੁੱਲ:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "ਸ਼ੁਰੂਆਤੀ ਚੈਕ">
+<!ENTITY InputChecked.accesskey "C">
+<!ENTITY InputSelected.label "ਸ਼ੁਰੂਆਤੀ ਚੁਣਿਆ">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "ਪੜ੍ਹਨ ਲਈ">
+<!ENTITY InputReadOnly.accesskey "R">
+<!ENTITY InputDisabled.label "ਆਯੋਗ">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "ਟੈਬ ਇੰਡੈਕਸ:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "ਖੇਤਰ ਅਕਾਰ:">
+<!ENTITY TextSize.accesskey "F">
+<!ENTITY TextLength.label "ਵੱਧੋ-ਵੱਧ ਲੰਬਾਈ:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "ਪਹੁੰਚ ਕੁੰਜੀ:">
+<!ENTITY AccessKey.accesskey "K">
+<!ENTITY Accept.label "ਸਵੀਕਾਰ ਕਿਸਮ:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "ਚਿੱਤਰ ਵਿਸ਼ੇਸਤਾ...">
+<!ENTITY ImageProperties.accesskey "E">

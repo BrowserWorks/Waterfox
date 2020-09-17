@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Кестенiң қасиетi">
+<!ENTITY applyButton.label                "Іске асыру">
+<!ENTITY applyButton.accesskey            "к">
+<!ENTITY closeButton.label                "Жабу">
+<!ENTITY tableTab.label                   "Кесте">
+<!ENTITY cellTab.label                    "Ұяшықтар">
+<!ENTITY tableRows.label                  "Жолдар:">
+<!ENTITY tableRows.accessKey              "л">
+<!ENTITY tableColumns.label               "Бағандар:">
+<!ENTITY tableColumns.accessKey           "Б">
+<!ENTITY tableHeight.label                "Биіктігі:">
+<!ENTITY tableHeight.accessKey            "и">
+<!ENTITY tableWidth.label                 "Ені:">
+<!ENTITY tableWidth.accessKey             "Е">
+<!ENTITY tableBorderSpacing.label         "Шектер және аралықтар">
+<!ENTITY tableBorderWidth.label           "Шегі:">
+<!ENTITY tableBorderWidth.accessKey       "Ш">
+<!ENTITY tableSpacing.label               "Аралығы:">
+<!ENTITY tableSpacing.accessKey           "А">
+<!ENTITY tablePadding.label               "Өрістер:">
+<!ENTITY tablePadding.accessKey           "р">
+<!ENTITY tablePxBetwCells.label           "пиксель, ұяшықтар арасында">
+<!ENTITY tablePxBetwBrdrCellContent.label "пиксель, ұяшық шекарасы және құрамасы арасында">
+<!ENTITY tableAlignment.label             "Кесте туралауы:">
+<!ENTITY tableAlignment.accessKey         "т">
+<!ENTITY tableCaption.label               "Тақырыптамасы">
+<!ENTITY tableCaption.accessKey           "ы">
+<!ENTITY tableCaptionAbove.label          "Кестенің үстінде">
+<!ENTITY tableCaptionBelow.label          "Кестенің астында">
+<!ENTITY tableCaptionLeft.label           "Кестенің сол жағынан">
+<!ENTITY tableCaptionRight.label          "Кестенің оң жағынан">
+<!ENTITY tableCaptionNone.label           "Ешнәрсе">
+<!ENTITY tableInheritColor.label           "(Парақ фоны көрсетіледі)">
+
+<!ENTITY cellSelection.label              "Таңдау">
+<!ENTITY cellSelectCell.label             "Ұяшық">
+<!ENTITY cellSelectRow.label              "Жол">
+<!ENTITY cellSelectColumn.label           "Баған">
+<!ENTITY cellSelectNext.label             "Келесі">
+<!ENTITY cellSelectNext.accessKey         "К">
+<!ENTITY cellSelectPrevious.label         "Алдыңғысы">
+<!ENTITY cellSelectPrevious.accessKey     "А">
+<!ENTITY applyBeforeChange.label          "Ағымдағы өзгерістер таңдауды өзгерту алдында іске асырылатын болады.">
+<!ENTITY cellContentAlignment.label       "Құраманың туралануы">
+<!ENTITY cellHorizontal.label             "Горизонталды:">
+<!ENTITY cellHorizontal.accessKey         "з">
+<!ENTITY cellVertical.label               "Вертикалды:">
+<!ENTITY cellVertical.accessKey           "В">
+<!ENTITY cellStyle.label                  "Ұяшықтың стилi:">
+<!ENTITY cellStyle.accessKey              "я">
+<!ENTITY cellNormal.label                 "Қалыпты">
+<!ENTITY cellHeader.label                 "Жоғарғы колонтитул">
+<!ENTITY cellTextWrap.label               "Мәтінді тасымалдау:">
+<!ENTITY cellTextWrap.accessKey           "т">
+<!ENTITY cellWrap.label                   "Тасымалдау">
+<!ENTITY cellNoWrap.label                 "Тасымалдамау">
+<!ENTITY cellAlignTop.label               "Жоғары">
+<!ENTITY cellAlignMiddle.label            "Ортаңғы">
+<!ENTITY cellAlignBottom.label            "Төмен">
+<!ENTITY cellAlignJustify.label           "Енi бойынша">
+<!ENTITY cellInheritColor.label           "(Кесте фоны көрсетіледі)">
+<!ENTITY cellUseCheckboxHelp.label        "Барлық таңдалған ұяшықтарға іске асатын қасиеттерді анықтау үшін, белгішелерді қолданыңыз">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label                       "Өлшемі">
+<!ENTITY pixels.label                     "пиксель">
+<!ENTITY backgroundColor.label            "Фон түсі:">
+<!ENTITY backgroundColor.accessKey        "Ф">
+<!ENTITY AlignLeft.label                  "Сол жақ">
+<!ENTITY AlignCenter.label                "Ортасы">
+<!ENTITY AlignRight.label                 "Оң жақ">

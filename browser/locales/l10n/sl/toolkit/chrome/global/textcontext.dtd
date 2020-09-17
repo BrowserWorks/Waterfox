@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Dodaj v slovar">
+<!ENTITY spellAddToDictionary.accesskey "s">
+<!ENTITY spellUndoAddToDictionary.label "Razveljavi dodajanje v slovar">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "Preveri črkovanje">
+<!ENTITY spellCheckToggle.accesskey "R">
+<!ENTITY spellNoSuggestions.label "(ni predlogov za popravilo črkovanja)">
+<!ENTITY spellDictionaries.label "Jeziki">
+<!ENTITY spellDictionaries.accesskey "j">
+
+<!ENTITY searchTextBox.clear.label "Počisti">
+
+<!ENTITY fillLoginMenu.label          "Izpolni prijavo">
+<!ENTITY fillLoginMenu.accesskey      "I">
+<!ENTITY fillPasswordMenu.label       "Izpolni geslo">
+<!ENTITY fillPasswordMenu.accesskey   "I">
+<!ENTITY fillUsernameMenu.label       "Izpolni uporabniško ime">
+<!ENTITY fillUsernameMenu.accesskey   "I">
+<!ENTITY noLoginSuggestions.label     "(Ni predlaganih prijav)">
+<!ENTITY viewSavedLogins.label        "Preglej shranjene prijave">

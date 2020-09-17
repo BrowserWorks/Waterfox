@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Súgó">
+<!ENTITY helpMenu.accesskey "S">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Súgó">
+<!ENTITY helpMenuWin.accesskey "S">
+<!ENTITY aboutProduct2.label "A &brandShorterName; névjegye">
+<!ENTITY aboutProduct2.accesskey "n">
+<!ENTITY helpTroubleshootingInfo.label     "Hibakeresési információ">
+<!ENTITY helpTroubleshootingInfo.accesskey "H">
+<!ENTITY helpSafeMode.label     "Újraindítás letiltott kiegészítőkkel…">
+<!ENTITY helpSafeMode.accesskey "r">
+
+<!ENTITY helpSafeMode.stop.label     "Újraindítás engedélyezett kiegészítőkkel">
+<!ENTITY helpSafeMode.stop.accesskey "R">
+<!ENTITY productHelp.label "&brandShortName; Súgó">
+<!ENTITY productHelp.accesskey "S">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Gyorsbillentyűk">
+<!ENTITY helpKeyboardShortcuts.accesskey "b">
+
+<!ENTITY helpFeedbackPage.label "Visszajelzés küldése…">
+<!ENTITY helpFeedbackPage.accesskey "V">
+
+<!ENTITY helpShowTour2.label "&brandShorterName; Túra">
+<!ENTITY helpShowTour2.accesskey "r">
+
+<!ENTITY helpGetInvolvedPage.label "Csatlakozzon">
+<!ENTITY helpGetInvolvedPage.accesskey "l">
+
+<!ENTITY helpDonationsPage.label "Támogasson">
+<!ENTITY helpDonationsPage.accesskey "T">

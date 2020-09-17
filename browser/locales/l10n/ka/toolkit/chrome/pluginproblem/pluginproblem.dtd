@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "მოდულის ასამოქმედებლად შეეხეთ აქ.">
+<!ENTITY clickToActivatePlugin                               "მოდულის ამოქმედება.">
+<!ENTITY checkForUpdates                                     "განახლებების შემოწმება…">
+<!ENTITY blockedPlugin.label                                 "მოდული ამორთულია უსაფრთხოების მიზნით.">
+<!ENTITY hidePluginBtn.label                                 "მოდულის დამალვა">
+<!ENTITY managePlugins                                       "მოდულების მართვა…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "განაახლეთ გვერდი">
+<!ENTITY reloadPlugin.post                                   " ხელახლა საცდელად.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "უეცარი გათიშვის მოხსენების გაგზავნა">
+<!ENTITY report.submitting                                   "მოხსენება იგზავნება…">
+<!ENTITY report.submitted                                    "უეცარი გათიშვის შესახებ მოხსენება გაგზავნილია.">
+<!ENTITY report.disabled                                     "უეცარი გათიშვების მომხსენებელი გამორთულია.">
+<!ENTITY report.failed                                       "გადაგზავნა ვერ მოხერხდა.">
+<!ENTITY report.unavailable                                  "მოხსენებები არაა.">
+<!ENTITY report.comment                                      "დაურთეთ შენიშვნა (შენიშვნები, საჯაროდ გამოჩნდება)">
+<!ENTITY report.pageURL                                      "გვერდის URL-ს მითითება">
+
+<!ENTITY plugin.file                                         "ფაილი">
+<!ENTITY plugin.mimeTypes                                    "MIME სახეობები">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash-ის დაცული რეჟიმის ჩართვა">
+<!ENTITY plugin.enableBlocklists.label                       "სახიფათო და მომაბეზრებელი Flash შიგთავსის შეზღუდვა ">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label "রচনা ও সম্বোধন">
+<!ENTITY addressingGroupTitle.label "সম্বোধন">
+<!ENTITY addressingText.label "যখন ঠিকানা খোঁজা হবে:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label "এই অ্যাকাউন্টের জন্য আমার গ্লোবাল LDAP সার্ভার পছন্দসমূহ ব্যবহার করা হবে (U)">
+<!ENTITY useGlobal.accesskey "U">
+<!ENTITY editDirectories.label "ডিরেক্টরি সম্পাদনা… (E)">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label "ভিন্ন কোনো LDAP সার্ভার ব্যবহার: (D)">
+<!ENTITY directories.accesskey "D">
+<!ENTITY directoriesNone.label "কোনটি না">
+
+<!-- am-addressing.xul -->
+
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label "রচনা">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label "HTML বিন্যাসে বার্তা রচনা (C)">
+<!ENTITY useHtml.accesskey "C">
+<!ENTITY autoQuote.label "উত্তর দেয়ার সময় স্বয়ংক্রিয়ভাবে আসল বার্তা উদ্ধৃত করা হবে (m)">
+<!ENTITY autoQuote.accesskey "m">
+<!ENTITY aboveQuote.label "উদ্ধৃতির উপরে আমার উত্তর শুরু করা হবে">
+<!ENTITY belowQuote.label "উদ্ধৃতির নিচে আমার উত্তর শুরু করা হবে">
+<!ENTITY selectAndQuote.label "উদ্ধৃতি নির্বাচন করা হবে">
+<!ENTITY place.label "এবং আমার স্বাক্ষর দেয়া হবে (s)">
+<!ENTITY place.accesskey "s">
+<!ENTITY belowText.label "উদ্ধৃতির নিচে (সুপারিশকৃত)">
+<!ENTITY aboveText.label "আমার উত্তরের নিচে (উদ্ধৃতির উপরে)">
+<!ENTITY includeSigOnReply.label "উত্তরে সাক্ষর অন্তর্ভূক্ত করা হবে (s)">
+<!ENTITY includeSigOnReply.accesskey "s">
+<!ENTITY includeSigOnForward.label "ফরওয়ার্ড করার সময় সাক্ষর অন্তর্ভূক্ত করা হবে (w)">
+<!ENTITY includeSigOnForward.accesskey "w">
+

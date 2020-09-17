@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Txertatu Taula">
+
+<!ENTITY size.label "Tamaina">
+<!ENTITY numRowsEditField.label "Errenkadak:">
+<!ENTITY numRowsEditField.accessKey "E">
+<!ENTITY numColumnsEditField.label "Zutabeak:">
+<!ENTITY numColumnsEditField.accessKey "u">
+<!ENTITY widthEditField.label "Zabalera:">
+<!ENTITY widthEditField.accessKey "Z">
+<!ENTITY borderEditField.label "Ertza:">
+<!ENTITY borderEditField.accessKey "E">
+<!ENTITY borderEditField.tooltip "Idatzi zenbaki bat taularen ertza zehazteko, edo idatzi zero (0) ertzik ez baduzu nahi">
+<!ENTITY pixels.label "pixel">

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "迷惑メールフィルターについて">
+<!ENTITY window.width  "600"><!-- en-US: 450 -->
+<!-- (^^; info1a.label と info1b.label の間に迷惑メールアイコンが表示される -->
+<!ENTITY info1a.label  "Mail には迷惑メール (スパムメール) であると思われる受信メッセージを自動的に識別する機能が備わっており、迷惑メールであると判断されたメッセージには迷惑メールアイコン">
+<!ENTITY info1b.label  "が表示されます。">
+<!ENTITY info2.label   "初めはツールバーの [迷惑メール] ボタンを用いて、各メッセージが迷惑メールであるかどうかマークしていってください。あなたの判断を元に迷惑メールの識別基準が作られていきます。">
+<!ENTITY info3.label   "Mail が迷惑メールを正確に判別できるようになったら、受信した迷惑メールを自動的に [迷惑メール] フォルダーへと移動させると良いでしょう。">
+<!ENTITY info4.label   "ヘルプをクリックすると詳細が表示されます。">

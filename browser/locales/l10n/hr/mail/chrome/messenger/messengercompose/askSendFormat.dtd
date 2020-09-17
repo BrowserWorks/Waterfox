@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "Pitanje o HTML e-pošti">
+
+<!ENTITY recipient.label "Neki od primatelja nisu navedeni da mogu primati HTML e-poštu.">
+
+<!ENTITY question.label "Želite li pretvoriti poruku u običan tekst ili je želite poslati u HTML formatu?">
+
+<!ENTITY plainTextAndHtml.label "Pošalji kao običan tekst i HTML">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Pošalji samo kao običan tekst">
+<!ENTITY plainTextOnly.accesskey "P">
+<!ENTITY htmlOnly.label "Pošalji samo u HTML formatu">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Pošalji">
+<!ENTITY send.accesskey "o">

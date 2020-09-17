@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title "İndirilenler">
+
+<!ENTITY downloadBehavior.label "İndirme başlama zamanı">
+<!ENTITY focusWhenStarting.label "İndirme yöneticisi açıksa yanıp söndür, aksi taktirde:">
+<!ENTITY focusWhenStarting.accesskey "n">
+<!ENTITY openDM.label "İndirme yöneticisini aç">
+<!ENTITY openDM.accesskey "m">
+<!ENTITY openProgressDialog.label "İlerleme penceresini aç">
+<!ENTITY openProgressDialog.accesskey "l">
+<!ENTITY doNothing.label "Bir şey açma">
+<!ENTITY doNothing.accesskey "B">
+
+<!ENTITY downloadLocation.label "Dosyayı keydettiğinde">
+<!ENTITY saveTo.label "Dosya kayıt yeri">
+<!ENTITY saveTo.accesskey "a">
+<!ENTITY chooseDownloadFolder.label "Dizin seç…">
+<!ENTITY chooseDownloadFolder.accesskey "s">
+<!ENTITY alwaysAsk.label "Dosyaların nereye kaydedileceğini her zaman sor">
+<!ENTITY alwaysAsk.accesskey "D">
+
+<!ENTITY downloadHistory.label "İndirme geçmişi">
+<!ENTITY removeEntries.label "Remove download entries">
+<!ENTITY removeEntries.accesskey "R">
+<!ENTITY whenCompleted.label "Tamamlandığı zaman">
+<!ENTITY whenQuittingApp.label "&brandShortName; uygulamasında çıkıldığı zaman">
+<!ENTITY neverRemove.label "Asla">
+
+<!ENTITY finishedBehavior.label "İndirme bittiğinde">
+<!ENTITY playSound.label "Play a sound">
+<!ENTITY playSound.accesskey "P">
+<!ENTITY showAlert.label "Show an alert">
+<!ENTITY showAlert.accesskey "S">
+<!ENTITY browse.label "Gözat…">
+<!ENTITY browse.accesskey "a">
+<!ENTITY playButton.label "Play">
+<!ENTITY playButton.accesskey "l">

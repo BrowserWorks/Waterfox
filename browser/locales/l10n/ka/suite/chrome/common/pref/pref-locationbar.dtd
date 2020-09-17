@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "მისამართების პანელი">
+
+<!ENTITY autoComplete.label                    "თვითდასრულება">
+<!ENTITY autoCompleteMatchHistory.label        "საიტების თვითშემოთავაზება ისტორიიდან">
+<!ENTITY autoCompleteMatchHistory.accesskey    "თ">
+<!ENTITY autoCompleteMatchBookmarks.label      "საიტების თვითშემოთავაზება სანიშნებიდან">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "ვ">
+<!ENTITY autoCompleteAutoFill.label            "თვითშევსება საუკეთესო თანხვედრის მიხედვით">
+<!ENTITY autoCompleteAutoFill.accesskey        "შ">
+<!ENTITY autoCompleteShowPopup.label           "თანხვედრათა შედეგების ჩამონათვალი">
+<!ENTITY autoCompleteShowPopup.accesskey       "ჩ">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "თანხვედრები, მხოლოდ ადრე მითითებული ვებსაიტებთან">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "ხ">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "თანხვედრა">
+<!ENTITY autoCompleteMatch.accesskey           "ნ">
+<!ENTITY autoCompleteMatchAnywhere             "მისამართის ან სათაურის ნებისმიერ ადგილას">
+<!ENTITY autoCompleteMatchWordsFirst           "ნებისმიერ ადგილას, უპირატესად სიტყვის კიდეებში">
+<!ENTITY autoCompleteMatchWords                "მხოლოდ სიტყვის კიდეებში">
+<!ENTITY autoCompleteMatchStart                "მხოლოდ მისამართის ან სათაურის დასაწყისში">
+<!ENTITY showInternetSearch.label              "ნაგულისხმევი საძიებო სისტემის ჩვენება">
+<!ENTITY showInternetSearch.accesskey          "გ">
+
+<!ENTITY formatting.label                      "დაფორმატება">
+<!ENTITY domainFormatting.label                "დომენის გამოკვეთა ვებსაიტებისა და FTP სერვერებისთვის">
+<!ENTITY domainFormatting.accesskey            "დ">
+<!ENTITY highlightSecure.label                 "მაღალი დონის უსაფრთხო კავშირის მქონე საიტების გამოყოფა">
+<!ENTITY highlightSecure.accesskey             "ყ">
+
+<!ENTITY unknownLocations.label                "უცნობი მისამართები">
+<!ENTITY domainGuessing.label                  "მისამართებისთვის &quot;www.&quot; და &quot;.com&quot; დამატება თუ ვებგვერდი ვერ მოიძებნა">
+<!ENTITY domainGuessing.accesskey              "w">
+<!ENTITY keywords.label                        "ინტერნეტში ძიება, როცა შეყვანილი ტექსტი არ წარმოადგენს საიტის მისამართს">
+<!ENTITY keywords.accesskey                    "ძ">

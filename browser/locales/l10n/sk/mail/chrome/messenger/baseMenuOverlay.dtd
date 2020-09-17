@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Pomocník">
+<!ENTITY helpMenu.accesskey "P">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Pomocník">
+<!ENTITY helpMenuWin.accesskey "P">
+<!ENTITY aboutProduct2.label "O aplikácii &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "O">
+<!ENTITY helpTroubleshootingInfo.label     "Informácie pre riešenie problémov">
+<!ENTITY helpTroubleshootingInfo.accesskey "c">
+<!ENTITY helpSafeMode.label     "Reštartovať a zakázať doplnky…">
+<!ENTITY helpSafeMode.accesskey "R">
+
+<!ENTITY helpSafeMode.stop.label     "Reštartovať s povolenými doplnkami">
+<!ENTITY helpSafeMode.stop.accesskey "R">
+<!ENTITY productHelp.label "Pomocník aplikácie &brandShortName;">
+<!ENTITY productHelp.accesskey "P">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Klávesové skratky">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpFeedbackPage.label "Odoslať spätnú väzbu…">
+<!ENTITY helpFeedbackPage.accesskey "O">
+
+<!ENTITY helpShowTour2.label "Prehliadka aplikácie &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey "a">
+
+<!ENTITY helpGetInvolvedPage.label "Zapojte sa">
+<!ENTITY helpGetInvolvedPage.accesskey "Z">
+
+<!ENTITY helpDonationsPage.label "Prispejte">
+<!ENTITY helpDonationsPage.accesskey "P">

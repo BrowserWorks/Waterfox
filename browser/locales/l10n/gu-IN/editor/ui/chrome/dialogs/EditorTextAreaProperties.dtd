@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "લખાણ વિસ્તાર ગુણધર્મો">
+
+<!ENTITY Settings.label "સેટીંગ">
+
+<!ENTITY TextAreaName.label "ક્ષેત્ર નામ:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "હરોળો:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "સ્તંભો:">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "માત્ર વાંચી શકાય તેવું">
+<!ENTITY TextAreaReadOnly.accessKey "O">
+<!ENTITY TextAreaDisabled.label "નિષ્ક્રિય કરેલ">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "ટૅબ અનુક્રમ:">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "વાપરવાની કી:">
+<!ENTITY TextAreaAccessKey.accessKey "K">
+<!ENTITY InitialText.label "પ્રારંભિક લખાણ:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "લપેટવાની સ્થિતિ:">
+<!ENTITY TextAreaWrap.accessKey "W">
+<!ENTITY WrapDefault.value "મૂળભુત">
+<!ENTITY WrapOff.value "બંધ">
+<!ENTITY WrapHard.value "સખત">
+<!ENTITY WrapSoft.value "નરમ">
+<!ENTITY WrapPhysical.value "ભૌતિક">
+<!ENTITY WrapVirtual.value "વર્ચ્યુઅલ">

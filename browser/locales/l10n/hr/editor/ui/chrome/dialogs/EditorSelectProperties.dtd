@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Postavke popisa za odabir">
+
+<!ENTITY Select.label "Popis za odabir">
+<!ENTITY SelectName.label "Naziv popisa:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Visina:">
+<!ENTITY SelectSize.accesskey "V">
+<!ENTITY SelectMultiple.label "Višestruki odabir">
+<!ENTITY SelectMultiple.accesskey "e">
+<!ENTITY SelectDisabled.label "Onemogućeno">
+<!ENTITY SelectDisabled.accesskey "O">
+<!ENTITY SelectTabIndex.label "Indeks kartice:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "Grupa mogućnosti">
+<!ENTITY OptGroupLabel.label "Naziv:">
+<!ENTITY OptGroupLabel.accesskey "a">
+<!ENTITY OptGroupDisabled.label "Onemogućeno">
+<!ENTITY OptGroupDisabled.accesskey "O">
+
+<!ENTITY Option.label "Mogućnost">
+<!ENTITY OptionText.label "Tekst:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Vrijednost:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "Početno odabrano">
+<!ENTITY OptionSelected.accesskey "P">
+<!ENTITY OptionDisabled.label "Onemogućeno">
+<!ENTITY OptionDisabled.accesskey "O">
+
+<!ENTITY TextHeader.label "Tekst">
+<!ENTITY ValueHeader.label "Vrijednost">
+<!ENTITY SelectedHeader.label "Odabrano">
+
+<!ENTITY AddOption.label "Dodaj mogućnost">
+<!ENTITY AddOption.accesskey "D">
+<!ENTITY AddOptGroup.label "Dodaj grupu">
+<!ENTITY AddOptGroup.accesskey "g">
+<!ENTITY RemoveElement.label "Ukloni">
+<!ENTITY RemoveElement.accesskey "U">
+<!ENTITY MoveElementUp.label "Pomakni gore">
+<!ENTITY MoveElementUp.accesskey "m">
+<!ENTITY MoveElementDown.label "Pomakni dolje">
+<!ENTITY MoveElementDown.accesskey "k">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Advanced Property Editor">
+<!ENTITY AttName.label                  "Attribute: ">
+<!ENTITY AttValue.label                 "Value: ">
+<!ENTITY PropertyName.label             "Property: ">
+<!ENTITY currentattributesfor.label     "Current attributes for: ">
+<!ENTITY tree.attributeHeader.label     "Attribute">
+<!ENTITY tree.propertyHeader.label      "Property">
+<!ENTITY tree.valueHeader.label         "Value">
+<!ENTITY tabHTML.label                  "HTML Attributes">
+<!ENTITY tabCSS.label                   "Inline Style">
+<!ENTITY tabJSE.label                   "JavaScript Events">
+
+<!ENTITY editAttribute.label    "Click on an item above to edit its value">
+<!ENTITY removeAttribute.label  "Remove">

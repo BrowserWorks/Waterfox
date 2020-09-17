@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Beschreibungseigenschaften">
+
+<!ENTITY Settings.label "Einstellungen">
+<!ENTITY Settings.accesskey "i">
+
+<!ENTITY EditLabelText.label "Text bearbeiten:">
+<!ENTITY EditLabelText.accesskey "B">
+<!ENTITY LabelFor.label "Für Steuerelement:">
+<!ENTITY LabelFor.accesskey "S">
+<!ENTITY AccessKey.label "Zugriffstaste:">
+<!ENTITY AccessKey.accesskey "T">
+
+<!ENTITY RemoveLabel.label "Beschreibung entfernen">
+<!ENTITY RemoveLabel.accesskey "E">

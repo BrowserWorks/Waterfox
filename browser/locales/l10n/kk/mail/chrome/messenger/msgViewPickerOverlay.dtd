@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY viewPicker.label "Көрініс:">
+<!ENTITY viewPicker.accesskey "р">
+<!ENTITY viewAll.label "Барлығы">
+<!ENTITY viewAll.accesskey "а">
+<!ENTITY viewUnread.label "Оқылмаған">
+<!ENTITY viewUnread.accesskey "ы">
+<!ENTITY viewNotDeleted.label "Өшірілмеген">
+<!ENTITY viewNotDeleted.accesskey "ш">
+<!ENTITY viewTags.label "Тегтер">
+<!ENTITY viewTags.accesskey "Т">
+<!ENTITY viewCustomViews.label "Таңдауыңызша көріністер">
+<!ENTITY viewCustomViews.accesskey "р">
+<!ENTITY viewVirtualFolder.label "Көріністі бума ретінде сақтау…">
+<!ENTITY viewVirtualFolder.accesskey "с">
+<!ENTITY viewCustomizeView.label "Баптау…">
+<!ENTITY viewCustomizeView.accesskey "а">

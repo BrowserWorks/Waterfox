@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "电子邮件">
+<!ENTITY readMsgsLink.label           "阅读">
+<!ENTITY composeMsgLink.label         "编写">
+
+<!ENTITY newsSectionHdr.label         "新闻组">
+<!ENTITY subscribeNewsLink.label      "管理新闻组订阅">
+
+<!ENTITY feedsSectionHdr.label        "收取点">
+<!ENTITY subscribeFeeds.label         "管理订阅">
+
+<!ENTITY chat.label                   "聊天">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "账户">
+<!ENTITY subscribeImapFolders.label   "管理文件夹订阅">
+<!ENTITY settingsLink.label           "账户设置">
+<!ENTITY setupNewAcct.label           "设置账户">
+
+<!ENTITY advFeaturesSectionHdr.label  "高级功能">
+<!ENTITY searchMsgsLink.label         "查找">
+<!ENTITY filtersLink.label            "管理消息过滤器">
+<!ENTITY junkSettings.label           "垃圾邮件设置">
+<!ENTITY offlineLink.label            "脱机设置">

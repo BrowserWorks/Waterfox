@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "離線網頁應用程式">
+<!ENTITY pref.offlineCache.caption          "離線網頁內容與使用者資料">
+
+<!ENTITY clearOfflineAppCache.label         "清除">
+<!ENTITY clearOfflineAppCache.accesskey     "C">
+
+<!ENTITY offlineAlwaysAllow.label           "允許所有網站儲存資料供離線時使用">
+<!ENTITY offlineAlwaysAllow.accesskey       "A">
+<!ENTITY offlineExplicit.label              "只允許經明確允許的網站">
+<!ENTITY offlineExplicit.accesskey          "O">
+<!ENTITY offlineNotifyAsk.label             "在網站想要儲存資料供離線使用時通知我">
+<!ENTITY offlineNotifyAsk.accesskey         "N">
+<!ENTITY offlineNotifyPermissions.label     "管理權限">
+<!ENTITY offlineNotifyPermissions.accesskey "P">
+
+<!ENTITY offlineAppsUsage.label             "下列網站使用離線儲存空間:">
+<!ENTITY offlineAppsListRemove.label        "清除資料…">
+<!ENTITY offlineAppsListRemove.accesskey    "d">
+

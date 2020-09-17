@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Event Menu -->
+
+<!ENTITY event.new.event                        "Tadyant tamaynut…">
+<!ENTITY event.new.event.accesskey              "d">
+
+<!ENTITY event.new.task                         "Tawuri tamaynut…">
+<!ENTITY event.new.task.accesskey               "w">
+
+<!ENTITY calendar.import.label                  "Sifeḍ…">
+<!ENTITY calendar.import.accesskey              "S">
+
+<!ENTITY calendar.export.label                  "Kter…">
+<!ENTITY calendar.export.accesskey              "t">
+
+<!ENTITY calendar.publish.label                 "Suffeɣ-d…">
+<!ENTITY calendar.publish.accesskey             "ɣ">
+
+<!ENTITY calendar.deletecalendar.label          "Kkes awitay yettwafernen…">
+<!ENTITY calendar.deletecalendar.accesskey      "y">
+<!ENTITY calendar.unsubscribecalendar.label     "Ffeɣ seg ujerred n uwitay yettwafernen…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "r">
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+
+<!ENTITY calendar.removecalendar.label          "Kkes awitay yettwafernen…">
+<!ENTITY calendar.removecalendar.accesskey      "n">
+
+
+<!ENTITY calendar.menu.customize.label          "Sagen…">
+<!ENTITY calendar.menu.customize.accesskey      "S">
+
+<!ENTITY showUnifinderCmd.label                 "Aff-d tidyanin">
+<!ENTITY showUnifinderCmd.accesskey             "f">
+<!ENTITY showUnifinderCmd.tooltip               "Snefli/Fneẓ agalis n unadu ɣef tedyanin">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Sken Tiwuriwin deg uwitay">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "i">
+
+<!ENTITY goTodayCmd.label                       "Ass-a">
+<!ENTITY goTodayCmd.accesskey                   "A">
+
+<!ENTITY showCurrentView.label                  "Timeẓri tamirant">
+<!ENTITY showCurrentView.accesskey              "ẓ">
+
+<!ENTITY calendar.properties.label              "Timeẓliyin n uwitay…">
+<!ENTITY calendar.properties.accesskey          "T">

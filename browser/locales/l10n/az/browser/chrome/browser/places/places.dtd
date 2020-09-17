@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Kitabxana">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Redaktə">
+<!ENTITY organize.accesskey    "d">
+<!ENTITY organize.tooltip      "Əlfəcinləri idarə et">
+
+<!ENTITY file.close.label               "Bağla">
+<!ENTITY file.close.accesskey           "B">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Görünüş">
+<!ENTITY views.accesskey                "n">
+<!ENTITY views.tooltip                  "Görünüşü dəyişdirin">
+<!ENTITY view.columns.label             "Sütunları göstər">
+<!ENTITY view.columns.accesskey         "S">
+<!ENTITY view.sort.label                "Sırala">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Siniflənməmiş">
+<!ENTITY view.unsorted.accesskey        "f">
+<!ENTITY view.sortAscending.label       "A-dan Z-yə sırala">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z-dən A-ya sırala">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Əlfəcinləri HTML-dən idxal et…">
+<!ENTITY importBookmarksFromHTML.accesskey "i">
+<!ENTITY exportBookmarksToHTML.label       "Əlfəcinləri HTML olaraq ixrac et…">
+<!ENTITY exportBookmarksToHTML.accesskey   "i">
+<!ENTITY importOtherBrowser.label          "Başqa səyyahdan məlumatları idxal et…">
+<!ENTITY importOtherBrowser.accesskey      "B">
+
+<!ENTITY cmd.backup.label               "Nüsxəsini çıxar…">
+<!ENTITY cmd.backup.accesskey           "N">
+<!ENTITY cmd.restore2.label             "Bərpa et">
+<!ENTITY cmd.restore2.accesskey         "e">
+<!ENTITY cmd.restoreFromFile.label      "Fayl seç…">
+<!ENTITY cmd.restoreFromFile.accesskey  "s">
+
+<!ENTITY col.name.label          "Ad">
+<!ENTITY col.tags.label          "Etiketlər">
+<!ENTITY col.url.label           "Ünvan">
+<!ENTITY col.mostrecentvisit.label "Ən son ziyarət">
+<!ENTITY col.visitcount.label    "Baxış sayı">
+<!ENTITY col.dateadded.label     "Əlavə etmə tarixi">
+<!ENTITY col.lastmodified.label  "Son dəyişiklik">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "İdxal etmə və ehtiyatlama">
+<!ENTITY maintenance.accesskey  "y">
+<!ENTITY maintenance.tooltip    "Əlfəcinlərinizi idxal edin və yedəkləyin">
+
+<!ENTITY backButton.tooltip  "Geri get">
+
+<!ENTITY forwardButton.tooltip  "İrəli get">
+
+<!ENTITY detailsPane.selectAnItemText.description "Xüsusiyyətlərini görmək və dəyişmək üçün bir obyekt seçin">
+

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+  
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Dosje e Re">
+<!ENTITY name.label                 "Emër:">
+<!ENTITY name.accesskey             "E">
+<!ENTITY description.label          "Krijoje si nëndosje të:">
+<!ENTITY description.accesskey      "K">
+<!ENTITY folderRestriction1.label   "Ky shërbyes i kufizon dosjet në dy lloje të veçantë.">
+<!ENTITY folderRestriction2.label   "Lejoni dosjen tuaj të re të përmbajë:">
+<!ENTITY foldersOnly.label          "Vetëm Dosje">
+<!ENTITY messagesOnly.label         "Vetëm Mesazhe">
+<!ENTITY accept.label               "Krijo Dosje">
+<!ENTITY accept.accesskey           "D">

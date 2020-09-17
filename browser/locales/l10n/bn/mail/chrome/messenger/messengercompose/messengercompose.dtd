@@ -1,0 +1,247 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "লিখুন: (কোনো বিষয় নেই)">
+<!-- File Menu -->
+
+<!ENTITY fileMenu.label "ফাইল (F)">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY newMenu.label "নতুন (N)">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "বার্তা (M)">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "M">
+<!ENTITY newContact.label "ঠিকানা বইয়ের পরিচিতি… (C)">
+<!ENTITY newContact.accesskey "C">
+<!ENTITY attachMenu.label "সংযুক্ত করা হবে (t)">
+<!ENTITY attachMenu.accesskey "t">
+<!ENTITY attachFileCmd.label "ফাইল… (F)">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "ওয়েব পেজ… (W)">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "ব্যক্তিগত কার্ড (vCard) (P)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY closeCmd.label "বন্ধ করুন (C)">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "C">
+<!ENTITY saveCmd.label "সংরক্ষণ (S)">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "নতুনভাবে সংরক্ষণ (A)">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsFileCmd.label "ফাইল… (F)">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "খসড়া (D)">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "ফর্মা (T)">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY sendNowCmd.label "এখন পাঠানো হবে (d)">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "পরে পাঠানো হবে (L)">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "L">
+<!ENTITY printSetupCmd.label "পৃষ্ঠার সেটআপ… (u)">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printCmd.label "মুদ্রণ… (P)">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "P">
+<!-- Edit Menu -->
+
+<!ENTITY editMenu.label "সম্পাদনা (E)">
+<!ENTITY editMenu.accesskey "E">
+<!ENTITY undoCmd.label "পূর্বাবস্থায় ফিরানো (U)">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "U">
+<!ENTITY redoCmd.label "পুনরায় করা (R)">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "R">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "w">
+<!ENTITY deleteCmd.label "মুছে ফেলুন (D)">
+<!ENTITY deleteCmd.accesskey "D">
+<!ENTITY editRewrapCmd.label "পুনরায় মোড়ানো (w)">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY selectAllCmd.accesskey "A">
+<!ENTITY findAgainCmd.label "পুনরায় খোঁজা হবে (g)">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "পূর্ববর্তীটি খোঁজা হবে (v)">
+<!ENTITY findPrevCmd.accesskey "v">
+<!-- View Menu -->
+
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!ENTITY viewMenu.label "প্রদর্শন (V)">
+<!ENTITY viewMenu.accesskey "V">
+<!ENTITY viewToolbarsMenuNew.label "টুলবার (T)">
+<!ENTITY viewToolbarsMenuNew.accesskey "T">
+<!ENTITY showCompositionToolbarCmd.label "মেইল রচনা টুলবার (o)">
+<!ENTITY showCompositionToolbarCmd.accesskey "o">
+<!ENTITY showFormattingBarCmd.label "বিন্যাস বার (F)">
+<!ENTITY showFormattingBarCmd.accesskey "F">
+<!ENTITY showTaskbarCmd.label "অবস্থা বার (S)">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "স্বনির্বাচন… (C)">
+<!ENTITY customizeToolbar.accesskey "C">
+
+<!ENTITY addressSidebar.label "পরিচিতির পার্শ্ববার (o)">
+<!ENTITY addressSidebar.accesskey "o">
+<!-- Format Menu -->
+
+<!ENTITY formatMenu.label "বিন্যাস (o)">
+<!ENTITY formatMenu.accesskey "o">
+<!-- Options Menu -->
+
+<!ENTITY optionsMenu.label "অপশন (p)">
+<!ENTITY optionsMenu.accesskey "p">
+<!ENTITY checkSpellingCmd2.label "বানান পরীক্ষণ… (h)">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "h">
+<!ENTITY enableInlineSpellChecker.label "টাইপ করার সময় বানান পরীক্ষণ (S)">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY quoteCmd.label "বার্তায় উদ্ধৃতি দিন (Q)">
+<!ENTITY quoteCmd.accesskey "Q">
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+
+<!ENTITY attachVCard.label "ব্যক্তিগত কার্ড সংযোজন করা হবে (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "প্রাপ্তিজ্ঞাপন (t)">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "প্রেরণের অবস্থার ঘোষণা (N)">
+<!ENTITY dsnMenu.accesskey "N">
+<!ENTITY autoFormatCmd.label "স্বয়ংক্রিয়-সনাক্তকরণ (A)">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "শুধুমাত্র সরল পাঠ্য (P)">
+<!ENTITY plainTextFormatCmd.accesskey "P">
+<!ENTITY htmlFormatCmd.label "শুধুমাত্র সমৃদ্ধ পাঠ্য (HTML) (R)">
+<!ENTITY htmlFormatCmd.accesskey "R">
+<!ENTITY bothFormatCmd.label "সরল এবং সমৃদ্ধ (HTML) পাঠ্য (L)">
+<!ENTITY bothFormatCmd.accesskey "L">
+<!ENTITY priorityMenu.label "অগ্রাধিকার (P)">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY priorityButton.label "অগ্রাধিকার:">
+<!ENTITY lowestPriorityCmd.label "সবচেয়ে কম (L)">
+<!ENTITY lowestPriorityCmd.accesskey "L">
+<!ENTITY lowPriorityCmd.label "কম (o)">
+<!ENTITY lowPriorityCmd.accesskey "o">
+<!ENTITY normalPriorityCmd.label "স্বাভাবিক (N)">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "বেশী (i)">
+<!ENTITY highPriorityCmd.accesskey "i">
+<!ENTITY highestPriorityCmd.label "সবচেয়ে বেশী (H)">
+<!ENTITY highestPriorityCmd.accesskey "H">
+<!ENTITY fileCarbonCopyCmd.label "এখানে একটি কপি পাঠান (d)">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "ফাইল এখানে ">
+<!-- Tools Menu -->
+
+<!ENTITY tasksMenu.label "টুল (T)">
+<!ENTITY tasksMenu.accesskey "T">
+<!ENTITY messengerCmd.label "মেইল ও নিউজগ্রুপ (M)">
+<!ENTITY messengerCmd.accesskey "M">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "ঠিকানা বই (A)">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY preferencesCmdUnix.label "পছন্দসমূহ (n)">
+<!ENTITY preferencesCmdUnix.accesskey "n">
+<!--  Mac OS X Window Menu -->
+
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "নূন্যতম বিস্তার">
+<!ENTITY bringAllToFront.label "সব সামনে আনা হবে">
+<!ENTITY zoomWindow.label "বড় আকারে প্রদর্শন">
+<!ENTITY windowMenu.label "উইন্ডো">
+<!-- Mail Toolbar -->
+
+<!ENTITY sendButton.label "পাঠান">
+<!ENTITY quoteButton.label "উদ্ধৃতি">
+<!ENTITY addressButton.label "পরিচিতি">
+<!ENTITY attachButton.label "সংযুক্তি যোগ">
+<!ENTITY spellingButton.label "বানান">
+<!ENTITY saveButton.label "সংরক্ষণ">
+<!-- Mail Toolbar Tooltips -->
+
+<!ENTITY sendButton.tooltip "এই বার্তাটি এখন পাঠানো হবে">
+<!ENTITY sendlaterButton.tooltip "এই বার্তাটি পরে পাঠানো হবে">
+<!ENTITY quoteButton.tooltip "পূর্ববর্তী বার্তার উদ্ধৃতি দিন">
+<!ENTITY addressButton.tooltip "একটি ঠিকানা বই থেকে প্রাপক নির্বাচন করা হবে">
+<!ENTITY saveButton.tooltip "এই বার্তাটি সংরক্ষণ করুন">
+<!ENTITY cutButton.tooltip "কাটা">
+<!ENTITY copyButton.tooltip "অনুলিপি">
+<!ENTITY pasteButton.tooltip "প্রতিলেপন">
+
+<!-- Headers -->
+
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY subject.accesskey "S">
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+
+<!ENTITY SmileButton.tooltip "একটি হাস্যজ্জ্বল মুখ প্রবেশ করান">
+<!ENTITY smiley1Cmd.label "হাসি">
+<!ENTITY smiley2Cmd.label "ভ্রূকুটি">
+<!ENTITY smiley3Cmd.label "চোখ টেপা">
+<!ENTITY smiley4Cmd.label "ভেংচি">
+<!ENTITY smiley5Cmd.label "উচ্চ হাসি">
+<!ENTITY smiley6Cmd.label "অস্বস্তি">
+<!ENTITY smiley7Cmd.label "অনির্ধারিত">
+<!ENTITY smiley8Cmd.label "বিস্ময়">
+<!ENTITY smiley9Cmd.label "চুম্বন">
+<!ENTITY smiley10Cmd.label "চিৎকার">
+<!ENTITY smiley11Cmd.label "দারুণ">
+<!ENTITY smiley12Cmd.label "লোভী">
+<!ENTITY smiley13Cmd.label "বিব্রত">
+<!ENTITY smiley14Cmd.label "নির্দোষ">
+<!ENTITY smiley15Cmd.label "কান্না">
+<!ENTITY smiley16Cmd.label "মুখ আটকানো">
+<!-- Message Pane Context Menu -->
+
+<!ENTITY spellCheckNoSuggestions.label "কোনো উপদেশ নেই">
+<!ENTITY spellCheckIgnoreWord.label "শব্দ উপেক্ষা করা হবে (I)">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "অভিধানে যোগ করা হবে (n)">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "পূর্বাবস্থায় ফিরানো (U)">
+<!ENTITY undo.accesskey "U">
+<!ENTITY cut.label "কাটা (t)">
+<!ENTITY cut.accesskey "t">
+<!ENTITY copy.label "অনুলিপি (C)">
+<!ENTITY copy.accesskey "C">
+<!ENTITY paste.label "প্রতিলেপন (P)">
+<!ENTITY paste.accesskey "P">
+<!ENTITY pasteQuote.label "উদ্ধৃতি হিসেবে প্রতিলেপন (Q)">
+<!ENTITY pasteQuote.accesskey "Q">
+
+<!ENTITY openAttachment.label "খুলুন (O)">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "মুছে ফেলুন (D)">
+<!ENTITY delete.accesskey "D">
+<!ENTITY removeAttachment.label "সংযুক্তি সরিয়ে ফেলা হবে (m)">
+<!ENTITY removeAttachment.accesskey "m">
+<!ENTITY renameAttachment.label "নতুনভাবে নামকরণ… (R)">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY selectAll.label "সব নির্বাচন (A)">
+<!ENTITY selectAll.accesskey "A">
+<!ENTITY attachFile.label "ফাইল সংযুক্ত করুন… (F)">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachPage.label "ওয়েব পেজ সংযুক্ত করুন… (W)">
+<!ENTITY attachPage.accesskey "W">
+<!-- Title for the address picker panel -->
+
+<!-- Attachment Pane Header Bar Context Menu -->
+
+<!ENTITY addressesSidebarTitle.label "পরিচিতি">
+

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label         "Vormivälja omadused">
+<!ENTITY windowTitleImage.label    "Vormi pildi omadused">
+
+<!ENTITY InputType.label           "Välja tüüp">
+<!ENTITY InputType.accesskey       "V">
+<!ENTITY text.value                "tekst">
+<!ENTITY password.value            "parool">
+<!ENTITY checkbox.value            "märkeruut">
+<!ENTITY radio.value               "raadionupp">
+<!ENTITY submit.value              "sisestamise nupp">
+<!ENTITY reset.value               "lähtestamise nupp">
+<!ENTITY file.value                "fail">
+<!ENTITY hidden.value              "peidetud">
+<!ENTITY image.value               "pilt">
+<!ENTITY button.value              "nupp">
+
+<!ENTITY InputSettings.label       "Välja sätted">
+<!ENTITY InputName.label           "Välja nimi:">
+<!ENTITY InputName.accesskey       "V">
+<!ENTITY GroupName.label           "Grupi nimi:">
+<!ENTITY GroupName.accesskey       "G">
+<!ENTITY InputValue.label          "Välja väärtus:">
+<!ENTITY InputValue.accesskey      "V">
+<!ENTITY InitialValue.label        "Algväärtus:">
+<!ENTITY InitialValue.accesskey    "A">
+<!ENTITY InputChecked.label        "Algselt märgitud">
+<!ENTITY InputChecked.accesskey    "l">
+<!ENTITY InputSelected.label       "Algselt valitud">
+<!ENTITY InputSelected.accesskey   "e">
+<!ENTITY InputReadOnly.label       "Ainult lugemiseks">
+<!ENTITY InputReadOnly.accesskey   "n">
+<!ENTITY InputDisabled.label       "Keelatud">
+<!ENTITY InputDisabled.accesskey   "K">
+<!ENTITY tabIndex.label            "Kaardi indeks:">
+<!ENTITY tabIndex.accesskey        "r">
+<!ENTITY TextSize.label            "Välja suurus:">
+<!ENTITY TextSize.accesskey        "j">
+<!ENTITY TextLength.label          "Maksimaalne pikkus:">
+<!ENTITY TextLength.accesskey      "M">
+<!ENTITY AccessKey.label           "Kiirklahv:">
+<!ENTITY AccessKey.accesskey       "h">
+<!ENTITY Accept.label              "Nõustumise tüübid:">
+<!ENTITY Accept.accesskey          "u">
+
+<!ENTITY ImageProperties.label     "Pildi omadused…">
+<!ENTITY ImageProperties.accesskey "P">

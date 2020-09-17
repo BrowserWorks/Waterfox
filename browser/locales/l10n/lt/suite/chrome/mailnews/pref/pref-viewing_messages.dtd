@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Laiškų skaitymas">
+<!ENTITY style.label                      "Stilius:">
+<!ENTITY style.accesskey                  "t">
+<!ENTITY regular.label                    "Normalus">
+<!ENTITY bold.label                       "Pusjuodis">
+<!ENTITY italic.label                     "Kursyvas">
+<!ENTITY boldItalic.label                 "Pusjuodis kursyvas">
+<!ENTITY size.label                       "Dydis:">
+<!ENTITY size.accesskey                   "D">
+<!ENTITY bigger.label                     "Didesnis">
+<!ENTITY smaller.label                    "Mažesnis">
+<!ENTITY color.label                      "Spalva:">
+<!ENTITY color.accesskey                  "S">
+<!ENTITY displayPlainText.caption         "Grynojo teksto laiškai">
+<!ENTITY fontPlainText.label              "Šriftas:">
+<!ENTITY fontPlainText.accesskey          "r">
+<!ENTITY displayQuoted.label              "Citatų šriftas:">
+<!ENTITY wrapInMsg.label                  "Laužyti eilutes pritaikant prie lango pločio">
+<!ENTITY wrapInMsg.accesskey              "p">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Jaustukus rodyti grafiškai">
+<!ENTITY convertEmoticons.accesskey       "J">
+<!ENTITY generalMessageDisplay.caption    "Bendrosios">
+<!ENTITY autoMarkAsRead.label             "Atvertą laišką pažymėti kaip skaitytą">
+<!ENTITY autoMarkAsRead.accesskey         "A">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "tik po to, kai jis rodomas">
+<!ENTITY markAsReadAfter.accesskey        "t">
+<!ENTITY secondsLabel.label               "sek.">
+
+<!ENTITY openingMessages.label            "Atveriamą laišką rodyti:">
+<!ENTITY newWindowRadio.label             "naujame lange">
+<!ENTITY newWindowRadio.accesskey         "n">
+<!ENTITY existingWindowRadio.label        "jau atvertame lange">
+<!ENTITY existingWindowRadio.accesskey    "e">
+<!ENTITY disableContent.label             "Neįkelti paveikslėlių ir kitų elementų iš tinklo">
+<!ENTITY disableContent.accesskey         "N">
+<!ENTITY showCondensedAddresses.label     "Jei asmuo yra adresų knygoje, rodyti tik jo asmenvardį">
+<!ENTITY showCondensedAddresses.accesskey "s">
+<!ENTITY closeMsgWindowOnDelete.label     "Ištrynus laišką, užverti langą su juo">
+<!ENTITY closeMsgWindowOnDelete.accesskey "v">

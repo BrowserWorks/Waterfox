@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; қауіпсіз режимі">
+<!ENTITY window.width                     "42em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; қауіпсіз режимде орындалуда, сондықтан сіздің баптауларыңыз, темалар және кеңейтулеріңіз уақытша сөндірілген.">
+<!ENTITY safeModeDescription2.label       "Бұл өзгерістердің кейбіреулерін немесе барлығын тұрақты қыла аласыз:">
+
+<!ENTITY disableAddons.label              "Барлық қосымшаларды сөндіру">
+<!ENTITY disableAddons.accesskey          "д">
+
+<!ENTITY resetToolbars.label              "Саймандар панельдерін және басқару элементтерін тастау">
+<!ENTITY resetToolbars.accesskey          "т">
+
+<!ENTITY changeAndRestartButton.label     "Өзгерістерді жасау және қайта қосу">
+<!ENTITY changeAndRestartButton.accesskey "ж">
+
+<!ENTITY continueButton.label             "Қауіпсіз режимде жалғастыру">
+<!ENTITY continueButton.accesskey         "с">

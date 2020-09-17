@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editfield0.label "Օգտվողի Անուն."> 
+<!ENTITY editfield1.label "Գաղտնաբառ."> 
+<!ENTITY copyCmd.label    "Պատճենել">
+<!ENTITY copyCmd.accesskey "Պ">
+<!ENTITY selectAllCmd.label "Նշել բոլորը">
+<!ENTITY selectAllCmd.accesskey "բ">

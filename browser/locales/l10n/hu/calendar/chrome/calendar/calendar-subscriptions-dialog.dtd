@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Subscriptions Dialog -->
+
+<!ENTITY calendar.subscriptions.dialog.title                            "Feliratkozás naptárakra">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Naptárak, amelyekben szerepel:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Keresés">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Válassza ki a naptárakat, amelyekre fel szeretne iratkozni:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Feliratkozás">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Leiratkozás">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Keresés…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Nincs találat.">

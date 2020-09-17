@@ -1,0 +1,200 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "გვერდის ჩატვირთვის შეცდომა">
+<!ENTITY retry.label "კვლავ სცადეთ">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "დაკავშირება ვერ მოხერხდა">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "უსაფრთხოების მიზნით პორტი აკრძალულია">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "სერვერი ვერ მოიძებნა">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>შეამოწმეთ, ხომ არაა მისამართი მცდარი. მაგალითად,
+    <strong>ww</strong>.example.com ნაცვლად
+    <strong>www</strong>.example.com</li>
+  <li>თუ ვერც სხვა გვერდებს ხსნით, შეამოწმეთ თქვენი კომპიუტერის ქსელური
+    კავშირი.</li>
+  <li>თუ თქვენი ქსელი ან კომპიუტერი ფარით ან პროქსითაა დაცული, გადაამოწმეთ აქვს თუ არა 
+    &brandShortName; პროგრამას ქსელის წვდომის უფლება.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "ფაილი ვერ მოიძებნა">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>შეამოწმეთ ფაილის სახელი მთავრულების გათვალისწინებით ან სხვა შეცდომებზე.</li>
+  <li>შეამოწმეთ, ხომ არაა ფაილი გადატანილი, გადარქმეული ან წაშლილი.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "ფაილთან წვდომა აკრძალულია">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>შესაძლოა წაშლილია, გადატანილია ან ფაილზე წვდომის უფლებები შეზღუდულია.</li>
+</ul>
+">
+
+<!ENTITY generic.title "უკაცრავად">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; ვერ ახერხებს ამ გვერდის ჩატვირთვას გარკვეული მიზეზით.</p>
+">
+
+<!ENTITY malformedURI.title "მისამართი უმართებლოა">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>ვებ მისამართი ჩვეულებრივ ამგვარად მიეთითება
+    <strong>http://www.example.com/</strong></li>
+  <li>გადაამოწმეთ, რომ ჩვეულებრივ დახრილს იყენებთ (მაგ.,
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "კავშირი გაწყდა">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "დოკუმენტი ვადაგასულია">
+<!ENTITY notCached.longDesc "<p>მოთხოვნილი დოკუმენტი მიუწვდომელია &brandShortName;-ის ბუფერში.</p><ul><li>უსაფრთხოების უზრუნველსაყოფად, &brandShortName; ხელმეორედ არ მოითხოვს მნიშვნელოვან დოკუმენტებს.</li><li>Click სცადეთ დოკუმენტის ხელახლა მოთხოვნა ვებსაიტიდან.</li></ul>">
+
+<!ENTITY netOffline.title "კავშირგარეშე რეჟიმი">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>დააჭირეთ „კვლავ სცადეთ“ ღილაკს კავშირზე გასასვლელად და გვერდის ხელახლა გასახსნელად.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "შიგთავსის დაშიფვრის შეცდომა">
+<!ENTITY contentEncodingError.longDesc "<ul>
+  <li>გთხოვთ, დაუკავშირდეთ ვებსაიტის მფლობელებს და აცნობოთ ამ ხარვეზის შესახებ.</li>
+</ul>">
+
+<!ENTITY unsafeContentType.title "სახიფათო სახის ფაილი">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>ამ პრობლემასთნა დაკავშირებით გთხოვთ ვებ საიტის მფლობელებს დაუკავშირდეთ.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "კავშირი გაწყდა">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "კავშირის დრო ამოიწურა">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "მისამართი გაუგებარი იყო">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>ამ მისამართის გასახსნელად, შესაძლოა სხვა პროგრამის დაყენება იყოს საჭირო.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "პროქსი სერვერმა კავშირი უარყო">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>გადაამოწმეთ პროქსის პარამეტრები და დარწმუნდით მათ მართებულობაში.</li>
+  <li>დაუკავშირდით ქსელის მმართველს და დარწმუნდით, რომ პროქსი სერვერი
+    მუშაობს.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "პროქსი სერვერის პოვნა ვერ ხერხდება">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>გადაამოწმეთ პროქსის პარამეტრები და დარწმუნდით მათ მართებულობაში.</li>
+  <li>შეამოწმეთ და დარწმუნდით, რომ თქვენი კომპიუტერის ქსელური კავშირი გამართულია.</li>
+  <li>თუ თქვენი ქსელი ან კომპიუტერი ფარით ან პროქსითაა დაცული, გადაამოწმეთ აქვს თუ არა
+    &brandShortName; პროგრამას ქსელის წვდომის უფლება.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "ეს გვერდი არამართებულად გადამისამართდა">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>ამ ხარვეზს, ზოგჯერ იწვევს უარყოფა, ან გამორთვა
+    ფუნთუშების.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "გაუთვალისწინებელი პასუხი სერვერიდან">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>შეამოწმეთ და დარწმუნდით რომ თქვენს სისტემაში პირადი უსაფრთხოების მმართველი
+    ჩადგმულია.</li>
+  <li>ამის მიზეზი შესაძლოა სერვერის არასტანდარტული კონფიგურაცია იყოს.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "უსაფრთხო დაკავშირება ვერ მოხერხდა">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>გვერდი, რომლის ნახვასაც ცდილობთ ვერ გაიხსნება, რადგან მიღებული მონაცემების ნამდვილობის დადასტურება ვერ ხერხდება.</li>
+  <li>გთხოვთ, დაუკავშირდეთ საიტის მფლობელებს და მოახსენოთ ამ ხარვეზის შესახებ.</li>
+</ul>">
+
+<!ENTITY nssBadCert.title "უსაფრთხო დაკავშირება ვერ ხერხდება">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>ეს შესაძლოა სერვერის გაუმართაობის ბრალი იყოს ან 
+სხვა საიტად გასაღების მცდელობას ჰქონდეს ადგილი.</li>
+  <li>თუ ამ საიტს მანამდე წარმატებით უკავშირდებოდით, ხარვეზი შესაძლოა 
+დროებითი იყოს და მოგვიანებით შეგიძლიათ კვლავ სცადოთ.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>საიტი დროებით მიუწვდომელი ან გადატვირთულია. კვლავ სცადეთ რამდენიმე
+    წამში.</li>
+  <li>თუ სხვა გვერდების ჩატვირთვასაც ვერ ახერხებთ, შეამოწმეთ კომპიუტერის ქსელთან
+    კავშირი.</li>
+  <li>თუ თქვენი ქსელი ან კომპიუტერი ფარით ან პროქსითაა დაცული, გადაამოწმეთ აქვს თუ არა
+    &brandShortName; პროგრამას ქსელის წვდომის უფლება.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "შეზღუდულია, შიგთავსის უსაფრთხოების დებულების შესაბამისად">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ზღუდავს ამ გვერდს, ვინაიდან შეიცავს შიგთავსს, რომელიც მიუღებელია უსაფრთხოების დებულების შესაბამისად.</p>">
+
+<!ENTITY xfoBlocked.title "ზღუდავს დებულება X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; ზღუდავს ამ გვერდის მოცემული გზით ჩატვირთვას, ვინაიდან მისი დებულება X-Frame-Options კრძალავს ამას.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "დაზიანებული შიგთავსის შეცდომა">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>თქვენთვის სასურველი გვერდი ვერ გაიხსნება, რადგან მონაცემთა გაცვლისას მოხდა შეცდომა.</p><ul><li>გთხოვთ დაუკავშირდით საიტის მფლობელებს და შეარტყობინეთ ამ შეცდომაზე.</li></ul>">
+
+<!ENTITY securityOverride.linkText "ან გამონაკლისის დამატება შეგიძლიათ…">
+<!ENTITY securityOverride.getMeOutOfHereButton "გამაშორე აქაურობას!">
+<!ENTITY securityOverride.exceptionButtonLabel "გამონაკლისის დამატება…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>არ უნდა ისარგებლოთ გამონაკლისით თუ ინტერნეტ კავშირს სრულად არ ენდობით ან ამ სერვერისთვის გაფრთხილებების ჩვენება ამორთული გაქვეთ.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "გარე XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>გთხოვთ მიმართოთ ვებსაიტის მფლობელებს და აცნობოთ ამ ხარვეზის შესახებ.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "კავშირი დაუცველია">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> იყენებს უსაფრთხოების ისეთ ტექნოლოგიას, რომელიც მოძველებული და დაუცველია. თავდამსხმელმა შესაძლოა მარტივად მიიღოს იმ მონაცემებზე წვდომა, რომელიც დაცულად მიგაჩნიათ. საიტზე შესვლამდე, აუცილებელია მისმა ხელმძღვანელობამ ეს ხარვეზი აღმოფხვრას.</p><p>შეცდომის კოდი: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "შეზღუდული გვერდი">
+
+<!ENTITY networkProtocolError.title "ქსელის ოქმის შეცდომა">
+<!ENTITY networkProtocolError.longDesc "<p>გვერდი რომლის მონახულებასაც ცდილობთ ვერ გამოჩნდება, ვინაიდან ქსელის ოქმში აღმოჩენილია შეცდომა.</p><ul><li>გთხოვთ, დაუკავშირდეთ საიტის მფლობელებს და აცნობოთ ამ ხარვეზის შესახებ.</li></ul>">

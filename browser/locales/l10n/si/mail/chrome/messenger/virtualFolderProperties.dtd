@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "නව සුරැකූ සෙවුම් ෆොල්ඩරයක්">
+<!ENTITY name.label                 "නම:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "‍මෙහි උප ෆෝල්ඩරයක් සේ සාදන්න:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "මෙම සුරැකූ සෙවුම් ෆොල්ඩරය සඳහා තේරීම් නිර්නායක වින්‍යාස කරන්න: ">
+
+<!ENTITY folderSelectionCaption.label "සෙවීමට ෆෝල්ඩර තෝරන්න: ">
+<!ENTITY chooseFoldersButton.label "තෝරන්න...">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "Search Online (Gives up-to-date results for IMAP and News folders but increases time to open the folder)">
+<!ENTITY searchOnline.accesskey "O">
+
+<!ENTITY newFolderButton.label "සාදන්න">
+<!ENTITY newFolderButton.accesskey "r">
+<!ENTITY editFolderButton.label "යාවත්කාලීන කරන්න">
+<!ENTITY editFolderButton.accesskey "U">

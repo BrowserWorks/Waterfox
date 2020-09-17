@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Кіраваць адметамі гэтага рахунку. Змоўчна ўжываецца першая адмета.">
+<!ENTITY identitiesListAdd.label "Дадаць…">
+<!ENTITY identitiesListAdd.accesskey "Д">
+<!ENTITY identitiesListEdit.label "Правіць…">
+<!ENTITY identitiesListEdit.accesskey "П">
+<!ENTITY identitiesListDefault.label "Усталяваць як змоўчны">
+<!ENTITY identitiesListDefault.accesskey "з">
+<!ENTITY identitiesListDelete.label "Выдаліць">
+<!ENTITY identitiesListDelete.accesskey "В">
+<!ENTITY identitiesListClose.label "Зачыніць">
+<!ENTITY identitiesListClose.accesskey "ч">

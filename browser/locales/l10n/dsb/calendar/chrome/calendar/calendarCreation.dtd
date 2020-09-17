@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Nowy kalender napóraś" >
+<!ENTITY wizard.label             "Nowy kalender napóraś" >
+<!ENTITY wizard.description       "Waš kalender lokalizěrowaś" >
+
+<!ENTITY initialpage.description    "Waš kalender dajo se na wašom licadle abo na serweru składowaś, aby na njen zdaloka pśistup měł abo jen z wašymi pśijaśelami abo sobuźěłaśerjami źělił." >
+<!ENTITY initialpage.computer.label  "Na mójom licadle">
+<!ENTITY initialpage.network.label  "W seśi">
+
+<!ENTITY locationpage.description         "Stajśo informacije wó tom k dispoziciji, což jo trěbne, aby pśistup k wašomu dalokemu kalendroju měło" >
+<!ENTITY locationpage.login.description   "Na žycenje: zapódajśo wužywarske mě a gronidło" >
+<!ENTITY locationpage.username.label      "Wužywarske mě:" >
+<!ENTITY locationpage.password.label      "Gronidło:" >
+
+<!ENTITY custompage.shortdescription  "Waš kalender pśiměriś" >
+<!ENTITY custompage.longdescription   "Móžośo swójomu kalenderoju pśimě daś a tšojenja z kalendera zabarwiś." >
+
+<!ENTITY finishpage.shortdescription  "Kalender jo se napórał" >
+<!ENTITY finishpage.longdescription   "Waš kalender jo se napórał." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Druge">
+
+<!ENTITY buttons.create.label "Kalender napóraś">
+<!ENTITY buttons.create.accesskey "l">
+
+<!ENTITY buttons.find.label "Kalendery pytaś">
+<!ENTITY buttons.find.accesskey "K">
+
+<!ENTITY buttons.back.label "Slědk">
+<!ENTITY buttons.back.accesskey "S">
+
+<!ENTITY buttons.subscribe.label "Aboněrowaś">
+<!ENTITY buttons.subscribe.accesskey "A">
+
+<!ENTITY calendartype.label "Kalendrowy typ:">
+<!ENTITY location.label "Městno:">
+<!ENTITY location.placeholder "URL abo mě hosta kalendrowego serwera">
+
+<!ENTITY network.nocredentials.label "Toś to městno pśizjawjeńske daty njetrjeba">
+<!ENTITY network.loading.description "Pšosym cakajśo, daniž waše kalendery njejsui namakane.">
+<!ENTITY network.notfound.description "Kalendery njejsu se dali na toś tom městnje namakaś. Pšosym pśeglědujśo swóje nastajenja.">
+<!ENTITY network.authfail.description "Pśizjawjeńske daty, kótarež sćo zapódał, njejsu se akceptěrowali. Pšosym pśeglědujśo swóje nastajenja.">
+
+<!ENTITY network.subscribe.single.description "Pšosym wubjeŕśo kalendery, kótarež wy by rady aboněrował.">
+<!ENTITY network.subscribe.multiple.description "Za toś to městno su někotare kalendrowe typy k dispoziciji. Pšosym wubjeŕśo kalendrowy typ a markěrujśo pón kalendery, kótarež cośo aboněrowaś.">

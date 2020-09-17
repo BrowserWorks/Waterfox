@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "פרטים על &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "תוכנת &brandShortName; היא ניסיונית וייתכן שלא תהיה יציבה.">
+<!ENTITY aboutPage.checkForUpdates.link         "בדיקה אחר עדכונים »">
+<!ENTITY aboutPage.checkForUpdates.checking     "בודק עדכונים…">
+<!ENTITY aboutPage.checkForUpdates.none         "אין עדכונים זמינים">
+<!ENTITY aboutPage.checkForUpdates.available2   "הורדת עדכון">
+<!ENTITY aboutPage.checkForUpdates.downloading  "העדכון בהורדה…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "התקנת עדכון">
+<!ENTITY aboutPage.faq.label                    "תשובות לשאלות נפוצות">
+<!ENTITY aboutPage.support.label                "תמיכה">
+<!ENTITY aboutPage.privacyPolicy.label          "מדיניות פרטיות">
+<!ENTITY aboutPage.rights.label                 "דע את זכויותיך">
+<!ENTITY aboutPage.relNotes.label               "הערות שחרור">
+<!ENTITY aboutPage.credits.label                "תודות">
+<!ENTITY aboutPage.license.label                "מידע רישוי">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox והסמלים של Firefox הם סימנים מסחריים של Mozilla Foundation.">

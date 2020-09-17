@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Voeg karakter in">
+<!ENTITY category.label "Kategorie">
+<!ENTITY letter.label "Letter:">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "Karakter:">
+<!ENTITY character.accessKey "K">
+<!ENTITY accentUpper.label "Aksent-bokas">
+<!ENTITY accentLower.label "Aksent-onderkas">
+<!ENTITY otherUpper.label "Ander bokas">
+<!ENTITY otherLower.label "Ander onderkas">
+<!ENTITY commonSymbols.label "Algemene simbole">
+<!ENTITY insertButton.label "Invoeg">
+<!ENTITY closeButton.label "Sluit">

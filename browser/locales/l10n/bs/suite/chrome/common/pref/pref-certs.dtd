@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Upravljanje certifikatima">
+<!ENTITY  managecerts.text         "Koristite Menadžera certifikata da upravljate vašim ličnim certifikatima, kao i onima od drugih ljudi i certifikatima autoriteta.">
+<!ENTITY  managecerts.button       "Upravljanje certifikatima…">
+<!ENTITY  managedevices.caption    "Upravljanje sigurnosnim uređajima">
+<!ENTITY  managedevices.text       "Koristite ovo dugme da upravljate vašim sigurnosnim uređajima, kao što su pametne kartice.">
+<!ENTITY  managedevices.button     "Upravljanje sigurnosnim uređajima…">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Certifikati">
+<!ENTITY  certs.label              "Certifikati">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "Koristite Online Certificate Status Protocol (OCSP) da potvrdite trenutnu validnost certifikata">
+<!ENTITY validation.requireOCSP.description       "Kada veza OCSP servera ne uspije, tretirajte certifikat kao nevažećim">

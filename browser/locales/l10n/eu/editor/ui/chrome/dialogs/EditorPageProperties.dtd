@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Orriaren propietateak">
+<!ENTITY location.label "Kokapena:">
+<!ENTITY lastModified.label "Azken aldaketa:">
+<!ENTITY titleInput.label "Izenburua:">
+<!ENTITY titleInput.accessKey "I">
+<!ENTITY authorInput.label "Egilea:">
+<!ENTITY authorInput.accessKey "E">
+<!ENTITY descriptionInput.label "Azalpena:">
+<!ENTITY descriptionInput.accessKey "A">
+<!ENTITY locationNewPage.label "[Orri berria, oraindik gorde gabe]">
+<!ENTITY EditHEADSource1.label "Erabiltzaile aurreratuak:">
+<!ENTITY EditHEADSource2.label "&lt;head&gt; (goiburua) atalaren edukiak aldatzeko ikusi menuan edo edizio modua tresna-barran, &quot;HTML iturburua&quot; aukeratu.">

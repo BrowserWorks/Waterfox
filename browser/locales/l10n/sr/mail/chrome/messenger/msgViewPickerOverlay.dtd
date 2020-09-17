@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "Преглед:">
+<!ENTITY viewPicker.accesskey "г">
+<!ENTITY viewAll.label "Све">
+<!ENTITY viewAll.accesskey "С">
+<!ENTITY viewUnread.label "Непрочитане">
+<!ENTITY viewUnread.accesskey "Н">
+<!ENTITY viewNotDeleted.label "Необрисане">
+<!ENTITY viewNotDeleted.accesskey "б">
+<!ENTITY viewTags.label "Ознаке">
+<!ENTITY viewTags.accesskey "О">
+<!ENTITY viewCustomViews.label "Прилагођени прегледи">
+<!ENTITY viewCustomViews.accesskey "л">
+<!ENTITY viewVirtualFolder.label "Сачувај преглед као фасциклу…">
+<!ENTITY viewVirtualFolder.accesskey "ј">
+<!ENTITY viewCustomizeView.label "Прилагоди…">
+<!ENTITY viewCustomizeView.accesskey "д">

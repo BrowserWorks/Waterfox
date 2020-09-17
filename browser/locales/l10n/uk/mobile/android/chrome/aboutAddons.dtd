@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Додатки">
+<!ENTITY aboutAddons.header2                    "Ваші додатки">
+
+<!ENTITY addonAction.enable                     "Увімкнути">
+<!ENTITY addonAction.disable                    "Вимкнути">
+<!ENTITY addonAction.uninstall                  "Вилучити">
+<!ENTITY addonAction.undo                       "Повернути">
+<!ENTITY addonAction.update                     "Оновити">
+
+<!ENTITY addonUnsigned.message                  "&brandShortName; не може перевірити цей додаток.">
+<!ENTITY addonUnsigned.learnMore                "Докладніше">

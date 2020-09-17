@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Mba’erysýi">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Mohenda">
+<!ENTITY organize.accesskey    "M">
+<!ENTITY organize.tooltip      "Emohenda nde rechaukahakuéra">
+
+<!ENTITY file.close.label               "Mboty">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Hechaha">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Hechaha moambue">
+<!ENTITY view.columns.label             "Yta rechaukaha">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "Mohenda">
+<!ENTITY view.sort.accesskey            "M">
+<!ENTITY view.unsorted.label            "Mohenda’ỹva">
+<!ENTITY view.unsorted.accesskey        "M">
+<!ENTITY view.sortAscending.label       "A > Z ñemohenda">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "A > Z ñemohenda">
+<!ENTITY view.sortDescending.accesskey  "A">
+
+<!ENTITY importBookmarksFromHTML.label     "Techaukaha jereru peteĩ HTML-gui">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Techaukaha jereraha HTML-ramo">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Mba’ekuaarã jereru…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "Mbokuatia...">
+<!ENTITY cmd.backup.accesskey           "M">
+<!ENTITY cmd.restore2.label             "Mbojevy">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Marandurenda Poravo…">
+<!ENTITY cmd.restoreFromFile.accesskey  "P">
+
+<!ENTITY col.name.label          "Téra">
+<!ENTITY col.tags.label          "Teramoĩ">
+<!ENTITY col.url.label           "Tendaréra">
+<!ENTITY col.mostrecentvisit.label "Jeike ramo pyahuvéva">
+<!ENTITY col.visitcount.label    "Jeikehague jepapa">
+<!ENTITY col.dateadded.label     "Mbojoapypyre">
+<!ENTITY col.lastmodified.label  "Ñemoambue ramove">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Mba’ereru ha Ñongatuguy">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Nde rechahaukakuéra mba’ereru ha mba’ereraha">
+
+<!ENTITY backButton.tooltip  "Tapykuévo jeho">
+
+<!ENTITY forwardButton.tooltip  "Tenonde jeho">
+
+<!ENTITY detailsPane.selectAnItemText.description "Eiporavo peteĩ mba’epuru ehecha ha embosako’i hag̃ua imba’etee">
+

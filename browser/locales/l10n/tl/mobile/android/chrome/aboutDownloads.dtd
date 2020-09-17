@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Mga Download">
+<!ENTITY aboutDownloads.header                     "Ang iyong Mga Pag-download">
+<!ENTITY aboutDownloads.empty                      "Walang Download">
+
+<!ENTITY aboutDownloads.open                       "Buksan">
+<!ENTITY aboutDownloads.remove                     "Burahin">
+<!ENTITY aboutDownloads.removeAll                  "Burahin Lahat">
+<!ENTITY aboutDownloads.pause                      "Pause">
+<!ENTITY aboutDownloads.resume                     "Ipagpatuloy">
+<!ENTITY aboutDownloads.cancel                     "Kanselahin">
+<!ENTITY aboutDownloads.retry                      "Subukan muli">

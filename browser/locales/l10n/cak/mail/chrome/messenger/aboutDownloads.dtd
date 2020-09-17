@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Xeyak Yakb'äl">
+<!ENTITY aboutDownloads.empty                      "Man Xyak ta Yakb'äl">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Tijaq K'wayöl Yakwuj">
+<!ENTITY cmd.show.accesskey                        "y">
+<!ENTITY cmd.showMac.label                         "Tik'ut Pa Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Tijaq">
+<!ENTITY cmd.open.accesskey                        "j">
+<!ENTITY cmd.removeFromHistory.label               "Tiyuj Pa Natab'äl">
+<!ENTITY cmd.removeFromHistory.accesskey           "u">
+<!ENTITY cmd.clearList.label                       "Tijosq'ïx Cholb'äl">
+<!ENTITY cmd.clearList.accesskey                   "j">
+<!ENTITY cmd.clearList.tooltip                     "Keyuj konojel ri taq okitz'ib' pa ri kicholajem taq yakb'äl eyakon, man ke ta ri' ri tajin yeqasäx.">
+<!ENTITY cmd.searchDownloads.label                 "Tikanöx…">
+<!ENTITY cmd.searchDownloads.key                   "F">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "Tsenkreḍ lqem aqbuṛ n &brandProductName;">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "Lqem amaynut n &brandProductName; izmerad d-yeglu s yibeddilen deg umaɣnu-ik ayen ur yemṣadan ara akked lqem-ik aqbuṛ. Seqdec amaɣnu-a kan s lqem amaynut, neɣ rnu amaɣnu amaynut i usbeddi-an &brandShortName;. timerna n umaɣnu amaynut yesra asbadu n yimiḍanen-ik, iwitayen-ik akked izegra-in i tikkelt-nniḍen.">
+
+<!ENTITY window.moreinfo "Ugar n telɣut…">
+<!ENTITY window.create "Rnu amaɣnu amaynut">
+<!ENTITY window.quit-win "Ffeɣ">
+<!ENTITY window.quit-nonwin "Ffeɣ">

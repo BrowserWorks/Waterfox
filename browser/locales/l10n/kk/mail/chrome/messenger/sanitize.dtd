@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog2.title         "Жуырдағы тарихты өшіру">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+<!ENTITY clearTimeDuration.label          "Жойылатын деректер мерзімі: ">
+<!ENTITY clearTimeDuration.accesskey      "й">
+<!ENTITY clearTimeDuration.lastHour       "Соңғы сағат">
+<!ENTITY clearTimeDuration.last2Hours     "Соңғы 2 сағат">
+<!ENTITY clearTimeDuration.last4Hours     "Соңғы 4 сағат">
+<!ENTITY clearTimeDuration.today          "Бүгін">
+<!ENTITY clearTimeDuration.everything     "Барлығы">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+<!ENTITY detailsProgressiveDisclosure.label     "Көбірек">
+<!ENTITY detailsProgressiveDisclosure.accesskey "е">
+
+
+<!ENTITY historyGroup.label                "Тарих">
+
+<!ENTITY itemHistory.label                 "Шолулар тарихы">
+<!ENTITY itemHistory.accesskey             "Ш">
+<!ENTITY itemCookies.label                 "Cookies">
+<!ENTITY itemCookies.accesskey             "C">
+<!ENTITY itemCache.label                   "Кэш">
+<!ENTITY itemCache.accesskey               "К">
+
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+<!ENTITY sanitizeEverythingUndoWarning     "Бұл әрекетті болдырмау мүмкін болмайды.">
+
+<!ENTITY dialog.width                 "35em">

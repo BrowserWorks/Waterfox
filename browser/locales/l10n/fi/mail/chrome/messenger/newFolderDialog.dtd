@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Labels -->
+<!ENTITY newFolderDialog.title       "Uusi kansio">
+<!ENTITY name.label                  "Nimi:">
+<!ENTITY name.accesskey              "N">
+<!ENTITY description.label           "Luo alikansiona kansiolle:">
+<!ENTITY description.accesskey       "L">
+<!ENTITY folderRestriction1.label    "Tämä palvelin rajoittaa kansiot kahteen tiettyyn tyyppiin.">
+<!ENTITY folderRestriction2.label    "Salli uuden kansion sisältää:">
+<!ENTITY foldersOnly.label           "Vain kansioita">
+<!ENTITY messagesOnly.label          "Vain viestejä">
+<!ENTITY accept.label               "Luo kansio">
+<!ENTITY accept.accesskey           "u">

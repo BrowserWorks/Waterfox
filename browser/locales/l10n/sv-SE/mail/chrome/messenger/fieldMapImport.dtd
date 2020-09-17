@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importera adressbok">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Importerad data ur posten: ">
+<!ENTITY fieldMapImport.next.label "Nästa">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "Föregående">
+<!ENTITY fieldMapImport.previous.accesskey "F">
+<!ENTITY fieldMapImport.text "Använd Flytta uppåt och Flytta neråt för att pussla ihop rätt fält i adressboken med korrekt data. Kryssa ur de delar du inte vill importera.">
+<!ENTITY fieldMapImport.up.label "Flytta uppåt">
+<!ENTITY fieldMapImport.up.accesskey "u">
+<!ENTITY fieldMapImport.down.label "Flytta neråt">
+<!ENTITY fieldMapImport.down.accesskey "r">
+<!ENTITY fieldMapImport.fieldListTitle "Fält i adressboken">
+<!ENTITY fieldMapImport.dataTitle "Post att importera">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Första posten innehåller fältnamn">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "ö">

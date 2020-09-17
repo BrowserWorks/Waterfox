@@ -1,0 +1,4 @@
+<!ENTITY options.title "Agordoj de programistaj iloj">
+<!ENTITY options.status.label "Stato:">
+<!ENTITY options.port.label "Pordo:">
+<!ENTITY options.forcelocal.label "Permesi konektojn el aliaj komputiloj">

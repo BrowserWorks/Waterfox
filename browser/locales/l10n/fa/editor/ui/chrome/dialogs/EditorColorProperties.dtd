@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Page Colors and Background">
+<!ENTITY pageColors.label "Page Colors">
+<!ENTITY defaultColorsRadio.label "Reader's default colors (Don't set colors in page)">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "فقط استفاده از تنظیمات رنگ از مرورگر بیننده(خواننده)">
+<!ENTITY customColorsRadio.label "Use custom colors:">
+<!ENTITY customColorsRadio.accessKey "c">
+<!ENTITY customColorsRadio.tooltip "These color settings override the viewer's browser settings">
+
+<!ENTITY normalText.label "Normal text">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "متن پیوند">
+<!ENTITY linkText.accessKey "پ">
+<!ENTITY activeLinkText.label "متن پیونده فعال">
+<!ENTITY activeLinkText.accessKey "ع">
+<!ENTITY visitedLinkText.label "متن پیوند بازدید شده">
+<!ENTITY visitedLinkText.accessKey "ب">
+<!ENTITY background.label "پس‌زمینه:">
+<!ENTITY background.accessKey "پ">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "تصویر پس‌زمینه:">
+<!ENTITY backgroundImage.accessKey "ت">
+<!ENTITY backgroundImage.tooltip "استفاده از یک پرونده‌ی تصویری به عنوان پس زمینه برای صفحه‌ی شما">
+<!ENTITY backgroundImage.shortenedDataURI "داده کوتاه شدهٔ URI (کپی URI کامل را در کلیپ بورد قرار خواهد داد)">

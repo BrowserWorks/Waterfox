@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label "Сувязі ў сетцы">
+<!ENTITY offlineContactsHeader.label "Сувязі па-за сеткаю">
+<!ENTITY conversationsHeader.label "Гутаркі">
+<!ENTITY searchResultConversation.label "Вынікі пошуку">
+<!ENTITY chat.noConv.title "Гутаркі будуць адлюстроўвацца тут.">
+<!ENTITY chat.noConv.description "Ужывайце спіс сувязяў на левай панэлі, каб пачаць гутарку.">
+<!ENTITY chat.noPreviousConv.description "&brandShortName; зараз не мае ніводнай гутаркі, захованай для гэтай сувязі.">
+<!ENTITY chat.noAccount.title "Вы пакуль не наладзілі рахунак гутаркі.">
+<!ENTITY chat.noAccount.description "Дазволіць &brandShortName; настаўляць вас падчас наладжвання вашага гутарковага рахунку.">
+<!ENTITY chat.accountWizard.button "Пачаць">
+<!ENTITY chat.noConnectedAccount.title "Вашы гутарковыя рахункі не злучаны.">
+<!ENTITY chat.noConnectedAccount.description "Вы можаце злучыцца з імі ў дыялогу 'Статус гутаркі':">
+<!ENTITY chat.showAccountManager.button "Паказаць статус гутаркі">
+
+<!ENTITY chat.participants "Удзельнікі:">
+<!ENTITY chat.previousConversations "Папярэднія гутаркі:">
+<!ENTITY chat.ongoingConversation "Цяперашнія гутаркі">
+
+<!ENTITY openConversationCmd.label "Пачаць гутарку">
+<!ENTITY openConversationCmd.accesskey "П">
+<!ENTITY closeConversationCmd.label "Закрыць гутарку">
+<!ENTITY closeConversationCmd.accesskey "к">
+<!ENTITY aliasCmd.label "Перайменаваць">
+<!ENTITY aliasCmd.accesskey "П">
+<!ENTITY deleteCmd.label "Выдаліць сувязь">
+<!ENTITY deleteCmd.accesskey "д">
+
+<!ENTITY openConversationButton.tooltip "Пачаць гутарку">
+<!ENTITY closeConversationButton.tooltip "Закрыць гутарку">
+
+<!ENTITY addBuddyButton.label "Дадаць сувязь">
+<!ENTITY joinChatButton.label "Пачаць гутарыць">
+<!ENTITY chatAccountsButton.label "Паказаць рахункі">
+
+<!ENTITY status.available "Даступны">
+<!ENTITY status.unavailable "Недаступны">
+<!ENTITY status.offline "Па-за сеткаю">
+
+<!ENTITY openLinkCmd.label "Адкрыць спасылку…">
+<!ENTITY openLinkCmd.accesskey "с">

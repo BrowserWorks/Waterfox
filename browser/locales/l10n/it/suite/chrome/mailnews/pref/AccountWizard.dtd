@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Creazione nuovo account">
+<!ENTITY accountWizard.size "width: 46em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Per poter ricevere i messaggi, è necessario configurare un account.">
+<!ENTITY accountTypeTitle.label "Configurazione nuovo account">
+<!ENTITY accountTypeDesc2.label "Questa creazione guidata raccoglierà le informazioni per la creazione di un account di posta o gruppi di discussione. Se non si fosse a conoscenza di alcune delle informazioni richieste contattare il proprio amministratore di sistema o il fornitore di servizi.">
+<!ENTITY accountTypeDirections.label "Seleziona il tipo di account da configurare:">
+<!ENTITY accountTypeMail.label "Account di posta">
+<!ENTITY accountTypeMail.accesskey "c">
+<!ENTITY accountTypeNews.label "Account gruppi di discussione">
+<!ENTITY accountTypeNews.accesskey "d">
+
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identità">
+<!ENTITY identityDesc.label "Ogni account ha una identità che è l'informazione che permette a chi riceve i tuoi messaggi di identificarti.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Inserire il nome che apparirà nel campo &quot;Da:&quot; dei propri messaggi in uscita">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(ad esempio, &quot;Mario Rossi&quot;).">
+<!ENTITY fullnameLabel.label "Nome:">
+<!ENTITY fullnameLabel.accesskey "N">
+
+<!ENTITY emailLabel.label "Indirizzo email:">
+<!ENTITY emailLabel.accesskey "e">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informazioni server in ingresso">
+<!ENTITY incomingServerTypeDesc.label "Selezionare il tipo di server in ingresso utilizzato.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "M">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY portNum.label "Porta:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Predefinita:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Inserire il nome del server in ingresso (per esempio, &quot;mail.esempio.it&quot;).">
+<!ENTITY incomingServer.label "Server in ingresso:">
+<!ENTITY incomingServer.accesskey "I">
+<!ENTITY leaveMsgsOnSrvr.label "Lascia i messaggi sul server">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Inserire il nome utente in ingresso assegnato dal fornitore di posta elettronica (per esempio, &quot;mrossi&quot;).">
+<!ENTITY incomingUsername.label "Nome utente:">
+<!ENTITY incomingUsername.accesskey "u">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Inserire il nome del server per i gruppi di discussione (NNTP) (ad esempio, &quot;news.esempio.it&quot;).">
+<!ENTITY newsServerLabel.label "Server gruppi discussione:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Informazioni server in uscita">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Inserire il nome del server in uscita (SMTP) (per esempio, &quot;smtp.esempio.it&quot;).">
+<!ENTITY outgoingServer.label "Server in uscita:">
+<!ENTITY outgoingServer.accesskey "S">
+<!ENTITY outgoingUsername.description "Inserire il nome utente in uscita assegnato dal fornitore di posta elettronica (di solito è lo stesso di quello in ingresso).">
+<!ENTITY outgoingUsername.label "Nome utente in uscita:">
+<!ENTITY outgoingUsername.accesskey "u">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "È possibile modificare le impostazioni del server in uscita scegliendo Configurazione account dal menu Modifica di Posta e gruppi di discussione.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Verrà usato l'attuale server di uscita (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Verrà usato l'attuale nome utente per il server in uscita (SMTP), &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Il server in uscita (SMTP), &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, è lo stesso della posta in arrivo; perciò verrà usato il nome utente della posta in arrivo per accedervi.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Nome account">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Inserire un nome per questo account (ad esempio, &quot;Lavoro&quot;, &quot;Casa&quot;, oppure &quot;Account gruppi discussione&quot;).">
+<!ENTITY accnameLabel.label "Nome account:">
+<!ENTITY accnameLabel.accesskey "N">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Congratulazioni!">
+<!ENTITY completionText.label "Verificare la correttezza delle informazioni inserite.">
+<!ENTITY serverTypePrefix.label "Tipo server in ingresso:">
+<!ENTITY serverNamePrefix.label "Nome server in ingresso:">
+<!ENTITY smtpServerNamePrefix.label "Nome server in uscita (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Nome server Gruppi discussione (NNTP):">
+<!ENTITY downloadOnLogin.label "Scarica subito i messaggi">
+<!ENTITY downloadOnLogin.accesskey "S">
+<!ENTITY deferStorageDesc.label "Spuntare questa casella per memorizzare la posta di questo account nella cartella In arrivo globale dell'account Cartelle Locali. Altrimenti l'account sarà visibile come account di livello superiore e la sua posta sarà memorizzata nella propria cartella.">
+<!ENTITY deferStorage.label "Utilizza In arrivo globale (memorizza la posta in Cartelle Locali)">
+<!ENTITY deferStorage.accesskey "U">
+<!ENTITY clickFinish.label "Premere Fine per salvare queste impostazioni ed uscire dalla creazione guidata dell'account.">
+<!ENTITY clickFinish.labelMac "Fare clic su Fatto per salvare queste impostazioni ed uscire dalla creazione guidata del nuovo account.">

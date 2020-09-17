@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Configurează setările pentru această identitate:">
+
+<!ENTITY settingsTab.label       "Setări">
+<!ENTITY copiesFoldersTab.label "Copii și dosare">
+<!ENTITY addressingTab.label    "Redactare și adrese">
+
+<!ENTITY publicData.label        "Date publice">
+<!ENTITY privateData.label       "Date private">
+<!ENTITY identityAlias.label     "Etichetă de identitate:">
+<!ENTITY identityAlias.accesskey "h">

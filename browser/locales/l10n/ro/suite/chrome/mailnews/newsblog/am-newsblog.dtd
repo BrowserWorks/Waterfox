@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# janimo <jani@ubuntu.com>
+# turcan <nicturcan@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY accountTitle.label "Account Settings">
+
+<!ENTITY biffStart.label "Verifică disponibilitatea articolelor noi la fiecare">
+<!ENTITY biffStart.accesskey "V">
+<!ENTITY biffEnd.label "minute">
+
+<!ENTITY loginAtStartup.label "Verifică disponibilitatea articolelor noi la pornire"> 
+<!ENTITY loginAtStartup.accesskey "c">
+
+<!ENTITY useQuickMode.label "În mod implicit arată sumarul articolului în loc să încarci pagina web"> 
+<!ENTITY useQuickMode.accesskey "b">
+
+<!ENTITY manageSubscriptions.label "Gestionare abonamente…"> 
+<!ENTITY manageSubscriptions.accesskey "m">
+
+<!-- entities from rss.rdf -->
+<!ENTITY feeds.accountName "Blogs &amp; News Feeds">
+<!ENTITY feeds.wizardShortName "Feeds">
+<!ENTITY feeds.wizardLongName "Blogs &amp; News Feeds">
+<!ENTITY feeds.wizardLongName.accesskey "F">

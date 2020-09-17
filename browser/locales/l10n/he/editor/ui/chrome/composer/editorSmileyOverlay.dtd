@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "פרצוף מחייך">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "חיוך">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "הכנס פרצוף מחייך">
+<!ENTITY smiley2Cmd.label "זועף">
+<!ENTITY smiley2Cmd.accesskey "F">
+<!ENTITY smiley2Cmd.tooltip "הכנס פרצוף זועף">
+<!ENTITY smiley3Cmd.label "קורץ">
+<!ENTITY smiley3Cmd.accesskey "W">
+<!ENTITY smiley3Cmd.tooltip "הכנס פרצוף קורץ">
+<!ENTITY smiley4Cmd.label "חורץ־לשון">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "הכנס פרצוף חורץ־לשון">
+<!ENTITY smiley5Cmd.label "צוחק">
+<!ENTITY smiley5Cmd.accesskey "L">
+<!ENTITY smiley5Cmd.tooltip "הכנס פרצוף צוחק">
+<!ENTITY smiley6Cmd.label "נבוך">
+<!ENTITY smiley6Cmd.accesskey "E">
+<!ENTITY smiley6Cmd.tooltip "הכנס פרצוף נבוך">
+<!ENTITY smiley7Cmd.label "הססן">
+<!ENTITY smiley7Cmd.accesskey "U">
+<!ENTITY smiley7Cmd.tooltip "הכנס פרצוף הססן">
+<!ENTITY smiley8Cmd.label "הפתעה">
+<!ENTITY smiley8Cmd.accesskey "p">
+<!ENTITY smiley8Cmd.tooltip "הכנס פרצוף הפתעה">
+<!ENTITY smiley9Cmd.label "נשיקה">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "הכנס פרצוף נשיקה">
+<!ENTITY smiley10Cmd.label "צעק">
+<!ENTITY smiley10Cmd.accesskey "Y">
+<!ENTITY smiley10Cmd.tooltip "הכנס פרצוף צועק">
+<!ENTITY smiley11Cmd.label "'קול'">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "הכנס פרצוף 'קול'">
+<!ENTITY smiley12Cmd.label "פה־כסף">
+<!ENTITY smiley12Cmd.accesskey "M">
+<!ENTITY smiley12Cmd.tooltip "הכנס פרצוף פה־כסף">
+<!ENTITY smiley13Cmd.label "יד־לפה">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "הכנס פרצוף יד־לפה">
+<!ENTITY smiley14Cmd.label "תמים">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "הכנס פרצוף תמים">
+<!ENTITY smiley15Cmd.label "בכי">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "הכנס פרצוף בכי">
+<!ENTITY smiley16Cmd.label "שפתיים־חתומות">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "הכנס פרצוף שפתיים־חתומות">
+<!ENTITY SmileButton.tooltip "הכנס פרצוף מחייך">
+
+

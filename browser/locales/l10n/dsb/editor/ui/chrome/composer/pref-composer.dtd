@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Meni nejnowšych bokow">
+<!ENTITY  documentsInMenu.label         "Maksimalna licba naliconych bokow:">
+<!ENTITY  documentsInMenu.accesskey     "M">
+<!ENTITY  savingFiles.title             "Gaž boki se składuju abo wozjawjaju">
+<!ENTITY  preserveExisting.label        "Originalne formatěrowanje žrědłowego koda wobchowaś">
+<!ENTITY  preserveExisting.accesskey    "O">
+<!ENTITY  preserveExisting.tooltip      "Wobchowujo łamanje smužkow a originalne formatěrowanje boka">
+<!ENTITY  saveAssociatedFiles.label     "Wobraze a druge z nimi zwězane dataje składowaś, gaž boki se składuju">
+<!ENTITY  saveAssociatedFiles.accesskey "b">
+<!ENTITY  showPublishDialog.label       "Pśecej wózjawjeński dialog pokazaś, gaž boki se wózjawjaju">
+<!ENTITY  showPublishDialog.accesskey   "P">
+<!ENTITY  composerEditing.label         "Wobźěłowanje">
+<!ENTITY  maintainStructure.label       "Wugotowanje tabele wobchowaś, gaž cele se zasajźuju abo lašuju">
+<!ENTITY  maintainStructure.tooltip     "Wobchowujo pšawokutnu póstawu tabele pśez awtomatiske pśidawanje celow pó zasajźenju abo lašowanju celow">
+<!ENTITY  maintainStructure.accesskey   "u">
+<!ENTITY  useCSS.label                  "CSS-stile město HTML-elementow a atributow wužywaś">
+<!ENTITY  useCSS.accesskey              "S">
+<!ENTITY  crInPCreatesNewP.label        "Tłocenje return-tasty we wótstawku napórajo pśecej nowy wótstawk">
+<!ENTITY  crInPCreatesNewP.accesskey    "T">

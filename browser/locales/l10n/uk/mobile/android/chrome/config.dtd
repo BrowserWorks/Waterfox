@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Пошук">
+
+<!ENTITY newPref.namePlaceholder       "Назва">
+
+<!ENTITY newPref.valueBoolean          "Булеве">
+<!ENTITY newPref.valueString           "Рядок">
+<!ENTITY newPref.valueInteger          "Ціле">
+
+<!ENTITY newPref.stringPlaceholder     "Введіть рядок">
+<!ENTITY newPref.numberPlaceholder     "Введіть число">
+
+<!ENTITY newPref.toggleButton          "Перемкнути">
+<!ENTITY newPref.cancelButton          "Скасувати">
+
+<!ENTITY contextMenu.copyPrefName      "Копіювати назву">
+<!ENTITY contextMenu.copyPrefValue     "Копіювати значення">

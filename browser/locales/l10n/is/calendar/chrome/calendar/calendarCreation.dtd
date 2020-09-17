@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title "Búa til nýtt dagatal">
+<!ENTITY wizard.label "Búa til nýtt dagatal">
+<!ENTITY wizard.description "Finndu dagatalið þitt">
+<!ENTITY initialpage.description "Hægt er að geyma dagatalið þitt á tölvunni þinni eða geyma það á miðli svo hægt sé að deila því með vinum og vinnufélögum.">
+<!ENTITY initialpage.computer.label "Á tölvunni minni">
+<!ENTITY initialpage.network.label "Á netinu">
+<!ENTITY locationpage.description "Settu inn upplýsingar um hvað þarf til að tengjast þínu fjartengdu dagatali">
+<!ENTITY locationpage.login.description "Valkvætt: sláðu inn notandanafn og lykilorð">
+<!ENTITY locationpage.username.label "Notandanafn:">
+<!ENTITY locationpage.password.label "Lykilorð:">
+<!ENTITY custompage.shortdescription "Sérsníða dagatalið þitt">
+<!ENTITY custompage.longdescription "Þú getur gefið dagatalinu nafn og lit sem er notað til að lita það í dagatalinu.">
+<!ENTITY finishpage.shortdescription "Dagatal var búið til">
+<!ENTITY finishpage.longdescription "Dagatalið var búið til.">

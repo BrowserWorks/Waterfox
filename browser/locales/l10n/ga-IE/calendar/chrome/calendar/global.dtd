@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Meán Oíche" >
+<!ENTITY time.noon "Meán Lae" >
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+
+<!ENTITY day.1.Ddd "Domh" >
+<!ENTITY day.1.Ddd.accesskey "D">
+<!ENTITY day.2.Ddd "Luan" >
+<!ENTITY day.2.Ddd.accesskey "L">
+<!ENTITY day.3.Ddd "Máir" >
+<!ENTITY day.3.Ddd.accesskey "M">
+<!ENTITY day.4.Ddd "Céad" >
+<!ENTITY day.4.Ddd.accesskey "C">
+<!ENTITY day.5.Ddd "Déar" >
+<!ENTITY day.5.Ddd.accesskey "r">
+<!ENTITY day.6.Ddd "Aoin" >
+<!ENTITY day.6.Ddd.accesskey "A">
+<!ENTITY day.7.Ddd "Sath" >
+<!ENTITY day.7.Ddd.accesskey "S">
+
+<!ENTITY day.1.name "Domhnach" >
+<!ENTITY day.2.name "Luan" >
+<!ENTITY day.3.name "Máirt" >
+<!ENTITY day.4.name "Céadaoin" >
+<!ENTITY day.5.name "Déardaoin" >
+<!ENTITY day.6.name "Aoine" >
+<!ENTITY day.7.name "Satharn" >
+
+<!ENTITY month.1.name "Eanáir" >
+<!ENTITY month.2.name "Feabhra" >
+<!ENTITY month.3.name "Márta" >
+<!ENTITY month.4.name "Aibreán" >
+<!ENTITY month.5.name "Bealtaine" >
+<!ENTITY month.6.name "Meitheamh" >
+<!ENTITY month.7.name "Iúil" >
+<!ENTITY month.8.name "Lúnasa" >
+<!ENTITY month.9.name "Meán Fómhair" >
+<!ENTITY month.10.name "Deireadh Fómhair" >
+<!ENTITY month.11.name "Samhain" >
+<!ENTITY month.12.name "Nollaig" >
+
+<!ENTITY onemonthbackward.tooltip "Mí Amháin Siar" >
+<!ENTITY onemonthforward.tooltip "Mí Amháin Ar Aghaidh" >
+<!ENTITY showToday.tooltip "Taispeáin Inniu">
+<!ENTITY onedayforward.tooltip "Lá Amháin Ar Aghaidh">
+<!ENTITY onedaybackward.tooltip "Lá Amháin Siar">
+<!ENTITY showselectedday.tooltip "Taispeáin imeachtaí an lae roghnaithe">

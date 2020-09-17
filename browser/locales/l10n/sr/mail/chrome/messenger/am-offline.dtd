@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Да би се уштедео простор на диску, не преузимај:">
+<!ENTITY doNotDownloadNntp.label "Да би се уштедео простор на диску, за употребу ван мреже не преузимај:">
+<!ENTITY doNotDownloadImap.label "Да би се уштедео простор на диску, можете ограничити преузимање порука са сервера и чување локалних копија за употребу ван мреже по старости или величини.">
+<!ENTITY allFoldersOffline2.label "Задржи поруке у свим фасциклама овог налога на овом рачунару.">
+<!ENTITY allFoldersOffline2.accesskey "д">
+<!ENTITY allFoldersOfflineNote.label "Напомена: промена овога утиче на све фасцикле овог налога. Да бисте подесили фасцикле засебно, користите дугме „Напредно…“.">
+<!ENTITY offlineNotDownload.label "Поруке веће од">
+<!ENTITY offlineNotDownload.accesskey "П">
+<!ENTITY autosyncNotDownload.label "Не преузимај поруке веће од">
+<!ENTITY autosyncNotDownload.accesskey "м">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "дана старо">
+<!ENTITY message.label "порука">
+<!ENTITY nntpNotDownloadRead.label "Читај поруке">
+<!ENTITY nntpNotDownloadRead.accesskey "т">
+<!ENTITY nntpDownloadMsg.label "Порука више од">
+<!ENTITY nntpDownloadMsg.accesskey "е">
+<!ENTITY retentionCleanup.label "Можете трајно обрисати старе поруке да бисте ослободили простор на диску.">
+<!ENTITY retentionCleanupImap.label "Можете трајно обрисати старе поруке, локалне копије и изворне поруке на удаљеном серверу, да бисте ослободили простор на диску.">
+<!ENTITY retentionCleanupPop.label "Можете трајно обрисати старе поруке, укључујући изворне поруке са удаљеног сервера, да бисте ослободили простор на диску.">
+<!ENTITY retentionKeepMsg.label "Обриши поруке више од">
+<!ENTITY retentionKeepMsg.accesskey "д">
+<!ENTITY retentionKeepAll.label "Не бриши било коју поруку">
+<!ENTITY retentionKeepAll.accesskey "ј">
+<!ENTITY retentionKeepRecent.label "Обриши све осим скорашњих">
+<!ENTITY retentionKeepRecent.accesskey "б">
+<!ENTITY retentionApplyToFlagged.label "Увек чувај поруке са звездицом">
+<!ENTITY retentionApplyToFlagged.accesskey "к">
+<!ENTITY nntpRemoveMsgBody.label "Уклони садржај из порука које су више од">
+<!ENTITY nntpRemoveMsgBody.accesskey "о">
+<!ENTITY offlineSelectNntp.label "Изабери новинске групе за употребу ван мреже…">
+<!ENTITY offlineSelectNntp.accesskey "с">
+<!ENTITY offlineImapAdvancedOffline.label "Напредно…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "р">
+<!ENTITY syncGroupTitle.label "Усклађивање порука">
+<!ENTITY diskspaceGroupTitle.label "Простор на диску">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Усклади све поруке у локалу без обзира на старост">
+<!ENTITY allAutosync.accesskey           "к">
+<!ENTITY ageAutosyncBefore.label         "Усклади скорашње">
+<!ENTITY ageAutosync.accesskey           "д">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Дана">
+<!ENTITY weekAgeInterval.label           "Недеља">
+<!ENTITY monthAgeInterval.label          "Месеци">
+<!ENTITY yearAgeInterval.label           "Година">
+<!ENTITY ageAutosyncAfter.label          "">

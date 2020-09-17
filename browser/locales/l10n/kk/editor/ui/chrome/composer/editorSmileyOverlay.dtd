@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Смайлик">
+<!ENTITY insertSmiley.accesskey "С">
+
+<!ENTITY smiley1Cmd.label "Күлімдеу">
+<!ENTITY smiley1Cmd.accesskey "К">
+<!ENTITY smiley1Cmd.tooltip "Смайликті кірістіру">
+<!ENTITY smiley2Cmd.label "Қабағын түю">
+<!ENTITY smiley2Cmd.accesskey "т">
+<!ENTITY smiley2Cmd.tooltip "Қабағын түйген бетті кірістіру">
+<!ENTITY smiley3Cmd.label "Көз қысу">
+<!ENTITY smiley3Cmd.accesskey "К">
+<!ENTITY smiley3Cmd.tooltip "Көзді қысқан бетті кірістіру">
+<!ENTITY smiley4Cmd.label "Тілді шығару">
+<!ENTITY smiley4Cmd.accesskey "Т">
+<!ENTITY smiley4Cmd.tooltip "Тілді шығарған бетті кірістіру">
+<!ENTITY smiley5Cmd.label "Күлу">
+<!ENTITY smiley5Cmd.accesskey "л">
+<!ENTITY smiley5Cmd.tooltip "Күлген бетті кірістіру">
+<!ENTITY smiley6Cmd.label "Сасып қалу">
+<!ENTITY smiley6Cmd.accesskey "С">
+<!ENTITY smiley6Cmd.tooltip "Сасып қалған бетті кірістіру">
+<!ENTITY smiley7Cmd.label "Шешпеген">
+<!ENTITY smiley7Cmd.accesskey "Ш">
+<!ENTITY smiley7Cmd.tooltip "Шешпеген бетті кірістіру">
+<!ENTITY smiley8Cmd.label "Таң қалдым">
+<!ENTITY smiley8Cmd.accesskey "Т">
+<!ENTITY smiley8Cmd.tooltip "Таң қалған бетті кірістіру">
+<!ENTITY smiley9Cmd.label "Сүю">
+<!ENTITY smiley9Cmd.accesskey "С">
+<!ENTITY smiley9Cmd.tooltip "Сүйген бетті кірістіру">
+<!ENTITY smiley10Cmd.label "Айғайлау">
+<!ENTITY smiley10Cmd.accesskey "й">
+<!ENTITY smiley10Cmd.tooltip "Айғайлаған бетті кірістіру">
+<!ENTITY smiley11Cmd.label "Тамаша">
+<!ENTITY smiley11Cmd.accesskey "Т">
+<!ENTITY smiley11Cmd.tooltip "Тамаша бетті кірістіру">
+<!ENTITY smiley12Cmd.label "Ақша">
+<!ENTITY smiley12Cmd.accesskey "А">
+<!ENTITY smiley12Cmd.tooltip "Ақша бетті кірістіру">
+<!ENTITY smiley13Cmd.label "Ауыздағы аяқ">
+<!ENTITY smiley13Cmd.accesskey "ы">
+<!ENTITY smiley13Cmd.tooltip "Ауыздағы аяқ бетті кірістіру">
+<!ENTITY smiley14Cmd.label "Айыпсыз">
+<!ENTITY smiley14Cmd.accesskey "й">
+<!ENTITY smiley14Cmd.tooltip "Айыпсыз бетті кірістіру">
+<!ENTITY smiley15Cmd.label "Жылау">
+<!ENTITY smiley15Cmd.accesskey "ы">
+<!ENTITY smiley15Cmd.tooltip "Жылаған бетті кірістіру">
+<!ENTITY smiley16Cmd.label "Үндемеу">
+<!ENTITY smiley16Cmd.accesskey "м">
+<!ENTITY smiley16Cmd.tooltip "Үндемейтін бетті кірістіру">
+<!ENTITY SmileButton.label "Смайликті кірістіру">
+<!ENTITY SmileButton.tooltip "Смайликті кірістіру">

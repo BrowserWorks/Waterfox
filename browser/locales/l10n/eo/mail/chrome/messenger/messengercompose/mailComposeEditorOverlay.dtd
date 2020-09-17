@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY attachImageSource.label         "Aldoni tiun ĉi bildon al la mesaĝo">
+<!ENTITY attachImageSource.accesskey     "A">
+
+<!ENTITY attachLinkSource.label          "Aldoni fonton de tiu ĉi ligilo al la mesaĝo">
+<!ENTITY attachLinkSource.accesskey      "A">

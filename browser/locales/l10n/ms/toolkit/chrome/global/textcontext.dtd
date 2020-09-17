@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Tambah dalam Kamus">
+<!ENTITY spellAddToDictionary.accesskey "a">
+<!ENTITY spellUndoAddToDictionary.label "Batal Tambah Dalam Kamus">
+<!ENTITY spellUndoAddToDictionary.accesskey "a">
+<!ENTITY spellCheckToggle.label "Semak Ejaan">
+<!ENTITY spellCheckToggle.accesskey "j">
+<!ENTITY spellNoSuggestions.label "(Tiada Cadangan Ejaan)">
+<!ENTITY spellDictionaries.label "Bahasa">
+<!ENTITY spellDictionaries.accesskey "h">
+
+<!ENTITY searchTextBox.clear.label "Buang">
+
+<!ENTITY fillLoginMenu.label          "Isikan Log masuk">
+<!ENTITY fillLoginMenu.accesskey      "i">
+<!ENTITY fillPasswordMenu.label       "Isi Kata Laluan">
+<!ENTITY fillPasswordMenu.accesskey   "I">
+<!ENTITY fillUsernameMenu.label       "Isi Nama pengguna">
+<!ENTITY fillUsernameMenu.accesskey   "g">
+<!ENTITY noLoginSuggestions.label     "(Tiada Cadangan Log Masuk)">
+<!ENTITY viewSavedLogins.label        "Papar Log Masuk Tersimpan">

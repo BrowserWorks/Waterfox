@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Oer net-winske berjochten">
+<!ENTITY window.width "450">
+<!ENTITY info1a.label "&brandShortName; detektearret automatysk ynkommende berjochten dy't net-winske binne (ek bekend as spam of junk). Berjochten dêr't &brandShortName; fan tinkt dat se net-winske binne wurde markearre mei in net-winske-berjochte-ikoantsje.">
+<!ENTITY info1b.label ".">
+<!ENTITY info2.label "Jo moatte &brandShortName; earst traine om net-winske berjochten der't te kennen. Dat dogge jo troch mei de knop Net-winske de berjochten as winske of net-winske te markearjen.">
+<!ENTITY info3.label "As &brandShortName; ynkommende berjochten korrekt as net-winsk werkend hat, kinne jo dy automatysk ferpleatse litte nei de map Net-winske.">
+<!ENTITY info4.label "Foar mear ynformaasje, klik op Help.">

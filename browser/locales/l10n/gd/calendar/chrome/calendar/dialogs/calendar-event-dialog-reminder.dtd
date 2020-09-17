@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Suidhich mar a chuirear rudan 'nad chuimhne">
+<!ENTITY reminder.add.label                                "Cuir ris">
+<!ENTITY reminder.add.accesskey                            "C">
+<!ENTITY reminder.remove.label                             "Thoir air falbh">
+<!ENTITY reminder.remove.accesskey                         "r">
+
+<!ENTITY reminder.reminderDetails.label                    "Mion-fhiosrachadh a' chuimhneachain">
+<!ENTITY reminder.action.label                             "Tagh gnìomh leis a chuirear rud 'nad chuimhne">
+
+<!ENTITY reminder.action.alert.label                       "Seall caismeachd">
+<!ENTITY reminder.action.email.label                       "Cuir post-dealain thugam">
+
+<!ENTITY alarm.units.minutes                               "mionaid(ean)" >
+<!ENTITY alarm.units.hours                                 "uair(ean) a thìde" >
+<!ENTITY alarm.units.days                                  "là(ithean)" >

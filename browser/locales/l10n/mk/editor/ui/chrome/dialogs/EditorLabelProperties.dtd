@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Својства на името">
+
+<!ENTITY Settings.label "Поставки">
+<!ENTITY Settings.accesskey "с">
+
+<!ENTITY EditLabelText.label "Измени го текстот:">
+<!ENTITY EditLabelText.accesskey "т">
+<!ENTITY LabelFor.label "За контрола:">
+<!ENTITY LabelFor.accesskey "о">
+<!ENTITY AccessKey.label "Клуч за пристап:">
+<!ENTITY AccessKey.accesskey "К">
+
+<!ENTITY RemoveLabel.label "Острани го името">
+<!ENTITY RemoveLabel.accesskey "р">

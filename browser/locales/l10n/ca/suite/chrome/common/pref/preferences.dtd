@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+
+<!ENTITY prefWindow.title "Preferències">
+<!ENTITY categoryHeader "Categoria">
+<!ENTITY appear.label "Aparença">
+<!ENTITY content.label "Contingut">
+<!ENTITY fonts.label "Tipus de lletra">
+<!ENTITY colors.label "Colors">
+<!ENTITY navigator.label "Navegador">
+<!ENTITY history.label "Historial">
+<!ENTITY languages.label "Llengües">
+<!ENTITY applications.label "Aplicacions ajudants">
+<!ENTITY locationBar.label "Barra d'ubicació">
+<!ENTITY tabWindows.label "Navegació amb pestanyes">
+<!ENTITY links.label "Comportament dels enllaços">
+<!ENTITY offline.label "Fora de línia">
+<!ENTITY security.label "Privadesa i seguretat">
+<!ENTITY privatedata.label "Dades privades">
+<!ENTITY cookies.label "Galetes">
+<!ENTITY images.label "Imatges">
+<!ENTITY popups.label "Finestres emergents">
+<!ENTITY passwords.label "Contrasenyes">
+<!ENTITY masterpass.label "Contrasenyes mestres">
+<!ENTITY ssl.label "SSL">
+<!ENTITY certs.label "Certificats">
+<!ENTITY sync.label "Sync">
+<!ENTITY advance.label "Avançat">
+<!ENTITY down.label "Baixades">
+<!ENTITY cache.label "Memòria cau">
+<!ENTITY offlineApps.label "Aplicacions fora de línia">
+<!ENTITY proxies.label "Servidors intermediaris">
+<!ENTITY httpnetworking.label "Xarxa HTTP">
+<!ENTITY smart.label "Instal·lació de programari">
+<!ENTITY download.label "Baixades">
+<!ENTITY keynav.label "Navegació amb teclat">
+<!ENTITY findAsYouType.label "Cerca a mesura que s'escriu">
+<!ENTITY search.label "Cerca a Internet">
+<!ENTITY policies.label "Polítiques de seguretat">
+<!ENTITY mousewheel.label "Rodeta del ratolí">
+<!ENTITY scriptsAndWindows.label "Scripts i connectors">
+<!ENTITY spellingPane.label  "Ortografia">
+
+<!ENTITY focusSearch.key "f">

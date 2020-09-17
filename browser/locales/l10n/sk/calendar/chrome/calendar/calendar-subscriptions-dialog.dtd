@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Calendar Subscriptions Dialog -->
+<!ENTITY calendar.subscriptions.dialog.title                            "Odoberať kalendáre">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Zobraziť kalendáre, ktoré obsahujú:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Hľadať">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Vyberte kalendáre, ktoré chcete odoberať:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Odoberať">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Zrušiť odber">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Hľadať…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Neboli nájdené žiadne výsledky.">

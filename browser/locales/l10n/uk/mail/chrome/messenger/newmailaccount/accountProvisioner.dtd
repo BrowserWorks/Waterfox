@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Ласкаво просимо до &brandShortName;">
+<!ENTITY header2.label "Хочете завести нову адресу ел.пошти?">
+<!ENTITY other.languages "Ми показуємо лише провайдерів, що надають послуги у вашому регіоні. Клацніть тут, щоб показати усіх провайдерів.">
+<!ENTITY error.line1 "Шкода, але ми не знайшли ніяких припущень щодо адреси ел.пошти.">
+<!ENTITY error.line2 "Ви можете спробувати дати запит по прізвиську чи іншому слову, щоб знайти інші адреси">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Також ви можете спробувати одну з ">
+<!ENTITY error.suggest.middle "безплатних альтернатив">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Привіт ">
+<!ENTITY success.title.after ", для вас доступні такі адреси ел.пошти:">
+<!ENTITY success.tip "(Ви також можете пошукати за прізвиськом чи іншим словом щоб знайти більше адрес)">
+<!ENTITY partnership.description "Завдяки партнерству з кількома провайдерами, &brandShortName; може запропонувати вам нову адресу ел.пошти. Лише вкажіть ваше ім’я та прізвище, чи інші слова, щоб почати.">
+<!ENTITY existing.header "Вже маєте адресу, котру хотіли б використати?">
+<!ENTITY tinyheader.title "Маєте адресу?">
+<!ENTITY tinyheader.existing "Пропустити це й використати мою існуючу ел.пошту">
+<!ENTITY content.close "Напевне, я сконфігурую мій обліковий запис потім.">
+<!ENTITY successful.title "Вітаємо!">
+<!ENTITY successful.successMessage "Ви успішно налаштували ваш обліковий запис.">
+<!ENTITY successful.write "Напишіть комусь листа">
+<!ENTITY successful.write.desc "Дайте знати вашим друзям та сім’ї про вашу нову адресу.<br/> Адже ж ви для цього заводили новий запис, вірно?">
+<!ENTITY successful.customize "Пристосуйте &brandShortName; всякими кльовими додатками">
+<!ENTITY successful.customize.desc "Існують тисячі додатків, котрі дозволяють вам пристосувати &brandShortName; до власне ваших потреб.">
+<!ENTITY successful.attach "Додайте особистий підпис до ваших листів">
+<!ENTITY successful.attach.desc "Ви можете автоматично додавати цитати або якусь інформацію про себе у кінець кожного вашого повідомлення.">
+<!ENTITY successful.close "Закрити це вікно.">
+<!ENTITY input.namePlaceholder "Ваше ім’я або прізвисько">
+<!ENTITY input.search "Шукати">
+<!ENTITY search_engine.title "Налаштувати ваш пошуковик">
+<!ENTITY search_engine.message "Ваш провайдер ел.пошти також надає можливіть пошуку в мережі.">
+<!ENTITY search_engine.button "Завершити">

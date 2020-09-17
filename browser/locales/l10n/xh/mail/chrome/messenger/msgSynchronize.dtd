@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Thoba umthwalo uze Uhambise Kunye Imiyalezo">
+<!ENTITY MsgSelect.label "Amanqaku Asetyenziselwa Imo Engeyo Yokusebenza">
+<!ENTITY MsgSyncDesc.label "Ukuba sowuzikhethile iziqulathi zeefayili okanye amaqela eendaba okusebenzisa kwimo engeyo yokusebenza, unako ukuthoba umthwalo kunye/okanye uyihambise kunye ngoku. Ngaphandle koko, sebenzisa iqhosha le-&quot;Khetha&quot; ukuze ukhethe iziqulathi zeefayili zemeyile namaqela eendaba ukwenzela imo engeyo yokusebenza.">
+<!ENTITY MsgSyncDirections.label "Thoba umthwalo kunye/okanye uhambise kunye okulandelayo:">
+<!ENTITY syncTypeMail.label "Imiyalezo yemeyile">
+<!ENTITY syncTypeMail.accesskey "I">
+<!ENTITY syncTypeNews.label "Imiyalezo yamaqela eendaba">
+<!ENTITY syncTypeNews.accesskey "I">
+<!ENTITY sendMessage.label "Thumela imiyalezo Engathunyelwanga">
+<!ENTITY sendMessage.accesskey "T">
+<!ENTITY workOffline.label "Umsebenzi ukwimo engeyo yokusebenza wakuba uthotyiwe umthwalo kunye/okanye ukuhambisa kunye kugqityiwe">
+<!ENTITY workOffline.accesskey "U">
+<!ENTITY selectButton.label "Khetha...">
+<!ENTITY selectButton.accesskey "e">
+<!ENTITY MsgSelectDesc.label "Khetha iziqulathi zeefayili zemeyile kunye namaqela eendaba asetyenziselwa imo engeyo yokusebenza.">
+<!ENTITY MsgSelectInd.label "Thoba umthwalo">
+<!ENTITY MsgSelectItems.label "Iziqulatho zeefayili kunye Namaqela eendaba">

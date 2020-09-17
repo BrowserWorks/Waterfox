@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Etiquetes">
+<!ENTITY pref.tags.caption          "Personalització de les etiquetes">
+<!ENTITY pref.tags.description      "Les etiquetes poden utilitzar-se per categoritzar i prioritzar els vostres missatges. Modifiqueu l'aparença i importància de les etiquetes amb els paràmetres a continuació. Les etiquetes superiors són de major importància que aquelles inferiors.">
+<!ENTITY tagColumn.label            "Etiqueta">
+<!ENTITY colorColumn.label          "Color">
+<!ENTITY defaultTagName.label       "Etiqueta sense títol">
+<!ENTITY addTagButton.label         "Afegeix">
+<!ENTITY addTagButton.accesskey     "A">
+<!ENTITY deleteTagButton.label      "Suprimeix">
+<!ENTITY deleteTagButton.accesskey  "u">
+<!ENTITY raiseTagButton.label       "Augmenta'n la importància">
+<!ENTITY raiseTagButton.accesskey   "g">
+<!ENTITY lowerTagButton.label       "Disminueix-ne la importància">
+<!ENTITY lowerTagButton.accesskey   "i">
+<!ENTITY restoreButton.label        "Restaura els paràmetres per defecte">
+<!ENTITY restoreButton.accesskey    "s">

@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Rregulla Filtrash">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Emër filtri:">
+<!ENTITY filterName.accesskey "E">
+
+<!ENTITY junk.label "E pavlerë">
+<!ENTITY notJunk.label "Jo e Pavlerë">
+
+<!ENTITY lowestPriorityCmd.label "Më e vogël">
+<!ENTITY lowPriorityCmd.label "E vogël">
+<!ENTITY normalPriorityCmd.label "Normale">
+<!ENTITY highPriorityCmd.label "E madhe">
+<!ENTITY highestPriorityCmd.label "Më e madhe">
+
+<!ENTITY contextDesc.label "Zbatoje filtrin kur:">
+<!ENTITY contextIncomingMail.label "Merret Postë e Re:">
+<!ENTITY contextIncomingMail.accesskey "M">
+<!ENTITY contextManual.label "Xhirohet Dorazi">
+<!ENTITY contextManual.accesskey "D">
+<!ENTITY contextBeforeCls.label "Filtroji përpara Klasifikimit Si të Pavlera">
+<!ENTITY contextAfterCls.label "Filtroji pas Klasifikimit Si të Pavlera">
+<!ENTITY contextOutgoing.label "Pas Dërgimit">
+<!ENTITY contextOutgoing.accesskey "D">
+<!ENTITY contextArchive.label "Arkivohet">
+<!ENTITY contextArchive.accesskey "A">
+
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Kryej këto veprime:">
+<!ENTITY filterActionDesc.accesskey "K">
+
+<!ENTITY filterActionOrderWarning.label "Shënim: Veprimet e filtrimit do të kryhen sipas një radhe tjetër.">
+<!ENTITY filterActionOrder.label "Shihni radhën e përmbushjes">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Kaloje Mesazhin te">
+<!ENTITY copyMessage.label "Kopjoje Mesazhin te">
+<!ENTITY forwardTo.label "Përcillja Mesazhin">
+<!ENTITY replyWithTemplate.label "Përgjigju me Gjedhe">
+<!ENTITY markMessageRead.label "Shënoje Si Të lexuar">
+<!ENTITY markMessageUnread.label "Shënoje Si Të palexuar">
+<!ENTITY markMessageStarred.label "Shto Yllkë">
+<!ENTITY setPriority.label "Vërja Përparësinë">
+<!ENTITY addTag.label "Etiketoje Mesazhin Si">
+<!ENTITY setJunkScore.label "Vërja Gjendjen Për të Pavlerën Si">
+<!ENTITY deleteMessage.label "Fshije Mesazhin">
+<!ENTITY deleteFromPOP.label "Fshije Prej Shërbyesi POP">
+<!ENTITY fetchFromPOP.label "Sille Prej Shërbyesi POP">
+<!ENTITY ignoreThread.label "Shpërfille Rrjedhën">
+<!ENTITY ignoreSubthread.label "Shpërfille Nënrrjedhën">
+<!ENTITY watchThread.label "Vëzhgoje Rrjedhën">
+<!ENTITY stopExecution.label "Ndale Përmbushjen e Filtrit">
+
+<!ENTITY addAction.tooltip "Shtoni një veprim të ri">
+<!ENTITY removeAction.tooltip "Hiqeni këtë veprim">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

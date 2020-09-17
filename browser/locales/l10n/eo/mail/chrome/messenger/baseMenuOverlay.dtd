@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Helpo">
+<!ENTITY helpMenu.accesskey "H">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Helpo">
+<!ENTITY helpMenuWin.accesskey "H">
+<!ENTITY aboutProduct2.label "Pri &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "P">
+<!ENTITY helpTroubleshootingInfo.label     "Informoj por solvi problemojn">
+<!ENTITY helpTroubleshootingInfo.accesskey "s">
+<!ENTITY helpSafeMode.label     "Restartigi kun malaktivigitaj aldonaĵoj…">
+<!ENTITY helpSafeMode.accesskey "R">
+
+<!ENTITY productHelp.label "Helpo por &brandShortName;">
+<!ENTITY productHelp.accesskey "H">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Alirklavoj">
+<!ENTITY helpKeyboardShortcuts.accesskey "A">
+
+<!ENTITY helpFeedbackPage.label "Sendi opinion…">
+<!ENTITY helpFeedbackPage.accesskey "o">
+
+<!ENTITY helpShowTour2.label "Prezento de &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey "e">
+
+<!ENTITY helpGetInvolvedPage.label "Partopreni">
+<!ENTITY helpGetInvolvedPage.accesskey "i">
+
+<!ENTITY helpDonationsPage.label "Donaci">
+<!ENTITY helpDonationsPage.accesskey "D">

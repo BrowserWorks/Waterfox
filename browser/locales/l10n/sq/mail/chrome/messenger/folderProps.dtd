@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Veti">
+
+<!ENTITY generalInfo.label                       "Të dhëna Të përgjithshme">
+<!ENTITY folderCharsetFallback2.label            "Kodim Teksti Kalimi Vetvetiu:">
+<!ENTITY folderCharsetFallback2.accesskey        "E">
+<!ENTITY folderCharsetEnforce2.label             "Zbatoje kodimin për krejt mesazhet te dosja (kodimi i tekstit për mesazhe individuale dhe vetëzbulimi do të shpërfillen)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Riformo Treguesin për Përmbledhje Kartele">
+<!ENTITY folderRebuildSummaryFile2.label         "Riparoje Dosjen">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Ndonjëherë kartela e treguesit të dosjes (.msf) dëmtohet dhe mesazhet mund të duken sikur mungojnë, ose mesazhe të fshirë të vazhdojnë të duken; riparimi i dosjes mund ta ndreqë këtë punë.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Përfshiji mesazhet e kësaj dosjeje në përfundime Kërkimi Global">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "P">
+
+<!ENTITY retention.label "Rregulla Mbajtjeje">
+<!ENTITY retentionUseAccount.label  "Përdor rregullimet e llogarisë sime">
+<!ENTITY retentionUseAccount.accesskey "P">
+<!ENTITY daysOld.label "ditë të vjetër">
+<!ENTITY message.label "mesazhe">
+<!ENTITY retentionCleanup.label "Për të ripatur hapësirë në disk, mesazhet e vjetër mund të fshihen përgjithnjë">
+<!ENTITY retentionCleanupImap.label "Për të kursyer vend në disk, mesazhet e vjetra mund të fshihen përgjithmonë, si kopjet vendore, ashtu edhe origjinalet në shërbyesin e largët.">
+<!ENTITY retentionCleanupPop.label "Për të kursyer vend në disk, mesazhet e vjetra mund të fshihen përgjithmonë, përfshi origjinalet në shërbyesin e largët.">
+<!ENTITY retentionDeleteMsg.label "Fshi mesazhe më të vjetër se">
+<!ENTITY retentionDeleteMsg.accesskey "F">
+<!ENTITY retentionKeepAll.label "Mos fshi ndonjë mesazh">
+<!ENTITY retentionKeepAll.accesskey "M">
+<!ENTITY retentionKeepRecent.label "Fshiji krejt, përveç më të fundit">
+<!ENTITY retentionKeepRecent.accesskey "F">
+<!ENTITY retentionApplyToFlagged.label "Mesazhet me yllkë mbaji përherë">
+<!ENTITY retentionApplyToFlagged.accesskey "M">
+
+<!ENTITY folderSynchronizationTab.label          "Njëkohësim">
+<!ENTITY folderCheckForNewMessages2.label         "Kur merren mesazhe të rinj për këtë llogari, kontrolloje përherë këtë dosje">
+<!ENTITY folderCheckForNewMessages2.accesskey     "K">
+
+<!ENTITY offlineFolder.check.label               "Përzgjidheni këtë dosje për përdorim jashtë linje">
+<!ENTITY offlineFolder.check.accesskey           "P">
+<!ENTITY offlineFolder.button.label              "Shkarkoje Tani">
+<!ENTITY offlineFolder.button.accesskey          "S">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Përzgjidheni këtë grup lajmesh për jashtë linje">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "P">
+<!ENTITY offlineNewsgroup.button.label           "Shkarkoje Tani">
+<!ENTITY offlineNewsgroup.button.accesskey       "S">
+
+<!ENTITY folderProps.name.label                  "Emër:">
+<!ENTITY folderProps.name.accesskey              "E">
+<!ENTITY folderProps.color.label                 "Ngjyrë Ikonash:">
+<!ENTITY folderProps.color.accesskey             "I">
+<!ENTITY folderProps.reset.tooltip               "Rikthe ngjyrën parazgjedhje">
+<!ENTITY folderProps.location.label              "Vendndodhje:">
+<!ENTITY folderProps.location.accesskey          "V">
+
+<!ENTITY folderSharingTab.label                  "Përndarje">
+<!ENTITY privileges.button.label                 "Privilegje…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Keni lejet vijuese:">
+<!ENTITY folderOtherUsers.label                  "Të tjerë me hyrje në këtë dosje:">
+<!ENTITY folderType.label                        "Lloj Dosjeje:">
+
+<!ENTITY folderQuotaTab.label                    "Kuota">
+<!ENTITY folderQuotaUsage.label                  "Përdorim:">
+<!ENTITY folderQuotaStatus.label                 "Gjendje:">
+
+<!ENTITY numberOfMessages.label                  "Numër mesazhesh:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "i panjohur">
+<!ENTITY sizeOnDisk.label                        "Madhësi në disk:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "e panjohur">

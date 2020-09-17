@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nowy folder wyszukiwania">
+<!ENTITY name.label "Nazwa:">
+<!ENTITY name.accesskey "n">
+<!ENTITY description.label "Utwórz jako podfolder:">
+<!ENTITY description.accesskey "U">
+
+<!ENTITY searchTermCaption.label "Skonfiguruj kryteria wyszukiwania użyte dla tego folderu wyszukiwania: ">
+
+<!ENTITY folderSelectionCaption.label "Wybierz foldery do przeszukiwania: ">
+<!ENTITY chooseFoldersButton.label "Wybierz…">
+<!ENTITY chooseFoldersButton.accesskey "y">
+
+<!ENTITY searchOnline.label "Szukaj online (daje aktualne wyniki dla folderów IMAP i grup dyskusyjnych, ale przez to wydłuża się czas otwierania folderu)">
+<!ENTITY searchOnline.accesskey "o">
+<!ENTITY newFolderButton.label "Utwórz">
+<!ENTITY newFolderButton.accesskey "t">
+<!ENTITY editFolderButton.label "Uaktualnij">
+<!ENTITY editFolderButton.accesskey "a">

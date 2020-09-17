@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Nova dissendolisto">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Aldoni al: ">
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "Nomo de listo:">
+<!ENTITY ListName.accesskey             "N">
+<!ENTITY ListNickName.label             "Kaŝnomo de listo: ">
+<!ENTITY ListNickName.accesskey         "K">
+<!ENTITY ListDescription.label          "Priskribo: ">
+<!ENTITY ListDescription.accesskey      "P">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Enmetu retpoŝtajn adresojn por aldoni al la dissendolisto:">
+<!ENTITY AddressTitle.accesskey         "E">
+<!ENTITY UpButton.label                 "Movi supren">
+<!ENTITY DownButton.label               "Movi malsupren">

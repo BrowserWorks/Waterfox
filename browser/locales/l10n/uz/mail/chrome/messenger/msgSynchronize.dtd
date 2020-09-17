@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Xabarlarni yuklab olish va sinxronlash">
+<!ENTITY MsgSelect.label "Oflayn foydalanish uchun elementlar">
+<!ENTITY MsgSyncDesc.label "Agar siz oflayn foydalanish uchun allaqachon xat jildlari va yangiliklar to‘plamlarini tanlagan bo‘lsangiz, siz ularni yuklab olishingiz va sinxronlashingiz mumkin. Bunday qilmagan bo‘lsangiz, oflayn foydalanish uchun xat jildlari va yangiliklar to‘plamlarini tanlash uchun &quot;Tanlash&quot; tugmasiga bosing.">
+<!ENTITY MsgSyncDirections.label "Quyidagilarni yuklab olish va sinxronlash:">
+<!ENTITY syncTypeMail.label "Xatlar">
+<!ENTITY syncTypeMail.accesskey "X">
+<!ENTITY syncTypeNews.label "Yangiliklar to‘plami">
+<!ENTITY syncTypeNews.accesskey "Y">
+<!ENTITY sendMessage.label "Jo‘natilmagan xabarlarni jo‘natish">
+<!ENTITY sendMessage.accesskey "j">
+<!ENTITY workOffline.label "Yuklab olish va sinxronlash tugaganda oflayn ishlash">
+<!ENTITY workOffline.accesskey "i">
+<!ENTITY selectButton.label "Tanlash…">
+<!ENTITY selectButton.accesskey "T">
+<!ENTITY MsgSelectDesc.label "Oflayn foydalanish uchun xat jildlari va yangiliklar to‘plamlarini tanlang.">
+<!ENTITY MsgSelectInd.label "Yuklab olish">
+<!ENTITY MsgSelectItems.label "Jildlar va yangiliklar to‘plami">

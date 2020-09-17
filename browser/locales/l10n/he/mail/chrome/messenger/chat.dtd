@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "אנשי קשר מקוונים">
+<!ENTITY offlineContactsHeader.label   "אנשי קשר לא מחוברים">
+<!ENTITY conversationsHeader.label     "שיחות">
+<!ENTITY searchResultConversation.label "תוצאת חיפוש">
+<!ENTITY chat.noConv.title             "השיחות תוצגנה כאן.">
+<!ENTITY chat.noAccount.title             "טרם הגדרת חשבון צ׳אט.">
+<!ENTITY chat.accountWizard.button       "איך מתחילים">
+<!ENTITY chat.noConnectedAccount.title             "חשבונות הצ׳אט שלך אינם מחוברים.">
+<!ENTITY chat.noConnectedAccount.description       "ניתן להתחבר אליהם מתיבת הדו־שיח ‚מצב צ׳אט’:">
+<!ENTITY chat.showAccountManager.button       "הצגת מצב הצ׳אט">
+
+<!ENTITY chat.participants             "משתתפים:">
+<!ENTITY chat.previousConversations    "שיחות קודמות:">
+<!ENTITY chat.ongoingConversation      "שיחה מתמשכת">
+
+<!ENTITY openConversationCmd.label     "התחלת שיחה">
+<!ENTITY openConversationCmd.accesskey "צ">
+<!ENTITY closeConversationCmd.label    "סגירת שיחה">
+<!ENTITY closeConversationCmd.accesskey "ס">
+<!ENTITY aliasCmd.label                "שינוי שם">
+<!ENTITY aliasCmd.accesskey            "ש">
+<!ENTITY deleteCmd.label               "הסרת איש קשר">
+<!ENTITY deleteCmd.accesskey           "ר">
+
+<!ENTITY openConversationButton.tooltip  "התחלת שיחה">
+<!ENTITY closeConversationButton.tooltip "סגירת שיחה">
+
+<!ENTITY addBuddyButton.label          "הוספת איש קשר">
+<!ENTITY joinChatButton.label          "הצטרפות לצ׳אט">
+<!ENTITY chatAccountsButton.label      "הצגת חשבונות">
+
+<!ENTITY status.available          "זמין">
+<!ENTITY status.unavailable        "לא זמין">
+<!ENTITY status.offline            "לא מקוון">
+
+<!ENTITY openLinkCmd.label            "פתיחת קישור…">
+<!ENTITY openLinkCmd.accesskey        "פ">

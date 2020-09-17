@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Nije aginda meitsje" >
+<!ENTITY wizard.label             "In nije aginda meitsje" >
+<!ENTITY wizard.description       "Jo aginda lokalisearje" >
+
+<!ENTITY initialpage.description    "Jo aginda kin op jo kompjûter of op in server bewarre wurde, sadat dizze op ôfstân berikber is foar bygelyks freonen of kollega’s." >
+<!ENTITY initialpage.computer.label  "Op myn kompjûter">
+<!ENTITY initialpage.network.label  "Op it netwurk">
+
+<!ENTITY locationpage.description         "Ynformaasje opjaan om tagong te krijen ta jo eksterne aginda" >
+<!ENTITY locationpage.login.description   "Opsjoneel: brûkersnamme en wachtwurd ynfiere" >
+<!ENTITY locationpage.username.label      "Brûkersnamme:" >
+<!ENTITY locationpage.password.label      "Wachtwurd:" >
+
+<!ENTITY custompage.shortdescription  "Jo aginda oanpasse" >
+<!ENTITY custompage.longdescription   "Jo kinne jo aginda in eigen namme jaan, en de barrens yn dizze aginda in eigen kleur." >
+
+<!ENTITY finishpage.shortdescription  "Aginda makke" >
+<!ENTITY finishpage.longdescription   "Jo aginda is makke." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Oars">
+
+<!ENTITY buttons.create.label "Aginda meitsje">
+<!ENTITY buttons.create.accesskey "m">
+
+<!ENTITY buttons.find.label "Aginda sykje">
+<!ENTITY buttons.find.accesskey "s">
+
+<!ENTITY buttons.back.label "Tebek">
+<!ENTITY buttons.back.accesskey "T">
+
+<!ENTITY buttons.subscribe.label "Abonnearje">
+<!ENTITY buttons.subscribe.accesskey "A">
+
+<!ENTITY calendartype.label "Agindatype:">
+<!ENTITY location.label "Lokaasje:">
+<!ENTITY location.placeholder "URL of hostnamme fan de agindaserver">
+
+<!ENTITY network.nocredentials.label "Dizze lokaasje fereasket gjin ferifikaasje">
+<!ENTITY network.loading.description "Ien momint, jo aginda’s wurde detektearre.">
+<!ENTITY network.notfound.description "Der binne gjin aginda’s op dizze lokaasje fûn. Kontrolearje jo ynstellingen.">
+<!ENTITY network.authfail.description "De ynfierde referinsjes waarden net akseptearre. Kontrolearje jo ynstellingen.">
+
+<!ENTITY network.subscribe.single.description "Selektearje de aginda’s wêrop jo jo abonnearje wolle.">
+<!ENTITY network.subscribe.multiple.description "Foar dizze lokaasje binne mear agindatypen beskikber. Selektearje it agindatype, en markearje dêrnei de aginda’s wêrop jo jo abonnearje wolle.">

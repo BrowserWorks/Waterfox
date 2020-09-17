@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Kalenterityökalupalkki">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "K">
+<!ENTITY lightning.toolbar.task.name "Tehtävätyökalupalkki">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "Synkronoi">
+<!ENTITY lightning.toolbar.sync.tooltip "Lataa kalenterit uudelleen ja synkronoi muutokset">
+<!ENTITY lightning.toolbar.delete.label "Poista">
+<!ENTITY lightning.toolbar.delete.tooltip "Poista valitut tapahtumat tai tehtävät">
+<!ENTITY lightning.toolbar.edit.label "Muokkaa">
+<!ENTITY lightning.toolbar.edit.tooltip "Muokkaa valittua tapahtumaa tai tehtävää">
+<!ENTITY lightning.toolbar.gototoday.label "Siirry tähän päivään">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Siirry tähän päivään">
+<!ENTITY lightning.toolbar.print.label "Tulosta">
+<!ENTITY lightning.toolbar.print.tooltip "Tulosta tapahtumat tai tehtävät">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Kalenteri">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Siirry Kalenteri-välilehteen">
+<!ENTITY lightning.toolbar.calendar.accesskey "K">
+<!ENTITY lightning.toolbar.task.label         "Tehtävät">
+<!ENTITY lightning.toolbar.task.tooltip       "Siirry Tehtävät-välilehteen">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Tapahtuma">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Luo uusi tapahtuma">
+<!ENTITY lightning.toolbar.newtask.label      "Tehtävä">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Luo uusi tehtävä">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Päivä">
+<!ENTITY lightning.toolbar.day.accesskey             "P">
+<!ENTITY lightning.toolbar.week.label                "Viikko">
+<!ENTITY lightning.toolbar.week.accesskey            "V">
+<!ENTITY lightning.toolbar.multiweek.label           "Moniviikko">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "M">
+<!ENTITY lightning.toolbar.month.label               "Kuukausi">
+<!ENTITY lightning.toolbar.month.accesskey           "K">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Sovellusvalikko">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Avaa &brandShortName;-valikon">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Kalenteripaneeli">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "K">
+<!ENTITY lightning.toolbar.calendarpane.label        "Näytä kalenteripaneeli">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "N">

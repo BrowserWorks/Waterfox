@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "הגדרת תזכורות">
+<!ENTITY reminder.add.label                                "הוספה">
+<!ENTITY reminder.add.accesskey                            "ו">
+<!ENTITY reminder.remove.label                             "הסרה">
+<!ENTITY reminder.remove.accesskey                         "ס">
+
+<!ENTITY reminder.reminderDetails.label                    "פרטי תזכורת">
+<!ENTITY reminder.action.label                             "בחר פעולת תזכורת">
+
+<!ENTITY reminder.relation.before.label                    "לפני" >
+<!ENTITY reminder.relation.after.label                     "אחרי" >
+
+<!ENTITY reminder.action.alert.label                       "הצג התרעה">
+<!ENTITY reminder.action.email.label                       "שלח דוא״ל">
+
+<!ENTITY alarm.units.minutes                               "דקות" >
+<!ENTITY alarm.units.hours                                 "שעות" >
+<!ENTITY alarm.units.days                                  "ימים" >

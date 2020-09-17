@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title "Content">
+<!ENTITY pref.content.description "These settings influence how website and message content appears in &brandShortName;.">
+<!ENTITY siteIcons.label "Website icons">
+<!ENTITY useSiteIcons.label "Show website icons">
+<!ENTITY useSiteIcons.accesskey "S">
+<!ENTITY useFavIcons.label "Aggressively look for website icons when the page does not define one">
+<!ENTITY useFavIcons.accesskey "A">
+<!ENTITY enableAutomaticImageResizing.label "Resize large images to fit in the browser window">
+<!ENTITY enableAutomaticImageResizing.accesskey "R">
+<!ENTITY useSmoothScroll.label "Use smooth scrolling">
+<!ENTITY useSmoothScroll.accesskey "U">
+<!ENTITY allowHWAccel.label "Use hardware acceleration when available">
+<!ENTITY allowHWAccel.accesskey "e">
+<!ENTITY textZoomOnly.label "Zoom only text instead of full pages">
+<!ENTITY textZoomOnly.accesskey "Z">
+<!ENTITY blockAutoRefresh.label "Warn me when web sites try to redirect or reload the page">
+<!ENTITY blockAutoRefresh.accesskey "W">
+<!ENTITY siteSpecific.label "Remember zoom levels on per-site basis">
+<!ENTITY siteSpecific.accesskey "m">

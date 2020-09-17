@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Գտնել և Փոխարինել">
+<!ENTITY findField.label "Գտնել տեքստ.">
+<!ENTITY findField.accesskey "n">
+<!ENTITY replaceField.label "Փոխարինել՝">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "Ըստ համընկման">
+<!ENTITY caseSensitiveCheckbox.accesskey "Ը">
+<!ENTITY wrapCheckbox.label "Տողադարձել">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY backwardsCheckbox.label "Որոնել հետադարձեր">
+<!ENTITY backwardsCheckbox.accesskey "հ">
+<!ENTITY findNextButton.label "Գտնել հաջորդը">
+<!ENTITY findNextButton.accesskey "F">
+<!ENTITY replaceButton.label "Փոխարինել">
+<!ENTITY replaceButton.accesskey "R">
+<!ENTITY replaceAndFindButton.label "Փոխարինել և Գտնել">
+<!ENTITY replaceAndFindButton.accesskey "d">
+<!ENTITY replaceAllButton.label "Փոխարինել բոլորը">
+<!ENTITY replaceAllButton.accesskey "A">
+<!ENTITY closeButton.label "Փակել">
+<!ENTITY closeButton.accesskey "Փ">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Du er i eit privat nettlesingsvindauge">
+<!ENTITY privatebrowsingpage.title.normal        "Vil du starte privat nettlesing?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; vil ikkje hugse historikk for dette vindauget.">
+<!ENTITY privatebrowsingpage.status.normal       "Du er ikkje i eit privat vindauge.">
+
+<!ENTITY privatebrowsingpage.learnmore.label     "Les meir">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "L">
+
+<!ENTITY privatebrowsingpage.close.label         "Lat att dette vinduet no">
+<!ENTITY privatebrowsingpage.close.accesskey     "a">
+
+<!ENTITY privatebrowsingpage.private.label       "Opne eit nytt privat vindauge">
+<!ENTITY privatebrowsingpage.private.accesskey   "O">

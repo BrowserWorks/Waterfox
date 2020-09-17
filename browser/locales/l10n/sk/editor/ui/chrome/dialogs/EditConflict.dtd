@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Window title -->
+<!ENTITY windowTitle.label "Vyberte úpravu">
+<!ENTITY conflictWarning.label "Túto stránku modifikoval iný program a zároveň máte neuložené zmeny v Composeri.">
+<!ENTITY conflictResolve.label "Označte verziu, ktorá sa má použiť:">
+<!ENTITY keepCurrentPageButton.label "Nechať aktuálnu stránku">
+<!ENTITY useOtherPageButton.label "Použiť inú verziu pre aktuálnu stránku">

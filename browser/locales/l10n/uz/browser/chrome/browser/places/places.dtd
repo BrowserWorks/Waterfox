@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Kutubxona">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Boshqarish">
+<!ENTITY organize.accesskey    "B">
+<!ENTITY organize.tooltip      "Xatchoʻplarni boshqarish">
+
+<!ENTITY file.close.label               "Yopish">
+<!ENTITY file.close.accesskey           "Y">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Koʻrishlar">
+<!ENTITY views.accesskey                "K">
+<!ENTITY views.tooltip                  "Koʻrishingizni oʻzgartirish">
+<!ENTITY view.columns.label             "Ustunlarni koʻrsatish">
+<!ENTITY view.columns.accesskey         "U">
+<!ENTITY view.sort.label                "Saralash">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Saralanmagan">
+<!ENTITY view.unsorted.accesskey        "S">
+<!ENTITY view.sortAscending.label       "A > Z saralash tartibida">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A saralash tartibida">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Xatchoʻplarni HTMLdan import qilish">
+<!ENTITY importBookmarksFromHTML.accesskey "i">
+<!ENTITY exportBookmarksToHTML.label       "Xatchoʻplarni HTMLga eksport qilish...">
+<!ENTITY exportBookmarksToHTML.accesskey   "e">
+<!ENTITY importOtherBrowser.label          "Ma`lumotlarni boshqa jilddan import qilish">
+<!ENTITY importOtherBrowser.accesskey      "b">
+
+<!ENTITY cmd.backup.label               "Zahiralash">
+<!ENTITY cmd.backup.accesskey           "Z">
+<!ENTITY cmd.restore2.label             "Tiklash">
+<!ENTITY cmd.restore2.accesskey         "T">
+<!ENTITY cmd.restoreFromFile.label      "Faylni tanlash">
+<!ENTITY cmd.restoreFromFile.accesskey  "t">
+
+<!ENTITY col.name.label          "Nomi">
+<!ENTITY col.tags.label          "Teglar">
+<!ENTITY col.url.label           "Manzili">
+<!ENTITY col.mostrecentvisit.label "Eng soʻnggi kirilgan">
+<!ENTITY col.visitcount.label    "Kirishlar soni">
+<!ENTITY col.dateadded.label     "Qoʻshilgan">
+<!ENTITY col.lastmodified.label  "Soʻnggi oʻzgartirilgan">
+
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Import qilish va zahira nusxasini yaratish">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Xatcho‘plarni import qilish va zahira nusxasini yaratish">
+
+<!ENTITY backButton.tooltip  "Orqaga qaytish">
+
+<!ENTITY forwardButton.tooltip  "Oldinga oʻtish">
+
+<!ENTITY detailsPane.selectAnItemText.description "Koʻrish uchun bandni tanlang va xossalarini oʻzgartiring">
+

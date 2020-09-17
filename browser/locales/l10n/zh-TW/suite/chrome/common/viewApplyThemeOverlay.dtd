@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY applyTheme.label            "套用佈景主題">
+<!ENTITY applyTheme.accesskey        "A">
+<!ENTITY getMoreThemesCmd.label      "下載更多佈景主題">
+<!ENTITY getMoreThemesCmd.accesskey  "G">
+<!ENTITY getBackgroundsCmd.label     "下載背景">
+<!ENTITY getBackgroundsCmd.accesskey "B">
+

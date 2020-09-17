@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "නිසරු ලිපි ලොග් සටහන">
+<!ENTITY adaptiveJunkLogInfo.label "නිසරු ලිපි පාලන ක්‍රියාකාරකම පිළිබඳ ලොග් සටහන් තබන්න.">
+<!ENTITY clearLog.label "ලොග් සටහන හිස් කරන්න">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY closeLog.label "වසන්න">
+<!ENTITY closeLog.accesskey "o">

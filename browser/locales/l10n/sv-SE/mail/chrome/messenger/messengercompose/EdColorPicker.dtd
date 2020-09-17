@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Färg">
+<!ENTITY lastPickedColor.label "Senast valda färg">
+<!ENTITY lastPickedColor.accessKey "e">
+<!ENTITY chooseColor1.label "Välj en färg:">
+<!ENTITY chooseColor2.label "Ange en HTML-färgsträng">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(t.ex. &quot;#0000ff&quot; eller &quot;blue&quot;):">
+<!ENTITY default.label "(ingen)">
+<!ENTITY default.accessKey "i">
+<!ENTITY palette.label "Palett:">
+<!ENTITY standardPalette.label "Standard">
+<!ENTITY webPalette.label "Alla webbfärger">
+<!ENTITY background.label "Bakgrund för:">
+<!ENTITY background.accessKey "B">
+<!ENTITY table.label "Tabell">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Cell(er)">
+<!ENTITY cell.accessKey "C">

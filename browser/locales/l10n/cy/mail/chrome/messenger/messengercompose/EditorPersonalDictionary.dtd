@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Geiriadur Personol">
+
+<!ENTITY wordEditField.label "Gair newydd:">
+<!ENTITY wordEditField.accessKey "n">
+<!ENTITY AddButton.label "Ychwanegu">
+<!ENTITY AddButton.accessKey "Y">
+<!ENTITY DictionaryList.label "Geiriau yn y geiriadur:">
+<!ENTITY DictionaryList.accessKey "G">
+<!ENTITY RemoveButton.label "Tynnu">
+<!ENTITY RemoveButton.accessKey "y">
+
+<!ENTITY CloseButton.label "Cau">
+<!ENTITY CloseButton.accessKey "u">

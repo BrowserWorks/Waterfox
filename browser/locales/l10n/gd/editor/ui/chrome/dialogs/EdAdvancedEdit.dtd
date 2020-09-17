@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Deasaichear nan roghainnean adhartach">
+<!ENTITY AttName.label                  "Feart: ">
+<!ENTITY AttValue.label                 "Luach: ">
+<!ENTITY PropertyName.label             "Buadh: ">
+<!ENTITY currentattributesfor.label     "Na feartan làithreach aig: ">
+<!ENTITY tree.attributeHeader.label     "Feart">
+<!ENTITY tree.propertyHeader.label      "Buadh">
+<!ENTITY tree.valueHeader.label         "Luach">
+<!ENTITY tabHTML.label                  "Feartan HTML">
+<!ENTITY tabCSS.label                   "Stoidhle ion-loidhne">
+<!ENTITY tabJSE.label                   "Tachartasan JavaScript">
+
+<!ENTITY editAttribute.label    "Briog air nì gu h-àrd gus a luach a dheasachadh">
+<!ENTITY removeAttribute.label  "Thoir air falbh">

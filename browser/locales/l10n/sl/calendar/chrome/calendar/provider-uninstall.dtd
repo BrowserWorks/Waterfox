@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Odstrani ponudnika">
+<!ENTITY providerUninstall.accept.label                    "Odnaroči izbrano">
+<!ENTITY providerUninstall.accept.accesskey                "O">
+<!ENTITY providerUninstall.cancel.label                    "Obdrži dodatek">
+<!ENTITY providerUninstall.cancel.accesskey                "d">
+<!ENTITY providerUninstall.preName.label                   "Želite odstraniti oz. onemogočiti:">
+<!ENTITY providerUninstall.postName.label                  "S tem bodo spodnji koledarji onemogočeni.">
+<!ENTITY providerUninstall.reinstallNote.label             "V kolikor ne načrtujete ponovne namestitve tega ponudnika, se lahko odločite za preklic naročnine na koledarje tega ponudnika.">

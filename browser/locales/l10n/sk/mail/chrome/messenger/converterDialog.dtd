@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Konvertor formátu uložených správ">
+<!ENTITY converterDialog.continueButton "Pokračovať">
+<!ENTITY converterDialog.cancelButton "Zrušiť">
+<!ENTITY converterDialog.finishButton "Dokončiť">
+<!ENTITY converterDialog.complete "Konverzia je dokončená. &brandShortName; sa teraz reštartuje.">
+<!ENTITY converterDialog.error "Konverzia zlyhala.">
+

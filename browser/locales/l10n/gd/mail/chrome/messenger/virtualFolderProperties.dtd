@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Pasgan ùr airson lorg a chaidh a shàbhaladh">
+<!ENTITY name.label                 "Ainm:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "Cruthaich mar fho-phasgan de:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "Rèitich na roghainnean luirg airson a' phasgain luirg seo a chaidh a shàbhaladh: ">
+
+<!ENTITY folderSelectionCaption.label "Tagh na pasgain a thèid a rannsachadh: ">
+<!ENTITY chooseFoldersButton.label "Tagh…">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "Lorg air loidhne (Gheibh thu toraidhean gu ruige an-diugh airson pasgain naidheachdan is IMAP ach bheir e nas fhaide a' fosgladh a' phasgain)">
+<!ENTITY searchOnline.accesskey "s">
+<!ENTITY newFolderButton.label       "Cruthaich">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "Ùraich">
+<!ENTITY editFolderButton.accesskey  "a">

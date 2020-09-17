@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Keresés helye:">
+<!ENTITY searchHeading.accesskey     "K">
+<!ENTITY searchSubfolders.label      "Keresés az almappákban is">
+<!ENTITY searchSubfolders.accesskey  "m">
+<!ENTITY searchOnHeading.label       "Keresés végrehajtása:">
+<!ENTITY searchOnHeading.accesskey   "e">
+<!ENTITY searchOnRemote.label        "Távoli kiszolgálón">
+<!ENTITY searchOnLocal.label         "Csak ezen a számtógépen">
+<!ENTITY resetButton.label           "Alaphelyzet">
+<!ENTITY resetButton.accesskey       "A">
+<!ENTITY openButton.label            "Megnyitás">
+<!ENTITY openButton.accesskey        "n">
+<!ENTITY deleteButton.label          "Törlés">
+<!ENTITY deleteButton.accesskey      "T">
+<!ENTITY searchDialogTitle.label     "Üzenetek keresése">
+<!ENTITY results.label               "Eredmények">
+<!ENTITY moveHereMenu.label          "Áthelyezés ide">
+<!ENTITY moveHereMenu.accesskey      "i">
+<!ENTITY moveButton.label            "Áthelyezés máshová">
+<!ENTITY moveButton.accesskey        "l">
+<!ENTITY goToFolderButton.label      "Üzenetmappa megnyitása">
+<!ENTITY goToFolderButton.accesskey  "z">
+<!ENTITY saveAsVFButton.label        "Mentés keresési mappaként">
+<!ENTITY saveAsVFButton.accesskey    "k">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Keresési hely:">
+<!ENTITY abSearchHeading.accesskey   "K">
+<!ENTITY propertiesButton.label      "Tulajdonságok">
+<!ENTITY propertiesButton.accesskey  "T">
+<!ENTITY composeButton.label         "Új üzenet">
+<!ENTITY composeButton.accesskey     "z">
+<!ENTITY abSearchDialogTitle.label   "Összetett keresés a címjegyzékben">

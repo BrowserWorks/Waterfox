@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder "Пошук">
+
+<!ENTITY newPref.namePlaceholder "Назва">
+
+<!ENTITY newPref.valueBoolean "Лагічнае">
+<!ENTITY newPref.valueString "Радок">
+<!ENTITY newPref.valueInteger "Цэлае">
+
+<!ENTITY newPref.stringPlaceholder "Увядзіце радок">
+<!ENTITY newPref.numberPlaceholder "Увядзіце лік">
+
+<!ENTITY newPref.toggleButton "Пераключыць">
+<!ENTITY newPref.cancelButton "Скасаваць">
+
+<!ENTITY contextMenu.copyPrefName "Капіяваць назву">
+<!ENTITY contextMenu.copyPrefValue "Капіяваць значэнне">

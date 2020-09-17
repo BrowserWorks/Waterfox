@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "הגדרות חשבון מתקדמות">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "ספריית שרת IMAP:‏">
+<!ENTITY serverDirectory.accesskey "I">
+<!ENTITY usingSubscription.label "הראה רק תיקיות להן אני מנוי">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "השרת תומך בתיקיות המכילות תת־תיקיות והודעות">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "מספר מרבי של חיבורי שרת אל המטמון">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "העדפות אלו מציינות את מרחבי השמות על שרת ה־IMAP שלך">
+<!ENTITY personalNamespace.label "מרחב שמות אישי:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "ציבורי (משותף):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "משתמשים אחרים:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "הרשה לשרת לעקוף מרחבי שמות אלה">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY accountInbox.label "דואר נכנס לחשבון זה">
+<!ENTITY accountInbox.accesskey "נ">
+<!ENTITY deferToServer.label "תיבת דואר נכנס עבור חשבון אחר">
+<!ENTITY deferToServer.accesskey "D">
+<!ENTITY deferGetNewMail.label "כלול שרת זה בקבלת דואר חדש">
+<!ENTITY deferGetNewMail.accesskey "I">

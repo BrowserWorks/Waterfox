@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Nastajenja formulara">
+
+<!ENTITY Settings.label "Nastajenja">
+
+<!ENTITY FormName.label "Mjeno formulara:">
+<!ENTITY FormName.accesskey "o">
+<!ENTITY FormAction.label "URL akcije:">
+<!ENTITY FormAction.accesskey "U">
+<!ENTITY FormMethod.label "Metoda:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Kodowanje:">
+<!ENTITY FormEncType.accesskey "K">
+<!ENTITY FormTarget.label "Cilowy wobłuk:">
+<!ENTITY FormTarget.accesskey "C">
+
+<!ENTITY RemoveForm.label "Formular wotstronić">
+<!ENTITY RemoveForm.accesskey "F">

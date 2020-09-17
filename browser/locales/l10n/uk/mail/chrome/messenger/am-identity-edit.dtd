@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Налаштувати параметри для цього ідентифікатора:">
+
+<!ENTITY settingsTab.label       "Параметри">
+<!ENTITY copiesFoldersTab.label "Копії та теки">
+<!ENTITY addressingTab.label    "Написання та адресація">
+
+<!ENTITY publicData.label        "Публічні дані">
+<!ENTITY privateData.label       "Приватні дані">
+<!ENTITY identityAlias.label     "Позначка запису:">
+<!ENTITY identityAlias.accesskey "з">

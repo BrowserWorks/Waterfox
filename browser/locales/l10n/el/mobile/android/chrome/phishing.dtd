@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Μακριά από εδώ!">
+<!ENTITY safeb.palm.decline.label "Αγνόηση αυτής της προειδοποίησης">
+<!ENTITY safeb.palm.reportPage.label "Γιατί έχει γίνει φραγή αυτής της ιστοσελίδας;">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Συμβουλές από τον πάροχο <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Η σελίδα έχει αναφερθεί ως κακόβουλη!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Αυτή η ιστοσελίδα στο  <span id='malware_sitename'/> έχει αναφερθεί ως κακόβουλη ιστοσελίδα και έχει φραγεί σύμφωνα με τις προτιμήσεις ασφαλείας σας.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Οι ιστοσελίδες επιθέσεων προσπαθούν να εγκαταστήσουν προγράμματα στον υπολογιστή σας τα οποία υποκλέπτουν προσωπικές σας πληροφορίες, χρησιμοποιούν τον υπολογιστή σας για να επιτίθενται σε άλλους υπολογιστές και βλάπτουν το σύστημα σας.</p><p>Μερικές ιστοσελίδες εγκαθιστούν επίτηδες κακόβουλο λογισμικό, αλλά σε αρκετές αυτό γίνεται χωρίς την γνώση ή την συγκατάθεση των ιδιοκτητών τους.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Παραπλανητική σελίδα!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Η ιστοσελίδα <span id='phishing_sitename'/> έχει αναφερθεί ως παραπλανητική και αποκλείστηκε σύμφωνα με τις προτιμήσεις ασφαλείας σας.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Οι παραπλανητικές σελίδες είναι σχεδιασμένες ώστε να σας παραπλανούν και να σας οδηγούν σε κάποια επικίνδυνη ενέργεια, όπως η εγκατάσταση λογισμικού ή η αποκάλυψη προσωπικών πληροφοριών, όπως κωδικοί πρόσβασης, αριθμοί τηλεφώνου ή πιστωτικών καρτών.</p><p>Η εισαγωγή οποιασδήποτε πληροφορίας σε αυτήν τη σελίδα μπορεί να έχει ως συνέπεια την υποκλοπή ταυτότητας ή άλλες απάτες.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Η σελίδα έχει αναφερθεί ότι περιέχει ανεπιθύμητο λογισμικό!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Η ιστοσελίδα <span id='unwanted_sitename'/> έχει αναφερθεί ότι περιέχει ανεπιθύμητο λογισμικό και έχει αποκλειστεί σύμφωνα με τις προτιμήσεις ασφαλείας σας.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Οι σελίδες με ανεπιθύμητο λογισμικό επιχειρούν να εγκαταστήσουν λογισμικό το οποίο ενδέχεται να είναι παραπλανητικό και να επηρεάσει το σύστημα σας με μη αναμενόμενο τρόπο.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Αυτή η ιστοσελίδα ενδέχεται να περιέχει κακόβουλο λογισμικό">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "Το &brandShortName; απέκλεισε αυτή τη σελίδα, επειδή ενδέχεται να αποπειραθεί να εγκαταστήσει επικίνδυνες εφαρμογές, που υποκλέπτουν ή διαγράφουν τις πληροφορίες σας (για παράδειγμα, φωτογραφίες, κωδικοί πρόσβασης, μηνύματα και πιστωτικές κάρτες).">

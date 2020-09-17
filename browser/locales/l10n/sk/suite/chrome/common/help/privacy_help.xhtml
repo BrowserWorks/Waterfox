@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Ochrana súkromia na internete</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="using_privacy_features">Používame funkcie na ochranu súkromia</h1>
+
+<p>Tento prehliadača obsahuje množstvo funkcií, pomocou ktorých môžete zvýšiť
+  bezpečnosť vašich súkromných údajov. Nasledujúce kapitoly popisujú,
+  ako môže tento prehliadač počas prehliadania webu spracovávať cookies,
+  heslá a obrázky.</p>
+
+<p>Informácie o ďalších bezpečnostných funkciách &brandShortName; nájdete v kapitolách
+  <a href="mailnews_security.xhtml">Podpisovanie a šifrovanie e-mailových správ</a> a
+  <a href="using_certs_help.xhtml">Používame certifikáty</a>.</p>
+
+<div class="contentsBox">Témy o ochrane súkromia:
+  <ul>
+    <li><a href="#privacy_on_the_internet">Súkromie na internete</a></li>
+    <li><a href="using_priv_help.xhtml#using_the_cookie_manager">Používame Správcu
+    cookies</a></li>
+    <li><a href="using_priv_help.xhtml#using_the_password_manager">Používame Správcu
+    hesiel</a></li>
+    <li><a href="using_priv_help.xhtml#encrypting_stored_sensitive_information">Šifrovanie
+      uložených citlivých informácií</a></li>
+    <li><a href="using_priv_help.xhtml#managing_images">Správa obrázkov</a></li>
+    <li><a href="cs_priv_prefs_popup.xhtml#controlling_popups">Ovládanie vyskakovacích okien</a></li>
+    <li><a href="privsec_help.xhtml">Súkromie a bezpečnosť</a></li>
+  </ul>
+</div>
+
+<h1 id="privacy_on_the_internet">Súkromie na internete</h1>
+
+<p>Táto sekcia sumarizuje niekoľko základných informácií o súkromí na internete.
+  Takisto popisuje niekoľko vecí, ktoré vám pomôžu uchrániť svoje súkromie.
+  Jej cieľom však nie je poskytnúť kompletné informácie o ochrane súkromia.</p>
+
+<div class="contentsBox">V tejto kapitole:
+  <ul>
+    <li><a href="#what_information_does_my_browser_give_to_a_website">Aké
+      informácie poskytuje prehliadač webovým stránkam?</a></li>
+    <li><a href="#what_are_cookies_and_how_do_they_work">Čo sú cookies a
+      ako fungujú?</a></li>
+    <li><a href="#why_and_how_are_websites_tracking_me">Prečo a ako ma stránky sledujú?</a></li>
+    <li><a href="#how_can_i_control_web_pages_in_email_messages">Ako ovládať webové
+      stránky v e-mailových správach?</a></li>
+    <li><a href="#how_can_i_make_sure_unauthorized_people_dont_use_information_about_me">Ako
+  zabrániť neoprávneným ľuďom získavať o mne informácie?</a></li>
+    </ul>
+</div>
+
+<h2 id="what_information_does_my_browser_give_to_a_website">Aké
+      informácie poskytuje prehliadač webovým stránkam?</h2>
+
+<p>Keď prehliadač zobrazí nejakú webovú stránku &mdash; napríklad po kliknutí na odkaz
+  alebo zadaní adresy URL, alebo pri zobrazení webovej stránky ako súčasti e-mailovej správy
+   &mdash; poskytne serveru aj určité informácie. Tieto informácie môžu okrem iného obsahovať
+  údaje o vašom operačnom prostredí, internetovú adresu a adresu stránky, z ktorej ste práve
+  prišli.</p>
+
+<h3>Operačné prostredie</h3>
+
+<p>Prehliadač stránku informuje o operačnom prostredí, v ktorom pracujete - tj. typ
+  a verziu prehliadača a operačného systému. Toto pomáha serveru zobraziť verziu
+  stránky, ktorá sa pre vás najlepšie hodí. Napríklad, server môže zistiť, že používate
+  slovenskú verziu &brandShortName;&nbsp;2.19 a operačný systém Windows&nbsp;7.</p>
+
+<h3 id="internet_address">Internetová adresa (IP)</h3>
+
+<p>Prehliadač musí webovému serveru oznámiť vašu internetovú adresu (tiež známa ako
+  adresa IP), aby vám tento mohol poslať webovú stránku, ktorú prehliadač zobrazí.
+  Server vám nemôže poskytnúť požadovanú stránku, pokiaľ túto adresu nepozná.</p>
+
+<p>Vaša adresa IP môže byť dynamická (dočasná) alebo statická (pevná).</p>
+
+<p>Keď sa pripájate k internetu prostredníctvom štandardného modemu pripojenému
+  k telefónnej linke, váš poskytovateľ internetového pripojenia (ISP) vám môže
+  pri každom prihlásení prideliť dočasnú adresu IP. Túto dočasnú adresu IP využívate
+  počas relácie pripojenia k internetu &mdash; napríklad do odhlásenia sa z modemu,
+  zrušeniu pripojenia alebo iného odpojenia počítača od prístupu k internetu.
+  Každý ISP má k dispozícií množstvo adries IP a tieto náhodne prideľuje používateľom.</p>
+
+<p>Ak máte DSL, káblový modem alebo optické pripojenie, môžete mať nastavenú
+  pevnú adresu IP, ktorá sa používa pri každom pripojení k sieti internet.</p>
+
+<p>Vaša adresa IP nie je totožná s vašou e-mailovou adresou.</p>
+
+<h3>Odkazujúca stránka</h3>
+
+<p>Prehliadač serveru oznámi, na akej stránke ste sa nachádzali, keď ste klikli na
+  odkaz, ktorý vás priviedol na práve zobrazenú stránku. Toto umožňuje stránkam zistiť,
+  na ktorých stránkach sa nachádzajú na ne odkazy. Keď si prezeráte jednotlivé podstránky
+  danej stránky, server takto môže zistiť váš pohyb po jednotlivých stránkach.</p>
+
+<p>[<a href="#privacy_on_the_internet">Návrat na začiatok kapitoly</a>]</p>
+
+<h2 id="what_are_cookies_and_how_do_they_work">Čo sú cookies a ako fungujú?</h2>
+
+<p>Cookie je krátka informácia využívaná niektorými webovými stránkami. Keď
+  navštívite stránku, ktorá využíva cookies, táto môže požiadať prehliadač o
+  uloženie jedného alebo viacerých súborov cookies vo vašom počítači.</p>
+
+<p>Neskôr, pri návrate na danú stránku, prehliadač poskytne tieto cookies danej
+  stránke.</p>
+
+<p>Ak používate štandardné nastavenia pre cookies, táto aktivita nie pre vás
+  viditeľná a nie ste informovaný o tom, že stránka požiadala prehliadač o uloženie
+  prípadne poskytnutie cookies. Ak však chcete, môžete prehliadač nastaviť tak, aby
+  pri takejto akcii vždy zobrazil upozornenie. Ďalšie informácie o tom, ako toto
+  správanie docieliť, získate v sekcii
+  <a href="using_priv_help.xhtml#cookies">Súkromie a bezpečnosť - Cookies</a>.</p>
+
+<h3>Ako stránky využívajú informácie z cookies?</h3>
+
+<p>Cookies umožňujú stránke získať informácie o vašich predchádzajúcich návštevách
+  danej stránky. Napríklad, ak ste zisťovali lokálnu predpoveď počasia alebo
+  objednávali knihy cez internet, webová stránka môže použiť cookies na zapamätanie
+  si miesta vášho bydliska alebo autorov, ktorých obľubujete a pri vašej nasledujúcej
+  návšteve vám tak zjednodušiť vyhľadávanie.</p>
+
+<p>Niektoré stránky majú uvedené Zásady ochrany súkromia, ktoré popisujú, ako
+  využívajú zhromažďované informácie.</p>
+
+<h3 id="what_are_third-party_cookies">Čo sú cookies tretích strán?</h3>
+
+<p>Ak prehliadač uloží súbor cookie pre nejakú stránku, tento súbor poskytne
+  len danej stránke. Prehliadač neposkytne stránke cookie pochádzajúci z
+  inej stránky. Pretože stránka môže získať len vlastné cookies, môže zisťovať
+  vaše aktivity iba na danej stránke, ale nie všeobecne pri prehliadaní webu.</p>
+
+<p>Niektoré webové stránky však zobrazujú obsah, ktorý je umiestnený na inej
+  webovej stránke. Týmto obsahom môže byť čokoľvek od obrázkov po text či reklamu.
+  Stránka, na ktorej je takýto obsah umiestnený, môže tiež požiadať server o uloženie
+  cookie vo vašom počítači, aj keď ste túto stránku priamo nenavštívili.
+</p>
+
+<p>Cookies, ktoré sú uložené inou stránkou ako tou, ktorú ste priamo navštívili,
+  sa nazývajú <strong>cookies tretích strán</strong> alebo <strong>cudzie
+  cookies</strong>. Webové stránky niekedy používajú cookies tretích strán spolu
+  s <strong>priehľadnými obrázkami GIF</strong>, čo sú špeciálne obrázky, ktoré
+  pomáhajú stránkam počítať návštevníkov, sledovať e-mailové odpovede, zistiť viac
+  o tom, ako návštevníci používajú webovú stránku alebo prispôsobiť stránku pre daného
+  návštevníka (priehľadné obrázky GIF sú tiež známe ako web beacons).</p>
+
+<p>Ak chcete, môžete prehliadač <a href="using_priv_help.xhtml#cookies">nastaviť</a> tak, že bude akceptovať cookies z originálneho
+  servera, ale zároveň odmietať cookies tretích strán, prípadne len z tých stránok, ktoré ste už predtým navštívili.</p>
+
+<p>[<a href="#privacy_on_the_internet">Návrat na začiatok kapitoly</a>]</p>
+
+<h2 id="why_and_how_are_websites_tracking_me">Why and How Are Websites
+  Tracking Me?</h2>
+
+<p>Websites are frequently interested in how they are used and by whom.
+  Thus, they may perform analytics on your browsing behavior, either by
+  themselves, or by utilizing a third-party service.</p>
+
+<p>Motivations for such user tracking may be a more personalized browsing
+  experience, e.g., by offering you services or products corresponding to your
+  previous browsing pattern, thus making it more likely that you are interested
+  in those. Third-party services are mostly interested in placing advertisements
+  that match your interests, thus making it more likely that you would click on
+  those ads, which in turn generates revenue.</p>
+
+<p>Of course, this list isn&apos;t all inclusive, other reasons may exist to
+  track the user&apos;s browsing behavior. To summarize, the trade-off is:</p>
+
+<ul>
+  <li><strong>Pros</strong>: Tracking of the user&apos;s browsing activity
+    allows the website to provide a more specific browsing experience, by
+    analyzing and matching your interests. You may even get offers you
+    wouldn&apos;t receive without prior knowledge of your usage pattern.</li>
+  <li><strong>Cons</strong>: In most cases, especially with third-party
+    tracking services, the information is gathered without the user&apos;s
+    consent, and its usage is not transparent. Comprehensive user profiling
+    across websites and over long periods of time may be considered intrusive
+    and a questionable practice violating the user&apos;s privacy.</li>
+</ul>
+
+<h3>What Are the Mechanisms of User Tracking?</h3>
+
+<p>There isn&apos;t any single tracking mechanism, rather several methods
+  exist. For example, a website may employ one or more of these methods:</p>
+
+<ul>
+  <li><a href="#what_are_cookies_and_how_do_they_work">Cookies</a>: This is
+    the most direct form of user tracking. When visiting a website for the
+    first time, a random but unique identifier is created by that site and
+    stored as a cookie in &brandShortName;. When returning to the website,
+    this cookie associates you with any previous visit to that site. This is
+    especially effective for third-party tracking given that such a service
+    can collect data from multiple websites they have contracts with based on
+    just a single tracking cookie.</li>
+  <li><a href="#internet_address">Internet Address</a>: The IP address
+    identifies your location on your provider&apos;s network. It may also
+    serve as a reference to your geographical location. Even without cookies,
+    multiple accesses to one or more websites from the same location can be
+    associated with each other in this way.</li>
+  <li><a href="#what_information_does_my_browser_give_to_a_website">Browser
+    Fingerprinting</a>: This method attempts to identify specific users based
+    on the characteristics of the browser that they are using. Such
+    characteristics include browser type and version, platform used, language
+    preferences, and possibly installed plugins or add-ons.</li>
+</ul>
+
+<h3>What Can I Do to Prevent User Tracking?</h3>
+
+<p>In general, there is no complete protection against unwanted tracking of
+  one&apos;s browsing activities. However, there are a couple of ways to make
+  it harder to get tracked:</p>
+
+<ul>
+  <li><a href="privsec_help.xhtml#privacy_and_security">Do Not Track</a>:
+    This is a method that allows users to explicitly opt out of (or consent
+    to) their browsing behavior being tracked. &brandShortName; supports
+    sending <q>Do Not Track</q> requests to websites, but they are not
+    obligated to honor such requests.</li>
+  <!-- NOTE: link "Data Manager" below once bug 599097 has been fixed -->
+  <li><a href="using_priv_help.xhtml#cookies">Cookies</a>: The power of
+    tracking cookies is their persistence across sessions. Thus, when you
+    restart &brandShortName;, the identifying cookie will still be sent to
+    the website performing the analytics. One measure against third-party
+    tracking is to prohibit third-party cookies altogether; another option is
+    the restriction of cookies to the current session only. Some websites may
+    no longer function correctly, but you can add exceptions to such sites in
+    the Data Manager or with the Cookie Manager options in the Tools menu.</li>
+  <li><a href="nav_help.xhtml#plugins">Plugins</a>: Obscure plugins make
+    browser fingerprinting easier. Thus, if you need such plugins for some
+    websites but not in general, disable them in the Add-ons Manager until
+    you need them, to avoid that they are disclosed to tracking sites.</li>
+  <li><a href="customize_help.xhtml#add-ons">Add-ons</a>: There is a variety
+    of extensions available for privacy &amp; security support. Some of them
+    will block unwanted content from advertisers or tracking services, others
+    provide more control on private data collected by plugins (e.g., Flash
+    cookies), or when and how to run scripts or embedded content.</li>
+</ul>
+
+<p><strong>Note</strong>: The issues related to user tracking are complex.
+  This description is not intended to be complete but to provide you with some
+  basic information on this topic.</p>
+
+<p>[<a href="#privacy_on_the_internet">Return to beginning of section</a>]</p>
+
+<h2 id="how_can_i_control_web_pages_in_email_messages">Ako ovládať webové
+      stránky v e-mailových správach?</h2>
+
+<p>Pre správy doručené ako súčasť e-mailových správ môžete úplne zakázať cookies,
+  obrázky a zásuvné moduly (JavaScript je zakázaný trvalo).</p>
+
+<p>Povolenie týchto volieb je užitočné pri prehliadaní webu, avšak nemusí byť potrebné
+  pri jednoduchých stránkach, ktoré prijmete prostredníctvom e-mailových správ.</p>
+
+<p>Ďalšie informácie o povolení resp. zakázaní cookies, obrázkov a
+  zásuvných modulov v e-mailových správach nájdete v častiach:</p>
+
+<ul>
+  <li><a href="using_priv_help.xhtml#cookies">Súkromie a bezpečnosť - Cookies</a></li>
+  <li><a href="mailnews_preferences.xhtml#message_display">Pošta a diskusné skupiny - zobrazenie
+    správy</a></li>
+  <li><a href="cs_nav_prefs_advanced.xhtml#scripts_and_plugins">Rozšírené nastavenia
+    - Skripty a zásuvné moduly</a></li>
+</ul>
+
+<p>[<a href="#privacy_on_the_internet">Návrat na začiatok kapitoly</a>]</p>
+
+<h2 id="how_can_i_make_sure_unauthorized_people_dont_use_information_about_me">Ako
+  zabrániť neoprávneným ľuďom získavať o mne informácie?</h2>
+
+<p>Najlepším spôsobom, ako uchovať vaše údaje v bezpečí, je prečítať si
+  Zásady ochrany súkromia pre každú navštevovanú webovú stránku a byť obozretný
+  pri zadávaní svojich osobných údajov na internete.</p>
+
+<p>Internet je verejná sieť. Ak odošlete svoje meno, telefónne číslo,
+  adresu a iné osobné údaje cez sieť (tj. cez webovú stránku, e-mailovú správu
+  alebo inak), musíte počítať s tým, že možné, že niekto cudzí môže tieto
+  informácie zachytiť.</p>
+
+<p>Tu je niekoľko otázok, ktoré by ste si mali položiť pri zadávaní údajov na webovej
+  stránke:</p>
+
+<ul>
+  <li>Aké údaje táto stránka zhromažďuje?</li>
+  <li>Ako tieto údaje využije?</li>
+  <li>Bude stránka tieto údaje zdieľať s niekým iným a mám možnosti ovplyvniť
+    zdieľanie týchto informácií?</li>
+  <li>Môžem pristupovať k mojim údajom a aktualizovať ich?</li>
+  <li>Ako server ochraňuje tieto informácie pred zneužitím?</li>
+  <li>Môžem v prípade otázok alebo problémov kontaktovať správcu servera?</li>
+</ul>
+
+<p>[<a href="#privacy_on_the_internet">Návrat na začiatok kapitoly</a>]</p>
+
+</body>
+</html>

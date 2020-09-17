@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from am-server-top.xul -->
+
+
+<!ENTITY messageStorage.label "Kadaviñ ar c'hemennadennoù">
+<!ENTITY securitySettings.label "Arventennoù diogelroez">
+<!ENTITY serverSettings.label "Arventennoù an dafariad">
+<!ENTITY serverType.label "Rizh an dafariad :">
+<!ENTITY serverName.label "Anv dafariad :">
+<!ENTITY serverName.accesskey "d">
+<!ENTITY userName.label "Anv arveriad :">
+<!ENTITY userName.accesskey "n">
+<!ENTITY port.label "Porzh:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Diouer:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Gwiriañ ar c'hemennadennoù nevez bep">
+<!ENTITY biffStart.accesskey "G">
+<!ENTITY biffEnd.label "a vunutennoù">
+<!ENTITY useIdleNotifications.label "Aotren rebuzadurioù dafariad prim pa zegouezh ur gemennadenn nevez ">
+<!ENTITY useIdleNotifications.accesskey "A">
+<!ENTITY connectionSecurity.label "Diogelroez ar c'hennask:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "Tra ebet">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, mar hegerz">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL">
+<!ENTITY authMethod.label "Hentenn dilesa:">
+<!ENTITY authMethod.accesskey "H">
+<!ENTITY leaveOnServer.label "Leuskel ar c'hemennadennoù war an dafariad">
+<!ENTITY leaveOnServer.accesskey "s">
+<!ENTITY headersOnly.label "Tapout an talbennoù hepken">
+<!ENTITY headersOnly.accesskey "T">
+<!ENTITY deleteByAgeFromServer.label "Evit d'an uc'hek">
+<!ENTITY deleteByAgeFromServer.accesskey "u">
+<!ENTITY daysEnd.label "a zeizioù">
+<!ENTITY deleteOnServer2.label "Betek ma vo dilamet ganin">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "Pellgargañ ar c'hemennadennoù nevez ent emgefreek">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "Pa vez lamet kuit ur gemennadenn ganin :">
+<!ENTITY modelMoveToTrash.label "Dilec'hiañ hi en teuliad Lastez">
+<!ENTITY modelMoveToTrash.accesskey "i">
+<!ENTITY modelMarkDeleted.label "Merkañ hi evel dilamet">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "Lemel kuit anezhañ diouzhtu">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Naetaat (&quot;Goullonderiñ&quot;) ar Voestad-degemer en ur guitaat ">
+<!ENTITY expungeOnExit.accesskey "G">
+<!ENTITY emptyTrashOnExit.label "Goullonderiñ ar gest en ur guitaat">
+<!ENTITY emptyTrashOnExit.accesskey "l">
+<!ENTITY loginAtStartup.label "Gwiriañ ar c'hemennadennoù nevez pa loc'h ar goulev">
+<!ENTITY loginAtStartup.accesskey "c">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+   of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Goulenn ganin a-raok pellgargañ muioc'h eget">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "a gemennadennoù">
+<!ENTITY alwaysAuthenticate.label "Azgoulenn atav an dilesa pa vez kennasket ouzh an dafariad">
+<!ENTITY alwaysAuthenticate.accesskey "t">
+<!ENTITY abbreviate.label "Diskouez anvioù ar strolladoù-keleier e penel an teuliad posteloù evel :">
+<!ENTITY abbreviateOn.label "Anvioù klok ('netscape.public.mozilla.mail-news', da skouer)">
+<!ENTITY abbreviateOff.label "Anvioù berraet ('n.p.m.mail-news', da skouer)">
+<!ENTITY advancedButton.label "Kempleshoc'h …">
+<!ENTITY advancedButton.accesskey "K">
+<!ENTITY serverDefaultCharset2.label "Bonegadur an arouezioù dre ziouer :">
+<!ENTITY localFolderPicker.label "Diuzañ ar c'havlec'hiadoù lec'hel :">
+<!ENTITY browseFolder.label "Furchal…">
+<!ENTITY browseFolder.accesskey "F">
+<!ENTITY browseNewsrc.label "Furchal…">
+<!ENTITY browseNewsrc.accesskey "F">
+
+<!ENTITY accountTitle.label "Arventennoù ar gont">
+<!ENTITY accountSettingsDesc.label "Dibar eo ar gont da-heul. N'eus pivelezh ebet stag outi.">
+<!ENTITY storeType.label "Rizh Kadaviñ Kemennadenn :">
+<!ENTITY storeType.accesskey "R">
+<!ENTITY mboxStore2.label "Restr dre teuliad (mbox)">
+<!ENTITY maildirStore.label "Restr dre kemennadenn (kavlec'h postel)">

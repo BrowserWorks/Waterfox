@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Dezinstalacja dostawcy">
+<!ENTITY providerUninstall.accept.label                    "Zrezygnuj z zaznaczonych subskrypcji">
+<!ENTITY providerUninstall.accept.accesskey                "Z">
+<!ENTITY providerUninstall.cancel.label                    "Pozostaw dodatek">
+<!ENTITY providerUninstall.cancel.accesskey                "P">
+<!ENTITY providerUninstall.preName.label                   "Poproszono o odinstalowanie lub wyłączenie:">
+<!ENTITY providerUninstall.postName.label                  "Spowoduje to wyłączenie poniższych kalendarzy.">
+<!ENTITY providerUninstall.reinstallNote.label             "Jeśli użytkownik nie planuje ponownej instalacji tego dostawcy, może zrezygnować z subskrybowania go.">

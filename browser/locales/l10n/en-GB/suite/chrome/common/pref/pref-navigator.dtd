@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "Browser">
+
+<!ENTITY navRadio.label                 "Display on">
+<!ENTITY navRadio.accesskey             "n">
+<!ENTITY navStartPageMenu.label         "Browser Startup">
+<!ENTITY newWinPageMenu.label           "New Window">
+<!ENTITY newTabPageMenu.label           "New Tab">
+
+<!ENTITY blankPageRadio.label           "Blank page">
+<!ENTITY blankPageRadio.accesskey       "B">
+<!ENTITY homePageRadio.label            "Home page">
+<!ENTITY homePageRadio.accesskey        "m">
+<!ENTITY lastPageRadio.label            "Last page visited">
+<!ENTITY lastPageRadio.accesskey        "L">
+<!ENTITY restoreSessionRadio.label      "Restore Previous Session">
+<!ENTITY restoreSessionRadio.accesskey  "P">
+
+<!ENTITY restoreSessionIntro.label      "When restoring sessions and windows">
+<!ENTITY restoreImmediately.label       "Restore all tabs immediately">
+<!ENTITY restoreImmediately.accesskey   "e">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "Restore">
+<!ENTITY restoreTabs.accesskey          "s">
+<!ENTITY restoreTabsAtATime.label       "tab(s) at a time">
+<!ENTITY restoreDeferred.label          "Only restore tabs when I need them">
+<!ENTITY restoreDeferred.accesskey      "O">
+
+<!ENTITY homePageIntro.label            "Clicking the Home button takes you to this group of pages:">
+<!ENTITY useCurrent.label               "Use Current Page">
+<!ENTITY useCurrent.accesskey           "U">
+<!ENTITY useCurrentGroup.label          "Use Current Group">
+<!ENTITY useCurrentGroup.accesskey      "G">
+<!ENTITY browseFile.label               "Choose File…">
+<!ENTITY browseFile.accesskey           "C">
+<!ENTITY useDefault.label               "Restore Default">
+<!ENTITY useDefault.accesskey           "R">
+
+<!ENTITY defaultBrowserGroup.label      "Default Browser">
+<!ENTITY defaultBrowserButton.label     "Set Default Browser">
+<!ENTITY defaultBrowserButton.accesskey "D">
+<!ENTITY alreadyDefaultText             "&brandShortName; is already your default browser.">
+<!ENTITY defaultPendingText             "&brandShortName; will be set as your default browser when you click OK.">
+<!ENTITY wasMadeDefaultText             "&brandShortName; has been set as your default browser.">
+<!ENTITY makeDefaultText                "Set &brandShortName; as your default browser.">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.advanced.title "Пашыраны">
+<!ENTITY systemPref.caption "Сістэмныя перавагі">
+<!ENTITY systemPrefCheck.label "Ужываць перавагі сістэмы">
+<!ENTITY systemPrefCheck.accesskey "У">
+<!ENTITY systemPref.desc "Калі гэтая адзінка адзначана, &brandShortName; наследуе перавагі сістэмы. Сістэмныя перавагі зменяць перавагі &brandShortName;.">
+<!ENTITY prefCheckDefault.caption "Убудаванне ў сістэму">
+<!ENTITY prefCheckDefaultClient.label "Правяраць наладжванні змоўчнага прыстасавання пры запуску">
+<!ENTITY prefCheckDefaultClient.accesskey "з">
+<!ENTITY crashReports.caption "Паведамляльнік пра крахі">
+<!ENTITY submitCrashes.label "Даслаць справаздачы пра крахі">
+<!ENTITY submitCrashes.accesskey "Д">

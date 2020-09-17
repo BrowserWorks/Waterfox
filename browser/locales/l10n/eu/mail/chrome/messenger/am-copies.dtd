@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Kopiak eta karpetak">
+<!ENTITY sendingPrefix.label "Mezuak bidaltzean, automatikoki: ">
+<!ENTITY fccMailFolder.label "Gorde kopia bat hemen:">
+<!ENTITY fccMailFolder.accesskey "G">
+<!ENTITY fccReplyFollowsParent.label "Gorde erantzunak erantzuten ari den mezuaren karpetan">
+<!ENTITY fccReplyFollowsParent.accesskey "d">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Bidali kopia (Cc) helbide hauetara:">
+<!ENTITY ccAddress.accesskey "B">
+<!ENTITY ccAddressList.placeholder "Banandu helbideak komaz">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bidali ezkutuko kopia (Bcc) helbide hauetara:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Banandu helbideak komaz">
+<!ENTITY saveMessageDlg.label "Erakutsi berresteko elkarrizketa-koadroa mezuak gordetzean">
+<!ENTITY saveMessageDlg.accesskey "s">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;Bidalitakoak&quot; karpetan:">
+<!ENTITY sentFolderOn.accesskey "B">
+<!ENTITY sentInOtherFolder.label "Beste karpeta batean:">
+<!ENTITY sentInOtherFolder.accesskey "e">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Mezuen artxiboak">
+<!ENTITY keepArchives.label "Mantendu mezuen artxiboak hemen:">
+<!ENTITY keepArchives.accesskey "M">
+<!ENTITY archiveHierarchyButton.label "Artxibatzeko aukerak…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label "&quot;Artxiboak&quot; karpetan:">
+<!ENTITY archivesFolderOn.accesskey "r">
+<!ENTITY archiveInOtherFolder.label "Bestelakoa:">
+<!ENTITY archiveInOtherFolder.accesskey "t">
+<!ENTITY specialFolders.label "Zirriborroak eta txantiloiak">
+<!ENTITY keepDrafts2.label "Mantendu zirriborro mezuak hemen:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;Zirriborroak&quot; karpetan:">
+<!ENTITY draftsFolderOn.accesskey "Z">
+<!ENTITY draftInOtherFolder.label "Beste karpeta batean:">
+<!ENTITY draftInOtherFolder.accesskey "e">
+<!ENTITY keepTemplates.label "Gorde txantiloiak hemen:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;Txantiloiak&quot; karpetan:">
+<!ENTITY templatesFolderOn.accesskey "x">
+<!ENTITY templateInOtherFolder.label "Beste karpeta batean:">
+<!ENTITY templateInOtherFolder.accesskey "e">

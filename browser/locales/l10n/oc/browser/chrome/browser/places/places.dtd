@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Bibliotèca">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizar">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organizar los marcapaginas">
+
+<!ENTITY file.close.label               "Tampar">
+<!ENTITY file.close.accesskey           "T">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Visualizacions">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Modificar l'afichatge">
+<!ENTITY view.columns.label             "Visualizar las colomnas">
+<!ENTITY view.columns.accesskey         "c">
+<!ENTITY view.sort.label                "Triar">
+<!ENTITY view.sort.accesskey            "T">
+<!ENTITY view.unsorted.label            "Pas triat">
+<!ENTITY view.unsorted.accesskey        "P">
+<!ENTITY view.sortAscending.label       "Òrdre de classificacion A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Òrdre de classificacion Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Importar de marcapaginas al format HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Exportar de marcapaginas al format HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importar de donadas d'un autre navegador…">
+<!ENTITY importOtherBrowser.accesskey      "m">
+
+<!ENTITY cmd.backup.label               "Salvar…">
+<!ENTITY cmd.backup.accesskey           "S">
+<!ENTITY cmd.restore2.label             "Restablir">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Causir un fichièr…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "Nom">
+<!ENTITY col.tags.label          "Etiquetas">
+<!ENTITY col.url.label           "Adreça">
+<!ENTITY col.mostrecentvisit.label "Darrièra visita">
+<!ENTITY col.visitcount.label    "Nombre de visitas">
+<!ENTITY col.dateadded.label     "Data d'apondon">
+<!ENTITY col.lastmodified.label  "Darrièra modificacion">
+
+<!ENTITY cmd.find.key  "F">
+
+<!ENTITY maintenance.label      "Importacion e salvament">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Importar e salvar los marcapaginas">
+
+<!ENTITY backButton.tooltip  "Recuolar d'una pagina">
+
+<!ENTITY forwardButton.tooltip  "Avançar d'una pagina">
+
+<!ENTITY detailsPane.selectAnItemText.description "Seleccionatz un element per visualizar e modificar sas proprietats">
+

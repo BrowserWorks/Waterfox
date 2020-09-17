@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Irudi propietateak">
+
+<!ENTITY pixelsPopup.value "pixel">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Irudiaren kokalekua:">
+<!ENTITY locationEditField.accessKey "k">
+<!ENTITY locationEditField.tooltip "Idatzi irudiaren fitxategi-izena edo kokalekua">
+<!ENTITY locationEditField.shortenedDataURI "Moztutako URI datuak (kopiatzeak URI osoa kokatuko du arbelean)">
+<!ENTITY title.label "Argibidea:">
+<!ENTITY title.accessKey "A">
+<!ENTITY title.tooltip "Html 'title' atributua erakutsiko da argibide bezala">
+<!ENTITY altText.label "Testu alternatiboa:">
+<!ENTITY altText.accessKey "a">
+<!ENTITY altTextEditField.tooltip "Idatzi irudiaren ordez ikusiko den testua">
+<!ENTITY noAltText.label "Ez erabili testu alternatiboa">
+<!ENTITY noAltText.accessKey "E">
+
+<!ENTITY previewBox.label "Irudiaren aurrebista">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Uneko tamaina:">
+<!ENTITY actualSizeRadio.label "Benetako tamaina">
+<!ENTITY actualSizeRadio.accessKey "B">
+<!ENTITY actualSizeRadio.tooltip "Itzuli irudiaren uneko tamainara">
+<!ENTITY customSizeRadio.label "Tamaina pertsonalizatua">
+<!ENTITY customSizeRadio.accessKey "s">
+<!ENTITY customSizeRadio.tooltip "Aldatu irudiaren tamaina orrian bistaratu bezala">
+<!ENTITY heightEditField.label "Altuera:">
+<!ENTITY heightEditField.accessKey "t">
+<!ENTITY widthEditField.label "Zabalera:">
+<!ENTITY widthEditField.accessKey "Z">
+<!ENTITY constrainCheckbox.label "Mantendu">
+<!ENTITY constrainCheckbox.accessKey "M">
+<!ENTITY constrainCheckbox.tooltip "Mantendu irudiaren itxuraren proportzioak">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Irudi-mapa">
+<!ENTITY removeImageMapButton.label "Ezabatu">
+<!ENTITY removeImageMapButton.accessKey "E">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Lerrokatu testua irudiarekin">
+<!ENTITY bottomPopup.value "Behean">
+<!ENTITY topPopup.value "Goian">
+<!ENTITY centerPopup.value "Erdialdean">
+<!ENTITY wrapRightPopup.value "Itzulbiratu eskuinean">
+<!ENTITY wrapLeftPopup.value "Itzulbiratu ezkerrean">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Tartea">
+<!ENTITY leftRightEditField.label "Ezkerrean eta eskuinean:">
+<!ENTITY leftRightEditField.accessKey "E">
+<!ENTITY topBottomEditField.label "Goian eta behean:">
+<!ENTITY topBottomEditField.accessKey "G">
+<!ENTITY borderEditField.label "Ertz solidoa:">
+<!ENTITY borderEditField.accessKey "E">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Lotutako irudiaren inguruan ertza erakutsi">
+<!ENTITY showImageLinkBorder.accessKey "e">
+<!ENTITY LinkAdvancedEditButton.label "Loturen edizio aurreratua…">
+<!ENTITY LinkAdvancedEditButton.accessKey "L">
+<!ENTITY LinkAdvancedEditButton.tooltip "Gehitu edo aldatu HTML atributuak, estilo-atributuak eta JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Inprimakia">
+<!ENTITY imageLocationTab.label "Kokalekua">
+<!ENTITY imageDimensionsTab.label "Neurriak">
+<!ENTITY imageAppearanceTab.label "Itxura">
+<!ENTITY imageLinkTab.label "Lotura">

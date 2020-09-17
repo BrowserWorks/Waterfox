@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Filtrowy protokol">
+<!ENTITY viewLogInfo.text "Filtrowy protokol dokumentěrujo filtry, kótarež su za toś to konto aktiwne byli. Wužyjśo slědujucy kontrolowy kašćik, aby protokolěrowanje zmóžnił.">
+<!ENTITY clearLog.label "Protokol wuprozniś">
+<!ENTITY clearLog.accesskey "P">
+<!ENTITY enableLog.label "Filtrowy protokol zmóžniś">
+<!ENTITY enableLog.accesskey "F">
+<!ENTITY closeLog.label "Zacyniś">
+<!ENTITY closeLog.accesskey "Z">

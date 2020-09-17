@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Um &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; er á prófunarstigi og gæti verið rysjóttur">
+<!ENTITY aboutPage.checkForUpdates.link         "Athuga með uppfærslur  »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Grennslast fyrir um uppfærslur...">
+<!ENTITY aboutPage.checkForUpdates.none         "Engar uppfærslur tiltækar">
+<!ENTITY aboutPage.checkForUpdates.available2   "Hala niður uppfærslu">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Er að hala niður uppfærslu...">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Setja inn uppfærslu">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "Stuðningur">
+<!ENTITY aboutPage.privacyPolicy.label          "Meðferð persónuupplýsinga ">
+<!ENTITY aboutPage.rights.label                 "Lærðu rétt þinn">
+<!ENTITY aboutPage.relNotes.label               "Útgáfuupplýsingar">
+<!ENTITY aboutPage.credits.label                "Þakkir">
+<!ENTITY aboutPage.license.label                "Upplýsingar um leyfi">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox og Firefox lógó eru vörumerki Mozilla Foundation.">

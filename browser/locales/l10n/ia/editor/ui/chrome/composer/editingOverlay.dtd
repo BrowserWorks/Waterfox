@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Aperir un file…">
+<!ENTITY openFileCmd.accesskey "A">
+<!ENTITY openFileCmd.key "A">
+<!ENTITY openRemoteCmd.label "Aperir adresse web…">
+<!ENTITY openRemoteCmd.accesskey "w">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Paginas recente">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "Salvar">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Salvar como…">
+<!ENTITY saveAsCmd.accesskey "C">
+<!ENTITY saveAsChangeEncodingCmd2.label "Salvar e cambiar le codification del texto">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "c">
+<!ENTITY publishCmd.label "Publicar">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publicar como…">
+<!ENTITY publishAsCmd.accesskey "c">
+<!ENTITY fileRevert.label "Reverter">
+<!ENTITY fileRevert.accesskey "t">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Parametros de publication del sito…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nove">
+<!ENTITY newToolbarCmd.tooltip "Crear un nove pagina con Composer">
+<!ENTITY openToolbarCmd.label "Aperir">
+<!ENTITY openToolbarCmd.tooltip "Aperir un file local">
+<!ENTITY saveToolbarCmd.tooltip "Salvar la file localmente">
+<!ENTITY publishToolbarCmd.tooltip "Incargar file a un loco remote">
+<!ENTITY printToolbarCmd.label "Imprimer">
+<!ENTITY printToolbarCmd.tooltip "Imprimer iste pagina">

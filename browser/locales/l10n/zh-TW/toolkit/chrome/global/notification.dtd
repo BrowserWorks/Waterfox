@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeNotification.tooltip "關閉此訊息">
+
+<!ENTITY checkForUpdates "檢查更新…">
+
+<!ENTITY learnMoreNoEllipsis "了解更多">
+
+<!ENTITY defaultButton.label "好！">
+<!ENTITY defaultButton.accesskey "O">
+
+<!ENTITY moreActionsButton.accessibleLabel "更多操作">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Propiedades da lista">
+
+<!ENTITY ListType.label "Tipo de lista">
+<!ENTITY bulletStyle.label "Estilo de viñeta:">
+<!ENTITY startingNumber.label "Iniciar en:">
+<!ENTITY startingNumber.accessKey "I">
+<!ENTITY none.value "Ningunha">
+<!ENTITY bulletList.value "Lista de viñetas (sen numerar)">
+<!ENTITY numberList.value "Lista numerada">
+<!ENTITY definitionList.value "Lista de definición">
+<!ENTITY changeEntireListRadio.label "Modificar toda a lista">
+<!ENTITY changeEntireListRadio.accessKey "M">
+<!ENTITY changeSelectedRadio.label "Modificar só os elementos seleccionados">
+<!ENTITY changeSelectedRadio.accessKey "s">

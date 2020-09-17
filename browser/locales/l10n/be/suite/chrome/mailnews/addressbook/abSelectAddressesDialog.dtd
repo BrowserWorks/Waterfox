@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY selectAddressWindow.title "Выбраць адрасы">
+<!ENTITY toButton.label "Да->">
+<!ENTITY toButton.accesskey "Д">
+<!ENTITY ccButton.label "Са->">
+<!ENTITY ccButton.accesskey "С">
+<!ENTITY bccButton.label "Сса->">
+<!ENTITY bccButton.accesskey "а">
+<!ENTITY newButton.label "Новая…">
+<!ENTITY newButton.accesskey "Н">
+<!ENTITY editButton.label "Рэдагаваць…">
+<!ENTITY editButton.accesskey "Р">
+<!ENTITY removeButton.label "Прыняць">
+<!ENTITY removeButton.accesskey "П">
+<!ENTITY lookIn.label "Шукаць у:">
+<!ENTITY lookIn.accesskey "Ш">
+<!ENTITY for.label "  ">
+<!ENTITY for.accesskey " ">
+<!ENTITY for.placeholder "Імя або э-пошта">
+<!ENTITY addressMessageTo.label "Адрасаваць ліст да:">
+<!ENTITY addressPickerNewButton.tooltip "Стварыць новую картку адраснай кнігі">
+<!ENTITY addressPickerEditButton.tooltip "Рэдагаваць вылучаную картку">

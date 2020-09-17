@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "고급 계정 설정">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP 서버 디렉터리:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "구독 허가한 폴더만 보이기">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "서버가 폴더 및 메시지를 포함하는 폴더 지원">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "캐시에 저장할 서버의 최대 연결수">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "설정은 IMAP 서버의 네임스페이스에 한정됩니다.">
+<!ENTITY personalNamespace.label "개인 네임스페이스:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "공공 (공용):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "다른 사용자:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "네임스페이스를 우선하도록 서버 허가">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY pop3DeferringDesc.label "이 계정 서버에서 메일을 다운로드 받을 때, 새 메시지를 아래 폴더에 저장:" >
+<!ENTITY accountInbox.label "이 계정의 받은 편지함">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "다른 POP3 계정의 받은 편지함">
+<!ENTITY deferToServer.accesskey "D">
+<!ENTITY deferGetNewMail.label "새 메일이 도착하면 이 서버도 포함">
+<!ENTITY deferGetNewMail.accesskey "I">

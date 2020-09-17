@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Yaron <sh.yaron@gmail.com>
+#
+-->
+<!ENTITY editContactPanelDeleteContact.label "מחיקה">
+<!ENTITY editContactPanelDeleteContact.accesskey "מ">
+
+<!ENTITY editContactName.label "שם:">
+<!ENTITY editContactName.accesskey "ש">
+
+<!ENTITY editContactEmail.label "דוא״ל:">
+<!ENTITY editContactEmail.accesskey "ד">
+
+<!ENTITY editContactAddressBook.label "פנקס כתובות">
+<!ENTITY editContactAddressBook.accesskey "פ">
+
+<!ENTITY editContactPanelDone.label "סיום">
+<!ENTITY editContactPanelDone.accesskey "ס">
+
+<!ENTITY contactMoveDisabledWarning.description "אין באפשרותך לשנות את ספר הכתובת כיוון שאיש הקשר הוא ברשימת דיוור.">
+
+

@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Apañuái henyhẽnguévo kuatiarogue">
+<!ENTITY retry.label "Ha'ãjey">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Ndaikatúi eike">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Ko kundaharape ndaikatúi eipuru">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Mohendahavusu ndojejuhúiva">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>Ehechajey pe jehai jejavýva kundaharape <strong>ww</strong>.example.com <strong>www</strong>.example.com rendaguépe</li> <div id='searchbox'> <input id='searchtext' type='search'> </input> <button id='searchbutton'>Search</button> </div> <li>neremyenyhẽ kuaáiramo peteĩ kuatiarogue, ehechajey ne mba'e'oka mba'ekuaarã térã Wi-Fi-pe jeike. <button id='wifi'>Emyandy Wi-Fi</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "Marandurenda ndojejuhúiva">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Ehechajey pe marandurenda réra jeipuru porãrã térã ambue jehai jejavýva.</li> <li>Ehechajey pe marandurenda oku'épa hendágui, herajeýpa térã oguetémapa.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Jeike kuatiaitépe noñemoneĩri">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Ikatúmakuri oñemboguete, oñemongu'e térã marandurenda ñemoneĩ ikatu omboyke pe jeike.</li> </ul>">
+
+<!ENTITY generic.title "Oops.">
+<!ENTITY generic.longDesc "<p>&brandShortName; ndaikatúi omyanyhẽ ko kuatiarogue ndojekuaái mba'érepa.</p>">
+
+<!ENTITY malformedURI.title "Pe kundaharape ndoikói">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>Ñanduti kundaharape ojehai tapia kóicha <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Heka</button> </div> <li>Ehecha porãke eipuruhahína barra ijykéva (i.e. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Pe jeike ojejokóma">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Kuatia oikove'ỹmava">
+<!ENTITY notCached.longDesc "<p>Pe kuatia ejeruréva ndaipóri &brandShortName;’s kachépe.</p><ul><li>Tekorosãrãramo &brandShortName; ndojeruréi ijehegui umi kuatia momba'épýva.</li><li>Eikutu pe Ha'ãjeýpe ejerurejey hag̃ua pe kuatia ko ñanduti roguépe.</li></ul>">
+
+<!ENTITY netOffline.title "Jeikekatu'ỹ reko">
+
+<!ENTITY contentEncodingError.title "Tetepy mbopapapy jejavy">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Ikatúpiko, eñomongeta umi ñanduti renda jára ndive emomarandu hag̃ua chupekuéra apañuãi rehegua.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Koichagua marandurenda hekorosã'ỹva">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Ikatúpiko, eñe'ẽmi umi ñanduti renda jára ndive emomarandu hag̃ua chupekuéra ko apañuãi.</li> </ul>">
+
+<!ENTITY netReset.title "Jeike oñepyrũjeýma">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Pe jeike ndoikovéima">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Pe kundaharape nahesakãi">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Ikatu eikotevẽ emohenda ambue software eike hag̃ua ko kundaharapépe.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Mohendahavusu proxy ombotove jeike">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Ehechajey proxy ñemboheko eikuaaite hag̃ua oĩ porãpa.</li> <li>Eñe'ẽ ne ñanduti ñangarekohára ndive eikuaaite hag̃ua mohendahavusu proxy oiko porãiteha.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Ndaikatúi ojejuhu mohendahavusu proxy">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Ehechajey proxy ñemboheko eikuaaite hag̃ua oĩ porãpa.</li> <li>Ehechakuaa pe mohendahavusu oguerekópa mba'ekuaarã aty mba'apoguáva térã Wi-Fi-pe jeike. <button id='wifi'>Emyandy Wi-Fi</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "Ko kuatiarogue ndoguerahajeýi hekoitépe">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ko apañuãi oikokuaa reipe'a térã neremoneĩriramo cookie ñeg̃uahẽ.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Mbohovái eha'ãrõ'ỹva mohendahavusúgui">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Ehechakuaa nde apopyvuvsu oguerekópa ñangarekoháraite tekorosãrã.</li> <li>Kóva ikatu oikohína peteĩ ñemboheko oiko porã'ỹva mohendahavusúpe rupi.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Jeikekatu ojavýva">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Kuatiarogue eikeseha ndaikatúi ehecha mba'ekuaarã og̃uahẽva ndaijeroviakatúi ndojehechajeýi rupi.</li> <li>Ikatúpiko eñe'ẽmi umi ñanduti renda jára ndive ha emombe'umi chupekuéra ko apañuãi.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Jeikekatu ojavýva">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Kóva ikatukuaa peteĩ apañuãi mohendahavusu ñemboheko ndive, térã oimeraẽva ohasasehína mohendahavusúramo.</li> <li>Eikéramo apañuãi'ỹ rehe ára ohasaramóva gotyo ko mohendahavusúpe, pe jejavy ikatu sapy'aguávante, ha eha'ãjeykuaa ag̃amieve.</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>Pe tenda ikatu ndojepurukuaái sapy'ami térã ojepuruetereihína. Eha'ãjey ag̃amieve.</li> <li>Ndaikatúiramo emyanyhẽ mba'evéichagua kuatiarogue, ehechajey mba'ekuaarã ne mba'e'oka oku'éva térã emyandy Wi-Fi. <button id='wifi'>Eipuru Wi-Fi</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "Ojejoko hetepy rekorosãrã purureko rupi">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ndohejái ko kuatiaroguépe oñemyañyhẽvo kóicha pe kuatiarogue oguereko rupi tetepy rekorosãrã purureko nomoneĩrĩva.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Tetepy imarãva jejavy">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Pe Kuatiarogue ehechaséva ndaikatúi ojehechauka ndéve ojejuhu rupi peteĩ jejavy mba'ekuaarã ñembohasakuévo.</p><ul><li>Ikatúpiko eñe'ẽ ko umi ñanduti renda jara ndive emomarandumi hag̃ua chupekuéra ko apañuãi.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Térã ikatu embojoapy oĩ'ỹva…">
+<!ENTITY securityOverride.getMeOutOfHereButton "¡Cheguenohẽmína ko'águi!">
+<!ENTITY securityOverride.exceptionButtonLabel "Embojuaju oĩ'ỹva…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Ani embojuapy peteĩ oĩ'ỹva eipuru jave ñanduti nderejeroviaiha térã ejepokuaa'ỹha ehechávo kyhyjerã ko mohendahavusu rehegua.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL okaygua">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Ikatúpiko eñe'ẽ umi ñanduti renda jara ndive emomarandu hag̃ua chupe ko apañuãi.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Ndaikatúi eikekatuhína">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Marandu tenondeveguáva: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Nde jeike nahekorosãihína">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Marandu tenondeveguáva: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY inadequateSecurityError.title "Nde jeike nahekorosãihína">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> oipuru tembipuru pyahu rekorosãrã ndoikovéimava ha oimeraẽva ombyaikuaáva. Peteĩ hekoñañáva ikatu ohechauka marandu hekorosã gua'uha. Pe ñanduti renda ñangarekohára omyatãraẽva'erã pe mohendahavusu oike mboyve tendápe.</p><p>Ayvu jejavy: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Jejavy guasu ñandutípe">
+<!ENTITY networkProtocolError.longDesc "<p>Pe kuatiarogue oñeha’ãhína mba’éichapa ohechaukáta jejavy guasu ñanduti pegua. </p><ul><li>Eñe’ẽ umi tenda jára ndive emomarandu hag̃ua chupekuéra ko apañuãi rehegua.</li></ul>">

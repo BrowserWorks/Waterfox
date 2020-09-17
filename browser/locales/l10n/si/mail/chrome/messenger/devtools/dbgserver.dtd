@@ -1,0 +1,4 @@
+<!ENTITY options.title "සංවර්දහක මෙවලම් අභිප්‍රේත">
+<!ENTITY options.status.label "තත්වය:">
+<!ENTITY options.port.label "පේනුව:">
+<!ENTITY options.forcelocal.label "වෙනත් පරිගණක වලින් පැමිණෙන සබඳතාවයන්ට ඉඩදෙන්න">

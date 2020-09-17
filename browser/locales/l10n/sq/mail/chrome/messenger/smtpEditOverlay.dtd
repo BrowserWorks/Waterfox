@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Rregullime">
+<!ENTITY security.caption "Siguri dhe Mirëfilltësim">
+<!ENTITY serverName.label "Emër Shërbyesi:">
+<!ENTITY serverName.accesskey "E">
+<!ENTITY serverDescription.label "Përshkrim:">
+<!ENTITY serverDescription.accesskey "P">
+<!ENTITY serverPort.label "Portë:">
+<!ENTITY serverPort.accesskey "O">
+<!ENTITY userName.label "Emër Përdoruesi:">
+<!ENTITY userName.accesskey "d">
+<!ENTITY connectionSecurity.label "Siguri lidhjeje:">
+<!ENTITY connectionSecurity.accesskey "l">
+<!ENTITY connectionSecurityType-0.label "Asnjë">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, në pastë">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Shërbyes SMTP">
+<!ENTITY serverPortDefault.label "Parazgjedhje:">
+<!ENTITY authMethod.label "Metodë mirëfilltësimi:">
+<!ENTITY authMethod.accesskey "M">

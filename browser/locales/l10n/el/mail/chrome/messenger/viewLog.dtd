@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Αρχείο καταγραφής φίλτρου">
+<!ENTITY viewLogInfo.text "Το Αρχείο καταγραφής φίλτρου είναι ένα αρχείο που καταγράφει ποια φίλτρα εκτελούνται. Χρησιμοποιήστε το κουτί επιλογής για να ενεργοποιήσετε την καταγραφή.">
+<!ENTITY clearLog.label "Εκκαθάριση Καταγραφής">
+<!ENTITY clearLog.accesskey "θ">
+<!ENTITY enableLog.label "Ενεργοποίηση της καταγραφής φίλτρου">
+<!ENTITY enableLog.accesskey "Ε">
+<!ENTITY closeLog.label "Κλείσιμο">
+<!ENTITY closeLog.accesskey "Κ">

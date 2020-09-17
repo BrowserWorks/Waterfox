@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Navegación con teclado">
+<!ENTITY tabNavigationBehavior.label "Navegación co tabulador">
+<!ENTITY tabNavigationLinks.label "Ligazóns">
+<!ENTITY tabNavigationLinks.accesskey "L">
+<!ENTITY tabNavigationForms.label "Botóns, botóns de opcións, caixas de selección, e listas de seleccion">
+<!ENTITY tabNavigationForms.accesskey "B">
+<!ENTITY tabNavigationTextboxes.label "Nota: caixas de texto e rexións desprazábeis sempre se inclúen na tabulación.">
+<!ENTITY tabNavigationDesc.label "Ao premer Tabulador ou Maiús+Tabulador, moverse entre:">
+<!ENTITY accessibilityBrowseWithCaret.label "Navegar con cursor de texto">
+<!ENTITY browseWithCaretDesc.label "A navegación con cursor de texto permítelle navegar e realizar seleccións dentro das páxinas usando as teclas do cursor para mover un cursor visíbel.">
+<!ENTITY browseWithCaretUse.label "Usar a navegación con cursor de texto">
+<!ENTITY browseWithCaretUse.accesskey "U">
+<!ENTITY browseWithCaretShortCut.label "Usar o atallo de teclado F7 para alternar a navegación con cursor de texto">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "Avisarme antes de activar a navegación con cursor de texto">
+<!ENTITY browseWithCaretWarn.accesskey "v">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title "Апавяшчэнні">
+<!ENTITY notifications.caption "Апавяшчэнні">
+<!ENTITY newMessagesArrive.label "Калі прыбываюць новыя лісты:">
+<!ENTITY showAlertFor.label "Паказаць папярэджанне для">
+<!ENTITY showAlertFor.accesskey "П">
+<!ENTITY showAlertTimeEnd.label "секундаў">
+<!ENTITY showAlertPreviewText.label "Паказваць перадпрагляд тэксту ліста">
+<!ENTITY showAlertPreviewText.accesskey "л">
+<!ENTITY showAlertSubject.label "Паказваць тэму">
+<!ENTITY showAlertSubject.accesskey "т">
+<!ENTITY showAlertSender.label "Паказваць адпраўніка">
+<!ENTITY showAlertSender.accesskey "а">
+<!ENTITY showTrayIcon.label "Паказаць значок у латку">
+<!ENTITY showTrayIcon.accesskey "л">
+<!ENTITY showBalloon.label "Паказваць капшук папярэджання">
+<!ENTITY showBalloon.accesskey "к">
+<!ENTITY bounceSystemDockIcon.label "Ажывіць значок">
+<!ENTITY bounceSystemDockIcon.accesskey "А">
+<!ENTITY playSound.label "Прайграць гук">
+<!ENTITY playSound.accesskey "г">
+<!ENTITY playButton.label "Граць">
+<!ENTITY playButton.accesskey "Г">
+<!ENTITY systemsound.label "Сістэмны гук новай пошты">
+<!ENTITY systemsound.accesskey "П">
+<!ENTITY customsound.label "Выбарачны файл .wav">
+<!ENTITY customsound.accesskey "В">
+<!ENTITY browse.label "Агляд…">
+<!ENTITY browse.accesskey "А">
+<!ENTITY browse.title "Выбраць файл">

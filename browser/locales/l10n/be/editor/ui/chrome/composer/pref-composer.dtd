@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composer.title "Укладальнік">
+<!ENTITY recentFiles.title "Меню нядаўніх старонак">
+<!ENTITY documentsInMenu.label "Найбольшая колькасць пералічаных старонак:">
+<!ENTITY documentsInMenu.accesskey "к">
+<!ENTITY savingFiles.title "Калі старонкі захоўваюцца або выдаюцца">
+<!ENTITY preserveExisting.label "Захоўваць першапачатковы фармат зыходніка">
+<!ENTITY preserveExisting.accesskey "З">
+<!ENTITY preserveExisting.tooltip "Захоўваць абрывы радкоў і першапачатковы фармат старонак">
+<!ENTITY saveAssociatedFiles.label "Захоўваць выявы і іншыя звязаныя файлы падчас захавання старонак ">
+<!ENTITY saveAssociatedFiles.accesskey "х">
+<!ENTITY showPublishDialog.label "Заўсёды паказваць дыялог выдання падчас публікавання старонак">
+<!ENTITY showPublishDialog.accesskey "ў">
+<!ENTITY composerEditing.label "Праўка">
+<!ENTITY maintainStructure.label "Захоўваць раскладку табліцы падчас устаўкі або выдалення ячэек">
+<!ENTITY maintainStructure.tooltip "Захоўваць проставугольную форму табліцы – самастойна дадаваць ячэйкі пасля ўстаўкі або выдалення ячэек">
+<!ENTITY maintainStructure.accesskey "У">
+<!ENTITY useCSS.label "Ужываць CSS стылі замест  HTML элементаў і атрыбутаў ">
+<!ENTITY useCSS.accesskey "ж">
+<!ENTITY crInPCreatesNewP.label "Увод (return) у абзацы заўсёды стварае новы абзац">
+<!ENTITY crInPCreatesNewP.accesskey "в">

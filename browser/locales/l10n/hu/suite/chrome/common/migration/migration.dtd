@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title           "Importálás varázsló">
+
+<!ENTITY importAllFrom.label             "Minden elem imőportálása innen:">
+<!ENTITY importBookmarksFrom.label       "Könyvjelzők importálása innen:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "Fájl">
+<!ENTITY importFromFile.accesskey        "F">
+<!ENTITY importFromNothing.label         "Nincs importálás">
+<!ENTITY importFromNothing.accesskey     "N">
+
+<!ENTITY importSource.title              "Beállítások és adatok importálása">
+<!ENTITY importItems.title               "Importálandó elemek">
+<!ENTITY importItems.label               "Válassza ki az importálni kívánt elemeket:">
+
+<!ENTITY selectProfile.title             "Profil kiválasztása">
+<!ENTITY selectProfile.label             "A következő profilokból lehet importálni:">
+
+<!ENTITY migrating.title                 "Importálás…">
+<!ENTITY migrating.label                 "A következő elemek importálása folyik…">
+
+<!ENTITY done.title                      "Importálás befejeződött">
+<!ENTITY done.label                      "A következő elemek sikeresen importálva lettek:">

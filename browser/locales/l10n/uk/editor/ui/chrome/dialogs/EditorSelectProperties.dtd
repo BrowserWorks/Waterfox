@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Властивості списку">
+
+<!ENTITY Select.label "Список">
+<!ENTITY SelectName.label "Назва списку:">
+<!ENTITY SelectName.accesskey "Н">
+<!ENTITY SelectSize.label "Висота:">
+<!ENTITY SelectSize.accesskey "В">
+<!ENTITY SelectMultiple.label "Множинний вибір">
+<!ENTITY SelectMultiple.accesskey "М">
+<!ENTITY SelectDisabled.label "Вимкнено">
+<!ENTITY SelectDisabled.accesskey "В">
+<!ENTITY SelectTabIndex.label "Послідовність переходу:">
+<!ENTITY SelectTabIndex.accesskey "П">
+
+<!ENTITY OptGroup.label "Група перемикачів">
+<!ENTITY OptGroupLabel.label "Мітка:">
+<!ENTITY OptGroupLabel.accesskey "М">
+<!ENTITY OptGroupDisabled.label "Вимкнено">
+<!ENTITY OptGroupDisabled.accesskey "В">
+
+<!ENTITY Option.label "Перемикач">
+<!ENTITY OptionText.label "Текст:">
+<!ENTITY OptionText.accesskey "Т">
+<!ENTITY OptionValue.label "Значення:">
+<!ENTITY OptionValue.accesskey "З">
+<!ENTITY OptionSelected.label "Спочатку вибрані">
+<!ENTITY OptionSelected.accesskey "В">
+<!ENTITY OptionDisabled.label "Вимкнено">
+<!ENTITY OptionDisabled.accesskey "В">
+
+<!ENTITY TextHeader.label "Текст">
+<!ENTITY ValueHeader.label "Значення">
+<!ENTITY SelectedHeader.label "Вибрано">
+
+<!ENTITY AddOption.label "Додати перемикач">
+<!ENTITY AddOption.accesskey "Д">
+<!ENTITY AddOptGroup.label "Додати групу">
+<!ENTITY AddOptGroup.accesskey "Г">
+<!ENTITY RemoveElement.label "Вилучити">
+<!ENTITY RemoveElement.accesskey "В">
+<!ENTITY MoveElementUp.label "Догори">
+<!ENTITY MoveElementUp.accesskey "о">
+<!ENTITY MoveElementDown.label "Донизу">
+<!ENTITY MoveElementDown.accesskey "з">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editorWindow.titlemodifier "Укладальнік">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!ENTITY compositionToolbar.tooltip "Прыладапаліца ўкладання">
+<!ENTITY previewToolbarCmd.label "Азірнуць">
+<!ENTITY previewToolbarCmd.tooltip "Загрузіць старонку ў азіральнік">
+<!ENTITY exportToTextCmd.label "Экспартаваць як тэкст…">
+<!ENTITY exportToTextCmd.accesskey "т">
+<!ENTITY previewCmd.label "Азірнуць старонку">
+<!ENTITY previewCmd.accesskey "А">
+<!ENTITY sendPageCmd.label "Даслаць старонку…">
+<!ENTITY sendPageCmd.accesskey "Д">
+<!ENTITY compositionToolbarCmd.label "Прыладапаліца ўкладання">
+<!ENTITY compositionToolbarCmd.accesskey "ў">
+<!ENTITY formattingToolbarCmd.label "Прыладапаліца фарматавання">
+<!ENTITY formattingToolbarCmd.accesskey "ф">
+<!ENTITY editmodeToolbarCmd.label "Прыладапаліца праўкі">
+<!ENTITY editmodeToolbarCmd.accesskey "п">
+<!ENTITY formatMenu.label "Фармат">
+<!ENTITY formatMenu.accesskey "Ф">
+<!ENTITY grid.label "Пазіцыйная сетка">
+<!ENTITY grid.accesskey "с">
+<!ENTITY pageProperties.label "Загаловак старонкі і ўласуівасці…">
+<!ENTITY pageProperties.accesskey "З">
+<!ENTITY validateCmd.label "Праверыць HTML">
+<!ENTITY validateCmd.accesskey "П">
+<!ENTITY NormalModeTab.label "Звычайны">
+<!ENTITY NormalMode.label "Звычайны рэжым праўкі">
+<!ENTITY NormalMode.accesskey "З">
+<!ENTITY NormalMode.tooltip "Паказваць межы табліцаў і іменаваныя якары">
+<!ENTITY AllTagsModeTab.label "Меціны HTML">
+<!ENTITY AllTagsMode.label "Меціны HTML">
+<!ENTITY AllTagsMode.accesskey "М">
+<!ENTITY AllTagsMode.tooltip "Паказваць значкі для ўсіх мецінаў HTML">
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Зыходнік">
+<!ENTITY HTMLSourceMode.label "Зыходнік HTML">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Праўка зыходніка HTML">
+<!ENTITY PreviewModeTab.label "Перадпрагляд">
+<!ENTITY PreviewMode.label "Перадпрагляд">
+<!ENTITY PreviewMode.accesskey "П">
+<!ENTITY PreviewMode.tooltip "Паказваць такім, якім будзе бачна ў азіральніку ">

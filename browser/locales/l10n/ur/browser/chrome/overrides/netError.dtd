@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "صفحہ لوڈ کرنے میں مسلہ">
+<!ENTITY retry.label "دوبارہ کوشش کریں">
+<!ENTITY returnToPreviousPage.label "واپس جائیں">
+<!ENTITY returnToPreviousPage1.label "واپس جائیں (تجویز شدہ)">
+<!ENTITY advanced2.label "اعلٰی…">
+<!ENTITY viewCertificate.label "تصدیق نامہ دیکھیں">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "پیش کار نہیں ملا">
+<!-- Localization note (dnsNotFound.title1) - "Hmm" is a sound made when considering or puzzling over something. You don't have to include it in your translation if your language does not have a written word like this. -->
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>مسل نام کو کیپیٹل یا دوسرے ٹائپنگ نقص کے لیے چیک کریں</li> <li>چیک کریں کہ مسل ہٹائی، نام تبدیل یا ڈلیٹ تو نہیں کر دی گئی۔ </li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul><li>یہ شاید ہٹائی گئی ہو، منتقل کر دیا ہو یا مسل کی اجازت رسائ سے روک رہی ہو</li></ul>">
+
+<!ENTITY generic.longDesc "<p>کسی وجہ سے یہ صفح لوڈ نہیں کر سکتا &brandShortName;</p>">
+
+<!ENTITY captivePortal.title "نیٹ ورک میں لاگ ان کریں">
+<!ENTITY captivePortal.longDesc2 "<p>انٹرنیٹ رسائی حاصل کرنے کے لئے اپکو پہلے اس نیٹورک پر لاگ ان کرنا ہوگا۔</p>">
+
+<!ENTITY openPortalLoginPage.label2 "نیٹ ورک کا لاگ ان صفحہ کھولیں">
+
+<!ENTITY malformedURI.pageTitle "ناجائز URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p> درخواست کردہ دستاویز &brandShortName; کے کیسے میں دستیاب نہیں۔ </p><ul><li> احتیاط کے لیے &brandShortName; حساس دستاویز خود بخود دوبارہ نہیں مانگتا۔ </li><li> ویب سائٹ سے دستاویز پھر مانگنے کے لیے &quot;پھر کوشش کریں&quot; پر کلک کریں۔</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>آن لائن موڈ پر آنے کے لیے اور صفح پھر لوڈ کرنے کے لیے &quot;پھر کوشش کریں&quot; دبائیں</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>ویب سائٹ کے مالکین کو اس مسلے کا بتانے کے لیے رابطہ کریں</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>ویب سائٹ کے مالکین کو اس مسلے کا بتانے کے لیے رابطہ کریں</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>آپ کو یہ پتہ کھولنے کے لیے دیگر سافٹ ویئر تنصیب کرنے کی ضرورت پڑھ سکتی ہے۔</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>پراکسی سیٹنگز چیک کریں اور یقین کریں کہ یہ ٹھیک ہیں۔</li> <li>یہ چیک کرنے کے لیے کہ آپ کا پراکسی پیش کار ٹھیک سے کام کر رہا ہے، اپنے نیٹورک نظام کار سے رابطہ کریں۔</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>پراکسی سیٹنگز چیک کریں اور یقین کریں کہ یہ ٹھیک ہیں۔</li> <li>چیک کریں کہ آپ کے کمپیوٹر کے پاس ایک ٹھیک نیٹورک کنکشن ہے۔</li> <li>اگر آپ کا کمپیوٹر یا نیٹورک فصیل کے ذریعے محفوظ ہے تو چیک کریں کہ  ویب تک رسائی کر سکتا ہے۔&brandShortName;</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>یہ مسلہ کبھی کبھی کوکیز نااہل کرنے یا انہیں قبول کہ کرنے کی وجہ سے ہو سکتی ہے۔</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>چیک کریں کہ آپ کے سسٹم پر پرسنل سکیورٹی مینیجر  تنصیب ہے۔</li> <li>یہ پیش کار پر غیر سٹینڈرڈ تشکیل کی وجہ سے ہو سکتا ہے۔</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>جو صفحہ آپ دیکھنا چاہ رہے ہیں، دکھایا نہیں جا سکتا کیونکہ موصول قوائف کی اصلیت کی تصدیق نہیں ہو سکی۔</li> <li>ویب سائٹ کے مالک کو اس مسلے کا بتانے کے لیے ان سے رابطہ کریں۔</li> </ul>">
+
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "آپ اس بارے میں کیا کر سکتے ہیں؟">
+
+
+
+
+<!ENTITY sharedLongDesc "<ul> <li>سائٹ عارظی طور پر غیر موجود یا مصروف ہو سکتی ہے۔ کچھ دیر بعد پھر کوشش کریں۔</li> <li>اگر آپ کوئی بھی صفحے نہیں لوڈ کر پائیں تو اپنے کمپیوٹر کےنیٹورک کنکشن کی پڑتال کریں۔</li> <li>اگر آپ کا کمپیوٹر یا نیٹورک فصیل یا پراکسی کے ذریعے محفوظ ہے تو پڑتال کریں کہ &brandShortName; ویب تک رسائی کی اجازت ہے</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p> نے اس صفحے کو اس طریقے سے لوڈ نہیں ہونے دیا کیونکہ اس صفحے کی مواد سکیورٹی پالیسی ہے جو اس کی اجازت نہیں دیتی۔ &brandShortName;</p>">
+
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>جو صفح آپ دیکھنے کی کوشش کر رہے ہیں وہ دکھایا نہیں جا سکتا کیونکہ قوائف کی منتقلی میں نقص پکڑا گیا۔</p><ul><li>اس مسلے کا بتانے کے لیے ویب سائٹ کے مالکین سے رابطہ کیجیے۔</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "خطرے کو قبول کریں اور جاری رکھیں">
+
+<!ENTITY errorReporting.automatic2 "Mozilla کی مدد کرے نقصان کردہ سائٹ کی شناخت اور بلاک کرنیں کے لئے اس طرح کی نقص رپورٹ کرے">
+<!ENTITY errorReporting.learnMore "مزید سیکھیں…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>اس مسلے کا بتانے کے لیے ویب سائٹ کے مالکین سے رابطہ کیجیے۔</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "اعلی معلومات: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.sts.pagetitle  "رابطہ قائم نہیں ھوا: امکانی حفاظتی مسئلہ">
+<!ENTITY certerror.copyToClipboard.label "متن کو تختہ تراشہ پر نقل کریں">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> سیکورٹی ٹیکنالوجی کا استعمال کرتا ہے جو کی فرسودہ اور حملے کا شکار ہے۔ حملہ آور آسانی سے اس معلومات کو ظاہر کر سکتا یے جسے آپ محفوظ سمجھ رہے ہے۔ آپکی سائٹ دورہ کرنے سے پہلے ویب سائٹ منتظمکار کو پیش کار ٹھک کرنا ہوگا۔</p><p> خرابی کا کوڈ: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "بلاک شدہ صفحہ">
+
+
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "اگر آپ کارپوریٹ نیٹ ورک پر ہیں تو ، آپ اپنے آئی ٹی ڈیپارٹمنٹ سے رابطہ کرسکتے ہیں۔">
+
+
+<!ENTITY prefReset.longDesc "ایسا لگتا ہے کہ اس کی وجہ آپ کی نیٹ ورک سلامتی کی سیٹنگز ہو سکتی ہے۔ کیا آپ طےشدہ سیٹنگز بحال کرناچاہتے ہیں؟">
+<!ENTITY prefReset.label "طے شدہ سیٹنگز بحال کریں">
+
+<!ENTITY enableTls10.label "TLS 1.0 اور 1.1 کو فعال کریں">
+

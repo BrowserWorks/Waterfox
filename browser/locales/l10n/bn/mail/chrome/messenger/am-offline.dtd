@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "ডিস্কের জায়গা সংরক্ষণ করতে, ডাউনলোড করা হবে না:">
+<!ENTITY doNotDownloadNntp.label "ডিস্কের জায়গা সংরক্ষণ করতে, অফলাইন ব্যবহারের জন্য ডাউনলোড করা হবে না:">
+<!ENTITY doNotDownloadImap.label "ডিস্কের জায়গা সংরক্ষণ করতে, সার্ভার থেকে বার্তা ডাউনলোড এবং অফলাইন ব্যবহারের জন্য স্থানীয় কপি রাখার ক্ষেত্রে সময় অথবা আকার দ্বারা সীমাবদ্ধ করা যায়।">
+<!ENTITY offlineNotDownload.label "বার্তাসমূহ অপেক্ষাকৃত বড় (M)">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY autosyncNotDownload.label "এর থেকে বড় বার্তা ডাউনলোড করা হবে না (m)">
+<!ENTITY autosyncNotDownload.accesskey "m">
+<!ENTITY kb.label "কিলোবাইট">
+<!ENTITY daysOld.label "দিনের পুরনো">
+<!ENTITY message.label "বার্তা">
+<!ENTITY nntpNotDownloadRead.label "বার্তা পাঠ করুন (d)">
+<!ENTITY nntpNotDownloadRead.accesskey "d">
+<!ENTITY nntpDownloadMsg.label "অপেক্ষাকৃত বেশী বার্তা (e)">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "ডিস্কের জায়গা পুনরুদ্ধার করতে, পুরনো বার্তা স্থায়ীভাবে মুছে ফেলা যেতে পারে।">
+<!ENTITY retentionCleanupImap.label "ডিস্কের জায়গা পুনরুদ্ধার করতে, পুরনো বার্তা স্থায়ীভাবে মুছে ফেলা যেতে পারে, স্থানীয় অনুলিপি এবং দূরবর্তী সার্ভারের মূল বার্তা উভয়ই।">
+<!ENTITY retentionCleanupPop.label "ডিস্কের জায়গা পুনরুদ্ধার করতে, দূরবর্তী সার্ভারের মূল অনুলিপিসহ, পুরনো বার্তা স্থায়ীভাবে মুছে ফেলা যেতে পারে।">
+<!ENTITY retentionKeepMsg.label "অপেক্ষাকৃত পুরনো বার্তা মুছে ফেলা হবে (t)">
+<!ENTITY retentionKeepMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "কোনো বার্তা মোছা হবে না (n)">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "সব মুছে ফেলা হবে, তবে সর্বাপেক্ষা সাম্প্রতিক (b)">
+<!ENTITY retentionKeepRecent.accesskey "b">
+<!ENTITY retentionApplyToFlagged.label "সর্বদা তারা চিহ্নিত বার্তা রাখা হবে (e)">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+<!ENTITY nntpRemoveMsgBody.label "বার্তা হতে মূল অংশ অপসারণ করা হবে, অপেক্ষাকৃত বেশী (o)">
+<!ENTITY nntpRemoveMsgBody.accesskey "o">
+<!ENTITY offlineSelectNntp.label "অফলাইনে ব্যবহারের জন্য নিউজগ্রুপ নির্বাচন… (S)">
+<!ENTITY offlineSelectNntp.accesskey "S">
+<!ENTITY offlineImapAdvancedOffline.label "উচ্চ পর্যায়ের… (v)">
+<!ENTITY offlineImapAdvancedOffline.accesskey "v">
+<!ENTITY syncGroupTitle.label "বার্তা সমকালীনকরণ">
+<!ENTITY diskspaceGroupTitle.label "ডিস্কের জায়গা">
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+
+<!ENTITY allAutosync.label "স্থানীয়ভাবে সকল বার্তা সমকালীন করা হবে (c)">
+<!ENTITY allAutosync.accesskey "c">
+<!ENTITY ageAutosyncBefore.label "সাম্প্রতিক বিষয়সমূহ সমকালীন করা হবে">
+<!ENTITY ageAutosync.accesskey "z">
+<!ENTITY ageAutosyncMiddle.label "">
+<!ENTITY dayAgeInterval.label "দিন">
+<!ENTITY weekAgeInterval.label "সপ্তাহ">
+<!ENTITY monthAgeInterval.label "মাস">
+<!ENTITY yearAgeInterval.label "বছর">
+<!ENTITY ageAutosyncAfter.label "">

@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label          "Omadused">
+
+<!ENTITY generalInfo.label                      "Üldine info">
+<!ENTITY folderCharsetFallback2.label           "Teksti kodeeringu varuvariant:">
+<!ENTITY folderCharsetFallback2.accesskey       "a">
+<!ENTITY folderCharsetEnforce2.label            "Kodeering rakendatakse kõigile kaustas olevatele kirjadele (üksikute kirjade kodeeringut ja automaatselt tuvastatud sätteid ignoreeritakse)">
+<!ENTITY folderCharsetEnforce2.accesskey        "R">
+<!ENTITY folderRebuildSummaryFileTip2.label     "Loo kokkuvõtte fail uuesti">
+<!ENTITY folderRebuildSummaryFile2.label        "Paranda kaust">
+<!ENTITY folderRebuildSummaryFile2.accesskey    "P">
+<!ENTITY folderRebuildSummaryFile.explanation   "Mõnikord saab kausta kokkuvõtte fail (.msf) kahjustada ja kirjad võivad näida kadununa või kustutatud kirjad jääda endiselt nähtavaks; kausta parandamine võib need probleemid lahendada.">
+<!ENTITY folderIncludeInGlobalSearch.label      "Kirjad selles kaustas kaasatakse üldotsingu tulemustesse">
+<!ENTITY folderIncludeInGlobalSearch.accesskey  "K">
+
+<!ENTITY retention.label                        "Säilitamise reeglid">
+<!ENTITY retentionUseAccount.label              "Kasutatakse minu konto sätteid">
+<!ENTITY retentionUseAccount.accesskey          "s">
+<!ENTITY daysOld.label                          "päeva">
+<!ENTITY message.label                          "kirja">
+<!ENTITY retentionCleanup.label                 "Kettaruumi vabastamiseks on võimalik vanad kirjad jäädavalt kustutada">
+<!ENTITY retentionCleanupImap.label             "Kettaruumi vabastamiseks on võimalik vanad kirjad jäädavalt kustutada; nii kohalikud koopiad kui ka originaalid kaugserverist.">
+<!ENTITY retentionCleanupPop.label              "Kettaruumi vabastamiseks on võimalik vanad kirjad jäädavalt kustutada; kaasa arvatud originaalid kaugserverist.">
+<!ENTITY retentionDeleteMsg.label               "Kustutatakse vanemad kirjad kui">
+<!ENTITY retentionDeleteMsg.accesskey           "m">
+<!ENTITY retentionKeepAll.label                 "Ühtegi kirja ei kustutata">
+<!ENTITY retentionKeepAll.accesskey             "E">
+<!ENTITY retentionKeepRecent.label              "Kustutatakse kõik peale hiljutiste">
+<!ENTITY retentionKeepRecent.accesskey          "j">
+<!ENTITY retentionApplyToFlagged.label          "Alati säilitatakse tähistatud kirjad">
+<!ENTITY retentionApplyToFlagged.accesskey      "l">
+
+<!ENTITY folderSynchronizationTab.label         "Sünkroniseerimine">
+<!ENTITY folderCheckForNewMessages2.label       "Uute kirjade hankimisel kontrollitakse alati seda kausta">
+<!ENTITY folderCheckForNewMessages2.accesskey   "U">
+
+<!ENTITY offlineFolder.check.label              "See kaust märgitakse kasutamiseks võrguta režiimis">
+<!ENTITY offlineFolder.check.accesskey          "S">
+<!ENTITY offlineFolder.button.label             "Tõmba kirjad">
+<!ENTITY offlineFolder.button.accesskey         "m">
+
+<!ENTITY selectofflineNewsgroup.check.label     "See uudistegrupp märgitakse kasutamiseks võrguta režiimis">
+<!ENTITY selectofflineNewsgroup.check.accesskey "t">
+<!ENTITY offlineNewsgroup.button.label          "Tõmba nüüd">
+<!ENTITY offlineNewsgroup.button.accesskey      "T">
+
+<!ENTITY folderProps.name.label                 "Nimi:">
+<!ENTITY folderProps.name.accesskey             "N">
+<!ENTITY folderProps.location.label             "Asukoht:">
+<!ENTITY folderProps.location.accesskey         "A">
+
+<!ENTITY folderSharingTab.label                 "Jagamine">
+<!ENTITY privileges.button.label                "Õigused...">
+<!ENTITY privileges.button.accesskey            "i">
+<!ENTITY permissionsDesc.label                  "Sul on järgnevad õigused:">
+<!ENTITY folderType.label                       "Kausta tüüp:">
+
+<!ENTITY folderQuotaTab.label                   "Kvoot">
+<!ENTITY folderQuotaUsage.label                 "Kasutamine:">
+<!ENTITY folderQuotaStatus.label                "Olek:">
+
+<!ENTITY numberOfMessages.label                 "Kirjade arv:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "pole teada">
+<!ENTITY sizeOnDisk.label                        "Suurus kettal:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "pole teada">

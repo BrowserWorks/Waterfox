@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "Pengecualian">
+<!ENTITY treehead.sitename.label        "Laman web">
+<!ENTITY treehead.status.label          "Status">
+<!ENTITY remove.label                   "Buang Laman Web">
+<!ENTITY remove.accesskey               "B">
+<!ENTITY removeall.label                "Buang Semua Laman Web">
+<!ENTITY removeall.accesskey            "e">
+<!ENTITY address.label                  "Alamat laman web:">
+<!ENTITY address.accesskey              "l">
+<!ENTITY block.label                    "Sekat">
+<!ENTITY block.accesskey                "S">
+<!ENTITY session.label                  "Izinkan untuk Sesi">
+<!ENTITY session.accesskey              "S">
+<!ENTITY allow.label                    "Izinkan">
+<!ENTITY allow.accesskey                "I">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "ਅਹਿਮ ਖ਼ਬਰਾਂ">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "&brandShortName; ਦੀ ਇਸ ਇੰਸਟਾਲੇਸ਼ਨ ਨਾਲ ਫਾਇਰਫਾਕਸ ਵਿੱਚ ਤੁਹਾਡੇ ਵਲੋਂ ਪਹਿਲਾਂ ਹੀ ਸੰਭਾਲੀ ਜਾਣਕਾਰੀ ਨੂੰ ਸਿੰਕ ਕਰਨ ਲਈ ਆਪਣੇ &syncBrand.fxAccount.label; ਨਾਲ ਸਾਇਨ-ਇਨ ਕਰੋ।">
+<!ENTITY continue-button "ਜਾਰੀ ਰੱਖੋ">
+
+<!ENTITY mainText "&brandShortName; ਦੀ ਇਹ ਇੰਸਟਾਲੇਸ਼ਨ ਦਾ ਨਵਾਂ ਪਰੋਫਾਈਲ ਹੈ। ਇਹ ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਬੁੱਕਮਾਰਕ, ਪਾਸਵਰਡ ਅਤੇ ਵਰਤੋਂਕਾਰ ਪਸੰਦਾਂ ਨੂੰ ਫਾਇਰਫਾਕਸ ਦੀਆਂ ਹੋਰ ਇੰਸਟਾਲੇਸ਼ਨਾਂ (ਜਿਸ ਵਿੱਚ ਫਾਇਰਫਾਕਸ, ਫਾਇਰਫਾਕਸ ESR, ਫਾਇਰਫਾਕਸ ਬੀਟਾ, ਫਾਇਰਫਾਕਸ ਡਿਵੈਲਪਰ ਐਡੀਸ਼ਨ ਅਤੇ ਫਾਇਰਫਾਕਸ ਨਾਈਟਲੀ ਸ਼ਾਮਲ ਹਨ) ਨਾਲ ਸਾਂਝਾ ਨਹੀਂ ਕਰਦਾ ਹੈ।">

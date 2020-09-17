@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Cookies">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Política de aceptación de cookies">
+
+<!ENTITY accAllCookiesRadio.label       "Permitir todas as cookies">
+<!ENTITY accAllCookiesRadio.accesskey   "c">
+
+<!ENTITY accOrgCookiesRadio.label       "Só permitir as cookies para o sitio web orixinal">
+<!ENTITY accOrgCookiesRadio.accesskey   "o">
+
+<!ENTITY disableCookies.label           "Bloquear as cookies">
+<!ENTITY disableCookies.accesskey       "B">
+
+<!ENTITY cookieRetentionPolicy.label    "Política de retención de cookies">
+
+<!ENTITY acceptNormally.label           "Aceptar cookies normalmente">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "Só aceptar para a sesión actual">
+<!ENTITY acceptForSession.accesskey     "S">
+
+<!ENTITY acceptforNDays.label           "Aceptar as cookies para">
+<!ENTITY acceptforNDays.accesskey       "A">
+<!ENTITY days.label                     "días">
+
+<!ENTITY warnAboutCookies.label         "Preguntar para cada cookie">
+<!ENTITY warnAboutCookies.accesskey     "a">
+<!ENTITY forCurrentSession.label        "excepto para as cookies de sesión">
+<!ENTITY forCurrentSession.accesskey    "e">
+
+<!ENTITY manageCookies.label            "Xestionar as cookies e os sitios">
+<!ENTITY manageCookiesDescription.label "Permítelle ver e xestionar as cookies gardadas e as configuracións para cada sitio web para aceptar e rexeitar as cookies. As configuracións por sitio web sobrescribirán as configuracións de arriba.">
+
+<!ENTITY viewCookies.label              "Xestor de cookies">
+<!ENTITY viewCookies.accesskey          "X">
+

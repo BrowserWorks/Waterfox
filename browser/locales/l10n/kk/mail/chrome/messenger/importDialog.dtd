@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Импорттау">
+<!ENTITY importAll.label          "Барлығын импорттау">
+<!ENTITY importAll.accesskey      "ы">
+<!ENTITY importMail.label         "Эл. пошта">
+<!ENTITY importMail.accesskey     "п">
+<!ENTITY importFeeds.label        "Таспаларға жазылулар">
+<!ENTITY importFeeds.accesskey    "Т">
+<!ENTITY importAddressbook.label  "Адрес кітапшалары">
+<!ENTITY importAddressbook.accesskey "А">
+<!ENTITY importSettings.label     "Баптаулар">
+<!ENTITY importSettings.accesskey "Б">
+<!ENTITY importFilters.label      "Сүзгілер">
+<!ENTITY importFilters.accesskey  "С">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; импорттау шебері">
+<!ENTITY importShortDesc.label    "Басқа бағдарламалардан пошта, адрестік кітапшалар, баптаулар және сүзгілерді импорттау">
+
+<!ENTITY importDescription1.label "Бұл шебер басқа пошта бағдарламалары және белгілі адрестік кітапша пішімдерінен пошта хабарламаларын, адрестік кітапшалар жазбаларын, таспаларға жазылуларын, баптауларды және/немесе сүзгілерді &brandShortName; ішіне импорттайды.">
+<!ENTITY importDescription2.label "Олар импортталып болғаннан кейін, &brandShortName; ішінде қолжетерлік болады.">
+
+<!ENTITY selectDescription.label  "Импорттау үшін файл түрін таңдаңыз:">
+<!ENTITY selectDescriptionB.label "Бар болып тұрған тіркелгіні таңдаңыз немесе жаңа тіркелгіні жасаңыз:">
+<!ENTITY selectDescription.accesskey "И">
+<!ENTITY acctName.label           "Аты:">
+<!ENTITY acctName.accesskey       "А">
+<!ENTITY noModulesFound.label     "Ішінен деректерді импорттау үшін қолданба немесе файл табылмады.">
+
+<!ENTITY back.label               "&lt; Артқа">
+<!ENTITY forward.label            "Алға &gt;">
+<!ENTITY finish.label             "Дайын">
+<!ENTITY cancel.label             "Бас тарту">
+
+<!ENTITY select.label             "немесе импортталатын нәрсе түрін таңдаңыз:">
+
+<!ENTITY title.label              "Атауы">
+<!ENTITY processing.label         "Импорт жүріп жатыр…">

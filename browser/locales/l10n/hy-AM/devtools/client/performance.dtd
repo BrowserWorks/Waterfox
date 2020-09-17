@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "Հաշվետերը պահում է նմուշները շրջանաձև պահնակում, իսկ պահնակը հասնում է ձայնագրության սահմանին, նոր նմուշները սկսում են վերագրել նմուշները ձայնագրության սկզբում:">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Միացնել բազմագործուն Firefox -ը` նախապատվություններում` ձայնագրման տվյալները իրական ժամանակում մատուցելու համար:">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "Պահնակը լցված է: Այժմ հին նմուշները վերագրվում են:">
+
+<!-- LOCALIZATION NOTE (performanceUI.unavailableNoticePB): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "Այս պահին պրոֆիլը ձայնագրելը անհասանելի է։ Խնդրում ենք փակել զննարկման բոլոր պատուհանները և փորձել կրկին։ ">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "Բեռնում...">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Ջրվեժ">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Ցույց է տալիս այն տարբեր գործողությունները, որոնք զննարկիչը կատարում է ձայնագրման ընթացքում, որոնք հաջորդաբար նկարագրված են որպես ջրվեժ։">
+<!ENTITY performanceUI.toolbar.js-calltree "Կանչել ծառը">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Գունանշել JavaScript գործառույթները, որտեղ դիտարկիչը գրառելիս ծախսում է շատ ժամանակ:">
+<!ENTITY performanceUI.toolbar.memory-calltree "Բաշխումներ">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Ցուցադրումներ, որտեղ ձայնագրության ընթացքում հիշողություն է հատկացվել։">
+<!ENTITY performanceUI.toolbar.js-flamegraph "Այրել JS աղյուսակը">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Ցոյց է տալիս JavaScript֊ի կանչի զանգը ձայնագրութեան ընթացքում։">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Հատկացումների հրային աղյուսակ">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "Ընդհանուր ժամանակը">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Այս գործառույթում և իր գործառույթներում ծախսված ժամանակի քանակը։">
+<!ENTITY performanceUI.table.selfDuration             "Ինքնակառավարման ժամ">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Ժամանակը ծախսվել է միայն այս գործառույթի ընթացքում։">
+<!ENTITY performanceUI.table.totalPercentage          "Ընդհանուր արժեքը">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Ժամային տոկոսը ծախսվել է միայն այս գործառույթի ընթացքում։">
+<!ENTITY performanceUI.table.selfPercentage           "Ինքնարժեքը">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Ժամային տոկոսը ծախսվել է միայն այս գործառույթի ընթացքում։">
+<!ENTITY performanceUI.table.samples                  "Նմուշներ">
+<!ENTITY performanceUI.table.samples.tooltip          "Այս գործառույթը բազմիցս անգամ եղել է տուփի վրա, երբ պրոֆիլը վերցրել է նմուշ։">
+<!ENTITY performanceUI.table.function                 "Գործառույթ">
+<!ENTITY performanceUI.table.function.tooltip         "Նմուշառված գործառույթի անվանումը և աղբյուրը:">
+<!ENTITY performanceUI.table.totalAlloc               "Ընդհանուր ընտրանքային հատկացումներ">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Այս վայրում և կլեներում նմուշառված առարկաների հատկացումների ընդհանուր քանակը։">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "Ընտրեք, թե ինչ տվյալներ են ցուցադրվելու ժամանակացույցում">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "Կազմաձևել կատարման նախասիրությունները։">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "Հակադարձ զանգի ծառ">
+<!ENTITY performanceUI.invertTree.tooltiptext "Զանգի ծառի շրջադարձը ցույց է տալիս զանգվածի պրոֆիլավորված ուղիները՝սկսած ամենաերիտասարդ շրջանակներից և ընդլայնվում են դեպի ավելի հին շրջանակներ։">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Շրջել բոց աղյուսակը">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Այրված աղյուսակը շրջելիս ցույց են տալիս զանգվածի հաշվեհամարի ուղիները՝սկսած ամենաերիտասարդ շրջանակներից և ընդլայնվում են դեպի ավելի հին շրջանակներ։">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Ցուցադրել Gecko հարթակի տվյալները">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Հարթակի տվյալների ցուցադրումը թույլ է տալիս JavaScript Profiler֊ի զեկույցները ներառել Gecko հարթակի խորհրդանիշներին։">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "Ցուցադրել JIT լավարկումները">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Ցույց տվեք JIT օպտիմազման տվյալները, որոնք նմուշառված են JavaScript֊ի յուրաքանչյուր շրջանակում․">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "Հարթեցնել ծառի կրկնարկումը">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Ուղղել ռեկուրսիան, երբ ստուգվում են գործառույթները։">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "Գրառման հիշողություն">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Գրառման հիշողության սպառումը հատկգրելիս։">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "Գրառել հատկացումները">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Գրառել առարկայի հատկացումները հատկագրելիս։">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "Գրառել թարթակի արագությունը">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Գրառել թարթակի արագությունը հատկագրելիս։">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "Ներկայումս գրառում է">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "Դադարեցնել գրառումը մուտքագրելով">
+<!ENTITY performanceUI.console.stopCommandEnd   "վահանակում։">

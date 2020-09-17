@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Priodweddau'r Ffurflen">
+
+<!ENTITY Settings.label "Gosodiadau">
+
+<!ENTITY FormName.label "Enw'r Ffurflen:">
+<!ENTITY FormName.accesskey "E">
+<!ENTITY FormAction.label "URL Gweithredol:">
+<!ENTITY FormAction.accesskey "U">
+<!ENTITY FormMethod.label "Dull:">
+<!ENTITY FormMethod.accesskey "D">
+<!ENTITY FormEncType.label "Amgodio:">
+<!ENTITY FormEncType.accesskey "A">
+<!ENTITY FormTarget.label "Ffrâm Darged:">
+<!ENTITY FormTarget.accesskey "F">
+
+<!ENTITY RemoveForm.label "Tynnu'r Ffurflen">
+<!ENTITY RemoveForm.accesskey "F">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Afrit og möppur">
+<!ENTITY sendingPrefix.label "Þegar póstur er sendur, gerist eftirfarandi sjálfkrafa: ">
+<!ENTITY fccMailFolder.label "Setja afrit í:">
+<!ENTITY fccMailFolder.accesskey "t">
+<!ENTITY fccReplyFollowsParent.label "Setja svarpóst í möppu póstsins sem verið er að svara">
+<!ENTITY fccReplyFollowsParent.accesskey "p">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Senda afrit á þessi tölvupóstföng:">
+<!ENTITY ccAddress.accesskey "þ">
+<!ENTITY ccAddressList.placeholder "Aðskildu tölvupóstföng með kommum">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Senda falið afrit á þessi tölvupóstföng:">
+<!ENTITY bccAddress.accesskey "ö">
+<!ENTITY bccAddressList.placeholder "Aðskildu tölvupóstföng með kommum">
+<!ENTITY saveMessageDlg.label "Birta staðfestingarglugga þegar póstur er vistaður">
+<!ENTITY saveMessageDlg.accesskey "s">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;Sent&quot; mappa í:">
+<!ENTITY sentFolderOn.accesskey "e">
+<!ENTITY sentInOtherFolder.label "Annað:">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Skjalageymsla">
+<!ENTITY keepArchives.label "Geyma skjalageymslu í:">
+<!ENTITY keepArchives.accesskey "k">
+<!ENTITY archiveHierarchyButton.label "Stillingar fyrir skjalageymslu…">
+<!ENTITY archiveHierarchyButton.accesskey "a">
+<!ENTITY archivesFolderOn.label "&quot;Skjalageymsla&quot; í:">
+<!ENTITY archivesFolderOn.accesskey "S">
+<!ENTITY archiveInOtherFolder.label "Annað:">
+<!ENTITY archiveInOtherFolder.accesskey "ð">
+<!ENTITY specialFolders.label "Drög og sniðmát">
+<!ENTITY keepDrafts2.label "Geyma drög í:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;Drög&quot; mappa í:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "Annað:">
+<!ENTITY draftInOtherFolder.accesskey "n">
+<!ENTITY keepTemplates.label "Geyma póstsniðmát í:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;Sniðmát&quot; mappa í:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "Annað:">
+<!ENTITY templateInOtherFolder.accesskey "a">

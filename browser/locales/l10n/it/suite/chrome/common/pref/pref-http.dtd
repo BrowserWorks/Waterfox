@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "Trasferimenti HTTP">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Opzioni connessione diretta">
+<!ENTITY prefProxy.label                     "Opzioni connessione via proxy">
+<!ENTITY prefEnableHTTP10.label              "Utilizza HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "U">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "t">
+<!ENTITY prefEnableHTTP11.label              "Utilizza HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "H">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "z">
+<!ENTITY prefPara                            "Le connessioni HTTP possono essere migliorate usando queste opzioni per aumentare la velocità o la compatibilità. Alcuni server proxy, ad esempio, richiedono HTTP/1.0 (vedere le note di versione per i dettagli).">
+<!ENTITY prefUseragent.label                 "Stringa user agent">
+<!ENTITY prefFirefoxCompat.label             "Pubblicizza compatibilità Firefox">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "Pubblicizza installazione di Lightning">
+<!ENTITY prefLightningShow.accesskey         "P">
+<!ENTITY prefCompatWarning                   "ATTENZIONE: disabilitare queste impostazioni potrebbe provocare malfunzionamenti in siti o servizi web.">
+<!ENTITY prefFirefoxStrict.label             "Identificati come Firefox">
+<!ENTITY prefFirefoxStrict.accesskey         "d">
+<!ENTITY prefFirefoxNone.label               "Identificati come SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey           "S">
+<!ENTITY prefFirefoxCompat2.label            "Identificati come SeaMonkey e dichiara compatibilità con Firefox">
+<!ENTITY prefFirefoxCompat2.accesskey        "c">
+<!ENTITY prefCompatWarning2.desc             "ATTENZIONE: cambiare questa impostazione potrebbe risultare in un malfunzionamento di servizi o siti web.">

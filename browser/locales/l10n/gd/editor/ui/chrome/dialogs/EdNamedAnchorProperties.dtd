@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Roghainnean na h-acrach ainmichte">
+<!ENTITY anchorNameEditField.label "Ainm na h-acrach:">
+<!ENTITY anchorNameEditField.accessKey "n">
+<!ENTITY nameInput.tooltip "Cuir a-steach ainm sònraichte airson na h-acrach ainmichte seo (amas)">
+

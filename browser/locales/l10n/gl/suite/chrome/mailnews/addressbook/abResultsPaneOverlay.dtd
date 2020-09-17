@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY GeneratedName.label                   "Nome">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "Correo electrónico">
+<!ENTITY PrimaryEmail.accesskey                "e">
+<!ENTITY Company.label                         "Organización">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "Nome fonético">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Alcume">
+<!ENTITY NickName.accesskey                    "A">
+<!ENTITY SecondEmail.label                     "Correo electrónico adicional">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "Departamento">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "Título">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Móbil">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Busca">
+<!ENTITY PagerNumber.accesskey                 "B">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Teléfono particular">
+<!ENTITY HomePhone.accesskey                   "T">
+<!ENTITY WorkPhone.label                       "Teléfono do traballo">
+<!ENTITY WorkPhone.accesskey                   "T">
+<!ENTITY ScreenName.label                      "Nome en pantalla">
+<!ENTITY ScreenName.accesskey                  "N">
+<!ENTITY sortAscending.label                   "Ascendente">
+<!ENTITY sortAscending.accesskey               "A">
+<!ENTITY sortDescending.label                  "Descendente">
+<!ENTITY sortDescending.accesskey              "D">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "Redactar correo para">
+<!ENTITY composeEmail.accesskey                "c">
+<!ENTITY copyAddress.label                     "Copiar correo electrónico">
+<!ENTITY copyAddress.accesskey                 "a">
+<!ENTITY deleteAddrBookCard.label              "Borrar">
+<!ENTITY deleteAddrBookCard.accesskey          "B">
+<!ENTITY newAddrBookCard.label                 "Nova tarxeta…">
+<!ENTITY newAddrBookCard.accesskey             "N">
+<!ENTITY newAddrBookMailingList.label          "Nova rolda de correo…">
+<!ENTITY newAddrBookMailingList.accesskey      "l">
+<!ENTITY addrBookCardProperties.label          "Propiedades">
+<!ENTITY addrBookCardProperties.accesskey      "P">

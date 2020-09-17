@@ -1,0 +1,99 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+<!--
+Entities below were automatically added by compare-locales,
+ based on en-US entities.
+-->
+
+<!ENTITY cookies.info.path.label "Path:">
+<!ENTITY fdata.tree.fieldname.label "Field Name">
+<!ENTITY perm.UseDefault "Use Default">
+<!ENTITY forget.permissions.label "Permissions">
+<!ENTITY selectAll.key "a">
+<!ENTITY pwd.tree.password.label "Password">
+<!ENTITY fdata.tree.lastused.label "Last Used">
+<!ENTITY pwd.button.remove.accesskey "R">
+<!ENTITY cookies.blockOnRemove.accesskey "W">
+<!ENTITY cookies.info.expires.label "Expires:">
+<!ENTITY cookies.tree.host.label "Website">
+<!ENTITY cookies.ctx.remove.accesskey "R">
+<!ENTITY cookies.info.domain.label "Domain:">
+<!ENTITY fdata.ctx.selectAll.label "Select All">
+<!ENTITY cookies.description "This domain has stored the following cookies on your computer:">
+<!ENTITY perm.NeverSave "Never save">
+<!ENTITY domain.search.placeholder "Search Domains">
+<!ENTITY cookies.ctx.selectAll.accesskey "A">
+<!ENTITY pwd.button.remove.label "Remove">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Copy Password">
+<!ENTITY pwd.ctx.selectAll.label "Select All">
+<!ENTITY fdata.tree.value.label "Entered Value">
+<!ENTITY forget.preferences.accesskey "o">
+<!ENTITY forget.formdata.label "Form Data">
+<!ENTITY cookies.info.host.label "Host:">
+<!ENTITY tab.forget.label "Forget">
+<!ENTITY forget.cookies.accesskey "C">
+<!ENTITY forget.permissions.accesskey "P">
+<!ENTITY cookies.infobox.label "Information about the selected Cookie">
+<!ENTITY pwd.ctx.remove.label "Remove">
+<!ENTITY cookies.blockOnRemove.label "When removing, block the listed websites from setting future cookies">
+<!ENTITY fdata.ctx.remove.accesskey "R">
+<!ENTITY tab.permissions.label "Permissions">
+<!ENTITY prefs.ctx.selectAll.label "Select All">
+<!ENTITY tab.preferences.label "Preferences">
+<!ENTITY domain.ctx.forgetdomain.accesskey "F">
+<!ENTITY forget.formdata.accesskey "D">
+<!ENTITY cookies.button.remove.accesskey "R">
+<!ENTITY cookies.ctx.remove.label "Remove">
+<!ENTITY pwd.ctx.remove.accesskey "R">
+<!ENTITY domain.ctx.forgetglobal.accesskey "F">
+<!ENTITY cookies.ctx.selectAll.label "Select All">
+<!ENTITY pwd.ctx.selectAll.accesskey "A">
+<!ENTITY fdata.button.remove.accesskey "R">
+<!ENTITY forget.passwords.label "Passwords">
+<!ENTITY fdata.ctx.remove.label "Remove">
+<!ENTITY cookies.info.name.label "Name:">
+<!ENTITY cookies.info.sendtype.label "Send For:">
+<!ENTITY domain.search.key "f">
+<!ENTITY cookies.info.value.label "Content:">
+<!ENTITY fdata.button.remove.label "Remove">
+<!ENTITY pwd.tree.username.label "Username">
+<!ENTITY prefs.ctx.remove.accesskey "R">
+<!ENTITY data.search.key "k">
+<!ENTITY cookies.button.remove.label "Remove">
+<!ENTITY fdata.ctx.selectAll.accesskey "A">
+<!ENTITY fdata.tree.firstused.label "First Used">
+<!ENTITY tab.passwords.label "Passwords">
+<!ENTITY prefs.ctx.selectAll.accesskey "A">
+<!ENTITY fdata.search.placeholder "Search Field Data">
+<!ENTITY prefs.description "Content preferences are a way for &brandShortName; to save its settings, like zoom levels, specifically for a website.">
+<!ENTITY prefs.button.remove.accesskey "R">
+<!ENTITY forget.button.accesskey "F">
+<!ENTITY prefs.tree.name.label "Preference Name">
+<!ENTITY cookies.tree.expires.label "Expires">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "C">
+<!ENTITY forget.preferences.label "Content Preferences">
+<!ENTITY domain.ctx.forgetglobal.label "Forget Global Data">
+<!ENTITY perm.AskAlways "Always ask">
+<!ENTITY forget.passwords.accesskey "a">
+<!ENTITY prefs.button.remove.label "Remove">
+<!ENTITY domain.tree.domain.label "Domain">
+<!ENTITY perm.Block "Block">
+<!ENTITY perm.AllowSession "Allow for Session">
+<!ENTITY perm.Allow "Allow">
+<!ENTITY forget.button.label "Forget This Data">
+<!ENTITY pwd.description "You have the following passwords stored for this domain:">
+<!ENTITY prefs.tree.value.label "Value">
+<!ENTITY prefs.ctx.remove.label "Remove">
+<!ENTITY domain.ctx.forgetdomain.label "Forget About This Domain">
+<!ENTITY cookies.tree.name.label "Cookie Name">
+<!ENTITY tab.formdata.label "Form Data">
+<!ENTITY fdata.tree.usecount.label "Use Count">
+<!ENTITY dataman.windowTitle "Data Manager">
+<!ENTITY pwd.tree.host.label "Website">
+<!ENTITY tab.cookies.label "Cookies">
+<!ENTITY forget.cookies.label "Cookies">
+<!ENTITY prefs.tree.host.label "Website">

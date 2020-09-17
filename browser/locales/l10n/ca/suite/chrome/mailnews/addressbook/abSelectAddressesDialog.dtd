@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY selectAddressWindow.title           "Seleccioneu les adreces">
+<!-- Buttons -->
+
+<!ENTITY toButton.label                      "A->"> 
+<!ENTITY toButton.accesskey                  "A"> 
+<!ENTITY ccButton.label                      "Cc->"> 
+<!ENTITY ccButton.accesskey                  "C"> 
+<!ENTITY bccButton.label                     "Cco->">  
+<!ENTITY bccButton.accesskey                 "o">  
+<!ENTITY newButton.label                     "Nou..."> 
+<!ENTITY newButton.accesskey                 "N"> 
+<!ENTITY editButton.label                    "Edita..."> 
+<!ENTITY editButton.accesskey                "E">
+<!ENTITY removeButton.label                  "Elimina"> 
+<!ENTITY removeButton.accesskey              "i"> 
+<!ENTITY lookIn.label                        "Cerca a: "> 
+<!ENTITY lookIn.accesskey                    "r"> 
+<!ENTITY for.label                           "per:"> 
+<!ENTITY for.accesskey                       "e"> 
+<!ENTITY for.placeholder                     "Nom o correu">
+<!ENTITY addressMessageTo.label              "Adreça el missatge a:"> 
+<!-- Tooltips items -->  
+
+<!ENTITY addressPickerNewButton.tooltip      "Crea una targeta de llibreta d'adreces nova"> 
+<!ENTITY addressPickerEditButton.tooltip     "Edita la targeta seleccionada"> 
+

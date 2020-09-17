@@ -1,0 +1,291 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Skrifa: (ekkert efni)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Skrá">
+<!ENTITY fileMenu.accesskey "S">
+<!ENTITY newMenu.label "Nýr">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "Póstur">
+<!ENTITY newMessage.key "P">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "P">
+<!ENTITY newContact.label "Tengiliður í nafnaskrá…">
+<!ENTITY newContact.accesskey "T">
+<!ENTITY attachMenu.label "Setja inn">
+<!ENTITY attachMenu.accesskey "e">
+<!ENTITY attachFileCmd.label "Skrá…">
+<!ENTITY attachFileCmd.accesskey "S">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Tengill í skrá">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Vefsíðu…">
+<!ENTITY attachPageCmd.accesskey "V">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Persónulegt nafnspjald (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY remindLater.label "Minna mig á seinna">
+<!ENTITY remindLater.accesskey "M">
+<!ENTITY closeCmd.label "Loka">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "L">
+<!ENTITY saveCmd.label "Vista">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "V">
+<!ENTITY saveAsCmd.label "Vista sem">
+<!ENTITY saveAsCmd.accesskey "i">
+<!ENTITY saveAsFileCmd.label "Skrá…">
+<!ENTITY saveAsFileCmd.accesskey "S">
+<!ENTITY saveAsDraftCmd.label "Drög">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "Sniðmát">
+<!ENTITY saveAsTemplateCmd.accesskey "t">
+<!ENTITY sendNowCmd.label "Senda núna">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "Senda síðar">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "ð">
+<!ENTITY printSetupCmd.label "Uppsetning síðu…">
+<!ENTITY printSetupCmd.accesskey "U">
+<!ENTITY printPreviewCmd.label "Prentskoðun">
+<!ENTITY printPreviewCmd.accesskey "ð">
+<!ENTITY printCmd.label "Prenta…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "P">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Breyta">
+<!ENTITY editMenu.accesskey "e">
+<!ENTITY undoCmd.label "Afturkalla">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "u">
+<!ENTITY redoCmd.label "Endurtaka">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "r">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "s">
+<!ENTITY deleteCmd.label "Eyða">
+<!ENTITY deleteCmd.accesskey "E">
+<!ENTITY editRewrapCmd.label "Línuskipta">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Endurnefna viðhengi…">
+<!ENTITY renameAttachmentCmd.accesskey "e">
+<!ENTITY selectAllCmd.accesskey "j">
+<!ENTITY findBarCmd.label "Finna…">
+<!ENTITY findBarCmd.accesskey "F">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Leita og breyta…">
+<!ENTITY findReplaceCmd.accesskey "L">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Leita aftur">
+<!ENTITY findAgainCmd.accesskey "i">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Leita til baka">
+<!ENTITY findPrevCmd.accesskey "b">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Skoða
+">
+<!ENTITY viewMenu.accesskey "k">
+<!ENTITY viewToolbarsMenuNew.label "Verkfæraslár">
+<!ENTITY viewToolbarsMenuNew.accesskey "V">
+<!ENTITY menubarCmd.label "Valmynd">
+<!ENTITY menubarCmd.accesskey "m">
+<!ENTITY showCompositionToolbarCmd.label "Samsetningarslá">
+<!ENTITY showCompositionToolbarCmd.accesskey "m">
+<!ENTITY showFormattingBarCmd.label "Sniðslá">
+<!ENTITY showFormattingBarCmd.accesskey "n">
+<!ENTITY showTaskbarCmd.label "Stöðuslá">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "Sérsníða…">
+<!ENTITY customizeToolbar.accesskey "S">
+
+<!ENTITY addressSidebar.label "Tengiliðahliðslá">
+<!ENTITY addressSidebar.accesskey "T">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Snið">
+<!ENTITY formatMenu.accesskey "n">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Valkostir">
+<!ENTITY optionsMenu.accesskey "a">
+<!ENTITY checkSpellingCmd2.label "Yfirfara stafsetningu…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "Y">
+<!ENTITY enableInlineSpellChecker.label "Athuga stafsetningu í innslætti">
+<!ENTITY enableInlineSpellChecker.accesskey "s">
+<!ENTITY quoteCmd.label "Vitna í póst">
+<!ENTITY quoteCmd.accesskey "V">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Bæta við persónulegu nafnspjaldi (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Staðfesting á lestri">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Staðfesting á móttöku">
+<!ENTITY dsnMenu.accesskey "n">
+<!ENTITY deliveryFormatMenu.label "Afhendingarsnið">
+<!ENTITY deliveryFormatMenu.accesskey "f">
+<!ENTITY autoFormatCmd.label "Skynja sjálfkrafa">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "Aðeins ósniðinn texti">
+<!ENTITY plainTextFormatCmd.accesskey "n">
+<!ENTITY htmlFormatCmd.label "Aðeins aukinn texti (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "H">
+<!ENTITY bothFormatCmd.label "Venjulegur og aukinn texti (HTML)">
+<!ENTITY bothFormatCmd.accesskey "l">
+<!ENTITY priorityMenu.label "Forgangur">
+<!ENTITY priorityMenu.accesskey "F">
+<!ENTITY priorityButton.title "Forgangur">
+<!ENTITY priorityButton.tooltiptext "Breyta forgangi pósts">
+<!ENTITY priorityButton.label "Mikilvægi:">
+<!ENTITY lowestPriorityCmd.label "Lægstur">
+<!ENTITY lowestPriorityCmd.accesskey "L">
+<!ENTITY lowPriorityCmd.label "Lágur">
+<!ENTITY lowPriorityCmd.accesskey "g">
+<!ENTITY normalPriorityCmd.label "Venjulegur">
+<!ENTITY normalPriorityCmd.accesskey "n">
+<!ENTITY highPriorityCmd.label "Hár">
+<!ENTITY highPriorityCmd.accesskey "r">
+<!ENTITY highestPriorityCmd.label "Hæstur">
+<!ENTITY highestPriorityCmd.accesskey "H">
+<!ENTITY fileCarbonCopyCmd.label "Senda afrit til">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "Setja skrá hérna">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Verkfæri">
+<!ENTITY tasksMenu.accesskey "V">
+<!ENTITY messengerCmd.label "Póstur og fréttahópar">
+<!ENTITY messengerCmd.accesskey "P">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Nafnaskrá">
+<!ENTITY addressBookCmd.accesskey "N">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Stillingar reiknings">
+<!ENTITY accountManagerCmd2.accesskey "S">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label "Valkostir">
+<!ENTITY preferencesCmd2.accesskey "o">
+<!ENTITY preferencesCmdUnix.label "Valkostir">
+<!ENTITY preferencesCmdUnix.accesskey "V">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Minnka">
+<!ENTITY bringAllToFront.label "Endurheimta">
+<!ENTITY zoomWindow.label "Aðdráttur">
+<!ENTITY windowMenu.label "Gluggi">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Senda">
+<!ENTITY quoteButton.label "Tilvitnun">
+<!ENTITY addressButton.label "Tengiliðir">
+<!ENTITY attachButton.label "Skrá">
+<!ENTITY spellingButton.label "Stafsetning">
+<!ENTITY saveButton.label "Vista">
+<!ENTITY printButton.label "Prenta">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Senda þennan póst núna">
+<!ENTITY sendlaterButton.tooltip "Senda þennan póst seinna">
+<!ENTITY quoteButton.tooltip "Vitna í fyrri póst">
+<!ENTITY addressButton.tooltip "Veldu viðtakanda úr nafnaskránni">
+<!ENTITY spellingButton.tooltip "Athuga stafsetningu á vali eða öllum póstinum">
+<!ENTITY saveButton.tooltip "Vista þennan póst">
+<!ENTITY cutButton.tooltip "Klippa">
+<!ENTITY copyButton.tooltip "Afrita">
+<!ENTITY pasteButton.tooltip "Líma">
+<!ENTITY printButton.tooltip "Prenta þennan póst">
+
+<!-- Headers -->
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY subject.accesskey "f">
+
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+<!ENTITY SmileButton.tooltip "Setja inn broskarl">
+<!ENTITY smiley1Cmd.label "Bros">
+<!ENTITY smiley2Cmd.label "Fýlusvipur">
+<!ENTITY smiley3Cmd.label "Blikka">
+<!ENTITY smiley4Cmd.label "Tunga út">
+<!ENTITY smiley5Cmd.label "Hlæjandi">
+<!ENTITY smiley6Cmd.label "Skammast sín">
+<!ENTITY smiley7Cmd.label "Óákveðin">
+<!ENTITY smiley8Cmd.label "Óvænt">
+<!ENTITY smiley9Cmd.label "Kyssa">
+<!ENTITY smiley10Cmd.label "Öskra">
+<!ENTITY smiley11Cmd.label "Svalur">
+<!ENTITY smiley12Cmd.label "Peningamunnur">
+<!ENTITY smiley13Cmd.label "Fótur-í-Munn">
+<!ENTITY smiley14Cmd.label "Saklaus">
+<!ENTITY smiley15Cmd.label "Gráta">
+<!ENTITY smiley16Cmd.label "Segi ekki orð">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Fann engar uppástungur">
+<!ENTITY spellCheckIgnoreWord.label "Hunsa orð">
+<!ENTITY spellCheckIgnoreWord.accesskey "H">
+<!ENTITY spellCheckAddToDictionary.label "Bæta við orðasafn">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "Afturkalla">
+<!ENTITY undo.accesskey "u">
+<!ENTITY cut.label "Klippa">
+<!ENTITY cut.accesskey "K">
+<!ENTITY copy.label "Afrita">
+<!ENTITY copy.accesskey "A">
+<!ENTITY paste.label "Líma">
+<!ENTITY paste.accesskey "L">
+<!ENTITY pasteQuote.label "Líma inn sem tilvitnun">
+<!ENTITY pasteQuote.accesskey "i">
+
+<!ENTITY openAttachment.label "Opna">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "Eyða">
+<!ENTITY delete.accesskey "E">
+<!ENTITY removeAttachment.label "Fjarlægja viðhengi">
+<!ENTITY removeAttachment.accesskey "F">
+<!ENTITY renameAttachment.label "Endurskíra…">
+<!ENTITY renameAttachment.accesskey "r">
+<!ENTITY selectAll.label "Velja allt">
+<!ENTITY selectAll.accesskey "j">
+<!ENTITY attachFile.label "Bæta við skrá(m)…">
+<!ENTITY attachFile.accesskey "B">
+<!ENTITY attachCloud.label "Tengill í skrá…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "Breyta í…">
+<!ENTITY convertCloud.accesskey "B">
+<!ENTITY cancelUpload.label "Hætta við">
+<!ENTITY cancelUpload.accesskey "H">
+<!ENTITY convertRegularAttachment.label "Venjulegt viðhengi">
+<!ENTITY convertRegularAttachment.accesskey "V">
+<!ENTITY attachPage.label "Bæta við vefsíðu…">
+<!ENTITY attachPage.accesskey "v">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Bæta við orðasöfnum…">
+<!ENTITY spellAddDictionaries.accesskey "a">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Tengiliðir">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Sérsníða Frá veffang…">
+<!ENTITY customizeFromAddress.accesskey "a">
+

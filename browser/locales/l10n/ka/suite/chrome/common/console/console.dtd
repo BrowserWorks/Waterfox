@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "შეცდომების კონსოლი">
+
+<!ENTITY errFile.label        "წყაროს ფაილი:">
+<!ENTITY errLine.label        "სტრიქონი:">
+<!ENTITY errColumn.label      "სვეტი:">
+
+<!ENTITY all.label            "ყველა">
+<!ENTITY all.accesskey        "ყ">
+<!ENTITY errors.label         "შეცდომები">
+<!ENTITY errors.accesskey     "შ">
+<!ENTITY warnings.label       "გაფრთხილებები">
+<!ENTITY warnings.accesskey   "ფ">
+<!ENTITY messages.label       "შეტყობინებები">
+<!ENTITY messages.accesskey   "ტ">
+<!ENTITY clear.label          "გასუფთავება">
+<!ENTITY clear.accesskey      "ს">
+<!ENTITY codeEval.label       "კოდი:">
+<!ENTITY codeEval.accesskey   "კ">
+<!ENTITY evaluate.label       "ანალიზი">
+<!ENTITY evaluate.accesskey   "ზ">
+<!ENTITY filter2.label        "ფილტრი:">
+<!ENTITY filter2.accesskey    "ფ">
+
+<!ENTITY copyCmd.label         "ასლი">
+<!ENTITY copyCmd.accesskey     "ლ">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "პირველი > ბოლო დალაგება">
+<!ENTITY sortFirst.accesskey   "პ">
+<!ENTITY sortLast.label        "ბოლო > პირველი დალაგება">
+<!ENTITY sortLast.accesskey    "ბ">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "მენიუს ზოლი">
+<!ENTITY modeToolbar.tooltip   "რეჟიმების ხელსაწყოთა ზოლი">
+<!ENTITY entryToolbar.tooltip  "Javascript ელემენტების ხელსაწყოთა ზოლი">
+<!ENTITY toolbarsCmd.label     "ჩვენება/დამალვა">
+<!ENTITY toolbarsCmd.accesskey "ვ">
+<!ENTITY toolbarMode.label     "რეჟიმი">
+<!ENTITY toolbarMode.accesskey "რ">
+<!ENTITY toolbarEval.label     "JavaScript ელემენტი">
+<!ENTITY toolbarEval.accesskey "ლ">

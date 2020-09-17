@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Buscar mensaxes en:">
+<!ENTITY searchHeading.accesskey     "e">
+<!ENTITY searchSubfolders.label      "Buscar nos subcartafoles">
+<!ENTITY searchSubfolders.accesskey  "u">
+<!ENTITY searchLocalSystem.label     "Buscar no sistema local">
+<!ENTITY searchLocalSystem.accesskey "B">
+<!ENTITY resetButton.label           "Limpar">
+<!ENTITY resetButton.accesskey       "L">
+<!ENTITY openButton.label            "Abrir">
+<!ENTITY openButton.accesskey        "A">
+<!ENTITY deleteButton.label          "Borrar">
+<!ENTITY deleteButton.accesskey      "B">
+<!ENTITY searchDialogTitle.label     "Buscar nas mensaxes">
+<!ENTITY results.label               "Resultados">
+<!ENTITY fileHereMenu.label          "Gardar aquí">
+<!ENTITY fileHereMenu.accesskey      "r">
+<!ENTITY fileButton.label            "Ficheiro">
+<!ENTITY fileButton.accesskey        "F">
+<!ENTITY goToFolderButton.label      "Abrir cartafol da mensaxe">
+<!ENTITY goToFolderButton.accesskey  "n">
+<!ENTITY saveAsVFButton.label      "Gardar como cartafol de busca">
+<!ENTITY saveAsVFButton.accesskey  "G">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Buscar en:">
+<!ENTITY abSearchHeading.accesskey   "e">
+<!ENTITY propertiesButton.label      "Propiedades">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "Redactar">
+<!ENTITY composeButton.accesskey     "R">
+<!ENTITY abSearchDialogTitle.label   "Busca avanzada na axenda de enderezos">

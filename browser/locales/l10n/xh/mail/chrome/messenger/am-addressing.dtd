@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Uhlanganiselo &amp; Ukufakwa kweedilesi">
+<!ENTITY addressingGroupTitle.label "Kufakwa iidilesi">
+<!ENTITY addressingText.label      "Xa ujonga iidilesi:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Sebenzisa izikhethwa zeseva yam yelimiweyo i-LDAP ukwenzela le akhawunti">
+<!ENTITY useGlobal.accesskey       "S">
+<!ENTITY editDirectories.label     "Hlela Oovimba Beefayili...">
+<!ENTITY editDirectories.accesskey "H">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Sebenzisa iseva eyahlukileyo ye-LDAP:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "None">
+
+<!-- am-addressing.xul -->
+
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Uhlanganiselo">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Qamba imiyalezo kulungiselelo lwe-HTML">
+<!ENTITY useHtml.accesskey                    "Q">
+<!ENTITY autoQuote.label                      "Ngokuzenzekela caphula umyalezo wentsusa xa uphendula">
+<!ENTITY autoQuote.accesskey                  "c">
+<!ENTITY aboveQuote.label                     "qalisa ngempendulo yam ngaphezu kokucatshulweyo">
+<!ENTITY belowQuote.label                     "qalisa ngempendulo yam ngezantsi kokucatshulweyo">
+<!ENTITY selectAndQuote.label                 "khetha isicatshulwa">
+<!ENTITY place.label                          "uze ubeke umsayino wam">
+<!ENTITY place.accesskey                      "u">
+<!ENTITY belowText.label                      "ngezantsi kwesicatshulwa (kucetyiswa njalo)">
+<!ENTITY aboveText.label                      "ngezantsi kwempendulo yam (ngaphezu kokucatshulweyo)">
+<!ENTITY includeSigOnReply.label              "Include signature for replies">
+<!ENTITY includeSigOnReply.accesskey          "I">
+<!ENTITY includeSigOnForward.label            "Include signature for forwards">
+<!ENTITY includeSigOnForward.accesskey        "w">
+
+<!ENTITY globalComposingPrefs.label           "Global Composing Preferences…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Global Addressing Preferences…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Muokkaa merkintää" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Kesto pysyy samana muutettaessa päättymispäivää">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "Alkaa" >
+<!ENTITY newevent.to.label                  "Päättyy" >
+
+<!ENTITY newevent.status.label                    "Tila" >
+<!ENTITY newevent.status.accesskey                "T" >
+<!ENTITY newevent.eventStatus.none.label          "Ei määritetty" >
+<!ENTITY newevent.eventStatus.none.accesskey      "E" >
+<!ENTITY newevent.todoStatus.none.label           "Ei määritetty" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Peruttu" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "K" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Peruttu" >
+<!ENTITY newevent.status.tentative.label          "Alustava" >
+<!ENTITY newevent.status.tentative.accesskey      "t" >
+<!ENTITY newevent.status.confirmed.label          "Vahvistettu" >
+<!ENTITY newevent.status.confirmed.accesskey      "V" >
+<!ENTITY newevent.status.needsaction.label        "Tarvitsee toimintaa" >
+<!ENTITY newevent.status.inprogress.label         "Käynnissä" >
+<!ENTITY newevent.status.completed.label          "Valmistui" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#37; valmiina">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Ilmoita osallistujille">
+<!ENTITY event.attendees.notify.accesskey            "i">
+<!ENTITY event.attendees.notifyundisclosed.label     "Erilliset kutsut jokaiselle osallistujalle">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "j">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Jos tämä on valittu, niin jokaiselle osallistujalle lähetetään yksi sähköpostiviesti. Jokaisessa kutsussa on mainittu vain osallistuja, joka on vastaanottanut sen. Näin muiden osallistujien henkilöllisyydet eivät paljastu.">
+<!ENTITY event.attendees.disallowcounter.label       "Kiellä vastaehdotukset">
+<!ENTITY event.attendees.disallowcounter.accesskey   "K">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Osoittaa, että et hyväksy vastaehdotuksia">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Uusi">
+<!ENTITY  event.menu.item.new.accesskey                   "U">
+<!ENTITY  event.menu.item.new.event.label                 "Tapahtuma">
+<!ENTITY  event.menu.item.new.event.accesskey             "T">
+<!ENTITY  event.menu.item.new.task.label                  "Tehtävä">
+<!ENTITY  event.menu.item.new.task.accesskey              "e">
+<!ENTITY  event.menu.item.new.message.label               "Viesti">
+<!ENTITY  event.menu.item.new.message.accesskey           "V">
+<!ENTITY  event.menu.item.new.contact.label               "Osoitekirjan yhteyshenkilö">
+<!ENTITY  event.menu.item.new.contact.accesskey           "O">
+<!ENTITY  event.menu.item.close.label                     "Sulje">
+<!ENTITY  event.menu.item.close.accesskey                 "S">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Tallenna">
+<!ENTITY  event.menu.item.save.accesskey                  "T">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Tallenna ja sulje">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "l">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "s">
+
+<!ENTITY  event.menu.item.delete.label                    "Poista…">
+<!ENTITY  event.menu.item.delete.accesskey                "P">
+<!ENTITY  event.menu.item.page.setup.label                "Sivun asetukset">
+<!ENTITY  event.menu.item.page.setup.accesskey            "e">
+<!ENTITY  event.menu.item.print.label                     "Tulosta">
+<!ENTITY  event.menu.item.print.accesskey                 "o">
+
+<!ENTITY  event.menu.edit.label                           "Muokkaa">
+<!ENTITY  event.menu.edit.accesskey                       "M">
+<!ENTITY  event.menu.edit.undo.label                      "Kumoa">
+<!ENTITY  event.menu.edit.undo.accesskey                  "m">
+<!ENTITY  event.menu.edit.redo.label                      "Tee uudelleen">
+<!ENTITY  event.menu.edit.redo.accesskey                  "T">
+<!ENTITY  event.menu.edit.cut.label                       "Leikkaa">
+<!ENTITY  event.menu.edit.cut.accesskey                   "L">
+<!ENTITY  event.menu.edit.copy.label                      "Kopioi">
+<!ENTITY  event.menu.edit.copy.accesskey                  "K">
+<!ENTITY  event.menu.edit.paste.label                     "Liitä">
+<!ENTITY  event.menu.edit.paste.accesskey                 "i">
+<!ENTITY  event.menu.edit.select.all.label                "Valitse kaikki">
+<!ENTITY  event.menu.edit.select.all.accesskey            "V">
+
+<!ENTITY  event.menu.view.label                           "Näytä">
+<!ENTITY  event.menu.view.accesskey                       "N">
+<!ENTITY  event.menu.view.toolbars.label                  "Työkalupalkit">
+<!ENTITY  event.menu.view.toolbars.accesskey              "T">
+<!ENTITY  event.menu.view.toolbars.event.label            "Tapahtumapalkki">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "T">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Muokkaa…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "M">
+<!ENTITY  event.menu.view.showlink.label                  "Näytä aiheeseen liittyvä linkki">
+<!ENTITY  event.menu.view.showlink.accesskey              "N">
+
+<!ENTITY  event.menu.options.label                            "Valinnat">
+<!ENTITY  event.menu.options.accesskey                        "V">
+<!ENTITY  event.menu.options.attendees.label                  "Kutsu osallistujia…">
+<!ENTITY  event.menu.options.attendees.accesskey              "K">
+<!ENTITY  event.menu.options.timezone2.label                  "Näytä aikavyöhykkeet">
+<!ENTITY  event.menu.options.timezone2.accesskey              "a">
+<!ENTITY  event.menu.options.priority2.label                  "Tärkeysaste">
+<!ENTITY  event.menu.options.priority2.accesskey              "T">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Ei määritetty">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "E">
+<!ENTITY  event.menu.options.priority.low.label               "Matala">
+<!ENTITY  event.menu.options.priority.low.accesskey           "M">
+<!ENTITY  event.menu.options.priority.normal.label            "Normaali">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "Korkea">
+<!ENTITY  event.menu.options.priority.high.accesskey          "K">
+<!ENTITY  event.menu.options.privacy.label                    "Tietosuoja">
+<!ENTITY  event.menu.options.privacy.accesskey                "s">
+<!ENTITY  event.menu.options.privacy.public.label             "Julkinen tapahtuma">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "J">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Näytä vain aika ja päivämäärä">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "N">
+<!ENTITY  event.menu.options.privacy.private.label            "Yksityinen tapahtuma">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "Y">
+<!ENTITY  event.menu.options.show.time.label                  "Näytä aika muodossa">
+<!ENTITY  event.menu.options.show.time.accesskey              "t">
+<!ENTITY  event.menu.options.show.time.busy.label             "Varattu">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "V">
+<!ENTITY  event.menu.options.show.time.free.label             "Vapaa">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "V">
+
+<!ENTITY event.invite.attendees.label                     "Kutsu osallistujia…">
+<!ENTITY event.invite.attendees.accesskey                 "K">
+<!ENTITY event.email.attendees.label                      "Kirjoita viesti kaikille osallistujille…">
+<!ENTITY event.email.attendees.accesskey                  "a">
+<!ENTITY event.email.tentative.attendees.label            "Kirjoita viesti epävarmoille osallistujille…">
+<!ENTITY event.email.tentative.attendees.accesskey        "u">
+<!ENTITY event.remove.attendees.label2                    "Poista kaikki osallistujat">
+<!ENTITY event.remove.attendees.accesskey                 "k">
+<!ENTITY event.remove.attendee.label                      "Poista osallistuja">
+<!ENTITY event.remove.attendee.accesskey                  "o">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Tallenna">
+<!ENTITY  event.toolbar.saveandclose.label                "Tallenna ja sulje">
+<!ENTITY  event.toolbar.delete.label                      "Poista">
+<!ENTITY  event.toolbar.attendees.label                   "Kutsu osallistujia">
+<!ENTITY  event.toolbar.privacy.label                     "Tietosuoja">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Tallenna">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Tallenna ja sulje">
+<!ENTITY  event.toolbar.delete.tooltip                    "Poista">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Kutsu henkilöitä">
+<!ENTITY  event.toolbar.attachments.tooltip               "Lisää liitetiedostoja">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Muuta tietosuoja-asetusta">
+<!ENTITY  event.toolbar.priority.tooltip                  "Muuta tärkeysastetta">
+<!ENTITY  event.toolbar.status.tooltip                    "Muuta tilaa">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Muuta vapaa/varattu -aikaa">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Käytä ehdotusta">
+<!ENTITY counter.button.proposal.accesskey                "e">
+<!ENTITY counter.button.proposal.tooltip2                 "Tapahtuman kentät päivitetään vastaehdotuksen tiedoilla. Vain tallentaminen lisämuutoksilla tai ilman tiedottaa myös muita osallistujia">
+<!ENTITY counter.button.original.label                    "Käytä alkuperäisiä tietoja">
+<!ENTITY counter.button.original.accesskey                "l">
+<!ENTITY counter.button.original.tooltip2                 "Tapahtuman kentissä säilytetään alkuperäiset, ennen vastaehdotuksen lähettämistä olleet tiedot">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Otsikko:" >
+<!ENTITY event.title.textbox.accesskey                    "k">
+<!ENTITY event.location.label                             "Osoite:" >
+<!ENTITY event.location.accesskey                         "s">
+<!ENTITY event.categories.label                           "Tyyppi:">
+<!ENTITY event.categories.accesskey                       "y">
+<!ENTITY event.categories.textbox.label                   "Lisää uusi tapahtumatyyppi" >
+<!ENTITY event.calendar.label                             "Kalenteri:" >
+<!ENTITY event.calendar.accesskey                         "e">
+<!ENTITY event.attendees.label                            "Osallistujat:" >
+<!ENTITY event.attendees.accesskey                        "j">
+<!ENTITY event.alldayevent.label                          "Koko päivän tapahtuma" >
+<!ENTITY event.alldayevent.accesskey                      "p">
+<!ENTITY event.from.label                                 "Alkaa:" >
+<!ENTITY event.from.accesskey                             "A">
+<!ENTITY task.from.label                                  "Alkaa:" >
+<!ENTITY task.from.accesskey                              "A">
+<!ENTITY event.to.label                                   "Päättyy:" >
+<!ENTITY event.to.accesskey                               "ä">
+<!ENTITY task.to.label                                    "Valmis:" >
+<!ENTITY task.to.accesskey                                "l">
+<!ENTITY task.status.label                                "Tila:" >
+<!ENTITY task.status.accesskey                            "T">
+<!ENTITY event.repeat.label                               "Toista:" >
+<!ENTITY event.repeat.accesskey                           "i">
+<!ENTITY event.until.label                                "Kunnes:">
+<!ENTITY event.until.accesskey                            "n">
+<!ENTITY event.reminder.label                             "Muistuta:" >
+<!ENTITY event.reminder.accesskey                         "u">
+<!ENTITY event.description.label                          "Kuvaus:" >
+<!ENTITY event.description.accesskey                      "v">
+<!ENTITY event.attachments.label                          "Liitteet:" >
+<!ENTITY event.attachments.accesskey                      "L" >
+<!ENTITY event.attachments.menubutton.label               "Lisää liite">
+<!ENTITY event.attachments.menubutton.accesskey           "L">
+<!ENTITY event.attachments.url.label                      "Verkkosivu…">
+<!ENTITY event.attachments.url.accesskey                  "V">
+<!ENTITY event.attachments.popup.remove.label             "Poista" >
+<!ENTITY event.attachments.popup.remove.accesskey         "P" >
+<!ENTITY event.attachments.popup.open.label               "Avaa" >
+<!ENTITY event.attachments.popup.open.accesskey           "A" >
+<!ENTITY event.attachments.popup.removeAll.label          "Poista kaikki" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "k" >
+<!ENTITY event.attachments.popup.attachPage.label         "Lisää verkkosivu liitteeksi…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "L" >
+<!ENTITY event.url.label                                  "Aiheeseen liittyvä linkki:" >
+<!ENTITY event.priority2.label                            "Tärkeysaste:">
+
+<!ENTITY event.reminder.none.label                        "Ei muistutusta " >
+<!ENTITY event.reminder.0minutes.before.label             "0 minuuttia ennen" >
+<!ENTITY event.reminder.5minutes.before.label             "5 minuuttia ennen" >
+<!ENTITY event.reminder.15minutes.before.label            "15 minuuttia ennen" >
+<!ENTITY event.reminder.30minutes.before.label            "30 minuuttia ennen" >
+<!ENTITY event.reminder.1hour.before.label                "1 tunti ennen" >
+<!ENTITY event.reminder.2hours.before.label               "2 tuntia ennen" >
+<!ENTITY event.reminder.12hours.before.label              "12 tuntia ennen" >
+<!ENTITY event.reminder.1day.before.label                 "1 päivä ennen" >
+<!ENTITY event.reminder.2days.before.label                "2 päivää ennen" >
+<!ENTITY event.reminder.1week.before.label                "1 viikko ennen" >
+<!ENTITY event.reminder.custom.label                      "Oma…" >
+
+<!ENTITY event.reminder.multiple.label                    "Useita muistutuksia…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Aika:">
+<!ENTITY event.statusbarpanel.privacy.label               "Tietosuoja:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Muokkaa toistuvuutta">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Ei toistu">
+<!ENTITY event.repeat.daily.label                       "Joka päivä">
+<!ENTITY event.repeat.weekly.label                      "Joka kuukausi">
+<!ENTITY event.repeat.every.weekday.label               "Joka arkipäivä">
+<!ENTITY event.repeat.bi.weekly.label                   "Joka toinen viikko">
+<!ENTITY event.repeat.monthly.label                     "Joka kuukausi">
+<!ENTITY event.repeat.yearly.label                      "Joka vuosi">
+<!ENTITY event.repeat.custom.label                      "Oma…">
+
+<!ENTITY event.recurrence.pattern.label                 "Toistuvuuskaava">
+<!ENTITY event.recurrence.occurs.label                  "Toista" >
+<!ENTITY event.recurrence.day.label                     "kerran päivässä" >
+<!ENTITY event.recurrence.week.label                    "kerran viikossa" >
+<!ENTITY event.recurrence.month.label                   "kerran kuussa" >
+<!ENTITY event.recurrence.year.label                    "kerran vuodessa" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Aina" >
+<!ENTITY repeat.units.days.both                         "päivän välein" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Joka arkipäivä" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "" >
+<!ENTITY repeat.units.weeks.both                        "viikon välein" >
+<!ENTITY event.recurrence.on.label                      "" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "" >
+<!ENTITY repeat.units.months.both                       "kuukauden välein" >
+<!ENTITY event.recurrence.monthly.every.label           "Jokaisena" >
+<!ENTITY event.recurrence.monthly.first.label           "Ensimmäisenä">
+<!ENTITY event.recurrence.monthly.second.label          "Toisena">
+<!ENTITY event.recurrence.monthly.third.label           "Kolmantena">
+<!ENTITY event.recurrence.monthly.fourth.label          "Neljäntenä">
+<!ENTITY event.recurrence.monthly.fifth.label           "Viidentenä">
+<!ENTITY event.recurrence.monthly.last.label            "Viimeisenä">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "sunnuntaina" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "maanantaina" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "tiistaina" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "keskiviikkona" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "torstaina" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "perjantaina" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "lauantaina" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "päivänä">
+<!ENTITY event.recurrence.repeat.recur.label            "">
+
+<!ENTITY event.recurrence.every.label                        "" >
+<!ENTITY repeat.units.years.both                             "vuoden välein" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "tammikuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "helmikuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "maaliskuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "huhtikuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "toukokuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "kesäkuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "heinäkuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "elokuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "syyskuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "lokakuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "marraskuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "joulukuuta" >
+<!ENTITY event.recurrence.yearly.every.label                 "Jokaisena">
+<!ENTITY event.recurrence.yearly.first.label                 "Ensimmäisenä">
+<!ENTITY event.recurrence.yearly.second.label                "Toisena">
+<!ENTITY event.recurrence.yearly.third.label                 "Kolmantena">
+<!ENTITY event.recurrence.yearly.fourth.label                "Neljäntenä">
+<!ENTITY event.recurrence.yearly.fifth.label                 "Viidentenä">
+<!ENTITY event.recurrence.yearly.last.label                  "Viimeisenä">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "sunnuntaina" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "maanantaina" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "tiistaina" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "keskiviikkona" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "torstaina" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "perjantaina" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "lauantaina" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "päivänä" >
+<!ENTITY event.recurrence.of.label                           "" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "tammikuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "helmikuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "maaliskuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "huhtikuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "toukokuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "kesäkuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "heinäkuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "elokuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "syyskuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "lokakuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "marraskuuta" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "joulukuuta" >
+
+<!ENTITY event.recurrence.range.label                   "Toistuvuuden takaraja">
+<!ENTITY event.recurrence.forever.label                 "Ei päättymispäivää" >
+<!ENTITY event.recurrence.repeat.for.label              "Luo" >
+<!ENTITY event.recurrence.appointments.label            "tapahtuma(a)" >
+<!ENTITY event.repeat.until.label                       "Toista seuraavaan päivään asti:" >
+<!ENTITY event.recurrence.preview.label                 "Esikatselu">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Kutsu osallistujia">
+<!ENTITY event.organizer.label                  "Järjestäjä">
+<!ENTITY event.freebusy.suggest.slot            "Ehdota aikaa:">
+<!ENTITY event.freebusy.button.next.slot        "Seuraava aika">
+<!ENTITY event.freebusy.button.previous.slot    "Edellinen aika">
+<!ENTITY event.freebusy.zoom                    "Suurenna:">
+<!ENTITY event.freebusy.legend.free             "Vapaa" >
+<!ENTITY event.freebusy.legend.busy             "Varattu" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Alustava" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Vapaalla" >
+<!ENTITY event.freebusy.legend.unknown          "Ei tiedossa" >
+<!ENTITY event.attendee.role.required           "Välttämätön osallistuja">
+<!ENTITY event.attendee.role.optional           "Mahdollinen osallistuja">
+<!ENTITY event.attendee.role.chair              "Puheenjohtaja">
+<!ENTITY event.attendee.role.nonparticipant     "Ei osallistuva">
+<!ENTITY event.attendee.usertype.individual     "Yksittäinen henkilö">
+<!ENTITY event.attendee.usertype.group          "Ryhmä">
+<!ENTITY event.attendee.usertype.resource       "Resurssi">
+<!ENTITY event.attendee.usertype.room           "Huone">
+<!ENTITY event.attendee.usertype.unknown        "Tuntematon">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Määritä aikavyöhyke">
+<!ENTITY event.timezone.custom.label     "Muut aikavyöhykkeet…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Yleistiedot">
+<!ENTITY read.only.title.label           "Otsikko:">
+<!ENTITY read.only.calendar.label        "Kalenteri:">
+<!ENTITY read.only.event.start.label     "Aloitusaika:">
+<!ENTITY read.only.task.start.label      "Aloitusaika:">
+<!ENTITY read.only.event.end.label       "Lopetusaika:">
+<!ENTITY read.only.task.due.label        "Valmis:">
+<!ENTITY read.only.repeat.label          "Toista:">
+<!ENTITY read.only.location.label        "Sijainti:">
+<!ENTITY read.only.category.label        "Kategoria:">
+<!ENTITY read.only.organizer.label       "Järjestäjä:">
+<!ENTITY read.only.reminder.label        "Muistuta:">
+<!ENTITY read.only.attachments.label     "Liitteet:">
+<!ENTITY read.only.attendees.label       "Osallistujat">
+<!ENTITY read.only.description.label     "Kuvaus">
+<!ENTITY read.only.link.label            "Aiheeseen liittyvä linkki">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Tallenna ja sulje">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Tallenna muutokset ja sulje ikkuna muuttamatta osallistumisen tilaa ja lähettämättä vastausta">
+<!ENTITY summary.dialog.accept.label            "Hyväksy">
+<!ENTITY summary.dialog.accept.tooltiptext      "Hyväksy kutsu">
+<!ENTITY summary.dialog.tentative.label         "Alustava">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Hyväksy alustavasti">
+<!ENTITY summary.dialog.decline.label           "Kieltäydy">
+<!ENTITY summary.dialog.decline.tooltiptext     "Kieltäydy kutsusta">
+<!ENTITY summary.dialog.dontsend.label          "Älä lähetä vastausta">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Muuta osallistumisstatustasi lähettämättä vastausta järjestäjälle ja sulje ikkuna">
+<!ENTITY summary.dialog.send.label              "Lähetä vastaus nyt">
+<!ENTITY summary.dialog.send.tooltiptext        "Lähetä vastaus järjestäjälle  ja sulje ikkuna">

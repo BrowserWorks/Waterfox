@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Inportazio morroia">
+
+<!ENTITY importFromWin.label            "Inportatu aukerak, kontu-ezarpenak, helbide-liburua, iragazkiak eta bestelako datuak hemendik:">
+<!ENTITY importFromNonWin.label         "Inportatu hobespenak, kontu-ezarpenak, helbide-liburua, iragazkiak eta bestelako datuak hemendik:">
+<!ENTITY importSourceNotFound.label     "Ez da aurkitu aplikaziorik bertatik datuak inportatzeko.">
+
+<!ENTITY importFromNothing.label        "Ezer ez inportatu">
+<!ENTITY importFromNothing.accesskey    "E">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 edo berriagoa">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Inportatu hemendik ezarpenak eta posta-karpetak">
+<!ENTITY importItems.title              "Inportatzeko elementuak">
+<!ENTITY importItems.label              "Hautatu inportatzeko elementuak:">
+
+<!ENTITY migrating.title                "Inportatzen…">
+<!ENTITY migrating.label                "Ondorengo elementuak ari dira inportatzen…">
+
+<!ENTITY selectProfile.title            "Hautatu profila">
+<!ENTITY selectProfile.label            "Ondorengo profilak inporta daitezke:">
+
+<!ENTITY done.title                     "Inportazioa burutu da">
+<!ENTITY done.label                     "Ondorengo gaiak ondo inportatu dira:">

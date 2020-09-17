@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Տեղահանել մատակարար">
+<!ENTITY providerUninstall.accept.label                    "Ապաբաժանորդագրվել ընտրվածից">
+<!ENTITY providerUninstall.accept.accesskey                "U">
+<!ENTITY providerUninstall.cancel.label                    "Պահել հավելվածք">
+<!ENTITY providerUninstall.cancel.accesskey                "K">
+<!ENTITY providerUninstall.preName.label                   "Դուք խնդրել եք տեղահանել կամ անջատել.">
+<!ENTITY providerUninstall.postName.label                  "Սա կբերի ներքևում գտնվող օրացույցերի անջատմանը:">
+<!ENTITY providerUninstall.reinstallNote.label             "Եթե դուք չեք պատրաստվում վերականգնել այս մատակարարին, ապա կարող եք հրաժարվել այս մատակարարի օրացույցերից:">

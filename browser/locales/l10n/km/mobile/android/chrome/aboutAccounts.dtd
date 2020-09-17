@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "គណនី Firefox">
+<!ENTITY aboutAccounts.connected.description "អ្នក​ត្រូវ​បាន​តភ្ជាប់​ជា">
+<!ENTITY aboutAccounts.syncPreferences.label "ប៉ះ​ទីនេះ​ដើម្បី​ពិនិត្យ​ការ​កំណត់​ធ្វើ​សមកាលកម្ម">
+
+<!ENTITY aboutAccounts.noConnection.title "មិន​មាន​​អ៊ីនធឺណិត">
+<!ENTITY aboutAccounts.retry.label "ព្យាយាម​ម្ដង​ទៀត">
+
+<!ENTITY aboutAccounts.restrictedError.title "បាន​ដាក់​កម្រិត">
+<!ENTITY aboutAccounts.restrictedError.description "អ្នក​មិន​អាច​គ្រប់គ្រង​គណនី Firefox ពី​ប្រវត្តិរូប​នេះ​បាន​ទេ។">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Desaniciar">
+<!ENTITY editContactPanelDeleteContact.accesskey "D">
+
+<!ENTITY editContactName.label "Nome:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Corréu-e:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Llibreta de direiciones:">
+<!ENTITY editContactAddressBook.accesskey "L">
+
+<!ENTITY editContactPanelDone.label "Fecho">
+<!ENTITY editContactPanelDone.accesskey "F">
+
+<!ENTITY contactMoveDisabledWarning.description "Nun pues camudar la llibreta de direiciones porque'l contautu ta nuna llista de corréu.">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Protokolo de adaptiĝa kontraŭtrudmesaĝa filtrilo">
+<!ENTITY adaptiveJunkLogInfo.label "Protokolo de aktiveco de adaptiĝanta filtro kontraŭ nedezirataj mesaĝoj.">
+<!ENTITY clearLog.label "Forviŝi protokolon">
+<!ENTITY clearLog.accesskey "v">
+<!ENTITY closeLog.label "Fermi">
+<!ENTITY closeLog.accesskey "F">

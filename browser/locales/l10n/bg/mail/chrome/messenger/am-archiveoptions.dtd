@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Настройки за архивиране">
+<!ENTITY archiveGranularityPrefix.label "При архивиране на съобщения се поставят в:">
+<!ENTITY archiveFlat.label "Отделна папка">
+<!ENTITY archiveFlat.accesskey "О">
+<!ENTITY archiveYearly.label "Архивни папки по години">
+<!ENTITY archiveYearly.accesskey "г">
+<!ENTITY archiveMonthly.label "Архивни папки по месеци">
+<!ENTITY archiveMonthly.accesskey "м">
+<!ENTITY keepFolderStructure.label "Запазване съществуващата структура от папки при архивиране">
+<!ENTITY keepFolderStructure.accesskey "З">
+<!ENTITY archiveExample.label "Пример">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Архиви">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Входяща кутия">

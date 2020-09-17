@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Flikar">
+
+<!ENTITY tabDisplay.label "Visa flikar">
+<!ENTITY autoHide.label "Dölj raden med flikar när bara en flik är öppen">
+<!ENTITY autoHide.accesskey2 "j">
+<!ENTITY background.label "Växla till nya flikar som öppnas från länkar">
+<!ENTITY background.accesskey "V">
+<!ENTITY warnOnClose.label "Varna när jag stänger ett fönster med flera flikar">
+<!ENTITY warnOnClose.accesskey "s">
+<!ENTITY relatedAfterCurrent.label "Öppna relaterade flikar bakom aktiv flik">
+<!ENTITY relatedAfterCurrent.accesskey "Ö">
+
+<!ENTITY loadGroup.label "Vid öppning av ett gruppmärke">
+<!ENTITY loadGroupAppend.label "Lägg till nya flikar">
+<!ENTITY loadGroupAppend.accesskey "L">
+<!ENTITY loadGroupReplace.label "Ersätt befintliga flikar">
+<!ENTITY loadGroupReplace.accesskey "b">
+
+<!ENTITY openTabs.label "Öppna flikar istället för fönster vid">
+
+<!ENTITY middleClick.label "Mellanklick, Ctrl+klick eller Ctrl+Enter på länkar i webbsidor">
+<!ENTITY middleClick.accesskey "M">
+<!ENTITY middleClickMac.label "Mittenklick, &#8984;+klick eller &#8984;+Retur på länkar i webbsidor">
+<!ENTITY middleClickMac.accesskey "M">
+<!ENTITY urlbar.label "Ctrl+Enter i adressfältet">
+<!ENTITY urlbar.accesskey "a">
+<!ENTITY urlbarMac.label "&#8984;+Retur i adressfältet">
+<!ENTITY urlbarMac.accesskey "a">
+
+<!ENTITY openManagers.label "Öppna i en ny flik istället för i eget fönster">
+<!ENTITY openDataManager.label "Data Manager">
+<!ENTITY openDataManager.accesskey "D">
+<!ENTITY openAddOnsManager.label "Tilläggshanteraren">
+<!ENTITY openAddOnsManager.accesskey "n">

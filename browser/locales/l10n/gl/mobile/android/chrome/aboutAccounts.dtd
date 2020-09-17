@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Contas Firefox">
+<!ENTITY aboutAccounts.connected.description "Está conectado como">
+<!ENTITY aboutAccounts.syncPreferences.label "Prema aquí para comprobar os axustes de Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "Sen conexión á Internet">
+<!ENTITY aboutAccounts.retry.label "Tentar de novo">
+
+<!ENTITY aboutAccounts.restrictedError.title "Restrinxido">
+<!ENTITY aboutAccounts.restrictedError.description "Non é posíbel xestionar contas Firefox dende este perfil.">

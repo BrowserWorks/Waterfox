@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Custom.label "ユーザー設定...">
+<!ENTITY ShrinkToFit.label "用紙に合わせて縮める">
+<!ENTITY close.accesskey "C">
+<!ENTITY close.label "閉じる">
+<!ENTITY customPrompt.title "拡大/縮小を設定...">
+<!ENTITY endarrow.tooltip "最後のページ">
+<!ENTITY homearrow.tooltip "最初のページ">
+<!ENTITY landscape.accesskey "L">
+<!ENTITY landscape.label "横">
+<!ENTITY leftarrow.tooltip "前のページ">
+<!ENTITY of.label "/">
+<!ENTITY p100.label "100&#037;">
+<!ENTITY p125.label "125&#037;">
+<!ENTITY p150.label "150&#037;">
+<!ENTITY p175.label "175&#037;">
+<!ENTITY p200.label "200&#037;">
+<!ENTITY p30.label "30&#037;">
+<!ENTITY p40.label "40&#037;">
+<!ENTITY p50.label "50&#037;">
+<!ENTITY p60.label "60&#037;">
+<!ENTITY p70.label "70&#037;">
+<!ENTITY p80.label "80&#037;">
+<!ENTITY p90.label "90&#037;">
+<!ENTITY page.accesskey "a">
+<!ENTITY page.label "ページ:">
+<!ENTITY pageSetup.accesskey "u">
+<!ENTITY pageSetup.label "ページ設定...">
+<!ENTITY portrait.accesskey "o">
+<!ENTITY portrait.label "縦">
+<!ENTITY print.accesskey "P">
+<!ENTITY print.label "印刷...">
+<!ENTITY rightarrow.tooltip "次のページ">
+<!ENTITY scale.accesskey "S">
+<!ENTITY scale.label "拡大/縮小:">

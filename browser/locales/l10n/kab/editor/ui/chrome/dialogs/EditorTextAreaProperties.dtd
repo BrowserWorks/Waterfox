@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Taɣaṛa n tjumma n uḍris">
+
+<!ENTITY Settings.label "Iɣewwaṛen">
+
+<!ENTITY TextAreaName.label "Isem n wurti:">
+<!ENTITY TextAreaName.accessKey "s">
+<!ENTITY TextAreaRows.label "Izirigen:">
+<!ENTITY TextAreaRows.accessKey "z">
+<!ENTITY TextAreaCols.label "Tigejda:">
+<!ENTITY TextAreaCols.accessKey "g">
+<!ENTITY TextAreaReadOnly.label "Taɣuṛi kan">
+<!ENTITY TextAreaReadOnly.accessKey "k">
+<!ENTITY TextAreaDisabled.label "Arurmid">
+<!ENTITY TextAreaDisabled.accessKey "r">
+<!ENTITY TextAreaTabIndex.label "Amatar n yiccer:">
+<!ENTITY TextAreaTabIndex.accessKey "m">
+<!ENTITY TextAreaAccessKey.label "Tasarutt n unekcum:">
+<!ENTITY TextAreaAccessKey.accessKey "s">
+<!ENTITY InitialText.label "Aḍris amezwaru:">
+<!ENTITY InitialText.accessKey "r">
+
+<!ENTITY TextAreaWrap.label "Askar uwnis:">
+<!ENTITY TextAreaWrap.accessKey "w">
+<!ENTITY WrapDefault.value "Amezwer">
+<!ENTITY WrapOff.value "Insa">
+<!ENTITY WrapHard.value "Iqquṛ">
+<!ENTITY WrapSoft.value "Leqqaq">
+<!ENTITY WrapPhysical.value "Aɣaṛan">
+<!ENTITY WrapVirtual.value "Araɣaṛan ">

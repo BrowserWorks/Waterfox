@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Rreth Postës së Pavlerë">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName;-i zbulon vetvetiu mesazhe ardhës që duket të jenë postë e pavlerë (njohur edhe si spam). Për mesazhe që &brandShortName;-i mendon se janë të pavlerë, do të shfaqet një ikonë hedhurinash">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Së pari, përmes përdorimit të butonave për shënim mesazhesh si të pavlerë ose si jo të pavlerë, te paneli për të Pavlerat, duhet ta stërvitni &brandShortName;-in të identifikojë postë.">
+<!ENTITY info3.label   "Pasi &brandShortName;-i të identifikojë saktë postë të pavlerë, mund të përdorni Kontrolle Poste të Pavlerë që posta e pavlerë të shpihet vetvetiu te dosja të Pavlera.">
+<!ENTITY info4.label   "Për më tepër të dhëna, klikoni mbi Ndihmën.">

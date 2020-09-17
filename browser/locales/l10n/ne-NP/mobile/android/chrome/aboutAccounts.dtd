@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox खाताहरू">
+<!ENTITY aboutAccounts.connected.description "को रुपमा तपाई यसमा जडान हुनुभएको छ।">
+<!ENTITY aboutAccounts.syncPreferences.label "Sync सेटिङहरू हेर्न यहाँ थिच्नुहोस्">
+
+<!ENTITY aboutAccounts.noConnection.title "इन्टरनेट सुविधा छैन">
+<!ENTITY aboutAccounts.retry.label "पुन: प्रयास गर्नुहोस्">
+
+<!ENTITY aboutAccounts.restrictedError.title "निषेधित">
+<!ENTITY aboutAccounts.restrictedError.description "तपाईँले यस प्रोफाइलबाट Firefox अकाउन्ट व्यवस्थापन गर्न सक्नुहुन्न।">

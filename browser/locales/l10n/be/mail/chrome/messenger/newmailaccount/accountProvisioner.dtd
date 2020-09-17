@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Калі ласка да &brandShortName;">
+<!ENTITY header2.label "Вы хочаце новы адрас э-пошты?">
+<!ENTITY other.languages "Мы паказваем толькі тых дастаўшчыкоў, якія прапаноўваюць адрасы для вашай вобласці.  Пстрыкніце тут, каб паказаць усіх дастаўшчыкоў.">
+<!ENTITY error.line1 "Прабачце, мы не можам знайсці ніводзін з прапанованых адрасоз э-пошты.">
+<!ENTITY error.line2 "Вы можаце пашукаць мянушкі або іншыя выразы, каб знайсці больш адрасоў э-пошты ">
+
+<!ENTITY error.suggest.before "Таксама вы можаце паспрабаваць адзін з ">
+<!ENTITY error.suggest.middle "дармовых альтэрнатыўных рахункаў э-пошты">
+<!ENTITY error.suggest.after ".">
+
+<!ENTITY success.title.before "Пріывітанне">
+<!ENTITY success.title.after ", наступныя адрасы э-пошты даступныя для вас:">
+<!ENTITY success.tip "(Вы можаце пашукаць мянушкі або іншыя выразы, каб знайсці больш адрасоў э-пошты)">
+<!ENTITY partnership.description "&brandShortName; у супрацоўніцтве з некалькімі дастаўшчыкамі можа прапанаваць вам новы рахунак э-пошты. Толькі ўвядзіце вашы прозвішча і імя або іншыя словы, якія вам падабаюцца, у палі ўгары, каб пачаць.">
+<!ENTITY existing.header "Ужо маеце адрас, якім хочаце карыстацца?">
+<!ENTITY tinyheader.title "Маеце адрас?">
+<!ENTITY tinyheader.existing "Прапусціць і пачаць карыстацца маёй існай э-поштай">
+<!ENTITY content.close "Думаю, я наладжу мой рахунак пазней.">
+<!ENTITY successful.title "Віншаванні!">
+<!ENTITY successful.successMessage "Вы паспяхова наладзілі ваш рахунак.">
+<!ENTITY successful.write "Укласці некалькі лістоў">
+<!ENTITY successful.write.desc "Паведаміць вашым сябрам і сям'і пра ваш новы адрас.<br/> Вы ж дзеля гэтага стварылі новы рахунак, так?">
+<!ENTITY successful.customize "Уладкаваць &brandShortName;, дадаць некалькі бліскучых дадаткаў">
+<!ENTITY successful.customize.desc "Існуе тысячы дадаткаў, якія дазволяць уладкаваць &brandShortName; так, каб ён задавальняў усе вашы патрэбы.">
+<!ENTITY successful.attach "Далучаць мой асабісты подпіс да маіх лістоў">
+<!ENTITY successful.attach.desc "Вы можаце ўладкаваць самадалучэнне допісу або нейкіх звестак пра вас у канец кожнага ліста, які вы дасылаеце.">
+<!ENTITY successful.close "Закрыць гэтае акно.">
+<!ENTITY input.namePlaceholder "Ваша імя або мянушка">
+<!ENTITY input.search "Пошук">
+<!ENTITY search_engine.title "Уладкаванне вашай машыны пошуку">
+<!ENTITY search_engine.message "Ваш дастаўшчык э-пошты можа таксама забяспечыць вас пошукам у сеціве.">
+<!ENTITY search_engine.button "Скончыць">

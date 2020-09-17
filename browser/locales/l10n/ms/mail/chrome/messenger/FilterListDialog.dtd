@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Tapis Mesej">
+<!ENTITY nameColumn.label "Nama Penapis">
+<!ENTITY activeColumn.label "Didayakan">
+<!ENTITY newButton.label "Baru…">
+<!ENTITY newButton.accesskey "B">
+<!ENTITY newButton.popupCopy.label "Salin…">
+<!ENTITY newButton.popupCopy.accesskey "S">
+<!ENTITY editButton.label "Edit…">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "Buang">
+<!ENTITY deleteButton.accesskey "g">
+<!ENTITY reorderTopButton "Pindah ke Atas">
+<!ENTITY reorderTopButton.accessKey "t">
+<!ENTITY reorderTopButton.toolTip "Susun semula penapis supaya dilaksanakan sebelum semua yang lain">
+<!ENTITY reorderUpButton.label "Pindah Atas">
+<!ENTITY reorderUpButton.accesskey "A">
+<!ENTITY reorderDownButton.label "Pindah Bawah">
+<!ENTITY reorderDownButton.accesskey "B">
+<!ENTITY reorderBottomButton "Pindah ke Bawah">
+<!ENTITY reorderBottomButton.accessKey "B">
+<!ENTITY reorderBottomButton.toolTip "Susun semula penapis supaya dilaksanakan selepas semua yang lain">
+<!ENTITY filterHeader.label "Penapis yang aktif dilaksanakan secara automatik mengikut susunan di bawah.">
+<!ENTITY filtersForPrefix.label "Tapis untuk:">
+<!ENTITY filtersForPrefix.accesskey "P">
+<!ENTITY viewLogButton.label "Tapis Log">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "Laksanakan Sekarang">
+<!ENTITY runFilters.accesskey "L">
+<!ENTITY stopFilters.label "Berhenti">
+<!ENTITY stopFilters.accesskey "B">
+<!ENTITY folderPickerPrefix.label "Laksanakan penapis yang dipilih pada:">
+<!ENTITY folderPickerPrefix.accesskey "l">
+<!ENTITY helpButton.label "Bantuan">
+<!ENTITY helpButton.accesskey "B">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Cari penapis mengikut nama…">
+
+
+

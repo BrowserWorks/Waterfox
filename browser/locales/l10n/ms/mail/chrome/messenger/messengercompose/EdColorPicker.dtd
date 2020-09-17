@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Warna">
+<!ENTITY lastPickedColor.label "Warna terakhir-dipilih">
+<!ENTITY lastPickedColor.accessKey "W">
+<!ENTITY chooseColor1.label "Pilih warna:">
+<!ENTITY chooseColor2.label "Masukkan string warna HTML">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(contoh: &quot;#0000ff&quot; atau &quot;blue&quot;):">
+<!ENTITY default.label "Piawai">
+<!ENTITY default.accessKey "P">
+<!ENTITY palette.label "Palet:">
+<!ENTITY standardPalette.label "Standard">
+<!ENTITY webPalette.label "Semua warna web">
+<!ENTITY background.label "Latar belakang untuk:">
+<!ENTITY background.accessKey "L">
+<!ENTITY table.label "Jadual">
+<!ENTITY table.accessKey "J">
+<!ENTITY cell.label "Sel">
+<!ENTITY cell.accessKey "S">

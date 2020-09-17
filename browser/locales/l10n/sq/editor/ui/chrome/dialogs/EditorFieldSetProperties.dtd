@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Veti për &quot;Field Set&quot;">
+
+<!ENTITY Legend.label "Legjendë">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "Përpunoni Legjendën:">
+<!ENTITY EditLegendText.accesskey "P">
+<!ENTITY LegendAlign.label "Drejtoni Legjendën:">
+<!ENTITY LegendAlign.accesskey "D">
+<!ENTITY AlignDefault.label "Parazgjedhje">
+<!ENTITY AlignLeft.label "Majtas">
+<!ENTITY AlignCenter.label "Në Qendër">
+<!ENTITY AlignRight.label "Djathtas">
+
+<!ENTITY RemoveFieldSet.label "Hiq &quot;Field Set&quot;">
+<!ENTITY RemoveFieldSet.accesskey "H">

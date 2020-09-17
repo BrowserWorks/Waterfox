@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Фон та кольори сторінки">
+<!ENTITY pageColors.label "Кольори сторінки">
+<!ENTITY defaultColorsRadio.label "Типові кольори читача (Не встановлювати кольори на сторінці)">
+<!ENTITY defaultColorsRadio.accessKey "Т">
+<!ENTITY defaultColorsRadio.tooltip "Використати налаштування кольору тільки із браузера читача">
+<!ENTITY customColorsRadio.label "Використати власні кольори:">
+<!ENTITY customColorsRadio.accessKey "В">
+<!ENTITY customColorsRadio.tooltip "Ці налаштування кольорів ігнорують налаштування браузера читача">
+
+<!ENTITY normalText.label "Звичайний текст">
+<!ENTITY normalText.accessKey "З">
+<!ENTITY linkText.label "Текст посилання">
+<!ENTITY linkText.accessKey "п">
+<!ENTITY activeLinkText.label "Текст активного посилання">
+<!ENTITY activeLinkText.accessKey "а">
+<!ENTITY visitedLinkText.label "Текст відвіданого посилання">
+<!ENTITY visitedLinkText.accessKey "в">
+<!ENTITY background.label "Тло:">
+<!ENTITY background.accessKey "Т">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Зображення для тла:">
+<!ENTITY backgroundImage.accessKey "З">
+<!ENTITY backgroundImage.tooltip "Використати файл зображення як тло для вашої сторінки">
+<!ENTITY backgroundImage.shortenedDataURI "Скорочений URI даних (копіювання помістить повний URI до буфера обміну)">

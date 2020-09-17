@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Propiedaes">
+
+<!ENTITY generalInfo.label                       "Información xeneral">
+<!ENTITY folderCharsetFallback2.label            "Codificación secudaria de testu:">
+<!ENTITY folderCharsetFallback2.accesskey        "C">
+<!ENTITY folderCharsetEnforce2.label             "Aplicar codificación a tolos mensaxes na carpeta (inoraránse los axustes de codificación de testu de mensaxes individuales y l'auto-deteición)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Reconstruyir el ficheru índiz resume">
+<!ENTITY folderRebuildSummaryFile2.label         "Iguar carpeta">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "I">
+<!ENTITY folderRebuildSummaryFile.explanation    "Dalgunes vegaes, el ficheru índiz de la carpeta (.msf) fráñase y pue paecer que dalgunos mensaxes válidos desapaecen mentanto qu'otros desaniciaos siguen amosándose; iguar la carpeta pue correxir estos problemes.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Incluyir mensaxes nesta carpeta nos resultaos de la gueta global">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "I">
+
+<!ENTITY retention.label "Política de retención">
+<!ENTITY retentionUseAccount.label  "Usar los datos de la mio cuenta">
+<!ENTITY retentionUseAccount.accesskey "i">
+<!ENTITY daysOld.label "díes d'antigüedá">
+<!ENTITY message.label "mensaxes">
+<!ENTITY retentionCleanup.label "Pa recuperar espaciu en discu, los mensaxes antiguos puen desaniciase ensembre.">
+<!ENTITY retentionCleanupImap.label "Pa recuperar espaciu en discu, los mensaxes antiguos puen desaniciase ensembre, tantu les copies llocales como los orixinales nel sirvidor remotu.">
+<!ENTITY retentionCleanupPop.label "Pa recuperar espaciu en discu, los mensaxes antiguos puen desaniciase ensembre, incluyendo los orixinales nel sirvidor remotu.">
+<!ENTITY retentionDeleteMsg.label "Desaniciar mensaxes con más de">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Nun desaniciar dengún mensaxe">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "Desaniciar toos sacante los más recientes">
+<!ENTITY retentionKeepRecent.accesskey "t">
+<!ENTITY retentionApplyToFlagged.label "Caltener siempre los mensaxes con estrella">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Sincronización">
+<!ENTITY folderCheckForNewMessages2.label         "Al obtener mensaxes nuevos d'esta cuenta, comprobar siempre esta carpeta">
+<!ENTITY folderCheckForNewMessages2.accesskey     "b">
+
+<!ENTITY offlineFolder.check.label               "Esbillar esta carpeta pa usar ensin conexón">
+<!ENTITY offlineFolder.check.accesskey           "E">
+<!ENTITY offlineFolder.button.label              "Descargar agora">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Esbillar esti grupu de noticies pa usar ensin conexón">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Descargar agora">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "Nome:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Llocalización:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Compartir">
+<!ENTITY privileges.button.label                 "Privilexos…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Tienes los siguientes permisos:">
+<!ENTITY folderType.label                        "Triba de carpeta:">
+
+<!ENTITY folderQuotaTab.label                    "Cuota">
+<!ENTITY folderQuotaUsage.label                  "Usu:">
+<!ENTITY folderQuotaStatus.label                 "Estáu:">
+
+<!ENTITY numberOfMessages.label                  "Númberu de mensaxes:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "desconocíu">
+<!ENTITY sizeOnDisk.label                        "Tamañu en discu:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "desconocíu">

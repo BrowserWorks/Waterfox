@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "સંપાદન ફેરફારો પસંદ કરો">
+<!ENTITY conflictWarning.label "આ પાનું અન્ય કાર્યક્રમ દ્વારા સુધારાઈ ગયેલ છે, પરંતુ તમારી પાસે કમ્પોઝરમાં નહિં સંગ્રહાયેલ ફેરફારો હશે.">
+<!ENTITY conflictResolve.label "કઈ આવૃત્તિ સાચવાની છે તે પસંદ કરો:">
+<!ENTITY keepCurrentPageButton.label "વર્તમાન પાનાં ફેરફારો સાચવો">
+<!ENTITY useOtherPageButton.label "વર્તમાન પાનાંને અન્ય ફેરફારોથી બદલો">

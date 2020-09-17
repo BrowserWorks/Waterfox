@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Сіты лістоў">
+<!ENTITY nameColumn.label "Назва сіта">
+<!ENTITY activeColumn.label "Дазволена">
+<!ENTITY newButton.label "Новае…">
+<!ENTITY newButton.accesskey "Н">
+<!ENTITY editButton.label "Рэдагаваць…">
+<!ENTITY editButton.accesskey "Р">
+<!ENTITY deleteButton.label "Выдаліць">
+<!ENTITY deleteButton.accesskey "д">
+<!ENTITY reorderUpButton.label "Рухаць угору">
+<!ENTITY reorderUpButton.accesskey "г">
+<!ENTITY reorderDownButton.label "Рухаць уніз">
+<!ENTITY reorderDownButton.accesskey "н">
+<!ENTITY filterHeader.label "Дазволеныя сіты выконваюцца самастойна ў наступным парадку.">
+<!ENTITY filtersForPrefix.label "Сіты для:">
+<!ENTITY filtersForPrefix.accesskey "С">
+<!ENTITY viewLogButton.label "Метрыка сіта">
+<!ENTITY viewLogButton.accesskey "М">
+<!ENTITY runFilters.label "Выканаць зараз">
+<!ENTITY runFilters.accesskey "В">
+<!ENTITY stopFilters.label "Спыніць">
+<!ENTITY stopFilters.accesskey "С">
+<!ENTITY folderPickerPrefix.label "Выканаць вылучаныя сіты на:">
+<!ENTITY folderPickerPrefix.accesskey "і">
+<!ENTITY choosethis.label "выбраць гэтую папку">
+<!ENTITY choosethisnewsserver.label "выбраць гэты паслугач навінаў">

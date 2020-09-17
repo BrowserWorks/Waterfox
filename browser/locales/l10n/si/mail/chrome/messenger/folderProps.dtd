@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "ලක්ෂණ">
+
+<!ENTITY generalInfo.label                       "සාමාන්‍ය තොරතුරු">
+<!ENTITY folderRebuildSummaryFileTip2.label      "සාරාංශ ගොනු සූචිය (Summary File Index) යළි-ගොඩනඟන්න">
+<!ENTITY folderRebuildSummaryFile2.label         "ෆෝල්ඩරය අලුත්වැඩියා කරන්න">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Sometimes the folder index සමහරවිට ෆෝල්ඩර සූචිය(.msf ගොනුව) හානි වී ලිපි නොපෙන්වීමට හෝ මැකූ ලිපි පෙන්වීමට හෝ පුළුවන; ෆෝල්ඩරය අලුත්වැඩියා කිරීමෙන් මෙය විසඳෙනු ඇත.">
+
+<!ENTITY folderIncludeInGlobalSearch.label       "පොදු සෙවුම් ප්‍රතිඵලයේදී මෙම ෆෝල්ඩරයේ ලිපිද ඇතුළත් කරන්න">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "තබාගැනීමේ පිළිවෙත">
+<!ENTITY retentionUseAccount.label  "මගේ ගිණූම් සැකසුම් භාවිතා කරන්න">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "දිනකට වඩා පැරණි ලිපි">
+<!ENTITY message.label "ලිපි">
+<!ENTITY retentionCleanup.label "ඩිස්කයේ ඉඩ ලබා ගැනීමට, පැරණි ලිපි ස්ථිරව මැකිය හැකිය">
+<!ENTITY retentionCleanupImap.label "ඩිස්කයේ ඉඩ ලබා ගැනීම සඳහා, සමීප පිටපත්(local copies)  සහ  සේවාදායකයේ මුල් ලිපි (originals on the remote server)යන ආකාර දෙකේම පැරණි ලිපි සම්පූර්ණයෙන්ම මකා දැමිය හැකිය.">
+<!ENTITY retentionCleanupPop.label "ඩිස්කයේ ඉඩ ලබා ගැනීම සඳහා, සේවාදායකයේ මුල් ලිපි (originals on the remote server) ඇතුළු පැරණි ලිපි සම්පූර්ණයෙන්ම මකා දැමිය හැකිය.">
+<!ENTITY retentionDeleteMsg.label "මීට වැඩි ලිපි මකා දමන්න">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+ <!ENTITY retentionKeepAll.label "කිසිඳු ලිපියක් මකන්න එපා">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "මෙම ආසන්නතම ලිපිය හැර සියල්ල මකන්න">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "තරුයෙදූ ලිපි සෑමවිටම තබාගන්න">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "සම්මුහුර්තකරණය">
+<!ENTITY folderCheckForNewMessages2.label         "මෙම ගිණුමට නව ලිපි ලබාගැනීමේදී, මෙම ෆෝල්ඩරය සෑම විටම පරීක්ෂා කරන්න">
+<!ENTITY folderCheckForNewMessages2.accesskey     "c">
+
+<!ENTITY offlineFolder.check.label               "අසම්බන්ධිතව භාවිතාව සඳහා මෙම ෆෝල්ඩරය තෝරන්න">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "දැන් බාගත කරන්න">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "අසම්බන්ධිතව භාවිතාව සඳහා මෙම පුවත්සමූහය තෝරන්න">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "දැන් බාගත කරන්න">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "නම:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "ස්ථානය:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "බෙදාගැනීම">
+<!ENTITY privileges.button.label                 "වරප්‍රසාදයන්...">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "ඔබට පහත අවසරයන් ඇත:">
+<!ENTITY folderType.label                        "ෆෝල්ඩර ආකාරය:">
+
+<!ENTITY folderQuotaTab.label                    "පංගුව (Quota)">
+<!ENTITY folderQuotaUsage.label                  "භාවිතාව:">
+<!ENTITY folderQuotaStatus.label                 "තත්ත්වය:">
+
+<!ENTITY numberOfMessages.label                  "ලිපි ගණන:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "නොදනී">
+<!ENTITY sizeOnDisk.label                        "ඩිස්කය තුළ විශාලත්වය:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "නොදනී">

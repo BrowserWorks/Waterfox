@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "새 캘린더 만들기" >
+<!ENTITY wizard.label             "새 캘린더를 만듭니다." >
+<!ENTITY wizard.description       "캘린더의 위치를 지정하십시오." >
+
+<!ENTITY initialpage.description    "캘린더는 내 컴퓨터에 저장하거나 또는 다른 사람과 공유하기 위해 리모트 서버에 저장할 수 있습니다." >
+<!ENTITY initialpage.computer.label  "내 컴퓨터에 저장">
+<!ENTITY initialpage.network.label  "네트워크 상에 저장">
+
+<!ENTITY locationpage.description         "리모트 캘린더에 접근하기 위한 정보를 제공합니다." >
+<!ENTITY locationpage.login.description   "선택 사항: 사용자 이름과 비밀번호를 입력하십시오." >
+<!ENTITY locationpage.username.label      "사용자 이름:" >
+<!ENTITY locationpage.password.label      "비밀번호:" >
+
+<!ENTITY custompage.shortdescription  "사용자에 따라 캘린더를 설정합니다." >
+<!ENTITY custompage.longdescription   "캘린더에 별명을 부여하거나 이벤트에 색상을 설정할 수 있습니다." >
+
+<!ENTITY finishpage.shortdescription  "캘린더 만들기 완료" >
+<!ENTITY finishpage.longdescription   "새 캘린더가 만들어졌습니다." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "기타">
+
+<!ENTITY buttons.create.label "캘린더 생성">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "캘린더 찾기">
+<!ENTITY buttons.find.accesskey "F">
+
+<!ENTITY buttons.back.label "뒤로">
+<!ENTITY buttons.back.accesskey "B">
+
+<!ENTITY buttons.subscribe.label "구독">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "캘린더 형식:">
+<!ENTITY location.label "위치:">
+<!ENTITY location.placeholder "캘린더 서버의 URL이나 호스트 명">
+
+<!ENTITY network.nocredentials.label "이 위치는 자격 증명을 필요로 하지 않음">
+<!ENTITY network.loading.description "캘린더를 찾을 때 까지 기다려 주세요.">
+<!ENTITY network.notfound.description "이 위치에서 캘린더를 찾지 못했습니다. 설정을 확인해 주세요.">
+<!ENTITY network.authfail.description "입력한 자격 증명이 받아들여지지 않았습니다. 설정을 확인해 주세요.">
+
+<!ENTITY network.subscribe.single.description "구독하려는 캘린더를 선택해 주세요.">
+<!ENTITY network.subscribe.multiple.description "이 위치에서는 여러개의 캘린더 형식이 가능합니다. 캘린더 형식을 선택하고 구독하려는 캘린더를 표시해 주세요.">

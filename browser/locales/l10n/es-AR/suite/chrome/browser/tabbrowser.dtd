@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Sin título)">
+<!ENTITY  newTab.label           "Nueva pestaña">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Cerrar pestaña">
+<!ENTITY  closeTab.accesskey         "C">
+<!ENTITY  closeOtherTabs.label   "Cerrar las otras pestañas">
+<!ENTITY  closeOtherTabs.accesskey         "o">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Cerrar pestañas hacia la derecha">
+<!ENTITY  closeTabsToTheEnd.accesskey "i">
+<!ENTITY  reloadAllTabs.label    "Recargar todas las pestañas">
+<!ENTITY  reloadAllTabs.accesskey         "a">
+<!ENTITY  reloadTab.label        "Recargar pestaña">
+<!ENTITY  reloadTab.accesskey         "R">
+<!ENTITY  bookmarkGroup.label    "Marcar este grupo de pestañas">
+<!ENTITY  bookmarkGroup.accesskey  "M">
+<!ENTITY  closeTabButton.tooltip   "Cerrar la pestaña actual">
+<!ENTITY  newTabButton.tooltip   "Abrir una nueva pestaña">
+<!ENTITY  listAllTabs.tooltip    "Listar todas las pestañas">
+<!ENTITY  undoCloseTab.label    "Deshacer cerrar pestaña">
+<!ENTITY  undoCloseTab.accesskey  "D">

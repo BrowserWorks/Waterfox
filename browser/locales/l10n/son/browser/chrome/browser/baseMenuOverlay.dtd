@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName; ga">
+<!ENTITY aboutProduct2.accesskey  "a">
+
+<!ENTITY preferencesCmdMac.label        "Ibaayey…">
+
+<!ENTITY servicesMenuMac.label          "Goyey">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; tugu">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Tanawey tugu">
+
+<!ENTITY showAllAppsCmdMac.label        "Kul cebe">
+

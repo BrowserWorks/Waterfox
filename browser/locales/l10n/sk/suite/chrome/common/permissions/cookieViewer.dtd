@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Uložené súbory cookies">
+<!ENTITY     tab.bannedservers.label        "Webové stránky a súbory cookies">
+<!ENTITY     div.bannedservers.label        "Spravovať stránky, ktoré môžu a nemôžu ukladať cookies vo vašom počítači.">
+<!ENTITY     div.cookiesonsystem.label      "Zobraziť a odstrániť súbory cookies, ktoré sú uložené vo vašom počítači.">
+<!ENTITY     treehead.cookiename.label      "Názov cookie">
+<!ENTITY     treehead.cookiedomain.label    "Stránka">
+<!ENTITY     treehead.cookieexpires.label   "Platnosť do">
+<!ENTITY     treehead.infoselected.label    "Informácie o označenom cookie">
+<!ENTITY     button.removecookie.label      "Odstrániť cookie">
+<!ENTITY     button.removecookie.accesskey  "d">
+<!ENTITY     button.removeallcookies.label  "Odstrániť všetky cookies">
+<!ENTITY     button.removeallcookies.accesskey "e">
+
+<!ENTITY     search.placeholder             "Hľadať cookies">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Názov:">
+<!ENTITY     props.value.label              "Obsah:">
+<!ENTITY     props.domain.label             "Server:">
+<!ENTITY     props.path.label               "Cesta:">
+<!ENTITY     props.secure.label             "Odoslané pre:">
+<!ENTITY     props.expires.label            "Platnosť do:">
+
+<!ENTITY     treehead.sitename.label        "Stránka">
+<!ENTITY     treehead.scheme.label          "Schéma">
+<!ENTITY     treehead.status.label          "Stav">
+<!ENTITY     windowtitle.label              "Správca cookies">
+
+<!ENTITY     blockSite.label                "Blokovať">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "Povoliť">
+<!ENTITY     allowSite.accesskey            "o">
+<!ENTITY     allowSiteSession.label         "Relácia">
+<!ENTITY     allowSiteSession.accesskey     "R">
+<!ENTITY     removepermission.label         "Odstrániť stránku">
+<!ENTITY     removepermission.accesskey     "d">
+<!ENTITY     removeallpermissions.label     "Odstrániť všetky stránky">
+<!ENTITY     removeallpermissions.accesskey "e">
+
+<!ENTITY     futureCookies.label            "Zakázať stránkam, ktorých cookies boli odstránené, nastavovať cookies v budúcnosti">
+<!ENTITY     futureCookies.accesskey        "a">

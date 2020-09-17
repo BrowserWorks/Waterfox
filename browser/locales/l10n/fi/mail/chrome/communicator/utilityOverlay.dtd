@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Tiedosto">
+<!ENTITY fileMenu.accesskey        "T">
+<!ENTITY newMenu.label            "Uusi">
+<!ENTITY newMenu.accesskey          "U">
+
+<!ENTITY editMenu.label          "Muokkaa">
+<!ENTITY editMenu.accesskey        "M">
+<!ENTITY undoCmd.label            "Kumoa">
+<!ENTITY undoCmd.accesskey          "m">
+<!ENTITY redoCmd.label            "Tee uudelleen">
+<!ENTITY redoCmd.accesskey          "T">
+<!ENTITY deleteCmd.label          "Poista">
+<!ENTITY deleteCmd.accesskey        "o">
+<!ENTITY preferencesCmd2.label "Asetukset">
+<!ENTITY preferencesCmd2.accesskey "A">
+<!ENTITY preferencesCmdUnix.label       "Asetukset">
+<!ENTITY preferencesCmdUnix.accesskey     "A">
+
+<!ENTITY customizeCmd.label "Mukauta">
+<!ENTITY customizeCmd.accesskey "m">
+
+<!ENTITY viewMenu.label          "Näytä">
+<!ENTITY viewMenu.accesskey        "N">
+<!ENTITY viewToolbarsMenu.label        "Työkalupalkit">
+<!ENTITY viewToolbarsMenu.accesskey      "T">
+<!ENTITY showTaskbarCmd.label          "Tilarivi">
+<!ENTITY showTaskbarCmd.accesskey        "r">
+
+<!ENTITY closeCmd.label      "Sulje">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "S">
+
+<!ENTITY quitApplicationCmd.label  "Lopeta">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "L">
+
+<!ENTITY quitApplicationCmdUnix.label  "Lopeta">
+<!ENTITY quitApplicationCmdUnix.accesskey  "L">
+
+<!ENTITY quitApplicationCmdMac.label  "Lopeta &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "L">

@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "A">
+<!ENTITY fromField4.label "De">
+<!ENTITY senderField4.label "Remitent">
+<!ENTITY author.label "Autor">
+<!ENTITY organizationField4.label "Organització">
+<!ENTITY replyToField4.label "Respon a">
+
+<!ENTITY subjectField4.label "Assumpte">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "CCO">
+<!ENTITY newsgroupsField4.label "Grups de discussió">
+<!ENTITY followupToField4.label "Continuació a">
+<!ENTITY tagsHdr4.label "Etiquetes">
+<!ENTITY dateField4.label "Data">
+<!ENTITY userAgentField4.label "Agent d'usuari">
+<!ENTITY referencesField4.label "Referències">
+<!ENTITY messageIdField4.label "ID del missatge">
+<!ENTITY inReplyToField4.label "En resposta a">
+<!ENTITY originalWebsite4.label "Lloc web">
+
+<!ENTITY hdrArchiveButton1.label "Arxiva">
+<!ENTITY hdrArchiveButton1.tooltip "Arxiva aquest missatge">
+<!ENTITY hdrSmartReplyButton1.label "Resposta intel·ligent">
+<!ENTITY hdrReplyButton1.label "Respon">
+<!ENTITY hdrReplyButton2.tooltip "Respon al remitent d'aquest missatge">
+<!ENTITY hdrReplyAllButton1.label "Respon a tots">
+<!ENTITY hdrReplyAllButton1.tooltip "Respon al remitent i a tots els destinataris">
+<!ENTITY hdrReplyListButton1.label "Respon a la llista">
+<!ENTITY hdrReplyListButton1.tooltip "Respon a la llista de correu">
+<!ENTITY hdrFollowupButton1.label "Segueix">
+<!ENTITY hdrFollowupButton1.tooltip "Publica al grup de discussió">
+<!ENTITY hdrForwardButton1.label "Reenvia">
+<!ENTITY hdrForwardButton1.tooltip "Reenvia aquest missatge">
+<!ENTITY hdrJunkButton1.label "Correu brossa">
+<!ENTITY hdrJunkButton1.tooltip "Marca aquest missatge com a correu brossa">
+<!ENTITY hdrTrashButton1.label "Suprimeix">
+<!ENTITY hdrTrashButton1.tooltip "Suprimeix aquest missatge">
+
+<!ENTITY hdrViewToolbarShowFull.label "Mostra les icones i el text">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "Mostra les icones només">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "i">
+<!ENTITY hdrViewToolbarShowText.label "Mostra el text només">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Mostra sempre respon al remitent">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "r">
+
+<!ENTITY otherActionsButton2.label "Més">
+<!ENTITY otherActionsButton.tooltip "Més accions">
+<!ENTITY otherActionsOpenConversation1.label "Obre la conversa">
+<!ENTITY otherActionsOpenConversation1.accesskey "c">
+<!ENTITY otherActionsOpenInNewWindow1.label "Obre en una finestra nova">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "f">
+<!ENTITY otherActionsOpenInNewTab1.label "Obre en una pestanya nova">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "p">
+<!ENTITY markAsReadMenuItem1.label "Marca com a llegit">
+<!ENTITY markAsReadMenuItem1.accesskey "l">
+<!ENTITY markAsUnreadMenuItem1.label "Marca com a no llegit">
+<!ENTITY markAsUnreadMenuItem1.accesskey "n">
+<!ENTITY saveAsMenuItem1.label "Anomena i desa…">
+<!ENTITY saveAsMenuItem1.accesskey "A">
+<!ENTITY viewSourceMenuItem1.label "Codi font">
+<!ENTITY viewSourceMenuItem1.accesskey "C">
+<!ENTITY otherActionsPrint1.label "Imprimeix…">
+<!ENTITY otherActionsPrint1.accesskey "I">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Inicialment mostra la subfinestra d'adjuncions">
+<!ENTITY startExpandedCmd.accesskey    "s">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Obre">
+<!ENTITY openAttachmentCmd.accesskey    "O">
+<!ENTITY saveAsAttachmentCmd.label    "Anomena i desa…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "A">
+<!ENTITY detachAttachmentCmd.label    "Separa…">
+<!ENTITY detachAttachmentCmd.accesskey    "p">
+<!ENTITY deleteAttachmentCmd.label    "Suprimeix">
+<!ENTITY deleteAttachmentCmd.accesskey    "x">
+<!ENTITY openAllAttachmentsCmd.label    "Obre-ho tot…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "O">
+<!ENTITY saveAllAttachmentsCmd.label    "Desa-ho tot…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "D">
+<!ENTITY detachAllAttachmentsCmd.label    "Separa-ho tot…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "S">
+<!ENTITY deleteAllAttachmentsCmd.label    "Suprimeix-ho tot…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "u">
+
+<!ENTITY openAttachment.tooltip "Obre el fitxer adjunt">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Obre la carpeta on es troba">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "b">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Mostra-ho en el Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Desa">
+<!ENTITY saveAttachmentButton1.tooltip     "Desa el fitxer adjunt">
+<!ENTITY saveAllAttachmentsButton1.label   "Desa-ho tot">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Desa tots els fitxers adjunts">
+
+<!ENTITY copyLinkCmd.label        "Copia l'enllaç">
+<!ENTITY copyLinkCmd.accesskey    "C">
+
+<!ENTITY CopyMessageId.label "Copia l'ID-missatge">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "Obre el missatge per ID">
+<!ENTITY OpenMessageForMsgId.accesskey "O">
+<!ENTITY OpenBrowserWithMsgId.label "Obre el navegador amb l'ID-missatge">
+<!ENTITY OpenBrowserWithMsgId.accesskey "n">

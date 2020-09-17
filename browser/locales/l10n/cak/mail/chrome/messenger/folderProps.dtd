@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Taq ichinil">
+
+<!ENTITY generalInfo.label                       "Chijun Etamab'äl">
+<!ENTITY folderCharsetFallback2.label            "Rucholajil rucholajem tzij, ri kan k'o wi:">
+<!ENTITY folderCharsetFallback2.accesskey        "R">
+<!ENTITY folderCharsetEnforce2.label             "Tokisäx ri b'itz'ib' pa konojel ri taq rutzijol yakwuj (ri rub'itz'ib' cholan kitzij yonil taq tzijol chuqa' ri ruyonil nitz'et choj xkerepüx kan)">
+<!ENTITY folderCharsetEnforce2.accesskey         "T">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Tinuk' chik Rucholajem Yakb'äl Ch'utitzijol">
+<!ENTITY folderRebuildSummaryFile2.label         "Tichojmirisäx Yakwuj">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "T">
+<!ENTITY folderRebuildSummaryFile.explanation    "K'o re ri rucholajem (.msf) yakb'äl ch'utitzijol niyujtäj chuqa' nitikïr yerelesaj el taq rutzijol o nitikïr yeruk'üt pe taq rutzijol eyujun; ninuk' re yakwuj re' nitikïr yeruchojmirisaj re taq k'ayewal re'.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Keya' qa taq rutzijol pa re yakwuj re' pa Kiq'i'oj Chijun Kanoxïk">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "K">
+
+<!ENTITY retention.label "Runa'ojil K'amonem">
+<!ENTITY retentionUseAccount.label  "Tinwokisaj kinuk'ulem ri rub'i' nutaqoya'l">
+<!ENTITY retentionUseAccount.accesskey "o">
+<!ENTITY daysOld.label "ojer taq q'ij">
+<!ENTITY message.label "taq tzijol">
+<!ENTITY retentionCleanup.label "Richin nikol rupam ri nimayakb'äl, tikirel jumul yeyuj el ri ojer taq rutzijol.">
+<!ENTITY retentionCleanupImap.label "Richin nikol rupam ri nimayakb'äl, tikirel jumul yeyuj el ri ojer taq rutzijol, achi'el ri aj wawe' chuqa' nab'ey taq wachib'enïk pa ri näj k'uxasamaj.">
+<!ENTITY retentionCleanupPop.label "Richin nikol rupam ri nimayakb'äl, tikirel jumul yeyuj el ri ojer taq rutzijol, achi'el ri nab'ey taq wachib'enïk pa ri näj k'uxasamaj.">
+<!ENTITY retentionDeleteMsg.label "Keyuj taq rutzijol nïm chuwäch">
+<!ENTITY retentionDeleteMsg.accesskey "r">
+<!ENTITY retentionKeepAll.label "Man keyuj taq tzijol">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "Keyuj konojel, man ke ta ri' ri e k'ak'a'">
+<!ENTITY retentionKeepRecent.accesskey "k">
+<!ENTITY retentionApplyToFlagged.label "Junelïk keyake' ri nimaläj taq rutzijol">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Ximojri'ïl">
+<!ENTITY folderCheckForNewMessages2.label         "Toq yekanöx k'ak'a' taq rutzijol re rub'i' taqoya'l re', junelïk tinik'öx re yakwuj re'">
+<!ENTITY folderCheckForNewMessages2.accesskey     "n">
+
+<!ENTITY offlineFolder.check.label               "Tichach re yajwuj re' richin nokisäx toq majun okem">
+<!ENTITY offlineFolder.check.accesskey           "T">
+<!ENTITY offlineFolder.button.label              "Tiqasäx Wakami">
+<!ENTITY offlineFolder.button.accesskey          "q">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Tichach re rumolaj tzijol re' richin nokisäx toq majun okem">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Tiqasäx Wakami">
+<!ENTITY offlineNewsgroup.button.accesskey       "q">
+
+<!ENTITY folderProps.name.label                  "B'i'aj:">
+<!ENTITY folderProps.name.accesskey              "B">
+<!ENTITY folderProps.location.label              "Ochochib'al:">
+<!ENTITY folderProps.location.accesskey          "O">
+
+<!ENTITY folderSharingTab.label                  "Tajin nikomonïx">
+<!ENTITY privileges.button.label                 "Ya'on kiq'ij…">
+<!ENTITY privileges.button.accesskey             "Y">
+<!ENTITY permissionsDesc.label                   "Ja re' ya'on q'ij chawe:">
+<!ENTITY folderType.label                        "Ruwäch Yakwuj:">
+
+<!ENTITY folderQuotaTab.label                    "Rajil">
+<!ENTITY folderQuotaUsage.label                  "Okisaxïk:">
+<!ENTITY folderQuotaStatus.label                 "B'anikil:">
+
+<!ENTITY numberOfMessages.label                  "Kajilab'al rutzijol:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "man etaman ta ruwäch">
+<!ENTITY sizeOnDisk.label                        "Runimilem pa nimayakb'äl:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "man etaman ta ruwäch">

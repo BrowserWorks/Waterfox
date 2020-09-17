@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Jurnal adaptativ de mesaje nesolicitate">
+<!ENTITY adaptiveJunkLogInfo.label "Jurnal de activitate pentru controlul adaptativ al mesajelor nesolicitate.">
+<!ENTITY clearLog.label "Golește jurnalul">
+<!ENTITY clearLog.accesskey "G">
+<!ENTITY closeLog.label "Închidere">
+<!ENTITY closeLog.accesskey "c">

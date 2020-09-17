@@ -1,0 +1,263 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "મેનુ ખોલો">
+<!ENTITY navbarOverflow.label                "વધારે સાધનો…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "ટૅબને જોડો">
+<!ENTITY  unpinTab.label                     "ટૅબ છોડો">
+
+<!ENTITY  listAllTabs.label      "બધા ટૅબ્સની યાદી કરો">
+
+<!ENTITY tabCmd.label "નવી ટૅબ">
+<!ENTITY openFileCmd.label "ફાઈલ ખોલો...">
+<!ENTITY printCmd.label "છાપો...">
+
+
+<!ENTITY taskManagerCmd.label "કાર્ય વ્યવસ્થાપક">
+
+<!ENTITY menubarCmd.label "મેનુ પટ્ટી">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY personalbarCmd.label "બુકમાર્ક્સ ટૂલબાર">
+<!ENTITY personalbarCmd.accesskey "B">
+<!ENTITY bookmarksToolbarItem.label "બુકમાર્ક્સ સાધનપટ્ટી વસ્તુઓ">
+
+<!ENTITY fullScreenCmd.label "પૂર્ણ સ્ક્રીન">
+
+
+<!-- LOCALIZATION NOTE (fxa.signin) Used to define the different labels
+     for the Firefox Account toolbar signin menu screen. -->
+
+ <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbart menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "હવે પૂર્ણ સ્ક્રીન છે">
+<!ENTITY fullscreenWarning.generic.label "આ દસ્તાવેજ હવે પૂર્ણ સ્ક્રીન પર છે">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "પૂર્ણ સ્ક્રીનથી બહાર નીકળો (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "પૂર્ણ સ્ક્રીનથી બહાર નીકળો (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "તમારા નિર્દેશક અંકુશ ધરાવે છે. Esc દબાવો પાછા નિયંત્રણ લઈ જવા માટે.">
+<!ENTITY pointerlockWarning.generic.label "આ દસ્તાવેજ આપના પોઇન્ટર નિયંત્રણ ધરાવે છે. Esc દબાવો પાછા નિયંત્રણલઈ જવા માટે.">
+
+<!ENTITY showAllBookmarks2.label "બધા બુકમાર્ક્સને બતાવો">
+<!ENTITY recentBookmarks.label "તાજેતરમાં કરેલ બુકમાર્ક">
+<!ENTITY bookmarksToolbarChevron.tooltip "વધુ બુકમાર્ક્સ બતાવો">
+
+<!ENTITY printButton.label            "છાપો">
+<!ENTITY printButton.tooltip          "આ પાનું છાપો">
+
+
+<!ENTITY searchItem.title             "શોધો">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "મુખ્ય">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; મુખ પાનું">
+
+<!ENTITY bookmarksButton.label          "બુકમાર્ક્સ">
+
+<!ENTITY bookmarksSubview.label             "બુકમાર્ક્સ">
+<!ENTITY bookmarksMenuButton2.label         "બુકમાર્ક્સ મેનૂ">
+<!ENTITY bookmarksMenuButton.other.label    "અન્ય બુકમાર્ક્સ">
+<!ENTITY bookmarksMenuButton.mobile.label   "મોબાઇલ બુકમાર્ક્સ">
+<!ENTITY viewBookmarksSidebar2.label        "બુકમાર્ક બાજુપટ્ટીને જુઓ">
+<!ENTITY hideBookmarksSidebar.label         "બુકમાર્ક્સ સાઇડબાર છુપાવો">
+<!ENTITY viewBookmarksToolbar.label         "બુકમાર્ક સાધનપટ્ટીને દર્શાવો">
+<!ENTITY hideBookmarksToolbar.label         "બુકમાર્ક્સ ટૂલબાર છુપાવો">
+<!ENTITY searchBookmarks.label              "બુકમાર્ક્સ શોધો">
+<!ENTITY bookmarkingTools.label             "બુકમાર્કિંગ સાધનો">
+<!ENTITY addBookmarksMenu.label             "ટૂલબારમાં બુકમાર્ક્સ મેનૂ ઉમેરો">
+<!ENTITY removeBookmarksMenu.label          "ટૂલબારમાંથી બુકમાર્ક મેનુને દૂર કરો">
+
+<!ENTITY historyButton.label            "ઇતિહાસ">
+
+<!ENTITY downloads.label              "ડાઉનલોડ">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "ડાઉનલોડ">
+<!ENTITY addons.label                 "એડ-ઓન">
+
+<!ENTITY webDeveloperMenu.label       "વેબ ડેવલપર">
+
+<!ENTITY newNavigatorCmd.label        "નવી વિન્ડો">
+<!ENTITY newPrivateWindow.label     "નવી ખાનગી વિન્ડો">
+
+<!ENTITY editMenu.label         "ફેરફાર">
+<!ENTITY preferencesCmd2.label       "વિકલ્પો">
+<!ENTITY preferencesCmdUnix.label       "પસંદગીઓ">
+
+
+<!ENTITY overflowCustomizeToolbar.label       "પોતાની રીતની સાધનપટ્ટી…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY historyMenu.label "ઇતિહાસ">
+<!ENTITY historyUndoMenu.label "છેલ્લે બધ થયેલ ટૅબ્સ">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "છેલ્લે બંધ થયેલ વિન્ડો">
+
+<!ENTITY appMenuHistory.showAll.label "બધા ઇતિહાસને બતાવો">
+<!ENTITY appMenuHistory.clearRecent.label "તાજેતરનાં ઇતિહાસને સાફ કરો…">
+<!ENTITY appMenuHistory.restoreSession.label "પહેલાનાં સત્રને પુન:સંગ્રહો">
+<!ENTITY appMenuHistory.viewSidebar.label "ઇતિહાસ બાજુપટ્ટીને જુઓ">
+<!ENTITY appMenuHistory.recentHistory.label "છેલ્લો ઇતિહાસ">
+<!ENTITY appMenuHelp.label "મદદ">
+
+<!ENTITY appMenuRemoteTabs.label "સમન્વિત કરેલા ટૅબ્સ">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "કોઈ ખુલ્લા ટૅબ્સ નથી">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "વધુ બતાવો">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "આ ઉપકરણમાંથી વધુ ટૅબ્સ બતાવો">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "બધું બતાવો">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "આ ઉપકરણમાંથી તમામ ટેબ્સ બતાવો">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "તમારા અન્ય ઉપકરણોમાંથી ટેબ્સની સૂચિ જોવા માટે ટેબ સમન્વયન ચાલુ કરો.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "અહીં અન્ય ઉપકરણોથી તમારા ટેબ્સ જોવા માંગો છો?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "સમન્વયન પસંદગીઓ ખોલો">
+<!ENTITY appMenuRemoteTabs.unverified.label "તમારા એકાઉન્ટને ચકાસવાની જરૂર છે.">
+<!ENTITY appMenuRemoteTabs.managedevices.label "ઉપકરણો સંચાલિત કરો…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "સમન્વિત ટૅબ્સ સાઇડબાર જુઓ">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "બીજા ઉપકરણ સાથે જોડાણ કરો">
+
+<!ENTITY appMenuRecentHighlights.label "તાજેતરના હાઈલાઈટ્સ">
+
+<!ENTITY customizeMenu.addToToolbar.label "સાધનપટ્ટીમાં ઉમેરો">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "ઓવરફ્લો મેનુમાં ઉમેરો">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "ઓવરફ્લો મેનૂમાંથી અનપિન કરો">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "સાધનપટ્ટીમાંથી દૂર કરો">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "વધારે વસ્તુઓને ઉમેરો…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "વધુ">
+
+<!ENTITY contentSearchSubmit.tooltip  "શોધ સબમિટ કરો">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "શોધો">
+<!ENTITY searchIcon.tooltip           "શોધો">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "કડીની નકલ કરો">
+
+<!ENTITY saveToPocketCmd.label        "પૃષ્ઠને Pocket પર સાચવો">
+<!ENTITY pocketMenuitem.label         "Pocketની સૂચિ જુઓ">
+
+<!ENTITY emailPageCmd.label           "ઇમેલ કડી…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "લખાણ માપ">
+
+<!ENTITY sidebarCloseButton.tooltip     "બાજુપટ્ટી બંધ કરો">
+
+<!ENTITY quitApplicationCmdWin2.label       "બહાર નીકળો">
+<!ENTITY quitApplicationCmdWin2.accesskey   "x">
+<!ENTITY quitApplicationCmdWin2.tooltip     "બહાર નીકળો &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "બંધ કરો">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "છોડી દો &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "પોપઅપ બ્લોકર પસંદગીઓમાં ફેરફાર કરો...">
+<!ENTITY editPopupSettings.label "પોપઅપ બ્લોકર વિકલ્પોમાં ફેરફાર કરો...">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "આ પાનાંમાં શોધો...">
+
+<!ENTITY spellAddDictionaries.label "શબ્દકોષો એડ-ઓન...">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "બ્રાઉઝર ટૅબ્સ">
+
+
+<!ENTITY syncBrand.shortName.label    "સમન્વય">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "આપમેળે-છુપાવો">
+
+
+<!ENTITY uiTour.infoPanel.close "બંધ કરો">
+
+<!ENTITY panicButton.thankyou.msg1                "તમારા તાજેતરના ઇતિહાસ સાફ કરવામાં આવે છે.">
+<!ENTITY panicButton.thankyou.msg2                "સલામત બ્રાઉઝિંગ!">
+<!ENTITY panicButton.thankyou.buttonlabel         "આભાર!">
+
+<!ENTITY updateAvailable.panelUI.label "ડાઉનલોડ કરો &brandShorterName; સુધારો">
+
+<!ENTITY updateManual.panelUI.label "&brandShorterName; ની એક નવી નકલ ડાઉનલોડ કરો">
+
+<!ENTITY updateRestart.panelUI.label2 "અપડેટ કરવા માટે પુનઃપ્રારંભ કરો &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "સમન્વય કરતા ઉપકરણો…">
+
+<!ENTITY pageAction.shareUrl.label "વહેંચો">
+<!ENTITY pageAction.shareMore.label "વધુ…">
+
+<!ENTITY libraryButton.tooltip "ઇતિહાસ, સાચવેલા બુકમાર્ક્સ, અને વધુ જુઓ">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "ઍક્સેસિબિલિટી સુવિધાઓ સક્ષમ">
+

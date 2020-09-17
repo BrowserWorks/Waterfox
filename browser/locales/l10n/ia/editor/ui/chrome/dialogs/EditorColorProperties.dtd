@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Colores del pagina e fundo">
+<!ENTITY pageColors.label "Colores del pagina">
+<!ENTITY defaultColorsRadio.label "Colores predefinite del lector (Non definir le colores in le pagina)">
+<!ENTITY defaultColorsRadio.accessKey "P">
+<!ENTITY defaultColorsRadio.tooltip "Usar solmente le colores configurate in le navigator del lector">
+<!ENTITY customColorsRadio.label "Usar colores personalisate:">
+<!ENTITY customColorsRadio.accessKey "P">
+<!ENTITY customColorsRadio.tooltip "Iste colores predefinite supplanta illos del navigator del visor">
+
+<!ENTITY normalText.label "Texto normal">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Texto del ligamine">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "Texto del ligamine active">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "Texto del ligamine visitate">
+<!ENTITY visitedLinkText.accessKey "V">
+<!ENTITY background.label "Fundo:">
+<!ENTITY background.accessKey "F">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Imagine de fundo:">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "Usar un file imagine como fundo pro tu pagina">
+<!ENTITY backgroundImage.shortenedDataURI "URI de datos abbreviate (copiar placiara le URI complete in le area de transferentia)">

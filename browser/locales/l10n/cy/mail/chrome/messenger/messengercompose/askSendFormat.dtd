@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "Cwestiwn E-bost HTML">
+
+<!ENTITY recipient.label "Mae rhai o'r derbynwyr heb eu rhestri eu bod yn gallu derbyn post HTML.">
+
+<!ENTITY question.label "Hoffech chi drosi'r neges i destun plaen ne ei anfon mewn HTML beth bynnag?">
+
+<!ENTITY plainTextAndHtml.label "Anfon mewn Testun Plaen a HTML">
+<!ENTITY plainTextAndHtml.accesskey "A">
+<!ENTITY plainTextOnly.label "Anfon mewn Testun Plaen yn Unig">
+<!ENTITY plainTextOnly.accesskey "T">
+<!ENTITY htmlOnly.label "Anfon mewn HTML yn Unig">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Anfon">
+<!ENTITY send.accesskey "A">

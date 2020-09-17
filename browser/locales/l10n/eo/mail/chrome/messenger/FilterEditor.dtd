@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Redakti filtrilon">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Nomo de filtrilo:">
+<!ENTITY filterName.accesskey "N">
+
+<!ENTITY junk.label "Trudmesaĝo">
+<!ENTITY notJunk.label "Dezirata mesaĝo">
+
+<!ENTITY lowestPriorityCmd.label "Plej malalta">
+<!ENTITY lowPriorityCmd.label "Malalta">
+<!ENTITY normalPriorityCmd.label "Meza">
+<!ENTITY highPriorityCmd.label "Alta">
+<!ENTITY highestPriorityCmd.label "Plej alta">
+
+<!ENTITY contextDesc.label "Apliki filtrilon dum:">
+<!ENTITY contextIncomingMail.label "elŝuti retpoŝton:">
+<!ENTITY contextIncomingMail.accesskey "e">
+<!ENTITY contextManual.label "permana aktivigo">
+<!ENTITY contextManual.accesskey "p">
+<!ENTITY contextBeforeCls.label "antaŭ filtri trudmesaĝojn">
+<!ENTITY contextAfterCls.label "post filtri trudmesaĝojn">
+<!ENTITY contextOutgoing.label "post sendi">
+<!ENTITY contextOutgoing.accesskey "s">
+<!ENTITY contextArchive.label "arĥivi">
+<!ENTITY contextArchive.accesskey "a">
+
+<!ENTITY filterActionDesc.label "kaj plenumi:">
+<!ENTITY filterActionDesc.accesskey "k">
+
+<!ENTITY filterActionOrderWarning.label "Rimarko: agoj de filtrado estos lanĉitaj en alia ordo.">
+<!ENTITY filterActionOrder.label "Montri ordon">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "movi mesaĝon al">
+<!ENTITY copyMessage.label "kopii mesaĝon al">
+<!ENTITY forwardTo.label "plusendi mesaĝon al">
+<!ENTITY replyWithTemplate.label "respondi uzante ŝablonon">
+<!ENTITY markMessageRead.label "marki kiel legitan">
+<!ENTITY markMessageUnread.label "marki kiel nelegitan">
+<!ENTITY markMessageStarred.label "marki per steleto">
+<!ENTITY setPriority.label "agordi prioritaton">
+<!ENTITY addTag.label "etikedi mesaĝon">
+<!ENTITY setJunkScore.label "marki kiel trudmesaĝon/deziratan mesaĝon">
+<!ENTITY deleteMessage.label "forigi mesaĝon">
+<!ENTITY deleteFromPOP.label "forigi el servilo POP">
+<!ENTITY fetchFromPOP.label "elŝuti el servilo POP">
+<!ENTITY ignoreThread.label "ignori fadenon">
+<!ENTITY ignoreSubthread.label "ignori subfadenon">
+<!ENTITY watchThread.label "observi fadenon">
+<!ENTITY stopExecution.label "haltigi filtrilon">
+
+<!ENTITY addAction.tooltip "Aldoni novan agon">
+<!ENTITY removeAction.tooltip "Forigi tiun ĉi agon">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

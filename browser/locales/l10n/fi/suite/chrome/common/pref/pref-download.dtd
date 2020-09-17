@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Lataukset">
+
+<!ENTITY downloadBehavior.label         "Aloitettaessa tiedoston latausta">
+<!ENTITY doNothing.label                "Älä avaa mitään">
+<!ENTITY doNothing.accesskey            "m">
+<!ENTITY openProgressDialog.label       "Avaa edistymisikkuna">
+<!ENTITY openProgressDialog.accesskey   "e">
+<!ENTITY openDM.label                   "Avaa latausikkuna">
+<!ENTITY openDM.accesskey               "l">
+<!ENTITY flashWhenOpen.label            "Välkytä latausikkunaa, jos se on jo auki">
+<!ENTITY flashWhenOpen.accesskey        "f">
+
+<!ENTITY downloadLocation.label         "Tallennettaessa tiedostoa">
+<!ENTITY saveTo.label                   "Tallenna se kansioon">
+<!ENTITY saveTo.accesskey               "T">
+<!ENTITY chooseDownloadFolder.label     "Valitse kansio…">
+<!ENTITY chooseDownloadFolder.accesskey "V">
+<!ENTITY alwaysAsk.label                "Kysy aina tiedoston tallennuskansio">
+<!ENTITY alwaysAsk.accesskey            "K">
+
+<!ENTITY downloadHistory.label          "Lataushistoria">
+<!ENTITY removeEntries.label            "Poista lataukset listalta">
+<!ENTITY removeEntries.accesskey        "P">
+<!ENTITY whenCompleted.label            "Kun ne ovat latautuneet">
+<!ENTITY whenQuittingApp.label          "Kun &brandShortName; suljetaan">
+<!ENTITY neverRemove.label              "Ei koskaan">
+
+<!ENTITY finishedBehavior.label         "Kun tiedosto on latautunut">
+<!ENTITY playSound.label                "Anna äänimerkki">
+<!ENTITY playSound.accesskey            "A">
+<!ENTITY showAlert.label                "Näytä ilmoitus">
+<!ENTITY showAlert.accesskey            "N">
+<!ENTITY browse.label                   "Selaa…">
+<!ENTITY browse.accesskey               "S">
+<!ENTITY playButton.label               "Toista">
+<!ENTITY playButton.accesskey           "i">

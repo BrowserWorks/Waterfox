@@ -1,0 +1,303 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Tampal Tanpa Format">
+<!ENTITY pasteNoFormatting.accesskey "n">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Tampal Sebagai Petikan">
+<!ENTITY pasteAsQuotationCmd.accesskey "P">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Sisip">
+<!ENTITY insertMenu.accesskey "S">
+<!ENTITY insertLinkCmd2.label "Pautan…">
+<!ENTITY insertLinkCmd2.accesskey "P">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "Nama Labuh…">
+<!ENTITY insertAnchorCmd.accesskey "L">
+<!ENTITY insertImageCmd.label "Imej…">
+<!ENTITY insertImageCmd.accesskey "I">
+<!ENTITY insertHLineCmd.label "Garis Mengufuk">
+<!ENTITY insertHLineCmd.accesskey "f">
+<!ENTITY insertTableCmd.label "Jadual…">
+<!ENTITY insertTableCmd.accesskey "J">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Math…">
+<!ENTITY insertMathCmd.accesskey "M">
+<!ENTITY insertCharsCmd.label "Aksara dan Simbol…">
+<!ENTITY insertCharsCmd.accesskey "A">
+<!ENTITY insertBreakAllCmd.label "Pecah Bawah Imej">
+<!ENTITY insertBreakAllCmd.accesskey "c">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Cipta Pautan…">
+<!ENTITY createLinkCmd.accesskey "n">
+<!ENTITY editLinkCmd.label "Edit Pautan dalam Composer Baru">
+<!ENTITY editLinkCmd.accesskey "i">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "Pilih fon">
+<!ENTITY fontfaceMenu.label "Fon">
+<!ENTITY fontfaceMenu.accesskey "F">
+<!ENTITY fontVarWidth.label "Lebar Variabel">
+<!ENTITY fontVarWidth.accesskey "V">
+<!ENTITY fontFixedWidth.label "Lebar Tetap">
+<!ENTITY fontFixedWidth.accesskey "p">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "Pilih saiz fon">
+<!ENTITY decreaseFontSize.label "Lebih kecil">
+<!ENTITY decreaseFontSize.accesskey "l">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Lebih besar">
+<!ENTITY increaseFontSize.accesskey "r">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Saiz">
+<!ENTITY fontSizeMenu.accesskey "z">
+<!ENTITY size-tinyCmd.label "Sangat kecil">
+<!ENTITY size-tinyCmd.accesskey "S">
+<!ENTITY size-smallCmd.label "Kecil">
+<!ENTITY size-smallCmd.accesskey "K">
+<!ENTITY size-mediumCmd.label "Sederhana">
+<!ENTITY size-mediumCmd.accesskey "S">
+<!ENTITY size-largeCmd.label "Besar">
+<!ENTITY size-largeCmd.accesskey "B">
+<!ENTITY size-extraLargeCmd.label "Ekstra Besar">
+<!ENTITY size-extraLargeCmd.accesskey "r">
+<!ENTITY size-hugeCmd.label "Sangat besar">
+<!ENTITY size-hugeCmd.accesskey "S">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Gaya Teks">
+<!ENTITY fontStyleMenu.accesskey "G">
+<!ENTITY styleBoldCmd.label "Tebal">
+<!ENTITY styleBoldCmd.accesskey "T">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Italik">
+<!ENTITY styleItalicCmd.accesskey "I">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Garis bawah">
+<!ENTITY styleUnderlineCmd.accesskey "G">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Tampak tembus">
+<!ENTITY styleStrikeThruCmd.accesskey "k">
+<!ENTITY styleSuperscriptCmd.label "Superskrip">
+<!ENTITY styleSuperscriptCmd.accesskey "p">
+<!ENTITY styleSubscriptCmd.label "Subskrip">
+<!ENTITY styleSubscriptCmd.accesskey "S">
+<!ENTITY styleNonbreakingCmd.label "Tersusun">
+<!ENTITY styleNonbreakingCmd.accesskey "N">
+<!ENTITY styleEm.label "Penekanan">
+<!ENTITY styleEm.accesskey "P">
+<!ENTITY styleStrong.label "Penekan Lebih kuat">
+<!ENTITY styleStrong.accesskey "t">
+<!ENTITY styleCite.label "Petikan">
+<!ENTITY styleCite.accesskey "P">
+<!ENTITY styleAbbr.label "Singkatan">
+<!ENTITY styleAbbr.accesskey "S">
+<!ENTITY styleAcronym.label "Akronim">
+<!ENTITY styleAcronym.accesskey "r">
+<!ENTITY styleCode.label "Kod">
+<!ENTITY styleCode.accesskey "o">
+<!ENTITY styleSamp.label "Output Sampel">
+<!ENTITY styleSamp.accesskey "m">
+<!ENTITY styleVar.label "Variabel">
+<!ENTITY styleVar.accesskey "V">
+
+<!ENTITY formatFontColor.label "Warna Teks…">
+<!ENTITY formatFontColor.accesskey "W">
+<!ENTITY tableOrCellColor.label "Warna Latar belakang Jadual atau Sel…">
+<!ENTITY tableOrCellColor.accesskey "L">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Buang Nama Labuh">
+<!ENTITY formatRemoveNamedAnchors.accesskey "B">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Perenggan">
+<!ENTITY paragraphMenu.accesskey "P">
+<!ENTITY paragraphParagraphCmd.label "Perenggan">
+<!ENTITY paragraphParagraphCmd.accesskey "P">
+<!ENTITY heading1Cmd.label "Tajuk 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Tajuk 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Tajuk 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Tajuk 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Tajuk 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Tajuk 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Alamat">
+<!ENTITY paragraphAddressCmd.accesskey "A">
+<!ENTITY paragraphPreformatCmd.label "Praformat">
+<!ENTITY paragraphPreformatCmd.accesskey "f">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Senarai">
+<!ENTITY formatlistMenu.accesskey "S">
+<!ENTITY noneCmd.label "Tiada">
+<!ENTITY noneCmd.accesskey "T">
+<!ENTITY listBulletCmd.label "Bulet">
+<!ENTITY listBulletCmd.accesskey "B">
+<!ENTITY listNumberedCmd.label "Nombor">
+<!ENTITY listNumberedCmd.accesskey "m">
+<!ENTITY listTermCmd.label "Terma">
+<!ENTITY listTermCmd.accesskey "T">
+<!ENTITY listDefinitionCmd.label "Takrif">
+<!ENTITY listDefinitionCmd.accesskey "T">
+<!ENTITY listPropsCmd.label "Sifat Senarai…">
+<!ENTITY listPropsCmd.accesskey "S">
+
+<!ENTITY ParagraphSelect.tooltip "Pilih format perenggan">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Teks Isi">
+<!ENTITY bodyTextCmd.accesskey "T">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Jajar">
+<!ENTITY alignMenu.accesskey "J">
+<!ENTITY alignLeft.label "Kiri">
+<!ENTITY alignLeft.accesskey "K">
+<!ENTITY alignLeft.tooltip "Jajar Kiri">
+<!ENTITY alignCenter.label "Tengah">
+<!ENTITY alignCenter.accesskey "T">
+<!ENTITY alignCenter.tooltip "Jajar Tengah">
+<!ENTITY alignRight.label "Kanan">
+<!ENTITY alignRight.accesskey "K">
+<!ENTITY alignRight.tooltip "Jajar Kanan">
+<!ENTITY alignJustify.label "Imbang">
+<!ENTITY alignJustify.accesskey "I">
+<!ENTITY alignJustify.tooltip "Imbang Jajaran">
+
+<!ENTITY increaseIndent.label "Tambah Inden">
+<!ENTITY increaseIndent.accesskey "I">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Kurangkan Inden">
+<!ENTITY decreaseIndent.accesskey "K">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Warna dan Latar belakang Halaman…">
+<!ENTITY colorsAndBackground.accesskey "b">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Jadual">
+<!ENTITY tableMenu.accesskey "d">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Pilih">
+<!ENTITY tableSelectMenu.accesskey "P">
+
+<!ENTITY tableSelectMenu2.label "Pilih Jadual">
+<!ENTITY tableSelectMenu2.accesskey "P">
+<!ENTITY tableInsertMenu2.label "Sisip Jadual">
+<!ENTITY tableInsertMenu2.accesskey "S">
+<!ENTITY tableDeleteMenu2.label "Buang Jadual">
+<!ENTITY tableDeleteMenu2.accesskey "B">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Sisip">
+<!ENTITY tableInsertMenu.accesskey "S">
+<!ENTITY tableTable.label "Jadual">
+<!ENTITY tableTable.accesskey "J">
+<!ENTITY tableRow.label "Baris">
+<!ENTITY tableRows.label "Baris">
+<!ENTITY tableRow.accesskey "B">
+<!ENTITY tableRowAbove.label "Baris Atas">
+<!ENTITY tableRowAbove.accesskey "B">
+<!ENTITY tableRowBelow.label "Baris Bawah">
+<!ENTITY tableRowBelow.accesskey "B">
+<!ENTITY tableColumn.label "Lajur">
+<!ENTITY tableColumns.label "Lajur">
+<!ENTITY tableColumn.accesskey "j">
+<!ENTITY tableColumnBefore.label "Lajur Sebelum">
+<!ENTITY tableColumnBefore.accesskey "j">
+<!ENTITY tableColumnAfter.label "Lajur Selepas">
+<!ENTITY tableColumnAfter.accesskey "S">
+<!ENTITY tableCell.label "Sel">
+<!ENTITY tableCells.label "Sel">
+<!ENTITY tableCell.accesskey "S">
+<!ENTITY tableCellContents.label "Kandungan Sel">
+<!ENTITY tableCellContents.accesskey "n">
+<!ENTITY tableAllCells.label "Semua Sel">
+<!ENTITY tableAllCells.accesskey "S">
+<!ENTITY tableCellBefore.label "Sel Sebelum">
+<!ENTITY tableCellBefore.accesskey "S">
+<!ENTITY tableCellAfter.label "Sel Selepas">
+<!ENTITY tableCellAfter.accesskey "p">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Buang">
+<!ENTITY tableDeleteMenu.accesskey "B">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "j">
+<!ENTITY tableJoinCells.accesskey "j">
+<!ENTITY tableSplitCell.label "Pisah Sel">
+<!ENTITY tableSplitCell.accesskey "S">
+<!ENTITY convertToTable.label "Cipta Jadual daripada Pilihan">
+<!ENTITY convertToTable.accesskey "t">
+<!ENTITY tableProperties.label "Sifat Jadual…">
+<!ENTITY tableProperties.accesskey "f">
+
+<!ENTITY imageToolbarCmd.label "Imej">
+<!ENTITY imageToolbarCmd.tooltip "Sisip imej baru atau edit sifat imej dipilih">
+<!ENTITY hruleToolbarCmd.label "H.Line">
+<!ENTITY hruleToolbarCmd.tooltip "Sisip garis mengufuk atau edit sifat garis dipilih">
+<!ENTITY tableToolbarCmd.label "Jadual">
+<!ENTITY tableToolbarCmd.tooltip "Sisip jadual baru atau edit sifat jadual dipilih">
+<!ENTITY linkToolbarCmd.label "Pautan">
+<!ENTITY linkToolbarCmd.tooltip "Sisip pautan baru atau edit sifat pautan dipilih">
+<!ENTITY anchorToolbarCmd.label "Labuh">
+<!ENTITY anchorToolbarCmd.tooltip "Sisip nama labuh baru atau edit sifat labuh dipilih">
+<!ENTITY TextColorButton.tooltip "Pilih warna teks">
+<!ENTITY BackgroundColorButton.tooltip "Pilih warna latar belakang">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Tetapkan saiz fon">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Saiz fon lebih kecil">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Saiz fon lebih besar">
+<!ENTITY boldToolbarCmd.tooltip "Tebal">
+<!ENTITY italicToolbarCmd.tooltip "Italik">
+<!ENTITY underlineToolbarCmd.tooltip "Garis bawah">
+<!ENTITY bulletListToolbarCmd.tooltip "Guna atau buang senarai bulet">
+<!ENTITY numberListToolbarCmd.tooltip "Guna atau buang senarai nombor">
+<!ENTITY outdentToolbarCmd.tooltip "Teks luar inden (alih kiri)">
+<!ENTITY indentToolbarCmd.tooltip "Teks inden (alih kanan)">
+<!ENTITY AlignPopupButton.tooltip "Pilih jajaran teks">
+<!ENTITY InsertPopupButton.tooltip "Sisip Pautan, Labuh, Imej, Garisan Mengufuk atau Jadual">
+<!ENTITY alignLeftButton.tooltip "Jajar teks sepanjang jidar kiri">
+<!ENTITY alignCenterButton.tooltip "Jajar teks di tengah">
+<!ENTITY alignRightButton.tooltip "Jajar teks sepanjang jidar kanan">
+<!ENTITY alignJustifyButton.tooltip "Jajar teks sepanjang jidar kiri dan kanan">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Sisip">
+<!ENTITY insertTOC.accesskey      "i">
+<!ENTITY updateTOC.label          "Kemaskini">
+<!ENTITY updateTOC.accesskey      "k">
+<!ENTITY removeTOC.label          "Buang">
+<!ENTITY removeTOC.accesskey      "g">
+<!ENTITY tocMenu.label            "Jadual Kandungan…">
+<!ENTITY tocMenu.accesskey        "d">

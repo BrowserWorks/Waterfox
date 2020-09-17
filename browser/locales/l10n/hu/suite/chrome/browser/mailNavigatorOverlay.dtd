@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "Üzenet">
+<!ENTITY newMessageCmd.accesskey         "Ü">
+<!ENTITY newMessageCmd.key               "M">
+
+<!ENTITY newContactCmd.label             "Névjegykártya…">
+<!ENTITY newContactCmd.accesskey         "N">
+
+<!ENTITY sendPage.label                  "Oldal küldése…">
+<!ENTITY sendPage.accesskey              "O">
+
+<!ENTITY contextSendThisPage.label       "Oldal küldése…">
+<!ENTITY contextSendThisPage.accesskey   "O">
+<!ENTITY contextSendThisLink.label       "Hiperhivatkozás küldése…">
+<!ENTITY contextSendThisLink.accesskey   "H">
+<!ENTITY contextSendImage.label          "Kép küldése…">
+<!ENTITY contextSendImage.accesskey      "p">
+<!ENTITY contextSendVideo.label          "Video küldése…">
+<!ENTITY contextSendVideo.accesskey      "i">
+<!ENTITY contextSendAudio.label          "Hang küldése…">
+<!ENTITY contextSendAudio.accesskey      "g">
+<!ENTITY contextSendFrame.label          "Keret küldése…">
+<!ENTITY contextSendFrame.accesskey      "K">
+
+<!ENTITY sendLinkCmd.label               "Hivatkozás küldése…"> 
+<!ENTITY sendLinkCmd.accesskey           "d">
+

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "நீங்கள் இதைத் தேர்வு செய்துள்ளீர்கள்:">
+<!ENTITY  from.label                  "வலைத்தளம்:">
+<!ENTITY  actionQuestion.label        "&brandShortName; இந்த கோப்பில் என்ன செய்ய வேண்டும்?">
+
+<!ENTITY  openWith.label              "பிற செயலிகள் மூலம் திற">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "மற்றவை...">
+
+<!ENTITY  saveFile.label              "கோப்பினை சேமி">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "இது போன்ற கோப்புகளுக்கு தானாக இதை செய்யவும்.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "கோப்பு வகை:">
+
+<!ENTITY  chooseHandlerMac.label      "தேர்வு செய்...">
+<!ENTITY  chooseHandlerMac.accesskey  "த">
+<!ENTITY  chooseHandler.label         "உலாவு...">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "கோப்பைச் சேமிக்கவா?">

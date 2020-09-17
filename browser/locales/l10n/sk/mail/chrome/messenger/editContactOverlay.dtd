@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Odstrániť">
+<!ENTITY editContactPanelDeleteContact.accesskey "O">
+
+<!ENTITY editContactName.label "Meno:">
+<!ENTITY editContactName.accesskey "M">
+
+<!ENTITY editContactEmail.label "E-mail:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Adresár:">
+<!ENTITY editContactAddressBook.accesskey "A">
+
+<!ENTITY editContactPanelDone.label "Hotovo">
+<!ENTITY editContactPanelDone.accesskey "H">
+
+<!ENTITY contactMoveDisabledWarning.description "Adresár nie je možné zmeniť, pretože kontakt sa nachádza v rozosielacom zozname.">

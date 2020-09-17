@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Manage the identities for this account. The first identity is used by default.">
+<!ENTITY identitiesListAdd.label  "Fakela...">
+<!ENTITY identitiesListAdd.accesskey  "F">
+<!ENTITY identitiesListEdit.label "Hlela...">
+<!ENTITY identitiesListEdit.accesskey "H">
+<!ENTITY identitiesListDefault.label "Set Default">
+<!ENTITY identitiesListDefault.accesskey "S">
+<!ENTITY identitiesListDelete.label "Cima">
+<!ENTITY identitiesListDelete.accesskey "C">
+<!ENTITY identitiesListClose.label "Close">
+<!ENTITY identitiesListClose.accesskey "C">

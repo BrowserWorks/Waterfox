@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Търсене">
+
+<!ENTITY newPref.namePlaceholder       "Име">
+
+<!ENTITY newPref.valueBoolean          "Булева">
+<!ENTITY newPref.valueString           "Низ">
+<!ENTITY newPref.valueInteger          "Целочислен">
+
+<!ENTITY newPref.stringPlaceholder     "Въведете низ">
+<!ENTITY newPref.numberPlaceholder     "Въведете число">
+
+<!ENTITY newPref.toggleButton          "Превключване">
+<!ENTITY newPref.cancelButton          "Отказ">
+
+<!ENTITY contextMenu.copyPrefName      "Копиране на името">
+<!ENTITY contextMenu.copyPrefValue     "Копиране на стойността">

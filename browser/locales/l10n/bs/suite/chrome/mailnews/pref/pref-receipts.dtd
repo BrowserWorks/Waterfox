@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "Potvrde čitanja">
+<!ENTITY prefReceipts.caption         "Potvrde čitanja">
+<!ENTITY requestReceipt.label         "Prilikom slanja poruke, uvijek zahtijevaj potvrdu čitanja">
+<!ENTITY receiptArrive.label          "Kada potvrda stigne:">
+<!ENTITY leaveIt.label                "Ostavi je u primljenoj pošti">
+<!ENTITY moveToSent.label             "Premjesti je u direktorij &quot;Poslana pošta&quot;">
+<!ENTITY requestMDN.label             "Kada primim zahtjev za potvrdu čitanja:">
+<!ENTITY returnSome.label             "Dozvoli potvrde čitanja za neke poruke">
+<!ENTITY never.label                  "Nikada ne šalji potvrdu čitanja">
+<!ENTITY notInToCc.label              "Ako nisam u Prima ili Kop dijelu poruke:">
+<!ENTITY outsideDomain.label          "Ako je pošiljaoc izvan moje domene:">
+<!ENTITY otherCases.label             "U svim ostalim slučajevima:">
+<!ENTITY askMe.label                  "Pitaj me">
+<!ENTITY alwaysSend.label             "Uvijek pošalji">
+<!ENTITY neverSend.label              "Nikada ne šalji">

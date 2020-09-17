@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Postavke tekstualnog polja">
+
+<!ENTITY Settings.label "Postavke">
+
+<!ENTITY TextAreaName.label "Naziv polja:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "Redovi:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Kolone:">
+<!ENTITY TextAreaCols.accessKey "K">
+<!ENTITY TextAreaReadOnly.label "Samo za čitanje">
+<!ENTITY TextAreaReadOnly.accessKey "o">
+<!ENTITY TextAreaDisabled.label "Onemogućeno">
+<!ENTITY TextAreaDisabled.accessKey "e">
+<!ENTITY TextAreaTabIndex.label "Indeks taba:">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "Tipka pristupa:">
+<!ENTITY TextAreaAccessKey.accessKey "k">
+<!ENTITY InitialText.label "Inicijalni tekst:">
+<!ENTITY InitialText.accessKey "t">
+
+<!ENTITY TextAreaWrap.label "Način prijeloma:">
+<!ENTITY TextAreaWrap.accessKey "N">
+<!ENTITY WrapDefault.value "Izvorno">
+<!ENTITY WrapOff.value "Isključeno">
+<!ENTITY WrapHard.value "Tvrdo">
+<!ENTITY WrapSoft.value "Mehko">
+<!ENTITY WrapPhysical.value "Fizički">
+<!ENTITY WrapVirtual.value "Virtuelno">

@@ -1,0 +1,223 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Հասցեագիրք">
+<!ENTITY blankResultsPaneMessage.label                  "Այս հասցեագիրքը կարող է ցուցադրել կոնտակտները միայն որոնումից հետո">
+<!ENTITY localResultsOnlyMessage.label                  "Հեռակա հասցեագրքի կոնտակտները հասանելի չեն մինչև որոնումը">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Ֆայլ">
+<!ENTITY fileMenu.accesskey                             "F">
+<!ENTITY newMenu.label                                  "Նոր">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newContact.label                               "Հասցեագրքի Կոնտակտ...">
+<!ENTITY newContact.accesskey                           "Կ">
+<!ENTITY newContact.key                                 "Հ">
+<!ENTITY newListCmd.label                               "Նամակների ցանկը...">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "Հասցեագիրք...">
+<!ENTITY newAddressBookCmd.accesskey                    "գ">
+<!ENTITY newCardDAVBookCmd.label                        "CardDAV Հասցեագիրք…">
+<!ENTITY newCardDAVBookCmd.accesskey                    "V">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP գրացուցակ...">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "Նամակ">
+<!ENTITY newMessageCmd.key                              "Ն">
+<!ENTITY newMessageCmd.accesskey                        "M">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Օգտ. Mac OS X-ի հասցեագիրքը">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Փակել">
+<!ENTITY closeCmd.key                                   "Փ">
+<!ENTITY closeCmd.accesskey                             "C">
+<!ENTITY printSetupCmd.label                            "Էջի կարգավորումներ…">
+<!ENTITY printSetupCmd.accesskey                        "u">
+<!ENTITY printPreviewContactCmd.label                   "Տպելու նախադիտում">
+<!ENTITY printPreviewContactCmd.accesskey               "v">
+<!ENTITY printPreviewAddressBook.label                  "Տպելու նախադիտում">
+<!ENTITY printPreviewAddressBook.accesskey              "B">
+<!ENTITY printContactCmd.label                          "Տպել կոնտակտը...">
+<!ENTITY printContactCmd.accesskey                      "P">
+<!ENTITY printContactCmd.key                            "Տ">
+<!ENTITY printAddressBook.label                         "Տպել հասցեագիրքը...">
+<!ENTITY printAddressBook.accesskey                     "հ">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Խմբագրել">
+<!ENTITY editMenu.accesskey                             "E">
+<!ENTITY deleteCmd.label                                "Ջնջել">
+<!ENTITY deleteAbCmd.label                              "Ջնջել Հասցեագիրքը">
+<!ENTITY deleteContactCmd.label                         "Ջնջել կոնտակտը">
+<!ENTITY deleteContactsCmd.label                        "Ջնջել կոնտակտները">
+<!ENTITY deleteListCmd.label                            "Ջնջել ցանկը">
+<!ENTITY deleteListsCmd.label                           "Ջնջել ցանկերը">
+<!ENTITY deleteItemsCmd.label                           "Ջնջել">
+<!ENTITY searchAddressesCmd.key                         "Փ">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesMenu.label                           "Հատկություններ">
+<!ENTITY propertiesMenu.accesskey                       "ո">
+<!ENTITY propertiesCmd.key                              "Հ">
+<!ENTITY abPropertiesMenu.label                         "Հասցեագրքի հատկությունները">
+<!ENTITY abPropertiesMenu.accesskey                     "ն">
+<!ENTITY contactPropertiesMenu.label                    "Կոնտակտի հատկությունները">
+<!ENTITY contactPropertiesMenu.accesskey                "յ">
+<!ENTITY mailingListPropertiesMenu.label                "Տեղեկագրի ցանկի հատկությունները">
+<!ENTITY mailingListPropertiesMenu.accesskey            "կ">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Տեսք">
+<!ENTITY viewMenu.accesskey                             "Տ">
+<!ENTITY viewToolbarsMenu.label                         "Գործիքագոտիներ">
+<!ENTITY viewToolbarsMenu.accesskey                     "Գ">
+<!ENTITY menubarCmd.label                               "Ցանկագոտի">
+<!ENTITY menubarCmd.accesskey                           "Ց">
+<!ENTITY showAbToolbarCmd.label                         "Հասցեագրքի գործիքաշերտը">
+<!ENTITY showAbToolbarCmd.accesskey                     "o">
+<!ENTITY showTaskbarCmd.label                           "Վիճակի տող">
+<!ENTITY showTaskbarCmd.accesskey                       "S">
+<!ENTITY customizeToolbar.label                         "Կարգավորել…">
+<!ENTITY customizeToolbar.accesskey                     "C">
+<!ENTITY layoutMenu.label                               "Լայնքը">
+<!ENTITY layoutMenu.accesskey                           "Լ">
+<!ENTITY showDirectoryPane.label                        "Թղթապանակի պ-ը">
+<!ENTITY showDirectoryPane.accesskey                    "Թ">
+<!ENTITY showContactPane2.label                         "Կոնտակտների պ-ը">
+<!ENTITY showContactPane2.accesskey                     "Կ">
+<!ENTITY menu_ShowNameAs.label                          "Ցուցադրել անունը որպես">
+<!ENTITY menu_ShowNameAs.accesskey                      "N">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Անուն ազգանուն">
+<!ENTITY firstLastCmd2.accesskey                        "Ա">
+<!ENTITY lastFirstCmd.label                             "Անուն ազգանուն">
+<!ENTITY lastFirstCmd.accesskey                         "Ա">
+<!ENTITY displayNameCmd.label                           "Ցուցադրվող անունը">
+<!ENTITY displayNameCmd.accesskey                       "D">
+<!ENTITY sortMenu.label                                 "Տեսակավորել ըստ՝">
+<!ENTITY sortMenu.accesskey                             "Տ">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Գործիքներ">
+<!ENTITY tasksMenu.accesskey                            "T">
+<!ENTITY messengerCmd.label                             "Փոստ և Լուրախմբեր">
+<!ENTITY messengerCmd.accesskey                         "Փ">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY addressBookCmd.label                           "Հասցեագիրք">
+<!ENTITY addressBookCmd.accesskey                       "a">
+<!ENTITY addressBookCmd.key                             "B">
+<!ENTITY searchAddressesCmd.label                       "Հասցեների որոնում...">
+<!ENTITY searchAddressesCmd.accesskey                   "Հ">
+<!ENTITY importCmd.label                                "Ներմուծել…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Արտահանել...">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmd2.label                          "Ընտրանքներ">
+<!ENTITY preferencesCmd2.accesskey                      "Կ">
+<!ENTITY preferencesCmdUnix.label                       "Նախապատվություններ">
+<!ENTITY preferencesCmdUnix.accesskey                   "n">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Նոր կոնտակտ">
+<!ENTITY newContactButton.accesskey                     "C">
+<!ENTITY newlistButton.label                            "Նոր ցանկ">
+<!ENTITY newlistButton.accesskey                        "L">
+<!ENTITY showAsDefault.label                            "Լռելյայն ինքնամեկնարկի գրացուցակ">
+<!ENTITY showAsDefault.accesskey                        "ի">
+<!ENTITY editPropertiesButton.label                     "Խմբագրել">
+<!ENTITY propertiesContext.label                        "Հատկություններ">
+<!ENTITY propertiesContext.accesskey                    "ն">
+<!ENTITY abPropertiesContext.label                      "Հատկություններ">
+<!ENTITY abPropertiesContext.accesskey                  "ն">
+<!ENTITY editContactContext.label                       "Խմբագրել կոնտակտը">
+<!ENTITY editContactContext.accesskey                   "Խ">
+<!ENTITY editMailingListContext.label                   "Խմբագրել ցանկը">
+<!ENTITY editMailingListContext.accesskey               "Խ">
+<!ENTITY newmsgButton.label                             "Նոր նամակ">
+<!ENTITY newmsgButton.accesskey                         "W">
+<!ENTITY newIM.label                                    "Ակնթարթային նամակ">
+<!ENTITY newIM.accesskey                                "I">
+<!ENTITY printButton.label                              "Տպել...">
+<!ENTITY printButton.accesskey                          "պ">
+<!ENTITY deleteButton2.label                            "Ջնջել">
+<!ENTITY deleteButton2.accesskey                        "D">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Նշեք, թե որ սյուները պետք է ցուցադրվեն">
+<!ENTITY newContactButton.tooltip                       "Ստեղծել նոր հասցե">
+<!ENTITY newlistButton.tooltip                          "Ստեղծել նոր ցանկ">
+<!ENTITY editPropertiesButton.tooltip                   "Խմբագրել ընտրվածը">
+<!ENTITY editAbPropertiesButton.tooltip                 "Խմբագրել ընտրված հասցեագրքի հատկությունները">
+<!ENTITY editContactPropertiesButton.tooltip            "Խմբագրել ընտրվածը">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Խմբագրել ընտրված տեղեկագիրը">
+<!ENTITY newmsgButton.tooltip                           "Ուղարկել նամակը">
+<!ENTITY newIM.tooltip                                  "Ուղարկել անմիջական նամակը">
+<!ENTITY deleteButton2.tooltip                          "Ջնջել ընտրվածը">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Անունը կամ էլ. հասցեն">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "Հասցեի ընդլայնված որոնում">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Արագ որոնում">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Հասցեագիրք">
+<!ENTITY Addrbook.accesskey                             "գ">
+<!ENTITY GeneratedName.label                            "Անունը">
+<!ENTITY GeneratedName.accesskey                        "N">
+<!ENTITY PrimaryEmail.label                             "Էլ-Փոստ">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "Անունը զրույցում">
+<!ENTITY ChatName.accesskey                             "C">
+<!ENTITY Company.label                                  "Կազմակերպություն">
+<!ENTITY Company.accesskey                              "z">
+<!ENTITY NickName.label                                 "Մականուն">
+<!ENTITY NickName.accesskey                             "i">
+<!ENTITY SecondEmail.label                              "Լրացուցիչ էլ. հասցե">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "Բաժին">
+<!ENTITY Department.accesskey                           "ի">
+<!ENTITY JobTitle.label                                 "Անվանում">
+<!ENTITY JobTitle.accesskey                             "Ա">
+<!ENTITY CellularNumber.label                           "Բջջային">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "Փեյջեր">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "Ֆաքս">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Տնային հեռախոս">
+<!ENTITY HomePhone.accesskey                            "H">
+<!ENTITY WorkPhone.label                                "Աշխ. հեռախոս">
+<!ENTITY WorkPhone.accesskey                            "W">
+<!ENTITY sortAscending.label                            "Աճմամբ">
+<!ENTITY sortAscending.accesskey                        "A">
+<!ENTITY sortDescending.label                           "Նվազմամբ">
+<!ENTITY sortDescending.accesskey                       "D">
+<!ENTITY _PhoneticName.label                            "Phonetic Name">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Կոնտակտը">
+<!ENTITY home.heading                                   "Տուն">
+<!ENTITY other.heading                                  "Այլ">
+<!ENTITY chat.heading                                   "Զրույց">
+<!ENTITY phone.heading                                  "Հեռախոս">
+<!ENTITY work.heading                                   "Աշխատանքային">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Նկարագրություն">
+<!ENTITY addresses.heading                              "Հասցեներ">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Քարտեզը">
+<!ENTITY mapIt.tooltip                                  "Ցուցադրել հասցեի քարտեզը վեբից">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Պատուհան">
+<!ENTITY minimizeWindow.label                           "Թաքցնել">
+<!ENTITY minimizeWindow.key                             "Թ">
+<!ENTITY bringAllToFront.label                          "Բոլորից առջև">
+<!ENTITY zoomWindow.label                               "Չափը">

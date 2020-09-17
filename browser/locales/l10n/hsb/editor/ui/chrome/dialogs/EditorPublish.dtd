@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Stronu wozjewić">
+<!ENTITY windowTitleSettings.label    "Wozjewjenske nastajenja">
+<!ENTITY publishTab.label             "Wozjewić">
+<!ENTITY settingsTab.label            "Nastajenja">
+<!ENTITY publishButton.label          "Wozjewić">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Mjeno sydła:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Wubjerće sydło, ke kotremuž chceće wozjewić">
+<!ENTITY newSiteButton.label          "Nowe sydło">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Sydłowy podzapis za tutu stronu:">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "Wubjerće abo zapodajće mjeno zdaleneho podzapisa za tutu stronu">
+<!ENTITY publishImgCheckbox.label     "Wobrazy a druhe dataje zapřijeć">
+<!ENTITY publishImgCheckbox.accesskey "d">
+<!ENTITY publishImgCheckbox.tooltip   "Wobraz a druhe dataje z tuteje strony wozjewić">
+<!ENTITY sameLocationRadio.label      "Samsne městno jako stronu wužiwać">
+<!ENTITY sameLocationRadio.accesskey  "m">
+<!ENTITY sameLocationRadio.tooltip    "Dataje do samsneho městna kaž strona wozjewić">
+<!ENTITY useSubdirRadio.label         "Tutón sydłowy podzapis wužiwać:">
+<!ENTITY useSubdirRadio.accesskey     "T">
+<!ENTITY useSubdirRadio.tooltip       "Dataje do wubraneho zdaleneho podzapisa wozjewić">
+<!ENTITY otherDirList.tooltip         "Mjeno zdaleneho podzapisa, hdźež budu so dataje wozjewjeć, wubrać abo zapodać">
+<!ENTITY pageTitle.label              "Titul strony:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Zapodajće titul, zo byšće stronu we woknje a w zapołožkach identifikował">
+<!ENTITY pageTitleExample.label       "na př.: &quot;Moja webstrona&quot;">
+<!ENTITY filename.label               "Datajowe mjeno:">
+<!ENTITY filename.accesskey           "D">
+<!ENTITY filename.tooltip             "Zapodajće mjeno za tutu dataju, inkluziwnje '.html' za webstronu">
+<!ENTITY filenameExample.label        "na př.: &quot;mojastrona.html&quot;;">
+<!ENTITY setDefaultButton.label       "Jako standard nastajić">
+<!ENTITY setDefaultButton.accesskey   "J">
+<!ENTITY removeButton.label           "Sydło wotstronić">
+<!ENTITY removeButton.accesskey       "S">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Wozjewjenje sydłow">
+<!ENTITY serverInfo.label             "Serwerowe informacije">
+<!ENTITY loginInfo.label              "Přizjewjenske informacije">
+<!ENTITY siteName.label               "Mjeno sydła:">
+<!ENTITY siteName.accesskey           "M">
+<!ENTITY siteName.tooltip             "Přimjeno, kotrež tute wozjewjene sydło identifikuje (na př.: 'mojesydło')">
+<!ENTITY siteUrl.label                "Wozjewjenska adresa (na př.: 'ftp://ftp.mójisp.de/mojewužiwarskemjeno'):">
+<!ENTITY siteUrl.accesskey            "W">
+<!ENTITY siteUrl.tooltip              "Adresa FTP:// abo HTTP:// přepodata wot wašeho ISP abo hosćaceje websłužby">
+<!ENTITY browseUrl.label              "HTTP-adresa wašeje startoweje strony (na př.: 'http://www.mójisp.de/mojewužiwarskemjeno'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "Adresa HTTP:// wašeho startoweho zapisa (njepodajće datajowe mjeno)">
+<!ENTITY username.label               "Wužiwarske mjeno:">
+<!ENTITY username.accesskey           "u">
+<!ENTITY username.tooltip             "Wužiwarske mjeno, kotrež wužiwaće, zo byšće so pola swojeho ISP abo hosćaceje websłužby přizjewił">
+<!ENTITY password.label               "Hesło:">
+<!ENTITY password.accesskey           "H">
+<!ENTITY password.tooltip             "Hesło zwjazane z wašim wužiwarskim mjenom">
+<!ENTITY savePassword.label           "Hesło składować">
+<!ENTITY savePassword.accesskey       "s">
+<!ENTITY savePassword.tooltip         "Wubjerće to, zo byšće swoje hesło přez zrjadowak hesłow wěsće składował">

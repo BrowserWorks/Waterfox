@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Postavke nove stranice">
+
+<!ENTITY  authorName.label          "Autor:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "Zadano prikazivanje stranice">
+
+<!ENTITY defaultColors.label        "Zadane boje čitatelja (ne postavljajte boje na stranici)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "Koristi prilagođene boje:">
+<!ENTITY customColors.accesskey     "K">
+
+<!ENTITY normalText.label           "Obični tekst">
+<!ENTITY normalText.accesskey       "n">
+<!ENTITY linkText.label             "Tekst poveznice">
+<!ENTITY linkText.accesskey         "p">
+<!ENTITY activeLinkText.label       "Tekst aktivne poveznice">
+<!ENTITY activeLinkText.accesskey   "a">
+<!ENTITY visitedLinkText.label      "Tekst posjećene poveznice">
+<!ENTITY visitedLinkText.accesskey  "e">
+<!ENTITY background.label           "Pozadina:">
+<!ENTITY background.accesskey       "z">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Pozadinska slika:">
+<!ENTITY backgroundImage.accesskey  "s">
+<!ENTITY chooseFile.label           "Odaberi datoteku…">
+<!ENTITY chooseFile.accesskey       "O">
+

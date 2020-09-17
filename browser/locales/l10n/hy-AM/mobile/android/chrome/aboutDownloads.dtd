@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Ներբեռնումներ">
+<!ENTITY aboutDownloads.header                     "Ձեր ներբեռնումները">
+<!ENTITY aboutDownloads.empty                      "Չկան ներբեռնումներ">
+
+<!ENTITY aboutDownloads.open                       "Բացել">
+<!ENTITY aboutDownloads.remove                     "Ջնջել">
+<!ENTITY aboutDownloads.removeAll                  "Ջնջել բոլորը">
+<!ENTITY aboutDownloads.pause                      "Ընդմիջել">
+<!ENTITY aboutDownloads.resume                     "Շարունակել">
+<!ENTITY aboutDownloads.cancel                     "Չեղարկել">
+<!ENTITY aboutDownloads.retry                      "Կրկնել">

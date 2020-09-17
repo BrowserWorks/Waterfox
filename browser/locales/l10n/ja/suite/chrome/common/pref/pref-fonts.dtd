@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "フォント">
+
+<!ENTITY  language.label                          "言語用のフォント:">
+<!ENTITY  language.accesskey                      "t">
+
+<!ENTITY  typefaces.label                         "書体">
+<!ENTITY  sizes.label                             "サイズ (ピクセル)">
+
+<!ENTITY  proportional.label                      "可変ピッチ:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "明朝体 (Serif):">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "ゴシック体 (Sans-serif):">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "等幅 (Monospace):">
+<!ENTITY  monospace.accesskey                     "M">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "装飾体 (Fantasy):">
+<!ENTITY  fantasy.accesskey                       "F">
+<!ENTITY  cursive.label                           "筆記体 (Cursive):">
+<!ENTITY  cursive.accesskey                       "C">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "ラテン文字">
+<!ENTITY  font.langGroup.japanese                 "日本語">
+<!ENTITY  font.langGroup.trad-chinese             "繁体字中国語 (台湾)">
+<!ENTITY  font.langGroup.simpl-chinese            "簡体字中国語">
+<!ENTITY  font.langGroup.trad-chinese-hk          "繁体字中国語 (香港)">
+<!ENTITY  font.langGroup.korean                   "韓国語">
+<!ENTITY  font.langGroup.cyrillic                 "キリル文字">
+<!ENTITY  font.langGroup.el                       "ギリシャ語">
+<!ENTITY  font.langGroup.thai                     "タイ語">
+<!ENTITY  font.langGroup.hebrew                   "ヘブライ語">
+<!ENTITY  font.langGroup.arabic                   "アラビア語">
+<!ENTITY  font.langGroup.devanagari               "デーヴァナーガリー">
+<!ENTITY  font.langGroup.tamil                    "タミル語">
+<!ENTITY  font.langGroup.armenian                 "アルメニア語">
+<!ENTITY  font.langGroup.bengali                  "ベンガル語">
+<!ENTITY  font.langGroup.canadian                 "統合カナダ先住民音節文字">
+<!ENTITY  font.langGroup.ethiopic                 "アムハラ語">
+<!ENTITY  font.langGroup.georgian                 "グルジア語">
+<!ENTITY  font.langGroup.gujarati                 "グジャラート語">
+<!ENTITY  font.langGroup.gurmukhi                 "グルムキー文字">
+<!ENTITY  font.langGroup.khmer                    "クメール語">
+<!ENTITY  font.langGroup.malayalam                "マラヤラム語">
+<!ENTITY  font.langGroup.math                     "数学記号">
+<!ENTITY  font.langGroup.odia                     "オディア語">
+<!ENTITY  font.langGroup.telugu                   "テルグ語">
+<!ENTITY  font.langGroup.kannada                  "カナラ語">
+<!ENTITY  font.langGroup.sinhala                  "シンハラ語">
+<!ENTITY  font.langGroup.tibetan                  "チベット語">
+<!ENTITY  font.langGroup.other                    "その他の表記体系">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "最小フォントサイズ:">
+<!ENTITY minSize.accesskey                        "z">
+<!ENTITY minSize.none                             "なし">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "明朝体 (Serif)">
+<!ENTITY  useDefaultFontSansSerif.label           "ゴシック体 (Sans-serif)">
+
+<!ENTITY  useDocumentFonts.label                  "ウェブページが指定したフォントを優先する">
+<!ENTITY  useDocumentFonts.accesskey              "o">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "ウェブページによってはフォントが指定されていることがあります。">
+<!ENTITY  useDefaultFont.label                    "ページで指定されたフォントを無視して既定のフォントを使用する">
+<!ENTITY  useDefaultFont.accesskey                "U">

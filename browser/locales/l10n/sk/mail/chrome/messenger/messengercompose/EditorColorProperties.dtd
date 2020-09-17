@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Farby stránky a pozadie">
+<!ENTITY pageColors.label "Farby stránky">
+<!ENTITY defaultColorsRadio.label "Farby čitateľa (nenastavovať farby na stránke)">
+<!ENTITY defaultColorsRadio.accessKey "F">
+<!ENTITY defaultColorsRadio.tooltip "Použiť farby nastavené v čitateľovom prehliadači">
+<!ENTITY customColorsRadio.label "Použiť vlastné farby:">
+<!ENTITY customColorsRadio.accessKey "v">
+<!ENTITY customColorsRadio.tooltip "Použijú sa tieto farby namiesto farieb nastavených v čitateľovom prehliadači">
+
+<!ENTITY normalText.label "Normálny text">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Odkaz">
+<!ENTITY linkText.accessKey "d">
+<!ENTITY activeLinkText.label "Aktívny odkaz">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "Navštívený odkaz">
+<!ENTITY visitedLinkText.accessKey "e">
+<!ENTITY background.label "Pozadie:">
+<!ENTITY background.accessKey "i">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Obrázok pozadia:">
+<!ENTITY backgroundImage.accessKey "b">
+<!ENTITY backgroundImage.tooltip "Pre pozadie stránky sa použije tento obrázok">
+<!ENTITY backgroundImage.shortenedDataURI "Skrátená URI (skopírovanie vloží celú URI do schránky)">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Berjochten sykje yn:">
+<!ENTITY searchHeading.accesskey     "k">
+<!ENTITY searchSubfolders.label      "Yn submappen sykje">
+<!ENTITY searchSubfolders.accesskey  "Y">
+<!ENTITY searchOnServer.label        "Sykje op server">
+<!ENTITY searchOnServer.accesskey    "s">
+<!ENTITY resetButton.label           "Wiskje">
+<!ENTITY resetButton.accesskey       "W">
+<!ENTITY openButton.label            "Iepenje">
+<!ENTITY openButton.accesskey        "I">
+<!ENTITY deleteButton.label          "Fuortsmite">
+<!ENTITY deleteButton.accesskey      "F">
+<!ENTITY searchDialogTitle.label     "Berjochten sykje">
+<!ENTITY results.label               "Resultaten">
+<!ENTITY moveButton.label            "Ferpleats nei">
+<!ENTITY moveButton.accesskey        "n">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Iepenje yn map">
+<!ENTITY openInFolder.accesskey      "m">
+<!ENTITY saveAsVFButton.label        "Bewarje as sykmap">
+<!ENTITY saveAsVFButton.accesskey    "s">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Adressen sykje yn:">
+<!ENTITY abSearchHeading.accesskey   "k">
+<!ENTITY propertiesButton.label      "Eigenskippen">
+<!ENTITY propertiesButton.accesskey  "E">
+<!ENTITY composeButton.label         "Opstelle">
+<!ENTITY composeButton.accesskey     "O">
+<!ENTITY deleteCardButton.label      "Fuortsmite">
+<!ENTITY deleteCardButton.accesskey  "F">
+<!ENTITY abSearchDialogTitle.label   "Adresboek wiidweidich trochsykje">
+

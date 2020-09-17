@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Ychwanegion">
+<!ENTITY aboutAddons.header2                    "Eich Ychwanegion">
+
+<!ENTITY addonAction.enable                     "Galluogi">
+<!ENTITY addonAction.disable                    "Atal">
+<!ENTITY addonAction.uninstall                  "Dadosod">
+<!ENTITY addonAction.undo                       "Dadwneud">
+<!ENTITY addonAction.update                     "Diweddaru">
+
+<!ENTITY addonUnsigned.message                  "Nid oedd modd i &brandShortName; ddilysu'r ychwanegyn hwn.">
+<!ENTITY addonUnsigned.learnMore                "Dysgu rhagor">

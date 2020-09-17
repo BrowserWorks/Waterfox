@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!-- Labels -->
+<!ENTITY addToAddressBook.label "Додај во: ">
+
+<!ENTITY addToAddressBook.accesskey "а">
+<!ENTITY ListName.label "Име на листа: ">
+<!ENTITY ListName.accesskey "л">
+<!ENTITY ListNickName.label "Прекар на листа: ">
+<!ENTITY ListNickName.accesskey "е">
+<!ENTITY ListDescription.label "Опис: ">
+<!ENTITY ListDescription.accesskey "п">
+
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label "Внесување на адреси за е-пошта кои ќе се додадат во поштенската листа:">
+<!ENTITY UpButton.label "Оди нагоре">
+<!ENTITY DownButton.label "Оди надолу">
+<!-- Access Keys -->
+

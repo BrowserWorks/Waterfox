@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Takvim">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Etkinlik...">
+<!ENTITY lightning.menupopup.new.event.accesskey "E">
+<!ENTITY lightning.menupopup.new.task.label     "Görev…">
+<!ENTITY lightning.menupopup.new.task.accesskey "G">
+<!ENTITY lightning.menupopup.new.calendar.label "Takvim…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "T">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Aç">
+<!ENTITY lightning.menupopup.open.accesskey           "A">
+<!ENTITY lightning.menupopup.open.message.label       "Kayıtlı iletiler…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "i">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Takvim dosyası…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "T">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Takvim">
+<!ENTITY lightning.menu.view.calendar.accesskey        "T">
+<!ENTITY lightning.menu.view.tasks.label               "Görevler">
+<!ENTITY lightning.menu.view.tasks.accesskey           "G">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Etkinlik ve görevler">
+<!ENTITY lightning.menu.eventtask.accesskey            "n">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-posta:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "İstemci taraflı e-posta zamanlamayı tercih et">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Zamanlamayı takvim sunucusu yapıyorsa, şimdilik yalnızca takvim özellikleri iletişim kutusunda bu takvimi kurduktan sonra bu seçeneği etkinleştirebilirsiniz.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Bu seçenek, zamanlamayı takvim sunucusu yönetiyorsa kullanılabilir. Bunu etkinleştirdiğinizde, zamanlamayı sunucuya bırakmak yerine standart e-posta tabanlı zamanlama yapılacaktır.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Kabul et">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Etkinlik davetini kabul et">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Tümünü kabul et">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Bu etkinliğin tüm kopyaları için etkinlik davetini kaydet">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Ekle">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Etkinliği takvime ekle">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Reddet">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Etkinlik davetini reddet">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Tümünü reddet">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Bu etkinliğin tüm kopyaları için etkinlik davetini reddet">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Reddet">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Karşı teklifi reddet">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Sil">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Takvimden sil">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Ayrıntılar…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Etkinlik ayrıntılarını göster">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Bana bu iletileri gösterme">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Takvim">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Takvim sekmesine git">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Devamı">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Diğer seçenekleri görmek için tıklayın">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Yeniden onayla">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Düzenleyene onay gönderir">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Yeniden zamanla">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Etkinliği yeniden zamanla">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Kopyasını kaydet">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Düzenleyene yanıt vermeden etkinliğin bir kopyasını takvime kaydet. Katılımcı listesi temizlenecektir.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Kesin değil">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Etkinlik davetini kesin olmadan kabul et">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Hepsi kesin değil">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Bu etkinliğin tüm kopyaları için etkinlik davetini kesin olmadan kabul et">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Güncelle">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Takvimdeki etkinliği güncelle">
+<!ENTITY lightning.imipbar.description                                      "Bu ileti bir etkinliğe davetiyedir.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Hemen yanıt gönder">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Düzenleyene yanıt gönder">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Dizinin tamamı için düzenleyene yanıt gönder">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Yanıt gönderme">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Düzenleyene yanıt göndermeden katılım durumunuzu değiştirin">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Düzenleyene yanıt göndermeden bu dizi için katılım durumunuzu değiştirin">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Yeni bir takvim oluştur">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Küçük ay takvimi göster">
+<!ENTITY todaypane.showMinimonth.accesskey "K">
+<!ENTITY todaypane.showMiniday.label "Küçük günü göster">
+<!ENTITY todaypane.showMiniday.accesskey  "ü">
+<!ENTITY todaypane.showNone.label "Hiçbirini gösterme">
+<!ENTITY todaypane.showNone.accesskey "H">
+<!ENTITY todaypane.showTodayPane.label "Bugünün bölmesini göster">
+<!ENTITY todaypane.showTodayPane.accesskey "ö">
+<!ENTITY todaypane.statusButton.label "Bugün bölmesi">

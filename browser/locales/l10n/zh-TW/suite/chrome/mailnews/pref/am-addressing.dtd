@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!ENTITY addressing.label          "寫信與通訊錄">
+<!ENTITY addressingGroupTitle.label "通訊錄">
+<!ENTITY autocompleteToMyDomain.label     "自動在地址的後面加上我的網域名稱">
+<!ENTITY autocompleteToMyDomain.accesskey "o">
+<!ENTITY addressingText.label      "尋找郵件地址時:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "對此帳號使用預設的 LDAP 伺服器設定">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "編輯目錄…">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "使用其它 LDAP 伺服器:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "無">
+
+<!-- am-addressing.xul -->
+
+<!ENTITY compositionGroupTitle.label          "編輯">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "以 HTML 格式編輯郵件">
+<!ENTITY useHtml.accesskey                    "C">
+<!ENTITY autoQuote.label                      "回信時自動引用原信內容">
+<!ENTITY autoQuote.accesskey                  "m">
+<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY then.label                           "然後，">
+<!ENTITY then.accesskey                       "T">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "引用時，">
+<!ENTITY quoting.accesskey                    "q">
+<!ENTITY aboveQuote.label                     "在引文前面開始回信">
+<!ENTITY belowQuote.label                     "在引文之後開始回信">
+<!ENTITY selectAndQuote.label                 "選取引言">
+<!ENTITY place.label                          "把簽名檔放在">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "引用內容之後 (建議值) ">
+<!ENTITY aboveText.label                      "我的回信內容之後 (引用內容之前) ">
+<!ENTITY includeSigOnReply.label              "回覆時附加簽名">
+<!ENTITY includeSigOnReply.accesskey          "I">
+<!ENTITY includeSigOnForward.label            "轉寄時附加簽名">
+<!ENTITY includeSigOnForward.accesskey        "w">
+
+<!ENTITY globalComposingPrefs.label           "全域編輯偏好設定…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "全域地址偏好設定…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

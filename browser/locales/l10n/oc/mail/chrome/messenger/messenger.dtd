@@ -1,0 +1,583 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY titledefault.label "&brandFullName;">
+<!ENTITY titleSeparator.label " - ">
+
+<!-- File Menu -->
+<!ENTITY newFolderCmd.label "Dorsièr…">
+<!ENTITY newFolderCmd.accesskey "D">
+
+<!ENTITY newVirtualFolderCmd.label "Dorsièr virtual…">
+<!ENTITY newVirtualFolderCmd.accesskey "v">
+<!ENTITY openMessageFileCmd.label "Dobrir un fichièr de messatge…">
+<!ENTITY openMessageFileCmd.accesskey "O">
+<!ENTITY saveAsMenu.label "Enregistrar coma">
+<!ENTITY saveAsMenu.accesskey "s">
+<!ENTITY saveAsFileCmd.label "Fichièr">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsFileCmd.key "s">
+<!ENTITY saveAsTemplateCmd.label "Modèl">
+<!ENTITY saveAsTemplateCmd.accesskey "M">
+<!ENTITY getNewMsgForCmd.label "Relevar los messatges novèls per">
+<!ENTITY getNewMsgForCmd.accesskey "l">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "Totes los comptes">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "T">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.label "Lo compte en cors d'utilizacion">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.accesskey "L">
+<!ENTITY sendUnsentCmd.label "Mandar los messatges en espèra">
+<!ENTITY sendUnsentCmd.accesskey "a">
+<!ENTITY subscribeCmd.label "S'abonar…">
+<!ENTITY subscribeCmd.accesskey "b">
+<!ENTITY deleteFolder.label "Suprimir lo dorsièr">
+<!ENTITY deleteFolder.accesskey "S">
+<!ENTITY renameFolder.label "Tornar nomenar lo dorsièr…">
+<!ENTITY renameFolder.accesskey "R">
+<!ENTITY renameFolder.key "VK_F2">
+<!ENTITY compactFolders.label "Compactar los dorsièrs">
+<!ENTITY compactFolders.accesskey "C">
+<!ENTITY emptyTrashCmd.label "Voidar la bedoceta">
+<!ENTITY emptyTrashCmd.accesskey "V">
+<!ENTITY offlineMenu.label "Fòra linha">
+<!ENTITY offlineMenu.accesskey "H">
+<!ENTITY offlineGoOfflineCmd.label "Trabalhar fòra connexion">
+<!ENTITY offlineGoOfflineCmd.accesskey "h">
+<!ENTITY synchronizeOfflineCmd.label "Telecargar/Sincronizar ara…">
+<!ENTITY synchronizeOfflineCmd.accesskey "T">
+<!ENTITY downloadSelectedCmd.label "Recuperar los messatges seleccionats">
+<!ENTITY downloadSelectedCmd.accesskey "R">
+<!ENTITY downloadStarredCmd.label "Recuperar los messatges seguits">
+<!ENTITY downloadStarredCmd.accesskey "c">
+<!ENTITY printCmd.label "Estampar">
+<!ENTITY printCmd.accesskey "p">
+<!ENTITY printCmd.key "p">
+<!ENTITY printPreviewCmd.label "Apercebut abans estampatge">
+<!ENTITY printPreviewCmd.accesskey "u">
+<!ENTITY printSetupCmd.label "Mesa en pagina…">
+<!ENTITY printSetupCmd.accesskey "g">
+
+<!-- Edit Menu -->
+<!ENTITY deleteMsgCmd.label "Suprimir lo messatge">
+<!ENTITY deleteMsgCmd.accesskey "S">
+<!ENTITY undeleteMsgCmd.label "Recuperar lo messatge">
+<!ENTITY undeleteMsgCmd.accesskey "R">
+<!ENTITY deleteMsgsCmd.label "Suprimir los messatges seleccionats">
+<!ENTITY deleteMsgsCmd.accesskey "S">
+<!ENTITY undeleteMsgsCmd.label "Recuperar los messatges seleccionats">
+<!ENTITY undeleteMsgsCmd.accesskey "R">
+<!ENTITY deleteFolderCmd.label "Suprimir lo dorsièr">
+<!ENTITY deleteFolderCmd.accesskey "d">
+<!ENTITY unsubscribeNewsgroupCmd.label "Se desabonar">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "n">
+<!ENTITY selectMenu.label "Seleccionar">
+<!ENTITY selectMenu.accesskey "t">
+<!ENTITY all.label "Tot">
+<!ENTITY all.accesskey "T">
+<!ENTITY selectThreadCmd.label "Discussion">
+<!ENTITY selectThreadCmd.accesskey "D">
+<!ENTITY selectThreadCmd.key "a">
+<!ENTITY selectFlaggedCmd.label "Messatges seguits">
+<!ENTITY selectFlaggedCmd.accesskey "u">
+<!ENTITY menuFavoriteFolder.label "Dorsièr preferit">
+<!ENTITY menuFavoriteFolder.accesskey "D">
+<!ENTITY folderPropsCmd.accesskey "o">
+<!ENTITY undoDeleteMsgCmd.label "Anullar l'escafament">
+<!ENTITY redoDeleteMsgCmd.label "Restablir lo messatge escafat">
+<!ENTITY undoMoveMsgCmd.label "Anullar lo desplaçament de messatge">
+<!ENTITY redoMoveMsgCmd.label "Restablir lo desplaçament de messatge">
+<!ENTITY undoCopyMsgCmd.label "Anullar la còpia de messatge">
+<!ENTITY redoCopyMsgCmd.label "Restablir la còpia de messatge">
+<!ENTITY undoMarkAllCmd.label "Anullar lo marcatge de totes los messatges en legits">
+<!ENTITY redoMarkAllCmd.label "Restablir lo marcatge de totes los messatges en legits">
+<!ENTITY undoDefaultCmd.label "Anullar">
+<!ENTITY undoDefaultCmd.accesskey "A">
+<!ENTITY redoDefaultCmd.label "Restablir">
+<!ENTITY redoDefaultCmd.accesskey "R">
+
+<!-- View Menu -->
+<!ENTITY showMessengerToolbarCmd.label "Barra d'espleches corrièr">
+<!ENTITY showMessengerToolbarCmd.accesskey "t">
+<!ENTITY customizeToolbar.label "Personalizar…">
+<!ENTITY customizeToolbar.accesskey "P">
+
+<!ENTITY messagePaneLayoutStyle.label "Disposicion">
+<!ENTITY messagePaneLayoutStyle.accesskey "p">
+<!ENTITY messagePaneClassic.label "Classica">
+<!ENTITY messagePaneClassic.accesskey "C">
+<!ENTITY messagePaneWide.label "Larga">
+<!ENTITY messagePaneWide.accesskey "L">
+<!ENTITY messagePaneVertical.label "Verticala">
+<!ENTITY messagePaneVertical.accesskey "V">
+<!ENTITY showMessageCmd.label "Panèl d'afichatge dels messatges">
+<!ENTITY showMessageCmd.accesskey "n">
+
+<!ENTITY folderView.label "Dorsièrs">
+<!ENTITY folderView.accesskey "r">
+<!ENTITY allFolders.label "Totes">
+<!ENTITY allFolders.accesskey "T">
+<!ENTITY unreadFolders.label "Dorsièrs amb de non legits">
+<!ENTITY unreadFolders.accesskey "n">
+<!ENTITY favoriteFolders.label "Dorsièrs preferits">
+<!ENTITY favoriteFolders.accesskey "p">
+<!ENTITY recentFolders.label "Dorsièrs recents">
+<!ENTITY recentFolders.accesskey "r">
+
+<!-- Sort Menu -->
+<!ENTITY sortMenu.label "Triar per">
+<!ENTITY sortMenu.accesskey "e">
+<!ENTITY sortByDateCmd.label "Data">
+<!ENTITY sortByDateCmd.accesskey "t">
+<!ENTITY sortByReceivedCmd.label "Recebut">
+<!ENTITY sortByReceivedCmd.accesskey "R">
+<!ENTITY sortByStarCmd.label "Seguit">
+<!ENTITY sortByStarCmd.accesskey "v">
+<!ENTITY sortByAttachmentsCmd.label "Pèças juntas">
+<!ENTITY sortByAttachmentsCmd.accesskey "j">
+<!ENTITY sortByPriorityCmd.label "Prioritat">
+<!ENTITY sortByPriorityCmd.accesskey "P">
+<!ENTITY sortBySizeCmd.label "Talha">
+<!ENTITY sortBySizeCmd.accesskey "i">
+<!ENTITY sortByStatusCmd.label "Estatut">
+<!ENTITY sortByStatusCmd.accesskey "u">
+<!ENTITY sortByTagsCmd.label "Etiquetas">
+<!ENTITY sortByTagsCmd.accesskey "q">
+<!ENTITY sortByJunkStatusCmd.label "Estatut indesirable">
+<!ENTITY sortByJunkStatusCmd.accesskey "e">
+<!ENTITY sortBySubjectCmd.label "Subjècte">
+<!ENTITY sortBySubjectCmd.accesskey "S">
+<!ENTITY sortByFromCmd.label "Expeditor">
+<!ENTITY sortByFromCmd.accesskey "x">
+<!ENTITY sortByRecipientCmd.label "Destinatari">
+<!ENTITY sortByRecipientCmd.accesskey "D">
+<!ENTITY sortByUnreadCmd.label "Legit">
+<!ENTITY sortByUnreadCmd.accesskey "L">
+<!ENTITY sortByOrderReceivedCmd.label "Òrdre de recepcion">
+<!ENTITY sortByOrderReceivedCmd.accesskey "O">
+<!ENTITY sortAscending.label "Òrdre creissent">
+<!ENTITY sortAscending.accesskey "a">
+<!ENTITY sortDescending.label "Òrdre descreissent">
+<!ENTITY sortDescending.accesskey "n">
+<!ENTITY sortThreaded.label "Discussions gropadas">
+<!ENTITY sortThreaded.accesskey "c">
+<!ENTITY sortUnthreaded.label "Discussions pas gropadas">
+<!ENTITY sortUnthreaded.accesskey "g">
+<!ENTITY groupBySort.label "Gropat per critèri de triada">
+<!ENTITY groupBySort.accesskey "G">
+<!ENTITY msgsMenu.label "Messatge">
+<!ENTITY msgsMenu.accesskey "M">
+<!ENTITY threads.label "Discussions">
+<!ENTITY threads.accesskey "D">
+<!ENTITY allMsgsCmd.label "Totas">
+<!ENTITY allMsgsCmd.accesskey "T">
+<!ENTITY expandAllThreadsCmd.label "Desvolopar totas las discussions">
+<!ENTITY expandAllThreadsCmd.accesskey "e">
+<!ENTITY expandAllThreadsCmd.key "*">
+<!ENTITY collapseAllThreadsCmd.label "Reduire totas las discussions">
+<!ENTITY collapseAllThreadsCmd.accesskey "R">
+<!ENTITY collapseAllThreadsCmd.key "\">
+<!ENTITY unreadMsgsCmd.label "Pas legidas">
+<!ENTITY unreadMsgsCmd.accesskey "N">
+<!ENTITY threadsWithUnreadCmd.label "Discussions amb de pas legits">
+<!ENTITY threadsWithUnreadCmd.accesskey "D">
+<!ENTITY watchedThreadsWithUnreadCmd.label "Discussions susvelhadas amb de pas legits">
+<!ENTITY watchedThreadsWithUnreadCmd.accesskey "l">
+<!ENTITY ignoredThreadsCmd.label "Discussions ignoradas">
+<!ENTITY ignoredThreadsCmd.accesskey "i">
+
+<!ENTITY headersMenu.label "Entèstas">
+<!ENTITY headersMenu.accesskey "n">
+<!ENTITY headersAllCmd.label "Complets">
+<!ENTITY headersAllCmd.accesskey "C">
+<!ENTITY headersNormalCmd.label "Normals">
+<!ENTITY headersNormalCmd.accesskey "N">
+<!ENTITY bodyMenu.label "Còs del messatge en">
+<!ENTITY bodyMenu.accesskey "o">
+<!ENTITY bodyAllowHTML.label "HTML original">
+<!ENTITY bodyAllowHTML.accesskey "H">
+<!ENTITY bodySanitized.label "HTML simple">
+<!ENTITY bodySanitized.accesskey "s">
+<!ENTITY bodyAsPlaintext.label "Tèxte sol">
+<!ENTITY bodyAsPlaintext.accesskey "x">
+
+<!ENTITY viewAttachmentsInlineCmd.label "Afichar las pèças juntas dins los messatges">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "A">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.
+-->
+
+<!ENTITY pageSourceCmd.label "Còde font del messatge">
+<!ENTITY pageSourceCmd.accesskey "s">
+<!ENTITY pageSourceCmd.key "u">
+
+<!-- Search Menu -->
+
+<!ENTITY findMenu.label "Recercar">
+<!ENTITY findMenu.accesskey "h">
+<!ENTITY findCmd.label "Recercar…">
+<!ENTITY findCmd.accesskey "R">
+<!ENTITY findCmd.key "f">
+<!ENTITY findAgainCmd.label "Recercar lo seguent">
+<!ENTITY findAgainCmd.accesskey "v">
+<!ENTITY findAgainCmd.key "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.key "g">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY searchMailCmd.label "Recercar dins lo corrièr">
+<!ENTITY searchMailCmd.accesskey "c">
+<!ENTITY searchMailCmd.key "f">
+<!ENTITY searchAddressesCmd.label "Cercar dins las adreças…">
+<!ENTITY searchAddressesCmd.accesskey "a">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Anar a">
+<!ENTITY goMenu.accesskey "l">
+<!ENTITY nextMenu.label "Venent">
+<!ENTITY nextMenu.accesskey "P">
+<!ENTITY nextMsgCmd.label "Messatge">
+<!ENTITY nextMsgCmd.accesskey "m">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "Messatge pas legit">
+<!ENTITY nextUnreadMsgCmd.accesskey "n">
+<!ENTITY nextUnreadMsgCmd.key "n">
+<!ENTITY nextStarredMsgCmd.label "Messatge seguit">
+<!ENTITY nextStarredMsgCmd.accesskey "v">
+<!ENTITY nextUnreadThread.label "Discussion pas legida">
+<!ENTITY nextUnreadThread.accesskey "s">
+<!ENTITY nextUnreadThread.key "t">
+<!ENTITY prevMenu.label "Precedent">
+<!ENTITY prevMenu.accesskey "r">
+<!ENTITY prevMsgCmd.label "Messatge">
+<!ENTITY prevMsgCmd.accesskey "M">
+<!ENTITY prevMsgCmd.key "b">
+<!ENTITY prevUnreadMsgCmd.label "Messatge pas legit">
+<!ENTITY prevUnreadMsgCmd.accesskey "n">
+<!ENTITY prevUnreadMsgCmd.key "p">
+<!ENTITY goForwardCmd.label "Seguent">
+<!ENTITY goForwardCmd.accesskey "S">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goBackCmd.label "Precedent">
+<!ENTITY goBackCmd.accesskey "c">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY prevStarredMsgCmd.label "Messatge seguit">
+<!ENTITY prevStarredMsgCmd.accesskey "v">
+<!ENTITY startPageCmd.label "Pagina d'aviada">
+<!ENTITY startPageCmd.accesskey "g">
+
+<!ENTITY msgMenu.label "Messatges">
+<!ENTITY msgMenu.accesskey "M">
+<!ENTITY newMsgCmd.label "Nouveau message">
+<!ENTITY newMsgCmd.accesskey "N">
+<!ENTITY newNewMsgCmd.label "Messatge">
+<!ENTITY newNewMsgCmd.accesskey "M">
+<!ENTITY archiveMsgCmd.label "Archiu">
+<!ENTITY archiveMsgCmd.accesskey "A">
+<!ENTITY archiveMsgCmd.key  "a">
+<!ENTITY cancelNewsMsgCmd.label "Anullar lo messatge">
+<!ENTITY cancelNewsMsgCmd.accesskey "A">
+<!ENTITY replyMsgCmd.label "Respondre">
+<!ENTITY replyMsgCmd.accesskey "R">
+<!ENTITY replyMsgCmd.key "r">
+<!ENTITY replySenderCmd.label "Respondre a l'exp. solament">
+<!ENTITY replySenderCmd.accesskey "R">
+<!ENTITY replyToAllMsgCmd.label "Respondre a totes">
+<!ENTITY replyToAllMsgCmd.accesskey "t">
+<!ENTITY replyToAllMsgCmd.key "r">
+<!ENTITY forwardMsgCmd.label "Transferir">
+<!ENTITY forwardMsgCmd.accesskey "f">
+<!ENTITY forwardMsgCmd.key "l">
+<!ENTITY forwardAsMenu.label "Transferir al format">
+<!ENTITY forwardAsMenu.accesskey "n">
+<!ENTITY forwardAsInline.label "Integrat">
+<!ENTITY forwardAsInline.accesskey "I">
+<!ENTITY forwardAsAttachmentCmd.label "Pèça junta">
+<!ENTITY forwardAsAttachmentCmd.accesskey "j">
+<!ENTITY createFilter.label "Crear un filtre a partir del messatge…">
+<!ENTITY createFilter.accesskey "i">
+<!ENTITY moveMsgToMenu.label "Desplaçar lo messatge cap a">
+<!ENTITY moveMsgToMenu.accesskey "D">
+<!ENTITY moveCopyMsgRecentMenu.label "Recent">
+<!ENTITY moveCopyMsgRecentMenu.accesskey "R">
+<!ENTITY copyMessageLocation.label "Copiar l'adreça del messatge">
+<!ENTITY copyMessageLocation.accesskey "m">
+<!ENTITY copyMsgToMenu.label "Copiar lo messatge cap a">
+<!ENTITY copyMsgToMenu.accesskey "C">
+<!ENTITY moveToFolderAgain.label "Desplaçar tornamai">
+<!ENTITY moveToFolderAgain.accesskey "v">
+<!ENTITY moveToFolderAgainCmd.key "m">
+<!ENTITY killThreadMenu.label "Ignorar la discussion">
+<!ENTITY killThreadMenu.accesskey "I">
+<!ENTITY killThreadMenu.key "k">
+<!ENTITY killSubthreadMenu.label "Ignorar las discussions filhas">
+<!ENTITY killSubthreadMenu.accesskey "n">
+<!ENTITY killSubthreadMenu.key "k">
+<!ENTITY watchThreadMenu.label "Susvelhar la discussion">
+<!ENTITY watchThreadMenu.accesskey "S">
+<!ENTITY watchThreadMenu.key "w">
+<!ENTITY tagMenu.label "Etiqueta">
+<!ENTITY tagMenu.accesskey "q">
+<!ENTITY tagCmd0.key "0">
+<!ENTITY tagCmd1.key "1">
+<!ENTITY tagCmd2.key "2">
+<!ENTITY tagCmd3.key "3">
+<!ENTITY tagCmd4.key "4">
+<!ENTITY tagCmd5.key "5">
+<!ENTITY tagCmd6.key "6">
+<!ENTITY tagCmd7.key "7">
+<!ENTITY tagCmd8.key "8">
+<!ENTITY tagCmd9.key "9">
+<!ENTITY markMenu.label "Marcar">
+<!ENTITY markMenu.accesskey "a">
+<!ENTITY markAsReadCmd.label "Coma legit">
+<!ENTITY markAsReadCmd.accesskey "l">
+<!ENTITY markThreadAsReadCmd.label "La discussion coma legida">
+<!ENTITY markThreadAsReadCmd.accesskey "d">
+<!ENTITY markThreadAsReadCmd.key "r">
+<!ENTITY markReadByDateCmd.label "Coma legits per data…">
+<!ENTITY markReadByDateCmd.accesskey "t">
+<!ENTITY markReadByDateCmd.key "c">
+<!ENTITY markAllReadCmd.label "Totes los messatges coma legits">
+<!ENTITY markAllReadCmd.accesskey "g">
+<!ENTITY markAllReadCmd.key "c">
+<!ENTITY markStarredCmd.label "Apondre un seguit">
+<!ENTITY markStarredCmd.accesskey "v">
+<!ENTITY markStarredCmd.key "S">
+<!ENTITY markAsJunkCmd.label "Coma indesirable">
+<!ENTITY markAsJunkCmd.accesskey "i">
+<!ENTITY markAsJunkCmd.key "j">
+<!ENTITY markAsNotJunkCmd.label "Coma acceptable">
+<!ENTITY markAsNotJunkCmd.accesskey "a">
+<!ENTITY markAsNotJunkCmd.key "j">
+<!ENTITY recalculateJunkScoreCmd.label "Aviar lo contraròtle dels indesirables">
+<!ENTITY recalculateJunkScoreCmd.accesskey "s">
+<!ENTITY openMessageWindowCmd.label "Dobrir lo messatge">
+<!ENTITY openMessageWindowCmd.accesskey "O">
+<!ENTITY openMessageWindowCmd.key "o">
+
+<!-- Windows Menu -->
+<!ENTITY windowMenu.label "Fenèstra">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Espleches">
+<!ENTITY tasksMenu.accesskey "O">
+<!ENTITY messengerCmd.label "Corrièr e gropes">
+<!ENTITY messengerCmd.accesskey "m">
+<!ENTITY addressBookCmd.label "Quasernet d'adreças">
+<!ENTITY addressBookCmd.accesskey "a">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY addons.label "Moduls complementaris">
+<!ENTITY addons.accesskey "c">
+<!ENTITY activitymanager.label "Activitats">
+<!ENTITY activitymanager.accesskey "a">
+<!ENTITY filtersApply.label "Aplicar los filtres sul dorsièr">
+<!ENTITY filtersApply.accesskey "l">
+<!ENTITY filtersApplyToSelection.label "Aplicar los filtres suls messatges seleccionats">
+<!ENTITY filtersApplyToSelection.accesskey "A">
+<!ENTITY filtersApplyToMessage.label "Aplicar los filtres sul messatge">
+<!ENTITY filtersApplyToMessage.accesskey "m">
+<!ENTITY runJunkControls.label "Tracar los indesirables dins lo dorsièr">
+<!ENTITY runJunkControls.accesskey "q">
+<!ENTITY deleteJunk.label "Suprimir los indesirables d'aqueste dorsièr">
+<!ENTITY deleteJunk.accesskey "e">
+<!ENTITY importCmd.label "Importar…">
+<!ENTITY importCmd.accesskey "I">
+
+<!ENTITY errorConsoleCmd.label "Consòla d'errors">
+<!ENTITY errorConsoleCmd.accesskey "s">
+
+<!ENTITY newMsgButton.label "Escriure">
+<!ENTITY replyButton.label "Respondre">
+<!ENTITY replyAllButton.label "Resp. a totes">
+<!ENTITY forwardButton.label "Transferir">
+<!ENTITY fileButton.label "Classar">
+<!ENTITY nextButton.label "Seguent">
+<!ENTITY previousButton.label "Precedent">
+<!ENTITY backButton1.label "Recuolar">
+<!ENTITY goForwardButton1.label "Avançar">
+<!ENTITY deleteButton.label "Suprimir">
+<!ENTITY undeleteButton.label "Restablir">
+<!ENTITY markButton.label "Marcar">
+<!ENTITY printButton.label "Estampar">
+<!ENTITY stopButton.label "Stop">
+<!ENTITY throbberItem.title "Indicator d'activitat">
+<!ENTITY junkButton.label "Indesirable">
+<!ENTITY notJunkButton.label "Acceptable">
+<!ENTITY addressBookButton.label "Adreças">
+<!ENTITY glodaSearch.title "Recèrca globala">
+<!ENTITY searchItem.title "Recèrca rapida">
+<!ENTITY mailViewsToolbarItem.title "Vistas de corrièr">
+<!ENTITY folderLocationToolbarItem.title "Emplaçament del dorsièr">
+<!ENTITY tagButton.label "Etiqueta">
+<!ENTITY compactButton.label "Compactar">
+
+<!-- Mail Toolbar Tooltips-->
+<!ENTITY advancedButton.tooltip "Recercar dins los messatges…">
+<!ENTITY getMsgButton.tooltip "Relevar los messatges novèls">
+<!ENTITY getAllNewMsgCmd.label "Relevar totes los messatges novèls">
+<!ENTITY getAllNewMsgCmd.accesskey "l">
+<!ENTITY newMsgButton.tooltip "Crear un messatge novèl">
+<!ENTITY replyButton.tooltip "Respondre al messatge">
+<!ENTITY replyAllButton.tooltip "Respondre a l'expeditor e a totes los destinataris">
+<!ENTITY forwardButton.tooltip "Transferir lo messatge seleccionat">
+<!ENTITY fileButton.tooltip "Classar los messatges seleccionats">
+<!ENTITY nextButton.tooltip "Anar al messatge pas legit venent">
+<!ENTITY previousButton.tooltip "Anar al messatge pas legit precedent">
+<!ENTITY goForwardButton.tooltip "Avançar d'un messatge">
+<!ENTITY goBackButton.tooltip "Recuolar d'un messatge">
+<!ENTITY deleteButton.tooltip "Suprimir lo messatge o lo dorsièr seleccionat">
+<!ENTITY undeleteButton.tooltip "Restablir lo messatge seleccionat">
+<!ENTITY markButton.tooltip "Marcar los messatges">
+<!ENTITY printButton.tooltip "Estampar aqueste messatge">
+<!ENTITY stopButton.tooltip "Arrestar lo transferiment corrent">
+<!ENTITY junkButton.tooltip "Marcar los messatges seleccionats coma indesirables">
+<!ENTITY notJunkButton.tooltip "Marcar los messatges seleccionats coma acceptables">
+<!ENTITY addressBookButton.tooltip "Dobrir lo quasernet d'adreças">
+<!ENTITY tagButton.tooltip "Etiquetar los messatges">
+<!ENTITY compactButton.tooltip "Levar los messatges suprimits del dorsièr seleccionat">
+
+<!-- Tags Menu Popup -->
+<!ENTITY addNewTag.label "Etiqueta novèla…">
+<!ENTITY addNewTag.accesskey "N">
+
+<!ENTITY folderSizeColumn.label "Talha">
+
+<!-- Folder Pane Context Menu -->
+<!ENTITY folderContextGetMessages.label "Relevar los messatges novèls">
+<!ENTITY folderContextGetMessages.accesskey "R">
+<!ENTITY folderContextOpenNewTab.label "Dobrir dins un onglet novèl">
+<!ENTITY folderContextOpenNewTab.accesskey "u">
+<!ENTITY folderContextNew.label "Sosdorsièr novèl…">
+<!ENTITY folderContextNew.accesskey "v">
+<!ENTITY folderContextRename.label "Tornar nomenar">
+<!ENTITY folderContextRename.accesskey "R">
+<!ENTITY folderContextRemove.label "Suprimir">
+<!ENTITY folderContextRemove.accesskey "e">
+<!ENTITY folderContextCompact.label "Compactar">
+<!ENTITY folderContextCompact.accesskey "p">
+<!ENTITY folderContextEmptyTrash.label "Voidar aquesta bedoceta ara">
+<!ENTITY folderContextEmptyTrash.accesskey "V">
+<!ENTITY folderContextEmptyJunk.label "Voidar lo dorsièr dels indesirables">
+<!ENTITY folderContextEmptyJunk.accesskey "s">
+<!ENTITY folderContextSendUnsentMessages.label "Mandar los messatges pas mandats">
+<!ENTITY folderContextSendUnsentMessages.accesskey "n">
+<!ENTITY folderContextUnsubscribe.label "Se desabonar del grop…">
+<!ENTITY folderContextUnsubscribe.accesskey "u">
+<!ENTITY folderContextMarkNewsgroupRead.label "Marcar lo grop coma legit">
+<!ENTITY folderContextMarkNewsgroupRead.accesskey "q">
+<!ENTITY folderContextMarkMailFolderRead.label "Marcar lo dorsièr coma legit">
+<!ENTITY folderContextMarkMailFolderRead.accesskey "d">
+<!ENTITY folderContextSubscribe.label "S'abonar…">
+<!ENTITY folderContextSubscribe.accesskey "b">
+<!ENTITY folderContextFavoriteFolder.label "Dorsièr preferit">
+<!ENTITY folderContextFavoriteFolder.accesskey "f">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label "Lo nom o lo messatge conten :">
+<!ENTITY SearchNameOrEmail.accesskey "n">
+
+<!-- Quick Search Menu Bar -->
+<!ENTITY searchSubjectMenu.label "Subjècte">
+<!ENTITY searchFromMenu.label "Expeditor">
+<!ENTITY searchSubjectOrFromMenu.label "Subjècte o Expeditor">
+<!ENTITY searchRecipient.label "Per o Còpia a">
+<!ENTITY searchSubjectOrRecipientMenu.label "Subjècte, Per o Còpia a">
+<!ENTITY searchMessageBody.label "Messatge complet">
+<!ENTITY saveAsVirtualFolderMenu.label "Salvar la recèrca coma dorsièr…">
+
+<!-- Thread Pane -->
+<!ENTITY threadColumn.label "Discussion">
+<!ENTITY fromColumn.label "Expeditor">
+<!ENTITY recipientColumn.label "Destinatari">
+<!ENTITY subjectColumn.label "Subjècte">
+<!ENTITY dateColumn.label "Data">
+<!ENTITY priorityColumn.label "Prioritat">
+<!ENTITY tagsColumn.label "Etiquetas">
+<!ENTITY accountColumn.label "Compte">
+<!ENTITY statusColumn.label "Estatut">
+<!ENTITY sizeColumn.label "Talha">
+<!ENTITY junkStatusColumn.label "Estatut indesirable">
+<!ENTITY unreadColumn.label "Pas legit">
+<!ENTITY totalColumn.label "Total">
+<!ENTITY readColumn.label "Legit">
+<!ENTITY receivedColumn.label "Recebut">
+<!ENTITY starredColumn.label "Seguit">
+<!ENTITY locationColumn.label "Emplaçament">
+<!ENTITY idColumn.label "Òrdre de recepcion">
+<!ENTITY attachmentColumn.label "Pèças juntas">
+
+<!-- Thread Pane Context Menu -->
+<!ENTITY contextOpenNewWindow.label "Dobrir dins una fenèstra novèla">
+<!ENTITY contextOpenNewWindow.accesskey "n">
+<!ENTITY contextOpenNewTab.label "Dobrir dins un onglet novèl">
+<!ENTITY contextOpenNewTab.accesskey "u">
+<!ENTITY contextReplySender.label "Respondre a l'expeditor">
+<!ENTITY contextReplySender.accesskey "R">
+<!ENTITY contextReplyAll.label "Respondre a tot lo monde">
+<!ENTITY contextReplyAll.accesskey "t">
+<!ENTITY contextForward.label "Transferir">
+<!ENTITY contextForward.accesskey "f">
+<!ENTITY contextMoveMsgMenu.label "Desplaçar cap a">
+<!ENTITY contextMoveMsgMenu.accesskey "D">
+<!ENTITY contextMoveCopyMsgRecentMenu.label "Recent">
+<!ENTITY contextMoveCopyMsgRecentMenu.accesskey "R">
+<!ENTITY contextCopyMsgMenu.label "Copiar cap a">
+<!ENTITY contextCopyMsgMenu.accesskey "c">
+<!ENTITY contextSaveAs.label "Enregistrar coma…">
+<!ENTITY contextSaveAs.accesskey "s">
+<!ENTITY contextPrint.label "Estampar…">
+<!ENTITY contextPrint.accesskey "p">
+<!ENTITY contextPrintPreview.label "Apercebut abans estampatge">
+<!ENTITY contextPrintPreview.accesskey "o">
+
+<!-- Quick Search Bar -->
+<!-- Quick Search Bar -->
+<!ENTITY quickSearchCmd.key "k">
+
+<!-- Message Header Context Menu -->
+<!ENTITY AddToAddressBook.label "Apondre l'adreça al quasernet d'adreças">
+<!ENTITY AddToAddressBook.accesskey "j">
+<!ENTITY AddDirectlyToAddressBook.label "Apondre l'adreça al quasernet d'adreças">
+<!ENTITY AddDirectlyToAddressBook.accesskey "o">
+<!ENTITY ViewContact.label "Afichar lo contacte">
+<!ENTITY ViewContact.accesskey "A">
+<!ENTITY CopyEmailAddress.label "Copiar l'adreça">
+<!ENTITY CopyEmailAddress.accesskey "C">
+<!ENTITY CreateFilterFrom.label "Crear un filtre…">
+<!ENTITY CreateFilterFrom.accesskey "f">
+<!ENTITY reportPhishingURL.label "Senhalar un corrièr fraudulós">
+<!ENTITY reportPhishingURL.accesskey "S">
+
+<!-- Content Pane Context Menu -->
+<!ENTITY saveLinkAsCmd.label "Enregistrar lo ligam jos…">
+<!ENTITY saveLinkAsCmd.accesskey "e">
+<!ENTITY saveImageAsCmd.label "Enregistrar l'imatge jos…">
+<!ENTITY saveImageAsCmd.accesskey "a">
+<!ENTITY copyLinkCmd.label "Copiar l'adreça del ligam">
+<!ENTITY copyLinkCmd.accesskey "n">
+<!ENTITY copyEmailCmd.label "Copiar l'adreça">
+<!ENTITY copyEmailCmd.accesskey "e">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label "Cargat">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.label "Minimizar">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "Totas al primièr plan">
+<!ENTITY zoomWindow.label "Zoom">
+
+<!ENTITY preferencesCmdMac.commandkey ",">
+<!ENTITY preferencesCmdMac.modifiers "accel">
+<!ENTITY servicesMenuMac.label "Servicis">
+<!ENTITY hideThisAppCmdMac.label "Amagar &brandShortName;">
+<!ENTITY hideThisAppCmdMac.commandkey "H">
+<!ENTITY hideThisAppCmdMac.modifiers "accel">
+<!ENTITY hideOtherAppsCmdMac.label "Amagar los autres">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+<!ENTITY hideOtherAppsCmdMac.modifiers "accel,alt">
+<!ENTITY showAllAppsCmdMac.label "Afichar tot">
+

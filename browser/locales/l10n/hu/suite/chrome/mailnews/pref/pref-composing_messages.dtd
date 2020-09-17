@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title        "Szerkesztés">
+<!ENTITY generalComposing.label               "Általános">
+<!ENTITY forwardMsg.label                     "Levél továbbítása:">
+<!ENTITY inline.label                         "Beágyazva">
+<!ENTITY inline.accesskey                     "B">
+<!ENTITY asAttachment.label                   "Mellékletként">
+<!ENTITY asAttachment.accesskey               "M">
+
+<!ENTITY replyQuoteInline.label               "Mellékletek beágyazott megtekintése a válaszokban">
+<!ENTITY replyQuoteInline.accesskey           "b">
+<!ENTITY warnOnSendAccelKey.label             "Jóváhagyás kérése gyorsbillentyűvel végzett levélküldéskor">
+<!ENTITY warnOnSendAccelKey.accesskey         "J">
+<!-- LOCALIZATION NOTE (autoSave.label): This will concatenate with
+     "xxx minutes", using a number and (autoSaveEnd.label). -->
+<!ENTITY autoSave.label                       "Üzenetek automatikus mentése">
+<!ENTITY autoSave.accesskey                   "m">
+<!ENTITY autoSaveEnd.label                    "percenként">
+<!-- LOCALIZATION NOTE (wrapOutMsg.label): This will concatenate with "xxx characters", using a number and (char.label). -->
+<!ENTITY wrapOutMsg.label                     "Levelek tördelése">
+<!ENTITY wrapOutMsg.accesskey                 "t">
+<!ENTITY char.label                           "karakter szélesre">
+
+<!ENTITY defaultMessagesHeader.label          "HTML-üzenetek beállításai">
+<!ENTITY font.label                           "Betű:">
+<!ENTITY font.accesskey                       "B">
+<!ENTITY size.label                           "Méret:">
+<!ENTITY size.accesskey                       "M">
+<!ENTITY fontColor.label                      "Szöveg:">
+<!ENTITY fontColor.accesskey                  "z">
+<!ENTITY bgColor.label                        "Háttér:">
+<!ENTITY bgColor.accesskey                    "H">
+<!ENTITY defaultCompose.label                 "Alapértelmezett szerkesztési formátum:">
+<!ENTITY defaultBodyText.label                "Szövegtörzs (az Enter gomb új sort hoz létre)">
+<!ENTITY defaultBodyText.accesskey            "t">
+<!ENTITY defaultParagraph.label               "Bekezdés (az Enter gomb új sort hoz létre)">
+<!ENTITY defaultParagraph.accesskey           "B">
+
+<!ENTITY selectHeaderType.label               "Válaszfejléc típusa:">
+<!ENTITY selectHeaderType.accesskey           "e">
+<!ENTITY noReplyOption.label                  "Nincs válaszfejléc">
+<!-- LOCALIZATION NOTE (authorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwrotesingle preference. [Author] needs to be
+  translated. -->
+<!ENTITY authorWroteOption.label              "[Szerző] írta:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_ondateauthorwrote preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY onDateAuthorWroteOption.label        "[Dátum] keltezéssel, [Szerző] írta:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwroteondate preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY authorWroteOnDateOption.label        "[Szerző] írta, [Dátum] keltezéssel:">

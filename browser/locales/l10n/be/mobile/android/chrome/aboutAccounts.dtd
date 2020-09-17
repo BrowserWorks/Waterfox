@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Уліковыя запісы Firefox">
+<!ENTITY aboutAccounts.connected.description "Вы злучаны як">
+<!ENTITY aboutAccounts.syncPreferences.label "Націсніце тут, каб праверыць налады Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "Няма інтэрнэт-злучэння">
+<!ENTITY aboutAccounts.retry.label "Паспрабаваць зноў">
+
+<!ENTITY aboutAccounts.restrictedError.title "Абмежавана">
+<!ENTITY aboutAccounts.restrictedError.description "Вы не можаце кіраваць уліковымі запісамі Firefox па гэтага профілю.">

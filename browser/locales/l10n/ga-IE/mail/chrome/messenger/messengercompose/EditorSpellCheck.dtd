@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Seiceáil Litriú">
+
+<!ENTITY misspelledWord.label "Focal mílitrithe:">
+<!ENTITY wordEditField.label "Ionadaigh le:">
+<!ENTITY wordEditField.accessKey "l">
+<!ENTITY checkwordButton.label "Seiceáil Focal">
+<!ENTITY checkwordButton.accessKey "c">
+<!ENTITY suggestions.label "Moltaí:">
+<!ENTITY suggestions.accessKey "o">
+<!ENTITY ignoreButton.label "Tabhair neamhaird air">
+<!ENTITY ignoreButton.accessKey "i">
+<!ENTITY ignoreAllButton.label "Tabhair Neamhaird ar Gach Rud">
+<!ENTITY ignoreAllButton.accessKey "N">
+<!ENTITY replaceButton.label "Ionadaigh">
+<!ENTITY replaceButton.accessKey "I">
+<!ENTITY replaceAllButton.label "Ionadaigh Uile">
+<!ENTITY replaceAllButton.accessKey "a">
+<!ENTITY stopButton.label "Stad">
+<!ENTITY stopButton.accessKey "a">
+<!ENTITY userDictionary.label "Foclóir Pearsanta:">
+<!ENTITY moreDictionaries.label "Íoslódáil tuilleadh foclóirí…">
+<!ENTITY addToUserDictionaryButton.label "Cuir Focal Leis">
+<!ENTITY addToUserDictionaryButton.accessKey "u">
+<!ENTITY editUserDictionaryButton.label "Eagar…">
+<!ENTITY editUserDictionaryButton.accessKey "E">
+<!ENTITY recheckButton2.label "Seiceáil an Téacs Arís">
+<!ENTITY recheckButton2.accessKey "T">
+<!ENTITY closeButton.label "Dún">
+<!ENTITY closeButton.accessKey "D">
+<!ENTITY sendButton.label "Seol">
+<!ENTITY sendButton.accessKey "S">
+<!ENTITY languagePopup.label "Teanga:">
+<!ENTITY languagePopup.accessKey "T">

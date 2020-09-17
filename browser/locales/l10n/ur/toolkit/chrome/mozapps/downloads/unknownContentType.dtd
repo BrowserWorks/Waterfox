@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "آپ نے اسے کھولنے کا انتخاب کیا ہے:">
+<!ENTITY  from.label                  "از:">
+<!ENTITY  actionQuestion.label        "&brandShortName; اس مسل کے ساتھ کیا کرے؟">
+
+<!ENTITY  openWith.label              "کھولیں بذریعہ">
+<!ENTITY  openWith.accesskey          "ک">
+<!ENTITY  other.label                 "دیگر...">
+
+<!ENTITY  saveFile.label              "مسل محفوظ کریں">
+<!ENTITY  saveFile.accesskey          "م">
+
+<!ENTITY  rememberChoice.label        "اس جیسی مسلوں کے لیے یہ اب سے خود بخود کریں۔">
+<!ENTITY  rememberChoice.accesskey    "خ">
+
+<!ENTITY  whichIs.label              "جو کہ:">
+
+<!ENTITY  chooseHandlerMac.label      "انتخاب کریں...">
+<!ENTITY  chooseHandlerMac.accesskey  "ا">
+<!ENTITY  chooseHandler.label         "براؤز کریں...">
+<!ENTITY  chooseHandler.accesskey     "ب">
+
+<!ENTITY  unknownPromptText.label     "کیا آپ اس مسل کو محفوظ کرنا چاہتے ہیں؟">

@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Isem: ">
+<!ENTITY directoryName.accesskey           "I">
+<!ENTITY directoryHostname.label           "Asenneftaɣ: ">
+<!ENTITY directoryHostname.accesskey       "s">
+<!ENTITY directoryBaseDN.label             "Isem n taɣult azadur: ">
+<!ENTITY directoryBaseDN.accesskey         "z">
+<!ENTITY findButton.label                  "Af">
+<!ENTITY findButton.accesskey              "A">
+<!ENTITY directorySecure.label             "Seqdec tuqqna taɣelsant (SSL)">
+<!ENTITY directorySecure.accesskey         "q">
+<!ENTITY directoryLogin.label              "Bind DN: ">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "Amatu">
+<!ENTITY Offline.tab                       "Aruqqin">
+<!ENTITY Advanced.tab                      "Leqqayen">
+<!ENTITY portNumber.label                  "Uṭṭun n tebburt: ">
+<!ENTITY portNumber.accesskey              "U">
+<!ENTITY searchFilter.label                "Imzizdeg n unadi: ">
+<!ENTITY searchFilter.accesskey            "z">
+<!ENTITY scope.label                       "Tanerfadit: ">
+<!ENTITY scope.accesskey                   "n">
+<!ENTITY scopeOneLevel.label               "Yiwen uswir">
+<!ENTITY scopeOneLevel.accesskey           "w">
+<!ENTITY scopeSubtree.label                "Adaseklu">
+<!ENTITY scopeSubtree.accesskey            "d">
+<!ENTITY return.label                      "Ur d-ttarra ara ugan n">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "igmaḍ">
+<!ENTITY offlineText.label                 "Tzemreḍ ad d-sidreḍ anɣel adigan n ukaram-agi akken ad yeli ihegga i weseqdec ticki temahaleḍ s war tuqqna.">
+<!ENTITY saslMechanism.label               "tarrayt n unekcum: ">
+<!ENTITY saslMechanism.accesskey           "k">
+<!ENTITY saslOff.label                     "Aḥerfi">
+<!ENTITY saslOff.accesskey                 "r">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+
+<!ENTITY newDirectoryWidth                 "36em">

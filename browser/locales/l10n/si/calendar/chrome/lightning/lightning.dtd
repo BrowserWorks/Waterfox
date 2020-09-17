@@ -1,0 +1,85 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.taskLabel "Lightning">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "වැඩසටහන">
+<!ENTITY lightning.menupopup.new.event.accesskey "E">
+<!ENTITY lightning.menupopup.new.task.label     "කාර්යය…">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "දිනදර්ශන…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "n">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "විවෘත කරන්න">
+<!ENTITY lightning.menupopup.open.accesskey           "O">
+<!ENTITY lightning.menupopup.open.message.label       "සුරැකි පණිවිඩ…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "M">
+<!ENTITY lightning.menupopup.open.calendar.label      "දිනදර්ශන ගොනුව…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "C">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "දිනදර්ශනය">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "කාර්යයන්">
+<!ENTITY lightning.menu.view.tasks.accesskey           "k">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "සිදුවීම් සහ කාර්යයන්">
+<!ENTITY lightning.menu.eventtask.accesskey            "n">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.mail.label         "තැපෑල">
+<!ENTITY lightning.toolbar.mail.accesskey     "M">
+<!ENTITY lightning.toolbar.calendar.label     "දිනදර්ශනය">
+<!ENTITY lightning.toolbar.calendar.accesskey "C">
+<!ENTITY lightning.toolbar.task.label         "කාර්යය">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+
+<!-- Messenger Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "දවස">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "සතිය">
+<!ENTITY lightning.toolbar.week.accesskey            "W">
+<!ENTITY lightning.toolbar.multiweek.label           "සති">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "u">
+<!ENTITY lightning.toolbar.month.label               "මාසය">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+
+<!-- properties dialog, calendar creation wizard -->
+<!ENTITY lightning.calendarproperties.showevents.inagenda.label "දවසේ තලයේ සිද්ධි දර්ශනය කරන්න">
+<!ENTITY lightning.calendarproperties.showtasks.label           "දවසේ තලයේ සහ කාර්‍යය විධියේ කාර්යය දර්ශය කරන්න">
+<!ENTITY lightning.calendarproperties.email.label               "ඊ-මේල්:">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.description "මෙම පණිවිඩයේ වැඩසටහනකට ආරාධනාවක් අඩංගු වේ.">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "නව දිනදර්ශනයක් සාදන්න">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "කෙටි මාසය දර්ශනය කරන්න">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "කෙටි දිනය දර්ශනය කරන්න">
+<!ENTITY todaypane.showMiniday.accesskey  "d">
+<!ENTITY todaypane.showNone.label "කිසිවක් දර්ශනය නොකරන්න">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "අද දවසේ තලය පෙන්නන්න">
+<!ENTITY todaypane.showTodayPane.accesskey "o">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "සිදුවීම">
+<!ENTITY lightning.toolbar.newtask.label      "කාර්යය">
+<!ENTITY todaypane.statusButton.label "දවසේ තලය">

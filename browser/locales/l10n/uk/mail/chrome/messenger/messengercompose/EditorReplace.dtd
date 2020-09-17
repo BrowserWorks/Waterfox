@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Знайти і замінити">
+<!ENTITY findField.label "Знайти текст:">
+<!ENTITY findField.accesskey "а">
+<!ENTITY replaceField.label "Замінити на:">
+<!ENTITY replaceField.accesskey "м">
+<!ENTITY caseSensitiveCheckbox.label "З урахуванням регістру">
+<!ENTITY caseSensitiveCheckbox.accesskey "З">
+<!ENTITY wrapCheckbox.label "З початку сторінки">
+<!ENTITY wrapCheckbox.accesskey "ч">
+<!ENTITY backwardsCheckbox.label "Пошук у зворотному напрямі">
+<!ENTITY backwardsCheckbox.accesskey "П">
+<!ENTITY findNextButton.label "Знайти далі">
+<!ENTITY findNextButton.accesskey "З">
+<!ENTITY replaceButton.label "Замінити">
+<!ENTITY replaceButton.accesskey "З">
+<!ENTITY replaceAndFindButton.label "Замінити і знайти">
+<!ENTITY replaceAndFindButton.accesskey "н">
+<!ENTITY replaceAllButton.label "Замінити все">
+<!ENTITY replaceAllButton.accesskey "В">
+<!ENTITY closeButton.label "Закрити">
+<!ENTITY closeButton.accesskey "З">

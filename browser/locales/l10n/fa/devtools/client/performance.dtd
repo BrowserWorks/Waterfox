@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "نمایه نمونه های حلقه های بافر را ذخیره سازی می‌کند،‌و به محض اینکه حجم ذخیره سازی بافر تکمیل شود مثال های جدید شروع به جایگیزی از ابتدا ذخیره سازی می‌شوند.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "فعال سازی فایرفاکس چندپردازشی در ترجیحات برای تفسیر کردن اطلاعات ذخیره شده در لحظه.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "ظرفیت بافر تکمیل شده است. نمونه‌های قدیم از این پس بازنویسی خواهند شد.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "ذخیره سازی یک نمایه در حال حاضر در دسترس نیست. لطفا تمامی پنجره‌های مرورگرهای خصوصی خود را بسته و سپس مجددا تلاش کنید.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "در حال بار کردن…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "آبشار">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "نمایش تفاوت عملیاتی بین کارایی مرورگر در طی ذخیره سازی ،‌ برای موردی که متوالی مثل آبشار قرار داده شود.">
+<!ENTITY performanceUI.toolbar.js-calltree "درخت فراخوانی">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "برجسته‌ سازی توابعJavaScript جایی که مرورگر بیشترین زمان خود را صرف ذخیره سازی می‌کند.">
+<!ENTITY performanceUI.toolbar.memory-calltree "اختصاص دادن">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "نمایش جایی که حافظه در طی ذخیره سازی اختصاص داده شده است.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "نمایه شعله JS">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "نمایش فرخوانی پشتهJavaScript برای روی دوره در حال ذخیره‌سازی.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "نمایه شعله اختصاص دادن">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "زمان کل">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "مدت زمان صرف شده جهت این تابع و تابع فراخوانده شده توسط آن.">
+<!ENTITY performanceUI.table.selfDuration             "زمان سرخود">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "میزان زمانی که تنها در این تابع صرف شده است.">
+<!ENTITY performanceUI.table.totalPercentage          "هزینه کل">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "درصد زمانی که در این تابع و توابعی که فراخوانی کرده، صرف شده است.">
+<!ENTITY performanceUI.table.selfPercentage           "هزینه سرخود">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "درصد زمانی که تنها در این تابع صرف شده است.">
+<!ENTITY performanceUI.table.samples                  "نمونه‌ها">
+<!ENTITY performanceUI.table.samples.tooltip          "تعداد زمان هایی که تابع بر روی پشته قرار داشته است برای گرفتن نمونه از نمایه.">
+<!ENTITY performanceUI.table.function                 "تابع">
+<!ENTITY performanceUI.table.function.tooltip         "نام و منبع موقعیت تابع نمونه برداری شده.">
+<!ENTITY performanceUI.table.totalAlloc               "تمام نمونه های اختصاص داده شده">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "همه تعداد اشیائی که برای نمونه اختصاص داده شده است در این موقعیت در callees.">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "انتخاب اینکه چه اطلاعات در این خط زمانی نمایش داده شود">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "پیکربندی ترجیحات کارایی.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "درخت فراخوانی معکوس">
+<!ENTITY performanceUI.invertTree.tooltiptext "معکوس کردن فراخوانی نمایش درخت در فراخونی شروع مسیر نمایه شده برای قاب‌های جدید و گسترش آن به سمت قدیمی ترین قابه‌ها.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "نمایه شعله معکوس">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "معکوس کردن نمایه شعله نمایش نمایه فراخونی مسیر شروع جدیدترین قاب ها و گسترش به سمت قاب‌های قدیمی تر.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "نمایش اطلاعات بستر Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "نمایش سکو اطلاعات برای گزارش های نمایهJavaScript فعال شده است که شامل نماد‌های سکو Gecko هم می‌شود.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "نمایش بهینه‌سازی های JIT">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "نمایش بهینه سازی‌های اطلاعات نمونه برداری شدهJIT به ازا قابJavaScript.">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "درخت مسطح بازگشتی">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "مسطح بازگشتی در هنگام بازرسی توابع.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "ذخیره‌سازی حافظه">
+<!ENTITY performanceUI.enableMemory.tooltiptext "ذخیره‌سازی حافظه مصرف در حال نمایه کردن.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "ذخیره‌ سازی اختصاص دادن">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "ذخیره‌سازی اشیا اختصاص داد شده در حین نمایه‌کردن.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "ذخیره‌سازی نرخ قاب">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "ذخیره‌سازی نرخ‌قاب در حین نمایه‌کردن.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "ذخیره‌سازی در حال حاضر به وسیله">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "توقف ذخیره سازی با وارد کردن">
+<!ENTITY performanceUI.console.stopCommandEnd   "در پایانه.">

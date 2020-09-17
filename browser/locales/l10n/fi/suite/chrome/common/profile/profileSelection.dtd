@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Valitse käyttäjäprofiili">
+<!ENTITY            profileManager.title "Profiilien hallinta">
+
+<!ENTITY            manage.label     "Muokkaa profiileja…">
+<!ENTITY            manage.accesskey "M">
+<!ENTITY            select.label     "Käytä profiilia">
+
+<!ENTITY            availableProfiles.label "Saatavilla olevat profiilit">
+
+<!ENTITY            introStart.label         "Pääset omaan profiiliisi, joka sisältää tallennetut viestit, asetukset ja muut henkilökohtaiset tiedot, valitsemalla omasi listasta ja napsauttamalla &start.label;.">
+<!ENTITY            introSwitch.label        "Voit ottaa käyttöön toisen profiilin, joka sisältää tallennetut viestit, asetukset ja muut profiilikohtaiset tiedot, valitsemalla sen listasta ja napsauttamalla &select.label;.">
+<!ENTITY            profileManagerText.label "Asetukset, kirjanmerkit, tallennetut viestit ja muut tiedot tallennetaan käyttäjäprofiiliin.">
+
+<!ENTITY            autoSelect.label         "Tämä profiili on oletusprofiili">
+<!ENTITY            autoSelect.accesskey     "T">
+
+<!ENTITY            start.label              "Käynnistä &brandShortName;">
+<!ENTITY            exit.label               "Lopeta">
+
+<!ENTITY            newButton.label          "Luo profiili…">
+<!ENTITY            newButton.accesskey      "L">
+<!ENTITY            renameButton.label       "Muuta profiilin nimeä…">
+<!ENTITY            renameButton.accesskey   "M">
+<!ENTITY            deleteButton.label       "Poista profiili…">
+<!ENTITY            deleteButton.accesskey   "P">
+
+<!ENTITY            offlineState.label       "Yhteydetön tila">
+<!ENTITY            offlineState.accesskey   "Y">

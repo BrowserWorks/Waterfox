@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Tinik'öx Rutz'ib'axik">
+
+<!ENTITY misspelledWord.label "Man tz'ib'an ta ütz tzij:">
+<!ENTITY wordEditField.label "Tijal rik'in:">
+<!ENTITY wordEditField.accessKey "r">
+<!ENTITY checkwordButton.label "Tinik'öx Tzij">
+<!ENTITY checkwordButton.accessKey "x">
+<!ENTITY suggestions.label "Taq chilab'enïk:">
+<!ENTITY suggestions.accessKey "i">
+<!ENTITY ignoreButton.label "Tiq'olo' richin">
+<!ENTITY ignoreButton.accessKey "i">
+<!ENTITY ignoreAllButton.label "Tiq'olo' richin Ronojel">
+<!ENTITY ignoreAllButton.accessKey "q">
+<!ENTITY replaceButton.label "Tijal">
+<!ENTITY replaceButton.accessKey "j">
+<!ENTITY replaceAllButton.label "Tijal Ronojel">
+<!ENTITY replaceAllButton.accessKey "R">
+<!ENTITY stopButton.label "Tiq'at">
+<!ENTITY stopButton.accessKey "a">
+<!ENTITY userDictionary.label "Ichin Soltzij:">
+<!ENTITY moreDictionaries.label "Keqasäx ch'aqa' chik taq soltzij…">
+<!ENTITY addToUserDictionaryButton.label "Titz'aqatisäx Tzij">
+<!ENTITY addToUserDictionaryButton.accessKey "q">
+<!ENTITY editUserDictionaryButton.label "Tinuk'…">
+<!ENTITY editUserDictionaryButton.accessKey "n">
+<!ENTITY recheckButton2.label "Tinik'öx chik Rucholajem Tzij">
+<!ENTITY recheckButton2.accessKey "R">
+<!ENTITY closeButton.label "Titz'apïx">
+<!ENTITY closeButton.accessKey "x">
+<!ENTITY sendButton.label "Titaq">
+<!ENTITY sendButton.accessKey "t">
+<!ENTITY languagePopup.label "Ch'ab'äl:">
+<!ENTITY languagePopup.accessKey "C">

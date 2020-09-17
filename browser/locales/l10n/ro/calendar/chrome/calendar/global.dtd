@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Miezul nopții" >
+<!ENTITY time.noon "Amiază" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "dum" >
+<!ENTITY day.1.Ddd.accesskey "d">
+<!ENTITY day.2.Ddd "lun" >
+<!ENTITY day.2.Ddd.accesskey "l">
+<!ENTITY day.3.Ddd "mar" >
+<!ENTITY day.3.Ddd.accesskey "m">
+<!ENTITY day.4.Ddd "mie" >
+<!ENTITY day.4.Ddd.accesskey "m">
+<!ENTITY day.5.Ddd "joi" >
+<!ENTITY day.5.Ddd.accesskey "j">
+<!ENTITY day.6.Ddd "vin" >
+<!ENTITY day.6.Ddd.accesskey "v">
+<!ENTITY day.7.Ddd "sâm" >
+<!ENTITY day.7.Ddd.accesskey "s">
+
+<!ENTITY day.1.name "duminică" >
+<!ENTITY day.2.name "luni" >
+<!ENTITY day.3.name "marți" >
+<!ENTITY day.4.name "miercuri" >
+<!ENTITY day.5.name "Joi" >
+<!ENTITY day.6.name "vineri" >
+<!ENTITY day.7.name "sâmbătă" >
+
+<!ENTITY month.1.name "ianuarie" >
+<!ENTITY month.2.name "februarie" >
+<!ENTITY month.3.name "martie" >
+<!ENTITY month.4.name "aprilie" >
+<!ENTITY month.5.name "mai" >
+<!ENTITY month.6.name "iunie" >
+<!ENTITY month.7.name "iulie" >
+<!ENTITY month.8.name "august" >
+<!ENTITY month.9.name "septembrie" >
+<!ENTITY month.10.name "octombrie" >
+<!ENTITY month.11.name "noiembrie" >
+<!ENTITY month.12.name "decembrie" >
+
+<!ENTITY onemonthbackward.tooltip "Cu o lună înapoi" >
+<!ENTITY onemonthforward.tooltip "Cu o lună înainte" >
+<!ENTITY oneyearbackward.tooltip "Cu un an înapoi" >
+<!ENTITY oneyearforward.tooltip "Cu un an înainte" >
+<!ENTITY showToday.tooltip "Mergi la ziua de azi">
+<!ENTITY onedayforward.tooltip "Cu o zi înainte">
+<!ENTITY onedaybackward.tooltip "Cu o zi înapoi">
+<!ENTITY showselectedday.tooltip "Afișează evenimentele pentru ziua selectată">

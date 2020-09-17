@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY server.label "Kiszolgáló: ">
+<!ENTITY server.accesskey "K">
+
+<!ENTITY virtualFolderListTitle.title        "Mappák kijelölése">
+<!ENTITY virtualFolderDesc.label       "Keresés a következő mappákban:">
+
+
+<!ENTITY folderName.label "Mappa neve">
+<!ENTITY folderSearch.label "Keresés">

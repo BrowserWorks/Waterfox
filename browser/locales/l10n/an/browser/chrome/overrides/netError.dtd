@@ -1,0 +1,142 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "S'ha produciu un problema en cargar a pachina">
+<!ENTITY retry.label "Torna-lo a probar">
+<!ENTITY returnToPreviousPage.label "Ir enta zaga">
+<!ENTITY returnToPreviousPage1.label "Tornar enta zaga (recomendau)">
+<!ENTITY advanced2.label "Abanzau…">
+<!ENTITY viewCertificate.label "Amostrar lo certificau">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "No s'ha trobau lo servidor">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Si l'adreza ye correcta, vet aquí tres atras cosas que puetz fer:</strong>
+<ul>
+  <li>Tornar-lo a intentar mas enta debant.</li>
+  <li>Comprebar la tuya connexión de ret.</li>
+  <li>Si yes connectau a través d'un talla-fuego, compreba que &brandShortName; tien lo permiso d'acceso a lo Web.</li>
+</ul>">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Comprebe que o nombre de fichero no tiene errors d'escritura u de l'uso de mayusclas.</li> <li>Comprebe si o fichero s'ha tresladau, renombrau u borrau.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Talment s'haiga borrau, moviu u l'acceso ye vedau por los permisos d'o fichero.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>&brandShortName; no puet cargar la pachina por bella razón.</p>">
+
+<!ENTITY captivePortal.title "Iniciar sesión de ret">
+<!ENTITY captivePortal.longDesc2 "<p>Has d'iniciar sesión en iste ret antes d'acceder a internet.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Ubrir la pachina d'Inicio de ret">
+
+<!ENTITY malformedURI.pageTitle "URL invalida">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Lo documento requiesto ya no ye disponible en a memoria caché d'o &brandShortName;.</p><ul><li>Por precaución de seguranza, lo &brandShortName; no tornará a demandar automaticament documentos sensible.</li><li>Faga clic en Tornar-lo a intentar pa solicitar lo documento a lo puesto web.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Faiga clic en &quot;Tornar-lo a probar&quot; ta tornar o modo en linia y esviellar a pachina.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Meta-se en contacto con os propietarios d'o puesto web ta informar-les d'iste problema.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Meta-se en contacto con os propietarios d'o puesto web ta informar-les d'iste problema.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Podría estar que calese instalar unatro software ta ubrir l'adreza.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Comprebe a configuración d'o servidor proxy ta asegurar-se de que ye correcta.</li> <li>Meta-se en contacto con l'administrador d'o ret ta asegurar-se de que o servidor proxy ye funcionando.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Comprebe que os parametros de configuración d'o proxy son correctos.</li> <li>Comprebe que o suyo ordinador tiene una connexión de ret operativa.</li> <li>Si o suyo ordinador u o suyo ret son protechius por un tallafuegos u proxy, asegure-se que o &brandShortName; tiene permiso ta accedir ta la web.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ixo podría pasar en haber desactivau u refusau l'acceptación de cookies.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Asegure-se de que o suyo sistema tiene un chestor de seguranza personal instalau.</li> <li>Puestar se tracte de una configuración no estandar en o servidor.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>A pachina que ye mirando de veyer no puet amostrar-se porque no ye posible verificar l’autenticidat d'os datos recibius.</li> <li>Meta-se en contacto con o responsable d'o puesto web ta informar-le-ne.</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; ha detectau menaza potencial de seguranza y no seguirá enta <span class='hostname'/>. Si vesitas esta pachina, los atacants podrían rapar información como las tuyas claus, correus, u detalles de tarcheta de credito.">
+<!ENTITY certerror.sts.introPara "&brandShortName; ha detectau una menaza potencial de seguranza y no seguirá enta <span class='hostname'/> perque esta pachina requiere una connexión segura.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; ha detectau un problema y no ha seguiu enta <span class='hostname'/>. La pachina ye mal configurada u la hora d'o reloch d'o tuyo ordinador no ye correcta.">
+<!ENTITY certerror.expiredCert.secondPara2 "Pareix que lo certificau de la pachina ha expirau, lo que priva a &brandShortName; de connectar de traza segura. Si vesitas la pachina, los atacants podrían rapar información como las tuyas claus, correus u detalles d'as tarchetas de credito.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Pareix que o certificau de la pachina ha expirau, lo qual priva que &brandShortName; se connecte de traza segura.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Qué puetz fer sobre ixo?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Lo problema ye muit probablement con la pachina, y no bi ha cosa a fer pa resolver-la. </p>
+<p>Si yes en un ret corporativo u fendo servir antivirus, puetz clamar al equipo de soporte pa aduya. Tamién puetz notificar-lo el problema a l'administrador d'a pachina.</p>
+
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Lo reloch de l'ordinador ye configurau como <span id='wrongSystemTime_systemDate2'/>. Asegura-te que lo día, hora y fuso horario d'o tuyo ordinador son correctos en as preferencias de sistema, y refresca <span class='hostname'/>.</p>
+<p>Si lo tuyo reloch ye en hora, la pachina web ye mal configurada y no bi ha cosa a fer pa solucionar lo problema. Puetz notificar-le-ne a l'administrador d'a pachina.</p>
+
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Lo problema ye en a pachina web y no bi ha cosa que fer pa solucionar-lo. Puetz informar d'o problema a l'administrador d'a pachina.</p>
+">
+
+<!ENTITY sharedLongDesc "<ul> <li>Lo puesto podría estar temporalment no disponible u masiau aqueferau. Torne a prebar-lo en bells momentos.</li> <li>Si no puede cargar garra pachina, comprebe a connexión de ret d'o suyo equipo.</li> <li>Si o suyo equipo u ret son protechius por un tallafuegos u proxy, asegure-se que o &brandShortName; tiene permiso ta accedir ta la web.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ha privau que a pachina se cargue d'ista traza porque tiene una politica de seguranza de conteniu que no lo permite.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; ha privau que esta pachina se cargue en este contexto perque la pachina tiene una politica de X-Frame-Options que no lo permite.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>A pachina que ye mirando de veyer no se puede amostrar porque s'ha produciu una error en a transmisión d'os datos.</p><ul><li>Meta-se en contacto con os propietarios d'o puesto web ta informar-les d'iste problema</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Acceptar lo risgo y continar">
+
+<!ENTITY errorReporting.automatic2 "Informa d'errors como iste pa aduyar a Mozilla a identificar y blocar puestos dolents.">
+<!ENTITY errorReporting.learnMore "Saber-ne mas…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Meta-se en contacto con os propietarios d'o puesto web ta informar-les d'iste problema.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Información abanzada: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Atención: risgo potencial de seguranza">
+<!ENTITY certerror.sts.pagetitle  "No se connecta: problema potencial de seguranza">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> tiene una politica de seguranza clamada HTTP Strict Transport Security (HSTS), que significa que &brandShortName; nomás puede connectar-se a ell de traza segura. No puetz anyadir una excepción pa vesitar este puesto.">
+<!ENTITY certerror.copyToClipboard.label "Copiar lo texto en lo portafuellas">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> fa servir technolochía de seguranza que ye obsoleta y vulnerable debant d'un ataque. Un acatant podría revelar información que vusté creyeba segura. L'administrador d'o puesto web habrá de fixar lo servidor antes que vusté pueda vesitar lo puesto.</p><p>Codigo d'error: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Pachina blocada">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> ye muit posiblement un puesto seguro, pero no se puede establir una connexión segura. Este problema ye causau per <span class='mitm-name'/> que ye un software d'o tuyo ordinador u d'o tuyo ret.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Si lo tuyo antivirus incluye una ferramienta que escaneya connexions cifradas (clamada “web scanning” u “https scanning”), puetz desactivar esta ferramienta. Si no funciona, puetz eliminar y resintalar l'antivirus.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Si yes en una ret corporativa, contacta con o tuyo departamento de IT.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Si no yes familiar con <span class='mitm-name'/>, esto puede ser un ataque y no has de continar enta lo puesto.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Si no yes familiar con <span class='mitm-name'/>, esto puede estar un ataque y no bi ha cosa que fer para acceder a la pachina.">
+
+<!ENTITY clockSkewError.longDesc "Lo tuyo ordinador piensa que son <span id='wrongSystemTime_systemDate1'/>, lo qual priva a &brandShortName; de connectar de traza segura. Pa vesitar <span class='hostname'></span>, actualiza lo reloch d'o tuyo ordinador en as preferencias d'o sistema a la data, hora y zona horaria actuals, y alavez refresca <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Pareix que los suyos achustes de seguranza de ret sigan la causa d'isto. Quiere restaurar los achustes por defecto?">
+<!ENTITY prefReset.label "Restaurar los achustes por defecto">
+
+<!ENTITY enableTls10.longDesc "Ista pachina web no permite lo protocolo TLS 1.2, que ye la versión minima soportada por &brandShortName;. L'activación de TLS 1.0 y TLS 1.1 puede permitir que la connexión se faiga.">
+<!ENTITY enableTls10.note "TLS 1.0 y TLS 1.1 serán desactivaus pa cutio en bella versión futura.">
+<!ENTITY enableTls10.label "Activar TLS 1.0 y 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>La pachina que ye mirando de visualizar no se puede amostrar porque s'ha detectau un error en o procotolo de ret </p><ul><li>Per favor, contacte con os propietarios d'o puesto web pa informar-les d'este problema.</li></ul>">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Omogoči posodobitve za vse vire">
+<!ENTITY biffAll.accesskey             "O">
+
+<!ENTITY newFeedSettings.label         "Privzete nastavitve za nove vire">
+
+<!ENTITY manageSubscriptions.label     "Upravljaj z naročninami …">
+<!ENTITY manageSubscriptions.accesskey "U">
+
+<!ENTITY feedWindowTitle.label         "Čarovnik za račune virov">
+<!ENTITY feeds.accountName             "Spletni dnevniki in viri novic">

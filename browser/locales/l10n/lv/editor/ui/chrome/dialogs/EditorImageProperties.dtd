@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+<!-- Window title -->
+
+<!-- These are in the Location tab panel -->
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- These controls are in the Image Map box of the expanded area -->
+
+
+<!-- These are the options for image alignment -->
+
+
+
+
+
+<!-- These controls are in the Spacing Box -->
+
+<!ENTITY spacingBox.label "Atstatums">
+
+
+
+
+
+
+<!-- These controls are in the Link Box -->
+
+
+
+
+<!-- These tabs are currently used in the image input dialog -->
+
+<!ENTITY imageInputTab.label "Forma">
+<!ENTITY imageLocationTab.label "Atrašanās vieta">
+<!ENTITY imageDimensionsTab.label "Izmēri">
+<!ENTITY imageAppearanceTab.label "Izskats">
+<!ENTITY imageLinkTab.label "Saite">

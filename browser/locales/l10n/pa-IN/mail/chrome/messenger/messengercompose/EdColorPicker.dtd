@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ਰੰਗ">
+<!ENTITY lastPickedColor.label "ਆਖਰੀ ਰੰਗ">
+<!ENTITY lastPickedColor.accessKey "L">
+<!ENTITY setColorExample.label "(ਜਿਵੇਂ ਕਿ: &quot;#0000ff&quot; ਜਾਂ &quot;blue&quot;):">
+<!ENTITY default.label "ਡਿਫਾਲਟ">
+<!ENTITY default.accessKey "D">
+<!ENTITY palette.label "ਰੰਗ-ਪੱਟੀ:">
+<!ENTITY standardPalette.label "ਸਟੈਂਡਰਡ">
+<!ENTITY webPalette.label "ਸਭ ਵੈੱਬ ਰੰਗ">
+<!ENTITY background.label "ਬੈਕਗਰਾਊਂਡ ਲਈ:">
+<!ENTITY background.accessKey "B">
+<!ENTITY table.label "ਟੇਬਲ">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "ਸੈੱਲ">
+<!ENTITY cell.accessKey "C">

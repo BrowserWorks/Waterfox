@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nowy rjadowak za składowane pytanje">
+<!ENTITY name.label                 "Mjeno:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "Podrjadowak wutworić wot:">
+<!ENTITY description.accesskey      "t">
+
+<!ENTITY searchTermCaption.label "Pytanske kriterije wužiwane za tutón rjadowak składowanych pytanjow konfigurować: ">
+
+<!ENTITY folderSelectionCaption.label "Rjadowaki za pytanje wubrać: ">
+<!ENTITY chooseFoldersButton.label "Wubrać…">
+<!ENTITY chooseFoldersButton.accesskey "b">
+
+<!ENTITY searchOnline.label "Online pytać (Přidawa aktuelne wuslědki za rjadowaki IMAP a powěsćow, powyša wšak čas, zo by so rjadowak wočinił)">
+<!ENTITY searchOnline.accesskey "O">
+<!ENTITY newFolderButton.label       "Wutworić">
+<!ENTITY newFolderButton.accesskey   "W">
+<!ENTITY editFolderButton.label      "Aktualizować">
+<!ENTITY editFolderButton.accesskey  "A">

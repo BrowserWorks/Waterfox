@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Proprietates">
+
+<!ENTITY generalInfo.label                       "Informationes general">
+<!ENTITY folderCharsetFallback2.label            "Codification de texto de ultime recurso:">
+<!ENTITY folderCharsetFallback2.accesskey        "C">
+<!ENTITY folderCharsetEnforce2.label             "Applicar iste codification a tote le messages in le dossier (ignorante le codification specificate per message e le auto-detection)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Reconstruer le indice de summarios del dossier">
+<!ENTITY folderRebuildSummaryFile2.label         "Reparar dossier">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Alcun vices le file de indice del dossier (.msf) deveni damnificate e messages pote mancar o messages delite pote continuar a apparer; reparar le dossier pote solver iste problema.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Includer le messages de iste dossier in le resultatos de recerca global">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "g">
+
+<!ENTITY retention.label "Regulas de retention">
+<!ENTITY retentionUseAccount.label  "Usar le parametros de mi conto">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "dies">
+<!ENTITY message.label "messages">
+<!ENTITY retentionCleanup.label "Pro recuperar spatio de disco, messages ancian pote esser delite permanentemente.">
+<!ENTITY retentionCleanupImap.label "Pro recuperar spatio de disco, messages ancian pote esser delite permanentemente, tanto le copias local como le originales sur le servitor remote.">
+<!ENTITY retentionCleanupPop.label "Pro recuperar spatio de disco, messages ancian pote esser delite permanentemente, incluse le originales sur le servitor remote.">
+<!ENTITY retentionDeleteMsg.label "Deler messages plus ancian de">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Non deler alcun message">
+<!ENTITY retentionKeepAll.accesskey "N">
+<!ENTITY retentionKeepRecent.label "Deler totes excepte le plus recente">
+<!ENTITY retentionKeepRecent.accesskey "t">
+<!ENTITY retentionApplyToFlagged.label "Sempre conservar messages con stella">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronisation">
+<!ENTITY folderCheckForNewMessages2.label         "Quando se recipe nove messages pro iste conto, sempre controlar iste dossier">
+<!ENTITY folderCheckForNewMessages2.accesskey     "c">
+
+<!ENTITY offlineFolder.check.label               "Seliger iste dossier pro uso foras de linea">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "Discargar ora">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Seliger iste gruppo pro uso foras de linea">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "f">
+<!ENTITY offlineNewsgroup.button.label           "Discargar ora">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "Nomine:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "Color de icone:">
+<!ENTITY folderProps.color.accesskey             "i">
+<!ENTITY folderProps.reset.tooltip               "Restaurar le color predefinite">
+<!ENTITY folderProps.location.label              "Loco:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Compartition">
+<!ENTITY privileges.button.label                 "Privilegios…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Tu ha le sequente permissiones:">
+<!ENTITY folderOtherUsers.label                  "Alteres con accesso a iste plica:">
+<!ENTITY folderType.label                        "Typo de dossier:">
+
+<!ENTITY folderQuotaTab.label                    "Quota">
+<!ENTITY folderQuotaUsage.label                  "Uso:">
+<!ENTITY folderQuotaStatus.label                 "Stato:">
+
+<!ENTITY numberOfMessages.label                  "Numero de messages:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "incognite">
+<!ENTITY sizeOnDisk.label                        "Dimension sur disco:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "incognite">

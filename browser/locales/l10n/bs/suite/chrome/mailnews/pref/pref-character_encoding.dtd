@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Kodiranje teksta">
+<!ENTITY messageDisplay.caption          "Prikaz poruke">
+<!ENTITY viewFallbackCharset2.label      "Pomoćna kodna stranica:">
+<!ENTITY viewFallbackCharset.desc        "(Koristi se za zastarjeli sadržaj koji ne deklariše kodiranje.)">
+
+<!ENTITY composingMessages.caption       "Sastavljanje poruka">
+<!ENTITY useMIME.label                   "Za poruke koje sadrže 8-bitne znakove, koristite 'quoted printable' MIME kodiranje. Ostavite odznačeno da pošaljete poruku kakva jeste.">
+<!ENTITY sendDefaultCharset2.label       "Izvorno kodiranje teksta:">
+<!ENTITY replyInDefaultCharset3.label    "Kada je moguće, koristite zadano kodiranje teksta u odgovorima. (Kada je odznačeno, samo nove poruke koriste ove postavke.)">

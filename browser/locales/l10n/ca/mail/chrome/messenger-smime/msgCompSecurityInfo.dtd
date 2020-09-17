@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Seguretat del missatge">
+<!ENTITY subject.plaintextWarning "Tingueu en compte que les línies de l'assumpte dels missatges del correu electrònic mai es xifraran.">
+<!ENTITY status.heading "El contingut del vostre missatge s'enviarà com segueix:">
+<!ENTITY status.signed "Signat digitalment:">
+<!ENTITY status.encrypted "Xifrat:">
+<!ENTITY status.certificates "Certificats:">
+<!ENTITY view.label "Visualitza">
+<!ENTITY view.accesskey "V">
+<!ENTITY tree.recipient "Destinatari">
+<!ENTITY tree.status "Estat">
+<!ENTITY tree.issuedDate "Emès">
+<!ENTITY tree.expiresDate "Venciment">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY addressbookPicker.label            "Llibreta de direiciones:">
+<!ENTITY addressbookPicker.accesskey        "L">
+<!ENTITY SearchNameOrEmail.label            "Nome o direición de corréu">
+
+<!ENTITY addtoToFieldMenu.label             "Amestar a campu Pa">
+<!ENTITY addtoToFieldMenu.accesskey         "P">
+<!ENTITY addtoCcFieldMenu.label             "Amestar a campu Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Amestar a campu CCt">
+<!ENTITY addtoBccFieldMenu.accesskey        "t">
+<!ENTITY deleteAddrBookCard.label           "Desaniciar">
+<!ENTITY deleteAddrBookCard.accesskey       "D">
+
+<!ENTITY toButton.label                     "Amestar a Pa:">
+<!ENTITY toButton.accesskey                 "A">
+<!ENTITY ccButton.label                     "Amestar a Cc:">
+<!ENTITY ccButton.accesskey                 "s">
+<!ENTITY bccButton.label                    "Amestar a Cct:">
+<!ENTITY bccButton.accesskey                "t">

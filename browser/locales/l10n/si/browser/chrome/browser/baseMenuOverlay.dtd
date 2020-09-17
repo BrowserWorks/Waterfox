@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName; පිළිබඳ">
+<!ENTITY aboutProduct2.accesskey  "A">
+
+<!ENTITY preferencesCmdMac.label        "අභිරුචීන්...">
+
+<!ENTITY servicesMenuMac.label          "සේවා">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; සඟවන්න">
+
+<!ENTITY hideOtherAppsCmdMac.label      "අනෙක්වා සඟවන්න">
+
+<!ENTITY showAllAppsCmdMac.label        "සියල්ල ම පෙන්වන්න">
+

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Invoerslimmerd">
+
+<!ENTITY importFromWin.label            "Voer opsies, rekeningopstelling, adresboek, filters en ander data van:">
+<!ENTITY importFromNonWin.label         "Voer voorkeure, rekeningopstelling, adresboek, filters en ander data van:">
+
+
+<!ENTITY importFromNothing.label        "Moenie enigiets invoer nie">
+<!ENTITY importFromNothing.accesskey    "M">
+
+
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Voer instellings en posvouers in">
+<!ENTITY importItems.title              "Items om in te voer">
+<!ENTITY importItems.label              "Kies watter items om in te voer:">
+
+<!ENTITY migrating.title                "Voer tans in…">
+<!ENTITY migrating.label                "Die volgende items word tans ingevoer…">
+
+<!ENTITY selectProfile.title            "Kies profiel">
+<!ENTITY selectProfile.label            "Die volgende profiele kan ingevoer word vanaf:">
+
+<!ENTITY done.title                     "Invoer afgehandel">
+<!ENTITY done.label                     "Die volgende items is suksesvol ingevoer:">

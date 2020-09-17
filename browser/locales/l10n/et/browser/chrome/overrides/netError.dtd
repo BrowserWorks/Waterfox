@@ -1,0 +1,204 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Probleem lehe laadimisel">
+<!ENTITY retry.label "Proovi uuesti">
+<!ENTITY returnToPreviousPage.label "Mine tagasi">
+<!ENTITY returnToPreviousPage1.label "Mine tagasi (soovitatav)">
+<!ENTITY advanced2.label "Edasijõudnuile…">
+<!ENTITY viewCertificate.label "Vaata sertifikaati">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Serverit ei leitud">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Kui see aadress on korrektne, siis siin on kolm asja, mida võid proovida:</strong>
+<ul>
+  <li>Proovi hiljem uuesti.</li>
+  <li>Kontrolli võrguühenduse olemasolu.</li>
+  <li>Kui ühendus on olemas, aga oled tulemüüri taga, siis kontrolli, et &brandShortName;il oleks õigus veebile ligi pääseda.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Kontrolli faili nimes olevaid suurtähti või muid sisestusvigu.</li>
+  <li>Kontrolli, kas faili pole mujale liigutatud, ümber nimetatud või kustutatud.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Fail võib olla kustutatud, mujale liigutatud või on sellele seatud ligipääsu piiravad õigused.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName;il pole mingil põhjusel selle lehe laadimine võimalik.</p>
+">
+
+<!ENTITY captivePortal.title "Võrku sisenemine">
+<!ENTITY captivePortal.longDesc2 "<p>Internetti pääsemiseks pead sellesse võrku sisse logima.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Ava sisselogimisleht">
+
+<!ENTITY malformedURI.pageTitle "Vigane URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Nõutud dokument pole brauseri vahemälus saadaval.</p><ul><li>Turvalisuse ettevaatusabinõuna ei laadi brauser tundliku infoga dokumente automaatselt uuesti.</li><li>Klõpsa Proovi uuesti, et hankida dokumendi sisu veebilehelt uuesti.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Vajuta &quot;Proovi uuesti&quot;, et lülituda võrgurežiimi ning laadida leht uuesti.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Palun võta ühendust veebilehe omanikuga, et informeerida teda antud probleemist.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Palun võta ühendust veebilehe omanikuga, et informeerida teda antud probleemist.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Selle aadressi avamiseks peaksid võib-olla paigaldama lisatarkvara.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Kontrolli puhverserveri sätteid, et teha kindlaks, kas need on õiged.</li>
+  <li>Võta ühendust oma võrguadministraatoriga, et teha kindlaks, kas puhverserver
+    töötab korralikult.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Kontrolli puhverserveri sätteid, et teha kindlaks, kas need on õiged.</li>
+  <li>Tee kindlaks, kas sinu arvuti võrguühendus töötab korrektselt.</li>
+  <li>Kui sinu arvuti või võrk on kaitstud tulemüüri või puhverserveri poolt, siis tee kindlaks,
+    et &brandShortName;il on lubatud internetti pääseda.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Probleemi võib mõnikord põhjustada küpsistest keeldumine või nende üldine
+    keelamine.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Kontrolli, et sinu süsteemi on paigaldatud personaalne turvalisuse
+    haldur.</li>
+  <li>See võib olla põhjustatud ebastandardsest serveri konfiguratsioonist.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Soovitud veebilehte pole võimalik näidata, kuna saadud andmete autentsust polnud võimalik kontrollida.</li>
+  <li>Palun võta veebilehe omanikuga ühendust ja teavita teda probleemist.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; tuvastas võimaliku turvaohu ja ei jätkanud saidi <span class='hostname'/> laadimist. Selle saidi külastamisel võivad ründajad varastada infot nagu sinu paroolid, e-posti aadress või krediitkaardi andmed.">
+<!ENTITY certerror.sts.introPara "&brandShortName; tuvastas potentsiaalse turvalisuse ohu ja ei loonud ühendust saidiga <span class='hostname'/>, kuna see nõuab turvalist ühendust.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; tuvastas probleemi ja ei loonud ühendust saidiga <span class='hostname'/>. Sait on kas poolikult häälestatud või on sinu arvuti kellaaeg vale.">
+<!ENTITY certerror.expiredCert.secondPara2 "Tõenäoliselt on selle saidi sert aegunud ja see takistab &brandShortName;il turvalise ühenduse loomist. Selle saidi külastamisel võivad ründajad varastada andmeid nagu sinu paroolid, e-posti aadress või krediitkaardi andmed.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Tõenäoliselt on selle saidi sert aegunud ja see takistab &brandShortName;il turvalise ühenduse loomist.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Mida on võimalik probleemi lahendamiseks teha?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Selle probleemi põhjus peitub tõenäoliselt saidis endas ja sa ei saa selle lahendamiseks midagi teha.</p>
+<p>Kui kasutad ettevõtte internetti või viirustõrje tarkvara, siis võid pöörduda abi saamiseks IT toe poole. Samuti võid teavitada antud probleemist ka saidi omanikku.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Sinu arvuti ajaks on <span id='wrongSystemTime_systemDate2'/>. Kontrolli üle, et sinu arvutile oleks määratud õige kuupäev, kellaaeg ning ajatsoon, ja värskenda siis lehte <span class='hostname'/>.</p>
+<p>Kui sinu arvuti aeg on juba õige, siis on antud sait tõenäoliselt valesti häälestatud ja sa ei saa midagi selle probleemi lahendamiseks teha. Küll võid sa aga saidi administraatorit antud probleemist teavitada.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Selle probleemi põhjus peitub tõenäoliselt saidis endas ja sa ei saa selle lahendamiseks midagi teha. Küll võid sa aga saidi administraatorit antud probleemist teavitada.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Veebileht võib olla ajutiselt kättesaamatu või liialt hõivatud. Proovi mõne aja
+    pärast uuesti.</li>
+  <li>Kui sa ei saa avada ühtegi lehte, siis kontrolli oma arvuti
+    võrguühendust.</li>
+  <li>Kui sinu arvuti või võrk on kaitstud tulemüüri või puhverserveri poolt, siis tee kindlaks,
+    et &brandShortName;il on lubatud internetti pääseda.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; keeldus lehe laadimisest sellisel moel, sest lehe sisu kaitsvate turvareeglite kohaselt on see keelatud.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Andmete edastamisel esinenud vea tõttu pole soovitud lehte võimalik kuvada.</p><ul><li>Palun võta ühendust veebilehe omanikega, et teavitada neid sellest probleemist.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Nõustu riskiga ja jätka">
+
+<!ENTITY errorReporting.automatic2 "Raporteeri taolistest vigadest, et Mozilla saaks tuvastada ja blokkida ohtlikud veebilehed">
+<!ENTITY errorReporting.learnMore "Rohkem teavet…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Palun võta ühendust veebilehe omanikega, et teavitada neid sellest probleemist.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Täpsem teave: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Hoiatus: ees on ootamas võimalik turvarisk">
+<!ENTITY certerror.sts.pagetitle  "Ühendust ei loodud: võimalik turvarisk">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "Sait <span class='hostname'></span> kasutab HTTP Strict Transport Security (HSTS) tehnoloogiat, et sundida &brandShortName; ühenduma ainult turvalise protokolli kaudu. Seetõttu pole selle serdi jaoks erandi lisamine võimalik.">
+<!ENTITY certerror.copyToClipboard.label "Kopeeri tekst vahemällu">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> kasutab turvatehnoloogiat, mis on aegunud ja ei paku rünnete eest kaitset. Ründaja võib suurema vaevata pääseda ligi teabele, mis sinu arvates on kaitstud. Saidi külastamiseks peab saidi administraator selle serveri kõigepealt ära parandama.</p><p>Veakood: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blokitud leht">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> on suure tõenäosusega ohutu sait, aga turvalise ühenduse loomine polnud sellegi poolest võimalik. Selle probleemi põhjuseks on <span class='mitm-name'/>, mis on kas tarkvara sinu arvutis või siis sinu võrgus.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 'Kui sinu antiviiruse tarkvara sisaldab krüptitud ühenduste skanneerimise funktsionaalsust (tihti nimetatud kui "veebi skannimine (web scanning)" või "httpsi skannimine (https scanning)"), siis võid sa selle funktsionaalsuse keelata. Kui see ei aita, siis proovi antiviiruse tarkvara eemaldada ja uuesti paigaldada.'>
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Kui sa asud ettevõtte võrgus, siis võid pöörduda IT osakonna poole.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Kui <span class='mitm-name'/> on sulle tundmatu, siis võib tegu olla rünnakuga ja sa ei peaks jätkama selle saidi külastamist.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Kui <span class='mitm-name'/> on sulle tundmatu, siis võib tegu olla rünnakuga ja sul puudub praegu võimalus seda saiti külastada.">
+
+<!ENTITY clockSkewError.longDesc "Sinu arvuti arvab ajaks olevat <span id='wrongSystemTime_systemDate1'/> - see takistab &brandShortName;il turvalise ühenduse loomist. Saidi <span class='hostname'></span> külastamiseks määra oma arvuti aeg õigeks ja värskenda siis saidi <span class='hostname'></span> sisu.">
+
+<!ENTITY prefReset.longDesc "Paistab, et seda probleemi võivad põhjustada sinu võrguturvalisuse sätted. Kas soovid taastada vaikesätted?">
+<!ENTITY prefReset.label "Taasta vaikesätted">
+
+<!ENTITY enableTls10.longDesc "See sait ei pruugi toetada protokolli TLS 1.2, mis on minimaalne versioon, mida &brandShortName; toetab. TLS 1.0 ja TLS 1.1 lubamine võib võimaldada ühenduse loomise.">
+<!ENTITY enableTls10.note "TLS 1.0 ja TLS 1.1 keelatakse tulevases väljalaskes jäädavalt.">
+<!ENTITY enableTls10.label "Luba TLS 1.0 ja 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Veebilehte, mida üritad vaadata, pole võimalik kuvada, kuna võrguprotokollis tuvastati viga.</p><ul><li>Palun võta ühendust veebisaidi omanikuga, et teavitada teda sellest probleemist.</li></ul>">

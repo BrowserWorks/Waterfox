@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ਚਿੱਤਰ ਵਿਸ਼ੇਸ਼ਤਾ">
+
+<!ENTITY pixelsPopup.value "ਪਿਕਸਲ">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "ਚਿੱਤਰ ਸਥਿਤੀ:">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "ਚਿੱਤਰ ਫਾਇਲ ਨਾਂ ਜਾਂ ਸਥਿਤੀ ਲਿਖੋ">
+<!ENTITY title.label "ਟੂਲ ਟਿੱਪ:">
+<!ENTITY title.accessKey "T">
+<!ENTITY title.tooltip "html 'ਹੈਡਿੰਗ' ਗੁਣ, ਜੋ ਕਿ ਟੂਲ-ਟਿੱਪ ਵਜੋਂ ਵੇਖਿਆ ਜਾਵੇਗਾ">
+<!ENTITY altText.label "ਬਦਲਵਾਂ ਟੈਕਸਟ:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "ਚਿੱਤਰ ਦੀ ਥਾਂ ਤੇ ਵੇਖਾਉਣ ਲਈ ਟੈਕਸਟ ਦਿਓ">
+<!ENTITY noAltText.label "ਬਦਲਵਾਂ ਟੈਕਸਟ ਨਾ ਇਸਤੇਮਾਲ ਕਰੋ">
+<!ENTITY noAltText.accessKey "D">
+
+<!ENTITY previewBox.label "ਚਿੱਤਰ ਝਲਕ">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "ਅਸਲੀ ਆਕਾਰ:">
+<!ENTITY actualSizeRadio.label "ਅਸਲੀ ਆਕਾਰ">
+<!ENTITY actualSizeRadio.accessKey "A">
+<!ENTITY actualSizeRadio.tooltip "ਚਿੱਤਰ ਦਾ ਅਸਲੀ ਆਕਾਰ ਮੁੜ-ਪ੍ਰਾਪਤ ਕਰੋ">
+<!ENTITY customSizeRadio.label "ਪਸੰਦੀਦਾ ਆਕਾਰ">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "ਪੇਜ਼ ਉੱਤੇ ਦਿੱਤੇ ਅਨੁਸਾਰ ਚਿੱਤਰ ਦਾ ਆਕਾਰ ਤਬਦੀਲ ਕਰੋ">
+<!ENTITY heightEditField.label "ਉਚਾਈ:">
+<!ENTITY heightEditField.accessKey "G">
+<!ENTITY widthEditField.label "ਚੌੜਾਈ:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY constrainCheckbox.label "ਸੀਮਾ">
+<!ENTITY constrainCheckbox.accessKey "C">
+<!ENTITY constrainCheckbox.tooltip "ਚਿੱਤਰ ਦਾ ਆਕਾਰ ਅਨੁਪਾਤ ਰੱਖੋ">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "ਚਿੱਤਰ ਖਾਕਾ">
+<!ENTITY removeImageMapButton.label "ਹਟਾਓ">
+<!ENTITY removeImageMapButton.accessKey "R">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "ਚਿੱਤਰ ਅਤੇ ਪਾਠ ਇਕਸਾਰ">
+<!ENTITY bottomPopup.value "ਹੇਠਾਂ">
+<!ENTITY topPopup.value "ਉੱਤੇ">
+<!ENTITY centerPopup.value "ਕੇਂਦਰ ਵਿੱਚ">
+<!ENTITY wrapRightPopup.value "ਸੱਜੇ ਸਮੇਟੋ">
+<!ENTITY wrapLeftPopup.value "ਖੱਬੇ ਸਮੇਟੋ">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "ਖਾਲੀ ਥਾਂ">
+<!ENTITY leftRightEditField.label "ਖੱਬੇ ਤੇ ਸੱਜੇ:">
+<!ENTITY leftRightEditField.accessKey "L">
+<!ENTITY topBottomEditField.label "ਉੱਤੇ ਤੇ ਹੇਠਾਂ:">
+<!ENTITY topBottomEditField.accessKey "T">
+<!ENTITY borderEditField.label "ਗੂੜਾ ਹਾਸ਼ੀਆ:">
+<!ENTITY borderEditField.accessKey "B">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "ਲਿੰਕ ਚਿੱਤਰ ਦੁਆਲੇ ਚਿੱਤਰ ਦਿਓ">
+<!ENTITY showImageLinkBorder.accessKey "B">
+
+<!ENTITY LinkAdvancedEditButton.label "Link Advanced Edit…">
+<!ENTITY LinkAdvancedEditButton.accessKey "L">
+<!ENTITY LinkAdvancedEditButton.tooltip "Add or modify HTML attributes, style attributes, and JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "ਫਾਰਮ">
+<!ENTITY imageLocationTab.label "ਸਥਿਤੀ">
+<!ENTITY imageDimensionsTab.label "ਮਾਪ">
+<!ENTITY imageAppearanceTab.label "ਸ਼ਕਲ">
+<!ENTITY imageLinkTab.label "ਲਿੰਕ">

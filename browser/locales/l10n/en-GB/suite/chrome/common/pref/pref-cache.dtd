@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Cache">
+<!ENTITY pref.cache.caption              "Set Cache Options">
+<!ENTITY cachePara                       "The cache keeps copies of frequently visited web pages on your hard disk. (Clicking Reload always shows you the latest version of a page.)">
+<!ENTITY cacheCheck.label                "Let &brandShortName; manage the size of my cache">
+<!ENTITY cacheCheck.accesskey            "L">
+<!ENTITY diskCacheUpTo.label             "Use up to">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "MB of disk space for the cache">
+<!ENTITY diskCacheFolder.label           "Cache Folder Location:">
+<!ENTITY clearDiskCache.label            "Clear Cache">
+<!ENTITY clearDiskCache.accesskey        "C">
+<!ENTITY chooseDiskCacheFolder.label     "Choose Folder…">
+<!ENTITY chooseDiskCacheFolder.accesskey "F">
+<!ENTITY diskCacheFolderExplanation      "Cache files will be stored in a subfolder named &quot;Cache&quot; of the directory you specify. Restart &brandShortName; for changes to take effect.">
+<!ENTITY docCache.label                  "Compare the page in the cache to the page on the network:">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "Once per session">
+<!ENTITY checkEveryTime.label            "Every time I view the page">
+<!ENTITY checkNever.label                "Never">
+<!ENTITY checkAutomatically.label        "When the page is out of date">
+
+<!ENTITY prefetchTitle.label             "Link Prefetching">
+<!ENTITY enablePrefetch.label            "Prefetch web pages when idle, so that links in web pages designed for prefetching can load more quickly">
+<!ENTITY enablePrefetch.accesskey        "P">

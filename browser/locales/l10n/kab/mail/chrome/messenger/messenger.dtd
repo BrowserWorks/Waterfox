@@ -1,0 +1,973 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY titledefault.label "&brandFullName;">
+<!ENTITY titleSeparator.label " - ">
+
+<!-- File Menu -->
+<!ENTITY newFolderCmd.label "Akaram…">
+<!ENTITY newFolderCmd.accesskey "A">
+<!ENTITY closeTabCmd2.label "Mdel iccer">
+<!ENTITY closeTabCmd2.accesskey "M">
+<!ENTITY closeOtherTabsCmd2.label "Mdel iccaren nniḍen">
+<!ENTITY closeOtherTabsCmd2.accesskey "d">
+<!ENTITY recentlyClosedTabsCmd.label "Iccaren imedlen melmi kan">
+<!ENTITY recentlyClosedTabsCmd.accesskey "m">
+
+<!ENTITY undoCloseTabCmd.commandkey "T">
+<!-- LOCALIZATION NOTE (moveToNewWindow.label):
+     Menu option to cause the current tab to be migrated to a new Thunderbird
+     window.
+     -->
+<!ENTITY moveToNewWindow.label "Senkez ɣer usfaylu amaynut">
+<!ENTITY moveToNewWindow.accesskey "m">
+<!ENTITY newVirtualFolderCmd.label "Anadi yettwaskelsen">
+<!ENTITY newVirtualFolderCmd.accesskey "n">
+<!ENTITY newOtherAccountsCmd.label "Imiḍanen nniḍen…">
+<!ENTITY newOtherAccountsCmd.accesskey "m">
+<!ENTITY newCreateEmailAccountCmd.label "Awid amiḍan n tirawt amaynut…">
+<!ENTITY newCreateEmailAccountCmd.accesskey "A">
+<!ENTITY newExistingEmailAccountCmd.label "Amiḍan n tirawt yellan">
+<!ENTITY newExistingEmailAccountCmd.accesskey "m">
+<!ENTITY newIMAccountCmd.label "Amiḍan n tirawt tusriṭ…">
+<!ENTITY newIMAccountCmd.accesskey "s">
+<!ENTITY newFeedAccountCmd.label "Amiḍan n usuddem...">
+<!ENTITY newFeedAccountCmd.accesskey "m">
+<!ENTITY newIMContactCmd.label "Anermisn udiwenni usrid…">
+<!ENTITY newIMContactCmd.accesskey "d">
+<!ENTITY  newMessageCmd2.key "m">
+<!ENTITY  newMessageCmd.key "M">
+<!ENTITY  newMessageCmd.label "Izen">
+<!ENTITY  newMessageCmd.accesskey "z">
+<!ENTITY  newContactCmd.label "Anermis n imedlis n tensa…">
+<!ENTITY  newContactCmd.accesskey "n">
+<!ENTITY openMenuCmd.label "Ldi">
+<!ENTITY openMenuCmd.accesskey "L">
+<!ENTITY openMessageFileCmd.label "Ldi izen ikelsen…">
+<!ENTITY openMessageFileCmd.accesskey "L">
+<!ENTITY saveAsMenu.label "Sekles s yisem">
+<!ENTITY saveAsMenu.accesskey "k">
+<!ENTITY saveAsFileCmd.label "Afaylu">
+<!ENTITY saveAsFileCmd.accesskey "A">
+<!ENTITY saveAsFileCmd.key "s">
+<!ENTITY saveAsTemplateCmd.label "Taneɣruft">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY getNewMsgForCmd.label "Awid iznan imaynuten i">
+<!ENTITY getNewMsgForCmd.accesskey "y">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "Akk imiḍanen">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "m">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.label "Amiḍan amiran">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.accesskey "n">
+<!ENTITY getNextNMsgCmd2.label "Awid iznan imaynuten id-iteddun">
+<!ENTITY getNextNMsgCmd2.accesskey "n">
+<!ENTITY sendUnsentCmd.label "Azen iznan ur neţwacegeɛ ara">
+<!ENTITY sendUnsentCmd.accesskey "z">
+<!ENTITY subscribeCmd.label "Multeɣ…">
+<!ENTITY subscribeCmd.accesskey "l">
+<!ENTITY deleteFolder.label "Kkes akaram">
+<!ENTITY deleteFolder.accesskey "K">
+<!ENTITY renameFolder.label "Snifel akaram…">
+<!ENTITY renameFolder.accesskey "S">
+<!ENTITY renameFolder.key "VK_F2">
+<!ENTITY compactFolders.label "Ssed ikaramen...">
+<!ENTITY compactFolders.accesskey "r">
+<!ENTITY emptyTrashCmd.label "Ḍegger iḍuman">
+<!ENTITY emptyTrashCmd.accesskey "ḍ">
+<!ENTITY offlineMenu.label "Aruqqin">
+<!ENTITY offlineMenu.accesskey "r">
+<!ENTITY offlineGoOfflineCmd.label "Mahel s war tuqqna">
+<!ENTITY offlineGoOfflineCmd.accesskey "M">
+<!ENTITY synchronizeOfflineCmd.label "Sider/Mtawi tura...">
+<!ENTITY synchronizeOfflineCmd.accesskey "t">
+<!ENTITY settingsOfflineCmd2.label "Iɣewwaṛen n war tuqqna">
+<!ENTITY settingsOfflineCmd2.accesskey "e">
+<!ENTITY downloadSelectedCmd.label "Awid iznan yettwafernen">
+<!ENTITY downloadSelectedCmd.accesskey "z">
+<!ENTITY downloadStarredCmd.label "Awi-d iznan s yetran">
+<!ENTITY downloadStarredCmd.accesskey "z">
+<!ENTITY printCmd.label "Siggez…">
+<!ENTITY printCmd.accesskey "g">
+<!ENTITY printCmd.key "p">
+<!ENTITY printPreviewCmd.label "Siggez taskant">
+<!ENTITY printPreviewCmd.accesskey "t">
+<!ENTITY printSetupCmd.label "Aswel n usebter...">
+<!ENTITY printSetupCmd.accesskey "b">
+
+<!-- Edit Menu -->
+<!ENTITY deleteMsgCmd.label "Kkes izen">
+<!ENTITY deleteMsgCmd.accesskey "K">
+<!ENTITY undeleteMsgCmd.label "Sefsex tukksa n yizen">
+<!ENTITY undeleteMsgCmd.accesskey "f">
+<!ENTITY deleteMsgsCmd.label "Sefsex iznan yettwafernen">
+<!ENTITY deleteMsgsCmd.accesskey "f">
+<!ENTITY undeleteMsgsCmd.label "Sefsex tukksa n yiznan yettwafernen">
+<!ENTITY undeleteMsgsCmd.accesskey "k">
+<!ENTITY deleteFolderCmd.label "Kkes akaram">
+<!ENTITY deleteFolderCmd.accesskey "K">
+<!ENTITY unsubscribeNewsgroupCmd.label "Ffeɣ seg ujerred">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "j">
+<!ENTITY selectMenu.label "Fren">
+<!ENTITY selectMenu.accesskey "n">
+<!ENTITY all.label "Akk">
+<!ENTITY all.accesskey "k">
+<!ENTITY selectThreadCmd.label "Akala afessas">
+<!ENTITY selectThreadCmd.accesskey "l">
+<!ENTITY selectThreadCmd.key "a">
+<!ENTITY selectFlaggedCmd.label "Iznan s yetran">
+<!ENTITY selectFlaggedCmd.accesskey "n">
+<!ENTITY menuFavoriteFolder.label "Akaram anurif">
+<!ENTITY menuFavoriteFolder.accesskey "r">
+<!ENTITY folderPropsCmd2.label "Timeẓliyin">
+<!ENTITY folderPropsFolderCmd2.label "Timeẓliyin n ukaram">
+<!ENTITY folderPropsNewsgroupCmd2.label "Timeẓliyin n isallen nugraw">
+<!ENTITY folderPropsCmd.accesskey "o">
+<!ENTITY undoDeleteMsgCmd.label "Sefsex tukksa n yizen">
+<!ENTITY redoDeleteMsgCmd.label "Uɣal ɣer tukksa n yizen">
+<!ENTITY undoMoveMsgCmd.label "Sefsex asenkez n yizen">
+<!ENTITY redoMoveMsgCmd.label "Uɣal ɣer usenkez n yizen">
+<!ENTITY undoCopyMsgCmd.label "Sefsex anɣal n yizen">
+<!ENTITY redoCopyMsgCmd.label "Uɣal ɣer unɣal n yizen">
+<!ENTITY undoMarkAllCmd.label "Sefsex acraḍ n tɣuri n yiznan">
+<!ENTITY redoMarkAllCmd.label "Uăl ɣer ucraḍ n tɣuri n yiznan">
+<!ENTITY undoDefaultCmd.label "Sefsax">
+<!ENTITY undoDefaultCmd.accesskey "S">
+<!ENTITY redoDefaultCmd.label "Err-d">
+<!ENTITY redoDefaultCmd.accesskey "E">
+
+<!-- View Menu -->
+<!ENTITY menubarCmd.label "Afeggag n wumuɣ">
+<!ENTITY menubarCmd.accesskey "f">
+<!ENTITY showMessengerToolbarCmd.label "Afeggag n ifecka n tirawt">
+<!ENTITY showMessengerToolbarCmd.accesskey "A">
+<!ENTITY customizeToolbar.label "Sagen…">
+<!ENTITY customizeToolbar.accesskey "S">
+
+<!ENTITY messagePaneLayoutStyle.label "Aseflu">
+<!ENTITY messagePaneLayoutStyle.accesskey "s">
+<!ENTITY messagePaneClassic.label "Timeẓri Klasik">
+<!ENTITY messagePaneClassic.accesskey "m">
+<!ENTITY messagePaneWide.label "Timeẓri tahrawant">
+<!ENTITY messagePaneWide.accesskey "w">
+<!ENTITY messagePaneVertical.label "Timeẓri tubdiṭ">
+<!ENTITY messagePaneVertical.accesskey "m">
+<!ENTITY showFolderPaneCmd.label "Agalis n ukaram">
+<!ENTITY showFolderPaneCmd.accesskey "l">
+<!ENTITY showFolderPaneColsCmd.label "Tigejda n ugalis n ukaram">
+<!ENTITY showFolderPaneColsCmd.accesskey "k">
+<!ENTITY showMessageCmd.label "Agalis n yizen">
+<!ENTITY showMessageCmd.accesskey "g">
+
+<!ENTITY folderView.label "Ikaramen">
+<!ENTITY folderView.accesskey "I">
+<!ENTITY unifiedFolders.label "Yeddukel">
+<!ENTITY unifiedFolders.accesskey "Y">
+<!ENTITY allFolders.label "Akkw">
+<!ENTITY allFolders.accesskey "k">
+<!ENTITY unreadFolders.label "Ur ittwaɣṛi ara">
+<!ENTITY unreadFolders.accesskey "t">
+<!ENTITY favoriteFolders.label "Anurif">
+<!ENTITY favoriteFolders.accesskey "A">
+<!ENTITY recentFolders.label "Melmi kan">
+<!ENTITY recentFolders.accesskey "e">
+<!ENTITY compactVersion.label "Timeẓri yessden">
+<!ENTITY compactVersion.accesskey "T">
+<!ENTITY folderPaneBar.label "Afeggag n ugalis n ukaram">
+<!ENTITY folderPaneBar.accesskey "r">
+
+<!-- Sort Menu -->
+<!ENTITY sortMenu.label "Smizzwer s:">
+<!ENTITY sortMenu.accesskey "S">
+<!ENTITY sortByDateCmd.label "Azemz">
+<!ENTITY sortByDateCmd.accesskey "z">
+<!ENTITY sortByReceivedCmd.label "Ittwarmes">
+<!ENTITY sortByReceivedCmd.accesskey "m">
+<!ENTITY sortByStarCmd.label "Itri">
+<!ENTITY sortByStarCmd.accesskey "I">
+<!ENTITY sortByAttachmentsCmd.label "Ticeqqufin yeddan">
+<!ENTITY sortByAttachmentsCmd.accesskey "c">
+<!ENTITY sortByPriorityCmd.label "Tazwart">
+<!ENTITY sortByPriorityCmd.accesskey "z">
+<!ENTITY sortBySizeCmd.label "Teɣzi">
+<!ENTITY sortBySizeCmd.accesskey "T">
+<!ENTITY sortByStatusCmd.label "Addad">
+<!ENTITY sortByStatusCmd.accesskey "d">
+<!ENTITY sortByTagsCmd.label "Tibzimin">
+<!ENTITY sortByTagsCmd.accesskey "b">
+<!ENTITY sortByJunkStatusCmd.label "Addad n uspam">
+<!ENTITY sortByJunkStatusCmd.accesskey "d">
+<!ENTITY sortBySubjectCmd.label "Amgay">
+<!ENTITY sortBySubjectCmd.accesskey "m">
+<!ENTITY sortByFromCmd.label "Si">
+<!ENTITY sortByFromCmd.accesskey "S">
+<!ENTITY sortByRecipientCmd.label "Anarmas">
+<!ENTITY sortByRecipientCmd.accesskey "n">
+<!ENTITY sortByCorrespondentCmd.label "Inmeɣṛa">
+<!ENTITY sortByCorrespondentCmd.accesskey "m">
+<!ENTITY sortByUnreadCmd.label "Taɣuṛi">
+<!ENTITY sortByUnreadCmd.accesskey "T">
+<!ENTITY sortByOrderReceivedCmd.label "Amizzwer i d-yettwaremsen">
+<!ENTITY sortByOrderReceivedCmd.accesskey "m">
+<!ENTITY sortAscending.label "Igemmen">
+<!ENTITY sortAscending.accesskey "I">
+<!ENTITY sortDescending.label "Amnusruy">
+<!ENTITY sortDescending.accesskey "A">
+<!ENTITY sortThreaded.label "Asqeṛdec">
+<!ENTITY sortThreaded.accesskey "A">
+<!ENTITY sortUnthreaded.label "Ulac asqeṛdec">
+<!ENTITY sortUnthreaded.accesskey "ṛ">
+<!ENTITY groupBySort.label "Yesdukkel-it usmizzwer">
+<!ENTITY groupBySort.accesskey "Y">
+<!ENTITY msgsMenu.label "Iznan">
+<!ENTITY msgsMenu.accesskey "z">
+<!ENTITY threads.label "Asqeṛdec">
+<!ENTITY threads.accesskey "q">
+<!ENTITY allMsgsCmd.label "Akk">
+<!ENTITY allMsgsCmd.accesskey "A">
+<!ENTITY expandAllThreadsCmd.label "Snefli akk asqerdec">
+<!ENTITY expandAllThreadsCmd.accesskey "S">
+<!ENTITY expandAllThreadsCmd.key "*">
+<!ENTITY collapseAllThreadsCmd.label "Fneẓ akk asqerdec">
+<!ENTITY collapseAllThreadsCmd.accesskey "F">
+<!ENTITY collapseAllThreadsCmd.key "\">
+<!ENTITY unreadMsgsCmd.label "Ur ittwaɣṛi ara">
+<!ENTITY unreadMsgsCmd.accesskey "t">
+<!ENTITY threadsWithUnreadCmd.label "Asqerdec ur nettwaɣri ara">
+<!ENTITY threadsWithUnreadCmd.accesskey "s">
+<!ENTITY watchedThreadsWithUnreadCmd.label "Asqerdec yettuɛessen ur nettwaɣri ara">
+<!ENTITY watchedThreadsWithUnreadCmd.accesskey "q">
+<!ENTITY ignoredThreadsCmd.label "Asqerdec yettwazeglen">
+<!ENTITY ignoredThreadsCmd.accesskey "A">
+
+<!ENTITY headersMenu.label "Iqeṛṛa">
+<!ENTITY headersMenu.accesskey "q">
+<!ENTITY headersAllCmd.label "Akk">
+<!ENTITY headersAllCmd.accesskey "A">
+<!ENTITY headersNormalCmd.label "Amagnu">
+<!ENTITY headersNormalCmd.accesskey "m">
+<!ENTITY bodyMenu.label "Tafekka n yizen am">
+<!ENTITY bodyMenu.accesskey "f">
+<!ENTITY bodyAllowHTML.label "HTML aneẓli">
+<!ENTITY bodyAllowHTML.accesskey "H">
+<!ENTITY bodySanitized.label "HTML aḥerfi">
+<!ENTITY bodySanitized.accesskey "f">
+<!ENTITY bodyAsPlaintext.label "Adris ačuṛan">
+<!ENTITY bodyAsPlaintext.accesskey "r">
+<!ENTITY bodyAllParts.label "Akk iḥedran n tfekka">
+<!ENTITY bodyAllParts.accesskey "d">
+
+<!ENTITY bodyMenuFeed.label "Semɣi-d tafekka n yizen am">
+<!ENTITY bodyMenuFeed.accesskey "f">
+<!ENTITY viewFeedWebPage.label "Asebtar web">
+<!ENTITY viewFeedWebPage.accesskey "b">
+<!ENTITY viewFeedSummary.label "Agzul">
+<!ENTITY viewFeedSummary.accesskey "z">
+<!ENTITY viewFeedSummaryFeedPropsPref.label "Amasal amezwer">
+<!ENTITY viewFeedSummaryFeedPropsPref.accesskey "a">
+
+<!ENTITY viewAttachmentsInlineCmd.label "Sken imeddayen n umnaḍ">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "d">
+
+<!ENTITY pageSourceCmd.label "Aɣbalu n yizen">
+<!ENTITY pageSourceCmd.accesskey "z">
+<!ENTITY pageSourceCmd.key "u">
+<!ENTITY getNewMessagesCmd.key "y">
+<!ENTITY getAllNewMessagesCmd.key "Y">
+
+<!-- Search Menu -->
+<!ENTITY findMenu.label "Nadi">
+<!ENTITY findMenu.accesskey "N">
+<!ENTITY findCmd.label "Nadi deg izen-agi…">
+<!ENTITY findCmd.accesskey "N">
+<!ENTITY findCmd.key "f">
+<!ENTITY findAgainCmd.label "Nadi ɣer zdat">
+<!ENTITY findAgainCmd.accesskey "z">
+<!ENTITY findAgainCmd.key "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.key "g">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY searchMailCmd.label "Nadi iznan di…">
+<!ENTITY searchMailCmd.accesskey "d">
+<!ENTITY searchMailCmd.key "f">
+<!ENTITY glodaSearchCmd.label "Anadi amatu...">
+<!ENTITY glodaSearchCmd.accesskey "G">
+<!ENTITY searchAddressesCmd.label "Nadi tansiwin…">
+<!ENTITY searchAddressesCmd.accesskey "d">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Bdu">
+<!ENTITY goMenu.accesskey "B">
+<!ENTITY nextMenu.label "Ɣeṛ zdat">
+<!ENTITY nextMenu.accesskey "z">
+<!ENTITY nextMsgCmd.label "Izen">
+<!ENTITY nextMsgCmd.accesskey "I">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "Izen ur nettwaɣri ara">
+<!ENTITY nextUnreadMsgCmd.accesskey "e">
+<!ENTITY nextUnreadMsgCmd.key "n">
+<!ENTITY nextStarredMsgCmd.label "Izen s yitran">
+<!ENTITY nextStarredMsgCmd.accesskey "e">
+<!ENTITY nextUnreadThread.label "Asqerdec ur nettwaɣri ara">
+<!ENTITY nextUnreadThread.accesskey "A">
+<!ENTITY nextUnreadThread.key "t">
+<!ENTITY prevMenu.label "Ɣeṛ deffir">
+<!ENTITY prevMenu.accesskey "d">
+<!ENTITY prevMsgCmd.label "Izen">
+<!ENTITY prevMsgCmd.accesskey "I">
+<!ENTITY prevMsgCmd.key "b">
+<!ENTITY prevUnreadMsgCmd.label "Izen ur nettwaɣri ara">
+<!ENTITY prevUnreadMsgCmd.accesskey "e">
+<!ENTITY prevUnreadMsgCmd.key "p">
+<!ENTITY goForwardCmd.label "Ɣer zdat">
+<!ENTITY goForwardCmd.accesskey "z">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goBackCmd.label "Ɣeṛ deffir">
+<!ENTITY goBackCmd.accesskey "d">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goChatCmd.label "Adiwenni usrid">
+<!ENTITY goChatCmd.accesskey "w">
+<!ENTITY goChatCmd2.key "H">
+<!ENTITY prevStarredMsgCmd.label "Izen s yetran">
+<!ENTITY prevStarredMsgCmd.accesskey "e">
+<!ENTITY folderMenu.label "Akaram">
+<!ENTITY folderMenu.accesskey "k">
+<!ENTITY goRecentlyClosedTabs.label "Iccaren imedlen melmi kan">
+<!ENTITY goRecentlyClosedTabs.accesskey "m">
+<!ENTITY startPageCmd.label "Asebter s usenker n yimayl">
+<!ENTITY startPageCmd.accesskey "s">
+
+<!-- Message Menu -->
+<!ENTITY msgMenu.label "Izen">
+<!ENTITY msgMenu.accesskey "I">
+<!ENTITY newMsgCmd.label "Izen amaynut">
+<!ENTITY newMsgCmd.accesskey "m">
+<!ENTITY newNewMsgCmd.label "Izen">
+<!ENTITY newNewMsgCmd.accesskey "I">
+<!ENTITY archiveMsgCmd.label "Aɣbaṛ">
+<!ENTITY archiveMsgCmd.accesskey "b">
+<!ENTITY archiveMsgCmd.key "a">
+<!ENTITY cancelNewsMsgCmd.label "Sefsex izen">
+<!ENTITY cancelNewsMsgCmd.accesskey "S">
+<!ENTITY replyMsgCmd.label "Err">
+<!ENTITY replyMsgCmd.accesskey "r">
+<!ENTITY replyMsgCmd.key "r">
+<!ENTITY replySenderCmd.label "Err kan i wemazan">
+<!ENTITY replySenderCmd.accesskey "r">
+<!ENTITY replyNewsgroupCmd2.label "Ḍfaṛ igrawen n isalen">
+<!ENTITY replyNewsgroupCmd2.accesskey "f">
+<!ENTITY replyToAllMsgCmd.label "Err-asen imaṛṛa">
+<!ENTITY replyToAllMsgCmd.accesskey "m">
+<!ENTITY replyToAllMsgCmd.key "r">
+<!ENTITY replyToListMsgCmd.label "Err i tebdart">
+<!ENTITY replyToListMsgCmd.accesskey "b">
+<!ENTITY replyToListMsgCmd.key "l">
+<!ENTITY forwardMsgCmd.label "Ɣzeṛ zdat">
+<!ENTITY forwardMsgCmd.accesskey "d">
+<!ENTITY forwardMsgCmd.key "l">
+<!ENTITY forwardAsMenu.label "Welleh am">
+<!ENTITY forwardAsMenu.accesskey "W">
+<!ENTITY forwardAsInline.label "Umniḍ">
+<!ENTITY forwardAsInline.accesskey "U">
+<!ENTITY forwardAsAttachmentCmd.label "Taceqquf yeddan">
+<!ENTITY forwardAsAttachmentCmd.accesskey "T">
+<!ENTITY editAsNewMsgCmd.label "Ldi-it-id d izen amaynut">
+<!ENTITY editAsNewMsgCmd.accesskey "L">
+<!ENTITY editAsNewMsgCmd.key "e">
+<!ENTITY editDraftMsgCmd.label "Ẓreg izen arewway">
+<!ENTITY editDraftMsgCmd.accesskey "r">
+<!ENTITY editTemplateMsgCmd.label "Ẓreg taneγruft">
+<!ENTITY editTemplateMsgCmd.accesskey "T">
+<!ENTITY newMsgFromTemplateCmd.label "Izen amaynut sγur tneγruft">
+<!ENTITY newMsgFromTemplateCmd.keycode "VK_RETURN"><!-- do not change "VK_RETURN" -->
+<!ENTITY createFilter.label "Rnu imzizdig seg izen…">
+<!ENTITY createFilter.accesskey "n">
+<!ENTITY moveMsgToMenu.label "Senkez ɣer">
+<!ENTITY moveMsgToMenu.accesskey "k">
+<!ENTITY moveCopyMsgRecentMenu.label "Melmi kan">
+<!ENTITY moveCopyMsgRecentMenu.accesskey "l">
+<!ENTITY copyMessageLocation.label "Nɣel tansa n yizen">
+<!ENTITY copyMessageLocation.accesskey "N">
+<!ENTITY copyMsgToMenu.label "Nɣel ɣeṛ">
+<!ENTITY copyMsgToMenu.accesskey "N">
+<!ENTITY moveToFolderAgain.label "Senkez tikelt nniḍen.">
+<!ENTITY moveToFolderAgain.accesskey "n">
+<!ENTITY moveToFolderAgainCmd.key "m">
+<!ENTITY killThreadMenu.label "Zgel asqerdec">
+<!ENTITY killThreadMenu.accesskey "Z">
+<!ENTITY killThreadMenu.key "k">
+<!ENTITY killSubthreadMenu.label "Zgel asqerdec asnawan">
+<!ENTITY killSubthreadMenu.accesskey "Z">
+<!ENTITY killSubthreadMenu.key "k">
+<!ENTITY watchThreadMenu.label "Ɛas asqerdec">
+<!ENTITY watchThreadMenu.accesskey "Ɛ">
+<!ENTITY watchThreadMenu.key "w">
+<!ENTITY tagMenu.label "Tabzimt">
+<!ENTITY tagMenu.accesskey "z">
+<!ENTITY tagCmd0.key "0">
+<!ENTITY tagCmd1.key "1">
+<!ENTITY tagCmd2.key "2">
+<!ENTITY tagCmd3.key "3">
+<!ENTITY tagCmd4.key "4">
+<!ENTITY tagCmd5.key "5">
+<!ENTITY tagCmd6.key "6">
+<!ENTITY tagCmd7.key "7">
+<!ENTITY tagCmd8.key "8">
+<!ENTITY tagCmd9.key "9">
+<!ENTITY markMenu.label "Cṛeḍ">
+<!ENTITY markMenu.accesskey "C">
+<!ENTITY toggleReadCmd.key "m">
+<!ENTITY markAsReadCmd.label "Yettwaɣṛa">
+<!ENTITY markAsReadCmd.accesskey "Y">
+<!ENTITY markAsUnreadCmd.label "Ur ittwaɣṛi ara">
+<!ENTITY markAsUnreadCmd.accesskey "t">
+<!ENTITY markThreadAsReadCmd.label "Asqerdec yettwaɣra">
+<!ENTITY markThreadAsReadCmd.accesskey "q">
+<!ENTITY markThreadAsReadCmd.key "r">
+<!ENTITY markReadByDateCmd.label "Yettwaɣra s wazem…">
+<!ENTITY markReadByDateCmd.accesskey "z">
+<!ENTITY markReadByDateCmd.key "c">
+<!ENTITY markAllReadCmd.label "Ttawaɣṛan akkw">
+<!ENTITY markAllReadCmd.accesskey "k">
+<!ENTITY markAllReadCmd.key "c">
+<!ENTITY markStarredCmd.label "Rnu itri">
+<!ENTITY markStarredCmd.accesskey "t">
+<!ENTITY markStarredCmd.key "S">
+<!ENTITY markAsJunkCmd.label "Am uspam">
+<!ENTITY markAsJunkCmd.accesskey "p">
+<!ENTITY markAsJunkCmd.key "j">
+<!ENTITY markAsNotJunkCmd.label "Mačči am uspam">
+<!ENTITY markAsNotJunkCmd.accesskey "m">
+<!ENTITY markAsNotJunkCmd.key "j">
+<!ENTITY recalculateJunkScoreCmd.label "Selkem asenqed n uspam">
+<!ENTITY recalculateJunkScoreCmd.accesskey "p">
+<!ENTITY openMessageWindowCmd.label "Ldi izen">
+<!ENTITY openMessageWindowCmd.accesskey "L">
+<!ENTITY openMessageWindowCmd.key "o">
+<!ENTITY openInConversationCmd.label "Ldi deg udiwenni">
+<!ENTITY openInConversationCmd.accesskey "L">
+<!ENTITY openInConversationCmd.key "i">
+<!ENTITY openAttachmentListCmd.label "Ticeqqufin yeddan">
+<!ENTITY openAttachmentListCmd.accesskey "c">
+<!ENTITY openFeedMessage1.label "Ticki teldiḍ iznan n usuddem">
+<!ENTITY openFeedMessage1.accesskey "T">
+<!ENTITY openFeedWebPage.label "Ldi am usebter Web">
+<!ENTITY openFeedWebPage.accesskey "W">
+<!ENTITY openFeedSummary.label "Ldi agzul">
+<!ENTITY openFeedSummary.accesskey "L">
+<!ENTITY openFeedWebPageInMP.label "Semmeskel gar usebter Web akked ugzul deg ugalis n yizen">
+<!ENTITY openFeedWebPageInMP.accesskey "m">
+
+<!-- Windows Menu -->
+<!ENTITY windowMenu.label "Asfaylu">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Ifecka">
+<!ENTITY tasksMenu.accesskey "f">
+<!ENTITY messengerCmd.label "Tirawt &amp; igrawen n isalen">
+<!ENTITY messengerCmd.accesskey "s">
+<!ENTITY addressBookCmd.label "Imedlis n tensa">
+<!ENTITY addressBookCmd.accesskey "m">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY addons.label "Izegrar imernan">
+<!ENTITY addons.accesskey "z">
+<!ENTITY addonPrefs.label "Iγewwaṛen n uzegrir">
+<!ENTITY addonPrefs.accesskey "U">
+<!ENTITY addonPrefsUnix.label "Ismenyifen n uzegrir">
+<!ENTITY addonPrefsUnix.accesskey "P">
+<!ENTITY addonNoPrefs.label "Ulac iγewwaṛen n izegrar ittwafen.">
+<!ENTITY activitymanager.label "Amsefrak n urmud">
+<!ENTITY activitymanager.accesskey "r">
+<!ENTITY imAccountsStatus.label "Addad n udiwenni usrid">
+<!ENTITY imAccountsStatus.accesskey "d">
+<!ENTITY imStatus.available          "Yella">
+<!ENTITY imStatus.unavailable        "Ulac-it">
+<!ENTITY imStatus.offline            "Aruqqin">
+<!ENTITY imStatus.showAccounts       "Sken imiḍanen…">
+<!ENTITY joinChatCmd.label "Ddu ɣer udiwenni s srid...">
+<!ENTITY joinChatCmd.accesskey "d">
+<!ENTITY savedFiles.label "Ifuyla ikelsen">
+<!ENTITY savedFiles.accesskey "u">
+<!ENTITY savedFiles.key "j">
+<!ENTITY filtersCmd2.label "Izen d imzizdigen">
+<!ENTITY filtersCmd2.accesskey "z">
+<!ENTITY filtersApply.label "Selkem imzizdigen ɣef ukaram">
+<!ENTITY filtersApply.accesskey "S">
+<!ENTITY filtersApplyToSelection.label "Selkem imzizdigen ɣef iznan ifernen">
+<!ENTITY filtersApplyToSelection.accesskey "k">
+<!ENTITY filtersApplyToMessage.label "Selkem imzizdigen ɣef yizen">
+<!ENTITY filtersApplyToMessage.accesskey "k">
+<!ENTITY runJunkControls.label "Selkem isenqaden n imaylen ispamen deg ukaram">
+<!ENTITY runJunkControls.accesskey "l">
+<!ENTITY deleteJunk.label "Kkes imaylen yettwaceṛḍen d ispamen deg ukaram">
+<!ENTITY deleteJunk.accesskey "K">
+<!ENTITY importCmd.label "Kter…">
+<!ENTITY importCmd.accesskey "r">
+<!ENTITY clearRecentHistory.label "Sfeḍ amazray aneggaru…">
+<!ENTITY clearRecentHistory.accesskey "m">
+<!ENTITY accountManagerCmd2.label "Amiḍan d iɣewwaṛen">
+<!ENTITY accountManagerCmd2.accesskey "w">
+<!-- LOCALIZATION NOTE (accountManagerCmdUnix.accesskey):
+     Belongs to accountManagerCmd.label, which is placed under the Edit menu
+     on Unix systems
+  -->
+<!ENTITY accountManagerCmdUnix2.accesskey "A">
+
+<!-- Developer Tools Submenu -->
+<!ENTITY devtoolsMenu.label "Ifecka n tneflit ">
+<!ENTITY devtoolsMenu.accesskey "c">
+<!ENTITY devToolboxCmd.label "Ifecka n tneflit">
+<!ENTITY devToolboxCmd.accesskey "k">
+<!ENTITY devToolboxCmd.commandkey "i">
+<!ENTITY debugAddonsCmd.label "Izegrar n tseɣtit">
+<!ENTITY debugAddonsCmd.accesskey "A">
+<!ENTITY tabsDebugCmd.label "Tamseɣtayt n ukatar n ugbur">
+<!ENTITY tabsDebugCmd.accesskey "b">
+<!ENTITY errorConsoleCmd.label "Tadiwent n tuccḍa">
+<!ENTITY errorConsoleCmd.accesskey "d">
+<!ENTITY errorConsoleCmd.commandkey "j">
+
+<!-- Mail Toolbar -->
+<!ENTITY getMsgButton1.label "Awid iznan">
+<!ENTITY newMsgButton.label "Aru">
+<!ENTITY replyButton.label "Err">
+<!ENTITY replyAllButton.label "Err-asen akk">
+<!ENTITY replyListButton.label "Err i tebdart">
+<!ENTITY forwardButton.label "Ɣer &amp;zdat">
+<!ENTITY fileButton.label "Afaylu">
+<!ENTITY archiveButton.label "Aɣbaṛ">
+<!ENTITY openConversationButton.label "Adiwenni">
+<!ENTITY nextButton.label "Ɣeṛ zdat">
+<!ENTITY nextButtonToolbarItem.label "Ɣer zdat- Win ur nettwaɣri ara">
+<!ENTITY nextMsgButton.label "Ɣeṛ zdat">
+<!ENTITY previousButton.label "Ɣeṛ deffir">
+<!ENTITY previousButtonToolbarItem.label "Ɣer deffir - Win ur nettwaɣri ara">
+<!ENTITY previousMsgButton.label "Ɣeṛ deffir">
+<!ENTITY backButton1.label "ɣer deffir">
+<!ENTITY goForwardButton1.label "Ɣer zdat">
+<!ENTITY deleteItem.title "Kkes">
+<!ENTITY deleteButton.label "Kkes">
+<!ENTITY undeleteButton.label "Sefsex tukksa">
+<!ENTITY markButton.label "Cṛeḍ">
+<!ENTITY printButton.label "Siggez">
+<!ENTITY stopButton.label "Rken">
+<!ENTITY throbberItem.title "anamal n wermud">
+<!ENTITY junkItem.title "Aspam">
+<!ENTITY junkButton.label "Aspam">
+<!ENTITY notJunkButton.label "Mačči d aspam">
+<!ENTITY addressBookButton.label "Imedlis n tensa">
+<!ENTITY chatButton.label "Adiwenni usrid">
+<!ENTITY glodaSearch.title "Anadi amatu">
+<!ENTITY searchItem.title "Anadi arurad">
+<!ENTITY mailViewsToolbarItem.title "Timeẓriyin n tirawt">
+<!ENTITY folderLocationToolbarItem.title "Tansa n ukaram">
+<!ENTITY tagButton.label "Tabzimt">
+<!ENTITY compactButton.label "Ssed">
+<!ENTITY appmenuButton.label "Umuɣ n usnas">
+
+<!-- Mail Toolbar Tooltips-->
+<!ENTITY advancedButton.tooltip "Anadi leqqayen n iznan">
+<!ENTITY getMsgButton.tooltip "Awi-d iznan imaynuten">
+<!ENTITY getAllNewMsgCmd.label "Awi-d akk iznan imaynuten ">
+<!ENTITY getAllNewMsgCmd.accesskey "y">
+<!ENTITY newMsgButton.tooltip "Rnu izen amaynut">
+<!ENTITY replyButton.tooltip "Err i yizen">
+<!ENTITY replyAllButton.tooltip "E&amp;rr i wemazan d inarmasen">
+<!ENTITY replyListButton.tooltip "Err i tabdart n tnezwit">
+<!ENTITY forwardButton.tooltip "Welleh izenan yettwafernen">
+<!ENTITY forwardAsInline.tooltip "Welleh izen yettwafernen am uḍris umniḍ">
+<!ENTITY forwardAsAttachment.tooltip "Welleh izen yettwafernen am umedday">
+<!ENTITY fileButton.tooltip "Err iznan yettwafernen ɣer ufaylu">
+<!ENTITY archiveButton.tooltip "Ḥrez iznan yettwafernen">
+<!ENTITY openMsgConversationButton.tooltip "Sken adiwenni n yizen yettwafernen">
+<!ENTITY nextButton.tooltip "Ddu ɣer yizen ur nettwaɣri ara i d-iteddun">
+<!ENTITY nextMsgButton.tooltip "Ddu ɣer yizen d-iteddun ur nettwaɣri ara">
+<!ENTITY previousButton.tooltip "Ddu ɣer yizen n deffir ur nettwaɣri ara">
+<!ENTITY previousMsgButton.tooltip "Senkez ɣeṛ yizen azewwar">
+<!ENTITY goForwardButton.tooltip "Ddu ɣeṛ zdat s yiwen n yizen">
+<!ENTITY goBackButton.tooltip "Uɣal ɣeṛ deffir s yiwen n yizen">
+<!ENTITY deleteButton.tooltip "Kkes izen neɣ akaram ifernen">
+<!ENTITY undeleteButton.tooltip "Sefsex tukksa n yizen ifernen">
+<!ENTITY markButton.tooltip "Cṛeḍ iznan">
+<!ENTITY printButton.tooltip "Siggez izen-agi">
+<!ENTITY stopButton.tooltip "Seḥbes asiweḍ amiran">
+<!ENTITY junkButton.tooltip "Creḍ iznan yettwafernen am uspam">
+<!ENTITY notJunkButton.tooltip "Creḍ iznan yettwafernen mačči d aspam">
+<!ENTITY addressBookButton.tooltip "Ddu ɣeṛ imedlis n tensa">
+<!ENTITY chatButton.tooltip "Sken iccer n udiwenni usrid">
+<!ENTITY tagButton.tooltip "Rnu tabzimt i yiznan">
+<!ENTITY compactButton.tooltip "Kkes iznan ittwaksen seg ukaram ifernen">
+<!ENTITY appmenuButton1.tooltip "Sken umuɣ n &brandShortName;">
+<!ENTITY addonsButton.tooltip "Sefrek izegrar-ik">
+
+<!-- Toolbar Button Popup -->
+<!ENTITY buttonMenuForwardAsInline.label "Welleḥ deg umnaḍ">
+<!ENTITY buttonMenuForwardAsAttachment.label "Welleh am umedday">
+
+<!-- Remote Content Button Popup -->
+<!ENTITY remoteContentOptionsAllowForMsg.label "Sken agbur anmeggag ɣef izen-agi">
+<!ENTITY remoteContentOptionsAllowForMsg.accesskey "k">
+<!ENTITY editRemoteContentSettings.label "Ẓreg iɣewwaṛen n ugbur anmeggag…">
+<!ENTITY editRemoteContentSettings.accesskey "Ẓ">
+<!ENTITY editRemoteContentSettingsUnix.label "Ẓreg ismenyifen n ugbur anmeggag…">
+<!ENTITY editRemoteContentSettingsUnix.accesskey "Ẓ">
+
+<!-- Phishing Button Popup -->
+<!ENTITY phishingOptionIgnore.label "Anef alɣu i yizen-agi">
+<!ENTITY phishingOptionIgnore.accesskey "n">
+<!ENTITY phishingOptionSettings.label "Ẓreg iɣewwaṛen n tiffin n ukellex…">
+<!ENTITY phishingOptionSettings.accesskey "Ẓ">
+<!ENTITY phishingOptionSettingsUnix.label "Ẓreg iɣewwaṛen n tiffin n ukellex…">
+<!ENTITY phishingOptionSettingsUnix.accesskey "Ẓ">
+
+<!-- AppMenu Popup -->
+<!ENTITY appmenuNewMsgCmd.label "Izen amaynut">
+<!ENTITY appmenuNewContactCmd.label "Anermis n imedlis n tensa…">
+<!ENTITY appmenuEditMenu.label "Ẓreg">
+<!ENTITY appmenuToolbarLayout.label "Aseflu n ifeggagen n ifecka…">
+<!ENTITY appmenuSelectThread.label "Fren asqerdec">
+<!ENTITY appmenuSelectFlagged.label "Sefsex tukksa n yizen yettwafernen">
+
+<!-- Tags Menu Popup -->
+<!ENTITY addNewTag.label "Tabzimt tamaynut…">
+<!ENTITY addNewTag.accesskey "b">
+<!ENTITY manageTags.label "Sefrek tibzimin…">
+<!ENTITY manageTags.accesskey "f">
+
+<!-- Folder Pane -->
+<!ENTITY folderNameColumn.label "Isem">
+<!ENTITY folderUnreadColumn.label "Ur ittwaɣṛi ara">
+<!ENTITY folderTotalColumn.label "Asemday">
+<!ENTITY folderSizeColumn.label "Teɣzi">
+
+<!-- Folder Pane Context Menu -->
+<!ENTITY folderContextGetMessages.label "Rems-d iznan">
+<!ENTITY folderContextGetMessages.accesskey "R">
+<!ENTITY folderContextMarkAllFoldersRead.label "Cṛeḍ akk ikaramen yettwaɣran">
+<!ENTITY folderContextPauseAllUpdates.label "Serǧu akk ileqman">
+<!ENTITY folderContextPauseUpdates.label "Serǧu ileqman">
+<!ENTITY folderContextPauseUpdates.accesskey "s">
+<!ENTITY folderContextOpenInNewWindow.label "Ldi deg usfaylu amaynut">
+<!ENTITY folderContextOpenInNewWindow.accesskey "L">
+<!ENTITY folderContextOpenNewTab.label "Ldi ɣef yiccer amaynut">
+<!ENTITY folderContextOpenNewTab.accesskey "c">
+<!ENTITY folderContextNew.label "Adakaram amaynut…">
+<!ENTITY folderContextNew.accesskey "A">
+<!ENTITY folderContextRename.label "Snifel isem">
+<!ENTITY folderContextRename.accesskey "S">
+<!ENTITY folderContextRemove.label "Kkes">
+<!ENTITY folderContextRemove.accesskey "K">
+<!ENTITY folderContextCompact.label "Ssed">
+<!ENTITY folderContextCompact.accesskey "s">
+<!ENTITY folderContextEmptyTrash.label "Ḍegger iḍuman">
+<!ENTITY folderContextEmptyTrash.accesskey "ḍ">
+<!ENTITY folderContextEmptyJunk.label " Ḍegger ispamen">
+<!ENTITY folderContextEmptyJunk.accesskey "p">
+<!ENTITY folderContextSendUnsentMessages.label "Azen iznan ur nettwacegeɛ ara">
+<!ENTITY folderContextSendUnsentMessages.accesskey "z">
+<!ENTITY folderContextUnsubscribe.label "Ffeɣ seg ujerred">
+<!ENTITY folderContextUnsubscribe.accesskey "F">
+<!ENTITY folderContextMarkNewsgroupRead.label "Creḍ agraw n isallen amzun yettwaɣra">
+<!ENTITY folderContextMarkNewsgroupRead.accesskey "r">
+<!ENTITY folderContextMarkMailFolderRead.label "Cṛeḍ akaram amzun yettwaɣra">
+<!ENTITY folderContextMarkMailFolderRead.accesskey "C">
+<!ENTITY folderContextSubscribe.label "Multeɣ…">
+<!ENTITY folderContextSubscribe.accesskey "l">
+<!ENTITY folderContextSearchForMessages.label "Nadi iznan…">
+<!ENTITY folderContextSearchForMessages.accesskey "N">
+<!ENTITY folderContextProperties2.label "Timeẓliyin">
+<!ENTITY folderContextProperties2.accesskey "ẓ">
+<!ENTITY folderContextFavoriteFolder.label "Akaram anurif">
+<!ENTITY folderContextFavoriteFolder.accesskey "m">
+<!ENTITY folderContextSettings2.label "Iɣewwaṛen">
+<!ENTITY folderContextSettings2.accesskey "w">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label "Isem neɣ imayl yegber:">
+<!ENTITY SearchNameOrEmail.accesskey "I">
+
+<!-- Gloda Search Bar -->
+<!ENTITY glodaSearchBar.placeholder "Nadi iznan…">
+
+<!-- Quick Search Menu Bar -->
+<!ENTITY searchSubjectMenu.label "Amgay">
+<!ENTITY searchFromMenu.label "Si">
+<!ENTITY searchSubjectOrFromMenu.label "Amgay neɣ Si">
+<!ENTITY searchRecipient.label "I neɣ Anɣ.I">
+<!ENTITY searchSubjectOrRecipientMenu.label "Asentel, I neɣ Anɣ.I">
+<!ENTITY searchMessageBody.label "Izen imaṛṛa">
+<!ENTITY saveAsVirtualFolderMenu.label "Kles anadi deg ukaram…">
+
+<!-- Thread Pane -->
+<!ENTITY selectColumn.label "Fren iznan">
+<!ENTITY threadColumn.label "Akala afessas">
+<!ENTITY fromColumn.label "Si">
+<!ENTITY recipientColumn.label "Anermas">
+<!ENTITY correspondentColumn.label "Inmeɣṛa">
+<!ENTITY subjectColumn.label "Amgay">
+<!ENTITY dateColumn.label "Azemz">
+<!ENTITY priorityColumn.label "Tazwart">
+<!ENTITY tagsColumn.label "Tabzimt">
+<!ENTITY accountColumn.label "Amiḍan">
+<!ENTITY statusColumn.label "Addad">
+<!ENTITY sizeColumn.label "Teɣzi">
+<!ENTITY junkStatusColumn.label "Addad n uspam">
+<!ENTITY unreadColumn.label "Ur ittwaɣṛi ara">
+<!ENTITY totalColumn.label "Asemday">
+<!ENTITY readColumn.label "Ittwaɣra">
+<!ENTITY receivedColumn.label "Iţwarmes">
+<!ENTITY starredColumn.label "Ɣur-s itri">
+<!ENTITY locationColumn.label "Tansa">
+<!ENTITY idColumn.label "Taladna tettwarmes">
+<!ENTITY attachmentColumn.label "Ticeqqufin yeddan">
+
+<!ENTITY deleteColumn.label "Kkes">
+
+<!-- Thread Pane Tooltips -->
+<!ENTITY columnChooser2.tooltip "Fren tigejda ad-sekneḍ">
+<!ENTITY selectColumn.tooltip "Fren/kkes afran n yiznan">
+<!ENTITY threadColumn2.tooltip "Sken asqerdec n yizen">
+<!ENTITY fromColumn2.tooltip "Asmizzwer s Si">
+<!ENTITY recipientColumn2.tooltip "Asmizzwer s unarmas">
+<!ENTITY correspondentColumn2.tooltip "Asmizzwer s inmeɣṛa">
+<!ENTITY subjectColumn2.tooltip "Asmizzwer s umgay">
+<!ENTITY dateColumn2.tooltip "Asmizzwer s wazemz">
+<!ENTITY priorityColumn2.tooltip "Asmizzwer s tezwart">
+<!ENTITY tagsColumn2.tooltip "Asmizzwer s tebzimin">
+<!ENTITY accountColumn2.tooltip "Smizzéwer s umiḍan">
+<!ENTITY statusColumn2.tooltip "Asmizzwer s waddad">
+<!ENTITY sizeColumn2.tooltip "Asmizzwer s teɣzi">
+<!ENTITY junkStatusColumn2.tooltip "Smizzwer s wddad n uspam">
+<!ENTITY unreadColumn2.tooltip "Amḍan n yeznan ur nettwaɣri ara deg usqerdec">
+<!ENTITY totalColumn2.tooltip "Amḍan n yeznan deg usqerdec">
+<!ENTITY readColumn2.tooltip "Asmizzwer s tɣruṛi">
+<!ENTITY receivedColumn2.tooltip "Asmizzwer s wazemz n urmas">
+<!ENTITY starredColumn2.tooltip "Asmizzwer s yetri">
+<!ENTITY locationColumn2.tooltip "Asmizzwer s wadig">
+<!ENTITY idColumn2.tooltip "Asmizzwer s wazemz n urmas">
+<!ENTITY attachmentColumn2.tooltip "Asmizzer s tceqqufin yeddan">
+
+<!ENTITY deleteColumn.tooltip "Kkes izen">
+
+<!-- Thread Pane Context Menu -->
+<!ENTITY contextNewMsgFromTemplate.label "Izen amaynut sγur tneγruft">
+<!ENTITY contextOpenNewWindow.label "Ldi izen deg usfaylu amaynut">
+<!ENTITY contextOpenNewWindow.accesskey "s">
+<!-- The contextOpenNewTab.accesskey ("T") potentially conflicts with
+     cutCmd.accessKey which is defined in textcontext.dtd from toolkit. Right
+     now, both menu items can't be visible at the same time, but should someone
+     enable copy/paste of message, this key would probably need to be changed. -->
+<!ENTITY contextOpenNewTab.label "Ldi izen ɣef yiccer amaynut">
+<!ENTITY contextOpenNewTab.accesskey "c">
+<!ENTITY contextOpenConversation.label "&amp;Ldi izen deg udiwenni">
+<!ENTITY contextOpenConversation.accesskey "d">
+<!ENTITY contextOpenContainingFolder.label "Ldi izen deg ukaram amagbar">
+<!ENTITY contextOpenContainingFolder.accesskey "L">
+<!ENTITY contextEditMsgAsNew.label "Ldi-it-id d izen amaynut">
+<!ENTITY contextEditMsgAsNew.accesskey "L">
+<!ENTITY contextEditDraftMsg.label "Ẓreg izen arewway">
+<!ENTITY contextEditTemplate.label "Ẓreg taneγruft">
+<!ENTITY contextEditTemplate.accesskey "T">
+<!ENTITY contextArchive.label "Aɣbaṛ">
+<!ENTITY contextArchive.accesskey "A">
+<!ENTITY contextReplySender.label "Err kan i wemazan">
+<!ENTITY contextReplySender.accesskey "r">
+<!ENTITY contextReplyNewsgroup2.label "Ḍfaṛ igrawen n isalen">
+<!ENTITY contextReplyNewsgroup2.accesskey "f">
+<!ENTITY contextReplyAll.label "Err-asen akk">
+<!ENTITY contextReplyAll.accesskey "a">
+<!ENTITY contextReplyList.label "Err i tebdart">
+<!ENTITY contextReplyList.accesskey "b">
+<!ENTITY contextForward.label "Ɣer zdat">
+<!ENTITY contextForward.accesskey "z">
+<!ENTITY contextForwardAsMenu.label "Welleh am">
+<!ENTITY contextForwardAsMenu.accesskey "W">
+<!ENTITY contextForwardAsInline.label "Deg umnaḍ">
+<!ENTITY contextForwardAsInline.accesskey "g">
+<!ENTITY contextForwardAsAttachmentItem.label "Taceqquf yeddan">
+<!ENTITY contextForwardAsAttachmentItem.accesskey "T">
+<!ENTITY contextMultiForwardAsAttachment.label "Welleh am imeddayen">
+<!ENTITY contextMultiForwardAsAttachment.accesskey "W">
+<!ENTITY contextMoveMsgMenu.label "Senkez ɣer">
+<!ENTITY contextMoveMsgMenu.accesskey "k">
+<!ENTITY contextMoveCopyMsgRecentMenu.label "Melmi kan">
+<!ENTITY contextMoveCopyMsgRecentMenu.accesskey "m">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.label "Inurifen">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.accesskey "f">
+<!ENTITY contextCopyMsgMenu.label "Nɣel ɣeṛ">
+<!ENTITY contextCopyMsgMenu.accesskey "N">
+<!ENTITY contextKillThreadMenu.label "Zgel asqerdec">
+<!ENTITY contextKillSubthreadMenu.accesskey "n">
+<!ENTITY contextKillThreadMenu.accesskey "Z">
+<!ENTITY contextKillSubthreadMenu.label "Zgel asqerdec asnawan">
+<!ENTITY contextWatchThreadMenu.label "Ɛas asqerdec">
+<!-- LOCALIZATION NOTE (contextWatchThreadMenu.accesskey):
+     In the en-US locale we ran out of access keys, so there is an empty access key for
+     Watch Thread. Localizers can pick a suitable key
+  -->
+<!ENTITY contextWatchThreadMenu.accesskey "">
+<!ENTITY contextSaveAs.label "Sekles daw…">
+<!ENTITY contextSaveAs.accesskey "k">
+<!ENTITY contextPrint.label "Siggez…">
+<!ENTITY contextPrint.accesskey "g">
+<!ENTITY contextPrintPreview.label "Wali send asiggez">
+<!ENTITY contextPrintPreview.accesskey "s">
+
+<!-- LOCALIZATION NOTE (columnPicker.applyTo.label):
+     This option in the thread pane column picker pops up a sub-menu containing
+     the "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" options. This item indicates
+     a desire to apply the currently displayed set of columns to some other
+     folder(s). The sub-menu items indicate whether we want to apply it to just
+     a folder or also its children.
+  -->
+<!ENTITY columnPicker.applyTo.label "Snes tigejda i…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolder.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolderAndChildren.label". It indicates a desire to
+     apply the currently display thread pane column settings to a single folder
+     that the user selects using the same widget as the move to/copy to
+     mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolder.label "Akaram…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolderAndChildren.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolder.label". It indicates a desire to
+     apply the currently display thread pane column settings to a folder and all
+     of its descendents. The user selects the folder using the same widget as the
+     move to/copy to mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolderAndChildren.label "Akaram d warraw-is…">
+<!-- LOCALIZATION NOTE (columnPicker.thisFolder.label):
+     This is used in the folder selection widget for the
+     "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" menu options. Whenever
+     a folder has children, it results in a menu popup; the first menu item
+     in that popup is given this label to indicate that that folder should be
+     selected. For example, if folder "A" has two children, "B" and "C", then
+     when the user hovers over "A", a new popup menu will be displayed whose
+     items are "This folder", "B", and "C". This is the equivalent of the
+     "File here" option for the move to/copy to widget.
+  -->
+<!ENTITY columnPicker.thisFolder.label "Akaram-agi">
+
+<!-- Media (video/audio) controls -->
+<!ENTITY contextPlay.label "Urar">
+<!ENTITY contextPlay.accesskey "U">
+<!ENTITY contextPause.label "Asteɛfu">
+<!ENTITY contextPause.accesskey "A">
+<!ENTITY contextMute.label "Susem">
+<!ENTITY contextMute.accesskey "S">
+<!ENTITY contextUnmute.label "Amesil">
+<!ENTITY contextUnmute.accesskey "m">
+
+<!-- Quick Search Bar -->
+<!-- LOCALIZATION NOTE (quickSearchCmd.key):
+     This is actually the key used for the global message search box; we have
+     not changed
+  -->
+<!ENTITY quickSearchCmd.key "k">
+<!-- LOCALIZATION NOTE (search.label.base1):
+     This is the base of the empty text for the global search box. We replace
+     #1 with the contents of the appropriate search.keyLabel.* value for the
+     platform.
+     The goal is to convey to the user that typing in the box will allow them
+     to search for messages globally and that there is a hotkey they can press
+     to get to the box faster. If the global indexer is disabled, the search
+     box will be collapsed and the user will never see this message.
+  -->
+<!ENTITY search.label.base1 "Nadi…#1">
+<!-- LOCALIZATION NOTE (search.keyLabel.nonmac):
+     The description of the key-binding to get into the global search box on
+     windows and linux (which use the control key). We use the key defined in
+     the quickSearchCmd.key entity defined above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.nonmac "&lt;Ctrl+K&gt;">
+<!-- LOCALIZATION NOTE (search.keyLabel.mac):
+     The description of the key-binding to get into the global search box on mac
+     systems. We use the key defined in the quickSearchCmd.key entity defined
+     above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.mac "&lt;&#x2318;K&gt;">
+
+<!-- Message Header Context Menu -->
+<!ENTITY AddToAddressBook.label "Rnu ɣeṛ imedlis n tensa…">
+<!ENTITY AddToAddressBook.accesskey "d">
+<!ENTITY AddDirectlyToAddressBook.label "Rnu ɣeṛ imedlis n tensa">
+<!ENTITY AddDirectlyToAddressBook.accesskey "d">
+<!ENTITY EditContact1.label "Ẓreg anermis">
+<!ENTITY EditContact1.accesskey "g">
+<!ENTITY ViewContact.label "Sken anermis">
+<!ENTITY ViewContact.accesskey "S">
+<!ENTITY SubscribeToNewsgroup.label "Multeɣ ɣeṛ ugraw n isalen">
+<!ENTITY SubscribeToNewsgroup.accesskey "s">
+<!ENTITY SendMessageTo.label "Aru izen i">
+<!ENTITY SendMessageTo.accesskey "r">
+<!ENTITY CopyEmailAddress.label "Nɣel tansiwin imayl">
+<!ENTITY CopyEmailAddress.accesskey "N">
+<!ENTITY CopyNameAndEmailAddress.label "Nɣel isem akked tansa">
+<!ENTITY CopyNameAndEmailAddress.accesskey "ɣ">
+<!ENTITY CopyNewsgroupName.label "Nɣel isem n ugraw n isalen">
+<!ENTITY CopyNewsgroupName.accesskey "N">
+<!ENTITY CopyNewsgroupURL.label "Nɣel tansa URL n ugraw n isalen">
+<!ENTITY CopyNewsgroupURL.accesskey "N">
+<!ENTITY CreateFilterFrom.label "Rnu imizizdig si…">
+<!ENTITY CreateFilterFrom.accesskey "z">
+<!ENTITY reportPhishingURL.label "Azen-aɣ-d ɣef yizen n ukellex">
+<!ENTITY reportPhishingURL.accesskey "z">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Rnu imawalen...">
+<!ENTITY spellAddDictionaries.accesskey "n">
+
+<!-- Content Pane Context Menu -->
+<!ENTITY saveLinkAsCmd.label "Kles aseɣwen daw…">
+<!ENTITY saveLinkAsCmd.accesskey "s">
+<!ENTITY saveImageAsCmd.label "Kles tugna daw…">
+<!ENTITY saveImageAsCmd.accesskey "u">
+<!ENTITY copyLinkCmd.label "Nɣel tansan n useɣwen">
+<!ENTITY copyLinkCmd.accesskey "N">
+<!ENTITY copyImageAllCmd.label "Nɣel tugna">
+<!ENTITY copyImageAllCmd.accesskey "n">
+<!ENTITY copyEmailCmd.label "Nɣel tansa imayl">
+<!ENTITY copyEmailCmd.accesskey "t">
+<!ENTITY stopCmd.label "Rken">
+<!ENTITY stopCmd.accesskey "R">
+<!ENTITY reloadCmd.label "Smiren">
+<!ENTITY reloadCmd.accesskey "m">
+<!ENTITY openInBrowser.label "Ldi deg iminig">
+<!ENTITY openInBrowser.accesskey "L">
+<!ENTITY openLinkInBrowser.label "Ldi aseɣwen deg iminig">
+<!ENTITY openLinkInBrowser.accesskey "L">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label "Immed">
+
+<!-- Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.label "Semẓi">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "Awi-d akk ɣer zdat">
+<!ENTITY zoomWindow.label "Zoom">
+
+<!-- Mac OS X Application Menu (Cocoa widgets) -->
+<!ENTITY preferencesCmdMac2.label       "Ismenyifen">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+<!ENTITY preferencesCmdMac.modifiers    "accel">
+<!ENTITY servicesMenuMac.label          "Tanfiwin">
+<!ENTITY hideThisAppCmdMac.label        "Ffer &brandShortName;">
+<!ENTITY hideThisAppCmdMac.commandkey   "H">
+<!ENTITY hideThisAppCmdMac.modifiers    "accel">
+<!ENTITY hideOtherAppsCmdMac.label      "Ffer wiyaḍ">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+<!ENTITY hideOtherAppsCmdMac.modifiers  "accel,alt">
+<!ENTITY showAllAppsCmdMac.label        "Sken imaṛṛa">
+
+<!-- Mac OS X Dock Icon pop-up menu -->
+<!ENTITY dockOptions.label              "Iɣewwaṛen n tignit n usnas…">
+<!ENTITY writeNewMessageDock.label      "Aru izen amaynut">
+<!ENTITY openAddressBookDock.label      "Ldi imedlis n tansa">
+
+<!-- Content tab Navigation buttons -->
+<!ENTITY browseBackButton.tooltip    "Uɣal s yiwen n usebter">
+<!ENTITY browseForwardButton.tooltip "Aẓ s yiwen usebter">

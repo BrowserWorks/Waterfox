@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Tabloya Dönüştür">
+<!ENTITY instructions1.label   "Düzenleyici, seçimdeki her bir paragraf için yeni bir tablo satırı oluşturur.">
+<!ENTITY instructions2.label   "Seçimi sütunlara ayırmak için kullanılacak karakteri seçin:">
+<!ENTITY commaRadio.label      "Virgül">
+<!ENTITY spaceRadio.label      "Boşluk">
+<!ENTITY otherRadio.label      "Diğer Karakter:">
+<!ENTITY deleteCharCheck.label "Ayraç karakterini sil">
+<!ENTITY collapseSpaces.label  "Fazladan boşlukları dikkate alma">
+<!ENTITY collapseSpaces.tooltip "Bitişik boşlukları tek bir ayraca dönüştür">

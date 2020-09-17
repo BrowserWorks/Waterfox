@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "Увійти в чат">
+<!ENTITY name.label                     "Кімната">
+<!ENTITY optional.label                 "(необов'язково)">
+<!ENTITY account.label                  "Обліковий запис">
+<!ENTITY autojoin.label                 "Автоматично входити в цю кімнату">
+<!ENTITY autojoin.accesskey             "А">

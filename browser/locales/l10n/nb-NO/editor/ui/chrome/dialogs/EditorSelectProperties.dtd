@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Egenskaper for alternativliste">
+
+<!ENTITY Select.label "Alternativliste">
+<!ENTITY SelectName.label "Listenavn:">
+<!ENTITY SelectName.accesskey "n">
+<!ENTITY SelectSize.label "Høyde:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "Flervalg">
+<!ENTITY SelectMultiple.accesskey "F">
+<!ENTITY SelectDisabled.label "Avslått">
+<!ENTITY SelectDisabled.accesskey "A">
+<!ENTITY SelectTabIndex.label "Tabulatorindeks:">
+<!ENTITY SelectTabIndex.accesskey "i">
+
+<!ENTITY OptGroup.label "Alternativgruppe">
+<!ENTITY OptGroupLabel.label "Etikett:">
+<!ENTITY OptGroupLabel.accesskey "E">
+<!ENTITY OptGroupDisabled.label "Avslått">
+<!ENTITY OptGroupDisabled.accesskey "A">
+
+<!ENTITY Option.label "Alternativ">
+<!ENTITY OptionText.label "Tekst:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Verdi:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "Opprinnelig valgt">
+<!ENTITY OptionSelected.accesskey "O">
+<!ENTITY OptionDisabled.label "Avslått">
+<!ENTITY OptionDisabled.accesskey "A">
+
+<!ENTITY TextHeader.label "Tekst">
+<!ENTITY ValueHeader.label "Verdi">
+<!ENTITY SelectedHeader.label "Valgt">
+
+<!ENTITY AddOption.label "Legg til alternativ">
+<!ENTITY AddOption.accesskey "a">
+<!ENTITY AddOptGroup.label "Legg til gruppe">
+<!ENTITY AddOptGroup.accesskey "g">
+<!ENTITY RemoveElement.label "Fjern">
+<!ENTITY RemoveElement.accesskey "r">
+<!ENTITY MoveElementUp.label "Flytt opp">
+<!ENTITY MoveElementUp.accesskey "o">
+<!ENTITY MoveElementDown.label "Flytt ned">
+<!ENTITY MoveElementDown.accesskey "d">

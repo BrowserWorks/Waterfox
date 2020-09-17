@@ -1,0 +1,54 @@
+<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "Sobre os seus dereitos">
+<!ENTITY rights.intro "&brandFullName; é un programa libre e de código aberto, construído por unha comunidade de centos de persoas de todo o mundo. Hai algunhas cousas que debería saber:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; está dispoñíbel nos termos da ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Isto significa que vostede pode usar, copiar e distribuír &brandShortName; a outras persoas. Vostede pode modificar o código fonte de &brandShortName; para satisfacer as súas necesidades. A licenza Mozilla Public License tamén lle outorga o dereito a distribuír as súas versións modificadas.">
+
+<!ENTITY rights.intro-point2a "Mozilla non outorga ningún dereito sobre as marcas ou logos de Mozilla e SeaMonkey. Información adicional sobre marcas pode atoparse ">
+<!ENTITY rights.intro-point2b "aquí">
+<!ENTITY rights.intro-point2c ".">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights.intro-point3a "As políticas de privacidade dos produtos de &vendorShortName; poden atoparse ">
+<!ENTITY rights.intro-point3b "aquí">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights.intro-point4a "&brandShortName; tamén fornece servizos opcionais como o servizo de actualizacións de complementos; porén, non podemos garantirlle que sexan 100&#37; precisos ou libres de erros. Pode atopar máis información, incluso información sobre como desactivar os servizos, en ">
+<!ENTITY rights.intro-point4b "termos do servizo">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.webservices-header "Servizos de sitios web do &brandFullName;">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights.webservices-a "&brandFullName; ofrece servizos opcionais (&quot;Servizos&quot;), como o servizo de actualización de complementos, que se dispoñibilizan para o seu uso con esta versión binaria de &brandShortName; tal como se describe a seguir. Se vostede non desexa empregar estes Servizos ou os seus termos fosen inaceptábeis, vostede podería deshabilitar o servizo de actualización de complementos abrindo as preferencias do aplicativo, seleccionando a sección ">
+<!ENTITY rights.webservices-b "Opcións avanzadas">
+<!ENTITY rights.webservices-c " seguida da lapela  ">
+<!ENTITY rights.webservices-d "Instalación de software">
+<!ENTITY rights.webservices-e ", e desmarcando as opcións &quot;Buscar actualizacións automaticamente&quot;.">
+
+<!-- points 1-6 text for branded builds -->
+<!ENTITY rights.webservices-term1 "&vendorShortName; podería interromper ou modificar a prestación dos Servizos unilateralmente.">
+<!ENTITY rights.webservices-term2 "Está convidado a usar estes servizos coa versión correspondente de &brandShortName;, e dispón dos dereitos necesarios para facelo. &vendorShortName; e os seus licenciatarios resérvanse todos os demais dereitos nos servizos. Estes termos non están destinados a limitar ningún dereito concedido polas licenzas de código aberto aplicábeis a &brandShortName; e ás correspondentes versións do código fonte do &brandShortName;.">
+<!ENTITY rights.webservices-term3 "Os Servizos fornécense &quot;tal cal&quot; &vendorShortName;, as persoas colaboradoras, licenciatarias e distribuidoras, renuncian a toda garantía, tanto explícitas como implícitas, incluíndo sen limitación, garantías que os Servizos son comercializábeis e satisfagan os seus propósitos particulares. Vostede asume completamente o risco tanto de seleccionar os Servizos como a súa calidade e desempeño. Algunhas xurisdicións non permiten a exclusión de limitacións ou garantías implicadas, de modo que este rexeite de responsabilidades podería non ser aplicábel no seu caso.">
+<!ENTITY rights.webservices-term4 "Agás requirimento legal, &vendorShortName;, as persoas contribuidoras, licenzatarias e distribuidoras non serán responsábeis de calquera prexuízo indirecto, especial, incidental, consecuente, punitivo ou exemplarizante relacionado co uso de &brandShortName; e os Servizos.  A responsabilidade colectiva baixo estes termos non excederá os 500 $ (cincocentos dólares). Algunhas xurisdicións non permiten a exclusión ou limitación de determinados danos, de modo que esta exclusión e limitación podería non ser aplicábel no seu caso.">
+<!ENTITY rights.webservices-term5 "&vendorShortName; podería actualizar estes termos cando sexa necesario. Os termos non deben ser modificados ou anulados sen consentimento escrito de &vendorShortName;'.">
+<!ENTITY rights.webservices-term6 "Estes termos operan baixo as leis do estado de California dos Estados Unidos de Norteamérica, excluíndo os seus conflitos sobre as provisións legais. Se calquera parte destes termos fora susceptíbel de ser non válido ou non conscriptivo, as porcións restantes manterán toda a forza e efectos. No caso de conflito entre a versión traducida e a orixinal en inglés, prevalecerá esta última.">
+

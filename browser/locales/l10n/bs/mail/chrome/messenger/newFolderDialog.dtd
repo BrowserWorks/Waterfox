@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Novi direktorij">
+<!ENTITY name.label                 "Naziv:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Kreiraj kao poddirektorij od:">
+<!ENTITY description.accesskey      "K">
+<!ENTITY folderRestriction1.label   "Ovaj server ograničava direktorije na dvije posebne vrste.">
+<!ENTITY folderRestriction2.label   "Dozvolite vašem novom direktoriju da sadrži:">
+<!ENTITY foldersOnly.label          "Samo direktorije">
+<!ENTITY messagesOnly.label         "Samo poruke">
+<!ENTITY accept.label               "Kreiraj direktorij">
+<!ENTITY accept.accesskey           "r">

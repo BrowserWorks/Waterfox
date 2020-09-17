@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "સુયોજનો">
+<!ENTITY security.caption "સુરક્ષા અને સત્તાધિકરણ">
+<!ENTITY serverName.label "સર્વર નામ:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "વર્ણન:">
+<!ENTITY serverDescription.accesskey "D">
+<!ENTITY serverPort.label "પોર્ટ:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "વપરાશકર્તા નામ:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY smtpEditTitle.label "SMTP સર્વર">
+<!ENTITY serverPortDefault.label "મૂળભુત:">

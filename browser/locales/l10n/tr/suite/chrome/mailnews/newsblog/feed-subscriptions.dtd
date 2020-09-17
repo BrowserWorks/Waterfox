@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label "Canlı yer imi abonelikleri">
+<!ENTITY subscriptionDesc.label "Not: Canlı yer imi dizinlerinin silinmesi önceden indirilmiş makaleleri etkilemez. ">
+<!ENTITY feedTitle.label "Başlık: ">
+<!ENTITY location.label "Konum: ">
+
+<!ENTITY button.addFeed.label "Ekle">
+<!ENTITY button.addFeed.accesskey "l">
+<!ENTITY button.editFeed.label "Düzenle">
+<!ENTITY button.editFeed.accesskey "e">
+<!ENTITY button.removeFeed.label "Kaldır">
+<!ENTITY button.removeFeed.accesskey "r">
+<!ENTITY button.importOPML.label "İçe aktar">
+<!ENTITY button.importOPML.accesskey "k">
+<!ENTITY button.exportOPML.label "Dışa aktar">
+<!ENTITY button.exportOPML.accesskey "t">
+
+<!ENTITY cmd.close.commandKey "w">

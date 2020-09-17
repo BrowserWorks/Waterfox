@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+   %brandDTD;
+<!ENTITY aboutLogins.title                       "ಲಾಗಿನ್‌ಗಳು">
+<!ENTITY aboutLogins.update                      "ಅಪ್‌ಡೇಟ್">
+<!ENTITY aboutLogins.emptyLoginText              "ನಿಮ್ಮ ಲಾಗಿನ್‌ಗಳನ್ನು ಸುರಕ್ಷಿತವಾಗಿರಿಸಿಕೊಳ್ಳಿ">
+<!ENTITY aboutLogins.emptyLoginHint              "&brandShortName; ಬಳಸಿ ನೀವು ಉಳಿಸಿದ ಲಾಗಿನ್‌ಗಳು ಮತ್ತು ಆಧಾರಗಳು ಇಲ್ಲಿ ಕಾಣಿಸಿಕೊಳ್ಳುತ್ತವೆ.">

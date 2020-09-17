@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offline.xul -->
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+
+
+<!ENTITY pref.network.title               "Hálózat nélkül és lemezterület">
+<!ENTITY pref.offline.caption             "Kapcsolat nélküli munka">
+<!ENTITY textStartUp                      "Induláskor:">
+<!ENTITY textStartUp.accesskey            "n">
+<!ENTITY menuitemRememberPrevState        "Előző online állapot megjegyzése">
+<!ENTITY menuitemAskMe                    "Rákérdezés az online állapotra indításkor">
+<!ENTITY menuitemAlwaysOnline             "Mindig online indulás">
+<!ENTITY menuitemAlwaysOffline            "Mindig kapcsolat nélküli indulás">
+<!ENTITY menuitemAutomatic                "Automatikus érzékelés (ha lehetséges)">
+<!ENTITY textGoingOnline                  "Postázandó üzenetek elküldése a csatlakozáskor">
+<!ENTITY radioAutoSend                    "Igen">
+<!ENTITY radioAutoSend.accesskey          "I">
+<!ENTITY radioNotSend                     "Soha">
+<!ENTITY radioNotSend.accesskey           "S">
+<!ENTITY radioAskUnsent                   "Kérdés">
+<!ENTITY radioAskUnsent.accesskey         "k">
+<!ENTITY textGoingOffline                 "Üzenetek letöltése kapcsolat nélküli üzemmódra váltáskor">
+<!ENTITY radioAutoDownload                "Igen">
+<!ENTITY radioAutoDownload.accesskey      "g">
+<!ENTITY radioNotDownload                 "Soha">
+<!ENTITY radioNotDownload.accesskey       "o">
+<!ENTITY radioAskDownload                 "Kérdés">
+<!ENTITY radioAskDownload.accesskey       "d">
+<!ENTITY mailConnections.caption          "Levelező kiszolgáló">
+<!ENTITY mailnewsTimeout.label            "Kapcsolat időtúllépés:">
+<!ENTITY mailnewsTimeout.accesskey        "p">
+<!ENTITY mailnewsTimeoutSeconds.label     "másodperc">
+<!ENTITY Diskspace                        "Lemezterület">
+<!ENTITY offlineCompactFolders.label      "Minden mappa tömörítése, ha a megtakarított hely több lenne, mint">
+<!ENTITY offlineCompactFolders.accesskey  "b">
+<!ENTITY offlineCompactFoldersMB.label    "MB összesen">

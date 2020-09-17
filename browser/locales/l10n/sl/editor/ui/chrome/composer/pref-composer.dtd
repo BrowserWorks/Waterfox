@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Meni nedavnih strani">
+<!ENTITY  documentsInMenu.label         "Največje število strani na seznamu:">
+<!ENTITY  documentsInMenu.accesskey     "s">
+<!ENTITY  savingFiles.title             "Ob shranjevanju ali objavljanju strani">
+<!ENTITY  preserveExisting.label        "Ohrani izvirno oblikovanje izvora">
+<!ENTITY  preserveExisting.accesskey    "O">
+<!ENTITY  preserveExisting.tooltip      "Ohrani prelom vrstic in izvirno oblikovanje strani">
+<!ENTITY  saveAssociatedFiles.label     "Ob shranjevanju strani shrani slike in druge povezane datoteke">
+<!ENTITY  saveAssociatedFiles.accesskey "O">
+<!ENTITY  showPublishDialog.label       "Med objavljanjem strani vedno prikaži pogovorno okno Objavi">
+<!ENTITY  showPublishDialog.accesskey   "M">
+<!ENTITY  composerEditing.label         "Urejanje">
+<!ENTITY  maintainStructure.label       "Med vstavljanjem ali brisanjem celic obdrži razporeditev tabele">
+<!ENTITY  maintainStructure.tooltip     "S samodejnim dodajanjem celic po njihovim vstavljanjem ali brisanjem ohranjuje pravokotno obliko tabele">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "Uporabi sloge CSS namesto elementov in atributov HTML">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "Nova vrsta v odstavku vedno ustvari nov odstavek">
+<!ENTITY  crInPCreatesNewP.accesskey    "e">

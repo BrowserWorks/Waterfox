@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Roghainnean adhartach a' chunntais">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Pasgan an fhrithealaiche IMAP:">
+<!ENTITY serverDirectory.accesskey "P">
+<!ENTITY usingSubscription.label "Na seall ach pasgain le fo-sgrìobhadh">
+<!ENTITY usingSubscription.accesskey "N">
+<!ENTITY dualUseFolders.label "Tha am frithealaiche a' cur taic ri pasgain anns a bheil fo-phasgain is teachdaireachdan">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "Àireamh as motha de cheanglaichean frithealaiche ri thasgadh">
+<!ENTITY maximumConnectionsNumber.accesskey "m">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Tha na roghainnean seo a' sònrachadh nan namespaces air an fhrithealaiche IMAP agad">
+<!ENTITY personalNamespace.label "Ainm-spàs pearsanta:">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Poblach (air a cho-roinneadh):">
+<!ENTITY publicNamespace.accesskey "P">
+<!ENTITY otherUsersNamespace.label "Cleachdaichean eile:">
+<!ENTITY otherUsersNamespace.accesskey "C">
+<!ENTITY overrideNamespaces.label "Leig le frithealaichean na namespaces seo fhàgail gu taobh">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3DeferringDesc.label "Ma luchdaichear a-nuas post o fhrithealaiche a’ chunntais seo, cuir am post ùr sa phasgan a leanas:" >
+<!ENTITY accountInbox.label "Bogsa a‑steach a’ chunntais seo">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Am bogsa a-steach airson cunntas eile">
+<!ENTITY deferToServer.accesskey "A">
+<!ENTITY deferGetNewMail.label "Gabh a-steach am frithealaiche seo nuair a dh'iarras mi am post ùr">
+<!ENTITY deferGetNewMail.accesskey "i">

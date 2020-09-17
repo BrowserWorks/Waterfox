@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Socruithe an fhreastalaí amach (SMTP)">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpDescription.label "Agus do chuid cuntas á mbainistiú, is féidir freastalaí ón liosta seo a úsáid trína roghnú mar an Freastalaí Amach (SMTP), nó úsáid a bhaint as an bhfreastalaí réamhshocraithe ón liosta seo trí &quot;Úsáid an Freastalaí Réamhshocraithe&quot; a roghnú.">
+
+<!ENTITY smtpListAdd.label  "Cuir Leis…">
+<!ENTITY smtpListAdd.accesskey  "C">
+<!ENTITY smtpListEdit.label "Eagar…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "Bain">
+<!ENTITY smtpListDelete.accesskey "B">
+<!ENTITY smtpListSetDefault.label "Réamhshocraigh">
+<!ENTITY smtpListSetDefault.accesskey "s">
+
+<!ENTITY serverDetails.label "Mionsonraí an fhreastalaí roghnaithe:">
+<!ENTITY serverDescription.label "Cur Síos: ">
+<!ENTITY serverName.label "Ainm an Fhreastalaí: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "Ainm Úsáideora: ">
+<!ENTITY connectionSecurity.label "Slándáil an Cheangail: ">
+<!ENTITY authMethod.label   "Modh fíordheimhnithe: ">

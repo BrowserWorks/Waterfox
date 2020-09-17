@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Ynghylch &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "Mae &brandShortName; yn arbrofol a gall fod yn ansad.">
+<!ENTITY aboutPage.checkForUpdates.link         "Gwirio am Ddiweddariad »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Chwilio am ddiweddariadau…">
+<!ENTITY aboutPage.checkForUpdates.none         "Dim diweddariadau ar gael">
+<!ENTITY aboutPage.checkForUpdates.available2   "Llwytho'r diweddariad i lawr">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Llwytho'r diweddariad i lawr…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Gosod diweddariad">
+<!ENTITY aboutPage.faq.label                    "Atebion">
+<!ENTITY aboutPage.support.label                "Cefnogaeth">
+<!ENTITY aboutPage.privacyPolicy.label          "Polisi Preifatrwydd">
+<!ENTITY aboutPage.rights.label                 "Gwybod eich Hawliau">
+<!ENTITY aboutPage.relNotes.label               "Nodiadau Rhyddhau">
+<!ENTITY aboutPage.credits.label                "Diolchiadau">
+<!ENTITY aboutPage.license.label                "Manylion Trwyddedu">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Mae Firefox a'r logos Firefox yn nodau masnach y Mozilla Foundation.">

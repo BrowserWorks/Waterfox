@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Abonnearje">
+<!ENTITY subscribeButton.label        "Abonnearje">
+<!ENTITY subscribeButton.accesskey    "b">
+<!ENTITY unsubscribeButton.label      "Abonnemint opsizze">
+<!ENTITY unsubscribeButton.accesskey  "o">
+<!ENTITY newGroupsTab.label           "Nije groepen">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Fernije">
+<!ENTITY refreshButton.accesskey      "F">
+<!ENTITY stopButton.label             "Ophâlde">
+<!ENTITY stopButton.accesskey         "O">
+<!ENTITY server.label                 "Account:">
+<!ENTITY server.accesskey             "A">
+<!ENTITY subscribedHeader.label       "Abonnearje">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Berjochten"> -->
+<!ENTITY namefield.label              "Nijsgroepen toane mei de tekst:">
+<!ENTITY namefield.accesskey          "t">

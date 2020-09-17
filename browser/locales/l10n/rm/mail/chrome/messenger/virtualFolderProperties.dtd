@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nov orinatur da tschertgas memorisadas">
+<!ENTITY name.label                 "Num:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Crear sco sutordinatur da:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "Configurar ils criteris da tschertga per quest ordinatur da tschertgas memoridadas: ">
+
+<!ENTITY folderSelectionCaption.label "Tscherner ils ordinaturs per tschertgar: ">
+<!ENTITY chooseFoldersButton.label "Tschertgar en...">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "Tschertgar online (furnescha resultats actuals da contos dad IMAP e da novitads, ma dovra dapli temp per avrir l'ordinatur)">
+<!ENTITY searchOnline.accesskey "S">
+<!ENTITY newFolderButton.label       "Crear">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "Actualisar">
+<!ENTITY editFolderButton.accesskey  "U">

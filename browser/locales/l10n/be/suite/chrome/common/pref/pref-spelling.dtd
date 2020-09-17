@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY prefSpelling.title "Праверка правапісу">
+<!ENTITY generalSpelling.label "Асноўныя">
+<!ENTITY checkSpellingWhenTyping.label "Правяраць правапіс падчас набору:">
+<!ENTITY checkSpellingWhenTyping.accesskey "ч">
+<!ENTITY dontCheckSpelling.label "Ніколі">
+<!ENTITY multilineCheckSpelling.label "У шматрадковых скрынках">
+<!ENTITY alwaysCheckSpelling.label "Усе скрынкі">
+<!ENTITY spellForMailAndNews.label "Пошта і Навінакупы">
+<!ENTITY checkSpellingBeforeSend.label "Правяраць правапіс перад дасыланнем">
+<!ENTITY checkSpellingBeforeSend.accesskey "П">
+<!ENTITY spellCheckInline.label "Правяраць правапіс падчас набору">
+<!ENTITY spellCheckInline.accesskey "н">
+<!ENTITY languagePopup.label "Мова:">
+<!ENTITY languagePopup.accessKey "М">
+<!ENTITY moreDictionaries.label "Загрузіць іншыя слоўнікі…">
+<!ENTITY noSpellCheckAvailable.label "Няма даступных слоўнікаў.">

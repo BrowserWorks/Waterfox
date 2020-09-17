@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from am-copies.xul -->
+
+
+<!ENTITY copyAndFolderTitle.label "Copies &amp; Folders">
+<!ENTITY sendingPrefix.label "Al ninviar mensaches:">
+<!ENTITY fccMailFolder.label "Meter automaticament una copia en:">
+<!ENTITY fccMailFolder.accesskey "M">
+<!ENTITY fccReplyFollowsParent.label "Colocar respuestas en a carpeta d'o mensache respondiu">
+<!ENTITY fccReplyFollowsParent.accesskey "u">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc a istas adrezas de correu:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Deseparar adrezas con minches">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc a istas adrezas de correu:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Deseparar adrezas con minches">
+<!ENTITY saveMessageDlg.label "Amostrar dialogo de confirmación quan s'alcen os mensaches">
+<!ENTITY saveMessageDlg.accesskey "A">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;Sent&quot; Folder on:">
+<!ENTITY sentFolderOn.accesskey "S">
+<!ENTITY sentInOtherFolder.label "Unatra carpeta:">
+<!ENTITY sentInOtherFolder.accesskey "U">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Fichers de mensaches">
+<!ENTITY keepArchives.label "Alzar fichers de mensaches en:">
+<!ENTITY keepArchives.accesskey "A">
+<!ENTITY archiveHierarchyButton.label "Opciones d'archivado…">
+<!ENTITY archiveHierarchyButton.accesskey "h">
+<!ENTITY archivesFolderOn.label "&quot;Archives&quot; Folder on:">
+<!ENTITY archivesFolderOn.accesskey "v">
+<!ENTITY archiveInOtherFolder.label "Unatra carpeta:">
+<!ENTITY archiveInOtherFolder.accesskey "e">
+<!ENTITY specialFolders.label "Borradors y plantillas">
+<!ENTITY keepDrafts.label "Alzar os borradors de mensaches en:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;Drafts&quot; Folder on:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "Utra carpeta:">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "Alzar as plantillas de mensaches en:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;Templates&quot; Folder on:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "Otra carpeta:">
+<!ENTITY templateInOtherFolder.accesskey "r">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Formularne kakosći">
+
+<!ENTITY Settings.label "Nastajenja">
+
+<!ENTITY FormName.label "Formularne mě:">
+<!ENTITY FormName.accesskey "F">
+<!ENTITY FormAction.label "Akciski URL:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "Metoda:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Koděrowanje:">
+<!ENTITY FormEncType.accesskey "K">
+<!ENTITY FormTarget.label "Celowy wobłuk:">
+<!ENTITY FormTarget.accesskey "C">
+
+<!ENTITY RemoveForm.label "Formular wótwónoźeś">
+<!ENTITY RemoveForm.accesskey "r">

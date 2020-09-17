@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "გამართეთ &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey      "S">
+<!ENTITY weaveDesc.label            "&syncBrand.fullName.label; თქვენი ისტორიის, სანიშნების, პაროლების და გახსნილი ჩანართების ყველა მოწყობილობიდან წვდომის საშუალებას გაძლევთ.">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "&syncBrand.fullName.label; ანგარიში">
+<!ENTITY accountName.label            "ანგარიშის სახელი:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "განახლება">
+<!ENTITY updatePass.accesskey         "U">
+<!ENTITY resetPass.label              "განულება">
+<!ENTITY resetPass.accesskey          "R">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "ანგარიშის მართვა">
+<!ENTITY manageAccount.accesskey      "M">
+<!ENTITY viewQuota.label              "ზღვრის ნახვა">
+<!ENTITY viewQuota.accesskey          "ნ">
+<!ENTITY changePassword.label         "პაროლის შეცვლა">
+<!ENTITY changePassword.accesskey     "C">
+<!ENTITY myRecoveryKey.label          "ჩემი აღდგენის კოდი">
+<!ENTITY myRecoveryKey.accesskey      "M">
+<!ENTITY resetSync.label              "რესინქრონიზაცია">
+<!ENTITY resetSync.accesskey          "R">
+<!ENTITY unlinkDevice.label           "მოწყობილობის ამორთვა">
+<!ENTITY unlinkDevice.accesskey       "D">
+<!ENTITY addDevice.label              "მოწყობილობის დამატება">
+<!ENTITY addDevice.accesskey          "A">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "კომპიუტერის სახელი:">
+<!ENTITY syncComputerName.accesskey   "N">
+
+<!ENTITY syncMy2.label              "სინქრონიზაცია:">
+<!ENTITY engine.addons.label        "მოდულები">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.bookmarks.label     "სანიშნები">
+<!ENTITY engine.bookmarks.accesskey "B">
+<!ENTITY engine.tabs.label          "ჩანართები">
+<!ENTITY engine.tabs.accesskey      "თ">
+<!ENTITY engine.history.label       "ისტორია">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.passwords.label     "პაროლები">
+<!ENTITY engine.passwords.accesskey "w">
+<!ENTITY engine.prefs.label         "პარამეტრები">
+<!ENTITY engine.prefs.accesskey     "P">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "მომსახურების პირობები">
+<!ENTITY prefs.ppLink.label         "პირადი მონაცემების დაცვის დებულება">

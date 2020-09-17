@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Почта и группы новостей">
+<!ENTITY generalSettings.caption          "Основные параметры">
+<!ENTITY confirmMove.label                "Запрашивать подтверждение при перемещении папок в «Удалённые»">
+<!ENTITY confirmMove.accesskey            "а">
+<!ENTITY preserveThreading.label          "Сохранять группировку по обсуждениям при сортировке сообщений">
+<!ENTITY preserveThreading.accesskey      "г">
+<!ENTITY loadInBackground.label           "Переключаться на новые вкладки при их открытии">
+<!ENTITY loadInBackground.accesskey       "е">
+<!ENTITY mailBiffOnNewWindow.label        "Проверять наличие новой почты только после открытия окна «Почта и группы новостей»">
+<!ENTITY mailBiffOnNewWindow.accesskey    "р">
+
+<!ENTITY defaultMailSettings.description  "Установить &brandShortName; как приложение по умолчанию для:">
+<!ENTITY setDefaultMail.label             "Почты">
+<!ENTITY setDefaultMail.accesskey         "ч">
+<!ENTITY setDefaultNews.label             "Конференций">
+<!ENTITY setDefaultNews.accesskey         "ф">
+<!ENTITY setDefaultFeed.label             "Лент новостей">
+<!ENTITY setDefaultFeed.accesskey         "е">
+
+<!ENTITY useInternalSettings.description  "Использовать Почту и Новости &brandShortName; при открытии в браузере ссылок на:">
+<!ENTITY useInternalMail.label            "Почту (mailto:)">
+<!ENTITY useInternalMail.accesskey        "о">
+<!ENTITY useInternalNews.label            "Новости (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "в">
+
+<!ENTITY messengerStartPage.caption       "Начальная страница">
+<!ENTITY enableStartPage.label            "Показывать стартовую страницу в области просмотра сообщения при запуске почтового клиента">
+<!ENTITY enableStartPage.accesskey        "с">
+<!ENTITY location.label                   "Адрес:">
+<!ENTITY location.accesskey               "д">
+<!ENTITY useDefault.label                 "Восстановить">
+<!ENTITY useDefault.accesskey             "т">
+<!ENTITY rememberLastMsg.label            "Запоминать последнее выбранное сообщение">
+<!ENTITY rememberLastMsg.accesskey        "п">

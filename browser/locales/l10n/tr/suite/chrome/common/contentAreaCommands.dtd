@@ -1,0 +1,126 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label "Reject popup windows from this website">
+<!ENTITY popupWindowRejectCmd.accesskey "o">
+<!ENTITY popupWindowAllowCmd.label "Allow popup windows from this website">
+<!ENTITY popupWindowAllowCmd.accesskey "o">
+<!ENTITY openLinkCmd.label "Yeni pencerede aç">
+<!ENTITY openLinkCmd.accesskey "p">
+<!ENTITY openLinkCmdInTab.label "Yeni sekmede aç">
+<!ENTITY openLinkCmdInTab.accesskey "Y">
+<!ENTITY openLinkInWindowCmd.label "Open">
+<!ENTITY openLinkInWindowCmd.accesskey "p">
+<!ENTITY openFrameCmd.label "Çerçeveyi yeni pencerede aç">
+<!ENTITY openFrameCmd.accesskey "e">
+<!ENTITY openFrameCmdInTab.label "Çerçeveyi yeni sekmede aç">
+<!ENTITY openFrameCmdInTab.accesskey "v">
+<!ENTITY keywordfield.label "Bu arama için anahtar kelime ekle…">
+<!ENTITY keywordfield.accesskey "k">
+<!ENTITY showOnlyThisFrameCmd.label "Sadece bu çerçeveyi göster">
+<!ENTITY showOnlyThisFrameCmd.accesskey "c">
+<!ENTITY goBackCmd.label "Back">
+<!ENTITY goBackCmd.accesskey "B">
+<!ENTITY goForwardCmd.label "İleri">
+<!ENTITY goForwardCmd.accesskey "l">
+<!ENTITY goUpCmd.label "Yukarı">
+<!ENTITY goUpCmd.accesskey "r">
+<!ENTITY reloadCmd.label "Tazele">
+<!ENTITY reloadCmd.accesskey "T">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY stopCmd.label "Dur">
+<!ENTITY stopCmd.accesskey "D">
+<!ENTITY reloadFrameCmd.label "Çerçeveyi tazele">
+<!ENTITY reloadFrameCmd.accesskey "e">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Seçimin kaynak kodunu göster">
+<!ENTITY viewPartialSourceForMathMLCmd.label "MathML kaynağını göster">
+<!ENTITY viewPartialSourceCmd.accesskey "u">
+<!ENTITY viewPageSourceCmd.label "Sayfa kaynağını göster">
+<!ENTITY viewPageSourceCmd.accesskey "a">
+<!ENTITY viewFrameSourceCmd.label "Çerçeve kaynağını göster">
+<!ENTITY viewFrameSourceCmd.accesskey "v">
+<!ENTITY viewPageInfoCmd.label "Sayfa bilgilerini göster">
+<!ENTITY viewPageInfoCmd.accesskey "S">
+<!ENTITY viewFrameInfoCmd.label "Çerçeve bilgilerini göster">
+<!ENTITY viewFrameInfoCmd.accesskey "e">
+<!ENTITY fitImageCmd.label "Fit Image to Window">
+<!ENTITY fitImageCmd.accesskey "F">
+<!ENTITY reloadImageCmd.label "Reload Image">
+<!ENTITY reloadImageCmd.accesskey "R">
+<!ENTITY viewImageCmd.label "Resme bak">
+<!ENTITY viewImageCmd.accesskey "R">
+<!ENTITY viewVideoCmd.label "Videoyu izle">
+<!ENTITY viewVideoCmd.accesskey "V">
+<!ENTITY viewBGImageCmd.label "Arkaplan resmini göster">
+<!ENTITY viewBGImageCmd.accesskey "r">
+<!ENTITY setWallpaperCmd.label "Set As Wallpaper">
+<!ENTITY setWallpaperCmd.accesskey "S">
+<!ENTITY bookmarkPageCmd.label "Sayfayı yer imlerine ekle">
+<!ENTITY bookmarkPageCmd.accesskey "m">
+<!ENTITY bookmarkLinkCmd.label "Bu bağlantıyı yer imlerine ekle">
+<!ENTITY bookmarkLinkCmd.accesskey "l">
+<!ENTITY bookmarkFrameCmd.label "Bu çerçeveyi yer imlerine ekle">
+<!ENTITY bookmarkFrameCmd.accesskey "m">
+<!ENTITY savePageAsCmd.label "Save Page As…">
+<!ENTITY savePageCmd.label "Save Page">
+<!ENTITY savePageCmd.accesskey "e">
+<!ENTITY savePageCmd.commandkey "s">
+<!ENTITY saveFrameAsCmd.label "Save Frame As…">
+<!ENTITY saveFrameCmd.label "Save Frame">
+<!ENTITY saveFrameCmd.accesskey "a">
+<!ENTITY saveLinkAsCmd.label "Save Link Target As…">
+<!ENTITY saveLinkCmd.label "Save Link Target">
+<!ENTITY saveLinkCmd.accesskey "S">
+<!ENTITY saveImageAsCmd.label "Save Image As…">
+<!ENTITY saveImageCmd.label "Save Image">
+<!ENTITY saveImageCmd.accesskey "v">
+<!ENTITY saveVideoCmd.label "Videoyu farklı kaydet…">
+<!ENTITY saveVideoCmd.accesskey "V">
+<!ENTITY saveAudioCmd.label "Sesi farklı kaydet…">
+<!ENTITY saveAudioCmd.accesskey "f">
+<!ENTITY copyLinkCmd.label "Copy Link Location">
+<!ENTITY copyLinkCmd.accesskey "L">
+<!ENTITY copyImageCmd.label "Resmi kopyala">
+<!ENTITY copyImageCmd.accesskey "y">
+<!ENTITY copyVideoURLCmd.label "Video konumunu kopyala">
+<!ENTITY copyVideoURLCmd.accesskey "V">
+<!ENTITY copyAudioURLCmd.label "Ses konumunu kopyala">
+<!ENTITY copyAudioURLCmd.accesskey "S">
+<!ENTITY metadataCmd.label "Properties">
+<!ENTITY metadataCmd.accesskey "P">
+<!ENTITY copyEmailCmd.label "Copy Email Address">
+<!ENTITY copyEmailCmd.accesskey "s">
+<!ENTITY thisFrameMenu.label "Geçerli çerçeve">
+<!ENTITY thisFrameMenu.accesskey "l">
+<!ENTITY mediaPlay.label "Yürüt">
+<!ENTITY mediaPlay.accesskey "Y">
+<!ENTITY mediaPause.label "Duraklat">
+<!ENTITY mediaPause.accesskey "D">
+<!ENTITY mediaMute.label "Sesi kapat">
+<!ENTITY mediaMute.accesskey "k">
+<!ENTITY mediaUnmute.label "Sesi aç">
+<!ENTITY mediaUnmute.accesskey "e">
+<!ENTITY mediaShowControls.label "Show Media Controls">
+<!ENTITY mediaShowControls.accesskey "a">
+<!ENTITY mediaHideControls.label "Hide Media Controls">
+<!ENTITY mediaHideControls.accesskey "a">
+<!ENTITY videoFullScreen.label "Tam ekran">
+<!ENTITY videoFullScreen.accesskey "T">
+<!ENTITY search.accesskey "W">
+<!ENTITY bidiSwitchPageDirectionItem.label "Sayfa Yönetimine Geç">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "S">
+<!ENTITY bidiSwitchTextDirectionItem.label "Metin Yönetimine Geç">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey "M">
+<!ENTITY spellAddToDictionary.label "Sözlüğe ekle">
+<!ENTITY spellAddToDictionary.accesskey "S">
+<!ENTITY spellIgnoreWord.label "Ignore Word">
+<!ENTITY spellIgnoreWord.accesskey "W">
+<!ENTITY spellCheckEnable.label "İmla denetimi">
+<!ENTITY spellCheckEnable.accesskey "İ">
+<!ENTITY spellNoSuggestions.label "(Yazım önerisi yok)">
+<!ENTITY spellDictionaries.label "Diller">
+<!ENTITY spellDictionaries.accesskey "l">
+<!ENTITY spellAddDictionaries.label "Download More Dictionaries…">
+<!ENTITY spellAddDictionaries.accesskey "D">

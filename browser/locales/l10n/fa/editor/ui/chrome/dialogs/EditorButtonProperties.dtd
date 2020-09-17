@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Button Properties">
+
+<!ENTITY Settings.label "تنظیمات">
+
+<!ENTITY ButtonType.label "نوع">
+<!ENTITY ButtonType.accesskey "ن">
+<!ENTITY submit.value "ارسال">
+<!ENTITY reset.value "بازگرداندن به حالت اولیه">
+<!ENTITY button.value "Button">
+
+<!ENTITY ButtonName.label "نام:">
+<!ENTITY ButtonName.accesskey "ن">
+<!ENTITY ButtonValue.label "Value:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Tab Index:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "غیر فعال">
+<!ENTITY ButtonDisabled.accesskey "غ">
+<!ENTITY AccessKey.label "Access Key:">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveButton.label "Remove Button">
+<!ENTITY RemoveButton.accesskey "R">

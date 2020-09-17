@@ -1,0 +1,37 @@
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Email"> 
+<!ENTITY readMsgsLink.label           "Citește corespondența"> 
+<!ENTITY composeMsgLink.label         "Compose a new message"> 
+
+<!ENTITY newsSectionHdr.label         "Newsgroups"> 
+<!ENTITY subscribeNewsLink.label      "Gestionează abonamentele la grupuri de discuții"> 
+
+<!ENTITY accountsSectionHdr.label     "Conturi"> 
+<!ENTITY subscribeImapFolders.label   "Gestionează abonamentele la dosare"> 
+<!ENTITY settingsLink.label           "Vezi setările acestui cont"> 
+<!ENTITY newAcctLink.label            "Creează un cont nou"> 
+
+<!ENTITY advFeaturesSectionHdr.label  "Opțiuni avansate"> 
+<!ENTITY searchMsgsLink.label         "Caută mesaje"> 
+<!ENTITY filtersLink.label            "Gestionează filtrele de mesaje">
+<!ENTITY junkSettings.label           "Parametri mesaje nesolicitate">
+<!ENTITY offlineLink.label            "Setări pentru lucru offline">
+
+<!ENTITY feedsSectionHdr.label        "Feeds">
+<!ENTITY subscribeFeeds.label         "Manage subscriptions">
+

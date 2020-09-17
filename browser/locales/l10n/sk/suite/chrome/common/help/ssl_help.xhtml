@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Nastavenie SSL</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="ssl_settings">Nastavenia SSL</h1>
+
+<p>Táto kapitola popisuje nastavenia predvolieb pre SSL.</p>
+
+<div class="contentsBox">V tejto kapitole:
+  <ul>
+    <li><a href="#privacy_and_security_preferences_ssl">Súkromie a bezpečnosť - SSL</a></li>
+  </ul>
+</div>
+
+<h2 id="privacy_and_security_preferences_ssl">Súkromie a bezpečnosť - SSL</h2>
+
+<p>Táto kapitola popisuje používanie panela nastavení SSL. Ak chcete zobraziť tento panel,
+postupujte nasledovne:</p>
+
+<ol>
+  <li>Otvorte ponuku <span class="mac">&brandShortName;</span>
+    <span class="noMac">Upraviť</span> a vyberte položku Možnosti.</li>
+  <li>V sekcii Súkromie a bezpečnosť kliknite na podkategóriu SSL. (Ak nevidíte žiadnu
+  podkategóriu, dvojitým kliknutím na položku Súkromie a bezpečnosť zobrazíte ich zoznam.)</li>
+</ol>
+
+<h3 id="ssl_protocol_versions">Verzie protokolu SSL</h3>
+
+<p>Protokol SSL (The Secure Sockets Layer) definuje pravidlá obojstranného overovania
+  medzi webovou stránkou a prehliadačom a šifrovanie údajov, ktoré si navzájom vymieňajú.
+  Protokol TLS (The Transport Layer Security) je štandard IETF založený na SSL. TLS 1.0
+  je vlastne SSL 3.1.</p>
+
+<p>V predvolenom stave sú tieto políčka označené, aby bola zaručená funkčnosť prehliadača
+  so staršími aj novšími webovými servermi:</p>
+
+<ul>
+  <li><strong>Povoliť SSL 3.0</strong>: umožňuje webovým serverom podporujúcim SSL 3.0 spolupracovať s
+    prehliadačom.</li>
+  <li><strong>Povoliť TLS 1.0</strong>: umožňuje webovým serverom podporujúcim TLS 1.0 využívať
+    jeho výhody.</li>
+</ul>
+
+<p><strong>Dôležitá poznámka TLS</strong>: Niektoré webové servery nepodporujú SSL korektne a
+nedokážu komunikovať prostredníctvom TLS. Tieto servery sú známe ako <q>netolerantné k TLS</q>.</p>
+
+<p>Ak je označená možnosť Povoliť TLS 1.0, prehliadač sa pokúsi použiť protokol TLS pri nadväzovaní
+  zabezpečených spojení so serverom. Ak podobné spojenie zlyhá, pretože server je netolerantný k TLS,
+  prehliadač použije SSL 3.0 (ak je povolené).</p>
+
+<h3 id="ssl_warnings">Upozornenia SSL</h3>
+
+<p>To, či stránka, ktorú práve prehliadate, používa zabezpečené pripojenie k severu,
+  zistíte jednoducho. Ak je pripojenie zabezpečené, ikona zámku v pravom dolnom rohu
+  okna prehliadača je zobrazuje zamknutý zámok. Ak pripojenie zabezpečené nie je,
+  zámok je odomknutý.</p>
+
+<p>Ak chcete, aby sa zobrazovali ďalšie upozornenia, môžete si ich nastaviť v paneli
+  nastavení SSL. Pre niektorých ľudí môžu byť tieto upozornenia otravné.</p>
+
+<p>Ak chcete aktivovať zobrazovanie týchto upozornení, označte nasledujúce polia:</p>
+
+<ul>
+  <li><strong>Načíta zašifrovanú stránku</strong>: Toto upozornenie vyberte vtedy,
+    keď chcete byť upozornený pri načítavaní zašifrovanej stránky.</li>
+  <li><strong>Opustí zašifrovanú stránku</strong>: Toto upozornenie vyberte vtedy,
+    keď chcete byť upozornený pri opustení stránky, ktorá podporuje šifrovanie a prechádzate
+    na stránku, ktorá ho nepodporuje.</li>
+  <li><strong>Odošle vyplnený formulár z nezašifrovanej stránky na nezašifrovanú
+    stránku</strong>: Toto upozornenie vyberte vtedy, keď chcete byť upozornený na
+    odosielanie údajov cez nezabezpečené pripojenie. Ak posielate informácie cez nezabezpečené
+    pripojenie, ktokoľvek môže jednoducho tieto údaje prečítať.</li>
+  <li><strong>Zobrazí stránku so zmiešaným zašifrovaným/nezašifrovaným obsahom</strong>:
+    Toto upozornenie vyberte vtedy, keď chcete byť upozornený pri prehliadaní stránky,
+    ktorá obsahuje nezašifrovaný obsah.</li>
+</ul>
+
+<p>Definície:
+  <a href="glossary.xhtml#authentication">autentifikácia</a>,
+  <a href="glossary.xhtml#encryption">šifrovanie</a>,
+  <a href="glossary.xhtml#certificate">certifikát</a>.</p>
+
+<p>Ďalšie informácie o šifrách a šifrovaní nájdete v nasledujúcich dokumentoch online:</p>
+
+<ul>
+  <li>
+    <a href="http://developer.mozilla.org/en/Introduction_to_Public-Key_Cryptography">Introduction
+    to Public-Key Cryptography</a></li>
+  <li>
+    <a href="http://developer.mozilla.org/en/Introduction_to_SSL">Introduction
+    to SSL</a></li>
+  <li>
+    <a href="http://www.mozilla.org/projects/security/pki/nss/nss-3.11/nss-3.11-algorithms.html">Encryption
+    Technologies Available in NSS 3.11</a>.</li>
+</ul>
+
+</body>
+</html>

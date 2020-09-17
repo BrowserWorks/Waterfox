@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event "Nýr atburður…">
+<!ENTITY event.new.event.accesskey "N">
+<!ENTITY event.new.task "Nýtt verkefni…">
+<!ENTITY event.new.task.accesskey "k">
+<!ENTITY calendar.import.label "Flytja inn…">
+<!ENTITY calendar.import.accesskey "F">
+<!ENTITY calendar.export.label "Flytja út…">
+<!ENTITY calendar.export.accesskey "l">
+<!ENTITY calendar.publish.label "Gefa út…">
+<!ENTITY calendar.publish.accesskey "t">
+<!ENTITY calendar.deletecalendar.label "Eyða völdu dagatali…">
+<!ENTITY calendar.deletecalendar.accesskey "d">
+<!ENTITY calendar.unsubscribecalendar.label "Hætta í áskrift fyrir valið dagatal…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "æ">
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label "Fjarlægja valið dagatal…">
+<!ENTITY calendar.removecalendar.accesskey "r">
+<!ENTITY calendar.menu.customize.label "Sérsníða…">
+<!ENTITY calendar.menu.customize.accesskey "r">
+<!ENTITY showUnifinderCmd.label "Finna atburði">
+<!ENTITY showUnifinderCmd.accesskey "F">
+<!ENTITY showUnifinderCmd.tooltip "Víxla flipa fyrir leita að atburðum">
+<!ENTITY calendar.displaytodos.checkbox.label "Sýna verkefni í dagatali">
+<!ENTITY calendar.displaytodos.checkbox.accesskey "S">
+<!ENTITY goTodayCmd.label "Í dag">
+<!ENTITY goTodayCmd.accesskey "d">
+<!ENTITY showCurrentView.label "Núverandi sýn">
+<!ENTITY showCurrentView.accesskey "N">
+<!ENTITY calendar.properties.label "Stillingar dagatals…">
+<!ENTITY calendar.properties.accesskey "d">

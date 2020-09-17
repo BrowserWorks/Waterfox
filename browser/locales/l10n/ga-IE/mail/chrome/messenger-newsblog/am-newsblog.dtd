@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Cumasaigh nuashonruithe do na fothaí go léir">
+<!ENTITY biffAll.accesskey             "C">
+
+<!ENTITY newFeedSettings.label         "Réamhshocruithe le haghaidh Fothaí Nua">
+
+<!ENTITY manageSubscriptions.label     "Bainistiú na Síntiús…">
+<!ENTITY manageSubscriptions.accesskey "S">
+
+<!ENTITY feedWindowTitle.label         "Treoraí na gCuntas Fotha">
+<!ENTITY feeds.accountName             "Blaganna agus Fothaí Nuachta">

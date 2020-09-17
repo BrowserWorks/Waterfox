@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Перавагі ЧатЗіла">
+<!ENTITY loading.label "Пачакайце, калі ласка, ідзе загрузка…">
+<!ENTITY homepage.url "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "Хатняя старонка ЧатЗіла">
+<!ENTITY object.add.label "Дадаць…">
+<!ENTITY object.add.hint "Дадаць новую сетку, канал або карыстальніка, каб прызначыць перавагі для">
+<!ENTITY object.add.accesskey "Д">
+<!ENTITY object.del.label "Выдаліць">
+<!ENTITY object.del.hint "Прыняць гэтачасовы аб'ект, ачысціць усе яго перавагі">
+<!ENTITY object.del.accesskey "В">
+<!ENTITY object.reset.label "Узнавіць">
+<!ENTITY object.reset.hint "Скінуць перавагі аб'екту, прызначыць змоўчныя">
+<!ENTITY object.reset.accesskey "У">
+<!ENTITY dialog.apply "Ужыць">
+<!ENTITY network "Сетка">
+<!ENTITY channel "Канал">
+<!ENTITY user "Карыстальнік">
+<!ENTITY config.add.title "Дадаць аб'ект перавагаў">
+<!ENTITY config.type.label "Тып:">
+<!ENTITY config.type.hint "Тып аб'екту для дадання перавагаў">
+<!ENTITY config.type.accesskey "Т">
+<!ENTITY config.network.label "Сетка:">
+<!ENTITY config.network.hint "Вядомая назва сеткі або назва паслугача">
+<!ENTITY config.network.accesskey "н">
+<!ENTITY config.target.label "Мэта:">
+<!ENTITY config.target.hint "Цэлявы канал або імя карыстальніка">
+<!ENTITY config.target.accesskey "М">

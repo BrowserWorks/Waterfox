@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Accounteigenskippen">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Algemien">
+<!ENTITY account.advanced              "Avansearre opsjes">
+<!ENTITY account.name                  "Brûkersnamme:">
+<!ENTITY account.password              "Wachtwurd:">
+<!ENTITY account.alias                 "Alias:">
+<!ENTITY account.newMailNotification   "Notifikaasje by nije e-mail">
+<!ENTITY account.autojoin              "Automatysk bywenne kanalen:">
+<!ENTITY account.proxySettings.caption "Proxyynstellingen:">
+<!ENTITY account.proxySettings.change.label     "Wizigje…">
+<!ENTITY account.proxySettings.change.accessKey "W">

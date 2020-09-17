@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Настройки на изходящия сървър (SMTP)">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpDescription.label "При управляване на идентичностите ви може да използвате сървър от този списък като изходящ сървър (SMTP) или да използвате стандартния сървър от този списък чрез избиране на „Използване на подразбиращ се“.">
+
+<!ENTITY smtpListAdd.label  "Добавяне…">
+<!ENTITY smtpListAdd.accesskey  "б">
+<!ENTITY smtpListEdit.label "Промяна…">
+<!ENTITY smtpListEdit.accesskey "П">
+<!ENTITY smtpListDelete.label "Премахване">
+<!ENTITY smtpListDelete.accesskey "х">
+<!ENTITY smtpListSetDefault.label "По подразбиране">
+<!ENTITY smtpListSetDefault.accesskey "о">
+
+<!ENTITY serverDetails.label "Подробности за избрания сървър:">
+<!ENTITY serverDescription.label "Описание:">
+<!ENTITY serverName.label "Име на сървър:">
+<!ENTITY serverPort.label "Порт:">
+<!ENTITY userName.label   "Потребителско име:">
+<!ENTITY connectionSecurity.label "Сигурност на връзката:">
+<!ENTITY authMethod.label   "Метод на удостоверяване: ">

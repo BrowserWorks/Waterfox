@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Configuración">
+<!ENTITY security.caption "Seguridá ya identificación">
+<!ENTITY serverName.label "Nome del sirvidor:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "Descripción:">
+<!ENTITY serverDescription.accesskey "D">
+<!ENTITY serverPort.label "Puertu:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "Nome d'usuariu:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "Seguridá de la conexón:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "Denguna">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, si ta disponible">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Sirvidor SMTP">
+<!ENTITY serverPortDefault.label "Predetermináu:">
+<!ENTITY authMethod.label "Métodu d'identificación:">
+<!ENTITY authMethod.accesskey "a">

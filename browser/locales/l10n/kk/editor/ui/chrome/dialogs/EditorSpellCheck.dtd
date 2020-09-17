@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Емлені тексеру">
+
+<!ENTITY misspelledWord.label "Қате жазылған сөз:">
+<!ENTITY wordEditField.label "Немен алмастыру:">
+<!ENTITY wordEditField.accessKey "е">
+<!ENTITY checkwordButton.label "Сөзді тексеру">
+<!ENTITY checkwordButton.accessKey "к">
+<!ENTITY suggestions.label "Ұсыныстар:">
+<!ENTITY suggestions.accessKey "с">
+<!ENTITY ignoreButton.label "Елемеу">
+<!ENTITY ignoreButton.accessKey "Е">
+<!ENTITY ignoreAllButton.label "Барлығын елемеу">
+<!ENTITY ignoreAllButton.accessKey "м">
+<!ENTITY replaceButton.label "Алмастыру">
+<!ENTITY replaceButton.accessKey "А">
+<!ENTITY replaceAllButton.label "Барлығын алмастыру">
+<!ENTITY replaceAllButton.accessKey "а">
+<!ENTITY stopButton.label "Тоқтату">
+<!ENTITY stopButton.accessKey "о">
+<!ENTITY userDictionary.label "Жеке сөздік:">
+<!ENTITY moreDictionaries.label "Көбірек сөздіктерді жүктеп алу…">
+<!ENTITY addToUserDictionaryButton.label "Сөзді қосу">
+<!ENTITY addToUserDictionaryButton.accessKey "о">
+<!ENTITY editUserDictionaryButton.label "Түзету…">
+<!ENTITY editUserDictionaryButton.accessKey "Т">
+<!ENTITY recheckButton2.label "Мәтінді қайта тексеру">
+<!ENTITY recheckButton2.accessKey "т">
+<!ENTITY closeButton.label "Жабу">
+<!ENTITY closeButton.accessKey "Ж">
+<!ENTITY sendButton.label "Жіберу">
+<!ENTITY sendButton.accessKey "Ж">
+<!ENTITY languagePopup.label "Тілі:">
+<!ENTITY languagePopup.accessKey "Т">

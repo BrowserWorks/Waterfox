@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Cấu hình các thiết lập cho định danh này:">
+
+<!ENTITY settingsTab.label       "Cài đặt">
+<!ENTITY copiesFoldersTab.label "Bản sao &amp; thư mục">
+<!ENTITY addressingTab.label    "Soạn thảo &amp; xác định địa chỉ">
+
+<!ENTITY publicData.label        "Dữ liệu công khai">
+<!ENTITY privateData.label       "Dữ liệu riêng tư">
+<!ENTITY identityAlias.label     "Nhãn nhận dạng:">
+<!ENTITY identityAlias.accesskey "b">

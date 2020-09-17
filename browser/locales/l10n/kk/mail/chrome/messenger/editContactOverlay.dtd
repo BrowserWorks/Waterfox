@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Өшіру">
+<!ENTITY editContactPanelDeleteContact.accesskey "і">
+
+<!ENTITY editContactName.label "Аты:">
+<!ENTITY editContactName.accesskey "А">
+
+<!ENTITY editContactEmail.label "Эл.пошта:">
+<!ENTITY editContactEmail.accesskey "Э">
+
+<!ENTITY editContactAddressBook.label "Адрестік кітапша:">
+<!ENTITY editContactAddressBook.accesskey "А">
+
+<!ENTITY editContactPanelDone.label "Дайын">
+<!ENTITY editContactPanelDone.accesskey "Д">
+
+<!ENTITY contactMoveDisabledWarning.description "Сіз адрестік кітапшаны өзгерте алмайсыз, өйткені контакт хаттарды тарату тізімінде болып тұр.">

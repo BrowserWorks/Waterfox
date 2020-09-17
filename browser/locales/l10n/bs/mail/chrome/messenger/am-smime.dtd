@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "Izaberi…">
+<!ENTITY digitalSign.certificate.accesskey "a">
+<!ENTITY digitalSign.certificate_clear.button "Očisti">
+<!ENTITY digitalSign.certificate_clear.accesskey "O">
+<!ENTITY encryption.certificate.button "Izaberi…">
+<!ENTITY encryption.certificate.accesskey "e">
+<!ENTITY encryption.certificate_clear.button "Očisti">
+<!ENTITY encryption.certificate_clear.accesskey "i">
+<!ENTITY signingGroupTitle.label "Digitalno potpisivanje">
+<!ENTITY signMessage.accesskey "D">
+
+<!-- Strings for the cert picker dialog -->
+
+<!ENTITY certPicker.title "Izaberite certifikat">
+<!ENTITY certPicker.info  "Certifikat:">
+<!ENTITY certPicker.detailsLabel "Detalji izabranog certifikata:">
+

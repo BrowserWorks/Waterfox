@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filterlash qoidalari">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Filtrning nomi:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Spam">
+<!ENTITY notJunk.label "Spam emas">
+
+<!ENTITY lowestPriorityCmd.label "Juda past">
+<!ENTITY lowPriorityCmd.label "Past">
+<!ENTITY normalPriorityCmd.label "O‘rtacha">
+<!ENTITY highPriorityCmd.label "Yuqori">
+<!ENTITY highestPriorityCmd.label "Eng yuqori">
+
+<!ENTITY contextDesc.label "Filterni qo‘llash:">
+<!ENTITY contextIncomingMail.label "Yangi xat kelganda:">
+<!ENTITY contextIncomingMail.accesskey "Y">
+<!ENTITY contextManual.label "Qo‘lbola ishga tushirish">
+<!ENTITY contextManual.accesskey "i">
+<!ENTITY contextBeforeCls.label "Spamni tasniflashdan oldin filterlash">
+<!ENTITY contextAfterCls.label "Spamni tasniflashdan keyin filterlash">
+<!ENTITY contextOutgoing.label "Jo‘natilgandanso‘ng">
+<!ENTITY contextOutgoing.accesskey "J">
+<!ENTITY contextArchive.label "Arxivlash">
+<!ENTITY contextArchive.accesskey "A">
+
+<!ENTITY filterActionDesc.label "Bu amallarni bajarish:">
+<!ENTITY filterActionDesc.accesskey "B">
+
+<!ENTITY filterActionOrderWarning.label "Eslatma: filterlash amallari boshqa tartibda ishga tushiriladi.">
+<!ENTITY filterActionOrder.label "Bajarish tartibini ko‘rish">
+<!-- New Style Filter Rule Actions -->
+
+<!ENTITY moveMessage.label "Xabarni ko‘chirish">
+<!ENTITY copyMessage.label "Xabardan nusxa ko‘chirish">
+<!ENTITY forwardTo.label "Xabarni uzatish">
+<!ENTITY replyWithTemplate.label "Namuna yordamida javob yozish">
+<!ENTITY markMessageRead.label "O‘qilgan deb belgilash">
+<!ENTITY markMessageUnread.label "O‘qilmagan deb belgilash">
+<!ENTITY markMessageStarred.label "Yulduz qo‘shish">
+<!ENTITY setPriority.label "Muhimligini o‘zgartirish">
+<!ENTITY addTag.label "Xabarga teg qo‘shish">
+<!ENTITY setJunkScore.label "Spam holatini o‘zgartirish">
+<!ENTITY deleteMessage.label "Xatni oʻchirish">
+<!ENTITY deleteFromPOP.label "POP serverdan o‘chirish">
+<!ENTITY fetchFromPOP.label "POP serverdan olish">
+<!ENTITY ignoreThread.label "Yozishmalarni e’tiborsiz qoldirish">
+<!ENTITY ignoreSubthread.label "Quyi yozishmalarni e’tiborsiz qoldirish">
+<!ENTITY watchThread.label "Yozishmani ko‘rish">
+<!ENTITY stopExecution.label "Filterlashni to‘xtatish">
+
+<!ENTITY addAction.tooltip "Yangi amal qo‘shish">
+<!ENTITY removeAction.tooltip "Bu amalni olib tashlash">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

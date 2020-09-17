@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "New Folder">
+<!ENTITY name.label                 "Name:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "Create as a subfolder of:">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "This server restricts folders to two special kinds.">
+<!ENTITY folderRestriction2.label   "Allow your new folder to contain:">
+<!ENTITY foldersOnly.label          "Folders Only">
+<!ENTITY messagesOnly.label         "Messages Only">
+<!ENTITY accept.label               "Create Folder">
+<!ENTITY accept.accesskey           "r">

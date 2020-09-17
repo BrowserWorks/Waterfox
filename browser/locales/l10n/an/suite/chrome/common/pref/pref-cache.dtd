@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-cache.xul -->
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+
+
+<!ENTITY pref.cache.title                "Caché">
+<!ENTITY pref.cache.caption              "Establir opciones de caché">
+<!ENTITY cachePara                       "A caché mantiene en o suyo disco duro copias d'as pachinas web visitadas freqüentment (encara que en pretar Recargar siempre s'amostrará a zaguera versión d'una pachina).">
+<!ENTITY cacheCheck.label                "Permitir a administrar &brandShortName; a grandaria d'a caché">
+<!ENTITY cacheCheck.accesskey            "m">
+<!ENTITY diskCacheUpTo.label             "Usar dica">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "MB d'espacio en disco t'a caché">
+<!ENTITY diskCacheFolder.label           "Ubicación d'a carpeta de caché:">
+<!ENTITY clearDiskCache.label            "Vaciar caché">
+<!ENTITY clearDiskCache.accesskey        "V">
+<!ENTITY chooseDiskCacheFolder.label     "Esleir carpeta…">
+<!ENTITY chooseDiskCacheFolder.accesskey "E">
+<!ENTITY diskCacheFolderExplanation      "Cache files will be stored in a subfolder named &quot;Cache&quot; of the directory you specify. Restart &brandShortName; for changes to take effect.">
+<!ENTITY docCache.label                  "Comparar a pachina en a caché con a pachina en o ret:">
+<!ENTITY docCache.accesskey              "C">
+<!ENTITY checkOncePerSession.label       "Una vez por sesión">
+<!ENTITY checkEveryTime.label            "Cada vez que veiga a pachina">
+<!ENTITY checkNever.label                "Nunca">
+<!ENTITY checkAutomatically.label        "Quan a pachina sía obsoleta">
+
+<!ENTITY prefetchTitle.label             "Precarga d'enlaces">
+<!ENTITY enablePrefetch.label            "Precargar as pachinas web mientres ye inactivo, ta que los vinclos en as pachinas web diseñadas ta ixo se carguen mas rapido">
+<!ENTITY enablePrefetch.accesskey        "P">

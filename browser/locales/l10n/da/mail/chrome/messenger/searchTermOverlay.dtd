@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY matchAll.label "Match alle de følgende">
+<!ENTITY matchAll.accesskey "a">
+<!ENTITY matchAny.label "Match en af følgende">
+<!ENTITY matchAny.accesskey "e">
+<!ENTITY matchAllMsgs.label "Match alle meddelelser">
+<!ENTITY matchAllMsgs.accesskey "M">
+
+<!ENTITY searchTermListAttributesFlexValue "5">
+<!ENTITY searchTermListOperatorsFlexValue "5">
+<!ENTITY searchTermListValueFlexValue "5">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Mahalagang Balita">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Upang mag-sync ng impormasyon na nai-save mo na sa Firefox gamit itong installation ng &brandShortName;, mag-sign in gamit ang iyong &syncBrand.fxAccount.label;.">
+<!ENTITY continue-button "Ipagpatuloy">
+
+<!ENTITY mainText "Ang pag-install ng &brandShortName; ay may bagong profile. Hindi ito nagbabahagi ng mga bookmark, mga password at mga user preference sa ibang installation ng Firefox (kabilang ang Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition at Firefox Nightly) sa computer na ito.">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "ネットワークとディスク領域">
+<!ENTITY pref.offline.caption             "オフライン">
+<!ENTITY textStartUp                      "起動したとき:">
+<!ENTITY textStartUp.accesskey            "W">
+<!ENTITY menuitemRememberPrevState        "前回終了時と同じ">
+<!ENTITY menuitemAskMe                    "起動時、処理方法を確認する">
+<!ENTITY menuitemAlwaysOnline             "常にオンラインで起動する">
+<!ENTITY menuitemAlwaysOffline            "常にオフラインで起動する">
+<!ENTITY menuitemAutomatic                "自動検出 (利用可能であれば)">
+<!ENTITY textGoingOnline                  "オンラインになったら、未送信メッセージを送信しますか？">
+<!ENTITY radioAutoSend                    "はい">
+<!ENTITY radioAutoSend.accesskey          "Y">
+<!ENTITY radioNotSend                     "いいえ">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "確認する">
+<!ENTITY radioAskUnsent.accesskey         "s">
+<!ENTITY textGoingOffline                 "オフラインにする前に、オフラインでも読めるようにメッセージをダウンロードしますか？">
+<!ENTITY radioAutoDownload                "はい">
+<!ENTITY radioAutoDownload.accesskey      "e">
+<!ENTITY radioNotDownload                 "いいえ">
+<!ENTITY radioNotDownload.accesskey       "o">
+<!ENTITY radioAskDownload                 "確認する">
+<!ENTITY radioAskDownload.accesskey       "k">
+<!ENTITY mailConnections.caption          "メールの接続">
+<!ENTITY mailnewsTimeout.label            "以下の秒数を経過した場合、接続をタイムアウトと判定します:">
+<!ENTITY mailnewsTimeout.accesskey        "m">
+<!ENTITY mailnewsTimeoutSeconds.label     "秒">
+<!ENTITY Diskspace                        "ディスク領域">
+<!ENTITY offlineCompactFolders.label      "ディスク領域を合計"><!-- offlineCompactFolders.label [ ] offlineCompactFoldersMB.label -->
+<!ENTITY offlineCompactFolders.accesskey  "C">
+<!ENTITY offlineCompactFoldersMB.label    "MB 以上節約できるときはフォルダーを最適化する">

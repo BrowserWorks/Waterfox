@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Sett inn matte">
+
+<!ENTITY sourceEditField.label "Skriv inn LaTeX kildekode:">
+
+<!ENTITY options.label "Innstillinger">
+<!ENTITY optionInline.label "Innbundet modus">
+<!ENTITY optionInline.accesskey "n">
+<!ENTITY optionDisplay.label "Visningsmodus">
+<!ENTITY optionDisplay.accesskey "V">
+<!ENTITY optionLTR.label "Venstre-til-høyre retning">
+<!ENTITY optionLTR.accesskey "V">
+<!ENTITY optionRTL.label "Høyre-til-venstre retning">
+<!ENTITY optionRTL.accesskey "H">
+
+<!ENTITY insertButton.label "Sett inn">
+<!ENTITY insertButton.accesskey "i">

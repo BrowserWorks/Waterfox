@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY tapToPlayPlugin                                     "Koppintson a bővítmény aktiválásához.">
+<!ENTITY clickToActivatePlugin                               "Bővítmény aktiválása.">
+<!ENTITY checkForUpdates                                     "Frissítések keresése…">
+<!ENTITY blockedPlugin.label                                 "Az Ön védelme érdekében ez a bővítmény le lett tiltva.">
+<!ENTITY hidePluginBtn.label                                 "Bővítmény elrejtése">
+<!ENTITY managePlugins                                       "Bővítménykezelő…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Oldal újratöltése">
+<!ENTITY reloadPlugin.post                                   " az újrapróbálkozáshoz.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Hibajelentés küldése">
+<!ENTITY report.submitting                                   "Jelentés küldése…">
+<!ENTITY report.submitted                                    "A hibajelentés elküldve.">
+<!ENTITY report.disabled                                     "A hibajelentés le van tiltva.">
+<!ENTITY report.failed                                       "A beküldés sikertelen.">
+<!ENTITY report.unavailable                                  "Nincs jelentés.">
+<!ENTITY report.comment                                      "Hozzászólás (a hozzászólások nyilvánosak)">
+<!ENTITY report.pageURL                                      "Az oldal URL-címének mellékelése">
+
+<!ENTITY plugin.file                                         "Fájl">
+<!ENTITY plugin.mimeTypes                                    "MIME-típusok">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash védett mód bekapcsolása">
+<!ENTITY plugin.enableBlocklists.label                       "Veszélyes és tolakodó Flash tartalmak blokkolása">

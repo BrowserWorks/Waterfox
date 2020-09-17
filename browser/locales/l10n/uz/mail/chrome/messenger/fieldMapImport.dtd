@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Manzil kitobini import qilish">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Yozib olish uchun ma’lumotlar import qilindi: ">
+<!ENTITY fieldMapImport.next.label "Keyingi">
+<!ENTITY fieldMapImport.next.accesskey "K">
+<!ENTITY fieldMapImport.previous.label "Oldingi">
+<!ENTITY fieldMapImport.previous.accesskey "O">
+<!ENTITY fieldMapImport.text "Manzil kitobi maydonlaridan topish uchun chapdagi Tepaga ko‘tarish va Pastga tushirish tugmalaridan foydalaning.">
+<!ENTITY fieldMapImport.up.label "Tepaga ko‘tarish">
+<!ENTITY fieldMapImport.up.accesskey "k">
+<!ENTITY fieldMapImport.down.label "Pastga tushirish">
+<!ENTITY fieldMapImport.down.accesskey "t">
+<!ENTITY fieldMapImport.fieldListTitle "Manzil kitobi maydonlari">
+<!ENTITY fieldMapImport.dataTitle "Import qilish uchun yozib olish ma’lumotlari">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Birinchi yozuvda maydon nomlari mavjud">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "B">

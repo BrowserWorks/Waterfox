@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLProtocolVersions.caption "SSL Protocol Versions">
+<!ENTITY SSLWarnings.caption "SSL Warnings">
+<!ENTITY SSLClientAuthMethod.caption "Client Certificate Selection">
+
+<!ENTITY pref.ssl.title "Secure Sockets Layer (SSL)">
+<!ENTITY enable.ssl3 "Enable SSL version 3">
+<!ENTITY enable.ssl3.accesskey "3">
+<!ENTITY enable.tls "Enable TLS">
+<!ENTITY enable.tls.accesskey "t">
+
+<!ENTITY warn.description "&brandShortName; can alert you to the security status of the web page you are viewing. Set &brandShortName; to show a warning and ask permission before:">
+<!ENTITY warn.enteringsecure "Loading a page that supports encryption">
+<!ENTITY warn.enteringsecure.accesskey "L">
+<!ENTITY warn.enteringweak "Loading a page that uses low-grade encryption">
+<!ENTITY warn.enteringweak.accesskey "o">
+<!ENTITY warn.insecurepost "Sending form data from an unencrypted page to an unencrypted page">
+<!ENTITY warn.insecurepost.accesskey "D">
+<!ENTITY warn.leavingsecure "Leaving a page that supports encryption">
+<!ENTITY warn.leavingsecure.accesskey "a">
+<!ENTITY warn.viewmixed "Viewing a page with an encrypted/unencrypted mix">
+<!ENTITY warn.viewmixed.accesskey "V">
+
+<!ENTITY certselect.description "Decide how &brandShortName; selects a security certificate to present to web sites that require one:">
+<!ENTITY certselect.auto "Select Automatically">
+<!ENTITY certselect.auto.accesskey "e">
+<!ENTITY certselect.ask "Ask Every Time">
+<!ENTITY certselect.ask.accesskey "E">

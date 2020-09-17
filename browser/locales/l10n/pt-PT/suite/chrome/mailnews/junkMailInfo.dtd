@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Acerca do lixo eletrónico">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "O correio deteta automaticamente as mensagens recebidas e que parecem lixo eletrónico (também conhecidas como spam). As mensagens que o correio ache que são lixo eletrónico mostram um ícone de Lixo">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Primeiro, tem de treinar o correio e identificar o lixo eletrónico, utilizando o botão Lixo na barra de ferramentas para marcar mensagens como lixo eletrónico ou não.">
+<!ENTITY info3.label   "Uma vez que o correio está a identificar corretamente o lixo eletrónico, pode usar os controlos de lixo eletrónico para mover o lixo eletrónico para a pasta de Lixo eletrónico.">
+<!ENTITY info4.label   "Para mais informações, clique em Ajuda.">

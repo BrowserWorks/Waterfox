@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Címzés">
+<!ENTITY emailCollectiontitle.label            "E-mail címek gyűjtése">
+<!ENTITY emailCollectionPicker.label           "E-mail címek hozzáadása:">
+<!ENTITY emailCollectionPicker.accesskey       "E">
+<!ENTITY emailCollectiontext.label             "A kimenő üzenetekben szereplő e-mail címek automatikusan hozzáadhatók egy helyi címjegyzékhez.">
+<!-- Autocompletion -->
+
+<!ENTITY addressingTitle.label                 "Automatikus címkiegészítés">
+<!ENTITY highlightNonMatches.label             "Automatikusan ki nem egészülő címek kiemelése">
+<!ENTITY highlightNonMatches.accesskey         "A">
+<!ENTITY addressingEnable.label                "Helyi címjegyzékek">
+<!ENTITY addressingEnable.accesskey            "H">
+<!ENTITY autocompleteText.label                "Üzenetek címzésekor egyezések keresése a következő helyeken:">
+<!ENTITY directories.label                     "Címtárkiszolgáló:">
+<!ENTITY directories.accesskey                 "C">
+<!ENTITY directoriesNone.label                 "Nincs">
+<!ENTITY editDirectories.label                 "Címtárak szerkesztése…">
+<!ENTITY editDirectories.accesskey             "C">

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title           "Importo vediklis">
+
+<!ENTITY importAllFrom.label             "Importuoti viską ką galima iš:">
+<!ENTITY importBookmarksFrom.label       "Importuoti adresyną iš:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "Failo">
+<!ENTITY importFromFile.accesskey        "F">
+<!ENTITY importFromNothing.label         "Nieko neimportuoti">
+<!ENTITY importFromNothing.accesskey     "N">
+
+<!ENTITY importSource.title              "Duomenų ir nuostatų importas">
+<!ENTITY importItems.title               "Importuotini elementai">
+<!ENTITY importItems.label               "Pasirinkite, ką importuoti:">
+
+<!ENTITY selectProfile.title             "Profilio pasirinkimas">
+<!ENTITY selectProfile.label             "Galima importuoti iš šių profilių:">
+
+<!ENTITY migrating.title                 "Importuojama…">
+<!ENTITY migrating.label                 "Importuojami šie elementai…">
+
+<!ENTITY done.title                      "Importas baigtas">
+<!ENTITY done.label                      "Sėkmingai importuota:">

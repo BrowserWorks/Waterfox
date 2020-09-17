@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "A">
+<!ENTITY fromField4.label "De">
+<!ENTITY senderField4.label "Expeditor">
+<!ENTITY author.label "Autor">
+<!ENTITY organizationField4.label "Organisation">
+<!ENTITY replyToField4.label "Responder a">
+
+<!ENTITY subjectField4.label "Subjecto">
+<!ENTITY ccField4.label "CC">
+<!ENTITY bccField4.label "Ccn">
+<!ENTITY newsgroupsField4.label "Gruppos de discussion">
+<!ENTITY followupToField4.label "Facer sequer a">
+<!ENTITY tagsHdr4.label "Tags">
+<!ENTITY dateField4.label "Data">
+<!ENTITY userAgentField4.label "Agente del usator">
+<!ENTITY referencesField4.label "Referentias">
+<!ENTITY messageIdField4.label "ID-message">
+<!ENTITY inReplyToField4.label "In responsa a">
+<!ENTITY originalWebsite4.label "Sito web">
+
+<!ENTITY hdrArchiveButton1.label "Archivo">
+<!ENTITY hdrArchiveButton1.tooltip "Archivar iste message">
+<!ENTITY hdrSmartReplyButton1.label "Responsa intelligente">
+<!ENTITY hdrReplyButton1.label "Responder">
+<!ENTITY hdrReplyButton2.tooltip "Responder al expeditor de iste message">
+<!ENTITY hdrReplyAllButton1.label "Responder a totes">
+<!ENTITY hdrReplyAllButton1.tooltip "Responder al expeditor e a tote le destinatarios">
+<!ENTITY hdrReplyListButton1.label "Responder al lista">
+<!ENTITY hdrReplyListButton1.tooltip "Responder al lista de diffusion">
+<!ENTITY hdrFollowupButton1.label "Sequito">
+<!ENTITY hdrFollowupButton1.tooltip "Publicar un responsa in iste gruppo">
+<!ENTITY hdrForwardButton1.label "Inviate ultra">
+<!ENTITY hdrForwardButton1.tooltip "Inviar ultra iste message">
+<!ENTITY hdrJunkButton1.label "Indesirate">
+<!ENTITY hdrJunkButton1.tooltip "Marcar iste message como indesirate">
+<!ENTITY hdrTrashButton1.label "Deler">
+<!ENTITY hdrTrashButton1.tooltip "Deler iste message">
+
+<!ENTITY hdrViewToolbarShowFull.label "Monstrar icones e texto">
+<!ENTITY hdrViewToolbarShowFull.accesskey "e">
+<!ENTITY hdrViewToolbarShowIcons.label "Monstrar solo icones">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "i">
+<!ENTITY hdrViewToolbarShowText.label "Monstrar texto solmente">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Sempre monstrar Responder al expeditor">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY otherActionsButton2.label "Plus">
+<!ENTITY otherActionsButton.tooltip "Altere actiones">
+<!ENTITY otherActionsOpenConversation1.label "Aperir in conversation">
+<!ENTITY otherActionsOpenConversation1.accesskey "c">
+<!ENTITY otherActionsOpenInNewWindow1.label "Aperir in un nove fenestra">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "f">
+<!ENTITY otherActionsOpenInNewTab1.label "Aperir in un nove scheda">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "s">
+<!ENTITY markAsReadMenuItem1.label "Marcar como legite">
+<!ENTITY markAsReadMenuItem1.accesskey "l">
+<!ENTITY markAsUnreadMenuItem1.label "Marcar como non legite">
+<!ENTITY markAsUnreadMenuItem1.accesskey "l">
+<!ENTITY saveAsMenuItem1.label "Salvar como…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "Vider le fonte">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "Imprimer…">
+<!ENTITY otherActionsPrint1.accesskey "I">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Monstrar initialmente le pannello de annexos">
+<!ENTITY startExpandedCmd.accesskey    "S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Aperir">
+<!ENTITY openAttachmentCmd.accesskey    "A">
+<!ENTITY saveAsAttachmentCmd.label    "Salvar como…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "S">
+<!ENTITY detachAttachmentCmd.label    "Retirar…">
+<!ENTITY detachAttachmentCmd.accesskey    "R">
+<!ENTITY deleteAttachmentCmd.label    "Deler">
+<!ENTITY deleteAttachmentCmd.accesskey    "D">
+<!ENTITY openAllAttachmentsCmd.label    "Aperir totes…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "A">
+<!ENTITY saveAllAttachmentsCmd.label    "Salvar totes…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+<!ENTITY detachAllAttachmentsCmd.label    "Retirar totes…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "R">
+<!ENTITY deleteAllAttachmentsCmd.label    "Deler totes…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "D">
+
+<!ENTITY openAttachment.tooltip "Aperir le file annexate">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Aperir le dossier que lo contine">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "D">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Monstrar in Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Salvar">
+<!ENTITY saveAttachmentButton1.tooltip     "Salvar le file annexate">
+<!ENTITY saveAllAttachmentsButton1.label   "Salvar totes">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Salvar tote le files annexate">
+
+<!ENTITY copyLinkCmd.label        "Copiar le adresse del ligamine">
+<!ENTITY copyLinkCmd.accesskey    "C">
+
+<!ENTITY CopyMessageId.label "Copiar le ID del message">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "Aperir message per ID">
+<!ENTITY OpenMessageForMsgId.accesskey "A">
+<!ENTITY OpenBrowserWithMsgId.label "Aperir navigator per ID del message">
+<!ENTITY OpenBrowserWithMsgId.accesskey "n">

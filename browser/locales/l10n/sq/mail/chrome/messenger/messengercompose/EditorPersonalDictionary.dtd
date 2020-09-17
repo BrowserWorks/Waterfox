@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Fjalor Vetjak">
+
+<!ENTITY wordEditField.label "Fjalë e re:">
+<!ENTITY wordEditField.accessKey "F">
+<!ENTITY AddButton.label "Shtoje">
+<!ENTITY AddButton.accessKey "S">
+<!ENTITY DictionaryList.label "Fjalë në fjalor:">
+<!ENTITY DictionaryList.accessKey "J">
+<!ENTITY RemoveButton.label "Hiqe">
+<!ENTITY RemoveButton.accessKey "H">
+
+<!ENTITY CloseButton.label "Mbylleni">
+<!ENTITY CloseButton.accessKey "M">

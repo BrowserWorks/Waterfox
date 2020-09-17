@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Dosar nou">
+<!ENTITY name.label                 "Nume:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Creează ca dosar sub:">
+<!ENTITY description.accesskey      "C">
+<!ENTITY folderRestriction1.label   "Acest server impune restricța ca dosarele să fie doar de două tipuri.">
+<!ENTITY folderRestriction2.label   "Noul dosar va conține:">
+<!ENTITY foldersOnly.label          "Doar dosare">
+<!ENTITY messagesOnly.label         "Doar mesaje">
+<!ENTITY accept.label               "Creează dosar">
+<!ENTITY accept.accesskey           "r">

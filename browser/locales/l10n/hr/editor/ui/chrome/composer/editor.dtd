@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Alatna traka sastavljanja">
+<!ENTITY previewToolbarCmd.label "Odaberi">
+<!ENTITY previewToolbarCmd.tooltip "Učitaj ovu stranicu u web pregledniku">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Izvezi u tekst…">
+<!ENTITY exportToTextCmd.accesskey "t">
+<!ENTITY previewCmd.label "Odaberi stranicu">
+<!ENTITY previewCmd.accesskey "O">
+<!ENTITY sendPageCmd.label "Pošalji stranicu…">
+<!ENTITY sendPageCmd.accesskey "P">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Alatna traka sastavljanja">
+<!ENTITY compositionToolbarCmd.accesskey "s">
+<!ENTITY formattingToolbarCmd.label "Alatna traka oblikovanja">
+<!ENTITY formattingToolbarCmd.accesskey "o">
+<!ENTITY editmodeToolbarCmd.label "Alatna traka načina uređivanja">
+<!ENTITY editmodeToolbarCmd.accesskey "u">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Oblikovanje">
+<!ENTITY formatMenu.accesskey "O">
+<!ENTITY grid.label "Mreža za pozicioniranje">
+<!ENTITY grid.accesskey "z">
+<!ENTITY pageProperties.label "Naslov stranice i postavke…">
+<!ENTITY pageProperties.accesskey "N">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Provjeri HTML">
+<!ENTITY validateCmd.accesskey "T">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Uobičajen">
+<!ENTITY NormalMode.label "Uobičajen način uređivanja">
+<!ENTITY NormalMode.accesskey "n">
+<!ENTITY NormalMode.tooltip "Prikaži obrube tablica i imenovana sidra">
+<!ENTITY AllTagsModeTab.label "HTML oznake">
+<!ENTITY AllTagsMode.label "HTML oznake">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Prikaži ikone za sve HTML oznake">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Izvorni kôd">
+<!ENTITY HTMLSourceMode.label "HTML izvorni kôd">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Uredi HTML izvorni kôd">
+<!ENTITY PreviewModeTab.label "Pregled">
+<!ENTITY PreviewMode.label "Pregled">
+<!ENTITY PreviewMode.accesskey "P">
+<!ENTITY PreviewMode.tooltip "Prikaži kao WYSIWYG (kao u web pregledniku)">

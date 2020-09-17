@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Yardım">
+<!ENTITY helpMenu.accesskey "Y">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Yardım">
+<!ENTITY helpMenuWin.accesskey "Y">
+<!ENTITY aboutProduct2.label "&brandShorterName; hakkında">
+<!ENTITY aboutProduct2.accesskey "h">
+<!ENTITY helpTroubleshootingInfo.label     "Sorun giderme bilgileri">
+<!ENTITY helpTroubleshootingInfo.accesskey "S">
+<!ENTITY helpSafeMode.label     "Eklentileri devre dışı bırakıp başlat...">
+<!ENTITY helpSafeMode.accesskey "E">
+
+<!ENTITY helpSafeMode.stop.label     "Eklentileri etkinleştirip yeniden başlat">
+<!ENTITY helpSafeMode.stop.accesskey "E">
+<!ENTITY productHelp.label "&brandShortName; yardımı">
+<!ENTITY productHelp.accesskey "a">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Klavye kısayolları">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpFeedbackPage.label "Geri bildirim gönder…">
+<!ENTITY helpFeedbackPage.accesskey "G">
+
+<!ENTITY helpShowTour2.label "&brandShorterName; turu">
+<!ENTITY helpShowTour2.accesskey "t">
+
+<!ENTITY helpGetInvolvedPage.label "Bize katılın">
+<!ENTITY helpGetInvolvedPage.accesskey "B">
+
+<!ENTITY helpDonationsPage.label "Bağış yapın">
+<!ENTITY helpDonationsPage.accesskey "B">

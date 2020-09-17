@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Ha decidido abrir:">
+<!ENTITY  from.label                  "desde:">
+<!ENTITY  actionQuestion.label        "¿Qué debería hacer &brandShortName; con este archivo?">
+
+<!ENTITY  openWith.label              "Abrir con">
+<!ENTITY  openWith.accesskey          "o">
+<!ENTITY  other.label                 "Otro…">
+
+<!ENTITY  saveFile.label              "Guardar archivo">
+<!ENTITY  saveFile.accesskey          "v">
+
+<!ENTITY  rememberChoice.label        "Hacer ésto automáticamente para estos archivos de ahora en más.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "que es:">
+
+<!ENTITY  chooseHandlerMac.label      "Seleccionar…">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "Examinar…">
+<!ENTITY  chooseHandler.accesskey     "x">
+
+<!ENTITY  unknownPromptText.label     "¿Desea guardar este archivo?">

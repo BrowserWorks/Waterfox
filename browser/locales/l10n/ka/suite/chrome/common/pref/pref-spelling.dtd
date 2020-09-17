@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "მართლწერა">
+<!ENTITY generalSpelling.label                "ძირითადი">
+<!ENTITY checkSpellingWhenTyping.label        "მართლწერის შემოწმება ტექსტის შეტანისას:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "W">
+<!ENTITY dontCheckSpelling.label              "არასოდეს">
+<!ENTITY multilineCheckSpelling.label         "მრავალ დაფაზე">
+<!ENTITY alwaysCheckSpelling.label            "ყველა დაფაზე">
+<!ENTITY spellForMailAndNews.label            "ელფოსტა და ჯგუფები">
+<!ENTITY checkSpellingBeforeSend.label        "მართლწერის შემოწმება გაგზავნამდე">
+<!ENTITY checkSpellingBeforeSend.accesskey    "C">
+<!ENTITY spellCheckInline.label               "მართლწერის შემოწმება ტექსტის შეტანისას">
+<!ENTITY spellCheckInline.accesskey           "e">
+<!ENTITY languagePopup.label                  "ენა:">
+<!ENTITY languagePopup.accessKey              "L">
+<!ENTITY moreDictionaries.label               "სხვა ლექსიკონების ჩამოტვიერთვა&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "ლექსიკონები ვერ მოიძებნა.">

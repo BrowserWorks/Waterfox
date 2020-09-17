@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Бар болып тұрған эл. пошта адресін баптау">
+<!ENTITY emailWizard.caption             "Ағымдағы эл. пошта адресін қолдану">
+<!ENTITY name.label                      "Сіздің атыңыз:">
+<!ENTITY name.accesskey                  "ы">
+<!ENTITY fullname.placeholder            "Сіздің толық атыңыз">
+<!ENTITY name.text                       "Басқаларға көрсетілетіндей, сіздің атыңыз">
+<!ENTITY name.error                      "Атыңызды енгізіңіз">
+<!ENTITY email.label                     "Эл. пошта адресі:">
+<!ENTITY email.accesskey                 "л">
+<!ENTITY email3.placeholder              "Эл. пошта адресіңіз">
+<!ENTITY email.text                      "Сіздің бар болып тұрған эл. пошта адресіңіз">
+<!ENTITY email.error                     "Эл. пошта адресі қате">
+<!ENTITY password.label                  "Пароль:">
+<!ENTITY password.accesskey              "П">
+<!ENTITY password.placeholder            "Пароль">
+<!ENTITY password.text                   "Міндетті емес, тек пайдаланушы атын растау үшін керек">
+<!ENTITY password.toggle                 "Парольді көрсету/жасыру">
+<!ENTITY rememberPassword.label          "Парольді есте сақтау">
+<!ENTITY rememberPassword.accesskey      "л">
+<!ENTITY usernameEx.label                "Сіздің логиніңіз:">
+<!ENTITY usernameEx.accesskey            "л">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "ДОМЕНІҢІЗ\пайдаланушы_атыңыз">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Домендегі пайдаланушы аты">
+
+<!ENTITY protocol.label                  "Хаттама:">
+<!ENTITY imapLong.label                  "IMAP (қашықтағы бумалар)">
+<!ENTITY pop3Long.label                  "POP3 (поштаны сіздің компьютеріңізде сақтау)">
+
+<!ENTITY manualConfigTable.summary       "Сервер баптаулары">
+<!ENTITY incoming.label                  "Кіріс:">
+<!ENTITY incomingColumn.label            "Кіріс">
+<!ENTITY outgoing.label                  "Шығыс:">
+<!ENTITY outgoingColumn.label            "Шығыс">
+<!ENTITY username.label                  "Пайдаланушы аты:">
+<!ENTITY serverRow.label                 "Сервер:">
+<!ENTITY portRow.label                   "Порт:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Аутентификация">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Автоанықтау">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Жоқ">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Exchange сервері:">
+
+<!ENTITY advancedSetup.label             "Кеңейтілген баптаулар">
+<!ENTITY advancedSetup.accesskey         "й">
+<!ENTITY cancel.label                    "Бас тарту">
+<!ENTITY cancel.accesskey                "а">
+<!ENTITY continue.label                  "Жалғастыру">
+<!ENTITY continue.accesskey              "Ж">
+<!ENTITY stop.label                      "Тоқтату">
+<!ENTITY stop.accesskey                  "Т">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Қайта тексеру">
+<!ENTITY half-manual-test.accesskey      "т">
+<!ENTITY manual-config.label             "Қолдан баптау…">
+<!ENTITY manual-config.accesskey         "д">
+<!ENTITY open-provisioner.label          "Жаңа эл. пошта адресін алу…">
+<!ENTITY open-provisioner.accesskey      "л">
+
+
+<!ENTITY get-help.label                  "Көмек алу">
+<!ENTITY get-help.accesskey              "е">
+
+
+<!ENTITY warning.label                   "Ескерту!">
+<!ENTITY incomingSettings.label          "Кіріс баптаулары:">
+<!ENTITY outgoingSettings.label          "Шығыс баптаулары:">
+<!ENTITY technicaldetails.label          "Техникалық ақпарат">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Мен қауіпті түсініп тұрмын.">
+<!ENTITY confirmWarning.accesskey        "п">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Дайын">
+<!ENTITY doneAccount.accesskey           "Д">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Баптауларды өзгерту">
+<!ENTITY changeSettings.accesskey        "п">
+
+<!ENTITY contactYourProvider.description "&brandShortName; сізге поштаны алу үшін көрсетілген баптауларды қолдануға рұқсат етуі мүмкін. Бірақ, сіз осы дәлсіз баптаулар жөнінде әкімшіңізбен немесе эл. пошта қызметтерін ұсынушыңызбен хабарласуыңыз керек. Көбірек білу үшін Thunderbird ЖҚС қараңыз.">
+
+<!ENTITY insecureServer.tooltip.title    "Ескерту! Бұл қауіпсіз емес сервер.">
+<!ENTITY insecureServer.tooltip.details  "Көбірек білу үшін шеңберді шертіңіз.">
+
+<!ENTITY insecureUnencrypted.description "Сіздің эл. поштаңыз және аутентификация ақпараты шифрленбеген түрде тасымалданады, сондықтан сіздің пароліңізді (және хабарламаңызды) басқа адамдар оқи алады. &brandShortName; сізге поштаны алуды рұқсат етеді, бірақ, серверді қауіпсіз байланысу мүмкіндігімен баптау жөнінде эл. пошта қызметтерін ұсынушыңызбен хабарласуыңыз керек.">
+<!ENTITY insecureSelfSigned.description  "Сервер біз сене алмайтын сертификатты қолданады, сондықтан, &brandShortName; және пошта сервері арасындағы байланысқа ешкім әсер етпейтініне сенімді емеспіз. &brandShortName; сізге поштаны алуды рұқсат етеді, бірақ, серверді сенімді сертификатпен баптау жөнінде эл. пошта қызметтерін ұсынушыңызбен хабарласуыңыз керек.">
+<!ENTITY secureServer.description        "Құттықтаймыз! Бұл қауіпсіз сервер.">

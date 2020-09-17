@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Tanlash ro‘yxati xossalari">
+
+<!ENTITY Select.label "Tanlash ro‘yxati">
+<!ENTITY SelectName.label "Ro‘yxati nomi:">
+<!ENTITY SelectName.accesskey "n">
+<!ENTITY SelectSize.label "Bo‘yin">
+<!ENTITY SelectSize.accesskey "B">
+<!ENTITY SelectMultiple.label "Bir nechtasini tanlash">
+<!ENTITY SelectMultiple.accesskey "B">
+<!ENTITY SelectDisabled.label "O‘chirib qo‘yilgan">
+<!ENTITY SelectDisabled.accesskey "O">
+<!ENTITY SelectTabIndex.label "Ichki oyna indeksi">
+<!ENTITY SelectTabIndex.accesskey "i">
+
+<!ENTITY OptGroup.label "Tanlash guruhi">
+<!ENTITY OptGroupLabel.label "Yorliq">
+<!ENTITY OptGroupLabel.accesskey "Y">
+<!ENTITY OptGroupDisabled.label "O‘chirib qo‘yilgan">
+<!ENTITY OptGroupDisabled.accesskey "O">
+
+<!ENTITY Option.label "Tanlov">
+<!ENTITY OptionText.label "Matn:">
+<!ENTITY OptionText.accesskey "M">
+<!ENTITY OptionValue.label "Qiymati:">
+<!ENTITY OptionValue.accesskey "Q">
+<!ENTITY OptionSelected.label "Boshlang‘ich tanlandi">
+<!ENTITY OptionSelected.accesskey "t">
+<!ENTITY OptionDisabled.label "O‘chirib qo‘yilgan">
+<!ENTITY OptionDisabled.accesskey "O">
+
+<!ENTITY TextHeader.label "Matn">
+<!ENTITY ValueHeader.label "Qiymat">
+<!ENTITY SelectedHeader.label "Tanlandi">
+
+<!ENTITY AddOption.label "Tanlamani qo‘shish">
+<!ENTITY AddOption.accesskey "T">
+<!ENTITY AddOptGroup.label "Guruhni qo‘shish">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "Olib tashlash">
+<!ENTITY RemoveElement.accesskey "O">
+<!ENTITY MoveElementUp.label "Tepaga ko‘tarish">
+<!ENTITY MoveElementUp.accesskey "k">
+<!ENTITY MoveElementDown.label "Pastga tushirish">
+<!ENTITY MoveElementDown.accesskey "t">

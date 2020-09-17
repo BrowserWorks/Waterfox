@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "關於 &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "A">
+
+<!ENTITY preferencesCmdMac.label        "偏好設定…">
+
+<!ENTITY servicesMenuMac.label          "服務">
+
+<!ENTITY hideThisAppCmdMac2.label       "隱藏 &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "隱藏其他視窗">
+
+<!ENTITY showAllAppsCmdMac.label        "全部顯示">
+
+<!ENTITY touchBarCmdMac.label           "自訂觸控列…">

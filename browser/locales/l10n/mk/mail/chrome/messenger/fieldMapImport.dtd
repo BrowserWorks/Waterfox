@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Увезување на адресар">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Увезени податоци за запис">
+<!ENTITY fieldMapImport.next.accesskey "Н">
+<!ENTITY fieldMapImport.previous.accesskey "з">
+<!ENTITY fieldMapImport.text "Користете ги Оди нагоре и Оди надолу за да ги поставите полињата на адресарот на лево со полињата за увоз на податоци на десно. Не ги избирајте елементите кои не сакате да ги увезете.">
+<!ENTITY fieldMapImport.up.accesskey "г">
+<!ENTITY fieldMapImport.down.accesskey "д">
+<!ENTITY fieldMapImport.fieldListTitle "Полиња на адресарот">
+<!ENTITY fieldMapImport.dataTitle "Податоци кои треба да се увезат">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "р">
+

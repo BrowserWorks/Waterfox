@@ -1,0 +1,58 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Muokkaa tätä tiedostoa ja kopioi nimellä userChrome.css 
+ * profiilikansiosi chrome-kansioon
+ */
+
+/*
+ * Tätä tiedostoa muokkaamalla on mahdollista radikaalisti muuttaa ohjelman
+ * käyttöliittymän ulkonäköä. Jos antamasi säännön on tarkoitus korvata
+ * olemassa oleva sääntö, käytä !important -lisäystä.
+ */
+
+/*
+ * Älä poista seuraavaa @namespace riviä. Ilman sitä tiedosto ei toimi oikein.
+ */
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* Asetetaan oletusnimiavaruudeksi XUL */
+
+
+/*
+ * Seuraavaksi joitain mahdollisia esteettömyysmuokkauksia:
+ */
+/*
+ * Aseta käytettyjen kirjasimien oletuskooksi 20 pt:
+ *
+ * * {
+ *   font-size: 20pt !important
+ * }
+ */
+/*
+ * Aseta ainoastaan valikkojen kirjasinkooksi 15 pt oletuskoon sijaan:
+ *
+ * menupopup > * {
+ *   font-size: 15pt !important
+ * }
+ */
+/*
+ * Aseta osoitepalkin kirjasin tasaväliseksi:
+ *
+ * #urlbar {
+ *    font-family: monospace !important;
+ * }
+ */
+
+/*
+ * Eliminoi toimintaindikaattori ja sen ärsyttävä animaatio:
+ *
+ * #throbber-box {
+ *   display: none !important;
+ * }
+ */
+
+/*
+ * Lisää esimerkkejä säännöistä (englanniksi) osoitteessa http://www.mozilla.org/unix/customizing.html
+ */
+ 

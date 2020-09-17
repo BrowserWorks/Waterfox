@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "Software Installation">
+<!ENTITY smartTitle.label                     "Manage Software Installations and Updates">
+<!ENTITY enableSU.label                       "Allow web sites to install extensions and updates">
+<!ENTITY enableSU.accesskey                   "e">
+<!ENTITY allowedSites.label                   "Allowed Sites">
+<!ENTITY allowedSites.accesskey               "A">
+
+<!ENTITY verifyUpdates.caption                "Updates">
+<!ENTITY autoUpdates.label                    "Automatically check for updates to:">
+<!ENTITY appUpdates.label                     "&brandShortName;">
+<!ENTITY appUpdates.accesskey                 "S">
+<!ENTITY daily.label                          "daily">
+<!ENTITY appDaily.accesskey                   "d">
+<!ENTITY weekly.label                         "weekly">
+<!ENTITY appWeekly.accesskey                  "w">
+<!ENTITY extensionsUpdates.label              "Installed Add-ons">
+<!ENTITY extensionsUpdates.accesskey          "n">
+<!ENTITY extensionsDaily.accesskey            "i">
+<!ENTITY extensionsWeekly.accesskey           "k">
+<!ENTITY addonManagerButton.label             "Add-on Manager">
+<!ENTITY addonManagerButton.accesskey         "M">
+
+
+<!--
+Entities below were automatically added by compare-locales,
+ based on en-US entities.
+-->
+
+<!ENTITY modeAutoAddonWarn.accesskey "b">
+<!ENTITY updateHistory.accesskey "u">
+<!ENTITY whenUpdatesFound.label "When updates to &brandShortName; are found">
+<!ENTITY askMe.accesskey "n">
+<!ENTITY modeAutomatic.accesskey "c">
+<!ENTITY modeAutoAddonWarn.label "Warn me if this will disable any of my add-ons">
+<!ENTITY updateHistory.label "Show Update History">
+<!ENTITY modeAutomatic.label "Automatically download and install the update">
+<!ENTITY askMe.label "Ask me what I want to do">

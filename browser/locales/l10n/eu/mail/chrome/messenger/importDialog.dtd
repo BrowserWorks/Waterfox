@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Inportatu">
+<!ENTITY importAll.label          "Inportatu guztia">
+<!ENTITY importAll.accesskey      "g">
+<!ENTITY importMail.label         "Posta">
+<!ENTITY importMail.accesskey     "P">
+<!ENTITY importFeeds.label        "Jarioen harpidetzak">
+<!ENTITY importFeeds.accesskey    "n">
+<!ENTITY importAddressbook.label  "Helbide-liburuak">
+<!ENTITY importAddressbook.accesskey "H">
+<!ENTITY importSettings.label     "Ezarpenak">
+<!ENTITY importSettings.accesskey "z">
+<!ENTITY importFilters.label      "Iragazkiak">
+<!ENTITY importFilters.accesskey  "r">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; inportatzeko morroia">
+<!ENTITY importShortDesc.label    "Inportatu posta, helbide-liburuak, ezarpenak eta iragazkiak beste programetatik">
+
+<!ENTITY importDescription1.label "Posta-mezuak, helbide-liburuko sarrerak, ezarpenak eta/edo beste posta-programetako iragazkiak eta ohiko helbide-liburu formatuak inportatuko ditu morroi honek &brandShortName;(e)ra.">
+<!ENTITY importDescription2.label "Inportatu ondoren, &brandShortName; postatik edo/eta helbide-liburutik ikusi ahal izango dituzu.">
+
+<!ENTITY selectDescription.label  "Hautatu inportatu nahi duzu fitxategi mota:">
+<!ENTITY selectDescriptionB.label "Hautatu badagoen kontu bat edo sortu berria:">
+<!ENTITY selectDescription.accesskey "H">
+<!ENTITY acctName.label           "Izena:">
+<!ENTITY acctName.accesskey       "I">
+<!ENTITY noModulesFound.label     "Ez da aurkitu daturik inportatzeko fitxategi edo aplikaziorik.">
+
+<!ENTITY back.label               "&lt; Aurrekoa">
+<!ENTITY forward.label            "Hurrengoa &gt;">
+<!ENTITY finish.label             "Amaitu">
+<!ENTITY cancel.label             "Utzi">
+
+<!ENTITY select.label             "Hautatu inportatu nahi duzuna:">
+
+<!ENTITY title.label              "Izenburua">
+<!ENTITY processing.label         "Inportatzen…">

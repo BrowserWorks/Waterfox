@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "ਤਕਨੀਕੀ ਸੋਧ...">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "HTML ਗੁਣ, ਸਟਾਈਲ ਅਤੇ JavaScript ਸ਼ਾਮਿਲ ਜਾਂ ਸੋਧ">
+<!ENTITY chooseFileButton.label "ਫਾਇਲ ਚੁਣੋ...">
+<!ENTITY chooseFileButton.accessKey "F">
+<!ENTITY chooseFileLinkButton.label "ਫਾਇਲ ਚੁਣੋ...">
+<!ENTITY chooseFileLinkButton.accessKey "o">
+<!ENTITY makeUrlRelative.label "URL ਪੇਜ਼ ਸਥਿਤੀ ਦੇ ਅਨੁਸਾਰੀ ਹੈ">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "ਅਨੁਸਾਰੀ ਅਤੇ ਅਸਲੀ URL ਵਿੱਚ ਬਦਲੋ। ਤੁਹਾਨੂੰ ਪੇਜ਼ ਨੂੰ ਇਹ ਕਰਨ ਲਈ ਪਹਿਲਾਂ ਸੰਭਾਲਣਾ ਚਾਹੀਦਾ ਹੈ।">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField.label "ਇੱਕ ਵੈੱਬ ਪੇਜ਼ ਦੀ ਸਥਿਤੀ ਦਿਓ, ਇੱਕ ਲੋਕਲ ਫਾਇਲ , ਜਾਂ ਪੋਪ-ਅੱਪ ਲਿਸਟ ਵਿੱਚੋਂ ਇੱਕ ਐਂਕਰ (Anchor) ਜਾਂ ਹੈੱਡਰ ਦਿਓ:">
+<!ENTITY LinkURLEditField.accessKey "L">

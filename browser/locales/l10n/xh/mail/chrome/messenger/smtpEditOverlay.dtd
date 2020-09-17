@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Imimiselo">
+<!ENTITY security.caption "Ukhuseleko Nokunyanisekisa">
+<!ENTITY serverName.label "Igama Leseva:">
+<!ENTITY serverName.accesskey "I">
+<!ENTITY serverDescription.label "Inkcazelo:">
+<!ENTITY serverDescription.accesskey "I">
+<!ENTITY serverPort.label "Isiqhagamshelisi:">
+<!ENTITY serverPort.accesskey "I">
+<!ENTITY userName.label "Igama Lomsebenzisi:">
+<!ENTITY userName.accesskey "g">
+<!ENTITY connectionSecurity.label "Connection security:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "None">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, if available">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Iseva ye-SMTP">
+<!ENTITY serverPortDefault.label "Okuhlala kukho:">
+<!ENTITY authMethod.label "Authentication method:">
+<!ENTITY authMethod.accesskey "i">

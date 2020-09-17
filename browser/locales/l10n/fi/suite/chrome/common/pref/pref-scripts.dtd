@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Komentosarjat ja liitännäiset">
+
+<!ENTITY navigator.label                 "Selaimessa">
+<!ENTITY navigator.accesskey             "S">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "Ota JavaScript käyttöön">
+<!ENTITY allowScripts.label              "Komentosarjat voivat:">
+<!ENTITY allowScripts.accesskey          "K">
+<!ENTITY allowWindowMoveResize.label     "Siirtää ikkunoita ja muuttaa niiden kokoa">
+<!ENTITY allowWindowFlip.label           "Nostaa ja laskea ikkunoita">
+<!ENTITY allowWindowStatusChange.label   "Muuttaa tilarivin tekstiä">
+<!ENTITY allowWindowImageSrcChange.label "Vaihtaa kuvia">
+<!ENTITY allowContextmenuDisable.label   "Poistaa ja muuttaa ponnahdusvalikkoja">
+<!ENTITY allowHideStatusBar.label        "Piilottaa tilarivin">
+
+<!ENTITY enablePlugins.label              "Salli liitännäisten käyttö:">
+<!ENTITY enablePluginForSuite.label      "Ohjelmistopaketissa">
+<!ENTITY enablePluginForSuite.accesskey  "h">
+
+<!ENTITY whenPageRequiresPlugins.label   "Jos sivusto vaatii liitännäisiä">
+<!ENTITY activateAllPlugins.label        "Aktivoi kaikki liitännäiset oletusarvoisesti">
+<!ENTITY activateAllPlugins.accesskey    "o">
+<!ENTITY warnPluginsRequired.label       "Kysy, jos lisää liitännäisiä tarvitsee asentaa">
+<!ENTITY warnPluginsRequired.accesskey   "o">

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Архивтеу баптаулары">
+<!ENTITY archiveGranularityPrefix.label "Хабарламаларды архивтеу кезінде, оларды қайда орналастыру:">
+<!ENTITY archiveFlat.label "Бір бума">
+<!ENTITY archiveFlat.accesskey "Б">
+<!ENTITY archiveYearly.label "Жыл сайынғы архивтеу бумалары">
+<!ENTITY archiveYearly.accesskey "Ж">
+<!ENTITY archiveMonthly.label "Ай сайынғы архивтеу бумалары">
+<!ENTITY archiveMonthly.accesskey "А">
+<!ENTITY keepFolderStructure.label "Архивтелген хабарламалардың бар болып тұрған бумалар құрылысын сақтау">
+<!ENTITY keepFolderStructure.accesskey "т">
+<!ENTITY archiveExample.label "Мысалы">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Архивтер">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Кіріс">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "خصائص الخط الأفقي">
+
+<!ENTITY dimensionsBox.label "الأبعاد">
+<!ENTITY heightEditField.label "الارتفاع:">
+<!ENTITY heightEditField.accessKey "ع">
+<!ENTITY widthEditField.label "العرض:">
+<!ENTITY widthEditField.accessKey "ض">
+<!ENTITY pixelsPopup.value "بكسل">
+<!ENTITY alignmentBox.label "المحاذاة">
+<!ENTITY leftRadio.label "يسارًا">
+<!ENTITY leftRadio.accessKey "س">
+<!ENTITY centerRadio.label "منتصفًا">
+<!ENTITY centerRadio.accessKey "م">
+<!ENTITY rightRadio.label "يمينًا">
+<!ENTITY rightRadio.accessKey "ي">
+
+<!ENTITY threeDShading.label "ظل ثلاثي الأبعاد">
+<!ENTITY threeDShading.accessKey "ظ">
+<!ENTITY saveSettings.label "استخدم كمبدئي">
+<!ENTITY saveSettings.accessKey "م">
+<!ENTITY saveSettings.tooltip "احفظ هذه الإعدادات لتستخدمها عند إدراج خطوط أفقية جديدة">

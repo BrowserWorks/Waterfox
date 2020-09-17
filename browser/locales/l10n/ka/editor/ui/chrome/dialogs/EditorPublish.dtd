@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "გვერდის გამოქვეყნება">
+<!ENTITY windowTitleSettings.label    "გამოქვეყვების პარამეტრები">
+<!ENTITY publishTab.label             "გამოქვეყნება">
+<!ENTITY settingsTab.label            "პარამეტრები">
+<!ENTITY publishButton.label          "გამოქვეყნება">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "საიტის სახელი:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "შეარჩიეთ გამოსაქვეყნებელი საიტი">
+<!ENTITY newSiteButton.label          "ახალი საიტი">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "საიტის ქვესაქაღალდე ამ გვერდისათვის:">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "აირჩიეთ ან მიუთითეთ საქაღალდე ამ გვერდის გარე ქვესაქაღალდისთვის">
+<!ENTITY publishImgCheckbox.label     "სურათებისა და სხვა ფაილების ჩათვლით">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip   "ამ საიტზე დამოწმებული სურათებისა და სხვა ფაილების გამოქვეყნება">
+<!ENTITY sameLocationRadio.label      "გვერდის მისამართის გამოყენება">
+<!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip    "ფაილების მოცემული გვერდის მისამართზე გამოქვეყნება">
+<!ENTITY useSubdirRadio.label         "საიტის ამ ქვესაქაღალდის გამოყენება:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "ფაილების გამოქვეყნება შერჩეულ გარე ქვესაქაღალდეში">
+<!ENTITY otherDirList.tooltip         "აირჩიეთ ან მიუთითეთ გარე ქვესაქაღალდის სახელი ფაილების გამოსაქვეყნებლად">
+<!ENTITY pageTitle.label              "გვერდის სათაური:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "მიუთითეთ გვერდის სათაური, რომელიც ფანჯრის პანელზე ან სანიშნებში გამოჩნდება">
+<!ENTITY pageTitleExample.label       "მაგ.: &quot;ჩემი ვებგვერდი&quot;">
+<!ENTITY filename.label               "ფაილის სახელი:">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip             "მიუთითეთ ვებგვერდის ფაილის სახელი '.html'-ის ჩათვლით">
+<!ENTITY filenameExample.label        "მაგ,: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label       "მითითება როგორც ძირითადი">
+<!ENTITY setDefaultButton.accesskey   "D">
+<!ENTITY removeButton.label           "საიტის მოცილება">
+<!ENTITY removeButton.accesskey       "R">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "საიტების გამოქვეყნება">
+<!ENTITY serverInfo.label             "სერვერის მონაცემები">
+<!ENTITY loginInfo.label              "შესვლის მონაცემები">
+<!ENTITY siteName.label               "საიტის სახელი:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "გამოსაქვეყნებელი საიტის მეტსახელი (მაგ.: 'საცდელი')">
+<!ENTITY siteUrl.label                "გამოქვეყნების მისამართი (მაგ.: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "FTP:// ან HTTP:// მისამართი, რომელიც თქვენმა ISP-მ ან მასპინძელმა სერვერმა მოგაწოდათ">
+<!ENTITY browseUrl.label              "თქვენი სათაო გვერდის HTTP მისამართი (მაგ.: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "HTTP:// მისამართი ან საბაზო საქაღალდე (ფაილის სახელი არ მიუთითოთ)">
+<!ENTITY username.label               "თქვენი სახელი:">
+<!ENTITY username.accesskey           "U">
+<!ENTITY username.tooltip             "სახელი, რომელსაც იყენებთ ISP-ზე ან მასპინძელ სერვერზე შესასვლელად">
+<!ENTITY password.label               "პაროლი:">
+<!ENTITY password.accesskey           "w">
+<!ENTITY password.tooltip             "თქვენს მომხმარებლის სახელთან დაკავშირებული პაროლი">
+<!ENTITY savePassword.label           "პაროლის ჩაწერა">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "პაროლის უსაფრთხო შენახვა პაროლების მმართველის საშუალებით">

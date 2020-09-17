@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Филтри за пораките">
+<!ENTITY nameColumn.label "Име на филтерот">
+<!ENTITY activeColumn.label "Овозможен">
+<!ENTITY newButton.label "Нов…">
+<!ENTITY newButton.accesskey "Н">
+<!ENTITY editButton.label "Уреди…">
+<!ENTITY editButton.accesskey "е">
+<!ENTITY deleteButton.label "Избриши">
+<!ENTITY deleteButton.accesskey "б">
+<!ENTITY reorderUpButton.label "Оди нагоре">
+<!ENTITY reorderUpButton.accesskey "г">
+<!ENTITY reorderDownButton.label "Оди надолу">
+<!ENTITY reorderDownButton.accesskey "д">
+<!ENTITY filterHeader.label "Овозможените филтри се извршуваат автоматски по долниот редослед.">
+<!ENTITY filtersForPrefix.label "Филтри за:">
+<!ENTITY filtersForPrefix.accesskey "Ф">
+<!ENTITY viewLogButton.label "Дневник на филтри">
+<!ENTITY viewLogButton.accesskey "н">
+<!ENTITY runFilters.label "Изврши сега">
+<!ENTITY runFilters.accesskey "с">
+<!ENTITY stopFilters.label "Стоп">
+<!ENTITY stopFilters.accesskey "С">
+<!ENTITY folderPickerPrefix.label "Изврши ги избраните филтри на:">
+<!ENTITY folderPickerPrefix.accesskey "з">
+<!ENTITY helpButton.label "Помош">
+<!ENTITY helpButton.accesskey "м">
+<!ENTITY closeCmd.key "W">

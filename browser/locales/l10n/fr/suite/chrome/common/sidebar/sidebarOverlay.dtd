@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Barre latérale">
+<!ENTITY sidebar.reload.label           "Actualiser">
+<!ENTITY sidebar.reload.accesskey       "A">
+<!ENTITY sidebar.picker.label           "Panneaux">
+<!ENTITY sidebar.customize.label        "Personnaliser…">
+<!ENTITY sidebar.customize.accesskey    "P">
+<!ENTITY sidebar.hide.label             "Masquer ce panneau">
+<!ENTITY sidebar.hide.accesskey         "M">
+<!ENTITY sidebar.switch.label           "Afficher ce panneau">
+<!ENTITY sidebar.switch.accesskey       "c">
+<!ENTITY sidebarCmd.label               "Barre latérale">
+<!ENTITY sidebarCmd.accesskey           "B">
+<!ENTITY sidebar.loading.label          "Chargement…">
+<!ENTITY sidebar.loadstopped.label      "Chargement arrêté">
+<!ENTITY sidebar.loading.stop.label     "Arrêter">
+<!ENTITY sidebar.loading.stop.accesskey "r">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "La barre est actuellement vide.">
+<!ENTITY sidebar.no-panels.add       'Vous pouvez ajouter des panneaux en cliquant sur le bouton « Panneaux » au-dessus.'>
+<!ENTITY sidebar.no-panels.hide      'Pour masquer complètement la barre, désélectionnez « Barre latérale » dans le menu « Affichage->Barres d’outils ».'>
+<!ENTITY sidebar.sbDirectory.label   "Répertoire de la barre…">
+
+<!ENTITY sidebar.pagenotfound.label  "Ce panneau n’est pas disponible actuellement.">
+<!ENTITY sidebar.close.tooltip       "Fermer">
+<!ENTITY sidebar.open.tooltip        "Ouvrir">
+
+<!ENTITY sidebar.search.label         "Rechercher">
+<!ENTITY sidebar.client-bookmarks.label     "Marque-pages">
+<!ENTITY sidebar.client-history.label       "Historique">
+<!ENTITY sidebar.client-addressbook.label   "Carnet d’adresses">

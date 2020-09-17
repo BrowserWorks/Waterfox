@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Restaurar sesión">
+<!ENTITY restorepage.pagetitle      "Desexa restaurar a súa sesión?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "A anterior sesión de &brandShortName; pechouse inesperadamente. Sentimos profundamente as molestias causadas. Pode restaurar as lapelas e as xanelas da sesión anterior, ou iniciar unha nova sesión se xa no son necesarias.">
+<!ENTITY restorepage.remedies       "Se &brandShortName; se pecha constantemente:">
+<!ENTITY restorepage.dueToChrome    "Tente desactivando algunha das extensións engadidas recentemente no Xestor de complementos.">
+<!ENTITY restorepage.dueToContent   "Tente restaurando a sesión sen as páxinas web que sospeita que poden causar o problema:">
+
+<!ENTITY restorepage.restoreButton  "Restaurar a sesión anterior">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.cancelButton   "Comezar nova sesión">
+<!ENTITY restorepage.cancel.access  "S">
+
+<!ENTITY restorepage.restoreHeader  "Restaurar">
+<!ENTITY restorepage.listHeader     "Xanelas e lapelas">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Xanela &#37;S">

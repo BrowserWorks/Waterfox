@@ -1,0 +1,220 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Imedlis n tensa">
+<!ENTITY blankResultsPaneMessage.label                  "Imedlis-agi n tensa iskaned kan inermisen deffir unadi">
+<!ENTITY localResultsOnlyMessage.label                  "Inermisen n imedlisen n tensa inmeggagen ttuskanen-d kan ticki tnunaḍ">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Afaylu">
+<!ENTITY fileMenu.accesskey                             "A">
+<!ENTITY newMenu.label                                  "Amaynut">
+<!ENTITY newMenu.accesskey                              "m">
+<!ENTITY newContact.label                               "Anermis n umedlis n tensa…">
+<!ENTITY newContact.accesskey                           "n">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Tabdart n tnezwit…">
+<!ENTITY newListCmd.accesskey                           "b">
+<!ENTITY newAddressBookCmd.label                        "Imedlis n tensa…">
+<!ENTITY newAddressBookCmd.accesskey                    "m">
+<!ENTITY newCardDAVBookCmd.label                        "Imedlis n tensa CardDAV…">
+<!ENTITY newCardDAVBookCmd.accesskey                    "V">
+<!ENTITY newLDAPDirectoryCmd.label                      "Akaram LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "Izen">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "I">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Seqdec imedlis n tensa Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Mdel">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "M">
+<!ENTITY printSetupCmd.label                            "Asbadu n usebter…">
+<!ENTITY printSetupCmd.accesskey                        "b">
+<!ENTITY printPreviewContactCmd.label                   "Siggez taskant n unermis">
+<!ENTITY printPreviewContactCmd.accesskey               "s">
+<!ENTITY printPreviewAddressBook.label                  "Siggez taskant n imedlis n tensa">
+<!ENTITY printPreviewAddressBook.accesskey              "m">
+<!ENTITY printContactCmd.label                          "Siggez anermis…">
+<!ENTITY printContactCmd.accesskey                      "S">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Siggez Imedlis n tensa…">
+<!ENTITY printAddressBook.accesskey                     "m">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Ẓreg">
+<!ENTITY editMenu.accesskey                             "Ẓ">
+<!ENTITY deleteCmd.label                                "Kkes">
+<!ENTITY deleteAbCmd.label                              "Kkes imedlis n tensa">
+<!ENTITY deleteContactCmd.label                         "Kkes anermis">
+<!ENTITY deleteContactsCmd.label                        "Kkes inermisen">
+<!ENTITY deleteListCmd.label                            "Kkes tabdart">
+<!ENTITY deleteListsCmd.label                           "Kkes tibdarin">
+<!ENTITY deleteItemsCmd.label                           "Kkes iferdisen">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!ENTITY propertiesMenu.label                           "Timeẓliyin">
+<!ENTITY propertiesMenu.accesskey                       "T">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Timeẓliyin n imedlis n tensa">
+<!ENTITY abPropertiesMenu.accesskey                     "ẓ">
+<!ENTITY contactPropertiesMenu.label                    "Timeẓliyin n unermis">
+<!ENTITY contactPropertiesMenu.accesskey                "m">
+<!ENTITY mailingListPropertiesMenu.label                "Timeẓliyin n tebdart n telɣut">
+<!ENTITY mailingListPropertiesMenu.accesskey            "ɣ">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Sken">
+<!ENTITY viewMenu.accesskey                             "e">
+<!ENTITY viewToolbarsMenu.label                         "Afeggag n ifecka">
+<!ENTITY viewToolbarsMenu.accesskey                     "A">
+<!ENTITY menubarCmd.label                               "Afeggag n wumuɣ">
+<!ENTITY menubarCmd.accesskey                           "g">
+<!ENTITY showAbToolbarCmd.label                         "Afegga n ifecka n imedlis n tensa">
+<!ENTITY showAbToolbarCmd.accesskey                     "g">
+<!ENTITY showTaskbarCmd.label                           "Afeggag n waddad">
+<!ENTITY showTaskbarCmd.accesskey                       "f">
+<!ENTITY customizeToolbar.label                         "Sagen…">
+<!ENTITY customizeToolbar.accesskey                     "S">
+<!ENTITY layoutMenu.label                               "Aseflu">
+<!ENTITY layoutMenu.accesskey                           "s">
+<!ENTITY showDirectoryPane.label                        "Agalis n ukaram">
+<!ENTITY showDirectoryPane.accesskey                    "l">
+<!ENTITY showContactPane2.label                         "Agalis n unermis">
+<!ENTITY showContactPane2.accesskey                     "n">
+<!ENTITY menu_ShowNameAs.label                          "Sken isem am">
+<!ENTITY menu_ShowNameAs.accesskey                      "k">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Aneggaru d amezwaru">
+<!ENTITY firstLastCmd2.accesskey                        "g">
+<!ENTITY lastFirstCmd.label                             "Aneggaru, amezwaru">
+<!ENTITY lastFirstCmd.accesskey                         "n">
+<!ENTITY displayNameCmd.label                           "Sken isem">
+<!ENTITY displayNameCmd.accesskey                       "k">
+<!ENTITY sortMenu.label                                 "Smizzwer s">
+<!ENTITY sortMenu.accesskey                             "m">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Ifecka">
+<!ENTITY tasksMenu.accesskey                            "f">
+<!ENTITY messengerCmd.label                             "Tirawt &amp; igrawen n isalen">
+<!ENTITY messengerCmd.accesskey                         "s">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Nadi tansiwin…">
+<!ENTITY searchAddressesCmd.accesskey                   "d">
+<!ENTITY importCmd.label                                "&amp;Kter…">
+<!ENTITY importCmd.accesskey                            "r">
+<!ENTITY exportCmd.label                                "Kter…">
+<!ENTITY exportCmd.accesskey                            "r">
+<!ENTITY preferencesCmd2.label                          "Iɣewwaṛen">
+<!ENTITY preferencesCmd2.accesskey                      "w">
+<!ENTITY preferencesCmdUnix.label                       "Ismenyifen">
+<!ENTITY preferencesCmdUnix.accesskey                   "s">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Anermis amaynut">
+<!ENTITY newContactButton.accesskey                     "n">
+<!ENTITY newlistButton.label                            "Tabdart tamaynut">
+<!ENTITY newlistButton.accesskey                        "b">
+<!ENTITY showAsDefault.label                            "Imedlis amezwer">
+<!ENTITY showAsDefault.accesskey                        "S">
+<!ENTITY editPropertiesButton.label                     "Ẓreg">
+<!ENTITY propertiesContext.label                        "Timeẓliyin">
+<!ENTITY propertiesContext.accesskey                    "T">
+<!ENTITY abPropertiesContext.label                      "Timeẓliyin">
+<!ENTITY abPropertiesContext.accesskey                  "T">
+<!ENTITY syncContext.label                              "Mtawi">
+<!ENTITY editContactContext.label                       "Ẓreg anermis">
+<!ENTITY editContactContext.accesskey                   "Ẓ">
+<!ENTITY editMailingListContext.label                   "Ẓreg tabdart">
+<!ENTITY editMailingListContext.accesskey               "Ẓ">
+<!ENTITY newmsgButton.label                             "Aru">
+<!ENTITY newmsgButton.accesskey                         "A">
+<!ENTITY newIM.label                                    "Izen askudan">
+<!ENTITY newIM.accesskey                                "d">
+<!ENTITY printButton.label                              "Siggez...">
+<!ENTITY printButton.accesskey                          "g">
+<!ENTITY deleteButton2.label                            "Kkes">
+<!ENTITY deleteButton2.accesskey                        "K">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Fren tigejda ad-sekneḍ">
+<!ENTITY newContactButton.tooltip                       "Rnu anermis n imedlis n tensa">
+<!ENTITY newlistButton.tooltip                          "Rnu tabdart tamaynut">
+<!ENTITY editPropertiesButton.tooltip                   "Ẓreg aferdis ittwafernen">
+<!ENTITY editAbPropertiesButton.tooltip                 "Ẓreg timeẓliyin n imedlis n tensa yettwafernen">
+<!ENTITY editContactPropertiesButton.tooltip            "Ẓreg anermis ittwafernen">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Ẓreg tabdart n telɣut yettwafernen">
+<!ENTITY newmsgButton.tooltip                           "Azen izen imayl">
+<!ENTITY newIM.tooltip                                  "Azen izen askudan neɣ n uqesseṛ">
+<!ENTITY deleteButton2.tooltip                          "Kkes aferdis ifernen">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Isem neɣ Imayl">
+<!ENTITY SearchNameOrEmail.accesskey                    "I">
+<!ENTITY advancedButton.tooltip                         "Anadi leqqayen n tensa">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Anadi arurad">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Imedlis n tensa">
+<!ENTITY Addrbook.accesskey                             "m">
+<!ENTITY GeneratedName.label                            "Isem">
+<!ENTITY GeneratedName.accesskey                        "I">
+<!ENTITY PrimaryEmail.label                             "Imayl">
+<!ENTITY PrimaryEmail.accesskey                         "m">
+<!ENTITY ChatName.label                                 "Isem n udiwenni usrid">
+<!ENTITY ChatName.accesskey                             "d">
+<!ENTITY Company.label                                  "Tuddsa">
+<!ENTITY Company.accesskey                              "d">
+<!ENTITY NickName.label                                 "Meffer isem">
+<!ENTITY NickName.accesskey                             "f">
+<!ENTITY SecondEmail.label                              "Imayl nniḍen">
+<!ENTITY SecondEmail.accesskey                          "n">
+<!ENTITY Department.label                               "Agezdu">
+<!ENTITY Department.accesskey                           "g">
+<!ENTITY JobTitle.label                                 "Azwel">
+<!ENTITY JobTitle.accesskey                             "z">
+<!ENTITY CellularNumber.label                           "Tiliɣṛi n ufus">
+<!ENTITY CellularNumber.accesskey                       "f">
+<!ENTITY PagerNumber.label                              "Amsebter">
+<!ENTITY PagerNumber.accesskey                          "b">
+<!ENTITY FaxNumber.label                                "Faks">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Tiliɣri n uxxam">
+<!ENTITY HomePhone.accesskey                            "l">
+<!ENTITY WorkPhone.label                                "Tiliɣri n umahil">
+<!ENTITY WorkPhone.accesskey                            "h">
+<!ENTITY sortAscending.label                            "Igemmen">
+<!ENTITY sortAscending.accesskey                        "I">
+<!ENTITY sortDescending.label                           "Amnusruy">
+<!ENTITY sortDescending.accesskey                       "A">
+<!ENTITY _PhoneticName.label                            "Isem asusru">
+<!ENTITY _PhoneticName.accesskey                        "s">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Inermisen">
+<!ENTITY home.heading                                   "Agejdan">
+<!ENTITY other.heading                                  "Wiyaḍ">
+<!ENTITY chat.heading                                   "Adiwenni usrid">
+<!ENTITY phone.heading                                  "Tiliɣri">
+<!ENTITY work.heading                                   "Amahil">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Aglam">
+<!ENTITY addresses.heading                              "Tansiwin">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Awi-d takarfḍa n tarakalt">
+<!ENTITY mapIt.tooltip                                  "Sken takarḍa n tarakalt n tensa-yagi si Web">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Asfaylu">
+<!ENTITY minimizeWindow.label                           "Semẓi">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Awid kullec ɣer zdat">
+<!ENTITY zoomWindow.label                               "Zoom">

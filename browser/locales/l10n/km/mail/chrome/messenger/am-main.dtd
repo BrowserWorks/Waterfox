@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Փոստարկղի կարգավորումներ">
+<!ENTITY accountName.label "Փոստարկղի անունը.">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Հիմնական որոշիչը">
+<!ENTITY identityDesc.label "Յուրք. փոստարկղ ունի իր որոշիչը, դա այն տեղեկությունն է, որ այլ մարդիկ տեսնում են կարդալով Ձեր նամակները։">
+<!ENTITY name.label "Ձեր անունը.">
+<!ENTITY name.accesskey "Y">
+<!ENTITY email.label "Էլ. հասցեներ.">
+<!ENTITY email.accesskey "E">
+<!ENTITY replyTo.label "Պատասխանել հասցեներին.">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "អ្នក​ទទួល​នឹង​ឆ្លើយតប​ទៅ​អាសយដ្ឋាន​ផ្សេង​នេះ">
+<!ENTITY organization.label "Կազմակերպությունը.">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Ստորագրությունը.">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "Օգտ. HTML (օր.՝ &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "ភ្ជាប់​ហត្ថលេខា​ពី​ឯកសារ​ជំនួស (អត្ថបទ, HTML, ឬ​រូបភាព) ៖">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Խմբագրել...">
+<!ENTITY choose.label "Ընտրել…">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "Խմբագրել այցեքարտը...">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Կցել իմ այցեքարտը նամակներին">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Կառավարել որոշիչները...">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Ելքային սպասարկիչը (SMTP).">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "Օգտ. հիմնական սպասարկիչը">
+

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Saját szótár">
+
+<!ENTITY wordEditField.label "Új szó:">
+<!ENTITY wordEditField.accessKey "Ú">
+<!ENTITY AddButton.label "Hozzáadás">
+<!ENTITY AddButton.accessKey "H">
+<!ENTITY DictionaryList.label "Szavak a szótárban:">
+<!ENTITY DictionaryList.accessKey "S">
+<!ENTITY RemoveButton.label "Eltávolítás">
+<!ENTITY RemoveButton.accessKey "E">
+
+<!ENTITY CloseButton.label "Bezárás">
+<!ENTITY CloseButton.accessKey "B">

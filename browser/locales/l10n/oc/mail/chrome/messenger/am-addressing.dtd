@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Redaccion e adreçatge">
+<!ENTITY addressingGroupTitle.label "Adreçatge">
+<!ENTITY addressingText.label      "Al moment de la recèrca d'adreças :">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Utilizar mas preferéncias globalas de servidor LDAP per aqueste compte">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "Modificar…">
+<!ENTITY editDirectories.accesskey "M">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Utilizar un servidor LDAP diferent :">
+<!ENTITY directories.accesskey     "d">
+<!ENTITY directoriesNone.label     "Pas cap">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Redaccion">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Redigir los messatges en HTML">
+<!ENTITY useHtml.accesskey                    "R">
+<!ENTITY autoQuote.label                      "Citar lo messatge original dins la responsa">
+<!ENTITY autoQuote.accesskey                  "a">
+<!ENTITY aboveQuote.label                     "la responsa comença abans la citacion">
+<!ENTITY belowQuote.label                     "la responsa comença aprèp la citacion">
+<!ENTITY selectAndQuote.label                 "la citacion es seleccionada">
+<!ENTITY place.label                          "e plaçar la signatura">
+<!ENTITY place.accesskey                      "p">
+<!ENTITY belowText.label                      "jos la citacion (recomandat)">
+<!ENTITY aboveText.label                      "jos ma responsa (en dessús de la citacion)">
+

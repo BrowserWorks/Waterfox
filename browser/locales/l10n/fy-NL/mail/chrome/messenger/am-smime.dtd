@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "End-to-end-fersifering">
+<!ENTITY e2eLearnMore.label "Mear ynfo">
+
+<!ENTITY e2eEnc.description "Sûnder end-to-end-fersifering wurdt de ynhâld fan berjochten maklik sichtber foar jo e-mailprovider en foar massa-tafersjoch.">
+<!ENTITY e2eeReqWarning.description "As jo fersifering nedich hawwe, moatte jo foar it ferstjoeren fan in berjocht de iepenbiere kaai of it sertifikaat fan elke ûntfanger hawwe.">
+
+<!ENTITY e2eSigning.description "Mei in digitale hantekening kinne ûntfangers kontrolearje oft it berjocht troch jo ferstjoerd is en oft de ynhâld net wizige is.">
+<!ENTITY e2eTechPref.description "Foarkar fersiferingstechnology:">
+
+<!ENTITY doNotEncrypt.label "Fersifering standert net ynskeakelje">
+<!ENTITY doNotEncrypt.accesskey "F">
+<!ENTITY requireEncryptMessage.label "Fersifering standert fereaskje">
+<!ENTITY requireEncryptMessage.accesskey "a">
+<!ENTITY encryptionCert2.message "Persoanlik fersiferingssertifikaat:">
+<!ENTITY digitalSign.certificate.button "Selektearje…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Wiskje">
+<!ENTITY digitalSign.certificate_clear.accesskey "W">
+<!ENTITY encryption.certificate.button "Selektearje…">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "Wiskje">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "Digitale ûndertekening">
+<!ENTITY signMessage2.label "Myn digitale hantekening standert tafoegje">
+<!ENTITY signMessage.accesskey "d">
+
+<!ENTITY signingCert2.message "Persoanlik sertifikaat foar digitaal ûndertekenjen:">
+
+<!ENTITY sendingDefaults.label "Standertynstellingen foar it ferstjoeren fan berjochten">
+
+<!ENTITY technologyAutomatic.label "Automatysk selektearje op basis fan beskikbere kaaien of sertifikaten">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "S/MIME-sertifikaten beheare">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "S/MIME-befeiligingsapparaten">
+<!ENTITY manageDevices2.accesskey "f">
+
+<!ENTITY technologySMIME.label "Foarkar foar S/MIME">
+<!ENTITY technologyOpenPGP.label "Foarkar foar OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Sertifikaat selektearje">
+<!ENTITY certPicker.info  "Sertifikaat:">
+<!ENTITY certPicker.detailsLabel "Details fan it selektearre sertifikaat:">
+
+<!ENTITY openpgpKey.message "Persoanlike kaai foar fersifering en digitale ûndertekening:">
+<!ENTITY openpgpKey.button "Persoanlike kaai ynstelle…">
+<!ENTITY openpgpKey.accesskey "o">

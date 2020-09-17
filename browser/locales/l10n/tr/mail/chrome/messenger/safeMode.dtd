@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; güvenli kip">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; şu an güvenli kipte çalışıyor. Bu kipte ayarlarınız, temalarınız ve eklentileriniz geçici olarak devre dışıdır.">
+<!ENTITY safeModeDescription2.label       "Aşağıdaki değişiklikleri kalıcı yapabilirsiniz:">
+
+<!ENTITY disableAddons.label              "Tüm eklentileri devre dışı bırak">
+<!ENTITY disableAddons.accesskey          "b">
+
+<!ENTITY resetToolbars.label              "Araç çubuklarını ve düğmeleri sıfırla">
+<!ENTITY resetToolbars.accesskey          "r">
+
+<!ENTITY changeAndRestartButton.label     "Değişiklikleri uygula ve tekrar çalıştır">
+<!ENTITY changeAndRestartButton.accesskey "D">
+
+<!ENTITY continueButton.label             "Güvenli kipte devam et">
+<!ENTITY continueButton.accesskey         "G">

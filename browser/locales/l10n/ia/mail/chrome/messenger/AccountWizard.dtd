@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Assistente de contos">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Pro reciper messages, tu debe primo configurar un conto.">
+<!ENTITY accountTypeTitle.label "Configuration de nove conto">
+<!ENTITY accountTypeDesc2.label "Iste assistente collige le informationes necessari pro configurar un conto. Si tu non cognosce le informationes requestate, contacta tu administrator de systema o fornitor de servicio internet.">
+<!ENTITY accountTypeDirections.label "Selectiona le typo de conto que tu vole implementar:">
+<!ENTITY accountTypeMail.label "Conto email">
+<!ENTITY accountTypeMail.accesskey "C">
+<!ENTITY accountTypeNews.label "Gruppos de discussion">
+<!ENTITY accountTypeNews.accesskey "d">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Spool de posta Unix (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identitate">
+<!ENTITY identityDesc.label "Cata conto ha un identitate, que es le informationes que te identifica al alteres quando illes recipe tu messages.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Scribe le nomine que apparera in le campo &quot;De:&quot; del messages a inviar">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(per exemplo, &quot;Julio Cesare&quot;).">
+<!ENTITY fullnameLabel.label "Tu nomine:">
+<!ENTITY fullnameLabel.accesskey "T">
+
+<!ENTITY emailLabel.label "Adresse de e-mail:">
+<!ENTITY emailLabel.accesskey "e">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informationes del servitor de entrata">
+<!ENTITY incomingServerTypeDesc.label "Selige le typo de servitor de entrata que tu usa.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP3">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Lassar messages sur le servitor">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!ENTITY portNum.label "Porta:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Predefinite:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Insere le nomine de tu servitor de entrata (per exemplo, &quot;mail.example.net&quot;).">
+<!ENTITY incomingServer.label "Servitor de entrata:">
+<!ENTITY incomingServer.accesskey "S">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Insere le nomine de usator de entrata que tu fornitor de e-mail te ha date (per exemplo, &quot;jcesare&quot;).">
+<!ENTITY incomingUsername.label "Nomine de usator:">
+<!ENTITY incomingUsername.accesskey "N">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Insere le nomine de tu servitor de novas (NNTP) (per exemplo, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Servitor de gruppos:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Informationes del servitor de exito">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Insere le nomine de tu servitor de exito (SMTP) (per exemplo, &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label "Servitor de exito:">
+<!ENTITY outgoingServer.accesskey "S">
+<!ENTITY outgoingUsername.description "Insere le nomine de usator de exito que tu fornitor de e-mail te ha date (iste es generalmente le mesme que le nomine de usator de entrata).">
+<!ENTITY outgoingUsername.label "Nomine de usator in exito:">
+<!ENTITY outgoingUsername.accesskey "U">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Tu pote cambiar le servitores de exito in le parametros de contos.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Le servitor de exito existente (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, essera usate.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Le nomine de usator de exito (SMTP) existente, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, sera usate.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Le servitor de exito (SMTP), &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, es identic al servitor de entrata. Le nomine de usator de entrata essera usate pro acceder a illo.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Nomine del conto">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Insere le nomine que identifica iste conto (p.ex. &quot;Conto professional&quot;, &quot;Conto personal&quot; o &quot;Conto de gruppos&quot;).">
+<!ENTITY accnameLabel.label "Nomine del conto:">
+<!ENTITY accnameLabel.accesskey "C">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Congratulationes!">
+<!ENTITY completionText.label "Verifica que le information infra es correcte.">
+<!ENTITY serverTypePrefix.label "Typo de servitor de entrata:">
+<!ENTITY serverNamePrefix.label "Nomine del servitor de entrata:">
+<!ENTITY smtpServerNamePrefix.label "Nomine del servitor de exito (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Nomine del servitor de gruppos (NNTP):">
+<!ENTITY downloadOnLogin.label "Discargar ora le messages">
+<!ENTITY downloadOnLogin.accesskey "D">
+<!ENTITY deferStorageDesc.label "Dismarca iste quadrato pro immagazinar le posta de iste conto in su proprie directorio. Isto face le conto apparer como conto de nivello principal. Alteremente, illo facera parte del conto de cassa de entrata global in le dossiers local.">
+<!ENTITY deferStorage.label "Usar le cassa de entrata global (immagazinar posta in dossiers local)">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "Clicca sur Finir pro confirmar iste parametros e exir del assistente de contos.">
+<!ENTITY clickFinish.labelMac "Clicca sur Facite pro confirmar iste parametros e exir del assistente de contos.">

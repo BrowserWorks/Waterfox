@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Хабарламаларды жүктеп алу және синхрондау">
+<!ENTITY MsgSelect.label "Желіден тыс режимінде қолдану үшін нәрселер">
+<!ENTITY MsgSyncDesc.label "Егер сіз желіден тыс режимі үшін пошта бумаларын немесе жаңалықтар топтарын таңдаған болсаңыз, оларды қазір жүктеп алуға және/немесе синхрондауға болады. Болмаса, &quot;Таңдау&quot; батырмасы көмегімен желіден тыс режимі үшін пошта бумаларын және жаңалықтар топтарын таңдаңыз.">
+<!ENTITY MsgSyncDirections.label "Келесіні жүктеп алу және/немесе синхрондау:">
+<!ENTITY syncTypeMail.label "Пошта хабарламалары">
+<!ENTITY syncTypeMail.accesskey "П">
+<!ENTITY syncTypeNews.label "Жаңалықтар топтары хабарламалары">
+<!ENTITY syncTypeNews.accesskey "Ж">
+<!ENTITY sendMessage.label "Жіберілмеген хабарламаларды жіберу">
+<!ENTITY sendMessage.accesskey "б">
+<!ENTITY workOffline.label "Жүктеп алу және/немесе синхрондау аяқталғаннан кейін желіден тыс режимінде жұмыс жасау">
+<!ENTITY workOffline.accesskey "ж">
+<!ENTITY selectButton.label "Таңдау…">
+<!ENTITY selectButton.accesskey "а">
+<!ENTITY MsgSelectDesc.label "Желіден тыс режимі үшін пошта бумаларын және жаңалықтар топтарын таңдау.">
+<!ENTITY MsgSelectInd.label "Жүктеп алу">
+<!ENTITY MsgSelectItems.label "Бумалар және жаңалықтар топтары">

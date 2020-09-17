@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Уласцівасці старонкі">
+<!ENTITY location.label "Месцазнаходжанне:">
+<!ENTITY lastModified.label "Апошняе змяненне:">
+<!ENTITY titleInput.label "Загаловак:">
+<!ENTITY titleInput.accessKey "З">
+<!ENTITY authorInput.label "Аўтар:">
+<!ENTITY authorInput.accessKey "А">
+<!ENTITY descriptionInput.label "Апісанне:">
+<!ENTITY descriptionInput.accessKey "п">
+<!ENTITY locationNewPage.label "[Новая старонка, яшчэ не захавана]">
+<!ENTITY EditHEADSource1.label "Дасведчаным карыстальнікам:">
+<!ENTITY EditHEADSource2.label "Каб рэдагаваць іншае змесціва рэгіёну &lt;head&gt;, выберыце &quot;Зыходнік HTML&quot; у меню Прагляд ці на Паліцы Прыладаў Рэжыму Праўкі.">

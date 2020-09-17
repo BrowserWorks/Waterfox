@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Միացնել բոլոր սնումների թարմացումները">
+<!ENTITY biffAll.accesskey             "Մ">
+
+<!ENTITY newFeedSettings.label         "Լռելյայն կարգավորումներ նոր սնումների համար">
+
+<!ENTITY manageSubscriptions.label     "Կառավարել բաժանորդագրությունները....">
+<!ENTITY manageSubscriptions.accesskey "M">
+
+<!ENTITY feedWindowTitle.label         "Սնման հաշվի Օգնական">
+<!ENTITY feeds.accountName             "Բլոգներ և նորություններ">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Жаңа бума">
+<!ENTITY name.label                 "Аты:">
+<!ENTITY name.accesskey             "А">
+<!ENTITY description.label          "Келесінің ішкі бумасы ретінде жасау:">
+<!ENTITY description.accesskey      "с">
+<!ENTITY folderRestriction1.label   "Сервер бумаларды екі арнайы түрмен шектейді.">
+<!ENTITY folderRestriction2.label   "Жаңа бумаңыздың ішінде келесінің болуын рұқсат ету:">
+<!ENTITY foldersOnly.label          "Тек бумалар">
+<!ENTITY messagesOnly.label         "Тек хабарламалар">
+<!ENTITY accept.label               "Буманы жасау">
+<!ENTITY accept.accesskey           "с">

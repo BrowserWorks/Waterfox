@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Izlash">
+
+<!ENTITY newPref.namePlaceholder       "Nomi">
+
+<!ENTITY newPref.valueBoolean          "Mantiqiy">
+<!ENTITY newPref.valueString           "Qator">
+<!ENTITY newPref.valueInteger          "Butun son">
+
+<!ENTITY newPref.stringPlaceholder     "Satrni kiriting">
+<!ENTITY newPref.numberPlaceholder     "Raqamni kiriting">
+
+<!ENTITY newPref.toggleButton          "O‘chirish/yoqish">
+<!ENTITY newPref.cancelButton          "Bekor qilish">
+
+<!ENTITY contextMenu.copyPrefName      "Nomidan nusxa olish">
+<!ENTITY contextMenu.copyPrefValue     "Qiymatdan nusxa olish">

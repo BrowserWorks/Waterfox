@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Få meg bort herfra!">
+<!ENTITY safeb.palm.decline.label "Ignorer denne advarselen">
+<!ENTITY safeb.palm.reportPage.label "Hvorfor ble dette nettstedet blokkert?">
+
+<!ENTITY safeb.blocked.malwarePage.title "Rapportert som angrepsnettsted!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Dette nettstedet på <span id='malware_sitename'/> er rapportert som et angrepsnettsted og er blokkert basert på dine sikkerhetsinnstillinger.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Angrepsnettsted forsøker installere programmer som stjeler din personlige informasjon, bruker datamaskinen din for å angripe andre, eller skader systemet ditt.</p><p>Noen angrepsnettsted sprer skadelig programvare med forsett, men mange gjør det også uten at de selv vet det, eller uten tillatelsen til eierne av nettstedet.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Rapporter nettsted med uønskede programmer!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Dette nettstedet på <span id='unwanted_sitename'/> er rapportert som et angrepsnettsted, og blokkeres basert på sikkerhetsinnstillingene dine.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Uønsket programvare-nettsted prøver å installere programmer som kan være villedende og påvirke systemet ditt på uventede måter.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Villedende nettsted!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Denne nettsiden på <span id='phishing_sitename'/> er rapportert som et villedende nettsted, og er blokkert basert på sikkerhetsinnstillingene dine.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Villedende nettsider er laget for å lure deg til å gjøre noe farlig, som å installere programmer, eller oppgi personlig informasjon som f.eks. passord, telefonnumre eller kredittkort.</p><p>Innskriving av informasjon på denne siden kan føre til identitetstyveri eller annen svindel.</p>">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Nettstedet forut kan inneholde skadelig programvare">
+<!-- Localization note (safeb.blocked.harmfulPage.shortDesc) - Please don't translate the contents of the <span id="harmful_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; blokkerte nettsiden på <span id='harmful_sitename'/> fordi den kan prøve å installere farlige apper som stjeler eller sletter din informasjon (for eksempel bilder, passord, meldinger og kredittkort).">
+<!ENTITY safeb.blocked.harmfulPage.longDesc "">
+
+<!-- Localization note (reportDeceptiveSite, notADeceptiveSite) - The two button strings will never be shown at the same time, so it's okay for them to have the same access key. -->
+<!ENTITY reportDeceptiveSite.label "Rapporter villedende nettsted…">
+<!ENTITY reportDeceptiveSite.accesskey "d">
+<!ENTITY notADeceptiveSite.label "Dette er ikke et villedende nettsted…">
+<!ENTITY notADeceptiveSite.accesskey "d">

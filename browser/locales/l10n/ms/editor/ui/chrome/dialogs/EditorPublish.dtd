@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Halaman Penerbitan">
+<!ENTITY windowTitleSettings.label    "Tetapan Penerbitan">
+<!ENTITY publishTab.label             "Terbitkan">
+<!ENTITY settingsTab.label            "Tetapan">
+<!ENTITY publishButton.label          "Terbitkan">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Nama Laman:">
+<!ENTITY siteList.accesskey           "n">
+<!ENTITY siteList.tooltip             "Pilih laman yang anda mahu terbitkan ini">
+<!ENTITY newSiteButton.label          "Laman Baru">
+<!ENTITY newSiteButton.accesskey      "B">
+<!ENTITY docDirList.label             "Sub-direktori laman untuk halaman ini:">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "Pilih atau masukkan nama sub-direktori jauh untuk halaman ini">
+<!ENTITY publishImgCheckbox.label     "Sisip imej dan fail lain">
+<!ENTITY publishImgCheckbox.accesskey "l">
+<!ENTITY publishImgCheckbox.tooltip   "Terbitkan imej dan fail lain yang dirujuki oleh halaman ini">
+<!ENTITY sameLocationRadio.label      "Guna lokasi yang sama dengan halaman">
+<!ENTITY sameLocationRadio.accesskey  "G">
+<!ENTITY sameLocationRadio.tooltip    "Terbitkan fail ke lokasi yang sama dengan halaman">
+<!ENTITY useSubdirRadio.label         "Guna sub-direktori laman ini:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Terbitkan fail ke sub-direktori jauh yang dipilih">
+<!ENTITY otherDirList.tooltip         "Pilih atau masukkan nama sub-direktori jauh yang menjadi tempat penerbitan fail">
+<!ENTITY pageTitle.label              "Tajuk Halaman:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Masukkan tajuk yang menjadi pengenalan halaman dalam tetingkap dan tandabuku">
+<!ENTITY pageTitleExample.label       "contoh: &quot;Halaman Web Saya&quot;">
+<!ENTITY filename.label               "Nama fail:">
+<!ENTITY filename.accesskey           "N">
+<!ENTITY filename.tooltip             "Masukkan nama untuk fail ini, termasuk '.html' halaman web">
+<!ENTITY filenameExample.label        "contoh: &quot;halamansaya.html&quot;">
+<!ENTITY setDefaultButton.label       "Tetapkan sebagai Piawai">
+<!ENTITY setDefaultButton.accesskey   "P">
+<!ENTITY removeButton.label           "Buang Laman">
+<!ENTITY removeButton.accesskey       "B">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Laman Penerbitan">
+<!ENTITY serverInfo.label             "Maklumat Pelayan">
+<!ENTITY loginInfo.label              "Maklumat Log masuk">
+<!ENTITY siteName.label               "Nama Laman:">
+<!ENTITY siteName.accesskey           "a">
+<!ENTITY siteName.tooltip             "Nama gelaran untuk mengenal pasti lokasi laman penerbitan ini (contoh: 'LamanSaya')">
+<!ENTITY siteUrl.label                "Alamat penerbitan (contoh: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "Alamat FTP:// atau HTTP:// yang disediakan oleh perkhidmatan ISP atau hos web anda">
+<!ENTITY browseUrl.label              "Alamat HTTP laman anda (contoh: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "Alamat HTTP:// direktori halaman utama anda (jangan sertakan nama fail)">
+<!ENTITY username.label               "Nama pengguna:">
+<!ENTITY username.accesskey           "N">
+<!ENTITY username.tooltip             "Nama pengguna yang anda gunakan untuk log masuk ke perkhidmatan ISP atau hos web">
+<!ENTITY password.label               "Kata laluan:">
+<!ENTITY password.accesskey           "t">
+<!ENTITY password.tooltip             "Kata laluan untuk nama pengguna anda">
+<!ENTITY savePassword.label           "Simpan Kata laluan">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Pilih ini untuk menyimpan kata laluan dengan selamat menggunakan Pengurus Kata laluan">

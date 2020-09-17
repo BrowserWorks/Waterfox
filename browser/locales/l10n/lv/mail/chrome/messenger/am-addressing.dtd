@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+
+
+
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY directoriesNone.label     "Nekas">
+
+<!-- am-addressing.xul -->
+
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Kompozīcija">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+
+
+
+<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Kaydedilen Dosyalar">
+<!ENTITY aboutDownloads.empty                      "Kaydedilen Dosya Yok">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Bulunduğu dizini aç">
+<!ENTITY cmd.show.accesskey                        "A">
+<!ENTITY cmd.showMac.label                         "Finder'da göster">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Aç">
+<!ENTITY cmd.open.accesskey                        "A">
+<!ENTITY cmd.removeFromHistory.label               "Geçmişten kaldır">
+<!ENTITY cmd.removeFromHistory.accesskey           "e">
+<!ENTITY cmd.clearList.label                       "Listeyi temizle">
+<!ENTITY cmd.clearList.accesskey                   "e">
+<!ENTITY cmd.clearList.tooltip                     "Süregelenler hariç kaydedilen dosyalar listesindeki tüm girişleri sil.">
+<!ENTITY cmd.searchDownloads.label                 "Ara…">
+<!ENTITY cmd.searchDownloads.key                   "F">

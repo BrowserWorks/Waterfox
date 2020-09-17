@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Parameters per novas paginas">
+
+<!ENTITY  authorName.label          "Autur:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "Apparientscha da pagina predefinida">
+
+<!ENTITY defaultColors.label        "Colurs predefinidas dal lectur (betg fixar las colurs en la pagina)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "Utilisar questas colurs:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "Text normal">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "Text da la colliaziun">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "Text activ da la colliaziun">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "Text da colliaziun visità">
+<!ENTITY visitedLinkText.accesskey  "V">
+<!ENTITY background.label           "Fund davos:">
+<!ENTITY background.accesskey       "F">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Maletg dal fund:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "Tscherner ina datoteca">
+<!ENTITY chooseFile.accesskey       "o">
+

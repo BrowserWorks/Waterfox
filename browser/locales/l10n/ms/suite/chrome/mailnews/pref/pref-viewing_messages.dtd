@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Paparan Mesej">
+<!ENTITY style.label                      "Gaya:">
+<!ENTITY style.accesskey                  "G">
+<!ENTITY regular.label                    "Biasa">
+<!ENTITY bold.label                       "Tebal">
+<!ENTITY italic.label                     "Italik">
+<!ENTITY boldItalic.label                 "Italik Tebal">
+<!ENTITY size.label                       "Saiz:">
+<!ENTITY size.accesskey                   "z">
+<!ENTITY bigger.label                     "Lebih besar">
+<!ENTITY smaller.label                    "Lebih kecil">
+<!ENTITY color.label                      "Warna:">
+<!ENTITY color.accesskey                  "W">
+<!ENTITY displayPlainText.caption         "Mesej teks biasa">
+<!ENTITY fontPlainText.label              "Fon:">
+<!ENTITY fontPlainText.accesskey          "F">
+<!ENTITY displayQuoted.label              "Tetapan untuk mesej petikan:">
+<!ENTITY wrapInMsg.label                  "Balut teks untuk memenuhi lebar tingkap">
+<!ENTITY wrapInMsg.accesskey              "B">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Papar ikon emotif sebagai grafik">
+<!ENTITY convertEmoticons.accesskey       "P">
+<!ENTITY generalMessageDisplay.caption    "Umum">
+<!ENTITY autoMarkAsRead.label             "Tandakan mesej secara automatik sebagai sudah dibaca">
+<!ENTITY autoMarkAsRead.accesskey         "T">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Selepas dipaparkan selama">
+<!ENTITY markAsReadAfter.accesskey        "d">
+<!ENTITY secondsLabel.label               "saat">
+
+<!ENTITY openingMessages.label            "Apabila membuka mesej, paparkan dalam:">
+<!ENTITY newWindowRadio.label             "Tetingkap mesej baru">
+<!ENTITY newWindowRadio.accesskey         "b">
+<!ENTITY existingWindowRadio.label        "Tetingkap mesej sedia ada">
+<!ENTITY existingWindowRadio.accesskey    "s">
+<!ENTITY disableContent.label             "Sekat imej dan kandungan lain daripada sumber jauh">
+<!ENTITY disableContent.accesskey         "S">
+<!ENTITY showCondensedAddresses.label     "Papar nama paparan kenalan dalam buku alamat sahaja">
+<!ENTITY showCondensedAddresses.accesskey "p">
+<!ENTITY closeMsgWindowOnDelete.label     "Tutup tetingkap mesej apabila menghapuskan mesej">
+<!ENTITY closeMsgWindowOnDelete.accesskey "t">

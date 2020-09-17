@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Servery proxy">
+<!ENTITY  pref.proxies.desc             "Server proxy je sieťová služba, ktorá umožňuje filtrovať a urýchliť pripojenie k sieti Internet.">
+<!ENTITY  proxyTitle.label              "Nastavenie serverov proxy pre prístup k sieti Internet">
+<!ENTITY  directTypeRadio.label         "Priame pripojenie k sieti Internet">
+<!ENTITY  directTypeRadio.accesskey     "m">
+<!ENTITY  systemTypeRadio.label         "Použiť systémové nastavenia serverov proxy">
+<!ENTITY  systemTypeRadio.accesskey     "s">
+<!ENTITY  manualTypeRadio.label         "Ručné nastavenie serverov proxy:">
+<!ENTITY  manualTypeRadio.accesskey     "u">
+<!ENTITY  wpadTypeRadio.label           "Automatická detekcia nastavení tejto siete">
+<!ENTITY  wpadTypeRadio.accesskey       "d">
+<!ENTITY  autoTypeRadio.label           "Adresa URL pre automatické nastavenie serverov proxy:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "Obnoviť">
+<!ENTITY  reload.accesskey              "b">
+<!ENTITY  http.label                    "Server proxy:">
+<!ENTITY  http.accesskey                "e">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "Rozšírené…">
+<!ENTITY  advanced.accesskey            "R">
+<!ENTITY  noproxy.label                 "Nepoužívať proxy pre:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "Príklad: .mozilla.org, .net.nz, 192.168.1.0/24">

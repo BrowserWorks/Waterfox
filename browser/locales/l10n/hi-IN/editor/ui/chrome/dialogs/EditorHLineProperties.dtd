@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "क्षैतिज रेखा गुण">
+
+<!ENTITY dimensionsBox.label "आयाम">
+<!ENTITY heightEditField.label "ऊंचाई:">
+<!ENTITY heightEditField.accessKey "G">
+<!ENTITY widthEditField.label "चौड़ाई:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY pixelsPopup.value "पिक्सेल">
+<!ENTITY alignmentBox.label "पंक्तिबद्धता">
+<!ENTITY leftRadio.value "बांया">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.value "केंद्र">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.value "दांया">
+<!ENTITY rightRadio.accessKey "R">
+
+<!ENTITY threeDShading.label "3-D छायांकन">
+<!ENTITY threeDShading.accessKey "S">
+<!ENTITY saveSettings.label "मूलभूत के रूप में प्रयोग करें">
+<!ENTITY saveSettings.accessKey "D">
+<!ENTITY saveSettings.tooltip "इन जमावटों को प्रयोग के लिये सहेजें जब एक नया क्षैतिज रेखा डाला जा रहा हो">

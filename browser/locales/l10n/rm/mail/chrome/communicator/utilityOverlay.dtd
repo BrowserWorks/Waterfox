@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Datoteca">
+<!ENTITY fileMenu.accesskey        "D">
+<!ENTITY newMenu.label            "Nov">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Modifitgar">
+<!ENTITY editMenu.accesskey        "M">
+<!ENTITY undoCmd.label            "Revocar">
+<!ENTITY undoCmd.accesskey          "v">
+<!ENTITY redoCmd.label            "Restituir">
+<!ENTITY redoCmd.accesskey          "s">
+<!ENTITY deleteCmd.label          "Stizzar">
+<!ENTITY deleteCmd.accesskey        "S">
+<!ENTITY preferencesCmd2.label "Preferenzas">
+<!ENTITY preferencesCmd2.accesskey "e">
+<!ENTITY preferencesCmdUnix.label       "Preferenzas">
+<!ENTITY preferencesCmdUnix.accesskey     "e">
+
+<!ENTITY customizeCmd.label "Persunalisar">
+<!ENTITY customizeCmd.accesskey "l">
+
+<!ENTITY viewMenu.label          "Vista">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "Travs da simbols">
+<!ENTITY viewToolbarsMenu.accesskey      "T">
+<!ENTITY showTaskbarCmd.label          "Trav da status">
+<!ENTITY showTaskbarCmd.accesskey        "u">
+
+<!ENTITY closeCmd.label      "Serrar">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "r">
+
+<!ENTITY quitApplicationCmd.label  "Terminar">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "e">
+
+<!ENTITY quitApplicationCmdUnix.label  "Terminar">
+<!ENTITY quitApplicationCmdUnix.accesskey  "e">
+
+<!ENTITY quitApplicationCmdMac.label  "Terminar &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "e">

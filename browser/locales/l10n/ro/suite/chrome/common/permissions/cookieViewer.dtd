@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# BuBBaX <mikebubbax@yahoo.com>
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY     tab.cookiesonsystem.label      "Cookie-uri stocate">
+<!ENTITY     tab.bannedservers.label        "Cookie Sites">
+<!ENTITY     div.bannedservers.label        "Manage sites that can and cannot store cookies on your computer.">
+<!ENTITY     div.cookiesonsystem.label      "Vizualizați și eliminați cookie-urile stocate pe acest calculator.">
+<!ENTITY     treehead.cookiename.label      "Nume cookie">
+<!ENTITY     treehead.cookiedomain.label    "Sait">
+<!ENTITY     treehead.cookieexpires.label   "Expiră la:">
+<!ENTITY     treehead.infoselected.label    "Informații despre cookie-ul selectat">
+<!ENTITY     button.removecookie.label      "Șterge cookie">
+<!ENTITY     button.removecookie.accesskey  "r">
+<!ENTITY     button.removeallcookies.label  "Șterge toate cookie-urile">
+<!ENTITY     button.removeallcookies.accesskey "e">
+
+<!ENTITY     search.placeholder             "Search Cookies">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Nume:">
+<!ENTITY     props.value.label              "Conținut:">
+<!ENTITY     props.domain.label             "Gazdă:">
+<!ENTITY     props.path.label               "Cale:">
+<!ENTITY     props.secure.label             "Trimite pentru:">
+<!ENTITY     props.expires.label            "Expiră la:">
+
+<!ENTITY     treehead.sitename.label        "Sait">
+<!ENTITY     treehead.status.label          "Stare">
+<!ENTITY     windowtitle.label              "Managerul Cookie-urilor">
+<!ENTITY     buttonaccept.label             "Închide">
+<!ENTITY     buttonaccept.accesskey         "c">
+
+<!ENTITY     blockSite.label                "Blochează">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "Permite">
+<!ENTITY     allowSite.accesskey            "P">
+<!ENTITY     allowSiteSession.label         "Session">
+<!ENTITY     allowSiteSession.accesskey     "S">
+<!ENTITY     removepermission.label         "Elimină sit">
+<!ENTITY     removepermission.accesskey     "E">
+<!ENTITY     removeallpermissions.label     "Elimină toate saiturile">
+<!ENTITY     removeallpermissions.accesskey "E">
+
+<!ENTITY     futureCookies.label            "Nu mai accepta cookie-uri de la saiturile de la care am șters deja cookie-uri">
+<!ENTITY     futureCookies.accesskey        "d">

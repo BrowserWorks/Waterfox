@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Nikela Ngomrhumo">
+<!ENTITY subscribeButton.label        "Nikela Ngomrhumo">
+<!ENTITY subscribeButton.accesskey    "N">
+<!ENTITY unsubscribeButton.label      "Unganikeli ngomrhumo">
+<!ENTITY unsubscribeButton.accesskey  "U">
+<!ENTITY newGroupsTab.label           "New Groups">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Yenza ntsha">
+<!ENTITY refreshButton.accesskey      "Y">
+<!ENTITY stopButton.label             "Nqumama">
+<!ENTITY stopButton.accesskey         "m">
+<!ENTITY server.label                 "Iakhawunti:">
+<!ENTITY server.accesskey             "I">
+<!ENTITY subscribedHeader.label       "Nikela Ngomrhumo">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Bonisa amanqaku aqulethe:">
+<!ENTITY namefield.accesskey          "i">

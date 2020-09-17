@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Administrar las identitads per quest conto. L'emprima identitad vegn utilisada sco standard.">
+<!ENTITY identitiesListAdd.label  "Agiuntar…">
+<!ENTITY identitiesListAdd.accesskey  "A">
+<!ENTITY identitiesListEdit.label "Modifitgar…">
+<!ENTITY identitiesListEdit.accesskey "M">
+<!ENTITY identitiesListDefault.label "Definir sco standard">
+<!ENTITY identitiesListDefault.accesskey "S">
+<!ENTITY identitiesListDelete.label "Stizzar">
+<!ENTITY identitiesListDelete.accesskey "z">
+<!ENTITY identitiesListClose.label "Serrar">
+<!ENTITY identitiesListClose.accesskey "R">

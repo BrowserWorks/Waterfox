@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Konte Firefox">
+<!ENTITY aboutAccounts.connected.description "A seŋiima e innde">
+<!ENTITY aboutAccounts.syncPreferences.label "Fiy ɗoo ngam ƴeewtaade teelte Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "Alaa ceŋol Enternet">
+<!ENTITY aboutAccounts.retry.label "Eto goɗngol">
+
+<!ENTITY aboutAccounts.restrictedError.title "Koko Falaa">
+<!ENTITY aboutAccounts.restrictedError.description "A waawaa toppitaade Konte Firefox e ndee heftinirde.">

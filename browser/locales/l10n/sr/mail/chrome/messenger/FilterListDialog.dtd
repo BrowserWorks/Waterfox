@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Филтери порука">
+<!ENTITY nameColumn.label "Име филтера">
+<!ENTITY activeColumn.label "Укључено">
+<!ENTITY newButton.label "Нови…">
+<!ENTITY newButton.accesskey "Н">
+<!ENTITY newButton.popupCopy.label "Копирај…">
+<!ENTITY newButton.popupCopy.accesskey "К">
+<!ENTITY editButton.label "Уреди…">
+<!ENTITY editButton.accesskey "У">
+<!ENTITY deleteButton.label "Обриши">
+<!ENTITY deleteButton.accesskey "б">
+<!ENTITY reorderTopButton "Помери нагоре">
+<!ENTITY reorderTopButton.accessKey "о">
+<!ENTITY reorderTopButton.toolTip "Преуреди филтер тако да се први изврши">
+<!ENTITY reorderUpButton.label "Помери горе">
+<!ENTITY reorderUpButton.accesskey "г">
+<!ENTITY reorderDownButton.label "Помери доле">
+<!ENTITY reorderDownButton.accesskey "д">
+<!ENTITY reorderBottomButton "Помери на дно">
+<!ENTITY reorderBottomButton.accessKey "н">
+<!ENTITY reorderBottomButton.toolTip "Преуреди филтер тако да се последњи изврши">
+<!ENTITY filterHeader.label "Укључени филтери се аутоматски извршавају у редоследу приказаном испод.">
+<!ENTITY filtersForPrefix.label "Филтери за:">
+<!ENTITY filtersForPrefix.accesskey "Ф">
+<!ENTITY viewLogButton.label "Записник филтера">
+<!ENTITY viewLogButton.accesskey "З">
+<!ENTITY runFilters.label "Изврши сада">
+<!ENTITY runFilters.accesskey "И">
+<!ENTITY stopFilters.label "Заустави">
+<!ENTITY stopFilters.accesskey "с">
+<!ENTITY folderPickerPrefix.label "Изврши одабран(е) филтер(е) над:">
+<!ENTITY folderPickerPrefix.accesskey "р">
+<!ENTITY helpButton.label "Помоћ">
+<!ENTITY helpButton.accesskey "П">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Претражи филтере по имену…">
+
+
+

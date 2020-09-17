@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Помощ">
+<!ENTITY helpMenu.accesskey "щ">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Помощ">
+<!ENTITY helpMenuWin.accesskey "щ">
+<!ENTITY helpTroubleshootingInfo.label     "Отстраняване на неизправности">
+<!ENTITY helpTroubleshootingInfo.accesskey "о">
+<!ENTITY helpSafeMode.label     "Рестартиране с изключени добавки…">
+<!ENTITY helpSafeMode.accesskey "Р">
+
+<!ENTITY helpKeyboardShortcuts.label "Клавишни комбинации">
+<!ENTITY helpKeyboardShortcuts.accesskey "к">
+
+
+
+

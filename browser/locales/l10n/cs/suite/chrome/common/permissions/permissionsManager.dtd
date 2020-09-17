@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label "Výjimky">
+<!ENTITY treehead.sitename.label "Server">
+<!ENTITY treehead.status.label "Stav">
+<!ENTITY remove.label "Odebrat server">
+<!ENTITY remove.accesskey "O">
+<!ENTITY removeall.label "Odebrat všechny servery">
+<!ENTITY removeall.accesskey "e">
+<!ENTITY address.label "Adresa webového serveru:">
+<!ENTITY address.accesskey "A">
+<!ENTITY block.label "Blokovat">
+<!ENTITY block.accesskey "B">
+<!ENTITY session.label "Povolit pro relaci">
+<!ENTITY session.accesskey "R">
+<!ENTITY allow.label "Povolit">
+<!ENTITY allow.accesskey "P">

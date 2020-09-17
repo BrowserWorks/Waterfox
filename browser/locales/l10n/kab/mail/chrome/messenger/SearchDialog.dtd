@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Nadi iznan di:">
+<!ENTITY searchHeading.accesskey     "d">
+<!ENTITY searchSubfolders.label      "Nadi ad-ikaramen">
+<!ENTITY searchSubfolders.accesskey  "d">
+<!ENTITY searchOnServer.label        "Selkem anadi ɣef uqeddac">
+<!ENTITY searchOnServer.accesskey    "k">
+<!ENTITY resetButton.label           "Sfeḍ">
+<!ENTITY resetButton.accesskey       "S">
+<!ENTITY openButton.label            "Ldi">
+<!ENTITY openButton.accesskey        "L">
+<!ENTITY deleteButton.label          "Kkes">
+<!ENTITY deleteButton.accesskey      "K">
+<!ENTITY searchDialogTitle.label     "Nadi iznan">
+<!ENTITY results.label               "Igmaḍ">
+<!ENTITY moveButton.label            "Senkez ɣer">
+<!ENTITY moveButton.accesskey        "k">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Ldi ɣef ukaram">
+<!ENTITY openInFolder.accesskey      "r">
+<!ENTITY saveAsVFButton.label        "Sekles am ukaram n unadi">
+<!ENTITY saveAsVFButton.accesskey    "l">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Nadi di:">
+<!ENTITY abSearchHeading.accesskey   "d">
+<!ENTITY propertiesButton.label      "Taɣaṛa">
+<!ENTITY propertiesButton.accesskey  "T">
+<!ENTITY composeButton.label         "Aru">
+<!ENTITY composeButton.accesskey     "A">
+<!ENTITY deleteCardButton.label      "Kkes">
+<!ENTITY deleteCardButton.accesskey  "K">
+<!ENTITY abSearchDialogTitle.label   "Anadi leqqayen n imedlis n tensa">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

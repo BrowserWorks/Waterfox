@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Tscherner modifitgar midadas">
+<!ENTITY conflictWarning.label "Questa pagina è vegnida modifitgada dad in auter program, ma ti has era midadas betg memorisadas en il Composer.">
+<!ENTITY conflictResolve.label "Tscherner la versiun che duai vegnir mantegnida:">
+<!ENTITY keepCurrentPageButton.label "Mantegnair las midadas actualas da la pagina">
+<!ENTITY useOtherPageButton.label "Remplazzar la pagina actuala cun tschellas midadas">

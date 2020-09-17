@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "పొడిగింతలు">
+<!ENTITY aboutAddons.header2                    "మీ ఆడాన్లు">
+
+<!ENTITY addonAction.enable                     "చేతనం">
+<!ENTITY addonAction.disable                    "అచేతనంచేయి">
+<!ENTITY addonAction.uninstall                  "నిర్మూలించు">
+<!ENTITY addonAction.undo                       "చేయవద్దు">
+<!ENTITY addonAction.update                     "తాజాకరించు">
+
+<!ENTITY addonUnsigned.message                  "ఈ యాడ్ఆన్ &brandShortName; ద్వారా ధృవీకరించబడలేదు.">
+<!ENTITY addonUnsigned.learnMore                "ఇంకా తెలుసుకోండి">

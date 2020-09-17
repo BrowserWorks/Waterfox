@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY feedTitle.label "Наслов:">
+
+<!ENTITY button.addFeed.label "Додај">
+<!ENTITY button.addFeed.accesskey "а">
+<!ENTITY button.removeFeed.label "Отстрани">
+<!ENTITY button.removeFeed.accesskey "р">
+<!ENTITY button.importOPML.label "Увези">
+<!ENTITY button.importOPML.accesskey "и">
+<!ENTITY button.exportOPML.label "Извези">
+<!ENTITY button.exportOPML.accesskey "з">
+
+<!ENTITY cmd.close.commandKey "w">

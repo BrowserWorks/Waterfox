@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Velkommen til &brandShortName;">
+<!ENTITY header2.label "Vil du have en ny mailadresse?">
+<!ENTITY other.languages "Vi viser kun de udbydere, der tilbyder adresser i dit område. Klik her for at få vist alle udbydere.">
+<!ENTITY error.line1 "Vi kan desværre ikke finde nogen foreslåede mailadresser.">
+<!ENTITY error.line2 "Du kan prøve at søge på aliasser eller med andre søgeord for at finde flere adresser.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Du kan også prøve en af ">
+<!ENTITY error.suggest.middle "udbyderne af gratis mailkonti">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Hej">
+<!ENTITY success.title.after ", de følgende mailadresser er tilgængelige:">
+<!ENTITY success.tip "(Du kan også prøve at søge på aliasser eller benytte andre søgeord for at finde flere adresser.)">
+<!ENTITY partnership.description "&brandShortName; kan i samarbejde med flere partnere tilbyde dig en ny mailkonto. Udfyld blot felterne ovenfor med dit for- og efternavn eller med andre ord for at begynde.">
+<!ENTITY existing.header "Har du allerede en adresse, du vil bruge?">
+<!ENTITY tinyheader.title "Har du en adresse?">
+<!ENTITY tinyheader.existing "Spring dette over og benyt min eksisterende mailadresse">
+<!ENTITY content.close "Jeg vil konfigurere min konto senere.">
+<!ENTITY successful.title "Tillykke!">
+<!ENTITY successful.successMessage "Du har nu konfigureret din konto.">
+<!ENTITY successful.write "Skriv nogle mails">
+<!ENTITY successful.write.desc "Fortæl dine venner og familie om din nye mailadresse. Det er jo derfor, du har fået denne nye konto!">
+<!ENTITY successful.customize "Tilpas &brandShortName; med nogle fede tilføjelser">
+<!ENTITY successful.customize.desc "Der er tusindvis af tilføjelser, du kan bruge til at tilpasse &brandShortName; til lige netop dit behov.">
+<!ENTITY successful.attach "Vedhæft en signatur til mine mails">
+<!ENTITY successful.attach.desc "Du kan automatisk få vedhæftet et citat eller lidt information om dig selv efter hver meddelelse, du sender.">
+<!ENTITY successful.close "Luk dette vindue.">
+<!ENTITY input.namePlaceholder "Dit navn eller alias">
+<!ENTITY input.search "Søg">
+<!ENTITY search_engine.title "Tilpas din søgetjeneste">
+<!ENTITY search_engine.message "Din mailudbyder kan også hjælpe dig med at søge på websider.">
+<!ENTITY search_engine.button "Færdig">

@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Ẓreg asebter">
+<!ENTITY windowTitleSettings.label    "Iɣewwaṛen n teẓrigt">
+<!ENTITY publishTab.label             "Ẓreg">
+<!ENTITY settingsTab.label            "Iɣewwaṛen">
+<!ENTITY publishButton.label          "Publish">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Isem n usmel wab:">
+<!ENTITY siteList.accesskey           "s">
+<!ENTITY siteList.tooltip             "Fren asmel anida tebɣiḍ ad eẓergeḍ">
+<!ENTITY newSiteButton.label          "Asmel amaynut">
+<!ENTITY newSiteButton.accesskey      "A">
+<!ENTITY docDirList.label             "Akaram asnawan n usmel i usebter-agi:">
+<!ENTITY docDirList.accesskey         "t">
+<!ENTITY docDirList.tooltip           "Fren neɣ sekcem isem n ukaram anmeggag i usebter-agi">
+<!ENTITY publishImgCheckbox.label     "Seddu tugniwin akked ifuyla nniḍen.">
+<!ENTITY publishImgCheckbox.accesskey "n">
+<!ENTITY publishImgCheckbox.tooltip   "Ẓreg tugniwin akked ifuyla nniḍen i d-ittunefken deg usebter-agi">
+<!ENTITY sameLocationRadio.label      "Seqdec adig nni iman-is am usebter">
+<!ENTITY sameLocationRadio.accesskey  "q">
+<!ENTITY sameLocationRadio.tooltip    "Suffeɣ ifuyla ɣer wadig nni iman-is am usebter">
+<!ENTITY useSubdirRadio.label         "Ẓreg tugniwin akked ifuyla nniḍen i d-ittunefken deg usebter-agi ">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Suffeɣ ifuyla ɣer ukaram asnawan anmeggag yettwafernen">
+<!ENTITY otherDirList.tooltip         "Fren neɣ sekcem isem n ukaram asnwan anmeggag aniɣer ad tessuffɣeḍ ifuyla.">
+<!ENTITY pageTitle.label              "Azwel n usebtar:">
+<!ENTITY pageTitle.accesskey          "b">
+<!ENTITY pageTitle.tooltip            "Sekcem azwel n usulu n usebter deg usfaylu akked d ticraḍ">
+<!ENTITY pageTitleExample.label       "amedya: &quot;Asebter inu&quot;">
+<!ENTITY filename.label               "Isem n ufaylu:">
+<!ENTITY filename.accesskey           "u">
+<!ENTITY filename.tooltip             "Sekcem isem n ufaylu, seddu '.html' ma yella d asebter web">
+<!ENTITY filenameExample.label        "amedya,: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label       "Sbadu-t d amezwer">
+<!ENTITY setDefaultButton.accesskey   "m">
+<!ENTITY removeButton.label           "Kkes asmel">
+<!ENTITY removeButton.accesskey       "K">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Ismal n teẓrigt">
+<!ENTITY serverInfo.label             "Talɣut n uqeddac">
+<!ENTITY loginInfo.label              "Talɣut n unekcum">
+<!ENTITY siteName.label               "Isem n usmel wab:">
+<!ENTITY siteName.accesskey           "s">
+<!ENTITY siteName.tooltip             "Meffer isem i yesuluyen asmel-agi n tezrigt (amedya: 'Asmel-iw')">
+<!ENTITY siteUrl.label                "Tansa n teẓrigt (amedya: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "Tansa  FTP:// neɣ HTTP:// i k-d-imidd  ISP yineqk neɣ ameẓlu n tnezduɣt web.">
+<!ENTITY browseUrl.label              "Tansa HTTP n usebter-inek agejdan (amedya.: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "tansa  HTTP:// n ukaram-inek agejdan (ur sedday ara isem n ufaylu)">
+<!ENTITY username.label               "Isem n useqdac:">
+<!ENTITY username.accesskey           "s">
+<!ENTITY username.tooltip             "Isem n useqdac i teseqdaceḍ akken ad tkecmeḍ ɣer ISP yinek neɣ ameẓlu n tnezduɣt web">
+<!ENTITY password.label               "Awal uffir:">
+<!ENTITY password.accesskey           "f">
+<!ENTITY password.tooltip             "Awal uffir icudden ɣer yisem n useqdac">
+<!ENTITY savePassword.label           "Se~kles awal uffir">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Fren w-agi akken ad tesekelseḍ awal-inek uffir s wudem aɣalsan s useqdec n umsefrak n wawal uffir">

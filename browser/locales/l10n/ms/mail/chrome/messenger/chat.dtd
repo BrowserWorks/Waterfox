@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Kenalan Atas Talian">
+<!ENTITY offlineContactsHeader.label   "Kenalan Luar Talian">
+<!ENTITY conversationsHeader.label     "Perbualan">
+<!ENTITY searchResultConversation.label "Hasil carian">
+<!ENTITY chat.noConv.title             "Perbualan akan dipaparkan di sini.">
+<!ENTITY chat.noConv.description       "Guna senarai kenalan dalam panel kiri untuk memulakan perbualan.">
+<!ENTITY chat.noPreviousConv.description       "Buat masa ini, tiada perbualan terdahulu yang disimpan oleh &brandShortName; untuk kenalan ini.">
+<!ENTITY chat.noAccount.title             "Anda masih belum menetapkan akaun sembang lagi.">
+<!ENTITY chat.noAccount.description       "Ikuti panduan proses penetapan akaun sembang yang disediakan oleh &brandShortName;.">
+<!ENTITY chat.accountWizard.button       "Mulakan">
+<!ENTITY chat.noConnectedAccount.title             "Akaun sembang anda tidak bersambung.">
+<!ENTITY chat.noConnectedAccount.description       "Anda boleh menyambungkannya dari dialog 'Status sembang':">
+<!ENTITY chat.showAccountManager.button       "Papar status sembang">
+
+<!ENTITY chat.participants             "Peserta:">
+<!ENTITY chat.previousConversations    "Perbualan Terdahulu:">
+<!ENTITY chat.ongoingConversation      "Perbualan sekarang">
+
+<!ENTITY openConversationCmd.label     "Mulakan Perbualan">
+<!ENTITY openConversationCmd.accesskey "b">
+<!ENTITY closeConversationCmd.label    "Tutup Perbualan">
+<!ENTITY closeConversationCmd.accesskey "T">
+<!ENTITY aliasCmd.label                "Namakan semula">
+<!ENTITY aliasCmd.accesskey            "N">
+<!ENTITY deleteCmd.label               "Buang Kenalan">
+<!ENTITY deleteCmd.accesskey           "g">
+
+<!ENTITY openConversationButton.tooltip  "Mulakan perbualan">
+<!ENTITY closeConversationButton.tooltip "Tutup perbualan">
+
+<!ENTITY addBuddyButton.label          "Tambah Kenalan">
+<!ENTITY joinChatButton.label          "Sertai Sembang">
+<!ENTITY chatAccountsButton.label      "Papar Akaun">
+
+<!ENTITY status.available          "Ada">
+<!ENTITY status.unavailable        "Tiada">
+<!ENTITY status.offline            "Luar talian">
+
+<!ENTITY openLinkCmd.label            "Buka Pautan…">
+<!ENTITY openLinkCmd.accesskey        "B">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label         "საიტის მისამართი:">
+<!ENTITY docSubdir.label       "გვერდის ქვესაქაღალდე:">
+<!ENTITY otherSubdir.label     "სურათის ქვესაქაღალდე:">
+
+<!ENTITY status.label          "გამოქვეყნება…">
+<!ENTITY fileList.label        "გამოქვეყნების სტატუსი">
+<!ENTITY succeeded.label       "წარმატებულია">
+<!ENTITY failed.label          "ვერ მოხერხდა">
+
+<!ENTITY keepOpen              "ამ ფანჯრის ღიად დატოვება გამოქვეყნების დასრულების შემდეგ.">
+<!ENTITY closeButton.label     "დახურვა">

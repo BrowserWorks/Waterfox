@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Tabelu zasunuś">
+
+<!ENTITY size.label "Wjelikosć">
+<!ENTITY numRowsEditField.label "Rědy:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "Słupy:">
+<!ENTITY numColumnsEditField.accessKey "S">
+<!ENTITY widthEditField.label "Šyrokosć:">
+<!ENTITY widthEditField.accessKey "r">
+<!ENTITY borderEditField.label "Kšoma:">
+<!ENTITY borderEditField.accessKey "K">
+<!ENTITY borderEditField.tooltip "Zapódajśo licbu za kšomu tabele abo zapódajśo nul (0) za žednu kšomu">
+<!ENTITY pixels.label "pikselow">

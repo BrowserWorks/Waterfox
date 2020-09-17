@@ -1,0 +1,196 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Ang pahina ng pag-load ng problema">
+<!ENTITY retry.label "Ulitin">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Hindi maka konekta">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Ang address na ito ay pinaghigpitan">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Hindi matagpuan ang server">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul>
+  <li>Lagyan ng check ang address para sa mga error sa pag-type tulad ng 
+    <strong>ww</strong>.example.com sa halip ng 
+    <strong>www</strong>.example.com</li> 
+    <div id='searchbox'> 
+      <input id='searchtext' type='search'> </input> 
+      <button id='searchbutton'>Paghahanap</button> 
+    </div>
+  <li>Kung hindi mo mai-load ang anumang mga pahina, suriin ang data ng iyong device o koneksyon sa Wi-Fi.
+    <button id='wifi'>Paganahin ang Wi-Fi</button>
+  </li></ul>">
+
+<!ENTITY fileNotFound.title "Hindi nahanap ang file">
+<!ENTITY fileNotFound.longDesc "<ul>
+  <li>Lagyan ng check ang pangalan ng file para sa malaking titik o iba pang mga error sa pag-type.</li> 
+  <li>Lagyan ng check upang makita kung ang file ay inilipat, pinalitan ng pangalan o tinanggal.</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Access sa mga file ay tinanggihan">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Maaaring maialis ito, inilipat, o pahintulot ng file ay maaaring pumipigil sa pag-access.</li></ul>">
+
+<!ENTITY generic.title "Oops.">
+<!ENTITY generic.longDesc "<p>&brandShortName; hindi maaaring ma-load ang pahinang ito para sa ilang kadahilanan.</p>">
+
+<!ENTITY malformedURI.title "Hindi wasto ang address">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>Ang mga web address ay kadalasang nakasulat
+    <strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Hanapin</button>
+    </div>
+  <li>Siguraduhin na gumagamit ka ng mga slashes ng pasulong (i.e.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Ang koneksyon ay naantala">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Nag-expire ang dokumento">
+<!ENTITY notCached.longDesc "<p>Ang hiniling na dokumento ay hindi magagamit sa cache ng &brandShortName;’</p><ul><li>.Bilang pag-iingat sa seguridad, &brandShortName; ay hindi awtomatikong muling humiling ng mga sensitibong dokumento.</li><li> I-click ang Subukan Muli upang muling hilingin ang dokumento mula sa website.</li></ul>">
+
+<!ENTITY netOffline.title "Di konektado">
+
+<!ENTITY contentEncodingError.title "Error sa Pag-encode ng Nilalaman">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Mangyaring makipag-ugnayan sa mga may-ari ng website upang ipaalam sa kanila ang problemang ito</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Hindi ligtas na file type">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Mangyaring makipag-ugnayan sa mga may-ari ng website upang ipaalam sa kanila ang problemang ito</li> </ul>">
+
+<!ENTITY netReset.title "Ang koneksyon ay na-reset">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Nagtagal ang koneksyon">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Ang address ay hindi naiintindihan">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Maaaring kailanganin mong mag-install ng iba pang software upang buksan ang address na ito.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Tinanggihan ng proxy server ang mga koneksyon">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Suriin ang mga setting ng proxy upang matiyak na tama ang mga ito.</li>
+  <li>Makipag-ugnay sa administrator ng iyong network upang matiyak na ang proxy server ay
+    nagtatrabaho.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Hindi mahanap ang proxy server">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "
+<ul>
+  <li>Suriin ang mga setting ng proxy upang matiyak na tama ang mga ito.</li>
+  <li>Suriin upang matiyak na ang iyong aparato ay may gumaganang data o koneksyon sa Wi-Fi.
+    <button id='wifi'>Paganahin ang Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Ang pahina ay hindi nagre-redirect ng maayos">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Ang problemang ito ay maaaring minsan ay sanhi ng hindi pagpapagana o pagtanggi na tanggapin
+    cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Hindi inaasahang tugon mula sa server">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Suriin upang matiyak na ang iyong system ay may Personal Security Manager
+    na-install.</li>
+  <li>Maaaring maging sanhi ng isang hindi karaniwang pamantayan sa server.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Nagbigo ang Panatag na Koneksiyon">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Ang pahina na sinusubukan mong tingnan ay hindi maaaring ipakita dahil ang pagiging tunay ng natanggap na data ay hindi ma-verify.</li>
+  <li>Mangyaring makipag-ugnay sa mga may-ari ng website upang ipaalam sa kanila ang problemang ito.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Nagbigo ang Panatag na Koneksiyon">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Ito ay maaaring isang problema sa pagsasaayos ng server, o maaaring ito
+isang taong nagsisikap na magpanggap sa server.</li>
+  <li>Kung nakakonekta ka sa matagumpay na server na ito sa nakaraan, ang error ay maaaring
+maging pansamantala, at maaari mong subukan ulit mamaya.</li>
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>Ang site ay maaaring pansamantalang hindi magagamit o masyadong abala. Subukan muli sa ilang sandali.</li>
+  <li>Kung hindi mo mai-load ang anumang mga pahina, suriin ang data ng iyong mobile device o koneksyon sa Wi-Fi.
+    <button id='wifi'>Paganahin ang Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Na-block sa pamamagitan ng Patakaran sa Seguridad ng Nilalaman">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; pinigilan ang pahinang ito sa paglo-load sa ganitong paraan dahil ang pahina ay may isang patakaran sa seguridad ng nilalaman na hindi pinapayagan nito.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Nasira ang Error sa Nilalaman">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ang pahina na sinusubukan mong tingnan ay hindi maipakita dahil nakita ang isang error sa paghahatid ng data.</p><ul><li>Mangyaring makipag-ugnay sa mga may-ari ng website upang ipaalam sa kanila ang problemang ito.</li></ul>">
+
+<!ENTITY securityOverride.linkText "O makakadagdag ka ang exception…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Alisin mo ako dito!">
+<!ENTITY securityOverride.exceptionButtonLabel "Dagdagan ng Exception…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Hindi ka dapat magdagdag ng pagbubukod kung gumagamit ka ng isang koneksyon sa internet na hindi ka lubos na pinagkakatiwalaan o kung hindi ka ginagamit upang makakita ng babala para sa server na ito.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Paki-contact ang may-ari ng website para malaman nila ang problemang ito.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Hindi ma-ugnay ang Ligtas">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Advanced na impormasyon: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Ang iyong koneksyon ay hindi secure">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Advanced na impormasyon: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Ang iyong koneksyon ay hindi secure">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> gumagamit ng teknolohiya ng seguridad na lipas na sa panahon at mahina ang pag-atake. Ang isang magsasalakay ay madaling maipakita ang impormasyon na inisip mong ligtas. Kailangan ng administrator ng website na ayusin ang server muna bago mo mabisita ang site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Network Protocol Error">
+<!ENTITY networkProtocolError.longDesc "<p>The page you are trying to view cannot be shown because an error in the network protocol was detected.</p><ul><li>Please contact the website owners to inform them of this problem.</li></ul>">

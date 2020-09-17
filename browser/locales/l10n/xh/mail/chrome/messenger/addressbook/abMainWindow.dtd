@@ -1,0 +1,195 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Incwadi Yeedilesi">
+<!ENTITY blankResultsPaneMessage.label                  "This address book shows contacts only after a search">
+<!ENTITY localResultsOnlyMessage.label                  "Contacts from remote address books are not shown until you search">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Ifayili">
+<!ENTITY fileMenu.accesskey                             "I">
+<!ENTITY newMenu.label                                  "Okutsha">
+<!ENTITY newMenu.accesskey                              "O">
+<!ENTITY newContact.label                               "Address Book Contact…">
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Uludwe Lwemeyile Ethunyelwayo...">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "Idilesi Incwadi...">
+<!ENTITY newAddressBookCmd.accesskey                    "I">
+<!ENTITY newLDAPDirectoryCmd.label                      "Uvimba Weefayili ze-LDAP...">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "Umyalezo">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "U">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Use Mac OS X Address Book">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Vala">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "V">
+<!ENTITY printSetupCmd.label                            "Ukumiselwa Kwekhasi...">
+<!ENTITY printSetupCmd.accesskey                        "e">
+<!ENTITY printPreviewContactCmd.label                   "Print Preview Contact">
+<!ENTITY printPreviewContactCmd.accesskey               "v">
+<!ENTITY printPreviewAddressBook.label                  "Jonga Incwadi Yeedilesi Phambi Koshicilelo">
+<!ENTITY printPreviewAddressBook.accesskey              "I">
+<!ENTITY printContactCmd.label                          "Print Contact…">
+<!ENTITY printContactCmd.accesskey                      "P">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Shicilela Incwadi Yeedilesi...">
+<!ENTITY printAddressBook.accesskey                     "Y">
+<!-- Edit Menu -->
+
+<!ENTITY editMenu.label                                 "Hlela">
+<!ENTITY editMenu.accesskey                             "H">
+<!ENTITY deleteCmd.label                                "Cima">
+<!ENTITY deleteAbCmd.label                              "Cima Incwadi Yeedilesi">
+<!ENTITY deleteContactCmd.label                         "Delete Contact">
+<!ENTITY deleteContactsCmd.label                        "Delete Contacts">
+<!ENTITY deleteListCmd.label                            "Delete List">
+<!ENTITY deleteListsCmd.label                           "Delete Lists">
+<!ENTITY deleteItemsCmd.label                           "Delete Items">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesCmd.key                              "i">
+<!-- View Menu -->
+
+<!ENTITY viewMenu.label                                 "Jonga">
+<!ENTITY viewMenu.accesskey                             "J">
+<!ENTITY viewToolbarsMenu.label                         "Izixwexwe zezixhobo zemiyalelo">
+<!ENTITY viewToolbarsMenu.accesskey                     "I"> 
+<!ENTITY menubarCmd.label                               "Menu Bar">
+<!ENTITY menubarCmd.accesskey                           "M">
+<!ENTITY showAbToolbarCmd.label                         "Isixwexwe Sezixhobo Zencwadi Yeedilesi">
+<!ENTITY showAbToolbarCmd.accesskey                     "n">
+<!ENTITY showTaskbarCmd.label                           "Isixwexwe Somgca Sesimo">
+<!ENTITY showTaskbarCmd.accesskey                       "I">
+<!ENTITY customizeToolbar.label                         "Lungiselela...">
+<!ENTITY customizeToolbar.accesskey                     "L">
+<!ENTITY layoutMenu.label                               "Layout">
+<!ENTITY layoutMenu.accesskey                           "L">
+<!ENTITY showDirectoryPane.label                        "Directory Pane">
+<!ENTITY showDirectoryPane.accesskey                    "D">
+<!ENTITY showContactPane2.label                         "Contact Pane">
+<!ENTITY showContactPane2.accesskey                     "C">
+<!ENTITY menu_ShowNameAs.label                          "Bonisa Nika Igama Kanje">
+<!ENTITY menu_ShowNameAs.accesskey                      "N"> 
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "First Last">
+<!ENTITY firstLastCmd2.accesskey                        "f"> 
+<!ENTITY lastFirstCmd.label                             "Ekugqibeleni, Ekuqaleni">
+<!ENTITY lastFirstCmd.accesskey                         "E">
+<!ENTITY displayNameCmd.label                           "Bonisa Igama">
+<!ENTITY displayNameCmd.accesskey                       "B">
+<!ENTITY sortMenu.label                                 "Kuhlelahlelwa ngako">
+<!ENTITY sortMenu.accesskey                             "K">
+<!-- Tools Menu -->
+
+<!ENTITY tasksMenu.label                                "Izixhobo zemiyalelo">
+<!ENTITY tasksMenu.accesskey                            "I">
+<!ENTITY messengerCmd.label                             "Imeyile &amp; Amaqela Eendaba">
+<!ENTITY messengerCmd.accesskey                         "I">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Zingela Iidilesi...">
+<!ENTITY searchAddressesCmd.accesskey                   "Z">
+<!ENTITY importCmd.label                                "Thatha ngaphandle...">
+<!ENTITY importCmd.accesskey                            "T">
+<!ENTITY exportCmd.label                                "Okuthunyelwa ngaphandle...">
+<!ENTITY exportCmd.accesskey                            "O">
+<!ENTITY preferencesCmd2.label                          "Options">
+<!ENTITY preferencesCmd2.accesskey                      "O">
+<!ENTITY preferencesCmdUnix.label                       "Izikhethwa">
+<!ENTITY preferencesCmdUnix.accesskey                   "t">
+<!-- Address Book Toolbar and Context Menus -->  
+
+<!ENTITY newContactButton.label                         "New Contact">
+<!ENTITY newContactButton.accesskey                     "C">
+<!ENTITY newlistButton.label                            "Uludwe Olutsha">
+<!ENTITY newlistButton.accesskey                        "O">
+<!ENTITY newmsgButton.label                             "Bhala">
+<!ENTITY newmsgButton.accesskey                         "B">
+<!ENTITY newIM.label                                    "Umyalezo Wangephanyazo">
+<!ENTITY newIM.accesskey                                "U">
+<!ENTITY deleteButton2.label                            "Delete">
+<!ENTITY deleteButton2.accesskey                        "D">
+<!-- Address Book Toolbar Tooltips -->
+
+<!ENTITY newContactButton.tooltip                       "Create a new address book contact">
+<!ENTITY newlistButton.tooltip                          "Yila uludwe olutsha">
+<!ENTITY newmsgButton.tooltip                           "Thumela umyalezo wemeyile">
+<!ENTITY newIM.tooltip                                  "Thumela umyalezo okanye ingxoxo yangephanyazo">
+<!ENTITY deleteButton2.tooltip                           "Delete selected item">
+<!-- Dir Tree header -->
+
+<!-- Search Bar -->
+
+<!ENTITY SearchNameOrEmail.label                        "Igama okanye Imeyile">
+<!ENTITY SearchNameOrEmail.accesskey                    "I">
+<!ENTITY advancedButton.tooltip                         "Uzingelo lweedilesi lwenqanaba eliphezulu">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Uzingelo Olukhawulezileyo">
+<!-- Results Pane -->
+
+<!ENTITY Addrbook.label                                 "Address Book">
+<!ENTITY Addrbook.accesskey                             "B">
+<!ENTITY GeneratedName.label                            "Igama">
+<!ENTITY GeneratedName.accesskey                        "I">
+<!ENTITY PrimaryEmail.label                             "Imeyile">
+<!ENTITY PrimaryEmail.accesskey                         "I">
+<!ENTITY ChatName.label                                 "Chat Name">
+<!ENTITY ChatName.accesskey                             "C">
+<!ENTITY Company.label                                  "Umbutho">
+<!ENTITY Company.accesskey                              "t">
+<!ENTITY NickName.label                                 "Igama lesiqhulo">
+<!ENTITY NickName.accesskey                             "q">
+<!ENTITY SecondEmail.label                              "Imeyile Efakelweyo">
+<!ENTITY SecondEmail.accesskey                          "y">
+<!ENTITY Department.label                               "Isebe">
+<!ENTITY Department.accesskey                           "b">
+<!ENTITY JobTitle.label                                 "Isihloko">
+<!ENTITY JobTitle.accesskey                             "I">
+<!ENTITY CellularNumber.label                           "Okuphatheka esandleni">
+<!ENTITY CellularNumber.accesskey                       "O">
+<!ENTITY PagerNumber.label                              "Isityhili samakhasi">
+<!ENTITY PagerNumber.accesskey                          "I">
+<!ENTITY FaxNumber.label                                "Ifeks">
+<!ENTITY FaxNumber.accesskey                            "I">
+<!ENTITY HomePhone.label                                "Ifowuni Yasekhaya">
+<!ENTITY HomePhone.accesskey                            "I">
+<!ENTITY WorkPhone.label                                "Ifowuni Yasemsebenzini">
+<!ENTITY WorkPhone.accesskey                            "Y">
+<!ENTITY sortAscending.label                            "Kuyanyukwa">
+<!ENTITY sortAscending.accesskey                        "K">
+<!ENTITY sortDescending.label                           "Kuyehliwa">
+<!ENTITY sortDescending.accesskey                       "K">
+<!ENTITY _PhoneticName.label                            "Igama Ngokwefonetiki">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+
+<!ENTITY contact.heading                                "Qhagamshelana">
+<!ENTITY home.heading                                   "Ekhaya">
+<!ENTITY other.heading                                  "Okunye">
+<!ENTITY chat.heading                                   "Chat">
+<!ENTITY phone.heading                                  "Ifowuni">
+<!ENTITY work.heading                                   "Umsebenzi">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Inkcazelo">
+<!ENTITY addresses.heading                              "Iidilesi">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Fumana Imephu">
+<!ENTITY mapIt.tooltip                                  "Bonisa imephu yale dilesi ukusuka Kuthungelwano">
+<!-- Status Bar -->
+
+<!ENTITY statusText.label "">
+<!--  Mac OS X Window Menu -->
+
+<!ENTITY windowMenu.label "Ifestile">
+<!ENTITY minimizeWindow.label "Nciphisa">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "Zisa Konke Ngaphambili">
+<!ENTITY zoomWindow.label "Yandisa unciphise">

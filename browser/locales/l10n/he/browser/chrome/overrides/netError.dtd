@@ -1,0 +1,187 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "בעיה בטעינת הדף">
+<!ENTITY retry.label "נסה שוב">
+<!ENTITY returnToPreviousPage.label "חזרה">
+<!ENTITY returnToPreviousPage1.label "חזרה (מומלץ)">
+<!ENTITY advanced2.label "מתקדם…">
+<!ENTITY viewCertificate.label "הצגת אישור">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "השרת לא נמצא">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>אם הכתובת הזאת נכונה, הנה שלוש אפשרויות נוספות שכדאי לנסות:</strong>
+<ul>
+  <li>לנסות שוב מאוחר יותר.</li>
+  <li>לבדוק את החיבור שלך לאינטרנט.</li>
+  <li>אם החיבור שלך לאינטרנט מוגן על־ידי חומת אש, יש לוודא כי הגישה של &brandShortName; לאינטרנט מורשית ופעילה.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>בדוק ששם הקובץ אוית נכון, שנעשה שימוש נכון באותיות רישיות ושאין שגיאות הקלדה אחרות.</li> 
+<li>בדוק אם הקובץ הועבר, שינה שם או נמחק.</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>ייתכן שהקובץ הוסר, הועבר או שההרשאות מונעות את הגישה אליו.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>מסיבה בלתי ידועה, אין ל־&brandShortName; אפשרות לטעון דף זה.</p>
+">
+
+<!ENTITY captivePortal.title "כניסה לרשת">
+<!ENTITY captivePortal.longDesc2 "
+<p>עליך להתחבר לרשת זו כדי לגלוש באינטרנט.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "פתיחת דף התחברות לרשת">
+
+<!ENTITY malformedURI.pageTitle "כתובת לא תקנית">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>המסמך המבוקש לא זמין במטמון של &brandShortName;.</p><ul><li>כאמצעי זהירות, &brandShortName; לא יבקש שוב אוטומטית מסמכים רגישים.</li><li>לחץ נסה שוב כדי לבקש מחדש את המסמך מאתר האינטרנט.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> 
+<li>לחץ על &quot;נסה שוב&quot; כדי לעבור למצב מקוון ולטעון מחדש את הדף.</li> 
+</ul>">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>נא ליצור קשר עם בעלי האתר כדי ליידע אותם על בעיה זו.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>נא ליצור קשר עם בעלי האתר כדי ליידע אותם על בעיה זו.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>ייתכן שיהיה צורך להתקין יישום אחר כדי לפתוח כתובת זו.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul>
+  <li>נא לבדוק כי הגדרות השרת המתווך שלך נכונות.</li>
+  <li>נא ליצור קשר עם מנהל הרשת שלך כדי לוודא כי השרת המתווך מתפקד.</li>
+</ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul>
+  <li>נא לבדוק כי הגדרות השרת המתווך שלך נכונות.</li>
+  <li>נא לוודא כי חיבור המחשב שלך לרשת פעיל.</li>
+  <li>אם המחשב או הרשת שלך מוגנים באמצעות חומת אש או שרת מתווך, נא לוודא כי &brandShortName; מורשה לגישה לרשת.</li>
+</ul>">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>בעיה זו נגרמת לעיתים מסירוב לקבל עוגיות או ניטרולן.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>ודא כי מותקן על המערכת שלך מנהל האבטחה האישי.</li> 
+<li>ייכתן וההגדרות השרת אינן תקניות</li> 
+</ul>">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>לא ניתן להציג את הדף המבוקש מכיוון שאין אפשרות לאמת את אמינות הנתונים שהתקבלו.</li>
+  <li>נא ליצור קשר עם בעלי האתר כדי ליידע אותם על בעיה זו.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "‏&brandShortName; זיהה איום אבטחה אפשרי ולא המשיך אל <span class='hostname'/>. אם ברצונך לבקר באתר זה, תוקפים יכולים לנסות לגנוב מידע כמו הססמאות, הודעות דוא״ל או פרטי כרטיס האשראי שלך.">
+<!ENTITY certerror.sts.introPara "‏&brandShortName; זיהה איום אבטחה אפשרי ולא המשיך אל <span class='hostname'/> מכיוון שאתר זה דורש חיבור מאובטח.">
+
+<!ENTITY certerror.expiredCert.introPara "‏&brandShortName; זיהה איום אבטחה אפשרי ולא המשיך אל <span class='hostname'/>. האתר לא מוגדר כראוי, או ששעון המחשב שלך לא מוגדר לשעה הנכונה.">
+<!ENTITY certerror.expiredCert.secondPara2 "כנראה שפג תוקף אישור האבטחה של האתר, מצב זה מונע מ־&brandShortName; להתחבר באופן מאובטח. אם ברצונך לבקר באתר זה, תוקפים יכולים לנסות לגנוב מידע כמו הססמאות, הודעות דוא״ל או פרטי כרטיס האשראי שלך.">
+<!ENTITY certerror.expiredCert.sts.secondPara "כנראה שפג תוקף אישור האבטחה של האתר, מצב זה מונע מ־&brandShortName; להתחבר באופן מאובטח.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "מה ניתן לעשות בנדון?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>כנראה שהבעיה היא באתר, ואין שום דבר שאפשר לעשות כדי לפתור זאת.</p>
+<p>אם הינך ברשת ארגונית או אם מותקנת תוכנת אנטיוירוס, ניתן לפנות אל צוותי התמיכה לקבלת סיוע. באפשרותך גם להודיע למנהל האתר על הבעיה.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "<p>שעון המחשב שלך מוגדר ל־<span id='wrongSystemTime_systemDate2'/>. נא לוודא שהתאריך, השעה ואזור הזמן הנכונים מוגדרים בהגדרות המערכת במחשב, ולאחר מכן לרענן את <span class='hostname'/>.</p>
+<p>אם השעון שלך כבר מוגדר לשעה הנכונה, יתכן שהאתר לא מוגדר כראוי, ואין שום דבר שבאפשרותך לעשות כדי לפתור את התקלה. ניתן ליידע את מנהל האתר בנוגע לבעיה.</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>כנראה שהבעיה היא באתר, ואין שום דבר שאפשר לעשות כדי לפתור זאת. ניתן להודיע למנהל האתר על הבעיה.</p>
+">
+
+<!ENTITY sharedLongDesc "<ul> 
+<li>האתר איננו זמין כרגע או שהוא עמוס מדי. נא לנסות שוב בעוד מספר רגעים.</li> 
+<li>אם אינך מצליח לטעון שום דף, מומלץ לבדוק את הקישוריות של המחשב שלך לרשת.</li> 
+<li>אם המחשב או הרשת שלך מוגנים באמצעות חומת אש או שרת מתווך, יש לוודא כי &brandShortName; מורשה לגישה לרשת.</li> 
+</ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; מנע מדף זה להיטען בדרך הזו מכיוון שלדף יש מדיניות אבטחת תוכן שאינה מאפשרת זאת.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; מנע מדף זה להיטען בהקשר זה מכיוון שלדף יש מדיניות X-Frame-Options שאינה מרשה זאת.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>לא ניתן להציג את הדף המבוקש מכיוון שאותרה שגיאה בתעבורת הנתונים.</p><ul><li>נא ליצור קשר עם בעלי האתר כדי ליידע אותם על בעיה זו.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "קבלת הסיכון והמשך">
+
+<!ENTITY errorReporting.automatic2 "דיווח על תקלות מסוג זה כדי לסייע ל־Mozilla לזהות ולחסום אתרים מסוכנים">
+<!ENTITY errorReporting.learnMore "מידע נוסף…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>נא ליצור קשר עם בעלי האתר כדי ליידע אותם על בעיה זו.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "מידע מתקדם: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "אזהרה: סכנת אבטחה אפשרית לפניך">
+<!ENTITY certerror.sts.pagetitle  "לא בוצעה התחברות: חולשת אבטחה אפשרית">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "ל־<span class='hostname'></span> יש מדיניות אבטחה בשם אבטחת תעבורה מחמירה של HTTP ‏(HSTS), כלומר &brandShortName; יכול להתחבר לאתר באופן מאובטח בלבד. לא ניתן להוסיף חריגה כדי לבקר באתר זה.">
+<!ENTITY certerror.copyToClipboard.label "העתקת טקסט ללוח">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p>האתר בכתובת <span class='hostname'></span> משתמש בטכנולוגיית אבטחה מיושנת החשופה לתקיפות. תוקף יכול לחשוף בקלות מידע שעשוי להחשב כמאובטח. על מנהל האתר לתקן את השרת לפני שיהיה ניתן לבקר באתר.</p><p>קוד שגיאה: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "עמוד חסום">
+
+<!ENTITY certerror.mitm.longDesc "‏<span class='hostname'></span> הוא ככל הנראה אתר בטוח, אך לא ניתן היה ליצור חיבור מאובטח. בעיה זו נגרמת על־ידי <span class='mitm-name'/>, שהיא תוכנה במחשב או ברשת שלך.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "אם תכנית האנטי־וירוס שלך כוללת תכונה הסורקת חיבורים מוצפנים (המכונה לעתים קרובות ”סריקת אינטרנט” או ”סריקת https”), ניתן לנסות להשבית את התכונה. אם פעולה זו לא סייעה בפתרון התקלה, באפשרותך להסיר ולהתקין מחדש את תכנית האנטי־וירוס.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "אם מחשב זה הוא חלק ממערך ארגוני, ניתן ליצור קשר עם מחלקת המחשוב שלך.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "אם <span class='mitm-name'/> אינו מוכר לך, יתכן שמדובר בתקיפה ושאולי מוטב לך לא להמשיך אל האתר.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "אם <span class='mitm-name'/> אינו מוכר לך, יתכן שמדובר בתקיפה ואין לך אף דרך להמשיך אל האתר.">
+
+<!ENTITY clockSkewError.longDesc "המחשב שלך משוכנע שעכשיו <span id='wrongSystemTime_systemDate1'/>, מה שמונע מ־&brandShortName; להתחבר באופן מאובטח. כדי לבקר ב־<span class='hostname'></span>, נא לעדכן את שעון המחשב שלך בהגדרות המערכת לשעה, התאריך ואזור הזמן הנוכחיים ואז לרענן את <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "נראה שהגדרות אבטחת הרשת שלך עשוי לגרום לכך. האם ברצונך לשחזר להגדרות ברירת מחדל?">
+<!ENTITY prefReset.label "שחזור הגדרות בררת המחדל">
+
+<!ENTITY enableTls10.longDesc "יתכן שאתר זה אינו תומך בפרוטוקול TLS 1.2 שהוא הגרסה המינימלית הנתמכת על־ידי &brandShortName;. הפעלת TLS 1.0 ו־TLS 1.1 עשויה לאפשר לחיבור זה להצליח.">
+<!ENTITY enableTls10.note "TLS 1.0 ו־TLS 1.1 יושבתו לצמיתות בגרסה עתידית.">
+<!ENTITY enableTls10.label "הפעלת TLS 1.0 ו־1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>לא ניתן להציג את הדף המבוקש מכיוון שאותרה שגיאה בפרוטוקול הרשת.</p><ul><li>נא ליצור קשר עם בעלי האתר כדי ליידע אותם על בעיה זו.</li></ul>">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "Navigateur">
+
+<!ENTITY navRadio.label                 "Afficher pour">
+<!ENTITY navRadio.accesskey             "h">
+<!ENTITY navStartPageMenu.label         "le démarrage du navigateur">
+<!ENTITY newWinPageMenu.label           "une nouvelle fenêtre">
+<!ENTITY newTabPageMenu.label           "un nouvel onglet">
+
+<!ENTITY blankPageRadio.label           "Une page blanche">
+<!ENTITY blankPageRadio.accesskey       "U">
+<!ENTITY homePageRadio.label            "Ma page d’accueil">
+<!ENTITY homePageRadio.accesskey        "M">
+<!ENTITY lastPageRadio.label            "La dernière page visitée">
+<!ENTITY lastPageRadio.accesskey        "L">
+<!ENTITY restoreSessionRadio.label      "Restaurer la session précédente">
+<!ENTITY restoreSessionRadio.accesskey  "d">
+
+<!ENTITY restoreSessionIntro.label      "Lors de la restauration de sessions et de fenêtres">
+<!ENTITY restoreImmediately.label       "Restaurer tous les onglets immédiatement">
+<!ENTITY restoreImmediately.accesskey   "e">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "Restaurer">
+<!ENTITY restoreTabs.accesskey          "s">
+<!ENTITY restoreTabsAtATime.label       "onglet(s) à la fois">
+<!ENTITY restoreDeferred.label          "Ne restaurer les onglets que lorsque j’en ai besoin">
+<!ENTITY restoreDeferred.accesskey      "N">
+
+<!ENTITY homePageIntro.label            "Cliquer sur le bouton « Accueil » chargera cette page ou ce groupe de pages :">
+<!ENTITY useCurrent.label               "Utiliser la page actuelle">
+<!ENTITY useCurrent.accesskey           "s">
+<!ENTITY useCurrentGroup.label          "Utiliser le groupe actuel">
+<!ENTITY useCurrentGroup.accesskey      "e">
+<!ENTITY browseFile.label               "Choisir un fichier…">
+<!ENTITY browseFile.accesskey           "C">
+<!ENTITY useDefault.label               "Configuration par défaut">
+<!ENTITY useDefault.accesskey           "n">
+
+<!ENTITY defaultBrowserGroup.label      "Navigateur par défaut">
+<!ENTITY defaultBrowserButton.label     "Définir le navigateur par défaut">
+<!ENTITY defaultBrowserButton.accesskey "D">
+<!ENTITY alreadyDefaultText             "&brandShortName; est déjà votre navigateur par défaut.">
+<!ENTITY defaultPendingText             "&brandShortName; sera défini comme navigateur par défaut quand vous cliquerez sur « OK ».">
+<!ENTITY wasMadeDefaultText             "&brandShortName; a été défini comme navigateur par défaut.">
+<!ENTITY makeDefaultText                "Faire de &brandShortName; votre navigateur par défaut.">

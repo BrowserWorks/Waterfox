@@ -1,0 +1,200 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Probleem by it laden fan de side">
+<!ENTITY retry.label "Probearje it opnij">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Kin gjin ferbining meitsje">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Dit adres hat in beheinde tagong">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Server net fûn">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Kontrolearje it adres op typflaters as
+    <strong>ww</strong>.example.com yn stee fan
+    <strong>www</strong>.example.com</li>
+  <li>Kontrolearje jo netwurkferbining as jo gjin inkelde side lade
+    kinne.</li>
+  <li>Gean nei oft &brandShortName; tagong hat ta it web of jo 
+    kompjûter of netwurk befeilige is troch in brânmuorre of proxyserver.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Bestân net fûn">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Kontrolearje de bestânsnamme op grutte/lytse letters of oare typflaters.</li>
+  <li>Kontrolearje oft it bestân ferpleatst, omneamd of fuortsmiten is.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Tagong ta it bestân is wegere">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>It kin fuortsmiten wêze, ferpleatst, of bestânsmachtigingen kinne tagong tsjingean.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Oei.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; kin om ien oft oare reden dizze side net lade.</p>
+">
+
+<!ENTITY malformedURI.title "It adres jildt net">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Webadressen hawwe gewoanwei de foarm
+    <strong>http://www.example.com/</strong></li>
+  <li>Let derop dat jo skeane streken brûke (d.i.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "De ferbining waard ferbrutsen">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokumint ferrûn">
+<!ENTITY notCached.longDesc "<p>It fersochte dokumint is net beskikber yn &brandShortName;'s-buffer.</p><ul><li>Fanwegen in feilichheidsfoarsoarchmaatregel sil &brandShortName; fertroulike dokuminten net automatysk opnij oanfreegje.</li><li>Klik om it dokumint opnij oan te freegjen fan de website.</li></ul>">
+
+<!ENTITY netOffline.title "Offline-modus">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Klik ‘Opnij probearje’ om nij online modus te gean en fernij de side.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Ynhâldkodearringsflater">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Nim kontakt op mei de website-eigeners om se oer dit probleem te ynformearjen.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Unfeilich bestânstype">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Nim kontakt op mei de website-eigeners om se oer dit probleem te ynformearjen.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "De ferbining waard opnij inisjalisearre">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "De wachttiid foar de ferbining is ferstrutsen">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "It adres waard net begrepen">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Miskien moatte jo oare software ynstallearje om dit adres te iepenjen.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "De proxyserver wegeret ferbiningen">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Kontrolearje oft jo proxy-ynstellingen goed binne.</li>
+  <li>Nim kontakt op mei jo netwurkbehearder om te kontrolearjen oft de proxyserver
+    wurket.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Kin de proxyserver net fine">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Kontrolearje oft jo proxy-ynstellingen goed binne.</li>
+  <li>Gean nei oft jo kompjûter op in wurkjend netwurk oansletten is.</li>
+  <li>Gean nei oft &brandShortName; tagong hat ta it web of jo 
+    kompjûter of netwurk befeilige is troch in brânmuorre of proxyserver.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "De side ferwiist net op in krekte wize troch">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Dit probleem kin somtiden feroarsake wurde troch it útskeakeljen of wegerjen
+   fan cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Unferwacht antwurd fan de server">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Soargje derfoar dat de persoanlike befeiligingsbehearder op jo systeem 
+  ynstallearre is.</li>
+  <li>Dit kin it gefolch wêze fan in net-standert konfiguraasje fan de server.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Befeilige ferbining mislearre">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>De side dy't jo besjen wolle kin net toand wurde, omdat de werkomst fan de ûntfongen data net ferifiearre wurde kin.</li>
+  <li>Nim kontakt op mei de website-eigeners om se te ynformearjen oer dit probleem.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Feilige Ferbining Mislearre">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+<li>Dit koe in probleem wêze mei de konfiguraasje fan de server, of it kin iets wêze wat probeart de server as in oar foar te dwaan.</li>
+<li>As jo earder al súksesfol ferbining hân hawwe mei dizze server, kin de flater tydlik wêze en kinne jo it letter nochris probearje.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Miskien is de website tydlik net beskikber. Probearje it letter 
+    nochris.</li>
+  <li>Kontrolearje jo netwurkferbining as jo gjin inkelde side lade kinne.</li>
+  <li>Gean nei oft &brandShortName; tagong hat ta it web, of dat jo 
+    kompjûter of netwurk befeilige is troch in brânmuorre of proxyserver.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Blokkearre troch ynhâldsbefeiligingsbelied">
+<!ENTITY cspBlocked.longDesc "<p>De browser hat opkeard dat de side op dizze manier laden wurd, omdat de side in ynhâldsbefeiligingsbelied hat dat dit net tastiet.</p>">
+
+<!ENTITY xfoBlocked.title "Blokkearre troch belied foar X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; hat opkeard dat de side yn dizze kontekst laden waard, omdat de side in belied foar X-Frame-Options hat dat dit net tastiet.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Skansearre-ynhâldsflater">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>De side dy't jo besjen wolle kin net werjûn wurde, omdat der in flater yn de gegevensoerdracht detektearre is.</p><ul><li>Nim kontakt op mei de website-eigeners om se oer dit probleem te ynformearjen.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Of jo kinne in útsûndering tafoegje…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Helje My Hjir út!">
+<!ENTITY securityOverride.exceptionButtonLabel "Utsûndering tafoegje…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Jo kinne better gjin útsûndering tafoegje as jo in ynternetferbining hawwe dy't jo net folslein fertrouwe, of as it net normaal is dat jo in warskôging sjogge foar dizze server.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Nim kontakt op mei de website-eigeners om se oer dit probleem te ynformearjen.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Jo ferbining is net feilich">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> brûkt ferâldere befeiligingstechnology dy't kwetsber is foar oanfallen. In oanfaller kin ienfâldichwei gegevens ûntdekke wêrfan jo tochten dat dizze feilich wiene. De websitebehearder moat earst de server yn oarder meitsje eardat jo de website besykje kinne.</p><p>Flaterkoade: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blokkearre side">
+
+<!ENTITY networkProtocolError.title "Netwurkprotokol-flater">
+<!ENTITY networkProtocolError.longDesc "<p>De side dy't jo probearje te besjen kin net toand wurde, omdat der in flater yn it netwurkprotokol detektearre is.</p><ul><li>Nim kontakt op mei de website-eigeners om se oer dit probleem te ynformearjen.</li></ul>">

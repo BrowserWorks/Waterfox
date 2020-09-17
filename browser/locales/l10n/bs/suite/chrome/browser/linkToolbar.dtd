@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "Navigaciona traka web stranice">
+<!ENTITY linkToolbar.tooltip "Navigaciona traka web stranice">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "Uvijek prikaži">
+<!ENTITY linkToolbarAsNeeded.label "Prikaži samo po potrebi">
+<!ENTITY linkToolbarNever.label "Uvijek sakrij">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "Vrh">
+<!ENTITY upButton.label "Gore">
+<!ENTITY firstButton.label "Prvo">
+<!ENTITY prevButton.label "Prethodno">
+<!ENTITY nextButton.label "Sljedeće">
+<!ENTITY lastButton.label "Posljednje">
+
+<!ENTITY documentButton.label "Dokument">
+
+<!ENTITY tocButton.label "Tabela sadržaja">
+<!ENTITY chapterButton.label "Poglavlja">
+<!ENTITY sectionButton.label "Sekcije">
+<!ENTITY subSectionButton.label "Podsekcije">
+<!ENTITY appendixButton.label "Prilozi">
+<!ENTITY glossaryButton.label "Rječnik">
+<!ENTITY indexButton.label "Indeks">
+
+<!ENTITY moreButton.label "Više">
+
+<!ENTITY helpButton.label "Pomoć">
+<!ENTITY searchButton.label "Traži">
+
+<!ENTITY authorButton.label "Autor(i)">
+<!ENTITY copyrightButton.label "Autorska prava">
+
+<!ENTITY bookmarkButton.label "Zabilješke">
+
+<!ENTITY alternateButton.label "Ostale verzije">
+
+<!ENTITY feedButton.label "Pretplatite se">

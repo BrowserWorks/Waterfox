@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Proprietăți">
+
+<!ENTITY generalInfo.label                       "Informații generale">
+<!ENTITY folderCharsetFallback2.label            "Codare de rezervă pentru text:">
+<!ENTITY folderCharsetFallback2.accesskey        "e">
+<!ENTITY folderCharsetEnforce2.label             "Aplică codarea pentru toate mesajele din dosar (setările individuale de codificare a caracterelor din mesaje și detectarea automată vor fi ignorate)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Reconstruiește indecșii fișierului de sumar">
+<!ENTITY folderRebuildSummaryFile2.label         "Repară dosarul">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Uneori fișierul index de dosar (.msf) se deteriorează și aparent lipsesc mesaje sau apar mesaje care au fost șterse; aceste probleme pot fi rezolvate prin repararea dosarului.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Include mesajele din acest dosar în rezultatele căutării globale">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "g">
+
+<!ENTITY retention.label "Politica de păstrare">
+<!ENTITY retentionUseAccount.label  "Folosește setările contului meu">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "zile">
+<!ENTITY message.label "mesaje">
+<!ENTITY retentionCleanup.label "Pentru a economisi spațiu pe disc, mesajele vechi pot fi șterse definitiv.">
+<!ENTITY retentionCleanupImap.label "Pentru a economisi spațiu pe disc, mesajele vechi pot fi șterse definitiv, atât copiile locale cât și cele originale de pe serverul de la distanță.">
+<!ENTITY retentionCleanupPop.label "Pentru a economisi spațiu pe disc, mesajele vechi pot fi șterse definitiv, inclusiv originalele de pe server.">
+<!ENTITY retentionDeleteMsg.label "Șterge mesajele mai vechi de">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Nu șterge niciun mesaj">
+<!ENTITY retentionKeepAll.accesskey "a">
+<!ENTITY retentionKeepRecent.label "Șterge tot cu excepția celor mai recente">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "Păstrează întotdeauna mesajele cu steluță">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Sincronizare">
+<!ENTITY folderCheckForNewMessages2.label         "La descărcarea mesajelor pentru acest cont, verifică întotdeauna dosarul acesta">
+<!ENTITY folderCheckForNewMessages2.accesskey     "c">
+
+<!ENTITY offlineFolder.check.label               "Selectează acest dosar pentru utilizare offline">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "Descarcă acum">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Selectează acest grup de discuții pentru folosire offline">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Descarcă acum">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "Nume:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "Culoare pictogramă:">
+<!ENTITY folderProps.color.accesskey             "I">
+<!ENTITY folderProps.reset.tooltip               "Restaurează culorile implicite">
+<!ENTITY folderProps.location.label              "Amplasare:">
+<!ENTITY folderProps.location.accesskey          "l">
+
+<!ENTITY folderSharingTab.label                  "Partajare">
+<!ENTITY privileges.button.label                 "Privilegii…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Ai următoarele drepturi:">
+<!ENTITY folderOtherUsers.label                  "Altele cu acces la acest dosar:">
+<!ENTITY folderType.label                        "Tip dosar:">
+
+<!ENTITY folderQuotaTab.label                    "Cotă">
+<!ENTITY folderQuotaUsage.label                  "Utilizare:">
+<!ENTITY folderQuotaStatus.label                 "Stare:">
+
+<!ENTITY numberOfMessages.label                  "Număr de mesaje:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "necunoscut">
+<!ENTITY sizeOnDisk.label                        "Spațiu pe disc:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "necunoscut">

@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Да">
+<!ENTITY fromField4.label "Ад">
+<!ENTITY senderField4.label "Адпраўнік">
+<!ENTITY author.label "Аўтар">
+<!ENTITY organizationField4.label "Установа">
+<!ENTITY replyToField4.label "Адказ-Да">
+
+<!ENTITY subjectField4.label "Тэма">
+<!ENTITY ccField4.label "СА">
+<!ENTITY bccField4.label "Сса">
+<!ENTITY newsgroupsField4.label "Навінакупы">
+<!ENTITY followupToField4.label "Водгук-Да">
+<!ENTITY tagsHdr4.label "Меціны">
+<!ENTITY dateField4.label "Дата">
+<!ENTITY userAgentField4.label "Дзеяч карыстальніка">
+<!ENTITY referencesField4.label "Спасылкі">
+<!ENTITY messageIdField4.label "Вызначальнік-Ліста">
+<!ENTITY inReplyToField4.label "У адказ на">
+<!ENTITY originalWebsite4.label "Пляцоўка Сеціва">
+
+<!ENTITY hdrArchiveButton1.label "У архіў">
+<!ENTITY hdrArchiveButton1.tooltip "Архіваваць гэты ліст">
+<!ENTITY hdrSmartReplyButton1.label "Кемны адказ">
+<!ENTITY hdrReplyButton1.label "Адказаць">
+<!ENTITY hdrReplyButton2.tooltip "Адказаць дасылальніку гэтага ліста">
+<!ENTITY hdrReplyAllButton1.label "Адк. усім">
+<!ENTITY hdrReplyAllButton1.tooltip "Адказаць адпраўніку і ўсім атрымальнікам">
+<!ENTITY hdrReplyListButton1.label "Адказаць спісу">
+<!ENTITY hdrReplyListButton1.tooltip "Адказаць паштоваму спісу">
+<!ENTITY hdrFollowupButton1.label "Даслаць водгук">
+<!ENTITY hdrFollowupButton1.tooltip "Даслаць водгук у навінакупу">
+<!ENTITY hdrForwardButton1.label "Накіраваць">
+<!ENTITY hdrForwardButton1.tooltip "Накіраваць гэты ліст">
+<!ENTITY hdrJunkButton1.label "Лухта">
+<!ENTITY hdrJunkButton1.tooltip "Пазначыць гэты ліст як лухту">
+<!ENTITY hdrTrashButton1.label "Выдаліць">
+<!ENTITY hdrTrashButton1.tooltip "Выдаліць ліст">
+
+<!ENTITY hdrViewToolbarShowFull.label "Паказваць значкі і тэкст">
+<!ENTITY hdrViewToolbarShowFull.accesskey "а">
+<!ENTITY hdrViewToolbarShowIcons.label "Паказваць толькі значкі">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "з">
+<!ENTITY hdrViewToolbarShowText.label "Паказваць толькі тэкст">
+<!ENTITY hdrViewToolbarShowText.accesskey "т">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Заўсёды паказваць адказ дасылальніку">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "д">
+
+<!ENTITY otherActionsButton2.label "Больш">
+<!ENTITY otherActionsButton.tooltip "Дадатковыя дзеянні">
+<!ENTITY otherActionsOpenConversation1.label "Адкрыць у гутарцы">
+<!ENTITY otherActionsOpenConversation1.accesskey "г">
+<!ENTITY otherActionsOpenInNewWindow1.label "Адкрыць у новым акне">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "а">
+<!ENTITY otherActionsOpenInNewTab1.label "Адкрыць у новай устаўцы">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "у">
+<!ENTITY markAsReadMenuItem1.label "Пазначыць прачытаным">
+<!ENTITY markAsReadMenuItem1.accesskey "ч">
+<!ENTITY markAsUnreadMenuItem1.label "Пазначыць непрачытаным">
+<!ENTITY markAsUnreadMenuItem1.accesskey "н">
+<!ENTITY saveAsMenuItem1.label "Захаваць як…">
+<!ENTITY saveAsMenuItem1.accesskey "я">
+<!ENTITY viewSourceMenuItem1.label "Праглядзець зыходнік">
+<!ENTITY viewSourceMenuItem1.accesskey "з">
+<!ENTITY otherActionsPrint1.label "Друкаваць…">
+<!ENTITY otherActionsPrint1.accesskey "Д">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Адразу паказваць шыбу далучэнняў">
+<!ENTITY startExpandedCmd.accesskey    "ш">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Адчыніць">
+<!ENTITY openAttachmentCmd.accesskey    "А">
+<!ENTITY saveAsAttachmentCmd.label    "Захаваць як…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "я">
+<!ENTITY detachAttachmentCmd.label    "Адлучыць…">
+<!ENTITY detachAttachmentCmd.accesskey    "ц">
+<!ENTITY deleteAttachmentCmd.label    "Выдаліць">
+<!ENTITY deleteAttachmentCmd.accesskey    "д">
+<!ENTITY openAllAttachmentsCmd.label    "Адчыніць усе…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "А">
+<!ENTITY saveAllAttachmentsCmd.label    "Захаваць усе…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "З">
+<!ENTITY detachAllAttachmentsCmd.label    "Адлучыць усе…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "А">
+<!ENTITY deleteAllAttachmentsCmd.label    "Выдаліць усе…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "В">
+
+<!ENTITY openAttachment.tooltip "Адкрыць далучаны файл">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Захаваць">
+<!ENTITY saveAttachmentButton1.tooltip     "Захаваць далучаны файл">
+<!ENTITY saveAllAttachmentsButton1.label   "Захаваць усе">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Захаваць усе далучаныя файлы">
+
+<!ENTITY copyLinkCmd.label        "Капіяваць месцазнаходжанне спасылкі">
+<!ENTITY copyLinkCmd.accesskey    "К">
+
+<!ENTITY CopyMessageId.label "Капіяваць вызначальнік-ліста:">
+<!ENTITY CopyMessageId.accesskey "К">
+<!ENTITY OpenMessageForMsgId.label "Адкрыць ліст з вызначальнікам:">
+<!ENTITY OpenMessageForMsgId.accesskey "А">
+<!ENTITY OpenBrowserWithMsgId.label "Адчыніць азіральнік з вызначальнікам-ліста">
+<!ENTITY OpenBrowserWithMsgId.accesskey "з">

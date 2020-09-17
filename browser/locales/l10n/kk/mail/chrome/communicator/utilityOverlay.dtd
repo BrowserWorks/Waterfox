@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Файл">
+<!ENTITY fileMenu.accesskey        "Ф">
+<!ENTITY newMenu.label            "Жаңа">
+<!ENTITY newMenu.accesskey          "Ж">
+
+<!ENTITY editMenu.label          "Түзету">
+<!ENTITY editMenu.accesskey        "Т">
+<!ENTITY undoCmd.label            "Болдырмау">
+<!ENTITY undoCmd.accesskey          "Б">
+<!ENTITY redoCmd.label            "Қайталау">
+<!ENTITY redoCmd.accesskey          "й">
+<!ENTITY deleteCmd.label          "Өшіру">
+<!ENTITY deleteCmd.accesskey        "ш">
+<!ENTITY preferencesCmd2.label "Опциялар">
+<!ENTITY preferencesCmd2.accesskey "О">
+<!ENTITY preferencesCmdUnix.label       "Параметрлер">
+<!ENTITY preferencesCmdUnix.accesskey     "м">
+
+<!ENTITY customizeCmd.label "Баптау">
+<!ENTITY customizeCmd.accesskey "т">
+
+<!ENTITY viewMenu.label          "Түрі">
+<!ENTITY viewMenu.accesskey        "р">
+<!ENTITY viewToolbarsMenu.label        "Саймандар панелдері">
+<!ENTITY viewToolbarsMenu.accesskey      "С">
+<!ENTITY showTaskbarCmd.label          "Қалып-күй жолағы">
+<!ENTITY showTaskbarCmd.accesskey        "ы">
+
+<!ENTITY closeCmd.label      "Жабу">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "Ж">
+
+<!ENTITY quitApplicationCmd.label  "Шығу">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "ы">
+
+<!ENTITY quitApplicationCmdUnix.label  "Шығу">
+<!ENTITY quitApplicationCmdUnix.accesskey  "Ш">
+
+<!ENTITY quitApplicationCmdMac.label  "&brandShortName; жұмысын аяқтау">
+<!ENTITY quitApplicationCmdMac.accesskey  "я">

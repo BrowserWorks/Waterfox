@@ -1,0 +1,84 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Dagatal">
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label "Atburður…">
+<!ENTITY lightning.menupopup.new.event.accesskey "A">
+<!ENTITY lightning.menupopup.new.task.label "Verkefni…">
+<!ENTITY lightning.menupopup.new.task.accesskey "V">
+<!ENTITY lightning.menupopup.new.calendar.label "Dagatal…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "D">
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label "Opna">
+<!ENTITY lightning.menupopup.open.accesskey "O">
+<!ENTITY lightning.menupopup.open.message.label "Vistaður tölvupóstur…">
+<!ENTITY lightning.menupopup.open.message.accesskey "p">
+<!ENTITY lightning.menupopup.open.calendar.label "Dagatalsskrá…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey "D">
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label "Dagatal">
+<!ENTITY lightning.menu.view.calendar.accesskey "D">
+<!ENTITY lightning.menu.view.tasks.label "Verkefni">
+<!ENTITY lightning.menu.view.tasks.accesskey "k">
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label "Atburðir og verkefni">
+<!ENTITY lightning.menu.eventtask.accesskey "A">
+<!-- properties dialog, calendar creation wizard -->
+<!ENTITY lightning.calendarproperties.email.label "Tölvupóstfang:">
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label "Samþykkja">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext "Samþykkja fundarboð">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label "Samþykkja alla">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext "Samþykkja fundarboð fyrir öll tilvik fundarins">
+<!ENTITY lightning.imipbar.btnAdd.label "Bæta við">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext "Bæta við atburði í dagatal">
+<!ENTITY lightning.imipbar.btnDecline.label "Hafna">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext "Hafna fundarboði">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label "Hafna öllu">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext "Hafna fundarboði fyrir öll tilvik fundarins">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label "Hafna">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext "Hafna mótsvari">
+<!ENTITY lightning.imipbar.btnDelete.label "Eyða">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext "Eyða úr dagatali">
+<!ENTITY lightning.imipbar.btnDetails.label "Upplýsingar…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext "Sýna fundarupplýsingar">
+<!ENTITY lightning.imipbar.btnMore.label "Meira">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext "Smelltu til að sjá fleiri valkosti">
+<!ENTITY lightning.imipbar.btnReconfirm2.label "Endurstaðfesta">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext "Senda endurstaðfestingu til fundarstjóra">
+<!ENTITY lightning.imipbar.btnReschedule.label "Breyta tíma">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext "Breyta tíma á atburð">
+<!ENTITY lightning.imipbar.btnSaveCopy.label "Vista afrit">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext "Vista sérstaklega afrit af atburði í dagatal óháð svari á fundarstjóra. Listinn af þátttakendum verður hreinsaður.">
+<!ENTITY lightning.imipbar.btnTentative.label "Með fyrirvara">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext "Samþykkja fundarboð með fyrirvara">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label "Allt með fyrirvara">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext "Samþykkja fundarboð með fyrirvara fyrir öll tilvik fundarins">
+<!ENTITY lightning.imipbar.btnUpdate.label "Uppfæra">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext "Uppfæra atburð í dagatali">
+<!ENTITY lightning.imipbar.description "Þessi tölvupóstur inniheldur fundarboð.">
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Búa til nýtt dagatal">
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Sýna stuttan mánuð">
+<!ENTITY todaypane.showMinimonth.accesskey "m">
+<!ENTITY todaypane.showMiniday.label "Sýna stuttan dag">
+<!ENTITY todaypane.showMiniday.accesskey "d">
+<!ENTITY todaypane.showNone.label "Sýna ekkert">
+<!ENTITY todaypane.showNone.accesskey "n">
+<!ENTITY todaypane.showTodayPane.label "Sýn dagsins í dag">
+<!ENTITY todaypane.showTodayPane.accesskey "d">
+<!ENTITY todaypane.statusButton.label "Dagurinn í dag">

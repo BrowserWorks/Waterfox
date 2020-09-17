@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Eveniment nou…">
+<!ENTITY event.new.event.accesskey              "n">
+
+<!ENTITY event.new.task                         "Sarcină nouă…">
+<!ENTITY event.new.task.accesskey               "S">
+
+<!ENTITY calendar.import.label                  "Importă…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Exportă…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Publică…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "Șterge calendarul selectat…">
+<!ENTITY calendar.deletecalendar.accesskey      "d">
+<!ENTITY calendar.unsubscribecalendar.label     "Dezabonează-te de la calendarul selectat…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "u">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Elimină calendarul selectat…">
+<!ENTITY calendar.removecalendar.accesskey      "r">
+
+
+<!ENTITY calendar.menu.customize.label          "Personalizează…">
+<!ENTITY calendar.menu.customize.accesskey      "P">
+
+<!ENTITY showUnifinderCmd.label                 "Caută evenimente">
+<!ENTITY showUnifinderCmd.accesskey             "G">
+<!ENTITY showUnifinderCmd.tooltip               "Comută panoul pentru găsirea evenimentelor">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Afișează sarcinile în calendar">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "A">
+
+<!ENTITY goTodayCmd.label                       "Ziua de azi">
+<!ENTITY goTodayCmd.accesskey                   "Z">
+
+<!ENTITY showCurrentView.label                  "Vizualizare actuală">
+<!ENTITY showCurrentView.accesskey              "V">
+
+<!ENTITY calendar.properties.label              "Proprietățile calendarului…">
+<!ENTITY calendar.properties.accesskey          "a">

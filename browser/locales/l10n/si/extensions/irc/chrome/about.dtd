@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZilla පිළිබඳ">
+
+<!ENTITY chatzilla.label       "ChatZilla">
+<!ENTITY version.unknown.label "නිකුතුව නොදනී">
+<!ENTITY version.known.label   "නිකුතුව &#37;S">
+<!ENTITY description.label     "පැහැදිලි, භාවිතයට පහසු සහ වඩා විතන්‍ය අන්තර්ජාල ප්‍රතිප්‍රචාර පිළිසඳර (IRC) සඳහා සේවාලාභියා.">
+
+<!ENTITY homepage.label    "මුළු තිරයට යන්න">
+<!ENTITY copyversion.label "නිකුතු විස්තර පිටපත් කරන්න">
+
+<!ENTITY section.core.label    "මූලික සංවර්ධන කණ්ඩායම:">
+<!ENTITY section.locale.label  "දේශීයකරණය:">
+<!ENTITY section.contrib.label "දායකයින්:">

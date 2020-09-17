@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Программа по улучшению работы пользователей ChatZilla">
+<!ENTITY window.size "width: 52em;">
+<!ENTITY intro.label "Программа по улучшению работы пользователей ChatZilla собирает информацию о том, как вы используете ChatZilla, не прерывая вашу работу. Она помогает разработчикам определить, что в ChatZilla нуждается в улучшении. Ничто из этой инфомации не будет использовано для установления вашей личности или связи с вами.">
+<!ENTITY groupSend.label "Отправлять следующие данные:">
+<!ENTITY sendClient.label "Когда была открыта и закрыта ChatZilla">
+<!ENTITY sendClient.accesskey "о">
+<!ENTITY sendCommand.label "Какие команды, меню и диалоги были использованы">
+<!ENTITY sendCommand.accesskey "и">
+<!ENTITY sendID.label "Ваш уникальный ID:">
+<!ENTITY sendIDSrc.label "(сгенерирован случайно)">
+<!ENTITY groupNotSent.label "Данные, которые никогда не будут отправляться:">
+<!ENTITY notsentNickname.label "Ваш ник">
+<!ENTITY notsentMessages.label "Содержимое сообщений, в том числе действия и уведомления">
+<!ENTITY notsentArguments.label "Параметры и данные для всех команд, меню и диалоговых окон">
+<!ENTITY notsentURLs.label "Имена и URLы сетей, серверов, каналов и пользователей">
+<!ENTITY notsentFiles.label "Имена и содержимое отправленных и полученных файлов">

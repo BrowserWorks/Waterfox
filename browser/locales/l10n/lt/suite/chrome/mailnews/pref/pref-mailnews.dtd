@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Paštas ir naujienų grupės">
+<!ENTITY generalSettings.caption          "Bendrosios">
+<!ENTITY confirmMove.label                "Įspėti prieš perkeliant aplankus į šiukšlinę">
+<!ENTITY confirmMove.accesskey            "l">
+<!ENTITY preserveThreading.label          "Paisyti gijų, rikiuojant laiškus">
+<!ENTITY preserveThreading.accesskey      "k">
+<!ENTITY mailBiffOnNewWindow.label        "Ar yra naujų laiškų, tikrinti tik atvėrus el. pašto ir naujienų grupių programą">
+<!ENTITY mailBiffOnNewWindow.accesskey    "t">
+
+<!ENTITY defaultMailSettings.description  "Skirti „&brandShortName;“ numatytąja programa:">
+<!ENTITY setDefaultMail.label             "elektroniniam paštui">
+<!ENTITY setDefaultMail.accesskey         "e">
+<!ENTITY setDefaultNews.label             "naujienų grupėms">
+<!ENTITY setDefaultNews.accesskey         "g">
+<!ENTITY setDefaultFeed.label             "sklaidos kanalams">
+<!ENTITY setDefaultFeed.accesskey         "k">
+
+<!ENTITY useInternalSettings.description  "Naudoti „&brandShortName;“ pašto ir naujienų grupių programą, atveriant šiuos naršyklės saitus:">
+<!ENTITY useInternalMail.label            "El. pašto (mailto:)">
+<!ENTITY useInternalMail.accesskey        "p">
+<!ENTITY useInternalNews.label            "Naujienų (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "a">
+
+<!ENTITY messengerStartPage.caption       "Į pašto pradžios tinklalapį">
+<!ENTITY enableStartPage.label            "Paleidus pašto programą, rodyti pradžios tinklalapį">
+<!ENTITY enableStartPage.accesskey        "r">
+<!ENTITY location.label                   "Pradžios tinklalapio adresas:">
+<!ENTITY location.accesskey               "d">
+<!ENTITY useDefault.label                 "Atstatyti numatytąjį adresą">
+<!ENTITY useDefault.accesskey             "n">
+<!ENTITY rememberLastMsg.label            "Įsiminti paskiausiai pažymėtą laišką">
+<!ENTITY rememberLastMsg.accesskey        "m">

@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "To">
+<!ENTITY fromField4.label "From">
+<!ENTITY senderField4.label "Sender">
+<!ENTITY organizationField4.label "Organization">
+
+<!ENTITY subjectField4.label "موضوع">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Newsgroups">
+<!ENTITY tagsHdr4.label "برچسب‌ها">
+<!ENTITY dateField4.label "تاریخ">
+<!ENTITY referencesField4.label "References">
+
+<!ENTITY hdrReplyButton1.label "پاسخ دادن">
+<!ENTITY hdrReplyAllButton1.label "Reply All">
+<!ENTITY hdrReplyAllButton1.tooltip "Reply to sender and all recipients">
+<!ENTITY hdrForwardButton1.label "جلو">
+<!ENTITY hdrJunkButton1.label "Junk">
+<!ENTITY hdrTrashButton1.label "حذف">
+<!ENTITY hdrTrashButton1.tooltip "حذف این پیام">
+
+
+<!ENTITY otherActionsButton2.label "بیشتر">
+<!ENTITY otherActionsOpenInNewTab1.label "باز کردن در زبانهٔ جدید">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "ب">
+<!ENTITY otherActionsPrint1.label "چاپ…">
+<!ENTITY otherActionsPrint1.accesskey "چ">
+
+<!-- Attachment bar context menu items -->
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "باز کردن">
+<!ENTITY openAttachmentCmd.accesskey    "ب">
+<!ENTITY saveAsAttachmentCmd.label    "ذخیره به نام…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "ذ">
+<!ENTITY detachAttachmentCmd.label    "جدا کردن پیوست…">
+<!ENTITY detachAttachmentCmd.accesskey    "ج">
+<!ENTITY saveAllAttachmentsCmd.label    "Save All…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+<!ENTITY detachAllAttachmentsCmd.label    "Detach All…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "D">
+<!ENTITY deleteAllAttachmentsCmd.label    "Delete All…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "e">
+
+
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "ذخیره">
+
+<!ENTITY copyLinkCmd.label        "رونوشت برداشتن از مکان پیوند">
+<!ENTITY copyLinkCmd.accesskey    "ن">
+

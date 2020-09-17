@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "새로 저장된 검색 폴더">
+<!ENTITY name.label "이름:">
+<!ENTITY name.accesskey "N">
+<!ENTITY description.label "하위 폴더 만들기:">
+<!ENTITY description.accesskey "C">
+
+<!ENTITY searchTermCaption.label "가상 폴더에 사용된 검색 비교 설정:">
+
+<!ENTITY folderSelectionCaption.label "검색할 폴더:">
+<!ENTITY chooseFoldersButton.label "선택…">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "온라인으로 검색 (최신 IMAP 및 뉴스 폴더 정보를 구성하므로 폴더 열기 시간이 지연됩니다).">
+<!ENTITY searchOnline.accesskey "S">
+<!ENTITY newFolderButton.label		"새로 만들기">
+<!ENTITY newFolderButton.accesskey	"r">
+<!ENTITY editFolderButton.label		"폴더 변경">
+<!ENTITY editFolderButton.accesskey	"U">

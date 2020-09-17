@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Özellikler">
+<!ENTITY propertiesMenu.accesskey           "Ö">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Adres defteri özellikleri">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Kişi özellikleri">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "E-posta listesi özellikleri">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Adres defteri bağlam menüsünü göster">
+<!ENTITY addressbookPicker.label            "Adres defteri:">
+<!ENTITY addressbookPicker.accesskey        "t">
+<!ENTITY searchContacts.label               "Kişilerde ara:">
+<!ENTITY searchContacts.accesskey           "a">
+<!ENTITY SearchNameOrEmail.label            "Ad veya e-posta">
+
+<!ENTITY addtoToFieldMenu.label             "Kime alanına ekle">
+<!ENTITY addtoToFieldMenu.accesskey         "e">
+<!ENTITY addtoCcFieldMenu.label             "Cc alanına ekle">
+<!ENTITY addtoCcFieldMenu.accesskey         "B">
+<!ENTITY addtoBccFieldMenu.label            "Bcc alanına ekle">
+<!ENTITY addtoBccFieldMenu.accesskey        "G">
+<!ENTITY deleteAddrBookCard.label           "Sil">
+<!ENTITY deleteAddrBookCard.accesskey       "S">
+<!ENTITY propertiesContext.label            "Özellikler">
+<!ENTITY propertiesContext.accesskey        "Ö">
+<!ENTITY abPropertiesContext.label          "Özellikler">
+<!ENTITY abPropertiesContext.accesskey      "Ö">
+<!ENTITY editContactContext.label           "Kişiyi düzenle">
+<!ENTITY editContactContext.accesskey       "d">
+<!ENTITY editMailingListContext.label       "Listeyi düzenle">
+<!ENTITY editMailingListContext.accesskey   "e">
+
+<!ENTITY newContactAbContext.label          "Yeni kişi">
+<!ENTITY newContactAbContext.accesskey      "k">
+<!ENTITY newListAbContext.label             "Yeni liste">
+<!ENTITY newListAbContext.accesskey         "L">
+
+<!ENTITY toButton.label                     "Kime alanına ekle:">
+<!ENTITY toButton.accesskey                 "e">
+<!ENTITY ccButton.label                     "Cc alanına ekle:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Bcc alanına ekle:">
+<!ENTITY bccButton.accesskey                "B">

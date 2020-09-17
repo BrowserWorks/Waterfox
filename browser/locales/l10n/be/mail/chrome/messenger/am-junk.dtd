@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Наладжванні лухты">
+<!ENTITY trainingDescription.label "Калі дазволіце, вы спачатку мусіце натрэнаваць &brandShortName; вызначаць пошту-лухту з дапамогаю кнопкі Лухта на паліцы прыладаў для пазначэння лістоў лухтою ці не. Вы мусіце пазначаць і лісты-лухту, і не. Пасля гэтага &brandShortName; будзе здольны вызначаць лухту самастойна.">
+<!ENTITY level.label "Дазволіць прыстасоўныя кіроўцы поштай-лухтой для гэтага рахунку">
+<!ENTITY level.accesskey "Д">
+
+<!ENTITY move.label "Перамяшчаць новыя лісты-лухту ў:">
+<!ENTITY move.accesskey "П">
+<!ENTITY junkFolderOn.label "папку &quot;Лухта&quot; у:">
+<!ENTITY junkFolderOn.accesskey "Л">
+<!ENTITY otherFolder.label "Іншую:">
+<!ENTITY otherFolder.accesskey "І">
+<!ENTITY purge1.label "Самастойна выдаляць лісты-лухту, старэйшыя чым">
+<!ENTITY purge1.accesskey "С">
+<!ENTITY purge2.label "дзён">
+
+<!ENTITY whitelistHeader.label "Не пазначаць самастойна пошту лухтою, калі дасылальнік у:">
+<!ENTITY whitelistHeader.accesskey "Н">
+
+<!ENTITY ispHeadersWarning.label "Калі дазволена, &brandShortName; пачне самастойна лічыць лісты, пазначаныя гэтым вонкавым класіфікатарам, лухтою.">
+<!ENTITY ispHeaders.label "Давяраць загалоўкам, якія вызначаюць ліст як лухту, усталяваным:">
+<!ENTITY ispHeaders.accesskey "в">
+
+<!ENTITY junkClassification.label "Вылучэнне">
+<!ENTITY junkActions.label "Прызначэнне і ўтрыманне">
+
+<!ENTITY globalJunkPrefs.label "Агульныя перавагі вызначэння лухты…">
+<!ENTITY globalJunkPrefs.accesskey "л">

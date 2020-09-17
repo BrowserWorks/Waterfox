@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "हेडर अनुकूलन गर्नुहोस्">
+<!ENTITY addButton.label "थप्नुहोस्">
+<!ENTITY addButton.accesskey "A">
+<!ENTITY removeButton.label "हटाउनुहोस्">
+<!ENTITY removeButton.accesskey "R">
+<!ENTITY newMsgHeader.label "नयाँ सन्देश हेडर:">
+<!ENTITY newMsgHeader.accesskey "N">

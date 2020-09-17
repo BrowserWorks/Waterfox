@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Pogas īpašības">
+
+<!ENTITY Settings.label "Iestatījumi">
+
+<!ENTITY ButtonType.label "Tips">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Iesniegt">
+<!ENTITY reset.value "Atstatīt">
+<!ENTITY button.value "Poga">
+
+<!ENTITY ButtonName.label "Nosaukums:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Vērtība:">
+<!ENTITY ButtonValue.accesskey "V">
+
+
+
+
+
+
+
+

@@ -1,0 +1,85 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+
+<!-- LOCALIZATION NOTE (newsServer.label) : do not translate "NNTP" in below line -->
+<!ENTITY messageStorage.label "Message Storage">
+<!ENTITY securitySettings.label "ආරක්ෂණ සැකසුම්">
+<!ENTITY serverSettings.label "සේවාදායක සැකසුම්">
+<!-- LOCALIZATION NOTE (popServer.label) : do not translate "POP" in below line -->
+<!-- LOCALIZATION NOTE (imapServer.label) : do not translate "IMAP" in below line -->
+<!ENTITY serverType.label "සේවාදායක වර්ගය:">
+<!ENTITY serverName.label "සේවාදායක නම:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "පරිශීලක නම:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "තොට (Port):">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "පෙරනිමි:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "සෑම විනාඩි  ">
+<!ENTITY biffStart.accesskey "">
+<!ENTITY biffEnd.label "වරක් අලුත් ලිපි ලබාගන්න">
+<!ENTITY connectionSecurity.label "සම්බන්ධතාවයේ ආරක්ෂාව:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "කිසිවිටෙක එපා">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, තිබේ නම්">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "සත්‍යාපන ක්‍රමය:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "සේවාදායකය තුළ ලිපි ඉතිරි කරන්න">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "ශීර්ෂයන් පමණක් ලබා ගන්න">
+<!ENTITY headersOnly.accesskey "f">
+<!ENTITY deleteByAgeFromServer.label "උපරිම වශයෙන් දින">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "">
+<!ENTITY deleteOnServer2.label "මම ලිපි මකන තුරු">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "ස්වයංක්‍රීයව අලුත් ලිපි භාගත කරන්න">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!-- LOCALIZATION NOTE (popServerTitle.label) : do not translate "POP" in below line -->
+<!ENTITY deleteMessagePrefix.label "මම ලිපියක් මකන විට:">
+<!ENTITY modelMoveToTrash.label "එය මැකූලිපි ෆෝල්ඩරයට දමන්න">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "එය මැකූ ලෙස ලකුණු කරන්න">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "එය එසැනින්ම ඉවත් කරන්න">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "පිටවීමේදී ලදලිපි ෆෝල්ඩරයේ මැකූලිපි ඉවත් කරන්න (&quot;Expunge&quot;)">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "පිටවීමේදී මැකූලිපි ෆෝල්ඩරය හිස් කරන්න">
+<!ENTITY emptyTrashOnExit.accesskey "x">
+<!ENTITY loginAtStartup.label "ආරම්භයේදී අලුත් ලිපි ලබාගන්න"> 
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency 
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+	 of messages between them
+-->
+<!ENTITY maxMessagesStart.label " ">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "ට වඩා වැඩි ලිපි භාගත කිරීමට පෙර විමසන්න">
+<!ENTITY alwaysAuthenticate.label "ෙම සේවාදායකයට සම්බන්ධ වීමේදී සෑමවිටම අනන්‍යතාවය තහවුරු කරවාගන්න">
+<!ENTITY alwaysAuthenticate.accesskey "w">
+<!ENTITY abbreviate.label "Show newsgroup names in the Mail Folder pane as:">
+<!ENTITY abbreviateOn.label "සම්පූර්ණ නම් (උදාහරණ, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "කෙටිකළ නම් (උදාහරණ, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "වැඩිමනත්...">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY localFolderPicker.label "ස්ථානීය ෆෝල්ඩරය තෝරන්න">
+<!ENTITY browseFolder.label "පිරික්සන්න...">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "පිරික්සන්න...">
+<!ENTITY browseNewsrc.accesskey "e">
+
+<!ENTITY accountTitle.label "ගිණුම් සැකසුම්">
+<!ENTITY accountSettingsDesc.label "පහත දැක්වෙන්නේ විශේෂිත ගිණුමකි.  ඒහා සම්බන්ධිත හැඳුනුම් නොමැත.">

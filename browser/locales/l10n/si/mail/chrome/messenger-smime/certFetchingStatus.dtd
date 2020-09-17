@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE shown while obtaining certificates from a directory -->
+
+<!ENTITY title.label "සහතික බාගතකිරීම">
+<!ENTITY info.message "නාමාවලිය තුළ ලබන්නාගේ සහතික සොයයි. මේ සඳහා විනාඩි කිහිපයක් ගතවනු ඇත.">
+<!ENTITY stop.label "සෙවීම කවතන්න">

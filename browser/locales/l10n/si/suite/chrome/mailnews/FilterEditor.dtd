@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filter Rules">
+
+<!ENTITY filterName.label "Filter name:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Junk">
+<!ENTITY notJunk.label "Not Junk">
+
+<!ENTITY lowestPriorityCmd.label "Lowest">
+<!ENTITY lowPriorityCmd.label "Low">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY highPriorityCmd.label "High">
+<!ENTITY highestPriorityCmd.label "Highest">
+
+<!ENTITY contextDesc.label "Apply filter when:">
+<!ENTITY contextDesc.accesskey "w">
+<!ENTITY contextIncoming.label "Checking Mail">
+<!ENTITY contextManual.label "Manually Run">
+<!ENTITY contextBoth.label "Checking Mail or Manually Run">
+<!ENTITY contextPostPlugin.label "Checking Mail (after classification)">
+<!ENTITY contextPostPluginBoth.label "Checking Mail (after classification) or Manually Run">
+
+<!ENTITY filterActionDesc.label "Perform these actions:">
+<!ENTITY filterActionDesc.accesskey "P">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Move Message to">
+<!ENTITY copyMessage.label "Copy Message to">
+<!ENTITY forwardTo.label "Forward Message to">
+<!ENTITY replyWithTemplate.label "Reply with Template">
+<!ENTITY markMessageRead.label "Mark As Read">
+<!ENTITY markMessageStarred.label "Mark As Flagged">
+<!ENTITY labelMessage.label "Label Message As">
+<!ENTITY setPriority.label "Set Priority to">
+<!ENTITY addTag.label "Tag Message">
+<!ENTITY setJunkScore.label "Set Junk Status to">
+<!ENTITY deleteMessage.label "Delete Message">
+<!ENTITY deleteFromPOP.label "Delete From POP Server">
+<!ENTITY fetchFromPOP.label "Fetch From POP Server">
+<!ENTITY ignoreThread.label "Ignore Thread">
+<!ENTITY ignoreSubthread.label "Ignore Subthread">
+<!ENTITY watchThread.label "Watch Thread">
+<!ENTITY stopExecution.label "Stop Filter Execution">

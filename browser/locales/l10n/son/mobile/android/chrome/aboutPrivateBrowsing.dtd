@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Sutura naarumi">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ Ganayan jejebu">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "War šii sutura naaruyan ra">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; na moo jereyaŋ gagay kaŋ ga hina war ceeciyan goyoo gana.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Ir ši honga taariki kul, amma tuku zumantey nda doo-šilbay taagey ga kaa ka gaabundi war jinaa ga.">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "Sutura ceeciyan ra, ir ši war ceeciyan taariki wala aleewa kul gaabundi. Doo-šilbawey kaŋ war g'i tonton nda tukey kaŋ zumandi ga cindi ka gaabundi war jinaa ga.">
+
+<!ENTITY privatebrowsingpage.link.private "Bay ka tonton wala?">
+<!ENTITY privatebrowsingpage.link.normal "Feeri sutura kanje taaga ra">

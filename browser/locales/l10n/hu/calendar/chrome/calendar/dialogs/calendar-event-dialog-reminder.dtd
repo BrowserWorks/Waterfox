@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Emlékeztetők beállítása">
+<!ENTITY reminder.add.label                                "Hozzáadás">
+<!ENTITY reminder.add.accesskey                            "H">
+<!ENTITY reminder.remove.label                             "Eltávolítás">
+<!ENTITY reminder.remove.accesskey                         "E">
+
+<!ENTITY reminder.reminderDetails.label                    "Emlékeztető részletei">
+<!ENTITY reminder.action.label                             "Emlékeztetőművelet választása">
+
+<!ENTITY reminder.action.alert.label                       "Figyelmeztető ablak">
+<!ENTITY reminder.action.email.label                       "E-mail küldése">
+
+<!ENTITY alarm.units.minutes                               "perc" >
+<!ENTITY alarm.units.hours                                 "óra" >
+<!ENTITY alarm.units.days                                  "nap" >

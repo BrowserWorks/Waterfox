@@ -1,0 +1,335 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Tz'ib'anïk: (majun taqikil)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Yakb'äl">
+<!ENTITY fileMenu.accesskey "y">
+<!ENTITY newMenu.label "K'ak'a'">
+<!ENTITY newMenu.accesskey "K">
+<!ENTITY newMessage.label "Tzijol">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "T">
+<!ENTITY newContact.label "Kib'i' Achib'il pa Kitz'ib'awuj Ochochib'äl…">
+<!ENTITY newContact.accesskey "K">
+<!ENTITY attachMenu.label "Titz'aqatisäx">
+<!ENTITY attachMenu.accesskey "x">
+<!ENTITY attachFileCmd.label "Yakb'äl(taq)…">
+<!ENTITY attachFileCmd.accesskey "Y">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Ajk'amaya'l Ruxaq…">
+<!ENTITY attachPageCmd.accesskey "A">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Ichinan Pirt'im (vCard)">
+<!ENTITY attachVCardCmd.accesskey "I">
+<!ENTITY remindLater.label "Tinatäx pe Chwe pa Jumej">
+<!ENTITY remindLater.accesskey "J">
+<!ENTITY closeCmd.label "Titz'apïx">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "t">
+<!ENTITY saveCmd.label "Tiyak">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "y">
+<!ENTITY saveAsCmd.label "Tiyak Achi'el">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsFileCmd.label "Yakb'äl…">
+<!ENTITY saveAsFileCmd.accesskey "Y">
+<!ENTITY saveAsDraftCmd.label "Nab'ey samaj">
+<!ENTITY saveAsDraftCmd.accesskey "N">
+<!ENTITY saveAsTemplateCmd.label "Kaxawäch">
+<!ENTITY saveAsTemplateCmd.accesskey "K">
+<!ENTITY sendNowCmd.label "Titaq Wakami">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "q">
+<!ENTITY sendLaterCmd.label "Titaq Na">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "t">
+<!ENTITY printSetupCmd.label "Tib'an Runuk'ulem Ruxaq…">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printPreviewCmd.label "Nab'ey Tz'etoj">
+<!ENTITY printPreviewCmd.accesskey "b">
+<!ENTITY printCmd.label "Titz'ajb'äx…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "b">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Tinuk'">
+<!ENTITY editMenu.accesskey "n">
+<!ENTITY undoCmd.label "Titzolïx">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "z">
+<!ENTITY redoCmd.label "Tikamulüx">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "k">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "n">
+<!ENTITY deleteCmd.label "Tiyuj">
+<!ENTITY deleteCmd.accesskey "y">
+<!ENTITY editRewrapCmd.label "Runuk'ulem cholaj">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Tiya' chik Jun Rub'i' ri Taqoj…">
+<!ENTITY renameAttachmentCmd.accesskey "c">
+<!ENTITY reorderAttachmentsCmd.label "Kecholajïx chik taq Taqoj…">
+<!ENTITY reorderAttachmentsCmd.accesskey "a">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Rupas Taqoj">
+<!ENTITY toggleAttachmentPaneCmd.accesskey "q">
+<!ENTITY selectAllCmd.accesskey "r">
+<!ENTITY findBarCmd.label "Tikanöx…">
+<!ENTITY findBarCmd.accesskey "k">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Tikanöx chuqa' Tijal…">
+<!ENTITY findReplaceCmd.accesskey "I">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Tikanöx Chik">
+<!ENTITY findAgainCmd.accesskey "k">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Tikanöx ri Xik'o Yan">
+<!ENTITY findPrevCmd.accesskey "o">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Kecholajïx chik taq Taqoj">
+<!ENTITY moveAttachmentTopPanelBtn.label "Tisilöx pa Rutikirib'al">
+<!ENTITY moveAttachmentUpPanelBtn.label "Tijotob'äx">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Kesilöx junam">
+<!ENTITY moveAttachmentDownPanelBtn.label "Tiqasäx Qa">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Tisilöx pa Ruk'isib'al">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Tichol: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Tichol: Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Tichol pa Rub'eyal: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Tichol pa Rub'eyal: Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Titz'et">
+<!ENTITY viewMenu.accesskey "t">
+<!ENTITY viewToolbarsMenuNew.label "Taq molsamajib'äl">
+<!ENTITY viewToolbarsMenuNew.accesskey "m">
+<!ENTITY menubarCmd.label "Rukajtz'ik K'utusamaj">
+<!ENTITY menubarCmd.accesskey "K">
+<!ENTITY showCompositionToolbarCmd.label "Rucholsamajib'al Nuk'unem">
+<!ENTITY showCompositionToolbarCmd.accesskey "o">
+<!ENTITY showFormattingBarCmd.label "Rukajtz'ik B'anikil">
+<!ENTITY showFormattingBarCmd.accesskey "R">
+<!ENTITY showTaskbarCmd.label "Rub'anikil Kajtz'ik">
+<!ENTITY showTaskbarCmd.accesskey "b">
+<!ENTITY customizeToolbar.label "Tichinäx…">
+<!ENTITY customizeToolbar.accesskey "c">
+
+<!ENTITY addressSidebar.label "Ajxikin Kipas Kib'i' Achib'il">
+<!ENTITY addressSidebar.accesskey "i">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "B'anikil">
+<!ENTITY formatMenu.accesskey "a">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Taq cha'oj">
+<!ENTITY optionsMenu.accesskey "c">
+<!ENTITY checkSpellingCmd2.label "Tinik'öx Rutz'ib'axik…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "n">
+<!ENTITY enableInlineSpellChecker.label "Tib'an Ruk'ojlem Rutz'ib'axik Toq Tajin Nitz'ib'äx">
+<!ENTITY enableInlineSpellChecker.accesskey "R">
+<!ENTITY quoteCmd.label "Tisik'ïx Rutzijol">
+<!ENTITY quoteCmd.accesskey "T">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Titz'aqatisäx Ichinan Pirt'im (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Etzolin taq Wujil">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Rutzijol Rub'anikil Jachoj">
+<!ENTITY dsnMenu.accesskey "R">
+<!ENTITY deliveryFormatMenu.label "Rukaxawäch Jachoj">
+<!ENTITY deliveryFormatMenu.accesskey "R">
+<!ENTITY autoFormatCmd.label "Ruyon Tiitz'et">
+<!ENTITY autoFormatCmd.accesskey "t">
+<!ENTITY plainTextFormatCmd.label "Xa Xe Cholan Tzij Majun Rub'anikil">
+<!ENTITY plainTextFormatCmd.accesskey "R">
+<!ENTITY htmlFormatCmd.label "Xa Xe Tz'aqatisan Cholan Tzij (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "X">
+<!ENTITY bothFormatCmd.label "Relik Cholan Tzij chuqa' Tz'aqatisan Cholan Tzij (HTML)">
+<!ENTITY bothFormatCmd.accesskey "l">
+<!ENTITY priorityMenu.label "Ya'on ruq'ij">
+<!ENTITY priorityMenu.accesskey "y">
+<!ENTITY priorityButton.title "Ya'on ruq'ij">
+<!ENTITY priorityButton.tooltiptext "Tijal rejqalem rutzijol">
+<!ENTITY priorityButton.label "Ya'on ruq'ij:">
+<!ENTITY lowestPriorityCmd.label "Ch'utin">
+<!ENTITY lowestPriorityCmd.accesskey "t">
+<!ENTITY lowPriorityCmd.label "Ko'öl">
+<!ENTITY lowPriorityCmd.accesskey "o">
+<!ENTITY normalPriorityCmd.label "Relik">
+<!ENTITY normalPriorityCmd.accesskey "r">
+<!ENTITY highPriorityCmd.label "Nïm">
+<!ENTITY highPriorityCmd.accesskey "m">
+<!ENTITY highestPriorityCmd.label "Yalan nïm">
+<!ENTITY highestPriorityCmd.accesskey "Y">
+<!ENTITY fileCarbonCopyCmd.label "Titaq jun Wachib'äl Chi Re">
+<!ENTITY fileCarbonCopyCmd.accesskey "q">
+<!ENTITY fileHereMenu.label "Yakb'äl Wawe'">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Samajib'äl">
+<!ENTITY tasksMenu.accesskey "s">
+<!ENTITY messengerCmd.label "Taqoya'l &amp; Taq Rutzijol">
+<!ENTITY messengerCmd.accesskey "m">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Kiwujil Ochochib'äl">
+<!ENTITY addressBookCmd.accesskey "o">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Kinuk'ulem Rub'i' Taqoya'l">
+<!ENTITY accountManagerCmd2.accesskey "K">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label "Taq cha'oj">
+<!ENTITY preferencesCmd2.accesskey "o">
+<!ENTITY preferencesCmdUnix.label "Taq ajowab'äl">
+<!ENTITY preferencesCmdUnix.accesskey "w">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Ch'utinarisaxïk">
+<!ENTITY bringAllToFront.label "Tik'am pe Ronojel Chuwa">
+<!ENTITY zoomWindow.label "Sum">
+<!ENTITY windowMenu.label "Window">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Titaq">
+<!ENTITY quoteButton.label "Tisik'ïx">
+<!ENTITY addressButton.label "Kib'i' achib'il">
+<!ENTITY attachButton.label "Titz'aqatisäx">
+<!ENTITY spellingButton.label "Tz'ib'anikil">
+<!ENTITY saveButton.label "Tiyak">
+<!ENTITY printButton.label "Titz'ajb'äx">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Titaq re rutzijol re' wakami">
+<!ENTITY sendlaterButton.tooltip "Titaq re rutzijol re' b'a' chik na">
+<!ENTITY quoteButton.tooltip "Tisik'ïx ri jun kan rutzijol">
+<!ENTITY addressButton.tooltip "Ticha' jun k'ulunel pa Kitz'ib'awuj Ochochib'äl">
+<!ENTITY attachButton.tooltip2 "Titz'aqatisäx jun taqoj">
+<!ENTITY spellingButton.tooltip "Tinik'ox rutz'ib'axik cha'oj o chijun ri rutzijol">
+<!ENTITY saveButton.tooltip "Titaq re rutzijol re'">
+<!ENTITY cutButton.tooltip              "Tiqupïx">
+<!ENTITY copyButton.tooltip             "Tiwachib'ëx">
+<!ENTITY pasteButton.tooltip            "Titz'ajb'äx">
+<!ENTITY printButton.tooltip "Titz'ajb'äx re rutzijol re'">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY fromAddr.accesskey "c">
+<!ENTITY subject.accesskey "T">
+<!ENTITY attachmentBucketCloseButton.tooltip "Tewäx ri rupas taqoj">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "Tich'ap jun tze'n paläj">
+<!ENTITY smiley1Cmd.label "Tze'enïk">
+<!ENTITY smiley2Cmd.label "B'is">
+<!ENTITY smiley3Cmd.label "Win">
+<!ENTITY smiley4Cmd.label "Juruj raq'">
+<!ENTITY smiley5Cmd.label "Nitze'en">
+<!ENTITY smiley6Cmd.label "Nik'ix">
+<!ENTITY smiley7Cmd.label "Ka'i' ruk'u'x">
+<!ENTITY smiley8Cmd.label "Ajmayel">
+<!ENTITY smiley9Cmd.label "Tz'ub'">
+<!ENTITY smiley10Cmd.label "Sik'inel">
+<!ENTITY smiley11Cmd.label "Tik'asäs">
+<!ENTITY smiley12Cmd.label "Pwäq-Chi'aj">
+<!ENTITY smiley13Cmd.label "Aqanaj-pa-Chi'aj">
+<!ENTITY smiley14Cmd.label "Ütz ruk'u'x">
+<!ENTITY smiley15Cmd.label "Oq'el">
+<!ENTITY smiley16Cmd.label "Chi'aj-e-Tz'apäl">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Majun Chilab'enïk Xilitäj">
+<!ENTITY spellCheckIgnoreWord.label "Tirepüx ri Tzij">
+<!ENTITY spellCheckIgnoreWord.accesskey "T">
+<!ENTITY spellCheckAddToDictionary.label "Titz'aqatisäx pa Soltzij">
+<!ENTITY spellCheckAddToDictionary.accesskey "o">
+<!ENTITY undo.label "Titzolïx">
+<!ENTITY undo.accesskey "z">
+<!ENTITY cut.label "Tiqupïx">
+<!ENTITY cut.accesskey "x">
+<!ENTITY copy.label "Tiwachib'ëx">
+<!ENTITY copy.accesskey "w">
+<!ENTITY paste.label "Titz'ajb'äx">
+<!ENTITY paste.accesskey "t">
+<!ENTITY pasteQuote.label "Titz'ajb'äx Achi'el Peyonïk">
+<!ENTITY pasteQuote.accesskey "P">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Tijaq">
+<!ENTITY openAttachment.accesskey "j">
+<!ENTITY delete.label "Tiyuj">
+<!ENTITY delete.accesskey "y">
+<!ENTITY removeAttachment.label "Tisilöx Taqoj">
+<!ENTITY removeAttachment.accesskey "T">
+<!ENTITY renameAttachment.label "Tisik'ïx chik…">
+<!ENTITY renameAttachment.accesskey "c">
+<!ENTITY reorderAttachments.label "Kecholajïx chik taq Taqoj…">
+<!ENTITY reorderAttachments.accesskey "j">
+<!ENTITY removeAllAttachments.label "Keyuj ronojel taq taqoj">
+<!ENTITY removeAllAttachments.accesskey "y">
+<!ENTITY selectAll.label "Ticha' Ronojel">
+<!ENTITY selectAll.accesskey "R">
+<!ENTITY attachFile.label "Ti(ke)tz'aqatisäx Yakb'äl…">
+<!ENTITY attachFile.accesskey "Y">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "Tik'ex pa…">
+<!ENTITY convertCloud.accesskey "T">
+<!ENTITY cancelUpload.label "Tiq'at Samajib'ëx">
+<!ENTITY cancelUpload.accesskey "q">
+<!ENTITY convertRegularAttachment.label "Jutaqil Taqoj">
+<!ENTITY convertRegularAttachment.accesskey "T">
+<!ENTITY attachPage.label "Titz'aqatisäx Ruxaq Ajk'amaya'l…">
+<!ENTITY attachPage.accesskey "A">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Pa Rutikirib'al Kek'ut Kipas Tz'aqatisan taq Tzij">
+<!ENTITY initiallyShowAttachmentPane.accesskey "K">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Ketz'aqatisäx taq Soltzij…">
+<!ENTITY spellAddDictionaries.accesskey "t">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Kib'i' achib'il">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Tichinäx pa Ochochib'äl…">
+<!ENTITY customizeFromAddress.accesskey "O">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Ruch'akul rutzijol">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Ruch'ab'äl chojmirisanel tz'ib'anikilal">
+<!ENTITY encodingStatusPanel.tooltip "Rucholajil tz'ib'atzij">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Sifat Borang">
+
+<!ENTITY Settings.label "Tetapan">
+
+<!ENTITY FormName.label "Nama Borang:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "URL Tindakan:">
+<!ENTITY FormAction.accesskey "T">
+<!ENTITY FormMethod.label "Kaedah:">
+<!ENTITY FormMethod.accesskey "K">
+<!ENTITY FormEncType.label "Pengekodan:">
+<!ENTITY FormEncType.accesskey "g">
+<!ENTITY FormTarget.label "Bingkai Sasaran:">
+<!ENTITY FormTarget.accesskey "S">
+
+<!ENTITY RemoveForm.label "Buang Borang">
+<!ENTITY RemoveForm.accesskey "B">

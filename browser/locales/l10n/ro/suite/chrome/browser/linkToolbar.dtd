@@ -1,0 +1,62 @@
+<!--
+# Translator(s):
+#
+# Laudatti <Laudatti@gmail.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# cris78 <ciuci78@yahoo.com>
+# stas <stas@nerd.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "Site Navigation Bar">
+<!ENTITY linkToolbar.accesskey "a">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "Show Always">
+<!ENTITY linkToolbarAlways.accesskey "S">
+<!ENTITY linkToolbarAsNeeded.label "Show Only As Needed">
+<!ENTITY linkToolbarAsNeeded.accesskey "O">
+<!ENTITY linkToolbarNever.label "Hide Always">
+<!ENTITY linkToolbarNever.accesskey "H">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "Început">
+<!ENTITY upButton.label "În sus">
+<!ENTITY firstButton.label "prima">
+<!ENTITY prevButton.label "Precedent">
+<!ENTITY nextButton.label "General">
+<!ENTITY lastButton.label "ultima">
+
+<!ENTITY documentButton.label "Document">
+
+<!ENTITY tocButton.label "Tabla de materii">
+<!ENTITY chapterButton.label "Capitole">
+<!ENTITY sectionButton.label "Secțiuni">
+<!ENTITY subSectionButton.label "Subsecțiuni">
+<!ENTITY appendixButton.label "Appendices">
+<!ENTITY glossaryButton.label "Glosar">
+<!ENTITY indexButton.label "Index">
+
+<!ENTITY moreButton.label "Mai multe">
+
+<!ENTITY helpButton.label "Ajutor">
+<!ENTITY searchButton.label "Cautare">
+
+<!ENTITY authorButton.label "Autor(i)">
+<!ENTITY copyrightButton.label "Copyright">
+
+<!ENTITY bookmarkButton.label "Semne de carte">
+
+<!ENTITY alternateButton.label "Alte versiuni">
+
+<!ENTITY feedButton.label "Subscrie">

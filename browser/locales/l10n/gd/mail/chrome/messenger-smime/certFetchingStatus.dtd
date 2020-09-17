@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE shown while obtaining certificates from a directory -->
+
+
+<!ENTITY title.label "A' luchdadh a-nuas teisteanasan">
+<!ENTITY info.message "A' rannsachadh a' phasgain airson teisteanasan nam faightearan. Faodaidh gum feum seo mionaid no dhà.">
+<!ENTITY stop.label "Sguir dhen rannsachadh">

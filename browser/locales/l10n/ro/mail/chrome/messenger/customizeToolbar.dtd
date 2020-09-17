@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Personalizează bara de unelte">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Poți adăuga sau elimina elemente trăgându-le pe/de pe barele de unelte.">
+<!ENTITY show.label               "Afișează:">
+<!ENTITY iconsAndText.label       "Pictograme și text">
+<!ENTITY icons.label              "Pictograme">
+<!ENTITY text.label               "Text">
+<!ENTITY iconsBesideText.label    "Pictograme alăturate textului">
+<!ENTITY useSmallIcons.label      "Folosește pictograme mici">
+<!ENTITY restoreDefaultSet.label  "Revenire la setările implicite">
+<!ENTITY showTitlebar2.label      "Bară de titlu">
+<!ENTITY extraDragSpace2.label    "Spațiu de tragere">
+<!ENTITY saveChanges.label        "Terminat">
+<!ENTITY undoChanges.label        "Anulează schimbările">

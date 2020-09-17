@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Menu da las ultimas paginas">
+<!ENTITY  documentsInMenu.label         "Dumber maximal da paginas en la glista:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+<!ENTITY  savingFiles.title             "Cun memorisar u publitgar paginas">
+<!ENTITY  preserveExisting.label        "Mantegnair la formataziun originala dal code da funtauna">
+<!ENTITY  preserveExisting.accesskey    "o">
+<!ENTITY  preserveExisting.tooltip      "Mantegnair sigls da lingia e la formataziun originala da la pagina">
+<!ENTITY  saveAssociatedFiles.label     "Memorisar graficas ed autras datotecas integradas ensemen cun las paginas">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "Adina mussar il dialog da publitgar sche paginas vegnan publitgadas">
+<!ENTITY  showPublishDialog.accesskey   "A">
+<!ENTITY  composerEditing.label         "Editar">
+<!ENTITY  maintainStructure.label       "Mantegnair il format da la tabella sche cellas vegnan inseridas u stizzadas">
+<!ENTITY  maintainStructure.tooltip     "Mantegnair la furma rectangulara da la tabella cun agiuntar automaticamain cellas, suenter avair inserì u stizzà cellas">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "Utilisar stils da CSS empè dad elements ed attributs HTML">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "Tasta enter en in paragraf creescha adina in nov paragraf">
+<!ENTITY  crInPCreatesNewP.accesskey    "R">

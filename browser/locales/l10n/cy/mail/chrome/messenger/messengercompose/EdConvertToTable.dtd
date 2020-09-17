@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Trosi i Dabl">
+<!ENTITY instructions1.label   "Mae Cyfansoddwr yn creu rhes tabl newydd am bob paragraff yn y dewis.">
+<!ENTITY instructions2.label   "Dewiswch y nod fydd yn cael ei ddefnyddio i wahanu'r dewis yn golofnau:">
+<!ENTITY commaRadio.label      "Collnod">
+<!ENTITY spaceRadio.label      "Lle">
+<!ENTITY otherRadio.label      "Nod Arall:">
+<!ENTITY deleteCharCheck.label "Dileu nod gwahanu">
+<!ENTITY collapseSpaces.label  "Anwybyddu'r bylchau ychwanegol">
+<!ENTITY collapseSpaces.tooltip "Trosi'r bylchau cyfagos i un gwahanydd">

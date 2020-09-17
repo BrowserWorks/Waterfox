@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY all.label "Загрузіць ўсе загалоўкі">
+<!ENTITY all.accesskey "з">
+<!ENTITY download.label "Загрузіць">
+<!ENTITY download.accesskey "р">
+<!ENTITY headers.label "загалоўкаў">
+<!ENTITY headers.accesskey "г">
+<!ENTITY mark.label "Пазначыць астатнія загалоўкі як прачытаныя">
+<!ENTITY mark.accesskey "ч">

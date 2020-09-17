@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Taɣaṛa n umiḍan">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Amatu">
+<!ENTITY account.advanced              "Iɣewwaṛen leqqayen">
+<!ENTITY account.name                  "Isem n useqdac:">
+<!ENTITY account.password              "Awal uffir:">
+<!ENTITY account.alias                 "Tabzimt:">
+<!ENTITY account.newMailNotification   "Lɣu ticki yella yimayl amaynut">
+<!ENTITY account.autojoin              "Ddu swudem amaynut ɣer ubadu:">
+<!ENTITY account.proxySettings.caption "Iɣewwaṛen n upṛuksi">
+<!ENTITY account.proxySettings.change.label     "Snifel…">
+<!ENTITY account.proxySettings.change.accessKey "n">

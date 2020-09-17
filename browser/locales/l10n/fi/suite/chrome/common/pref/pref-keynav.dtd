@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Näppäimistönavigointi">
+<!ENTITY tabNavigationBehavior.label "Navigointi sarkainnäppäimen avulla">
+<!ENTITY tabNavigationLinks.label "Linkkiin">
+<!ENTITY tabNavigationLinks.accesskey "L">
+<!ENTITY tabNavigationForms.label "Painikkeeseen, radiopainikkeeseen, ruutuun tai valintalistaan">
+<!ENTITY tabNavigationForms.accesskey "P">
+<!ENTITY tabNavigationTextboxes.label "Huom. Tekstiruudut ja vieritettävät alueet ovat aina osa siirtymäjärjestystä.">
+<!ENTITY tabNavigationDesc.label "Kun painan Sarkain tai Vaihto+Sarkain, siirry seuraavaan tai edelliseen:">
+<!ENTITY accessibilityBrowseWithCaret.label "Kohdistinselaaminen">
+<!ENTITY browseWithCaretDesc.label "Kohdistinselaaminen antaa sinun lukea ja valita sivulla olevaa tekstiä nuolinäppäimillä.">
+<!ENTITY browseWithCaretUse.label "Käytä kohdistinselausta">
+<!ENTITY browseWithCaretUse.accesskey "K">
+<!ENTITY browseWithCaretShortCut.label "F7-näppäin ottaa kohdistinselauksen päälle ja pois">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "Kysy ennen kohdistinselaamisen käyttöönottoa">
+<!ENTITY browseWithCaretWarn.accesskey "K">

@@ -1,0 +1,418 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "वस्तु का संपादन करें" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "समाप्ति की तारीख बदलते समय अवधि रखें">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "से" >
+<!ENTITY newevent.to.label                  "को" >
+
+<!ENTITY newevent.status.label                    "स्थिति‌" >
+<!ENTITY newevent.status.accesskey                "S" >
+<!ENTITY newevent.eventStatus.none.label          "निर्दिष्ट नहीं है" >
+<!ENTITY newevent.eventStatus.none.accesskey      "o" >
+<!ENTITY newevent.todoStatus.none.label           "निर्दिष्ट नहीं है" >
+<!ENTITY newevent.eventStatus.cancelled.label     "रद्द" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "n" >
+<!ENTITY newevent.todoStatus.cancelled.label      "रद्द" >
+<!ENTITY newevent.status.tentative.label          "संभावित" >
+<!ENTITY newevent.status.tentative.accesskey      "T" >
+<!ENTITY newevent.status.confirmed.label          "पुष्टि" >
+<!ENTITY newevent.status.confirmed.accesskey      "C" >
+<!ENTITY newevent.status.needsaction.label        "कार्रवाई की आवश्यकता है" >
+<!ENTITY newevent.status.inprogress.label         "प्रक्रिया में" >
+<!ENTITY newevent.status.completed.label          "इसपर समाप्त" >
+<!-- The following entity is for New Task dialog only -->
+
+<!ENTITY newtodo.percentcomplete.label      "&#037; पूर्ण">
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+
+<!ENTITY event.attendees.notify.label                "उपस्थितगण को सूचित करें">
+<!ENTITY event.attendees.notify.accesskey            "f">
+<!ENTITY event.attendees.notifyundisclosed.label     "प्रत्येक सहभागी को अलग-अलग आमंत्रण">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "x">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "यह विकल्प हर सहभागी को एक आमंत्रण ईमेल भेजता है प्रत्येक आमंत्रण सिर्फ़ प्राप्तकर्ता सहभागी की ही जानकारी रखता है ताकि अन्य सहभागी की जानकारी का खुलासा ना हो">
+<!ENTITY event.attendees.disallowcounter.label       "काउंटर नामंज़ूर">
+<!ENTITY event.attendees.disallowcounter.accesskey   "a">
+<!ENTITY event.attendees.disallowcounter.tooltip     "स्पष्ट होता है की आप जवाबी प्रस्ताव को स्वीकार नही करेंगे">
+<!-- Keyboard Shortcuts -->
+
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+<!-- Menubar -->
+
+<!ENTITY  event.menu.item.new.label                       "नया">
+<!ENTITY  event.menu.item.new.accesskey                   "N">
+<!ENTITY  event.menu.item.new.event.label                 "कार्यक्रम">
+<!ENTITY  event.menu.item.new.event.accesskey             "E">
+<!ENTITY  event.menu.item.new.task.label                  "कार्य">
+<!ENTITY  event.menu.item.new.task.accesskey              "T">
+<!ENTITY  event.menu.item.new.message.label               "संदेश">
+<!ENTITY  event.menu.item.new.message.accesskey           "M">
+<!ENTITY  event.menu.item.new.contact.label               "पता पुस्तिका संपर्क">
+<!ENTITY  event.menu.item.new.contact.accesskey           "C">
+<!ENTITY  event.menu.item.close.label                     "बंद">
+<!ENTITY  event.menu.item.close.accesskey                 "C">
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+
+<!ENTITY  event.menu.item.save.label                      "सहेजें">
+<!ENTITY  event.menu.item.save.accesskey                  "S">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+
+<!ENTITY  event.menu.item.saveandclose.label              "सहेजें तथा बन्द करें">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "l">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "मिटाएँ…">
+<!ENTITY  event.menu.item.delete.accesskey                "D">
+<!ENTITY  event.menu.item.page.setup.label                "पृष्ठ व्यवस्थित">
+<!ENTITY  event.menu.item.page.setup.accesskey            "u">
+<!ENTITY  event.menu.item.print.label                     "छापें">
+<!ENTITY  event.menu.item.print.accesskey                 "P">
+
+<!ENTITY  event.menu.edit.label                           "संपादन">
+<!ENTITY  event.menu.edit.accesskey                       "E">
+<!ENTITY  event.menu.edit.undo.label                      "पहले जैसा">
+<!ENTITY  event.menu.edit.undo.accesskey                  "U">
+<!ENTITY  event.menu.edit.redo.label                      "दोहराएँ">
+<!ENTITY  event.menu.edit.redo.accesskey                  "R">
+<!ENTITY  event.menu.edit.cut.label                       "काटें">
+<!ENTITY  event.menu.edit.cut.accesskey                   "t">
+<!ENTITY  event.menu.edit.copy.label                      "नक़ल करें">
+<!ENTITY  event.menu.edit.copy.accesskey                  "C">
+<!ENTITY  event.menu.edit.paste.label                     "चिपकाएँ">
+<!ENTITY  event.menu.edit.paste.accesskey                 "P">
+<!ENTITY  event.menu.edit.select.all.label                "सभी चुनें">
+<!ENTITY  event.menu.edit.select.all.accesskey            "A">
+
+<!ENTITY  event.menu.view.label                           "देखें">
+<!ENTITY  event.menu.view.accesskey                       "V">
+<!ENTITY  event.menu.view.toolbars.label                  "औज़ारपट्टी‌">
+<!ENTITY  event.menu.view.toolbars.accesskey              "T">
+<!ENTITY  event.menu.view.toolbars.event.label            "कार्यक्रम औजार पट्टी">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "E">
+<!ENTITY  event.menu.view.toolbars.customize.label        "मनपसंद बनाएँ">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "C">
+<!ENTITY  event.menu.view.showlink.label                  "संबंधित कड़ी दिखाएँ">
+<!ENTITY  event.menu.view.showlink.accesskey              "R">
+
+<!ENTITY  event.menu.options.label                            "तथा विकल्प">
+<!ENTITY  event.menu.options.accesskey                        "O">
+<!ENTITY  event.menu.options.attendees.label                  "सहभागीयो को आमंत्रित करें...">
+<!ENTITY  event.menu.options.attendees.accesskey              "I">
+<!ENTITY  event.menu.options.timezone2.label                  "समय क्षेत्र दिखाएँ">
+<!ENTITY  event.menu.options.timezone2.accesskey              "z">
+<!ENTITY  event.menu.options.priority2.label                  "प्राथमिकता">
+<!ENTITY  event.menu.options.priority2.accesskey              "y">
+<!ENTITY  event.menu.options.priority.notspecified.label      "निर्दिष्ट नहीं है">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "o">
+<!ENTITY  event.menu.options.priority.low.label               "तथा कम">
+<!ENTITY  event.menu.options.priority.low.accesskey           "L">
+<!ENTITY  event.menu.options.priority.normal.label            "सामान्य">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "उँचा">
+<!ENTITY  event.menu.options.priority.high.accesskey          "H">
+<!ENTITY  event.menu.options.privacy.label                    "तथा गोपनीयता">
+<!ENTITY  event.menu.options.privacy.accesskey                "P">
+<!ENTITY  event.menu.options.privacy.public.label             "सार्वजनिक समारोह">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "u">
+<!ENTITY  event.menu.options.privacy.confidential.label       "केवल समय और तिथि दिखाएँ">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "S">
+<!ENTITY  event.menu.options.privacy.private.label            "निजी कार्यक्रम">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "r">
+<!ENTITY  event.menu.options.show.time.label                  "समय को इस रूप में दिखाएँ">
+<!ENTITY  event.menu.options.show.time.accesskey              "T">
+<!ENTITY  event.menu.options.show.time.busy.label             "व्यस्त">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "B">
+<!ENTITY  event.menu.options.show.time.free.label             "खाली">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "F">
+
+<!ENTITY event.invite.attendees.label                     "सहभागीयो को आमंत्रित करें...">
+<!ENTITY event.invite.attendees.accesskey                 "I">
+<!ENTITY event.email.attendees.label                      "सभी सहभागियों को ई-मेल लिखें...">
+<!ENTITY event.email.attendees.accesskey                  "A">
+<!ENTITY event.email.tentative.attendees.label            "अनिश्चयी सहभागियों को ई-मेल लिखें...">
+<!ENTITY event.email.tentative.attendees.accesskey        "U">
+<!ENTITY event.remove.attendees.label2                    "सभी सहभागियों को हटाएँ">
+<!ENTITY event.remove.attendees.accesskey                 "r">
+<!ENTITY event.remove.attendee.label                      "सहभागियों को हटाएँ">
+<!ENTITY event.remove.attendee.accesskey                  "e">
+<!-- Toolbar -->
+
+<!ENTITY  event.toolbar.save.label2                       "सहेजें">
+<!ENTITY  event.toolbar.saveandclose.label                "सहेजें तथा बन्द करें">
+<!ENTITY  event.toolbar.delete.label                      "मिटाएँ">
+<!ENTITY  event.toolbar.attendees.label                   "सहभागीयो को आमंत्रित करें">
+<!ENTITY  event.toolbar.privacy.label                     "गोपनीयता">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "सहेजें">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "सहेजें तथा बन्द करें">
+<!ENTITY  event.toolbar.delete.tooltip                    "मिटाएँ">
+<!ENTITY  event.toolbar.attendees.tooltip                 "सहभागीयो को आमंत्रित करें">
+<!ENTITY  event.toolbar.attachments.tooltip               "संलग्नक जोड़ें">
+<!ENTITY  event.toolbar.privacy.tooltip                   "गोपनीयता को परिवर्तित करें">
+<!ENTITY  event.toolbar.priority.tooltip                  "प्राथमिकता को परिवर्तित करें">
+<!ENTITY  event.toolbar.status.tooltip                    "अवस्था को परिवर्तित करें">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "खाली/व्यस्त समय को परिवर्तित करें">
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+
+<!ENTITY counter.button.proposal.label                    "प्रस्ताव लागू करें">
+<!ENTITY counter.button.proposal.accesskey                "p">
+<!ENTITY counter.button.proposal.tooltip2                 "कार्यक्रम क्षेत्रों को प्रति-प्रस्तावों से मूल्यांकनों का उपयोग कर भरा जाएगा, केवल अतिरिक्त परिवर्तन के साथ अथवा के अलावा संचित ही सभी प्रतिभागियों को तदनुसार सूचित करेगा">
+<!ENTITY counter.button.original.label                    "मूल डेटा लागू करें">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "मूल कार्यक्रम से मान्यताओं पर ही क्षेत्रों को निर्धारित किया जाएगा,प्रति प्रस्तावों के निर्मित होने से पहले">
+<!-- Main page -->
+
+<!ENTITY event.title.textbox.label                        "शीर्षक:" >
+<!ENTITY event.title.textbox.accesskey                    "i">
+<!ENTITY event.location.label                             "स्थान" >
+<!ENTITY event.location.accesskey                         "L">
+<!ENTITY event.categories.label                           "श्रेणी">
+<!ENTITY event.categories.accesskey                       "y">
+<!ENTITY event.categories.textbox.label                   "नई प्रविष्टि जोड़ें" >
+<!ENTITY event.calendar.label                             "कैलेन्डर" >
+<!ENTITY event.calendar.accesskey                         "C">
+<!ENTITY event.attendees.label                            "सहभागी:" >
+<!ENTITY event.attendees.accesskey                        "n">
+<!ENTITY event.alldayevent.label                          "पूरे दिन का कार्यक्रम" >
+<!ENTITY event.alldayevent.accesskey                      "d">
+<!ENTITY event.from.label                                 "प्रारंभ:" >
+<!ENTITY event.from.accesskey                             "S">
+<!ENTITY task.from.label                                  "प्रारंभ" >
+<!ENTITY task.from.accesskey                              "S">
+<!ENTITY event.to.label                                   "अंतः" >
+<!ENTITY event.to.accesskey                               "u">
+<!ENTITY task.to.label                                    "समाप्ति तिथि:" >
+<!ENTITY task.to.accesskey                                "u">
+<!ENTITY task.status.label                                "स्थिति:" >
+<!ENTITY task.status.accesskey                            "a">
+<!ENTITY event.repeat.label                               "दोहराएँ:" >
+<!ENTITY event.repeat.accesskey                           "R">
+<!ENTITY event.until.label                                "जब तक">
+<!ENTITY event.until.accesskey                            "B">
+<!ENTITY event.reminder.label                             "स्मरण:" >
+<!ENTITY event.reminder.accesskey                         "m">
+<!ENTITY event.description.label                          "विवरण:" >
+<!ENTITY event.description.accesskey                      "p">
+<!ENTITY event.attachments.label                          "संलग्नक:" >
+<!ENTITY event.attachments.accesskey                      "h" >
+<!ENTITY event.attachments.menubutton.label               "संलग्न ">
+<!ENTITY event.attachments.menubutton.accesskey           "A">
+<!ENTITY event.attachments.url.label                      "वेब पृष्ठ...">
+<!ENTITY event.attachments.url.accesskey                  "W">
+<!ENTITY event.attachments.popup.remove.label             "मिटाएँ" >
+<!ENTITY event.attachments.popup.remove.accesskey         "R" >
+<!ENTITY event.attachments.popup.open.label               "खोलें " >
+<!ENTITY event.attachments.popup.open.accesskey           "O" >
+<!ENTITY event.attachments.popup.removeAll.label          "सभी मिटाएँ" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "A" >
+<!ENTITY event.attachments.popup.attachPage.label         "वेब पृष्ठ संलग्न करें..." >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "g" >
+<!ENTITY event.url.label                                  "संबंधित कड़ी:" >
+<!ENTITY event.priority2.label                            "प्राथमिकताः">
+
+<!ENTITY event.reminder.none.label                        "कोई स्मरण नहीं" >
+<!ENTITY event.reminder.0minutes.before.label             "0 मिनट पहले" >
+<!ENTITY event.reminder.5minutes.before.label             "5 मिनट पहले" >
+<!ENTITY event.reminder.15minutes.before.label            "15 मिनट पहले" >
+<!ENTITY event.reminder.30minutes.before.label            "30 मिनट पहले" >
+<!ENTITY event.reminder.1hour.before.label                "1 घंटे पहले" >
+<!ENTITY event.reminder.2hours.before.label               "2 घंटे पहले" >
+<!ENTITY event.reminder.12hours.before.label              "12 घंटे पहले" >
+<!ENTITY event.reminder.1day.before.label                 "1 दिन पहले" >
+<!ENTITY event.reminder.2days.before.label                "2 दिन पहले" >
+<!ENTITY event.reminder.1week.before.label                "1 सप्ताह पहले" >
+<!ENTITY event.reminder.custom.label                      "मनपसंद..." >
+
+<!ENTITY event.reminder.multiple.label                    "कई अनुस्मारक…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "समय के रूप में:">
+<!ENTITY event.statusbarpanel.privacy.label               "गोपनीयता">
+<!-- Recurrence dialog -->
+
+<!ENTITY recurrence.title.label                         "पुनरावृत्ति संपादन">
+
+<!ENTITY event.repeat.does.not.repeat.label             "दोहराएँ नहीं">
+<!ENTITY event.repeat.daily.label                       "प्रतिदिन">
+<!ENTITY event.repeat.weekly.label                      "साप्ताहिक">
+<!ENTITY event.repeat.every.weekday.label               "प्रत्येक साप्ताहिक दिन">
+<!ENTITY event.repeat.bi.weekly.label                   "सप्ताह में दो बार">
+<!ENTITY event.repeat.monthly.label                     "मासिक">
+<!ENTITY event.repeat.yearly.label                      "वार्षिक">
+<!ENTITY event.repeat.custom.label                      "मनपसंद...">
+
+<!ENTITY event.recurrence.pattern.label                 "पुनरावृत्ति पैटर्न">
+<!ENTITY event.recurrence.occurs.label                  "दोहराएँ" >
+<!ENTITY event.recurrence.day.label                     "प्रतिदिन" >
+<!ENTITY event.recurrence.week.label                    "साप्ताहिक" >
+<!ENTITY event.recurrence.month.label                   "मासिक" >
+<!ENTITY event.recurrence.year.label                    "वार्षिक" >
+
+<!ENTITY event.recurrence.pattern.every.label           "प्रत्येक" >
+<!ENTITY repeat.units.days.both                         "दिन‌" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "प्रत्येक साप्ताहिक दिन" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "प्रत्येक" >
+<!ENTITY repeat.units.weeks.both                        "सप्ताह‌" >
+<!ENTITY event.recurrence.on.label                      "पर:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "प्रत्येक" >
+<!ENTITY repeat.units.months.both                       "महिना" >
+<!ENTITY event.recurrence.monthly.every.label           "प्रत्येक" >
+<!ENTITY event.recurrence.monthly.first.label           "पहला">
+<!ENTITY event.recurrence.monthly.second.label          "दूसरा">
+<!ENTITY event.recurrence.monthly.third.label           "तीसरा">
+<!ENTITY event.recurrence.monthly.fourth.label          "चौथा">
+<!ENTITY event.recurrence.monthly.fifth.label           "पाँचवाँ">
+<!ENTITY event.recurrence.monthly.last.label            "अंतिम">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "रविवार" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "सोमवार" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "मंगलवार" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "बुधवार" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "गरूवार" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "शुक्रवार" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "शनिवार" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "महीने का दिन">
+<!ENTITY event.recurrence.repeat.recur.label            "दिनों पर पुनरावृत्ति">
+
+<!ENTITY event.recurrence.every.label                        "प्रत्येक:" >
+<!ENTITY repeat.units.years.both                             "वर्ष‌" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "प्रत्येक" >
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+
+<!ENTITY event.recurrence.pattern.yearly.of.label            "‌" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "जनवरी" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "फ़रवरी" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "मार्च" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "अप्रैल" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "मई" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "जून" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "जुलाई" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "अगस्त" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "सितम्बर" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "अक्टूबर" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "नवम्बर" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "दिसंबर" >
+<!ENTITY event.recurrence.yearly.every.label                 "प्रत्येक">
+<!ENTITY event.recurrence.yearly.first.label                 "पहला">
+<!ENTITY event.recurrence.yearly.second.label                "दूसरा">
+<!ENTITY event.recurrence.yearly.third.label                 "तीसरा">
+<!ENTITY event.recurrence.yearly.fourth.label                "चौथा">
+<!ENTITY event.recurrence.yearly.fifth.label                 "पाँचवाँ">
+<!ENTITY event.recurrence.yearly.last.label                  "अंतिम">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "रविवार" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "सोमवार" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "मंगलवार" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "बुधवार" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "गुरूवार" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "शुक्रवार" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "शनिवार" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "दिन" >
+<!ENTITY event.recurrence.of.label                           "का" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "जनवरी" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "फ़रवरी" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "मार्च" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "अप्रैल" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "मई" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "जून" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "जुलाई" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "अगस्त" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "सितम्बर" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "अक्टूबर" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "नवम्बर" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "दिसबंर" >
+
+<!ENTITY event.recurrence.range.label                   "पुनरावृत्ति की सीमा">
+<!ENTITY event.recurrence.forever.label                 "कोई अंतिम तारीख़ नहीं" >
+<!ENTITY event.recurrence.repeat.for.label              "बनाएँ" >
+<!ENTITY event.recurrence.appointments.label            "मुलाकात‌" >
+<!ENTITY event.repeat.until.label                       "दोहराएँ जब तक" >
+<!ENTITY event.recurrence.preview.label                 "पूर्वावलोकन">
+<!-- Attendees dialog -->
+
+<!ENTITY invite.title.label                     "सहभागीयो को आमंत्रित करें">
+<!ENTITY event.organizer.label                  "आयोज‍क">
+<!ENTITY event.freebusy.suggest.slot            "समय स्लॉट का सुझाव -">
+<!ENTITY event.freebusy.button.next.slot        "अगला स्लॉट">
+<!ENTITY event.freebusy.button.previous.slot    "पिछला स्लॉट">
+<!ENTITY event.freebusy.zoom                    "ज़ूमः">
+<!ENTITY event.freebusy.legend.free             "खाली" >
+<!ENTITY event.freebusy.legend.busy             "व्यस्त" >
+<!ENTITY event.freebusy.legend.busy_tentative   "अनिश्चित" >
+<!ENTITY event.freebusy.legend.busy_unavailable "कार्यालय के बाहर" >
+<!ENTITY event.freebusy.legend.unknown          "कोई सूचना नहीं" >
+<!ENTITY event.attendee.role.required           "आवश्यक प्रतिभागी">
+<!ENTITY event.attendee.role.optional           "वैकल्पिक सहभागी">
+<!ENTITY event.attendee.role.chair              "कुर्सी">
+<!ENTITY event.attendee.role.nonparticipant     "गैर-सहभागी">
+<!ENTITY event.attendee.usertype.individual     "प्रत्येक">
+<!ENTITY event.attendee.usertype.group          "समूह">
+<!ENTITY event.attendee.usertype.resource       "संसाधन">
+<!ENTITY event.attendee.usertype.room           "कमरा">
+<!ENTITY event.attendee.usertype.unknown        "अज्ञात">
+<!-- Timezone dialog -->
+
+<!ENTITY timezone.title.label            "कृपया समय क्षेत्र उल्लिखित करें">
+<!ENTITY event.timezone.custom.label     "अन्य समय क्षेत्र…">
+<!-- Read-Only dialog -->
+
+<!ENTITY read.only.general.label         "सामान्य">
+<!ENTITY read.only.title.label           "शीर्षक:">
+<!ENTITY read.only.event.start.label     "प्रारंभिक तिथि:">
+<!ENTITY read.only.task.start.label      "प्रारंभिक तिथि:">
+<!ENTITY read.only.event.end.label       "समाप्ति तिथि:">
+<!ENTITY read.only.task.due.label        "समाप्ति तिथि:">
+<!ENTITY read.only.repeat.label          "दोहराएँ:">
+<!ENTITY read.only.location.label        "स्थान:">
+<!ENTITY read.only.category.label        "वर्गः">
+<!ENTITY read.only.organizer.label       "आयोज‍क:">
+<!ENTITY read.only.reply.label           "जवाब:">
+<!ENTITY read.only.accept.label          "मैं भाग लूँगा">
+<!ENTITY read.only.decline.label         "मैं भाग नही लूँगा">
+<!ENTITY read.only.tentative.label       "मैं भाग ले सकता हूँ">
+<!ENTITY read.only.needs.action.label    "मैं बाद में पुष्टि करूँगा">
+<!ENTITY read.only.reminder.label        "स्मरण:">
+<!ENTITY read.only.attachments.label     "संलग्नक:">
+<!ENTITY read.only.attendees.label       "सहभागी">
+<!ENTITY read.only.description.label     "विवरण">
+<!ENTITY read.only.link.label            "सम्बन्धित कड़ी">

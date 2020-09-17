@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "例外">
+<!ENTITY treehead.sitename.label        "サイト">
+<!ENTITY treehead.status.label          "状況">
+<!ENTITY remove.label                   "サイトを削除">
+<!ENTITY remove.accesskey               "R">
+<!ENTITY removeall.label                "すべてのサイトを削除">
+<!ENTITY removeall.accesskey            "e">
+<!ENTITY address.label                  "ウェブサイトの URL:">
+<!ENTITY address.accesskey              "d">
+<!ENTITY block.label                    "拒否">
+<!ENTITY block.accesskey                "B">
+<!ENTITY session.label                  "受け入れるが、ブラウザー終了時にリセット">
+<!ENTITY session.accesskey              "S">
+<!ENTITY allow.label                    "許可">
+<!ENTITY allow.accesskey                "A">

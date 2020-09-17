@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Knopeigenskippen">
+
+<!ENTITY Settings.label "Ynstellingen">
+
+<!ENTITY ButtonType.label "Type">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Ferstjoere">
+<!ENTITY reset.value "Wiskje">
+<!ENTITY button.value "Knop">
+
+<!ENTITY ButtonName.label "Namme:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Wearde:">
+<!ENTITY ButtonValue.accesskey "W">
+<!ENTITY tabIndex.label "Tabyndeks:">
+<!ENTITY tabIndex.accesskey "y">
+<!ENTITY ButtonDisabled.label "Utskeakele">
+<!ENTITY ButtonDisabled.accesskey "U">
+<!ENTITY AccessKey.label "Fluchtoets:">
+<!ENTITY AccessKey.accesskey "F">
+
+<!ENTITY RemoveButton.label "Knop fuortsmite">
+<!ENTITY RemoveButton.accesskey "K">

@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title "Composizione">
+<!ENTITY generalComposing.label "Generale">
+<!ENTITY forwardMsg.label "Inoltra messaggi:">
+<!ENTITY inline.label "In linea">
+<!ENTITY inline.accesskey "I">
+<!ENTITY asAttachment.label "Come allegato">
+<!ENTITY asAttachment.accesskey "a">
+<!ENTITY replyQuoteInline.label "Cita gli allegati in linea nelle risposte">
+<!ENTITY replyQuoteInline.accesskey "e">
+<!ENTITY warnOnSendAccelKey.label "Chiedi conferma quando si spedisce usando la scorciatoia da tastiera">
+<!ENTITY warnOnSendAccelKey.accesskey "h">
+<!ENTITY autoSave.label "Salva in automatico il messaggio ogni">
+<!ENTITY autoSave.accesskey "u">
+<!ENTITY autoSaveEnd.label "minuti">
+<!ENTITY wrapOutMsg.label "Manda a capo i messaggi di testo a">
+<!ENTITY wrapOutMsg.accesskey "M">
+<!ENTITY char.label "caratteri">
+<!ENTITY defaultMessagesHeader.label "Impostazioni predefinite messaggi HTML">
+<!ENTITY font.label "Carattere:">
+<!ENTITY font.accesskey "r">
+<!ENTITY size.label "Dimensione:">
+<!ENTITY size.accesskey "D">
+<!ENTITY fontColor.label "Colore testo:">
+<!ENTITY fontColor.accesskey "t">
+<!ENTITY bgColor.label "Sfondo:">
+<!ENTITY bgColor.accesskey "S">
+<!ENTITY defaultCompose.label "Formato di composizione predefinito:">
+<!ENTITY defaultBodyText.label "Corpo testo (il tasto invio crea una nuova riga)">
+<!ENTITY defaultBodyText.accesskey "o">
+<!ENTITY defaultParagraph.label "Paragrafo (il tasto invio crea un nuovo paragrafo)">
+<!ENTITY defaultParagraph.accesskey "P">
+<!ENTITY selectHeaderType.label "Selezionare il tipo di intestazione di risposta:">
+<!ENTITY selectHeaderType.accesskey "e">
+<!ENTITY noReplyOption.label "Nessuna intestazione di risposta">
+<!ENTITY authorWroteOption.label "[Autore] ha scritto:">
+<!ENTITY onDateAuthorWroteOption.label "Il [data], [autore] ha scritto:">
+<!ENTITY authorWroteOnDateOption.label "[Autore] ha scritto, il [data]:">

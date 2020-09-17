@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "Profiler menyimpan sampel dalam penimbal pekeliling dan apabila penimbal mencapai had untuk merakam, sampel baru akan mula menulis ganti sampel pada permulaan rakaman.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Dayakan multiproses Firefox dalam tetapan keutamaan untuk membolehkan rakaman data dalam masa nyata.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "Penimbal sudah penuh. Sampel yang lebih lama kini sedang ditulis ganti.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "Rakaman profil tidak dapat dibuat pada masa ini. Sila tutup semua tetingkap pelayar peribadi dan cuba lagi.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "Memuatkan…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Waterfall">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Papar operasi berbeza yang dilaksanakan pelayar semasa rakaman, disusun secara berurutan sebagai waterfall.">
+<!ENTITY performanceUI.toolbar.js-calltree "Pepohon Panggilan">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Serlahkan fungsi JavaScript masa pelayar yang paling banyak digunakan semasa rakaman.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Peruntukan">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Papar kedudukan memori semasa rakaman.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "Carta JS Flame">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Papar susunan panggilan JavaScript sepanjang rakaman.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Carta Peruntukan Flame">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "Jumlah Masa">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Jumlah masa yang digunakan dalam fungsi ini dan kefungsiannya.">
+<!ENTITY performanceUI.table.selfDuration             "Masa Diri">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Jumlah masa yang digunakan hanya dalam fungsi ini.">
+<!ENTITY performanceUI.table.totalPercentage          "Jumlah Kos">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Jumlah masa yang digunakan dalam fungsi ini dan kefungsiannya.">
+<!ENTITY performanceUI.table.selfPercentage           "Kos Diri">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Peratusan masa yang digunakan hanya dalam fungsi ini.">
+<!ENTITY performanceUI.table.samples                  "Contoh">
+<!ENTITY performanceUI.table.samples.tooltip          "Bilangan fungsi ini disusun apabila profiler mengambil sampel.">
+<!ENTITY performanceUI.table.function                 "Fungsi">
+<!ENTITY performanceUI.table.function.tooltip         "Nama dan sumber lokasi fungsi yang menjadi sampel.">
+<!ENTITY performanceUI.table.totalAlloc               "Jumlah Peruntukan Disampel">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Bilangan peruntukan sampel Objek di lokasi ini dan di penerima.">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "Pilih data untuk dipaparkan dalam garis masa">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "Konfigurasi prestasi keutamaan.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "Songsangkan Call Tree">
+<!ENTITY performanceUI.invertTree.tooltiptext "Menyongsang pokok panggilan memaparkan laluan panggilan berprofil bermula dari bingkai muda dan berkembang kepada bingkai yang lebih tua.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Songsangkan Carta Flame">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Menyongsang carta api memaparkan laluan panggilan berprofil bermula dari bingkai muda dan berkembang kepada bingkai yang lebih tua.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Papar Data Platform Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Memaparkan data platform membolehkan JavaScript Profiler melaporkan untuk memasukkan simbol platform Gecko.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "Papar Pengoptimuman JIT">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Papar sampel data pengoptimuman JIT dalam setiap bingkai JavaScript.">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "Meratakan pokok Recursion">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Ratakan rekursi apabila memeriksa fungsi.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "Memori Rakaman">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Rakam penggunaan memori semasa memprofil.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "Rekod Peruntukkan">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Rakam peruntukan Objek semasa memprofil.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "Rakam Kadar Bingkai">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Rakam kadar bingkai semasa memprofil.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "Kini sedang merakam via">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "Hentikan rakaman dengan butang Masuk">
+<!ENTITY performanceUI.console.stopCommandEnd   "ke dalam konsol.">

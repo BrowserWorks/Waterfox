@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Sisip Aksara">
+<!ENTITY category.label "Kategori">
+<!ENTITY letter.label "Huruf:">
+<!ENTITY letter.accessKey "H">
+<!ENTITY character.label "Aksara:">
+<!ENTITY character.accessKey "A">
+<!ENTITY accentUpper.label "Aksen Huruf besar">
+<!ENTITY accentLower.label "Aksen Huruf kecil">
+<!ENTITY otherUpper.label "Huruf besar Lain">
+<!ENTITY otherLower.label "Huruf kecil Lain">
+<!ENTITY commonSymbols.label "Simbol Biasa">
+<!ENTITY insertButton.label "Sisip">
+<!ENTITY closeButton.label "Tutup">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Message Header View Popup -->
+
+<!ENTITY AddToAddressBook.label "Adres defterine ekle…">
+<!ENTITY AddToAddressBook.accesskey "d">
+<!ENTITY SendMailTo.label "İleti oluştur…">
+<!ENTITY SendMailTo.accesskey "İ">
+<!ENTITY CopyEmailAddress.label "Posta adresini kopyala">
+<!ENTITY CopyEmailAddress.accesskey "k">
+<!ENTITY CreateFilterFrom.label "Postadan süzgeç oluştur…">
+<!ENTITY CreateFilterFrom.accesskey "P">
+<!ENTITY copyLinkCmd.label "Bağlantı konumunu kopyala">
+<!ENTITY copyLinkCmd.accesskey "B">
+<!ENTITY CopyMessageId.label "Copy Message-ID">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "Open Message For ID">
+<!ENTITY OpenMessageForMsgId.accesskey "O">
+<!ENTITY OpenBrowserWithMsgId.label "Open Browser With Message-ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey "B">

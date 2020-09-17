@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items --> 
+
+<!ENTITY fileMenu.label					"ફાઈલ"> 
+<!ENTITY fileMenu.accesskey				"f">
+<!ENTITY newMenu.label						"નવું">
+<!ENTITY newMenu.accesskey					"N">
+<!-- LOCALIZATION NOTE  (newNavigatorCmd.label): Do NOT translate "Navigator" -->
+
+<!ENTITY editMenu.label					"ફેરફાર કરો"> 
+<!ENTITY editMenu.accesskey				"e"> 
+<!ENTITY undoCmd.label						"છેલ્લી ક્રિયા રદ કરો">  
+<!ENTITY undoCmd.accesskey					"u"> 
+<!ENTITY redoCmd.label						"ફરીથી કરો">  
+<!ENTITY redoCmd.accesskey					"r">  
+<!ENTITY deleteCmd.label					"કાઢી નાંખો">  
+<!ENTITY deleteCmd.accesskey				"d">  
+<!ENTITY preferencesCmdUnix.label       "પસંદગીઓ">
+<!ENTITY preferencesCmdUnix.accesskey     "n"> 
+
+<!ENTITY viewMenu.label					"જુઓ"> 
+<!ENTITY viewMenu.accesskey				"v"> 
+<!ENTITY viewToolbarsMenu.label				"સાધનપટ્ટીઓ"> 
+<!ENTITY viewToolbarsMenu.accesskey			"T"> 
+<!ENTITY showTaskbarCmd.label					"સ્થિતિદર્શક પટ્ટી">  
+<!ENTITY showTaskbarCmd.accesskey				"S"> 
+
+<!ENTITY closeCmd.label			"બંધ કરો">  
+<!ENTITY closeCmd.key			"W">  
+<!ENTITY closeCmd.accesskey		"c">
+
+<!ENTITY quitApplicationCmd.label	"બહાર નીકળો"> 
+<!ENTITY quitApplicationCmd.key		"Q"> 
+<!ENTITY quitApplicationCmd.accesskey	"x">
+
+<!ENTITY quitApplicationCmdUnix.label	"બંધ કરો"> 
+<!ENTITY quitApplicationCmdUnix.accesskey	"q">
+

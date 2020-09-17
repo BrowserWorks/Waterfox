@@ -1,0 +1,973 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY titledefault.label "&brandFullName;">
+<!ENTITY titleSeparator.label " - ">
+
+<!-- File Menu -->
+<!ENTITY newFolderCmd.label "폴더…">
+<!ENTITY newFolderCmd.accesskey "F">
+<!ENTITY closeTabCmd2.label "탭 닫기">
+<!ENTITY closeTabCmd2.accesskey "C">
+<!ENTITY closeOtherTabsCmd2.label "다른 탭 닫기">
+<!ENTITY closeOtherTabsCmd2.accesskey "o">
+<!ENTITY recentlyClosedTabsCmd.label "최근에 닫은 탭">
+<!ENTITY recentlyClosedTabsCmd.accesskey "R">
+
+<!ENTITY undoCloseTabCmd.commandkey "T">
+<!-- LOCALIZATION NOTE (moveToNewWindow.label):
+     Menu option to cause the current tab to be migrated to a new Thunderbird
+     window.
+     -->
+<!ENTITY moveToNewWindow.label "새로운 창으로 이동">
+<!ENTITY moveToNewWindow.accesskey "W">
+<!ENTITY newVirtualFolderCmd.label "저장된 메시지 검색…">
+<!ENTITY newVirtualFolderCmd.accesskey "S">
+<!ENTITY newOtherAccountsCmd.label "기타 계정…">
+<!ENTITY newOtherAccountsCmd.accesskey "O">
+<!ENTITY newCreateEmailAccountCmd.label "새 메일 계정…">
+<!ENTITY newCreateEmailAccountCmd.accesskey "G">
+<!ENTITY newExistingEmailAccountCmd.label "기존 메일 계정…">
+<!ENTITY newExistingEmailAccountCmd.accesskey "E">
+<!ENTITY newIMAccountCmd.label "채팅 계정…">
+<!ENTITY newIMAccountCmd.accesskey "C">
+<!ENTITY newFeedAccountCmd.label "피드 계정…">
+<!ENTITY newFeedAccountCmd.accesskey "d">
+<!ENTITY newIMContactCmd.label "채팅 연락처…">
+<!ENTITY newIMContactCmd.accesskey "h">
+<!ENTITY  newMessageCmd2.key "N">
+<!ENTITY  newMessageCmd.key "M">
+<!ENTITY  newMessageCmd.label "메시지">
+<!ENTITY  newMessageCmd.accesskey "m">
+<!ENTITY  newContactCmd.label "주소록 연락처…">
+<!ENTITY  newContactCmd.accesskey "C">
+<!ENTITY openMenuCmd.label "열기">
+<!ENTITY openMenuCmd.accesskey "O">
+<!ENTITY openMessageFileCmd.label "메시지 열기…">
+<!ENTITY openMessageFileCmd.accesskey "O">
+<!ENTITY saveAsMenu.label "다른 이름으로 저장">
+<!ENTITY saveAsMenu.accesskey "S">
+<!ENTITY saveAsFileCmd.label "파일">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsFileCmd.key "s">
+<!ENTITY saveAsTemplateCmd.label "템플릿">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY getNewMsgForCmd.label "새 메시지 받기">
+<!ENTITY getNewMsgForCmd.accesskey "w">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "모든 계정">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "A">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.label "현재 계정">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.accesskey "C">
+<!ENTITY getNextNMsgCmd2.label "다음 뉴스 메시지 받기">
+<!ENTITY getNextNMsgCmd2.accesskey "t">
+<!ENTITY sendUnsentCmd.label "보낼 편지함 메시지 보내기">
+<!ENTITY sendUnsentCmd.accesskey "d">
+<!ENTITY subscribeCmd.label "구독…">
+<!ENTITY subscribeCmd.accesskey "b">
+<!ENTITY deleteFolder.label "폴더 삭제">
+<!ENTITY deleteFolder.accesskey "e">
+<!ENTITY renameFolder.label "폴더 이름 바꾸기…">
+<!ENTITY renameFolder.accesskey "R">
+<!ENTITY renameFolder.key "VK_F2">
+<!ENTITY compactFolders.label "폴더 압축">
+<!ENTITY compactFolders.accesskey "F">
+<!ENTITY emptyTrashCmd.label "지운 편지함 비우기">
+<!ENTITY emptyTrashCmd.accesskey "y">
+<!ENTITY offlineMenu.label "오프라인">
+<!ENTITY offlineMenu.accesskey "l">
+<!ENTITY offlineGoOfflineCmd.label "오프라인으로 작업">
+<!ENTITY offlineGoOfflineCmd.accesskey "w">
+<!ENTITY synchronizeOfflineCmd.label "지금 다운로드/동기화…">
+<!ENTITY synchronizeOfflineCmd.accesskey "S">
+<!ENTITY settingsOfflineCmd2.label "오프라인 설정…">
+<!ENTITY settingsOfflineCmd2.accesskey "e">
+<!ENTITY downloadSelectedCmd.label "선택된 메시지 가져오기">
+<!ENTITY downloadSelectedCmd.accesskey "l">
+<!ENTITY downloadStarredCmd.label "별표 메시지 가져오기">
+<!ENTITY downloadStarredCmd.accesskey "a">
+<!ENTITY printCmd.label "인쇄…">
+<!ENTITY printCmd.accesskey "P">
+<!ENTITY printCmd.key "p">
+<!ENTITY printPreviewCmd.label "인쇄 미리 보기">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printSetupCmd.label "인쇄 화면 설정…">
+<!ENTITY printSetupCmd.accesskey "u">
+
+<!-- Edit Menu -->
+<!ENTITY deleteMsgCmd.label "메시지 삭제">
+<!ENTITY deleteMsgCmd.accesskey "D">
+<!ENTITY undeleteMsgCmd.label "메시지 삭제 취소">
+<!ENTITY undeleteMsgCmd.accesskey "d">
+<!ENTITY deleteMsgsCmd.label "선택한 메시지 삭제">
+<!ENTITY deleteMsgsCmd.accesskey "D">
+<!ENTITY undeleteMsgsCmd.label "선택한 메시지 삭제 취소">
+<!ENTITY undeleteMsgsCmd.accesskey "d">
+<!ENTITY deleteFolderCmd.label "폴더 삭제">
+<!ENTITY deleteFolderCmd.accesskey "D">
+<!ENTITY unsubscribeNewsgroupCmd.label "구독 해지">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "b">
+<!ENTITY selectMenu.label "선택">
+<!ENTITY selectMenu.accesskey "S">
+<!ENTITY all.label "모두">
+<!ENTITY all.accesskey "A">
+<!ENTITY selectThreadCmd.label "글타래">
+<!ENTITY selectThreadCmd.accesskey "T">
+<!ENTITY selectThreadCmd.key "a">
+<!ENTITY selectFlaggedCmd.label "별표 메시지">
+<!ENTITY selectFlaggedCmd.accesskey "S">
+<!ENTITY menuFavoriteFolder.label "즐겨찾기 폴더">
+<!ENTITY menuFavoriteFolder.accesskey "v">
+<!ENTITY folderPropsCmd2.label "속성…">
+<!ENTITY folderPropsFolderCmd2.label "폴더 속성…">
+<!ENTITY folderPropsNewsgroupCmd2.label "뉴스 그룹 속성…">
+<!ENTITY folderPropsCmd.accesskey "o">
+<!ENTITY undoDeleteMsgCmd.label "삭제 실행 취소">
+<!ENTITY redoDeleteMsgCmd.label "삭제 재실행">
+<!ENTITY undoMoveMsgCmd.label "이동 실행 취소">
+<!ENTITY redoMoveMsgCmd.label "이동 재실행">
+<!ENTITY undoCopyMsgCmd.label "복사 실행 취소">
+<!ENTITY redoCopyMsgCmd.label "복사 재실행">
+<!ENTITY undoMarkAllCmd.label "모두 읽음 표시 실행 취소">
+<!ENTITY redoMarkAllCmd.label "모두 읽음 표시 재실행">
+<!ENTITY undoDefaultCmd.label "실행 취소">
+<!ENTITY undoDefaultCmd.accesskey "U">
+<!ENTITY redoDefaultCmd.label "재실행">
+<!ENTITY redoDefaultCmd.accesskey "R">
+
+<!-- View Menu -->
+<!ENTITY menubarCmd.label "메뉴 모음">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY showMessengerToolbarCmd.label "메일 도구 모음">
+<!ENTITY showMessengerToolbarCmd.accesskey "o">
+<!ENTITY customizeToolbar.label "사용자 정의…">
+<!ENTITY customizeToolbar.accesskey "C">
+
+<!ENTITY messagePaneLayoutStyle.label "창 보기">
+<!ENTITY messagePaneLayoutStyle.accesskey "L">
+<!ENTITY messagePaneClassic.label "기본 보기">
+<!ENTITY messagePaneClassic.accesskey "C">
+<!ENTITY messagePaneWide.label "넓게 보기">
+<!ENTITY messagePaneWide.accesskey "W">
+<!ENTITY messagePaneVertical.label "아래로 보기">
+<!ENTITY messagePaneVertical.accesskey "V">
+<!ENTITY showFolderPaneCmd.label "폴더 창">
+<!ENTITY showFolderPaneCmd.accesskey "F">
+<!ENTITY showFolderPaneColsCmd.label "폴더 열">
+<!ENTITY showFolderPaneColsCmd.accesskey "P">
+<!ENTITY showMessageCmd.label "메시지 창">
+<!ENTITY showMessageCmd.accesskey "M">
+
+<!ENTITY folderView.label "폴더">
+<!ENTITY folderView.accesskey "F">
+<!ENTITY unifiedFolders.label "통합">
+<!ENTITY unifiedFolders.accesskey "n">
+<!ENTITY allFolders.label "모든 폴더">
+<!ENTITY allFolders.accesskey "A">
+<!ENTITY unreadFolders.label "읽지 않은 폴더">
+<!ENTITY unreadFolders.accesskey "U">
+<!ENTITY favoriteFolders.label "즐겨찾기">
+<!ENTITY favoriteFolders.accesskey "F">
+<!ENTITY recentFolders.label "최근 폴더">
+<!ENTITY recentFolders.accesskey "R">
+<!ENTITY compactVersion.label "간단히 보기">
+<!ENTITY compactVersion.accesskey "C">
+<!ENTITY folderPaneBar.label "폴더 창 도구모음">
+<!ENTITY folderPaneBar.accesskey "F">
+
+<!-- Sort Menu -->
+<!ENTITY sortMenu.label "정렬">
+<!ENTITY sortMenu.accesskey "S">
+<!ENTITY sortByDateCmd.label "날짜">
+<!ENTITY sortByDateCmd.accesskey "e">
+<!ENTITY sortByReceivedCmd.label "받은 편지함">
+<!ENTITY sortByReceivedCmd.accesskey "v">
+<!ENTITY sortByStarCmd.label "별표">
+<!ENTITY sortByStarCmd.accesskey "S">
+<!ENTITY sortByAttachmentsCmd.label "첨부">
+<!ENTITY sortByAttachmentsCmd.accesskey "A">
+<!ENTITY sortByPriorityCmd.label "중요도">
+<!ENTITY sortByPriorityCmd.accesskey "P">
+<!ENTITY sortBySizeCmd.label "크기">
+<!ENTITY sortBySizeCmd.accesskey "z">
+<!ENTITY sortByStatusCmd.label "메일 상태">
+<!ENTITY sortByStatusCmd.accesskey "u">
+<!ENTITY sortByTagsCmd.label "태그">
+<!ENTITY sortByTagsCmd.accesskey "g">
+<!ENTITY sortByJunkStatusCmd.label "스팸 상태">
+<!ENTITY sortByJunkStatusCmd.accesskey "J">
+<!ENTITY sortBySubjectCmd.label "제목">
+<!ENTITY sortBySubjectCmd.accesskey "b">
+<!ENTITY sortByFromCmd.label "보낸 사람">
+<!ENTITY sortByFromCmd.accesskey "F">
+<!ENTITY sortByRecipientCmd.label "받는 사람">
+<!ENTITY sortByRecipientCmd.accesskey "c">
+<!ENTITY sortByCorrespondentCmd.label "글 쓴 사람">
+<!ENTITY sortByCorrespondentCmd.accesskey "e">
+<!ENTITY sortByUnreadCmd.label "읽음">
+<!ENTITY sortByUnreadCmd.accesskey "R">
+<!ENTITY sortByOrderReceivedCmd.label "받은 순서">
+<!ENTITY sortByOrderReceivedCmd.accesskey "O">
+<!ENTITY sortAscending.label "오름차순">
+<!ENTITY sortAscending.accesskey "A">
+<!ENTITY sortDescending.label "내림차순">
+<!ENTITY sortDescending.accesskey "D">
+<!ENTITY sortThreaded.label "글타래 사용">
+<!ENTITY sortThreaded.accesskey "T">
+<!ENTITY sortUnthreaded.label "글타래 사용 안 함">
+<!ENTITY sortUnthreaded.accesskey "h">
+<!ENTITY groupBySort.label "정렬 방식으로 묶기">
+<!ENTITY groupBySort.accesskey "G">
+<!ENTITY msgsMenu.label "메시지">
+<!ENTITY msgsMenu.accesskey "M">
+<!ENTITY threads.label "글타래">
+<!ENTITY threads.accesskey "e">
+<!ENTITY allMsgsCmd.label "모두">
+<!ENTITY allMsgsCmd.accesskey "A">
+<!ENTITY expandAllThreadsCmd.label "모든 글타래 보이기">
+<!ENTITY expandAllThreadsCmd.accesskey "E">
+<!ENTITY expandAllThreadsCmd.key "*">
+<!ENTITY collapseAllThreadsCmd.label "모든 글타래 감추기">
+<!ENTITY collapseAllThreadsCmd.accesskey "C">
+<!ENTITY collapseAllThreadsCmd.key "\">
+<!ENTITY unreadMsgsCmd.label "읽지 않은 메일">
+<!ENTITY unreadMsgsCmd.accesskey "U">
+<!ENTITY threadsWithUnreadCmd.label "읽지 않은 글타래">
+<!ENTITY threadsWithUnreadCmd.accesskey "T">
+<!ENTITY watchedThreadsWithUnreadCmd.label "읽지 않은 글타래 보기">
+<!ENTITY watchedThreadsWithUnreadCmd.accesskey "W">
+<!ENTITY ignoredThreadsCmd.label "무시된 글타래">
+<!ENTITY ignoredThreadsCmd.accesskey "i">
+
+<!ENTITY headersMenu.label "머리글">
+<!ENTITY headersMenu.accesskey "H">
+<!ENTITY headersAllCmd.label "모두">
+<!ENTITY headersAllCmd.accesskey "A">
+<!ENTITY headersNormalCmd.label "기본">
+<!ENTITY headersNormalCmd.accesskey "N">
+<!ENTITY bodyMenu.label "메시지 본문">
+<!ENTITY bodyMenu.accesskey "B">
+<!ENTITY bodyAllowHTML.label "HTML 원문">
+<!ENTITY bodyAllowHTML.accesskey "H">
+<!ENTITY bodySanitized.label "HTML 소스">
+<!ENTITY bodySanitized.accesskey "S">
+<!ENTITY bodyAsPlaintext.label "텍스트 형식">
+<!ENTITY bodyAsPlaintext.accesskey "P">
+<!ENTITY bodyAllParts.label "전체 본문 영역">
+<!ENTITY bodyAllParts.accesskey "A">
+
+<!ENTITY bodyMenuFeed.label "피드 본문 형식: ">
+<!ENTITY bodyMenuFeed.accesskey "B">
+<!ENTITY viewFeedWebPage.label "웹 문서">
+<!ENTITY viewFeedWebPage.accesskey "W">
+<!ENTITY viewFeedSummary.label "요약">
+<!ENTITY viewFeedSummary.accesskey "m">
+<!ENTITY viewFeedSummaryFeedPropsPref.label "기본 형식">
+<!ENTITY viewFeedSummaryFeedPropsPref.accesskey "D">
+
+<!ENTITY viewAttachmentsInlineCmd.label "첨부 보기">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "A">
+
+<!ENTITY pageSourceCmd.label "메시지 소스 보기">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.key "u">
+<!ENTITY getNewMessagesCmd.key "y">
+<!ENTITY getAllNewMessagesCmd.key "Y">
+
+<!-- Search Menu -->
+<!ENTITY findMenu.label "찾기">
+<!ENTITY findMenu.accesskey "F">
+<!ENTITY findCmd.label "메시지에서 찾기…">
+<!ENTITY findCmd.accesskey "F">
+<!ENTITY findCmd.key "f">
+<!ENTITY findAgainCmd.label "다시 찾기">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.key "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.key "g">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY searchMailCmd.label "메시지 찾기…">
+<!ENTITY searchMailCmd.accesskey "M">
+<!ENTITY searchMailCmd.key "f">
+<!ENTITY glodaSearchCmd.label "전체 검색…">
+<!ENTITY glodaSearchCmd.accesskey "G">
+<!ENTITY searchAddressesCmd.label "주소록 찾기…">
+<!ENTITY searchAddressesCmd.accesskey "S">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "이동">
+<!ENTITY goMenu.accesskey "G">
+<!ENTITY nextMenu.label "다음">
+<!ENTITY nextMenu.accesskey "N">
+<!ENTITY nextMsgCmd.label "메시지">
+<!ENTITY nextMsgCmd.accesskey "M">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "읽지 않은 다음 메시지">
+<!ENTITY nextUnreadMsgCmd.accesskey "U">
+<!ENTITY nextUnreadMsgCmd.key "n">
+<!ENTITY nextStarredMsgCmd.label "별표 메시지">
+<!ENTITY nextStarredMsgCmd.accesskey "S">
+<!ENTITY nextUnreadThread.label "읽지 않은 다음 글타래">
+<!ENTITY nextUnreadThread.accesskey "T">
+<!ENTITY nextUnreadThread.key "t">
+<!ENTITY prevMenu.label "이전">
+<!ENTITY prevMenu.accesskey "P">
+<!ENTITY prevMsgCmd.label "메시지">
+<!ENTITY prevMsgCmd.accesskey "M">
+<!ENTITY prevMsgCmd.key "b">
+<!ENTITY prevUnreadMsgCmd.label "읽지 않은 이전 메시지">
+<!ENTITY prevUnreadMsgCmd.accesskey "U">
+<!ENTITY prevUnreadMsgCmd.key "p">
+<!ENTITY goForwardCmd.label "앞으로">
+<!ENTITY goForwardCmd.accesskey "F">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goBackCmd.label "뒤로">
+<!ENTITY goBackCmd.accesskey "B">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goChatCmd.label "채팅">
+<!ENTITY goChatCmd.accesskey "c">
+<!ENTITY goChatCmd2.key "H">
+<!ENTITY prevStarredMsgCmd.label "별표 메시지">
+<!ENTITY prevStarredMsgCmd.accesskey "S">
+<!ENTITY folderMenu.label "폴더">
+<!ENTITY folderMenu.accesskey "O">
+<!ENTITY goRecentlyClosedTabs.label "최근에 닫은 탭">
+<!ENTITY goRecentlyClosedTabs.accesskey "R">
+<!ENTITY startPageCmd.label "시작 페이지">
+<!ENTITY startPageCmd.accesskey "S">
+
+<!-- Message Menu -->
+<!ENTITY msgMenu.label "메시지">
+<!ENTITY msgMenu.accesskey "M">
+<!ENTITY newMsgCmd.label "새 메시지 쓰기">
+<!ENTITY newMsgCmd.accesskey "N">
+<!ENTITY newNewMsgCmd.label "메시지">
+<!ENTITY newNewMsgCmd.accesskey "M">
+<!ENTITY archiveMsgCmd.label "보존">
+<!ENTITY archiveMsgCmd.accesskey "A">
+<!ENTITY archiveMsgCmd.key "a">
+<!ENTITY cancelNewsMsgCmd.label "선택한 메시지 취소">
+<!ENTITY cancelNewsMsgCmd.accesskey "n">
+<!ENTITY replyMsgCmd.label "회신">
+<!ENTITY replyMsgCmd.accesskey "R">
+<!ENTITY replyMsgCmd.key "r">
+<!ENTITY replySenderCmd.label "회신">
+<!ENTITY replySenderCmd.accesskey "R">
+<!ENTITY replyNewsgroupCmd2.label "뉴스 그룹에 답신">
+<!ENTITY replyNewsgroupCmd2.accesskey "u">
+<!ENTITY replyToAllMsgCmd.label "전체 회신">
+<!ENTITY replyToAllMsgCmd.accesskey "p">
+<!ENTITY replyToAllMsgCmd.key "r">
+<!ENTITY replyToListMsgCmd.label "리스트로 회신">
+<!ENTITY replyToListMsgCmd.accesskey "L">
+<!ENTITY replyToListMsgCmd.key "l">
+<!ENTITY forwardMsgCmd.label "전달">
+<!ENTITY forwardMsgCmd.accesskey "F">
+<!ENTITY forwardMsgCmd.key "l">
+<!ENTITY forwardAsMenu.label "다음으로 전달하기">
+<!ENTITY forwardAsMenu.accesskey "w">
+<!ENTITY forwardAsInline.label "내용">
+<!ENTITY forwardAsInline.accesskey "I">
+<!ENTITY forwardAsAttachmentCmd.label "첨부">
+<!ENTITY forwardAsAttachmentCmd.accesskey "A">
+<!ENTITY editAsNewMsgCmd.label "메시지 편집">
+<!ENTITY editAsNewMsgCmd.accesskey "E">
+<!ENTITY editAsNewMsgCmd.key "e">
+<!ENTITY editDraftMsgCmd.label "임시 메시지 편집">
+<!ENTITY editDraftMsgCmd.accesskey "D">
+<!ENTITY editTemplateMsgCmd.label "템플릿 편집">
+<!ENTITY editTemplateMsgCmd.accesskey "T">
+<!ENTITY newMsgFromTemplateCmd.label "서식 파일에서 새 메시지">
+<!ENTITY newMsgFromTemplateCmd.keycode "VK_RETURN"><!-- do not change "VK_RETURN" -->
+<!ENTITY createFilter.label "메시지로부터 규칙 만들기">
+<!ENTITY createFilter.accesskey "a">
+<!ENTITY moveMsgToMenu.label "다른 폴더로 이동">
+<!ENTITY moveMsgToMenu.accesskey "M">
+<!ENTITY moveCopyMsgRecentMenu.label "이동 내역">
+<!ENTITY moveCopyMsgRecentMenu.accesskey "R">
+<!ENTITY copyMessageLocation.label "메시지 위치 복사">
+<!ENTITY copyMessageLocation.accesskey "M">
+<!ENTITY copyMsgToMenu.label "다른 폴더로 복사">
+<!ENTITY copyMsgToMenu.accesskey "C">
+<!ENTITY moveToFolderAgain.label "같은 폴더로 이동">
+<!ENTITY moveToFolderAgain.accesskey "i">
+<!ENTITY moveToFolderAgainCmd.key "m">
+<!ENTITY killThreadMenu.label "글타래 무시">
+<!ENTITY killThreadMenu.accesskey "I">
+<!ENTITY killThreadMenu.key "k">
+<!ENTITY killSubthreadMenu.label "하위 글타래 무시">
+<!ENTITY killSubthreadMenu.accesskey "S">
+<!ENTITY killSubthreadMenu.key "k">
+<!ENTITY watchThreadMenu.label "글타래 보기">
+<!ENTITY watchThreadMenu.accesskey "W">
+<!ENTITY watchThreadMenu.key "w">
+<!ENTITY tagMenu.label "태그">
+<!ENTITY tagMenu.accesskey "g">
+<!ENTITY tagCmd0.key "0">
+<!ENTITY tagCmd1.key "1">
+<!ENTITY tagCmd2.key "2">
+<!ENTITY tagCmd3.key "3">
+<!ENTITY tagCmd4.key "4">
+<!ENTITY tagCmd5.key "5">
+<!ENTITY tagCmd6.key "6">
+<!ENTITY tagCmd7.key "7">
+<!ENTITY tagCmd8.key "8">
+<!ENTITY tagCmd9.key "9">
+<!ENTITY markMenu.label "표시">
+<!ENTITY markMenu.accesskey "k">
+<!ENTITY toggleReadCmd.key "m">
+<!ENTITY markAsReadCmd.label "읽은 상태로 표시">
+<!ENTITY markAsReadCmd.accesskey "R">
+<!ENTITY markAsUnreadCmd.label "읽지 않은 상태로 표시">
+<!ENTITY markAsUnreadCmd.accesskey "U">
+<!ENTITY markThreadAsReadCmd.label "글타래 읽음 표시">
+<!ENTITY markThreadAsReadCmd.accesskey "T">
+<!ENTITY markThreadAsReadCmd.key "r">
+<!ENTITY markReadByDateCmd.label "날짜로 읽음 표시">
+<!ENTITY markReadByDateCmd.accesskey "D">
+<!ENTITY markReadByDateCmd.key "c">
+<!ENTITY markAllReadCmd.label "모두 읽은 상태로 표시">
+<!ENTITY markAllReadCmd.accesskey "A">
+<!ENTITY markAllReadCmd.key "c">
+<!ENTITY markStarredCmd.label "별표 추가">
+<!ENTITY markStarredCmd.accesskey "S">
+<!ENTITY markStarredCmd.key "S">
+<!ENTITY markAsJunkCmd.label "스팸 메일로 표시">
+<!ENTITY markAsJunkCmd.accesskey "J">
+<!ENTITY markAsJunkCmd.key "j">
+<!ENTITY markAsNotJunkCmd.label "정상 메일로 표시">
+<!ENTITY markAsNotJunkCmd.accesskey "N">
+<!ENTITY markAsNotJunkCmd.key "j">
+<!ENTITY recalculateJunkScoreCmd.label "스팸 메일 관리 실행">
+<!ENTITY recalculateJunkScoreCmd.accesskey "C">
+<!ENTITY openMessageWindowCmd.label "메시지 열기">
+<!ENTITY openMessageWindowCmd.accesskey "O">
+<!ENTITY openMessageWindowCmd.key "o">
+<!ENTITY openInConversationCmd.label "대화에서 열기">
+<!ENTITY openInConversationCmd.accesskey "s">
+<!ENTITY openInConversationCmd.key "o">
+<!ENTITY openAttachmentListCmd.label "첨부">
+<!ENTITY openAttachmentListCmd.accesskey "A">
+<!ENTITY openFeedMessage1.label "피드를 열 때">
+<!ENTITY openFeedMessage1.accesskey "O">
+<!ENTITY openFeedWebPage.label "웹 문서 보기">
+<!ENTITY openFeedWebPage.accesskey "W">
+<!ENTITY openFeedSummary.label "요약 보기">
+<!ENTITY openFeedSummary.accesskey "S">
+<!ENTITY openFeedWebPageInMP.label "메시지 판넬의 웹 문서/요약 보기 전환">
+<!ENTITY openFeedWebPageInMP.accesskey "T">
+
+<!-- Windows Menu -->
+<!ENTITY windowMenu.label "창">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "도구">
+<!ENTITY tasksMenu.accesskey "T">
+<!ENTITY messengerCmd.label "메일 및 뉴스 그룹">
+<!ENTITY messengerCmd.accesskey "N">
+<!ENTITY addressBookCmd.label "주소록">
+<!ENTITY addressBookCmd.accesskey "B">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY addons.label "부가 기능">
+<!ENTITY addons.accesskey "A">
+<!ENTITY addonPrefs.label "부가 기능 설정">
+<!ENTITY addonPrefs.accesskey "O">
+<!ENTITY addonPrefsUnix.label "부가 기능 설정">
+<!ENTITY addonPrefsUnix.accesskey "P">
+<!ENTITY addonNoPrefs.label "부가 기능 설정이 없습니다.">
+<!ENTITY activitymanager.label "메시지 작업 관리">
+<!ENTITY activitymanager.accesskey "v">
+<!ENTITY imAccountsStatus.label "채팅 상태">
+<!ENTITY imAccountsStatus.accesskey "C">
+<!ENTITY imStatus.available          "이용 가능">
+<!ENTITY imStatus.unavailable        "이용 불가">
+<!ENTITY imStatus.offline            "오프라인">
+<!ENTITY imStatus.showAccounts       "계정 표시…">
+<!ENTITY joinChatCmd.label "채팅 참가…">
+<!ENTITY joinChatCmd.accesskey "t">
+<!ENTITY savedFiles.label "저장된 파일">
+<!ENTITY savedFiles.accesskey "l">
+<!ENTITY savedFiles.key "j">
+<!ENTITY filtersCmd2.label "메일 규칙…">
+<!ENTITY filtersCmd2.accesskey "F">
+<!ENTITY filtersApply.label "폴더에 규칙 실행">
+<!ENTITY filtersApply.accesskey "R">
+<!ENTITY filtersApplyToSelection.label "선택한 메시지에 규칙 실행">
+<!ENTITY filtersApplyToSelection.accesskey "u">
+<!ENTITY filtersApplyToMessage.label "메시지에 규칙 실행">
+<!ENTITY filtersApplyToMessage.accesskey "u">
+<!ENTITY runJunkControls.label "폴더 내 스팸 메일 규칙 실행">
+<!ENTITY runJunkControls.accesskey "C">
+<!ENTITY deleteJunk.label "폴더 내 스팸 메일 삭제">
+<!ENTITY deleteJunk.accesskey "D">
+<!ENTITY importCmd.label "가져오기…">
+<!ENTITY importCmd.accesskey "m">
+<!ENTITY clearRecentHistory.label "최근 기록 삭제…">
+<!ENTITY clearRecentHistory.accesskey "H">
+<!ENTITY accountManagerCmd2.label "계정 설정…">
+<!ENTITY accountManagerCmd2.accesskey "S">
+<!-- LOCALIZATION NOTE (accountManagerCmdUnix.accesskey):
+     Belongs to accountManagerCmd.label, which is placed under the Edit menu
+     on Unix systems
+  -->
+<!ENTITY accountManagerCmdUnix2.accesskey "A">
+
+<!-- Developer Tools Submenu -->
+<!ENTITY devtoolsMenu.label "개발자 도구">
+<!ENTITY devtoolsMenu.accesskey "o">
+<!ENTITY devToolboxCmd.label "개발자 도구 모음">
+<!ENTITY devToolboxCmd.accesskey "T">
+<!ENTITY devToolboxCmd.commandkey "i">
+<!ENTITY debugAddonsCmd.label "부가기능 디버그">
+<!ENTITY debugAddonsCmd.accesskey "A">
+<!ENTITY tabsDebugCmd.label "콘텐츠 프레임 디버거">
+<!ENTITY tabsDebugCmd.accesskey "C">
+<!ENTITY errorConsoleCmd.label "오류 정보">
+<!ENTITY errorConsoleCmd.accesskey "E">
+<!ENTITY errorConsoleCmd.commandkey "j">
+
+<!-- Mail Toolbar -->
+<!ENTITY getMsgButton1.label "받기">
+<!ENTITY newMsgButton.label "쓰기">
+<!ENTITY replyButton.label "회신">
+<!ENTITY replyAllButton.label "모두 회신">
+<!ENTITY replyListButton.label "리스트로 회신">
+<!ENTITY forwardButton.label "전달">
+<!ENTITY fileButton.label "파일">
+<!ENTITY archiveButton.label "보관">
+<!ENTITY openConversationButton.label "대화">
+<!ENTITY nextButton.label "다음">
+<!ENTITY nextButtonToolbarItem.label "다음 항목">
+<!ENTITY nextMsgButton.label "다음 메시지">
+<!ENTITY previousButton.label "이전">
+<!ENTITY previousButtonToolbarItem.label "이전 항목">
+<!ENTITY previousMsgButton.label "이전 메시지">
+<!ENTITY backButton1.label "뒤로">
+<!ENTITY goForwardButton1.label "앞으로">
+<!ENTITY deleteItem.title "삭제">
+<!ENTITY deleteButton.label "삭제">
+<!ENTITY undeleteButton.label "복구">
+<!ENTITY markButton.label "표시">
+<!ENTITY printButton.label "인쇄">
+<!ENTITY stopButton.label "중지">
+<!ENTITY throbberItem.title "활성도 지시자">
+<!ENTITY junkItem.title "스팸">
+<!ENTITY junkButton.label "스팸">
+<!ENTITY notJunkButton.label "정상">
+<!ENTITY addressBookButton.label "주소록">
+<!ENTITY chatButton.label "채팅">
+<!ENTITY glodaSearch.title "전체 검색">
+<!ENTITY searchItem.title "빠른 검색">
+<!ENTITY mailViewsToolbarItem.title "메일 보기">
+<!ENTITY folderLocationToolbarItem.title "폴더 위치">
+<!ENTITY tagButton.label "태그">
+<!ENTITY compactButton.label "비우기">
+<!ENTITY appmenuButton.label "앱 메뉴">
+
+<!-- Mail Toolbar Tooltips-->
+<!ENTITY advancedButton.tooltip "고급 메시지 검색">
+<!ENTITY getMsgButton.tooltip "새 메시지 받기">
+<!ENTITY getAllNewMsgCmd.label "새 메시지 모두 받기">
+<!ENTITY getAllNewMsgCmd.accesskey "G">
+<!ENTITY newMsgButton.tooltip "새 메시지 쓰기">
+<!ENTITY replyButton.tooltip "메시지 회신">
+<!ENTITY replyAllButton.tooltip "모든 받은 사람에게 회신">
+<!ENTITY replyListButton.tooltip "메일링 리스트로 회신">
+<!ENTITY forwardButton.tooltip "선택한 메시지 전달">
+<!ENTITY forwardAsInline.tooltip "선탁한 메시지를 인라인으로 전달">
+<!ENTITY forwardAsAttachment.tooltip "선택한 메시지를 첨부로 전달">
+<!ENTITY fileButton.tooltip "선택한 메시지 파일">
+<!ENTITY archiveButton.tooltip "선택한 메시지 보관">
+<!ENTITY openMsgConversationButton.tooltip "선택한 메시지의 대화 보기">
+<!ENTITY nextButton.tooltip "다음 읽지 않은 메일로 이동">
+<!ENTITY nextMsgButton.tooltip "다음 메시지로 이동">
+<!ENTITY previousButton.tooltip "읽지 않은 이전 메시지로 이동">
+<!ENTITY previousMsgButton.tooltip "이전 메시지로 이동">
+<!ENTITY goForwardButton.tooltip "한 메시지 앞으로 가기">
+<!ENTITY goBackButton.tooltip "한 메시지 뒤로 가기">
+<!ENTITY deleteButton.tooltip "선택한 메시지나 폴더 삭제">
+<!ENTITY undeleteButton.tooltip "선택한 메시지 삭제 복구">
+<!ENTITY markButton.tooltip "메시지 표시">
+<!ENTITY printButton.tooltip "메시지 인쇄">
+<!ENTITY stopButton.tooltip "전송 중지">
+<!ENTITY junkButton.tooltip "선택한 메시지를 스팸 메일로 설정">
+<!ENTITY notJunkButton.tooltip "선택한 메시지를 정상 메일로 설정">
+<!ENTITY addressBookButton.tooltip "주소록 열기">
+<!ENTITY chatButton.tooltip "채팅 열기">
+<!ENTITY tagButton.tooltip "태그 메시지">
+<!ENTITY compactButton.tooltip "선택한 폴더에서 삭제 표시된 메시지 지우기">
+<!ENTITY appmenuButton1.tooltip "앱 메뉴 표시하기">
+<!ENTITY addonsButton.tooltip "부가 기능 관리하기">
+
+<!-- Toolbar Button Popup -->
+<!ENTITY buttonMenuForwardAsInline.label "인라인 전달">
+<!ENTITY buttonMenuForwardAsAttachment.label "첨부 전달">
+
+<!-- Remote Content Button Popup -->
+<!ENTITY remoteContentOptionsAllowForMsg.label "이 메시지의 외부 콘텐츠 표시">
+<!ENTITY remoteContentOptionsAllowForMsg.accesskey "S">
+<!ENTITY editRemoteContentSettings.label "외부 콘텐츠 옵션 편집하기…">
+<!ENTITY editRemoteContentSettings.accesskey "E">
+<!ENTITY editRemoteContentSettingsUnix.label "외부 콘텐츠 설정 편집하기…">
+<!ENTITY editRemoteContentSettingsUnix.accesskey "E">
+
+<!-- Phishing Button Popup -->
+<!ENTITY phishingOptionIgnore.label "이 메시지의 경고 무시">
+<!ENTITY phishingOptionIgnore.accesskey "n">
+<!ENTITY phishingOptionSettings.label "사기 의심 메일 검색 옵션…">
+<!ENTITY phishingOptionSettings.accesskey "d">
+<!ENTITY phishingOptionSettingsUnix.label "사기 의심 메일 검색 설정…">
+<!ENTITY phishingOptionSettingsUnix.accesskey "d">
+
+<!-- AppMenu Popup -->
+<!ENTITY appmenuNewMsgCmd.label "새 메시지">
+<!ENTITY appmenuNewContactCmd.label "주소록 연락처…">
+<!ENTITY appmenuEditMenu.label "수정">
+<!ENTITY appmenuToolbarLayout.label "툴바 레이아웃…">
+<!ENTITY appmenuSelectThread.label "글타래 선택">
+<!ENTITY appmenuSelectFlagged.label "별표 메시지 선택">
+
+<!-- Tags Menu Popup -->
+<!ENTITY addNewTag.label "새 태그…">
+<!ENTITY addNewTag.accesskey "N">
+<!ENTITY manageTags.label "태그 관리하기…">
+<!ENTITY manageTags.accesskey "M">
+
+<!-- Folder Pane -->
+<!ENTITY folderNameColumn.label "이름">
+<!ENTITY folderUnreadColumn.label "읽지 않음">
+<!ENTITY folderTotalColumn.label "전체">
+<!ENTITY folderSizeColumn.label "크기">
+
+<!-- Folder Pane Context Menu -->
+<!ENTITY folderContextGetMessages.label "메시지 받기">
+<!ENTITY folderContextGetMessages.accesskey "G">
+<!ENTITY folderContextMarkAllFoldersRead.label "모든 폴더 읽음 표시">
+<!ENTITY folderContextPauseAllUpdates.label "모든 업데이트 중지">
+<!ENTITY folderContextPauseUpdates.label "업데이트 중지">
+<!ENTITY folderContextPauseUpdates.accesskey "U">
+<!ENTITY folderContextOpenInNewWindow.label "새 창으로 열기">
+<!ENTITY folderContextOpenInNewWindow.accesskey "O">
+<!ENTITY folderContextOpenNewTab.label "새 탭으로 열기">
+<!ENTITY folderContextOpenNewTab.accesskey "T">
+<!ENTITY folderContextNew.label "새 하위 폴더…">
+<!ENTITY folderContextNew.accesskey "N">
+<!ENTITY folderContextRename.label "이름 바꾸기">
+<!ENTITY folderContextRename.accesskey "R">
+<!ENTITY folderContextRemove.label "삭제">
+<!ENTITY folderContextRemove.accesskey "D">
+<!ENTITY folderContextCompact.label "압축…">
+<!ENTITY folderContextCompact.accesskey "C">
+<!ENTITY folderContextEmptyTrash.label "지운 편지함 비우기">
+<!ENTITY folderContextEmptyTrash.accesskey "y">
+<!ENTITY folderContextEmptyJunk.label "스팸함 비우기">
+<!ENTITY folderContextEmptyJunk.accesskey "J">
+<!ENTITY folderContextSendUnsentMessages.label "메일 다시 보내기">
+<!ENTITY folderContextSendUnsentMessages.accesskey "d">
+<!ENTITY folderContextUnsubscribe.label "구독 해지">
+<!ENTITY folderContextUnsubscribe.accesskey "U">
+<!ENTITY folderContextMarkNewsgroupRead.label "읽은 뉴스 그룹 표시">
+<!ENTITY folderContextMarkNewsgroupRead.accesskey "k">
+<!ENTITY folderContextMarkMailFolderRead.label "폴더 읽음 표시">
+<!ENTITY folderContextMarkMailFolderRead.accesskey "k">
+<!ENTITY folderContextSubscribe.label "구독…">
+<!ENTITY folderContextSubscribe.accesskey "b">
+<!ENTITY folderContextSearchForMessages.label "메시지 검색…">
+<!ENTITY folderContextSearchForMessages.accesskey "S">
+<!ENTITY folderContextProperties2.label "속성…">
+<!ENTITY folderContextProperties2.accesskey "P">
+<!ENTITY folderContextFavoriteFolder.label "즐겨찾기 폴더">
+<!ENTITY folderContextFavoriteFolder.accesskey "a">
+<!ENTITY folderContextSettings2.label "설정…">
+<!ENTITY folderContextSettings2.accesskey "e">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label "포함된 이름이나 메일 주소:">
+<!ENTITY SearchNameOrEmail.accesskey "N">
+
+<!-- Gloda Search Bar -->
+<!ENTITY glodaSearchBar.placeholder "메시지 검색…">
+
+<!-- Quick Search Menu Bar -->
+<!ENTITY searchSubjectMenu.label "제목">
+<!ENTITY searchFromMenu.label "보낸 사람">
+<!ENTITY searchSubjectOrFromMenu.label "제목 혹은 보낸 사람">
+<!ENTITY searchRecipient.label "받는 사람 또는 참조">
+<!ENTITY searchSubjectOrRecipientMenu.label "제폭, 받는 사람 또는 참조">
+<!ENTITY searchMessageBody.label "메시지 전체">
+<!ENTITY saveAsVirtualFolderMenu.label "폴더로 검색 저장…">
+
+<!-- Thread Pane -->
+<!ENTITY selectColumn.label "메시지 선택">
+<!ENTITY threadColumn.label "글타래">
+<!ENTITY fromColumn.label "보낸 사람">
+<!ENTITY recipientColumn.label "받는 사람">
+<!ENTITY correspondentColumn.label "글 쓴 사람">
+<!ENTITY subjectColumn.label "제목">
+<!ENTITY dateColumn.label "날짜">
+<!ENTITY priorityColumn.label "중요도">
+<!ENTITY tagsColumn.label "태그">
+<!ENTITY accountColumn.label "계정">
+<!ENTITY statusColumn.label "메일 상태">
+<!ENTITY sizeColumn.label "크기">
+<!ENTITY junkStatusColumn.label "스팸 상태">
+<!ENTITY unreadColumn.label "읽지 않음">
+<!ENTITY totalColumn.label "전체">
+<!ENTITY readColumn.label "읽음">
+<!ENTITY receivedColumn.label "보낸 편지함">
+<!ENTITY starredColumn.label "별표">
+<!ENTITY locationColumn.label "주소">
+<!ENTITY idColumn.label "받은 순서">
+<!ENTITY attachmentColumn.label "첨부">
+
+<!ENTITY deleteColumn.label "삭제">
+
+<!-- Thread Pane Tooltips -->
+<!ENTITY columnChooser2.tooltip "표시할 항목 선택">
+<!ENTITY selectColumn.tooltip "모든 메시지 선택 토글">
+<!ENTITY threadColumn2.tooltip "글타래 메시지 표시">
+<!ENTITY fromColumn2.tooltip "보낸 사람 순으로 정렬">
+<!ENTITY recipientColumn2.tooltip "받는 사람으로 정렬">
+<!ENTITY correspondentColumn2.tooltip "글 쓴 사람으로 정렬">
+<!ENTITY subjectColumn2.tooltip "제목으로 정렬">
+<!ENTITY dateColumn2.tooltip "날짜로 정렬">
+<!ENTITY priorityColumn2.tooltip "중요도로 정렬">
+<!ENTITY tagsColumn2.tooltip "태그로 정렬하기">
+<!ENTITY accountColumn2.tooltip "계정별로 정력">
+<!ENTITY statusColumn2.tooltip "메일 상태로 정렬">
+<!ENTITY sizeColumn2.tooltip "크기로 정렬">
+<!ENTITY junkStatusColumn2.tooltip "스팸 상태로 정렬">
+<!ENTITY unreadColumn2.tooltip "글타래의 읽지 않은 메시지 수">
+<!ENTITY totalColumn2.tooltip "글타래의 메시지 전체 수">
+<!ENTITY readColumn2.tooltip "읽은 상태로 정렬">
+<!ENTITY receivedColumn2.tooltip "받은 날짜 순으로 정렬">
+<!ENTITY starredColumn2.tooltip "별표로 정렬">
+<!ENTITY locationColumn2.tooltip "주소로 정렬">
+<!ENTITY idColumn2.tooltip "받은 순서로 정렬">
+<!ENTITY attachmentColumn2.tooltip "첨부 파일로 정렬">
+
+<!ENTITY deleteColumn.tooltip "메시지 지우기">
+
+<!-- Thread Pane Context Menu -->
+<!ENTITY contextNewMsgFromTemplate.label "서식 파일에서 새 메시지">
+<!ENTITY contextOpenNewWindow.label "새 창에 메시지 열기">
+<!ENTITY contextOpenNewWindow.accesskey "W">
+<!-- The contextOpenNewTab.accesskey ("T") potentially conflicts with
+     cutCmd.accessKey which is defined in textcontext.dtd from toolkit. Right
+     now, both menu items can't be visible at the same time, but should someone
+     enable copy/paste of message, this key would probably need to be changed. -->
+<!ENTITY contextOpenNewTab.label "새 탭으로 메시지 열기">
+<!ENTITY contextOpenNewTab.accesskey "T">
+<!ENTITY contextOpenConversation.label "새 탭으로 대화 열기">
+<!ENTITY contextOpenConversation.accesskey "n">
+<!ENTITY contextOpenContainingFolder.label "메시지를 포함한 폴더 열기">
+<!ENTITY contextOpenContainingFolder.accesskey "n">
+<!ENTITY contextEditMsgAsNew.label "새로 편집…">
+<!ENTITY contextEditMsgAsNew.accesskey "E">
+<!ENTITY contextEditDraftMsg.label "임시 메시지 편집">
+<!ENTITY contextEditTemplate.label "템플릿 편집">
+<!ENTITY contextEditTemplate.accesskey "T">
+<!ENTITY contextArchive.label "보관">
+<!ENTITY contextArchive.accesskey "h">
+<!ENTITY contextReplySender.label "회신">
+<!ENTITY contextReplySender.accesskey "R">
+<!ENTITY contextReplyNewsgroup2.label "뉴스 그룹 팔로우업">
+<!ENTITY contextReplyNewsgroup2.accesskey "u">
+<!ENTITY contextReplyAll.label "모두 회신">
+<!ENTITY contextReplyAll.accesskey "A">
+<!ENTITY contextReplyList.label "리스트로 회신">
+<!ENTITY contextReplyList.accesskey "L">
+<!ENTITY contextForward.label "전달">
+<!ENTITY contextForward.accesskey "F">
+<!ENTITY contextForwardAsMenu.label "다른 이름으로 전달 ">
+<!ENTITY contextForwardAsMenu.accesskey "o">
+<!ENTITY contextForwardAsInline.label "인라인 전달">
+<!ENTITY contextForwardAsInline.accesskey "I">
+<!ENTITY contextForwardAsAttachmentItem.label "첨부">
+<!ENTITY contextForwardAsAttachmentItem.accesskey "A">
+<!ENTITY contextMultiForwardAsAttachment.label "첨부로 전달">
+<!ENTITY contextMultiForwardAsAttachment.accesskey "o">
+<!ENTITY contextMoveMsgMenu.label "이동">
+<!ENTITY contextMoveMsgMenu.accesskey "M">
+<!ENTITY contextMoveCopyMsgRecentMenu.label "최근">
+<!ENTITY contextMoveCopyMsgRecentMenu.accesskey "R">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.label "즐겨찾기">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.accesskey "F">
+<!ENTITY contextCopyMsgMenu.label "복사">
+<!ENTITY contextCopyMsgMenu.accesskey "C">
+<!ENTITY contextKillThreadMenu.label "글타래 무시">
+<!ENTITY contextKillSubthreadMenu.accesskey "b">
+<!ENTITY contextKillThreadMenu.accesskey "I">
+<!ENTITY contextKillSubthreadMenu.label "하위 글타래 무시">
+<!ENTITY contextWatchThreadMenu.label "글타래 보기">
+<!-- LOCALIZATION NOTE (contextWatchThreadMenu.accesskey):
+     In the en-US locale we ran out of access keys, so there is an empty access key for
+     Watch Thread. Localizers can pick a suitable key
+  -->
+<!ENTITY contextWatchThreadMenu.accesskey "">
+<!ENTITY contextSaveAs.label "다른 이름으로 저장…">
+<!ENTITY contextSaveAs.accesskey "S">
+<!ENTITY contextPrint.label "인쇄…">
+<!ENTITY contextPrint.accesskey "P">
+<!ENTITY contextPrintPreview.label "인쇄 미리 보기">
+<!ENTITY contextPrintPreview.accesskey "v">
+
+<!-- LOCALIZATION NOTE (columnPicker.applyTo.label):
+     This option in the thread pane column picker pops up a sub-menu containing
+     the "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" options. This item indicates
+     a desire to apply the currently displayed set of columns to some other
+     folder(s). The sub-menu items indicate whether we want to apply it to just
+     a folder or also its children.
+  -->
+<!ENTITY columnPicker.applyTo.label "항목에 적용…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolder.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolderAndChildren.label". It indicates a desire to
+     apply the currently display thread pane column settings to a single folder
+     that the user selects using the same widget as the move to/copy to
+     mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolder.label "폴더…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolderAndChildren.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolder.label". It indicates a desire to
+     apply the currently display thread pane column settings to a folder and all
+     of its descendents. The user selects the folder using the same widget as the
+     move to/copy to mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolderAndChildren.label "폴더안 전체…">
+<!-- LOCALIZATION NOTE (columnPicker.thisFolder.label):
+     This is used in the folder selection widget for the
+     "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" menu options. Whenever
+     a folder has children, it results in a menu popup; the first menu item
+     in that popup is given this label to indicate that that folder should be
+     selected. For example, if folder "A" has two children, "B" and "C", then
+     when the user hovers over "A", a new popup menu will be displayed whose
+     items are "This folder", "B", and "C". This is the equivalent of the
+     "File here" option for the move to/copy to widget.
+  -->
+<!ENTITY columnPicker.thisFolder.label "현재 폴더">
+
+<!-- Media (video/audio) controls -->
+<!ENTITY contextPlay.label "실행">
+<!ENTITY contextPlay.accesskey "P">
+<!ENTITY contextPause.label "중지">
+<!ENTITY contextPause.accesskey "P">
+<!ENTITY contextMute.label "음소거">
+<!ENTITY contextMute.accesskey "M">
+<!ENTITY contextUnmute.label "음소거 해제">
+<!ENTITY contextUnmute.accesskey "m">
+
+<!-- Quick Search Bar -->
+<!-- LOCALIZATION NOTE (quickSearchCmd.key):
+     This is actually the key used for the global message search box; we have
+     not changed
+  -->
+<!ENTITY quickSearchCmd.key "k">
+<!-- LOCALIZATION NOTE (search.label.base1):
+     This is the base of the empty text for the global search box. We replace
+     #1 with the contents of the appropriate search.keyLabel.* value for the
+     platform.
+     The goal is to convey to the user that typing in the box will allow them
+     to search for messages globally and that there is a hotkey they can press
+     to get to the box faster. If the global indexer is disabled, the search
+     box will be collapsed and the user will never see this message.
+  -->
+<!ENTITY search.label.base1 "#1 검색">
+<!-- LOCALIZATION NOTE (search.keyLabel.nonmac):
+     The description of the key-binding to get into the global search box on
+     windows and linux (which use the control key). We use the key defined in
+     the quickSearchCmd.key entity defined above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.nonmac "&lt;Ctrl+K&gt;">
+<!-- LOCALIZATION NOTE (search.keyLabel.mac):
+     The description of the key-binding to get into the global search box on mac
+     systems. We use the key defined in the quickSearchCmd.key entity defined
+     above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.mac "&lt;&#x2318;K&gt;">
+
+<!-- Message Header Context Menu -->
+<!ENTITY AddToAddressBook.label "주소록에 추가…">
+<!ENTITY AddToAddressBook.accesskey "B">
+<!ENTITY AddDirectlyToAddressBook.label "주소록에 바로 추가">
+<!ENTITY AddDirectlyToAddressBook.accesskey "B">
+<!ENTITY EditContact1.label "연락처 편집…">
+<!ENTITY EditContact1.accesskey "E">
+<!ENTITY ViewContact.label "연락처 보기">
+<!ENTITY ViewContact.accesskey "V">
+<!ENTITY SubscribeToNewsgroup.label "뉴스그룹 구독">
+<!ENTITY SubscribeToNewsgroup.accesskey "N">
+<!ENTITY SendMessageTo.label "메일 쓰기">
+<!ENTITY SendMessageTo.accesskey "s">
+<!ENTITY CopyEmailAddress.label "메일 주소 복사">
+<!ENTITY CopyEmailAddress.accesskey "C">
+<!ENTITY CopyNameAndEmailAddress.label "이름과 메일 주소 복사">
+<!ENTITY CopyNameAndEmailAddress.accesskey "N">
+<!ENTITY CopyNewsgroupName.label "뉴스 그룹 이름 복사">
+<!ENTITY CopyNewsgroupName.accesskey "C">
+<!ENTITY CopyNewsgroupURL.label "뉴스 그룹 URL 복사">
+<!ENTITY CopyNewsgroupURL.accesskey "U">
+<!ENTITY CreateFilterFrom.label "규칙 만들기…">
+<!ENTITY CreateFilterFrom.accesskey "F">
+<!ENTITY reportPhishingURL.label "사기 메일 보고">
+<!ENTITY reportPhishingURL.accesskey "o">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "맞춤법 사전 추가…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Content Pane Context Menu -->
+<!ENTITY saveLinkAsCmd.label "다른 이름으로 링크 저장…">
+<!ENTITY saveLinkAsCmd.accesskey "k">
+<!ENTITY saveImageAsCmd.label "다른 이름으로 이미지 저장…">
+<!ENTITY saveImageAsCmd.accesskey "v">
+<!ENTITY copyLinkCmd.label "링크 주소 복사">
+<!ENTITY copyLinkCmd.accesskey "C">
+<!ENTITY copyImageAllCmd.label "이미지 복사">
+<!ENTITY copyImageAllCmd.accesskey "I">
+<!ENTITY copyEmailCmd.label "메일 주소 복사">
+<!ENTITY copyEmailCmd.accesskey "E">
+<!ENTITY stopCmd.label "중지">
+<!ENTITY stopCmd.accesskey "S">
+<!ENTITY reloadCmd.label "새로 고침">
+<!ENTITY reloadCmd.accesskey "R">
+<!ENTITY openInBrowser.label "브라우저로 열기">
+<!ENTITY openInBrowser.accesskey "O">
+<!ENTITY openLinkInBrowser.label "브라우저로 링크 열기">
+<!ENTITY openLinkInBrowser.accesskey "O">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label "문서 완료">
+
+<!-- Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.label "창 최소화">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "모두 앞으로 보내기">
+<!ENTITY zoomWindow.label "창 확대">
+
+<!-- Mac OS X Application Menu (Cocoa widgets) -->
+<!ENTITY preferencesCmdMac2.label       "환경 설정…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+<!ENTITY preferencesCmdMac.modifiers    "accel">
+<!ENTITY servicesMenuMac.label          "서비스">
+<!ENTITY hideThisAppCmdMac.label        "&brandShortName; 숨기기">
+<!ENTITY hideThisAppCmdMac.commandkey   "H">
+<!ENTITY hideThisAppCmdMac.modifiers    "accel">
+<!ENTITY hideOtherAppsCmdMac.label      "다른 프로그램 숨기기">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+<!ENTITY hideOtherAppsCmdMac.modifiers  "accel,alt">
+<!ENTITY showAllAppsCmdMac.label        "모두 보이기">
+
+<!-- Mac OS X Dock Icon pop-up menu -->
+<!ENTITY dockOptions.label              "독 아이콘 옵션…">
+<!ENTITY writeNewMessageDock.label      "새 메시지 작성">
+<!ENTITY openAddressBookDock.label      "주소록 열기">
+
+<!-- Content tab Navigation buttons -->
+<!ENTITY browseBackButton.tooltip    "한 페이지 뒤로 가기">
+<!ENTITY browseForwardButton.tooltip "한 페이지 앞으로 가기">

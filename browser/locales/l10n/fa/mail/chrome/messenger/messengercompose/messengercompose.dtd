@@ -1,0 +1,286 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+
+<!ENTITY msgComposeWindow.title "نوشتن: (بدون موضوع)">
+<!-- File Menu -->
+
+<!ENTITY fileMenu.label "پرونده">
+<!ENTITY fileMenu.accesskey "پ">
+<!ENTITY newMenu.label "جدید">
+<!ENTITY newMenu.accesskey "ج">
+<!ENTITY newMessage.label "پیغام">
+
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "پ">
+<!ENTITY newContact.label "Address Book Contact…">
+<!ENTITY newContact.accesskey "C">
+<!ENTITY attachMenu.label "Attach">
+<!ENTITY attachMenu.accesskey "t">
+<!ENTITY attachFileCmd.label "File(s)…">
+<!ENTITY attachFileCmd.accesskey "F">
+
+
+
+<!ENTITY attachPageCmd.label "Web Page…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Personal Card (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+
+
+<!ENTITY closeCmd.label "بستن">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "ب">
+<!ENTITY saveCmd.label "ذخیره">
+
+<!ENTITY saveCmd.accesskey "ذ">
+<!ENTITY saveAsCmd.label "ذخیره به نام">
+<!ENTITY saveAsCmd.accesskey "ذ">
+<!ENTITY saveAsFileCmd.label "File…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Draft">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "Template">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY sendNowCmd.label "Send Now">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "Send Later">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "L">
+<!ENTITY printSetupCmd.label "تنظیم صفحه…">
+<!ENTITY printSetupCmd.accesskey "ت">
+<!ENTITY printPreviewCmd.label "پیش‌نمای چاپ">
+<!ENTITY printPreviewCmd.accesskey "پ">
+<!ENTITY printCmd.label "چاپ…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "چ">
+<!-- Edit Menu -->
+
+<!ENTITY editMenu.label "ویرایش">
+<!ENTITY editMenu.accesskey "و">
+<!ENTITY undoCmd.label "واگرد">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "و">
+<!ENTITY redoCmd.label "از نو">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "ز">
+<!ENTITY cutCmd.key "X">
+
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+
+<!ENTITY editRewrapCmd.accesskey "w">
+<!ENTITY deleteCmd.label "حذف">
+<!ENTITY deleteCmd.accesskey "ح">
+<!ENTITY editRewrapCmd.label "Rewrap">
+<!ENTITY editRewrapCmd.key "R">
+
+
+<!ENTITY selectAllCmd.accesskey "ا">
+
+
+
+
+
+
+<!ENTITY findAgainCmd.label "پیدا کردن مجدد">
+<!ENTITY findAgainCmd.accesskey "پ">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "پیدا کردن قبلی">
+<!ENTITY findPrevCmd.accesskey "پ">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!-- View Menu -->
+
+<!ENTITY viewMenu.label "نما">
+<!ENTITY viewMenu.accesskey "ن">
+<!ENTITY viewToolbarsMenuNew.label "نوار ابزار">
+<!ENTITY viewToolbarsMenuNew.accesskey "ن">
+
+
+<!ENTITY showCompositionToolbarCmd.label "Composition Toolbar">
+<!ENTITY showCompositionToolbarCmd.accesskey "o">
+<!ENTITY showFormattingBarCmd.label "Formatting Bar">
+<!ENTITY showFormattingBarCmd.accesskey "F">
+<!ENTITY showTaskbarCmd.label "نوار وضعیت">
+<!ENTITY showTaskbarCmd.accesskey "ن">
+<!ENTITY customizeToolbar.label "سفارشی‌سازی…">
+<!ENTITY customizeToolbar.accesskey "س">
+
+<!ENTITY addressSidebar.label "Contacts Sidebar">
+<!ENTITY addressSidebar.accesskey "o">
+<!-- Format Menu -->
+
+<!ENTITY formatMenu.label "قالب">
+<!ENTITY formatMenu.accesskey "ق">
+<!-- Options Menu -->
+
+<!ENTITY optionsMenu.label "گزینه‌ها">
+<!ENTITY optionsMenu.accesskey "گ">
+<!ENTITY checkSpellingCmd2.label "Check Spelling…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "h">
+<!ENTITY enableInlineSpellChecker.label "Spell Check As You Type">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY quoteCmd.label "Quote Message">
+<!ENTITY quoteCmd.accesskey "Q">
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+
+<!ENTITY attachVCard.label "Attach Personal Card (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Return Receipt">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Delivery Status Notification">
+<!ENTITY dsnMenu.accesskey "N">
+
+
+<!ENTITY autoFormatCmd.label "تشخیص خودکار">
+<!ENTITY autoFormatCmd.accesskey "ت">
+<!ENTITY plainTextFormatCmd.label "Plain Text Only">
+<!ENTITY plainTextFormatCmd.accesskey "P">
+<!ENTITY htmlFormatCmd.label "Rich Text (HTML) Only">
+<!ENTITY htmlFormatCmd.accesskey "R">
+<!ENTITY bothFormatCmd.label "Plain and Rich (HTML) Text">
+<!ENTITY bothFormatCmd.accesskey "l">
+<!ENTITY priorityMenu.label "Priority">
+<!ENTITY priorityMenu.accesskey "P">
+
+
+<!ENTITY priorityButton.label "Priority:">
+<!ENTITY lowestPriorityCmd.label "Lowest">
+<!ENTITY lowestPriorityCmd.accesskey "L">
+<!ENTITY lowPriorityCmd.label "Low">
+<!ENTITY lowPriorityCmd.accesskey "o">
+<!ENTITY normalPriorityCmd.label "عادی">
+<!ENTITY normalPriorityCmd.accesskey "ع">
+<!ENTITY highPriorityCmd.label "High">
+<!ENTITY highPriorityCmd.accesskey "i">
+<!ENTITY highestPriorityCmd.label "Highest">
+<!ENTITY highestPriorityCmd.accesskey "H">
+<!ENTITY fileCarbonCopyCmd.label "Send a Copy To">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "File Here">
+<!-- Tools Menu -->
+
+<!ENTITY tasksMenu.label "ابزارها">
+<!ENTITY tasksMenu.accesskey "ا">
+<!ENTITY messengerCmd.label "Mail &amp; Newsgroups">
+<!ENTITY messengerCmd.accesskey "M">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Address Book">
+<!ENTITY addressBookCmd.accesskey "A">
+
+
+
+
+
+
+<!ENTITY preferencesCmdUnix.label "ترجیحات">
+<!ENTITY preferencesCmdUnix.accesskey "ت">
+<!--  Mac OS X Window Menu -->
+
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "کمینه کردن">
+<!ENTITY bringAllToFront.label "آوردن همه به جلو">
+<!ENTITY zoomWindow.label "زوم">
+<!ENTITY windowMenu.label "پنجره">
+<!-- Mail Toolbar -->
+
+<!ENTITY sendButton.label "Send">
+<!ENTITY quoteButton.label "Quote">
+<!ENTITY addressButton.label "Contacts">
+<!ENTITY attachButton.label "Attach">
+<!ENTITY spellingButton.label "Spelling">
+<!ENTITY saveButton.label "ذخیره">
+<!ENTITY printButton.label "چاپ">
+<!-- Mail Toolbar Tooltips -->
+
+<!ENTITY sendButton.tooltip "Send this message now">
+<!ENTITY sendlaterButton.tooltip "Send this message later">
+<!ENTITY quoteButton.tooltip "Quote the previous message">
+<!ENTITY addressButton.tooltip "Select a recipient from an Address Book">
+
+
+<!ENTITY saveButton.tooltip "Save this message">
+<!ENTITY cutButton.tooltip              "بریدن">
+<!ENTITY copyButton.tooltip             "رونوشت برداشتن">
+<!ENTITY pasteButton.tooltip            "چسباندن">
+<!ENTITY printButton.tooltip "Print this message">
+
+<!-- Headers -->
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY subject.accesskey "م">
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+
+<!ENTITY SmileButton.tooltip "Insert a smiley face">
+<!ENTITY smiley1Cmd.label "Smile">
+<!ENTITY smiley2Cmd.label "Frown">
+<!ENTITY smiley3Cmd.label "Wink">
+<!ENTITY smiley4Cmd.label "Tongue-out">
+<!ENTITY smiley5Cmd.label "Laughing">
+<!ENTITY smiley6Cmd.label "Embarrassed">
+<!ENTITY smiley7Cmd.label "Undecided">
+<!ENTITY smiley8Cmd.label "Surprise">
+<!ENTITY smiley9Cmd.label "Kiss">
+<!ENTITY smiley10Cmd.label "Yell">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley12Cmd.label "Money-Mouth">
+<!ENTITY smiley13Cmd.label "Foot-in-Mouth">
+<!ENTITY smiley14Cmd.label "Innocent">
+<!ENTITY smiley15Cmd.label "Cry">
+<!ENTITY smiley16Cmd.label "Lips-are-Sealed">
+<!-- Message Pane Context Menu -->
+
+<!ENTITY spellCheckNoSuggestions.label "No Suggestions Found">
+<!ENTITY spellCheckIgnoreWord.label "Ignore Word">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "اضافه‌کردن به واژه‌نامه">
+<!ENTITY spellCheckAddToDictionary.accesskey "ا">
+<!ENTITY undo.label "واگرد">
+<!ENTITY undo.accesskey "و">
+<!ENTITY cut.label "بریدن">
+<!ENTITY cut.accesskey "ب">
+<!ENTITY copy.label "رونوشت برداشتن">
+<!ENTITY copy.accesskey "ن">
+<!ENTITY paste.label "چسباندن">
+<!ENTITY paste.accesskey "چ">
+<!ENTITY pasteQuote.label "Paste As Quotation">
+<!ENTITY pasteQuote.accesskey "Q">
+
+<!ENTITY openAttachment.label "باز کردن">
+<!ENTITY openAttachment.accesskey "ب">
+<!ENTITY delete.label "حذف">
+<!ENTITY delete.accesskey "ح">
+
+
+<!ENTITY renameAttachment.label "Rename…">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY selectAll.label "انتخاب همه">
+<!ENTITY selectAll.accesskey "ا">
+<!ENTITY attachFile.label "Attach File(s)…">
+<!ENTITY attachFile.accesskey "F">
+
+
+
+
+
+
+
+
+<!ENTITY attachPage.label "Attach Web Page…">
+<!ENTITY attachPage.accesskey "W">
+<!-- Spell checker context menu items -->
+
+<!-- Title for the address picker panel -->
+
+<!-- Attachment Pane Header Bar Context Menu -->
+
+<!ENTITY addressesSidebarTitle.label "Contacts">
+<!-- Identity popup customize menuitem -->
+

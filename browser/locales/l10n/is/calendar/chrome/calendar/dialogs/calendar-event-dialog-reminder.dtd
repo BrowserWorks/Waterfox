@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title "Búa til áminningar">
+<!ENTITY reminder.add.label "Bæta við">
+<!ENTITY reminder.add.accesskey "B">
+<!ENTITY reminder.remove.label "Fjarlægja">
+<!ENTITY reminder.remove.accesskey "F">
+<!ENTITY reminder.reminderDetails.label "Upplýsingar fyrir áminningu">
+<!ENTITY reminder.action.label "Veldu áminningu">
+<!ENTITY reminder.action.alert.label "Sýna aðvörun">
+<!ENTITY reminder.action.email.label "Senda póst">
+<!ENTITY alarm.units.minutes "mínútur">
+<!ENTITY alarm.units.hours "klukkustundir">
+<!ENTITY alarm.units.days "dagar">

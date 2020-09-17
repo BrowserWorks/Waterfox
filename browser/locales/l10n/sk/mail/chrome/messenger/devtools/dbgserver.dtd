@@ -1,0 +1,4 @@
+<!ENTITY options.title "Nastavenia vývojárskych nástrojov">
+<!ENTITY options.status.label "Stav:">
+<!ENTITY options.port.label "Port:">
+<!ENTITY options.forcelocal.label "Povoliť pripojenia z iných počítačov">

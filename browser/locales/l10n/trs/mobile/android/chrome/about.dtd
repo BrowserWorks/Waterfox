@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Rayi'î &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; ma si arajhuè si ngàj ni ga'ue si si gi'iaj sun hue'ej">
+<!ENTITY aboutPage.checkForUpdates.link         "Nana'uì' 'ngo sa nagi'iaj nakàa »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Hìaj nana'uij sa nagi'iaj nakàa...">
+<!ENTITY aboutPage.checkForUpdates.none         "Nitaj sa nagi'iaj nakàa hua">
+<!ENTITY aboutPage.checkForUpdates.available2   "Naduni' sa nagi'iaj nakàa">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Hìaj naduni sa nagi'iaj nakàa...">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Nagi'iaj nakò' ma">
+<!ENTITY aboutPage.faq.label                    "Sa achín na'anj guìi doj">
+<!ENTITY aboutPage.support.label                "Sa ruguñu'unj un">
+<!ENTITY aboutPage.privacyPolicy.label          " Sa garayino’">
+<!ENTITY aboutPage.rights.label                 "Gini'in nuguan' tna'uej riña yi'ît">
+<!ENTITY aboutPage.relNotes.label               "Nuguan' ri' riña aga' na">
+<!ENTITY aboutPage.credits.label                "Duguî’ rugûñu’ūnj">
+<!ENTITY aboutPage.license.label                "Nuguan’ da’uî' gini’în' hìaj nï' gàchin garasun'">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Si da'nga' Firefox dugumîn yi'nï' gu'naj Mozilla.">

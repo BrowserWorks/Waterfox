@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Personalisar le barra de instrumentos">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Vos pote adder o remover elementos trahente los a intra o a foras le barras de instrumentos.">
+<!ENTITY show.label               "Monstrar:">
+<!ENTITY iconsAndText.label       "Icones e texto">
+<!ENTITY icons.label              "Icones">
+<!ENTITY text.label               "Texto">
+<!ENTITY iconsBesideText.label    "Icones al latere de texto">
+<!ENTITY useSmallIcons.label      "Usar micre icones">
+<!ENTITY restoreDefaultSet.label  "Restaurar le parametros">
+<!ENTITY showTitlebar2.label      "Barra de titulo">
+<!ENTITY extraDragSpace2.label    "Spatio de traction">
+<!ENTITY saveChanges.label        "Facite">
+<!ENTITY undoChanges.label        "Disfacer le cambios">

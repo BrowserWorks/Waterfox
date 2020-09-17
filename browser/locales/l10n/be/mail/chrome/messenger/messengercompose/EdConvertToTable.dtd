@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY windowTitle.label "Ператварэнне ў табліцу">
+<!ENTITY instructions1.label "Укладальнік стварае новы шэраг табліцы для кожнага параграфу вылучэння.">
+<!ENTITY instructions2.label "Выбраць знак для раздзялення вылучэння ў слупкі:">
+<!ENTITY commaRadio.label "Коска">
+<!ENTITY spaceRadio.label "Прагал">
+<!ENTITY otherRadio.label "Іншы знак:">
+<!ENTITY deleteCharCheck.label "Выдаліць знак раздзяляльніка">
+<!ENTITY collapseSpaces.label "Ігнараваць дадатковыя прагалы">
+<!ENTITY collapseSpaces.tooltip "Ператварыць сумежныя прагалы ў адзін раздзяляльнік">

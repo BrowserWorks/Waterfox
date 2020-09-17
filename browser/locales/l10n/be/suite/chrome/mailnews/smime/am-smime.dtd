@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Бяспека">
+<!ENTITY securityTab.label "Бяспека">
+<!ENTITY securityHeading.label "Каб дасылаць і атрымліваць падпісаныя ці тайнапісныя лісты, вы мусіце вызначыць разам пасведчанне лічбавага падпісання і пасведчанне шыфравання. ">
+<!ENTITY encryptionGroupTitle.label "Шыфраванне">
+<!ENTITY encryptionChoiceLabel.label "Змоўчнае наладжванне шыфравання для лістоў, якія дасылаюцца:">
+<!ENTITY neverEncrypt.label "Ніколі (не ўжываць шыфраванне)">
+<!ENTITY neverEncrypt.accesskey "Н">
+<!ENTITY alwaysEncryptMessage.label "Патрэбны (немагчыма даслаць ліст, калі не ўсе атрымальнікі маюць пасведчанні)">
+<!ENTITY alwaysEncryptMessage.accesskey "э">
+<!ENTITY encryptionCert.message "Ужываць гэтае пасведчанне, каб шыфраваць і расшыфроўваць лісты, што дасылаюцца да вас:">
+<!ENTITY digitalSign.certificate.button "Вылучыць…">
+<!ENTITY digitalSign.certificate.accesskey "ы">
+<!ENTITY digitalSign.certificate_clear.button "Ачысціць">
+<!ENTITY digitalSign.certificate_clear.accesskey "ч">
+<!ENTITY encryption.certificate.button "Вылучыць…">
+<!ENTITY encryption.certificate.accesskey "в">
+<!ENTITY encryption.certificate_clear.button "Ачысціць">
+<!ENTITY encryption.certificate_clear.accesskey "ч">
+<!ENTITY signingGroupTitle.label "Лічбавае падпісанне">
+<!ENTITY signMessage.label "Лічбава падпісваць лісты (змоўчна)">
+<!ENTITY signMessage.accesskey "Л">
+<!ENTITY signingCert.message "Ужываць гэтае пасведчанне, каб лічбава падпісваць лісты, што вы адсылаеце:">
+<!ENTITY certificates.label "Пасведчанні">
+<!ENTITY manageCerts.label "Кіраваць пасведчаннямі…">
+<!ENTITY manageCerts.accesskey "К">
+<!ENTITY manageDevices.label "Кіраваць збудовамі бяспекі…">
+<!ENTITY manageDevices.accesskey "б">

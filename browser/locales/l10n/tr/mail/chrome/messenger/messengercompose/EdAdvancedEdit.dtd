@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Gelişmiş Özellik Düzenleyici">
+<!ENTITY AttName.label                  "Öznitelik:">
+<!ENTITY AttValue.label                 "Değer:">
+<!ENTITY PropertyName.label             "Özellik:">
+<!ENTITY currentattributesfor.label     "Bunun için geçerli öznitelikler:">
+<!ENTITY tree.attributeHeader.label     "Öznitelik">
+<!ENTITY tree.propertyHeader.label      "Özellik">
+<!ENTITY tree.valueHeader.label         "Değer">
+<!ENTITY tabHTML.label                  "HTML öznitelikleri">
+<!ENTITY tabCSS.label                   "Satır İçi Biçem">
+<!ENTITY tabJSE.label                   "JavaScript Olayları">
+
+<!ENTITY editAttribute.label    "Bir ögenin değerini değiştirmek için üzerine tıklayın">
+<!ENTITY removeAttribute.label  "Kaldır">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Pokročilé…">
+<!ENTITY AdvancedEditButton.accessKey "k">
+<!ENTITY AdvancedEditButton.tooltip "Pridať alebo modifikovať atribúty HTML a štýlu, pridať JavaScript udalosti pre tento objekt">
+<!ENTITY chooseFileButton.label "Vybrať súbor…">
+<!ENTITY chooseFileButton.accessKey "s">
+<!ENTITY chooseFileLinkButton.label "Vybrať súbor…">
+<!ENTITY chooseFileLinkButton.accessKey "V">
+<!ENTITY makeUrlRelative.label "Adresa URL je relatívna k umiestneniu stránky">
+<!ENTITY makeUrlRelative.accessKey "R">
+<!ENTITY makeUrlRelative.tooltip "Zmena medzi relatívnou a absolútnou adresou URL. Ak chcete toto zmeniť, musíte stránku najprv uložiť">
+
+<!ENTITY LinkURLEditField2.label "Zadajte adresu stránky, lokálny súbor alebo vyberte pomenovanú kotvu alebo nadpis z kontextovej ponuky:">
+<!ENTITY LinkURLEditField2.accessKey "v">

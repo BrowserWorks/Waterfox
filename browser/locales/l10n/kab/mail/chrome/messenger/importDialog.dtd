@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Kter">
+<!ENTITY importAll.label          "Kter yal taɣawsa.">
+<!ENTITY importAll.accesskey      "y">
+<!ENTITY importMail.label         "Tirawt">
+<!ENTITY importMail.accesskey     "i">
+<!ENTITY importFeeds.label        "Ajerred ɣer usuddem">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "Imedlisen n tensa">
+<!ENTITY importAddressbook.accesskey "d">
+<!ENTITY importSettings.label     "Iɣewwaren">
+<!ENTITY importSettings.accesskey "I">
+<!ENTITY importFilters.label      "Imzizdigen">
+<!ENTITY importFilters.accesskey  "d">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Akaram n ukter &brandShortName; ">
+<!ENTITY importShortDesc.label    "Kter imaylen, Imedlisen n tensa, Iɣewwaṛen, imzizdigen seg iseɣẓanen nniḍen">
+
+<!ENTITY importDescription1.label "Amarag-agi ad d-yekter ɣer &brandShortName; iznan, inekcam n imedlis n tensa, amulteɣ n usuddem, ismenyaf, akked imzizdigen seg iseɣẓanen n tirawt akked imasalen yettwasnen n imedlisen n tensa.">
+<!ENTITY importDescription2.label "Ticki ttwaketren, ad tizmired ad tkecmeḍ ɣer-sen di &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Ma ulac aɣilif fren anaw n ufaylu i tebɣid ad tketreḍ:">
+<!ENTITY selectDescriptionB.label "Ma ulac aɣilif fren amiḍan yellan neɣ rnu amiḍan amaynut:">
+<!ENTITY selectDescription.accesskey "M">
+<!ENTITY acctName.label           "Isem:">
+<!ENTITY acctName.accesskey       "I">
+<!ENTITY noModulesFound.label     "Ulac asnas neɣ afaylu yettwafen akken ad d-ketred isefka.">
+
+<!ENTITY back.label               " &lt; ɣer deffir">
+<!ENTITY forward.label            "Ɣeṛ zdat &gt;">
+<!ENTITY finish.label             "Fak">
+<!ENTITY cancel.label             "Sefsex">
+
+<!ENTITY select.label             "neɣ fren anaw n wallal ara yettwaketren:">
+
+<!ENTITY title.label              "Azwel">
+<!ENTITY processing.label         "Akter...">

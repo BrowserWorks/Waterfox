@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Adressebok">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!ENTITY blankResultsPaneMessage.label                  "Denne adresseboken viser kontakter bare etter at du har gjort et søk">
+<!ENTITY localResultsOnlyMessage.label                  "Kontakter fra eksterne adressebøker vises ikke før du søker">
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Kontakt …">
+<!ENTITY newContact.accesskey                           "K">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "E-postliste …">
+<!ENTITY newListCmd.accesskey                           "E">
+<!ENTITY newAddressBookCmd.label                        "Adressebok …">
+<!ENTITY newAddressBookCmd.accesskey                    "d">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP-katalog …">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "L">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "Skriv ut kontakt …">
+<!ENTITY printContactViewCmd.accesskey                  "k">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printPreviewContactViewCmd.label               "Forhåndsvisning av kontakt">
+<!ENTITY printPreviewContactViewCmd.accesskey           "v">
+<!ENTITY printAddressBook.label                         "Skriv ut adressebok …">
+<!ENTITY printAddressBook.accesskey                     "a">
+<!ENTITY printPreviewAddressBook.label                  "Forhåndsvisning av adressebok">
+<!ENTITY printPreviewAddressBook.accesskey              "F">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Slett adressebok">
+<!ENTITY deleteContactCmd.label                         "Slett kontakt">
+<!ENTITY deleteContactsCmd.label                        "Slett valgte kontakter">
+<!ENTITY deleteListCmd.label                            "Slett liste">
+<!ENTITY deleteListsCmd.label                           "Slett valgte lister">
+<!ENTITY deleteItemsCmd.label                           "Slett valgte elementer">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Bytt om for/etternavn">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "B">
+<!ENTITY propertiesCmd.label                            "Egenskaper …">
+<!ENTITY propertiesCmd.accesskey                        "E">
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Adressebok-verktøylinje">
+<!ENTITY showAbToolbarCmd.accesskey                     "A">
+<!ENTITY layoutMenu.label                               "Layout">
+<!ENTITY layoutMenu.accesskey                           "L">
+<!ENTITY showDirectoryPane.label                        "Mappe-panel">
+<!ENTITY showDirectoryPane.accesskey                    "M">
+<!ENTITY showContactPane2.label                         "Kontakt-panel">
+<!ENTITY showContactPane2.accesskey                     "K">
+<!ENTITY menu_ShowNameAs.label                          "Vis navn som">
+<!ENTITY menu_ShowNameAs.accesskey                      "n">
+<!ENTITY firstLastCmd.label                             "Fornavn, Etternavn">
+<!ENTITY firstLastCmd.accesskey                         "F">
+<!ENTITY lastFirstCmd.label                             "Etternavn, Fornavn">
+<!ENTITY lastFirstCmd.accesskey                         "E">
+<!ENTITY displayNameCmd.label                           "Vis navn">
+<!ENTITY displayNameCmd.accesskey                       "V">
+
+<!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleDirectoryPaneCmd.key                     "S">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Importer …">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Eksporter …">
+<!ENTITY exportCmd.accesskey                            "E">
+
+<!-- Toolbar and Popup items -->
+<!ENTITY newContactButton.label                         "Ny kontakt">
+<!ENTITY newContactButton.accesskey                     "N">
+<!ENTITY newlistButton.label                            "Ny liste">
+<!ENTITY newlistButton.accesskey                        "L">
+<!ENTITY editItemButton.label                           "Egenskaper">
+<!ENTITY editItemButton.accesskey                       "P">
+<!ENTITY newmsgButton.label                             "Skriv ny">
+<!ENTITY newmsgButton.accesskey                         "n">
+<!ENTITY deleteItemButton.label                         "Slett">
+<!ENTITY deleteItemButton.accesskey                     "S">
+<!ENTITY newimButton.label                              "Direktemelding">
+<!ENTITY newimButton.accesskey                          "I">
+<!ENTITY printButton.label                              "Skriv ut">
+<!ENTITY printButton.accesskey                          "r">
+<!ENTITY searchNameAndEmail.placeholder                 "Søk i navn og e-postadresse">
+<!ENTITY searchBox.title                                "Søk">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Adressebok-verktøylinje">
+<!ENTITY newContactButton.tooltip                       "Lag en ny kontakt">
+<!ENTITY newlistButton.tooltip                          "Lag en ny liste">
+<!ENTITY editItemButton.tooltip                         "Rediger valgt element">
+<!ENTITY newmsgButton.tooltip                           "Send en e-post">
+<!ENTITY newIM.tooltip                                  "Send en direktemelding eller chatt">
+<!ENTITY printButton.tooltip                            "Skriv ut valgt element">
+<!ENTITY deleteItemButton.tooltip                       "Slett valgt element">
+<!ENTITY throbber.tooltip                               "Gå til hjemmesiden til &vendorShortName;">
+<!ENTITY throbber.tooltip2                              "Gå til hjemmesiden til &brandShortName;">
+<!ENTITY advancedButton.tooltip                         "Avansert adressesøk">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Adressebøker">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Kontakt">
+<!ENTITY home.heading                                   "Hjem">
+<!ENTITY other.heading                                  "Annet">
+<!ENTITY chat.heading                                   "Nettprat">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Arbeid">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Beskrivelse">
+<!ENTITY addresses.heading                              "Adresser">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Hent kart">
+<!ENTITY mapIt.tooltip                                  "Viser et kart med denne adressen fra nettet">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

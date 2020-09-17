@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Мени скорашњих страница">
+<!ENTITY  documentsInMenu.label         "Највећи број страница у списку:">
+<!ENTITY  documentsInMenu.accesskey     "н">
+<!ENTITY  savingFiles.title             "Када се чувају или објављују странице">
+<!ENTITY  preserveExisting.label        "Сачувај изворно форматирање">
+<!ENTITY  preserveExisting.accesskey    "ф">
+<!ENTITY  preserveExisting.tooltip      "Сачувај преламања линија и изворно форматирање странице">
+<!ENTITY  saveAssociatedFiles.label     "Сачувај слике и остале придружене датотеке приликом чувања страница">
+<!ENTITY  saveAssociatedFiles.accesskey "С">
+<!ENTITY  showPublishDialog.label       "Увек приказуј дијалог за објављивање приликом објављивања страница">
+<!ENTITY  showPublishDialog.accesskey   "а">
+<!ENTITY  composerEditing.label         "Уређивање">
+<!ENTITY  maintainStructure.label       "Задржи распоред табеле приликом убацивања или брисања ћелија">
+<!ENTITY  maintainStructure.tooltip     "Задржава правоугаони облик табеле аутоматским додавањем ћелија након убацивања или брисања ћелија">
+<!ENTITY  maintainStructure.accesskey   "З">
+<!ENTITY  useCSS.label                  "Користи CSS стил уместо HTML елемената и особина">
+<!ENTITY  useCSS.accesskey              "К">
+<!ENTITY  crInPCreatesNewP.label        "Притискање дугмета „ентер“ унутар пасуса увек започиње нови пасус">
+<!ENTITY  crInPCreatesNewP.accesskey    "р">

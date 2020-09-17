@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Ndihmë">
+<!ENTITY helpMenu.accesskey "N">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Ndihmë">
+<!ENTITY helpMenuWin.accesskey "N">
+<!ENTITY aboutProduct2.label "Mbi &brandShorterName;-in">
+<!ENTITY aboutProduct2.accesskey "M">
+<!ENTITY helpTroubleshootingInfo.label     "Të dhëna Diagnostikimi">
+<!ENTITY helpTroubleshootingInfo.accesskey "T">
+<!ENTITY helpSafeMode.label     "Riniseni me Shtesat të Çaktivizuara…">
+<!ENTITY helpSafeMode.accesskey "R">
+<!ENTITY helpSafeMode.stop.label     "Rinise me Shtesat të Aktivizuara">
+<!ENTITY helpSafeMode.stop.accesskey "R">
+<!ENTITY productHelp.label "Ndihmë mbi &brandShortName;-in">
+<!ENTITY productHelp.accesskey "N">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Shkurtore Tastiere">
+<!ENTITY helpKeyboardShortcuts.accesskey "T">
+
+<!ENTITY helpFeedbackPage.label "Parashtroni Përshtypjet…">
+<!ENTITY helpFeedbackPage.accesskey "P">
+
+<!ENTITY helpShowTour2.label "Tur &brandShorterName;-i">
+<!ENTITY helpShowTour2.accesskey "T">
+
+<!ENTITY helpGetInvolvedPage.label "Përfshihuni">
+<!ENTITY helpGetInvolvedPage.accesskey "ë">
+
+<!ENTITY helpDonationsPage.label "Bëni një Dhurim">
+<!ENTITY helpDonationsPage.accesskey "B">

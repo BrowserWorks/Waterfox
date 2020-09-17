@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Agordi memorigilojn">
+<!ENTITY reminder.add.label                                "Aldoni">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "Forigi">
+<!ENTITY reminder.remove.accesskey                         "F">
+
+<!ENTITY reminder.reminderDetails.label                    "Detaloj de memorigilo">
+<!ENTITY reminder.action.label                             "Elektu memorigan agon">
+
+<!ENTITY reminder.action.alert.label                       "Montri averton">
+<!ENTITY reminder.action.email.label                       "Sendi retpoŝton">
+
+<!ENTITY alarm.units.minutes                               "minutoj" >
+<!ENTITY alarm.units.hours                                 "horoj" >
+<!ENTITY alarm.units.days                                  "tagoj" >

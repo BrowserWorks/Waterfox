@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "דוא״ל">
+<!ENTITY readMsgsLink.label           "קרא הודעות">
+<!ENTITY composeMsgLink.label         "חבר הודעה חדשה">
+
+<!ENTITY newsSectionHdr.label         "קבוצות דיון">
+<!ENTITY subscribeNewsLink.label      "נהל מינויים לקבוצות דיון">
+
+<!ENTITY feedsSectionHdr.label        "הזנות">
+<!ENTITY subscribeFeeds.label         "נהל מינויים">
+
+<!ENTITY chat.label                   "צ׳אט">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "חשבונות">
+<!ENTITY subscribeImapFolders.label   "נהל מינויים לתיקיות">
+<!ENTITY settingsLink.label           "הצג הגדרות עבור חשבון זה">
+<!ENTITY setupNewAcct.label           "הגדרת חשבון:">
+
+<!ENTITY advFeaturesSectionHdr.label  "תכונות מתקדמות">
+<!ENTITY searchMsgsLink.label         "חפש בהודעות">
+<!ENTITY filtersLink.label            "נהל מסנני הודעות">
+<!ENTITY junkSettings.label           "הגדרות דואר זבל">
+<!ENTITY offlineLink.label            "הגדרות לא־מקוון">

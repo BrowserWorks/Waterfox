@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "Letöltés folyamatban…">
+<!ENTITY closeWindow.key                 "x">
+<!ENTITY cmd.pause.tooltip               "Szünet">
+<!ENTITY cmd.resume.tooltip              "Folytatás">
+<!ENTITY cmd.retry.tooltip               "Újra">
+<!ENTITY cmd.cancel.tooltip              "Mégse">
+<!ENTITY cmd.open.label                  "Megnyitás">
+<!ENTITY cmd.open.accesskey              "M">
+<!ENTITY cmd.show.label                  "Tartalmazó mappa megnyitása">
+<!ENTITY cmd.show.accesskey              "m">
+<!ENTITY cmd.goToDownloadPage.label      "Ugrás a letöltési oldalra">
+<!ENTITY cmd.goToDownloadPage.accesskey  "U">
+<!ENTITY cmd.copyDownloadLink.label      "Letöltési hivatkozás másolása">
+<!ENTITY cmd.copyDownloadLink.accesskey  "L">
+<!ENTITY closeWhenDone.label             "Ablak bezárása, ha a letöltés befejeződött.">
+<!ENTITY closeWhenDone.accesskey         "b">

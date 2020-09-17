@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Lajme të Rëndësishme">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Për njëkohësimin e të dhënave që keni ruajtur tashmë nën Firefox me këtë instalim të &brandShortName;-it, bëni hyrjen me &syncBrand.fxAccount.label; tuaj.">
+<!ENTITY continue-button "Vazhdo">
+
+<!ENTITY mainText "Ky instalim i &brandShortName;-it përmban një profil të ri. Nuk ndan faqerojtës, fjalëkalime dhe parapëlqime përdoruesi me instalime të tjera Firefox (përfshi Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition, dhe Firefox Nightly) në këtë kompjuter.">

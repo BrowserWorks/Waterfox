@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Nastavitve">
+<!ENTITY security.caption "Varnost in overitev">
+<!ENTITY serverName.label "Ime strežnika:">
+<!ENTITY serverName.accesskey "s">
+<!ENTITY serverDescription.label "Opis:">
+<!ENTITY serverDescription.accesskey "O">
+<!ENTITY serverPort.label "Vrata:">
+<!ENTITY serverPort.accesskey "V">
+<!ENTITY userName.label "Uporabniško ime:">
+<!ENTITY userName.accesskey "U">
+<!ENTITY connectionSecurity.label "Varnost povezave:">
+<!ENTITY connectionSecurity.accesskey "a">
+<!ENTITY connectionSecurityType-0.label "Brez">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, če je na voljo">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Strežnik SMTP">
+<!ENTITY serverPortDefault.label "Privzeto:">
+<!ENTITY authMethod.label "Metoda overitve:">
+<!ENTITY authMethod.accesskey "M">

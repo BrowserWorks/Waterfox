@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Configurar mementos">
+<!ENTITY reminder.add.label                                "Adder">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "Remover">
+<!ENTITY reminder.remove.accesskey                         "R">
+
+<!ENTITY reminder.reminderDetails.label                    "Detalios del memento">
+<!ENTITY reminder.action.label                             "Elige un action del memento">
+
+<!ENTITY reminder.action.alert.label                       "Monstrar un alerta">
+<!ENTITY reminder.action.email.label                       "Inviar un email">
+
+<!ENTITY alarm.units.minutes                               "minutas" >
+<!ENTITY alarm.units.hours                                 "horas" >
+<!ENTITY alarm.units.days                                  "dies" >

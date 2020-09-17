@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "คุณสมบัติ">
+
+<!ENTITY generalInfo.label                       "ข้อมูลทั่วไป">
+<!ENTITY folderCharsetFallback2.label            "รหัสอักขระตัวทางเลือก:">
+<!ENTITY folderCharsetFallback2.accesskey        "ร">
+<!ENTITY folderCharsetEnforce2.label             "ใช้รหัสอักขระกับข้อความทั้งหมดในโฟลเดอร์ (แต่ละการตั้งค่ารหัสอักขระเนื้อหาข้อความและการตรวจจับอัตโนมัติจะถูกเพิกเฉย)">
+<!ENTITY folderCharsetEnforce2.accesskey         "ช">
+<!ENTITY folderRebuildSummaryFileTip2.label      "สร้างดัชนีไฟล์ข้อมูลสรุปใหม่">
+<!ENTITY folderRebuildSummaryFile2.label         "ซ่อมแซมโฟลเดอร์">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "ซ">
+<!ENTITY folderRebuildSummaryFile.explanation    "บางครั้งไฟล์ดัชนีโฟลเดอร์ (.msf) อาจเสียหาย ส่งผลให้ข้อความอาจหายไปหรือข้อความที่ถูกลบแสดงขึ้น การซ่อมแซมโฟลเดอร์อาจซ่อมแซมปัญหาเหล่านี้ได้">
+<!ENTITY folderIncludeInGlobalSearch.label       "รวมข้อความในโฟลเดอร์นี้ในผลการค้นหาส่วนกลาง">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "ว">
+
+<!ENTITY retention.label "นโยบายการเก็บข้อมูล">
+<!ENTITY retentionUseAccount.label  "ใช้การตั้งค่าบัญชีของฉัน">
+<!ENTITY retentionUseAccount.accesskey "ใ">
+<!ENTITY daysOld.label "วัน">
+<!ENTITY message.label "ข้อความ">
+<!ENTITY retentionCleanup.label "เพื่อกู้คืนเนื้อที่ดิสก์ สามารถลบข้อความเก่าอย่างถาวรได้">
+<!ENTITY retentionCleanupImap.label "เพื่อกู้คืนเนื้อที่ดิสก์ สามารถลบข้อความเก่าอย่างถาวรได้ทั้งสำเนาภายในและต้นฉบับที่อยู่บนเซิร์ฟเวอร์ระยะไกล">
+<!ENTITY retentionCleanupPop.label "เพื่อกู้คืนเนื้อที่ดิสก์ สามารถลบข้อความเก่าอย่างถาวรได้รวมถึงต้นฉบับที่อยู่บนเซิร์ฟเวอร์ระยะไกล">
+<!ENTITY retentionDeleteMsg.label "ลบข้อความที่เก่ากว่า">
+<!ENTITY retentionDeleteMsg.accesskey "ล">
+<!ENTITY retentionKeepAll.label "ไม่ต้องลบข้อความใด ๆ">
+<!ENTITY retentionKeepAll.accesskey "ม">
+<!ENTITY retentionKeepRecent.label "ลบทั้งหมดยกเว้นรายการล่าสุด">
+<!ENTITY retentionKeepRecent.accesskey "บ">
+<!ENTITY retentionApplyToFlagged.label "เก็บข้อความที่ติดดาวไว้เสมอ">
+<!ENTITY retentionApplyToFlagged.accesskey "ก">
+
+<!ENTITY folderSynchronizationTab.label          "การประสานข้อมูล">
+<!ENTITY folderCheckForNewMessages2.label         "เมื่อได้รับข้อความใหม่สำหรับบัญชีนี้ ให้ตรวจสอบโฟลเดอร์นี้เสมอ">
+<!ENTITY folderCheckForNewMessages2.accesskey     "เ">
+
+<!ENTITY offlineFolder.check.label               "เลือกโฟลเดอร์นี้สำหรับการใช้งานออฟไลน์">
+<!ENTITY offlineFolder.check.accesskey           "โ">
+<!ENTITY offlineFolder.button.label              "ดาวน์โหลดเดี๋ยวนี้">
+<!ENTITY offlineFolder.button.accesskey          "ด">
+
+<!ENTITY selectofflineNewsgroup.check.label      "เลือกกลุ่มข่าวนี้สำหรับการใช้งานออฟไลน์">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "ข">
+<!ENTITY offlineNewsgroup.button.label           "ดาวน์โหลดเดี๋ยวนี้">
+<!ENTITY offlineNewsgroup.button.accesskey       "ด">
+
+<!ENTITY folderProps.name.label                  "ชื่อ:">
+<!ENTITY folderProps.name.accesskey              "ช">
+<!ENTITY folderProps.color.label                 "สีไอคอน:">
+<!ENTITY folderProps.color.accesskey             "อ">
+<!ENTITY folderProps.reset.tooltip               "เรียกคืนสีเริ่มต้น">
+<!ENTITY folderProps.location.label              "ตำแหน่งที่ตั้ง:">
+<!ENTITY folderProps.location.accesskey          "ต">
+
+<!ENTITY folderSharingTab.label                  "การแบ่งปัน">
+<!ENTITY privileges.button.label                 "สิทธิ์…">
+<!ENTITY privileges.button.accesskey             "ส">
+<!ENTITY permissionsDesc.label                   "คุณมีสิทธิอนุญาตดังต่อไปนี้:">
+<!ENTITY folderOtherUsers.label                  "คนอื่น ๆ ที่มีสิทธิ์เข้าถึงโฟลเดอร์นี้:">
+<!ENTITY folderType.label                        "ชนิดโฟลเดอร์:">
+
+<!ENTITY folderQuotaTab.label                    "โควตา">
+<!ENTITY folderQuotaUsage.label                  "การใช้งาน:">
+<!ENTITY folderQuotaStatus.label                 "สถานะ:">
+
+<!ENTITY numberOfMessages.label                  "จำนวนข้อความ:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "ไม่ทราบ">
+<!ENTITY sizeOnDisk.label                        "ขนาดบนดิสก์:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "ไม่ทราบ">

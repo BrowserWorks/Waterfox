@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "လုံခြုံစွာ ဝဘ်ဆိုက်ကြည့်ရှုခြင်း">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ ခြေရာခံ ကာကွယ်မှု စနစ်">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "သင်သည် သီးသန့်ကြည့်ရှုခြင်းတွင် ရှိမနေပါ">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName;သည် သင့်လှုပ်ရှားမှုကို ခြေရာခံနိုင်သည်ဟု ထင်ရသော ဝဘ်စာမျက်နှာများ၏ အစိတ်အပိုင်းများကို တားဆီးထားသည်။">
+<!ENTITY privatebrowsingpage.description.privateDetails "ကျွန်ုပ်တို့သည် မည်သည့်မှတ်တမ်းမျှ မှတ်ထားမည် မဟုတ်သော်လည်း ဆွဲယူထားသည့်ဖိုင်များနှင့် စာမှတ်အသစ်များကို သင့်ကိရိယာထဲတွင် သိမ်းဆည်းထားပါမည်။">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "သီးသန့်ကြည့်ရှုနေစဉ်အတွင်း ကျွန်ုပ်တို့သည် မည်သည့်ကြည့်ရှုမှုမှတ်တမ်း သို့မဟုတ် ယာယီအချက်အလက်များကို မှတ်ထားမည်မဟုတ်ပါ။ အသစ်မှတ်ထားသည့် စာမှတ်များနှင့် ဆွဲယူထားသည့် ဖိုင်များသည် သင့်ကိရိယာထဲရှိ သိမ်းဆည်းထားပါမည်။">
+
+<!ENTITY privatebrowsingpage.link.private "ဆက်လက်လေ့လာလိုပါသလား?">
+<!ENTITY privatebrowsingpage.link.normal "သီးသန့် တပ်ဗ်တစ်ခု ဖွင့်ရန်">

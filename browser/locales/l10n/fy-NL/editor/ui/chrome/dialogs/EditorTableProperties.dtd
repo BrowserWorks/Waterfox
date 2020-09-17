@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Tabeleigenskippen">
+<!ENTITY applyButton.label                "Tapasse">
+<!ENTITY applyButton.accesskey            "T">
+<!ENTITY closeButton.label                "Slute">
+<!ENTITY tableTab.label                   "Tabel">
+<!ENTITY cellTab.label                    "Sellen">
+<!ENTITY tableRows.label                  "Rigen:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Kolommen:">
+<!ENTITY tableColumns.accessKey           "K">
+<!ENTITY tableHeight.label                "Hichte:">
+<!ENTITY tableHeight.accessKey            "H">
+<!ENTITY tableWidth.label                 "Breedte:">
+<!ENTITY tableWidth.accessKey             "B">
+<!ENTITY tableBorderSpacing.label         "Rânen en marzjes">
+<!ENTITY tableBorderWidth.label           "Râne:">
+<!ENTITY tableBorderWidth.accessKey       "n">
+<!ENTITY tableSpacing.label               "Marzjes:">
+<!ENTITY tableSpacing.accessKey           "M">
+<!ENTITY tablePadding.label               "Opfolling:">
+<!ENTITY tablePadding.accessKey           "p">
+<!ENTITY tablePxBetwCells.label           "piksels tusken sellen">
+<!ENTITY tablePxBetwBrdrCellContent.label "piksels tusken selrâne en ynhâld">
+<!ENTITY tableAlignment.label             "Rjochtsjen Tabel:">
+<!ENTITY tableAlignment.accessKey         "j">
+<!ENTITY tableCaption.label               "Byskrift:">
+<!ENTITY tableCaption.accessKey           "i">
+<!ENTITY tableCaptionAbove.label          "Boppe de tabel">
+<!ENTITY tableCaptionBelow.label          "Under de tabel">
+<!ENTITY tableCaptionLeft.label           "Lofts fan de tabel">
+<!ENTITY tableCaptionRight.label          "Rochts fan de tabel">
+<!ENTITY tableCaptionNone.label           "Gjin">
+<!ENTITY tableInheritColor.label           "(Sidekleur trochskine litte)">
+
+<!ENTITY cellSelection.label              "Seleksje">
+<!ENTITY cellSelectCell.label             "Sel">
+<!ENTITY cellSelectRow.label              "Rige">
+<!ENTITY cellSelectColumn.label           "Kolom">
+<!ENTITY cellSelectNext.label             "Folgjende">
+<!ENTITY cellSelectNext.accessKey         "F">
+<!ENTITY cellSelectPrevious.label         "Foarige">
+<!ENTITY cellSelectPrevious.accessKey     "o">
+<!ENTITY applyBeforeChange.label          "Dizze wizigingen wurde tapast foardat de seleksje wizige wurdt.">
+<!ENTITY cellContentAlignment.label       "Ynhâld rjochtsje">
+<!ENTITY cellHorizontal.label             "Horizontaal:">
+<!ENTITY cellHorizontal.accessKey         "z">
+<!ENTITY cellVertical.label               "Fertikaal:">
+<!ENTITY cellVertical.accessKey           "e">
+<!ENTITY cellStyle.label                  "Selstyl:">
+<!ENTITY cellStyle.accessKey              "s">
+<!ENTITY cellNormal.label                 "Normaal">
+<!ENTITY cellHeader.label                 "Kop">
+<!ENTITY cellTextWrap.label               "Rjochtsjen tekst:">
+<!ENTITY cellTextWrap.accessKey           "k">
+<!ENTITY cellWrap.label                   "Rjochtsje">
+<!ENTITY cellNoWrap.label                 "Net rjochtsje">
+<!ENTITY cellAlignTop.label               "Boppe">
+<!ENTITY cellAlignMiddle.label            "Sintrearre">
+<!ENTITY cellAlignBottom.label            "Under">
+<!ENTITY cellAlignJustify.label           "Utfolje">
+<!ENTITY cellInheritColor.label           "(Tabelkleur trochskine litte)">
+<!ENTITY cellUseCheckboxHelp.label        "Brûk de seleksjefekjes om te bepalen hokker eigenskippen tapast wurde op alle selektearre sellen">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Grutte">
+<!ENTITY pixels.label                     "piksels">
+<!ENTITY backgroundColor.label            "Eftergrûnkleur:">
+<!ENTITY backgroundColor.accessKey        "E">
+<!ENTITY AlignLeft.label                  "Lofts">
+<!ENTITY AlignCenter.label                "Sintrearre">
+<!ENTITY AlignRight.label                 "Rjochts">

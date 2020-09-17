@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Postavke tabele">
+<!ENTITY applyButton.label                "Primijeni">
+<!ENTITY applyButton.accesskey            "P">
+<!ENTITY closeButton.label                "Zatvori">
+<!ENTITY tableTab.label                   "Tabela">
+<!ENTITY cellTab.label                    "Ćelije">
+<!ENTITY tableRows.label                  "Redovi:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Kolone:">
+<!ENTITY tableColumns.accessKey           "K">
+<!ENTITY tableHeight.label                "Visina:">
+<!ENTITY tableHeight.accessKey            "V">
+<!ENTITY tableWidth.label                 "Širina:">
+<!ENTITY tableWidth.accessKey             "Š">
+<!ENTITY tableBorderSpacing.label         "Okviri i razmaci">
+<!ENTITY tableBorderWidth.label           "Okvir:">
+<!ENTITY tableBorderWidth.accessKey       "k">
+<!ENTITY tableSpacing.label               "Razmak:">
+<!ENTITY tableSpacing.accessKey           "R">
+<!ENTITY tablePadding.label               "Padding:">
+<!ENTITY tablePadding.accessKey           "P">
+<!ENTITY tablePxBetwCells.label           "piksela između ćelija">
+<!ENTITY tablePxBetwBrdrCellContent.label "piksela između ivice ćelija i sadržaja">
+<!ENTITY tableAlignment.label             "Poravnanje tabele:">
+<!ENTITY tableAlignment.accessKey         "t">
+<!ENTITY tableCaption.label               "Opis:">
+<!ENTITY tableCaption.accessKey           "O">
+<!ENTITY tableCaptionAbove.label          "Iznad tabele">
+<!ENTITY tableCaptionBelow.label          "Ispod tabele">
+<!ENTITY tableCaptionLeft.label           "Lijevo od tabele">
+<!ENTITY tableCaptionRight.label          "Desno od tabele">
+<!ENTITY tableCaptionNone.label           "Nema">
+<!ENTITY tableInheritColor.label           "(Dozvoli da se boje stranice vide kroz)">
+
+<!ENTITY cellSelection.label              "Izbor">
+<!ENTITY cellSelectCell.label             "Ćelija">
+<!ENTITY cellSelectRow.label              "Red">
+<!ENTITY cellSelectColumn.label           "Kolona">
+<!ENTITY cellSelectNext.label             "Sljedeći">
+<!ENTITY cellSelectNext.accessKey         "S">
+<!ENTITY cellSelectPrevious.label         "Prethodni">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!ENTITY applyBeforeChange.label          "Trenutne promjene će biti primijenjene prije promjene izbora.">
+<!ENTITY cellContentAlignment.label       "Poravnanje sadržaja">
+<!ENTITY cellHorizontal.label             "Horizontalno:">
+<!ENTITY cellHorizontal.accessKey         "z">
+<!ENTITY cellVertical.label               "Vertikalno:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Stil ćelije:">
+<!ENTITY cellStyle.accessKey              "ć">
+<!ENTITY cellNormal.label                 "Normalno">
+<!ENTITY cellHeader.label                 "Zaglavlje">
+<!ENTITY cellTextWrap.label               "Omotavanje teksta:">
+<!ENTITY cellTextWrap.accessKey           "t">
+<!ENTITY cellWrap.label                   "Omotaj">
+<!ENTITY cellNoWrap.label                 "Nemoj omotati">
+<!ENTITY cellAlignTop.label               "Vrh">
+<!ENTITY cellAlignMiddle.label            "Sredina">
+<!ENTITY cellAlignBottom.label            "Dno">
+<!ENTITY cellAlignJustify.label           "Obostrano">
+<!ENTITY cellInheritColor.label           "(Dozvoli da se boje tablice vide kroz)">
+<!ENTITY cellUseCheckboxHelp.label        "Koristite polja za potvrdu da oktrijete koje postavke su primijenjene na izabrane ćelije">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label                       "Veličina">
+<!ENTITY pixels.label                     "piksela">
+<!ENTITY backgroundColor.label            "Boja pozadine:">
+<!ENTITY backgroundColor.accessKey        "B">
+<!ENTITY AlignLeft.label                  "Lijevo">
+<!ENTITY AlignCenter.label                "Sredina">
+<!ENTITY AlignRight.label                 "Desno">

@@ -1,0 +1,12 @@
+<!ENTITY Menubar.tooltip "Галоўнае меню">
+<!ENTITY Toolbar.tooltip "Галоўная прыладапаліца">
+<!ENTITY multiline-expand.tooltip "Пераключэнне ў шматрадковы ўвод (Ctrl+Up)">
+<!ENTITY multiline-contract.tooltip "Пераключэнне ў аднарадковы ўвод  (Ctrl+Down)">
+<!ENTITY multiline-send.tooltip "Даслаць гэты тэкст (Ctrl+Увод)">
+<!ENTITY server-nick.tooltip "Змяніць мянушку або прызначыць стан знікнення. Каб вярнуцца ў скрынку ўводу, націсніце Выхад.">
+<!ENTITY Underline.label "Падкрэслены">
+<!ENTITY Bold.label "Выразны">
+<!ENTITY Reverse.label "Перакуліць відэя">
+<!ENTITY Normal.label "Звычайны">
+<!ENTITY Color.label "Колер">
+<!ENTITY ForeBack.label "xx=Наперад yy=Назад">

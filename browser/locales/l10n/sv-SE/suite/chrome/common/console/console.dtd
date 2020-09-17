@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!ENTITY errorConsole.title "Felkonsol">
+
+<!ENTITY errFile.label   "Källkodsfil:">
+<!ENTITY errLine.label   "Rad:">
+<!ENTITY errColumn.label "Kolumn:">
+
+<!ENTITY all.label          "Alla">
+<!ENTITY all.accesskey      "A">
+<!ENTITY errors.label       "Fel">
+<!ENTITY errors.accesskey   "F">
+<!ENTITY warnings.label     "Varningar">
+<!ENTITY warnings.accesskey "V">
+<!ENTITY messages.label     "Meddelanden">
+<!ENTITY messages.accesskey "M">
+<!ENTITY clear.label        "Rensa">
+<!ENTITY clear.accesskey    "R">
+<!ENTITY codeEval.label     "Kod:">
+<!ENTITY codeEval.accesskey "K">
+<!ENTITY evaluate.label     "Evaluera">
+<!ENTITY evaluate.accesskey "E">
+<!ENTITY filter2.label      "Filter:">
+<!ENTITY filter2.accesskey  "t">
+
+<!ENTITY copyCmd.label       "Kopiera">  
+<!ENTITY copyCmd.accesskey   "o"> 
+<!ENTITY copyCmd.commandkey  "C"> 
+<!ENTITY sortFirst.label     "Ordna första > sista">
+<!ENTITY sortFirst.accesskey "f">
+<!ENTITY sortLast.label      "Ordna sista > första">
+<!ENTITY sortLast.accesskey  "s">
+<!ENTITY closeCmd.commandkey "w">  
+<!ENTITY focus1.commandkey   "l">  
+<!ENTITY focus2.commandkey   "d">  
+
+<!ENTITY menuBar.tooltip      "Menyfält">
+<!ENTITY modeToolbar.tooltip  "Verktygsfält för upplysningar">
+<!ENTITY entryToolbar.tooltip "Verktygsfält för skripttolken">
+<!ENTITY toolbarsCmd.label "Visa/Dölj">
+<!ENTITY toolbarsCmd.accesskey "i">
+<!ENTITY toolbarMode.label "Upplysningar">
+<!ENTITY toolbarMode.accesskey "U">
+<!ENTITY toolbarEval.label "Skripttolken">
+<!ENTITY toolbarEval.accesskey "S">

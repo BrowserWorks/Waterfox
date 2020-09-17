@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Dataju wócyniś…">
+<!ENTITY openFileCmd.accesskey "c">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Webadresu wócyniś…">
+<!ENTITY openRemoteCmd.accesskey "a">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Nejnowše boki">
+<!ENTITY fileRecentMenu.accesskey "N">
+<!ENTITY saveCmd.label "Składowaś">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Składowaś ako…">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsChangeEncodingCmd2.label "Tekstowe koděrowanje składowaś a změniś">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "e">
+<!ENTITY publishCmd.label "Wózjawiś">
+<!ENTITY publishCmd.accesskey "z">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Wózjawiś ako…">
+<!ENTITY publishAsCmd.accesskey "w">
+<!ENTITY fileRevert.label "Anulěrowaś">
+<!ENTITY fileRevert.accesskey "l">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Nastajenja za wózjawjenje sedłow…">
+<!ENTITY publishSettings.accesskey "s">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nowy">
+<!ENTITY newToolbarCmd.tooltip "Nowy editorowy bok napóraś">
+<!ENTITY openToolbarCmd.label "Wócyniś">
+<!ENTITY openToolbarCmd.tooltip "Lokalnu dataju wócyniś">
+<!ENTITY saveToolbarCmd.tooltip "Dataju do lokalnego městna składowaś">
+<!ENTITY publishToolbarCmd.tooltip "Dataju do webadrese nagraś">
+<!ENTITY printToolbarCmd.label "Śišćaś">
+<!ENTITY printToolbarCmd.tooltip "Toś ten bok śišćaś">

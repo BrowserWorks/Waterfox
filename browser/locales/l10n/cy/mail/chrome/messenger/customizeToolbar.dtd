@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Cyfaddasu'r Bar Offer">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Gallwch ychwanegu neu dynnu eitemau drwy lusgo i neu oddi wrth y barau offer.">
+<!ENTITY show.label               "Dangos:">
+<!ENTITY iconsAndText.label       "Eiconau a Thestun">
+<!ENTITY icons.label              "Eiconau">
+<!ENTITY text.label               "Testun">
+<!ENTITY iconsBesideText.label    "Eiconau gerllaw Testun">
+<!ENTITY useSmallIcons.label      "Defnyddio Eiconau Bach">
+<!ENTITY restoreDefaultSet.label  "Adfer y Set Ragosodedig">
+<!ENTITY showTitlebar2.label      "Bar Teitl">
+<!ENTITY extraDragSpace2.label    "Gofod Llusgo">
+<!ENTITY saveChanges.label        "Gorffen">
+<!ENTITY undoChanges.label        "Dadwneud Newidiadau">

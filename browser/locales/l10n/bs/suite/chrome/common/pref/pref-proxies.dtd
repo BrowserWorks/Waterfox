@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Proxy serveri">
+<!ENTITY  pref.proxies.desc             "Proxy je mreža servisa koja može filtrirati i ubrzati vašu internet vezu.">
+<!ENTITY  proxyTitle.label              "Konfigurišite Proxy za pristup internetu">
+<!ENTITY  directTypeRadio.label         "Direktna veza sa internetom">
+<!ENTITY  systemTypeRadio.label         "Koristi sistemske proxy postavke">
+<!ENTITY  manualTypeRadio.label         "Ručne proxy postavke:">
+<!ENTITY  wpadTypeRadio.label           "Automatski otkrij proxy konfiguraciju">
+<!ENTITY  autoTypeRadio.label           "URL za automatsko konfigurisanje proxyja:">
+<!ENTITY  reload.label                  "Učitaj ponovo">
+<!ENTITY  http.label                    "Proxy:">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  advanced.label                "Napredno…">
+<!ENTITY  noproxy.label                 "Nema proxyja za:">
+<!ENTITY  noproxyExplain.label          "Primjer: .mozilla.org, .net.nz, 192.168.1.0/24">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Sohbet Hesabı Sihirbazı">
+
+<!ENTITY accountProtocolTitle.label   "Sohbet ağı">
+<!ENTITY accountProtocolInfo.label    "Lütfen sohbet hesabınızın ağını seçin.">
+<!ENTITY accountProtocolField.label   "Ağ:">
+<!ENTITY accountProtocolGetMore.label "Daha fazlasını edin…">
+
+<!ENTITY accountUsernameTitle.label   "Kullanıcı adı">
+<!ENTITY accountUsernameDuplicate.label "Bu hesap zaten yapılandırılmış!">
+
+<!ENTITY accountPasswordTitle.label   "Parola">
+<!ENTITY accountPasswordInfo.label    "Lütfen aşağıdaki kutuya parolanızı girin.">
+<!ENTITY accountPasswordField.label   "Parola:">
+<!ENTITY accountPasswordManager.label "Buraya girdiğiniz parola, Parola Yöneticisi'nde depolanacaktır. Bu hesaba her bağlandığınızda parolanızın sorulmasını istiyorsanız bu kutuyu boş bırakın.">
+
+<!ENTITY accountAdvancedTitle.label   "Gelişmiş Seçenekler">
+<!ENTITY accountAdvancedInfo.label    "İsterseniz bu adımı geçebilirsiniz.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Yeni posta gelince haber ver">
+<!ENTITY accountAliasGroupbox.caption "Yerel takma ad">
+<!ENTITY accountAliasField.label      "Takma ad:">
+<!ENTITY accountAliasInfo.label       "Bu, yalnızca siz konuşurken görüşmeleriniz sırasında görünecektir. Karşı taraf görmeyecektir.">
+<!ENTITY accountProxySettings.caption "Vekil Sunucu Ayarları">
+<!ENTITY accountProxySettings.change.label     "Değiştir…">
+<!ENTITY accountProxySettings.change.accessKey "D">
+
+<!ENTITY accountSummaryTitle.label   "Özet">
+<!ENTITY accountSummaryInfo.label    "Girdiğiniz bilgilerin özeti aşağıda görüntülenmektedir. Lütfen hesabınızı oluşturmadan önce kontrol edin.">
+<!ENTITY accountSummary.connectNow.label "Bu hesabı şimdi bağla.">

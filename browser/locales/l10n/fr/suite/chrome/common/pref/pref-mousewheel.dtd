@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "Molette de la souris">
+<!ENTITY mouseWheelPanel.label           "Spécifier le comportement de la molette en combinaison avec cette touche de modification : ">
+<!ENTITY usingJustTheWheel.label         "aucune touche de modification">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Option">
+<!ENTITY usingWheelAndCtrl.label2        "Ctrl">
+<!ENTITY usingWheelAndShft.label2        "Maj">
+<!ENTITY mouseWheelGroup.label           "Défilement vertical">
+<!ENTITY mouseWheelHorizGroup.label      "Défilement horizontal">
+<!ENTITY sameAsVertical.label            "Identique au défilement vertical">
+<!ENTITY sameAsVertical.accesskey        "v">
+<!ENTITY doNothing.label                 "Ne rien faire">
+<!ENTITY doNothing.accesskey             "N">
+<!ENTITY doNothingHoriz.accesskey        "r">
+<!ENTITY scrollDocument.label            "Faire défiler le document">
+<!ENTITY scrollDocument.accesskey        "F">
+<!ENTITY scrollDocumentHoriz.accesskey   "c">
+<!ENTITY history.label                   "Avancer ou reculer dans l’historique">
+<!ENTITY history.accesskey               "A">
+<!ENTITY historyHoriz.accesskey          "h">
+<!ENTITY zoom.label                      "Zoomer">
+<!ENTITY zoom.accesskey                  "Z">
+<!ENTITY zoomHoriz.accesskey             "o">
+<!ENTITY wheelSpeed.label                "Vitesse de la molette :">
+<!ENTITY wheelSpeed.accesskey            "t">
+<!ENTITY wheelSpeedHoriz.accesskey       "m">
+<!ENTITY reverseDirection.label          "Inverser la direction">
+<!ENTITY reverseDirection.accesskey      "I">
+<!ENTITY reverseDirectionHoriz.accesskey "e">

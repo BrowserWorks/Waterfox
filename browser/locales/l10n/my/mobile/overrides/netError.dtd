@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "စာမျက်နှာ ဖွင့်လှစ်မှု အမှား">
+<!ENTITY retry.label "ထပ်ကြိုးစားပါ">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "ချိတ်ဆက်ဖို့ မအောင်မြင်ဘူး">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "ဒီလိပ်စာကို တားမြစ်ထားသည်">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "ဆာဗာကို မတွေ့ပါ">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>စာရိုက်မှားခြင်းအတွက် လိပ်စာကို စစ်ဆေးပါ။ အောက်ပါပုံစံအတိုင်း ဖြစ်နိုင်သည်။ <strong>www</strong>.example.com ကို ရိုက်ရမည့်အစား<strong>ww</strong>.example.com  ကဲ့သို့ ရိုက်ထားခြင်း</li><div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Search</button> </div> <li>အကယ်၍ မည်သည့်စာမျက်နှာမျှ မဖော်ပြနိုင်လျှင် သင့်ကိရိယာ၏ data သို့မဟုတ် Wi-Fi ချိတ်ဆက်မှုကို စစ်ဆေးပါ။ <button id='wifi'>Wi-Fi ကို ဖွင့်ရန်</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "ဖိုင် မတွေ့ရဘူး">
+<!ENTITY fileNotFound.longDesc "<ul> <li>ဖိုင်နာမည်အား အကြီးစာလုံးပေးထားမိလားသို့အခြားပြဿနာရှီလားစစ်ပါ</li> <li>ဖိုင်အားဖျက်လိုက် သို့နာမည်ပြောင်းလိုက်လားစစ်ပါ </li> </ul>">
+
+<!ENTITY fileAccessDenied.title "ဖိုင်အသုံးပြုခြင်းကို တားမြစ်ထားသည်">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>၎င်းကို ဖျက်ထားခြင်း၊ ရွှေ့ထားခြင်း သို့မဟုတ် ဖိုင်အသုံးပြုမှုဆိုင်ရာမူဝါဒများက အသုံးမပြုနိုင်စေရန် တားမြစ်နေခြင်း ဖြစ်နိုင်ပါသည်။</li> </ul>">
+
+<!ENTITY generic.title "တောင်းဆိုချက်ကို အပြီးမသတ်နိုင်ဘူး">
+<!ENTITY generic.longDesc "<p>&brandShortName; can’t load this page for some reason.</p>">
+
+<!ENTITY malformedURI.title "လိပ်စာသည် ပုံစံမှားယွင်းနေသည်">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>လိပ်စာများကို ထုံးစံအားဖြင့် ယခုလိုရေးကြသည် <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>ရှာရန်</button> </div> <li>ရှေ့ယိမ်းမျဉ်းစောင်းကို အသုံးပြုထားခြင်းရှိ၊မရှိ စစ်ဆေးပါ (i.e. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "ချိတ်ဆက်မှု ပြတ်တောက်သွားသည်">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "ဆွဲယူရန် ရက်လွန်စာရွက်စာတမ်း">
+<!ENTITY notCached.longDesc "<p>တောင်းဆိုထားသောစာတမ်းသည် &brandShortName;၏ခေတ္တမှတ်ဉာဏ်ထဲတွင် မရှိတော့ပါ။</p><ul><li>လုံခြုံရေးကာကွယ်မှုအရ &brandShortName; သည် အချို့သောစာတမ်းများကိုသိမ်းထားလေ့မရှိပါ။</li><li>ဝဘ်ဆိုဒ်မှပြန်လည်တောင်းဆိုရန်အတွက် နောက်ထပ် ကိုနှိပ်ပါ။</li></ul>">
+
+<!ENTITY netOffline.title "ချိတ်ဆက်မဲ့ စနစ်">
+
+<!ENTITY contentEncodingError.title "အကြောင်းအရာ စာစီစနစ် မှားယွင်းမှု">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>ကျေးဇူးပြုပြီး ဝဘ်ဆိုဒ်ပိုင်ရှင်အား ဒီပြသာနာကို အကြောင်းကြားရန် ဆက်သွယ်ပါ။</li>  </ul>">
+
+<!ENTITY unsafeContentType.title "အန္တရာယ်မကင်းတဲ့ ဖိုင်အမျိုးအစား">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>ကျေးဇူးပြုပြီး ဝတ်ဆိုဒ်ပိုင်ရှင်များအား ဒီပြသာနာကို အကြောင်းကြားရန် ဆက်သွယ်ပါ။</li> </ul>">
+
+<!ENTITY netReset.title "ဆက်သွယ်မှုကို ပြန်လည်သတ်မှတ်သည်">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "ဆက်သွယ်မှုကို သတ်မှတ်ချိန်အတွင်း မပြုလုပ်နိုင်ပါ">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "ရေးထားသည့်လိပ်စာသည် ပုံစံမှားနေသည်">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>ဤလိပ်စာအားဖွင့်ရန် အခြားဆော့ဝဲလိုလိမ့်မည်ဖြစ်သည်။</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "ကြားခံ ဆာဗာက ချိတ်ဆက်မှုကို ငြင်းပယ်တယ်">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>ပယောက်ဆီအပြင်အဆင်ကို မှန်မမှန်စစ်ပါ။</li> <li>ကွန်ယက်ချိတ်ဆက်ထားသူအား ဆက်သွယ်ပြီး ပယောက်ဆီဆာဗာအလုပ် ဆောင်ရွက်ခြင်းရှိမရှိ စစ်ဆေးပါ</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "ကြားခံ ဆာဗာ မတွေ့ရဘူး။">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>ကြားခံဆောင်ရွက်မှု အပြင်အဆင်ကို မှန်/မမှန် စစ်ဆေးပါ။ </li> <li>သင့်ကိရိယာတွင် data သို့မဟုတ် Wi-Fi ချိတ်ဆက်မှု ဆောင်ရွက်နိုင်ခြင်း ရှိ/မရှိ စစ်ဆေးပါ။<button id='wifi'>Wi-Fi ကို ဖွင့်ရန်</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "ဒီစာမျက်နှာသည် ကောင်းမွန်စွာ လမ်းညွှန်မပေးပါ">
+<!ENTITY redirectLoop.longDesc "<ul> <li>ယခုပြဿနာမျိုးသည် ကွတ်ကီးအားပိတ်ထားလိုက်လျှင် ဖြစ် တတ်သည် </li> </ul>">
+
+<!ENTITY unknownSocketType.title "မမှန်ကန်တဲ့ တုံ့ပြန်ချက်">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>သင်၏ ကွန်ပျူတာထဲတွင် ပါဆင်နယ် လုံခြုံရေးမန်နေဂျာ တပ်ထားလား ကြည့်ပါ</li> <li>ဒါဟာ ဆာဗာထဲတွင် အပြင်အဆင်မှားယွင်းနေခြင်းကြောင့်ဖြစ်လိမ့်မည်</li> </ul>">
+
+<!ENTITY nssFailure2.title "လုံခြုံတဲ့ ချိတ်ဆက်မှု ပျက်သွားတယ်">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li> သင်ကြည့်ရန်ကြိုးစားနေသော စာမျက်နှာကို မဖော်ပြနိုင်ပါ။ အဘယ့်ကြောင့်ဆိုသော် လက်ခံရရှိထားသော အချက်အလက်၏ ထောက်ခံချက်ကို အတည်မပြုနိုင်သောကြောင့် ဖြစ်သည်။</li> <li>ဒီပြဿနာကို အသိပေးရန် ကျေးဇူးပြု၍ ဝဘ်ဆိုဒ်ပိုင်ရှင်ထံသို့ ဆက်သွယ်ပါ။</li> </ul>">
+
+<!ENTITY nssBadCert.title "လုံခြုံတဲ့ ချိတ်ဆက်မှု ပျက်သွားတယ်">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>ဒါဟာ ဆာဗာ၏အပြင်အဆင် ပြဿနာ သို့မဟုတ် တစုံတယောက်က ဆာဗာကို အယောင်ဆောင်ဖို့ ကြိုးစားတာ​ ဖြစ်နိုင်သည်။ </li> <li>အရင်တုန်းက ဒီဆာဗာကို အောင်အောင် မြင်မြင် သင်ချိတ်ဆက်ခဲ့ဖူးလျှင်၊ ယာယီအမှား ဖြစ်နိုင်သည်၊ ထို့ကြောင့် နောင်တွင် ထပ်မံဆောင်ရွက်ကြည့်ပါ။</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>ယခုဝက်ဆိုက်သည် လောလောဆယ် အလုပ်မလုပ် သို့ အရမ်းအလုပ်များနေခြင်း ကြောင့်ဖြစ်လိမ့်မည်။</li> <li>ခဏကြာလျှင် ပြန်ကြိုးစားပါ။ အလုပ်မလုပ်သေးပါက ဒေတာသို့ ဝိုင်ဖိုင် ချိတ်ဆက်မှုကို စစ်ဆေးပါ<button id='wifi'>ဝိုင်ဖိုင်ဖွင့်မည်</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "Content Security Policy အရပိတ်ပင်ထားသည်။">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; သည်ယခု၀တ်ဆိုက်အားပါ၀င်နေသောအရာတစ်ခု၏လုံခြုံရေး ကြောင့်ရယူခြင်းကိုခွင့်မပြုပါ.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "နှောက်ယှက်ခံရသောပြသာနာ">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>အချက်အလက်ကူးယူပြောင်းခြင်းပြသာနာကြောင့်၀တ်ဆိုက်အားမပြသနိုင်ပါ။</p><ul><li>၀တ်ဆိုက်ပိုင်ရှင်များဤပြသာနာအားအသိပေးရန်ကျေးဇူးပြုပြီးဆက်သွယ်ပေးပါ။</li></ul>">
+
+<!ENTITY securityOverride.linkText "သို့မဟုတ်ပါက သင်ခြွင်းချက်တစ်ခုထားနိုင်သည်">
+<!ENTITY securityOverride.getMeOutOfHereButton "ဒီနေရာမှ ကျွန်ပ်ကကို ဆွဲထုတ်ပါ။">
+<!ENTITY securityOverride.exceptionButtonLabel "ချွင်းချက် ထည့်သွင်းပါ...">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>You should not add an exception if you are using an internet connection that you do not trust completely or if you are not used to seeing a warning for this server.</p> <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>၀တ်ဆိုက်ပိုင်ရှင်အားဤပြသာနားအားတင်ပြရန်ဆက်သွယ်ပါ</li></ul></p>">
+
+<!ENTITY sslv3Used.title "လုံခြုံစိတ်ချစွာ မချိတ်ဆက်နိုင်ပါ">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Advanced info: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "ချိတ်ဆက်မှုသည် မလုံခြုံပါ">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Advanced info: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "ချိတ်ဆက်မှုသည် မလုံခြုံပါ">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span>သည် အိုဟောင်းပြီး တိုက်ခိုက်ရန်လွယ်ကူသည့် လုံခြုံရေးနည်းပညာကို အသုံးပြုထားသည်။ တိုက်ခိုက်သူသည် သင်လုံခြုံသည်ဟုထင်သည့် အချက်အလက်များကို လွယ်ကူစွာ ဖော်ထုတ်နိုင်ပါလိမ့်မည်။ သင်လာရောက်မလည်ပတ်မီ ဝဘ်ဆိုဒ်စီမံခန့်ခွဲသူသည် ဆာဗာကို အရင်ဆုံး ပြုပြင်ဖြေရှင်းရန် လိုအပ်သည်။</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "ချိတ်ဆက်ခြင်း ပရိုတိုကော ပြသာနာ">
+<!ENTITY networkProtocolError.longDesc "<p>ချိတ်ဆက်မှုပရိုတိုကော တွင် ပြသာနာ တစ်ခုရှိသောကြောင့် ယခု ဝတ်ဘ်စာမျက်နှာအားဖွင့်မရပါ</p><ul><li>ကျေးဇူးပြုပြီး ဆိုက်ထိန်းသိမ်းသူများအား ပြသာနာတင်ပြပေးပါ</li></ul>">

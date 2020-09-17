@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Nori">
+<!ENTITY fromField4.label "Nork">
+<!ENTITY senderField4.label "Bidaltzailea">
+<!ENTITY author.label "Egilea">
+<!ENTITY organizationField4.label "Erakundea">
+<!ENTITY replyToField4.label "Erantzun honi">
+
+<!ENTITY subjectField4.label "Gaia">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Berri-taldeak">
+<!ENTITY followupToField4.label "Jarraipena honi">
+<!ENTITY tagsHdr4.label "Etiketak">
+<!ENTITY dateField4.label "Data">
+<!ENTITY userAgentField4.label "Erabiltzaile-agentea">
+<!ENTITY referencesField4.label "Erreferentziak">
+<!ENTITY messageIdField4.label "Mezu-IDa">
+<!ENTITY inReplyToField4.label "Honi erantzunez">
+<!ENTITY originalWebsite4.label "Webgunea">
+
+<!ENTITY hdrArchiveButton1.label "Artxibatu">
+<!ENTITY hdrArchiveButton1.tooltip "Artxibatu mezu hau">
+<!ENTITY hdrSmartReplyButton1.label "Erantzun bizkorra">
+<!ENTITY hdrReplyButton1.label "Erantzun">
+<!ENTITY hdrReplyButton2.tooltip "Erantzun mezu honen bidaltzaileari">
+<!ENTITY hdrReplyAllButton1.label "Erantzun denei">
+<!ENTITY hdrReplyAllButton1.tooltip "Erantzun bidaltzaileari eta hartzaile guztiei">
+<!ENTITY hdrReplyListButton1.label "Erantzun zerrendari">
+<!ENTITY hdrReplyListButton1.tooltip "Erantzun posta-zerrendari">
+<!ENTITY hdrFollowupButton1.label "Jarraipena">
+<!ENTITY hdrFollowupButton1.tooltip "Bidali jarraipena berri-talde honetara">
+<!ENTITY hdrForwardButton1.label "Birbidali">
+<!ENTITY hdrForwardButton1.tooltip "Birbidali mezua">
+<!ENTITY hdrJunkButton1.label "Zaborra">
+<!ENTITY hdrJunkButton1.tooltip "Markatu mezu hau zabor gisa">
+<!ENTITY hdrTrashButton1.label "Ezabatu">
+<!ENTITY hdrTrashButton1.tooltip "Ezabatu mezua">
+
+<!ENTITY hdrViewToolbarShowFull.label "Erakutsi ikonoak eta testua">
+<!ENTITY hdrViewToolbarShowFull.accesskey "E">
+<!ENTITY hdrViewToolbarShowIcons.label "Erakutsi ikonoak soilik">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "i">
+<!ENTITY hdrViewToolbarShowText.label "Erakutsi testua soilik">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Beti erakutsi 'Erantzun bidaltzaileari'">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "r">
+
+<!ENTITY otherActionsButton2.label "Gehiago">
+<!ENTITY otherActionsButton.tooltip "Ekintza gehiago">
+<!ENTITY otherActionsOpenConversation1.label "Ireki hizketaldian">
+<!ENTITY otherActionsOpenConversation1.accesskey "h">
+<!ENTITY otherActionsOpenInNewWindow1.label "Ireki leiho berrian">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "l">
+<!ENTITY otherActionsOpenInNewTab1.label "Ireki fitxa berri batean">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "t">
+<!ENTITY markAsReadMenuItem1.label "Markatu irakurritako gisa">
+<!ENTITY markAsReadMenuItem1.accesskey "k">
+<!ENTITY markAsUnreadMenuItem1.label "Markatu irakurri gabeko gisa">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "Gorde honela…">
+<!ENTITY saveAsMenuItem1.accesskey "G">
+<!ENTITY viewSourceMenuItem1.label "Ikusi iturburua">
+<!ENTITY viewSourceMenuItem1.accesskey "I">
+<!ENTITY otherActionsPrint1.label "Inprimatu…">
+<!ENTITY otherActionsPrint1.accesskey "p">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Erakutsi eranskinen panela hasieran">
+<!ENTITY startExpandedCmd.accesskey    "E">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Ireki">
+<!ENTITY openAttachmentCmd.accesskey    "I">
+<!ENTITY saveAsAttachmentCmd.label    "Gorde honela…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "a">
+<!ENTITY detachAttachmentCmd.label    "Askatu…">
+<!ENTITY detachAttachmentCmd.accesskey    "s">
+<!ENTITY deleteAttachmentCmd.label    "Ezabatu">
+<!ENTITY deleteAttachmentCmd.accesskey    "z">
+<!ENTITY openAllAttachmentsCmd.label    "Ireki dena…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "I">
+<!ENTITY saveAllAttachmentsCmd.label    "Gorde dena…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "G">
+<!ENTITY detachAllAttachmentsCmd.label    "Askatu dena…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "d">
+<!ENTITY deleteAllAttachmentsCmd.label    "Ezabatu dena…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "E">
+
+<!ENTITY openAttachment.tooltip "Ireki erantsitako fitxategia">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Ireki dagoen karpeta">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "k">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Erakutsi Finder-en">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Gorde">
+<!ENTITY saveAttachmentButton1.tooltip     "Gorde erantsitako fitxategia">
+<!ENTITY saveAllAttachmentsButton1.label   "Gorde dena">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Gorde erantsitako fitxategi guztiak">
+
+<!ENTITY copyLinkCmd.label        "Kopiatu loturaren helbidea">
+<!ENTITY copyLinkCmd.accesskey    "K">
+
+<!ENTITY CopyMessageId.label "Kopiatu mezu-IDa">
+<!ENTITY CopyMessageId.accesskey "K">
+<!ENTITY OpenMessageForMsgId.label "Ireki mezua ID bidez">
+<!ENTITY OpenMessageForMsgId.accesskey "I">
+<!ENTITY OpenBrowserWithMsgId.label "Ireki nabigatzailea mezu-ID honekin">
+<!ENTITY OpenBrowserWithMsgId.accesskey "b">

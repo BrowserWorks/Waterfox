@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "వెతకండి">
+
+<!ENTITY newPref.namePlaceholder       "పేరు">
+
+<!ENTITY newPref.valueBoolean          "బూలియన్">
+<!ENTITY newPref.valueString           "స్ట్రింగ్">
+<!ENTITY newPref.valueInteger          "ఇంటీజర్">
+
+<!ENTITY newPref.stringPlaceholder     "పదబంధం ఇవ్వండి">
+<!ENTITY newPref.numberPlaceholder     "సంఖ్యను ఇవ్వండి">
+
+<!ENTITY newPref.toggleButton          "టాగిల్">
+<!ENTITY newPref.cancelButton          "రద్దుచేయి">
+
+<!ENTITY contextMenu.copyPrefName      "పేరును నకలుతీయి">
+<!ENTITY contextMenu.copyPrefValue     "విలవను  నకలుతీయి">

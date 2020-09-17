@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Tetapan Pelayan Keluar (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Apabila menguruskan identiti, anda boleh guna pelayan dalam senarai dengan memilihnya sebagai Pelayan Keluar (SMTP), atau gunakan pelayan piawai dalam senarai ini dengan memilih &quot;Guna Pelayan Piawai&quot;.">
+
+<!ENTITY smtpListAdd.label  "Tambah…">
+<!ENTITY smtpListAdd.accesskey  "h">
+<!ENTITY smtpListEdit.label "Edit…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "Buang">
+<!ENTITY smtpListDelete.accesskey "g">
+<!ENTITY smtpListSetDefault.label "Tetapkan Piawai">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDetails.label "Butiran pelayan yang dipilih:">
+<!ENTITY serverDescription.label "Keterangan: ">
+<!ENTITY serverName.label "Nama Pelayan: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "Nama Pengguna: ">
+<!ENTITY connectionSecurity.label "Keselamatan Sambungan: ">
+<!ENTITY authMethod.label   "Kaedah pengesahan: ">

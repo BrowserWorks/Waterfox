@@ -1,0 +1,54 @@
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# turcan <nicturcan@gmail.com>
+# Laudatti <Laudatti@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Junk Mail">
+<!ENTITY junkSettings.caption "Global Junk Mail Settings">
+<!ENTITY junkMail.intro "Goto Account Settings to configure account specific junk mail settings.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Când marchez mesaje ca spam:">
+<!ENTITY manualMark.accesskey           "C">
+<!ENTITY manualMarkModeMove.label       "Mută-le în dosarul „Spam” al contului">
+<!ENTITY manualMarkModeMove.accesskey   "M">
+<!ENTITY manualMarkModeDelete.label     "Șterge-le">
+<!ENTITY manualMarkModeDelete.accesskey "t">
+
+<!ENTITY markAsRead.intro               "Mark messages as read:">
+<!ENTITY autoMarkAsRead.label           "When &brandShortName; determines that they are junk">
+<!ENTITY autoMarkAsRead.accesskey       "u">
+<!ENTITY manualMarkAsRead.label         "When I manually mark them as junk">
+<!ENTITY manualMarkAsRead.accesskey     "k">
+
+<!ENTITY enableJunkLogging.label        "Activează jurnalizarea pentru filtrarea de spam">
+<!ENTITY enableJunkLogging.accesskey    "e">
+<!ENTITY openJunkLog.label              "Arată jurnalul">
+<!ENTITY openJunkLog.accesskey          "A">
+<!ENTITY resetTrainingData.label        "Reset training data">
+<!ENTITY resetTrainingData.accesskey    "R">
+
+<!ENTITY pref.suspectMail.caption       "Suspect Mail">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "E-mail Scams">
+<!ENTITY enablePhishingDetector.label     "Tell me if the message I'm reading is a suspected email scam">
+<!ENTITY enablePhishingDetector.accesskey "T">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Anti-Virus">
+<!ENTITY antiVirus.label                  "Allow anti-virus clients to scan incoming messages more easily">
+<!ENTITY antiVirus.accesskey              "A">

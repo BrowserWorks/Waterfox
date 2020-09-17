@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Privata retumo">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ Protekto kontraŭ spurado">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Vi ne estas en privata retumo">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; blokas partojn de paĝoj, kiuj povus spuri vian retumon.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Ni ne memoros la historion, sed elŝutitaj dosieroj kaj novaj legosignoj estos tamen konservitaj en via aparato.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "En privata retumo ni ne gardos ion ajn de via retuma historio aŭ kuketoj. Se vi aldonas legosignojn aŭ elŝutas dosierojn, ili tamen restos en via aparato.">
+
+<!ENTITY privatebrowsingpage.link.private "Ĉu vi volas havi pli da informo?">
+<!ENTITY privatebrowsingpage.link.normal "Malfermi novan privatan langeton">

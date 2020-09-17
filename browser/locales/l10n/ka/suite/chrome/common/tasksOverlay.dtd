@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label "ჩაკეცვა">
+<!ENTITY minimizeWindowCmd.key "ჩ">
+<!ENTITY zoomWindowCmd.label "ზომის შეცვლა">
+<!ENTITY navigatorCmd.label "ბრაუზერი">
+<!ENTITY navigatorCmd.accesskey "ბ">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "შემდგენი">
+<!ENTITY editorCmd.accesskey "c">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "შეცდომის კონსოლი">
+<!ENTITY errorConsoleCmd.accesskey "C">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "ბრაუზერი">
+<!ENTITY taskComposer.tooltip "შემდგენი">
+
+<!ENTITY webDevelopment.label "ვებ პროგრამირება">
+<!ENTITY webDevelopment.accesskey "W">
+
+<!ENTITY windowMenu.label "სარკმელი">
+<!ENTITY windowMenu.accesskey "W">
+
+<!ENTITY tasksMenu.label "ხელსაწყოები">
+<!ENTITY tasksMenu.accesskey "T">
+
+<!ENTITY datamanCmd.label "მონაცემთა მმართველი">
+<!ENTITY datamanCmd.accesskey "D">
+
+<!ENTITY passwordManagerCmd.label "პაროლების მმართველი">
+<!ENTITY passwordManagerCmd.accesskey "P">
+
+<!ENTITY passwordDisplayCmd.label "შენახული პაროლების მართვა">
+<!ENTITY passwordDisplayCmd.accesskey "M">
+
+<!ENTITY passwordExpireCmd.label "გასვლა">
+<!ENTITY passwordExpireCmd.accesskey "l">
+
+<!ENTITY downloadManagerCmd.label "ჩამოტვირთვის მმართველი">
+<!ENTITY downloadManagerCmd.accesskey "n">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "მოდულების მმართველი">
+<!ENTITY addOnsManagerCmd.accesskey "A">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "პროფილის გადართვა…">
+<!ENTITY switchProfileCmd.accesskey "h">
+
+<!ENTITY syncBrand.shortName.label "სინქრონიზაცია">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "სინქრონიზაციის პარამეტრები…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "სინქრონიზაცია">
+<!ENTITY syncSyncNowItem.accesskey "S">

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label "Име: ">
+<!ENTITY directoryName.accesskey "И">
+<!ENTITY directoryHostname.label "Име на домаќин">
+<!ENTITY directoryHostname.accesskey "о">
+<!ENTITY directoryBaseDN.label "Base DN: ">
+<!ENTITY directoryBaseDN.accesskey "b">
+<!ENTITY findButton.label "Пронајди">
+<!ENTITY findButton.accesskey "н">
+<!ENTITY directorySecure.label "Користи безбедна врска (SSL)">
+<!ENTITY directorySecure.accesskey "о">
+<!ENTITY directoryLogin.label "Bind DN: ">
+<!ENTITY directoryLogin.accesskey "i">
+<!ENTITY General.tab "Општо">
+<!ENTITY Offline.tab "Локално">
+<!ENTITY Advanced.tab "Напредно">
+<!ENTITY portNumber.label "Број на порта: ">
+<!ENTITY portNumber.accesskey "п">
+<!ENTITY searchFilter.label "Филтер за пребарување: ">
+<!ENTITY searchFilter.accesskey "л">
+<!ENTITY scope.label "Опфат: ">
+<!ENTITY scope.accesskey "ф">
+<!ENTITY scopeOneLevel.label "Едно ниво">
+<!ENTITY scopeOneLevel.accesskey "н">
+<!ENTITY scopeSubtree.label "Под-дрво">
+<!ENTITY scopeSubtree.accesskey "д">
+<!ENTITY return.label "Не враќај повеќе од">
+<!ENTITY return.accesskey "р">
+<!ENTITY results.label "резултати">
+<!ENTITY offlineText.label "Можете да преземете локална копија на овој директориум, за тој да ви биде достапен кога ќе работите локално.">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth "36em">

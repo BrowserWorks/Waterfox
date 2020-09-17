@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title           "Sprievodca importovaním">
+
+<!ENTITY importAllFrom.label             "Importovať všetky položky z:">
+<!ENTITY importBookmarksFrom.label       "Importovať záložky z:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "Zo súboru">
+<!ENTITY importFromFile.accesskey        "s">
+<!ENTITY importFromNothing.label         "Nič neimportovať">
+<!ENTITY importFromNothing.accesskey     "r">
+
+<!ENTITY importSource.title              "Import nastavení a údajov">
+<!ENTITY importItems.title               "Položky na importovanie">
+<!ENTITY importItems.label               "Vyberte, ktoré položky chcete importovať:">
+
+<!ENTITY selectProfile.title             "Výber profilu">
+<!ENTITY selectProfile.label             "Importovať možno tieto profily:">
+
+<!ENTITY migrating.title                 "Importuje sa…">
+<!ENTITY migrating.label                 "Práve sa importujú tieto položky…">
+
+<!ENTITY done.title                      "Import dokončený">
+<!ENTITY done.label                      "Úspešne boli importované tieto položky:">

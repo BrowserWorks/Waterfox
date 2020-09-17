@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Privénavigatie">
+
+<!ENTITY editPageCmd.label "Pagina bewerken">
+<!ENTITY editPageCmd.accesskey "w">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Navigatiewerkbalk">
+<!ENTITY navbarCmd.accesskey "N">
+<!ENTITY bookmarksToolbarCmd.label     "Bladwijzerwerkbalk">
+<!ENTITY bookmarksToolbarCmd.accesskey "B">
+
+<!ENTITY closeWindow.label "Venster sluiten">
+<!ENTITY closeWindow.accesskey "e">
+
+<!ENTITY minimizeButton.tooltip       "Minimaliseren">
+<!ENTITY restoreButton.tooltip        "Herstellen">
+
+<!ENTITY feedsMenu.label "Abonneren op deze pagina">
+<!ENTITY feedsMenu.accesskey "o">
+
+<!ENTITY menuBar.tooltip                  "Menubalk">
+<!ENTITY bookmarksToolbar.tooltip         "Bladwijzerwerkbalk">
+<!ENTITY navigationToolbar.tooltip        "Navigatiewerkbalk">
+
+<!ENTITY editBookmark.done.label "Gereed">
+<!ENTITY editBookmark.cancel.label "Annuleren">
+<!ENTITY editBookmark.removeBookmark.accessKey "v">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Terug">
+<!ENTITY backButton.tooltip           "Een pagina terug gaan">
+<!ENTITY forwardButton.label          "Vooruit">
+<!ENTITY forwardButton.tooltip        "Een pagina vooruit gaan">
+<!ENTITY reloadButton.label           "Vernieuwen">
+<!ENTITY reloadButton.tooltip         "Huidige pagina vernieuwen">
+<!ENTITY stopButton.label             "Stoppen">
+<!ENTITY stopButton.tooltip           "Het laden van deze pagina stoppen">
+<!ENTITY searchButton.label           "Zoeken">
+<!ENTITY searchButton.tooltip         "Typ een woord in het veld links hiernaast en klik daarna op Zoeken">
+<!ENTITY goButton.label               "Gaan">
+<!ENTITY goButton.tooltip             "Typ een locatie in het veld links hiernaast en klik daarna op Gaan">
+<!ENTITY printButton.label            "Afdrukken">
+<!ENTITY printButton.tooltip          "Deze pagina afdrukken">
+
+<!ENTITY throbber.tooltip             "Naar de &vendorShortName;-startpagina gaan">
+
+<!ENTITY throbber.tooltip2            "Naar de &brandShortName;-startpagina gaan">
+
+<!ENTITY locationBar.tooltip          "Voer een zoekterm, sleutelwoord of webadres in">
+<!ENTITY locationBar.accesskey        "d">
+<!ENTITY locationBar.title            "Locatie">
+<!ENTITY proxyIcon.tooltip            "Sleep dit pictogram om een koppeling naar deze pagina te maken">
+
+<!ENTITY searchItem.title             "Zoeken">
+
+<!ENTITY bookmarksButton.label        "Bladwijzers">
+<!ENTITY bookmarksButton.tooltip      "Bladwijzerlijst">
+<!ENTITY homeButton.label             "Startpagina">
+<!ENTITY bookmarksToolbarItem.label   "Bladwijzerwerkbalkitems">
+<!ENTITY bookmarksToolbarChevron.tooltip "Meer bladwijzers tonen">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Gereed">
+
+<!ENTITY popupIcon.tooltiptext      "Pop-ups van deze website deblokkeren">
+
+<!ENTITY viewSecurityInfo.label      "Beveiligingsinfo bekijken">
+<!ENTITY viewSecurityInfo.accesskey  "i">
+<!ENTITY viewCertificate.label       "Certificaat bekijken">
+<!ENTITY viewCertificate.accesskey   "C">
+<!ENTITY viewCertManager.label       "Certificatenbeheerder openen">
+<!ENTITY viewCertManager.accesskey   "b">
+
+<!ENTITY zoomIn.tooltiptext          "Groter">
+<!ENTITY zoomOut.tooltiptext         "Kleiner">

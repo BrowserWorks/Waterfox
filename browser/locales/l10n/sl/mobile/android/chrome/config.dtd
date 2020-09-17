@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Iskanje">
+
+<!ENTITY newPref.namePlaceholder       "Ime">
+
+<!ENTITY newPref.valueBoolean          "Logična vrednost">
+<!ENTITY newPref.valueString           "Niz">
+<!ENTITY newPref.valueInteger          "Celo število">
+
+<!ENTITY newPref.stringPlaceholder     "Vnesite niz">
+<!ENTITY newPref.numberPlaceholder     "Vnesite število">
+
+<!ENTITY newPref.toggleButton          "Preklopi">
+<!ENTITY newPref.cancelButton          "Prekliči">
+
+<!ENTITY contextMenu.copyPrefName      "Kopiraj ime">
+<!ENTITY contextMenu.copyPrefValue     "Kopiraj vrednost">

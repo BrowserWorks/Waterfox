@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Abunar">
+<!ENTITY subscribeButton.label        "Abunar">
+<!ENTITY subscribeButton.accesskey    "A">
+<!ENTITY unsubscribeButton.label      "Annullar l'abunament">
+<!ENTITY unsubscribeButton.accesskey  "n">
+<!ENTITY newGroupsTab.label           "Novas gruppas da news">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Actualisar">
+<!ENTITY refreshButton.accesskey      "t">
+<!ENTITY stopButton.label             "Fermar">
+<!ENTITY stopButton.accesskey         "F">
+<!ENTITY server.label                 "Conto:">
+<!ENTITY server.accesskey             "C">
+<!ENTITY subscribedHeader.label       "Abunar">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Mussar elements che cuntegnan:">
+<!ENTITY namefield.accesskey          "M">

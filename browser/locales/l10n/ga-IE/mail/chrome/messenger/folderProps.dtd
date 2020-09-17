@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Airíonna">
+
+<!ENTITY generalInfo.label                       "Eolas Ginearálta">
+<!ENTITY folderCharsetFallback2.label            "Ionchódú Cúltaca Téacs:">
+<!ENTITY folderCharsetFallback2.accesskey        "I">
+<!ENTITY folderCharsetEnforce2.label             "Cuir an t-ionchódú i bhfeidhm ar gach teachtaireacht san fhillteán (tabharfar neamhaird ar shocruithe ionchódaithe sna teachtaireachtaí féin agus ar bhrath uathoibríoch)">
+<!ENTITY folderCharsetEnforce2.accesskey         "a">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Atóg an Comhad Achoimre">
+<!ENTITY folderRebuildSummaryFile2.label         "Deisigh an Fillteán">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "D">
+<!ENTITY folderRebuildSummaryFile.explanation    "Uaireanta, déantar dochar don chomhad innéacs (.msf) san fhillteán sa chaoi nach bhfeicfidh tú teachtaireachtaí áirithe agus feicfidh tú cinn eile tar éis dóibh a bheith scriosta.  Is féidir na fadhbanna seo a réiteach tríd an fillteán a dheisiú.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Cuir teachtaireachtaí as an bhfillteán seo san áireamh sa Chuardach Cuimsitheach">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "C">
+
+<!ENTITY retention.label "Polasaí Coinneála">
+<!ENTITY retentionUseAccount.label  "Úsáid socruithe mo chuntais">
+<!ENTITY retentionUseAccount.accesskey "s">
+<!ENTITY daysOld.label "lá d'aois">
+<!ENTITY message.label "teachtaireacht is déanaí">
+<!ENTITY retentionCleanup.label "Chun spás diosca a shaoradh, is féidir seanteachtaireachtaí a scriosadh go buan.">
+<!ENTITY retentionCleanupImap.label "Chun spás diosca a shaoradh, is féidir seanteachtaireachtaí a scriosadh go buan, cóipeanna logánta agus bunchóipeanna ar an gcianfhreastalaí araon.">
+<!ENTITY retentionCleanupPop.label "Chun spás diosca a shaoradh, is féidir seanteachtaireachtaí a scriosadh go buan, na bunchóipeanna ar an gcianfhreastalaí ina measc.">
+<!ENTITY retentionDeleteMsg.label "Scrios teachtaireachtaí níos sine ná">
+<!ENTITY retentionDeleteMsg.accesskey "s">
+<!ENTITY retentionKeepAll.label "Ná scrios teachtaireacht ar bith">
+<!ENTITY retentionKeepAll.accesskey "a">
+<!ENTITY retentionKeepRecent.label "Scrios gach ceann ach an ceann is déanaí">
+<!ENTITY retentionKeepRecent.accesskey "g">
+<!ENTITY retentionApplyToFlagged.label "Coimeád teachtaireachtaí marcáilte i gcónaí">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Sioncronú">
+<!ENTITY folderCheckForNewMessages2.label         "Seiceáil an fillteán seo i gcónaí agus teachtaireachtaí nua á bhfáil don chuntas seo">
+<!ENTITY folderCheckForNewMessages2.accesskey     "c">
+
+<!ENTITY offlineFolder.check.label               "Roghnaigh an fillteán seo le haghaidh úsáide as líne">
+<!ENTITY offlineFolder.check.accesskey           "s">
+<!ENTITY offlineFolder.button.label              "Íoslódáil Anois">
+<!ENTITY offlineFolder.button.accesskey          "s">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Roghnaigh an grúpa nuachta seo le haghaidh úsáide as líne">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Íoslódáil Anois">
+<!ENTITY offlineNewsgroup.button.accesskey       "s">
+
+<!ENTITY folderProps.name.label                  "Ainm:">
+<!ENTITY folderProps.name.accesskey              "n">
+<!ENTITY folderProps.location.label              "Suíomh:">
+<!ENTITY folderProps.location.accesskey          "S">
+
+<!ENTITY folderSharingTab.label                  "Comhroinnt">
+<!ENTITY privileges.button.label                 "Ceadanna…">
+<!ENTITY privileges.button.accesskey             "C">
+<!ENTITY permissionsDesc.label                   "Tá na ceadanna seo a leanas agat:">
+<!ENTITY folderType.label                        "Cineál an Fhillteáin:">
+
+<!ENTITY folderQuotaTab.label                    "Cuóta">
+<!ENTITY folderQuotaUsage.label                  "Úsáid:">
+<!ENTITY folderQuotaStatus.label                 "Stádas:">
+
+<!ENTITY numberOfMessages.label                  "Líon na dteachtaireachtaí:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "anaithnid">
+<!ENTITY sizeOnDisk.label                        "Méid ar an diosca:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "anaithnid">

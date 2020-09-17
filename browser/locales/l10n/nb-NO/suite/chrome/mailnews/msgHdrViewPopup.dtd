@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Legg til i adressebok …">
+<!ENTITY AddToAddressBook.accesskey        "L">
+<!ENTITY EditContact.label                 "Rediger kontakt …">
+<!ENTITY EditContact.accesskey             "R">
+<!ENTITY ViewContact.label                 "Vis kontakt">
+<!ENTITY ViewContact.accesskey             "V">
+<!ENTITY SendMailTo.label                  "Skriv e-post til …">
+<!ENTITY SendMailTo.accesskey              "S">
+<!ENTITY CopyEmailAddress.label            "Kopier e-postadresse">
+<!ENTITY CopyEmailAddress.accesskey        "K">
+<!ENTITY CopyNameAndEmailAddress.label     "Kopier navn og e-postadresse">
+<!ENTITY CopyNameAndEmailAddress.accesskey "n">
+<!ENTITY CreateFilterFrom.label            "Opprett filtre fra …">
+<!ENTITY CreateFilterFrom.accesskey        "O">
+<!ENTITY openInBrowser.label               "Åpne i nettleser">
+<!ENTITY openInBrowser.accesskey           "n">
+<!ENTITY bookmarkLinkCmd.label             "Bokmerk denne lenken …">
+<!ENTITY bookmarkLinkCmd.accesskey         "B">
+<!ENTITY copyLinkCmd.label                 "Kopier lenkeadresse">
+<!ENTITY copyLinkCmd.accesskey             "K">
+<!ENTITY CopyMessageId.label               "Kopier meldingsid">
+<!ENTITY CopyMessageId.accesskey           "K">
+<!ENTITY OpenMessageForMsgId.label         "Åpne melding for ID">
+<!ENTITY OpenMessageForMsgId.accesskey     "n">
+<!ENTITY OpenBrowserWithMsgId.label        "Åpne nettleser med meldingsid">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "n">

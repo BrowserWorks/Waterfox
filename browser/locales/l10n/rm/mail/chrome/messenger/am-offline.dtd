@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Per spargnar capacitad da memorisar, betg telechargiar:">
+<!ENTITY doNotDownloadNntp.label "Per spargnar capacitad da memorisar, betg telechargiar per l'utilisaziun senza connexiun:">
+<!ENTITY doNotDownloadImap.label "Per spargnar capacitad da memorisar, pon ins limitar tenor criteris da temp e grondezza il telechargiar da messadis dal server IMAP ed il preservar da copias localas per leger senza connexiun.">
+<!ENTITY allFoldersOffline2.label "Preservar ils messadis da tut ils ordinaturs da quest conto sin quest computer">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "Commentari: Questa midada pertutga tut ils ordinaturs da quest conto. Per definir singuls ordinaturs, clicca sin il buttun «Avanzà…».">
+<!ENTITY offlineNotDownload.label "Messadis pli gronds che">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY autosyncNotDownload.label "Betg telechargiar messadis pli gronds che">
+<!ENTITY autosyncNotDownload.accesskey "m">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "dis vegls">
+<!ENTITY message.label "messadis">
+<!ENTITY nntpNotDownloadRead.label "Messadis legids">
+<!ENTITY nntpNotDownloadRead.accesskey "d">
+<!ENTITY nntpDownloadMsg.label "Messadis pli vegls che">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Stizzar definitivamain messadis vegls, per render disponibel capacitad da memorisar.">
+<!ENTITY retentionCleanupImap.label "Stizzar definitivamain messadis vegls, per render disponibel capacitad da memorisar - schebain copias localas sco era ils originals sin il server IMAP.">
+<!ENTITY retentionCleanupPop.label "Stizzar definitivamain messadis vegls, per render disponibel capacitad da memorisar - inclusiv ils originals sin il server POP.">
+<!ENTITY retentionKeepMsg.label "Stizzar messadis ch'èn pli vegls che">
+<!ENTITY retentionKeepMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "Stizzar nagins messadis">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "Stizzar tuts, exclus ils pli actuals">
+<!ENTITY retentionKeepRecent.accesskey "z">
+<!ENTITY retentionApplyToFlagged.label "Adina preservar messadis segnads">
+<!ENTITY retentionApplyToFlagged.accesskey "A">
+<!ENTITY nntpRemoveMsgBody.label "Stizzar cuntegns da messadis ch'èn pli vegls che">
+<!ENTITY nntpRemoveMsgBody.accesskey "z">
+<!ENTITY offlineSelectNntp.label "Tscherner gruppas da discussiun per leger offline…">
+<!ENTITY offlineSelectNntp.accesskey "S">
+<!ENTITY offlineImapAdvancedOffline.label "Avanzà…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "x">
+<!ENTITY syncGroupTitle.label "Sincronisaziun da messadis">
+<!ENTITY diskspaceGroupTitle.label "Capacitad da memorisar">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Telechargiar tut ils messadis independent da lur vegliadetgna">
+<!ENTITY allAutosync.accesskey           "c">
+<!ENTITY ageAutosyncBefore.label         "Mo telechargiar messadis dals ultims">
+<!ENTITY ageAutosync.accesskey           "G">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Dis">
+<!ENTITY weekAgeInterval.label           "Emnas">
+<!ENTITY monthAgeInterval.label          "Mais">
+<!ENTITY yearAgeInterval.label           "Onns">
+<!ENTITY ageAutosyncAfter.label          "">

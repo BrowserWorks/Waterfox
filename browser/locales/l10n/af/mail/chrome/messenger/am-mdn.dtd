@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Antwoordstrokies">
+<!ENTITY useGlobalPrefs.label         "Gebruik my algemene antwoordstrokie-voorkeure vir hierdie rekening">
+<!ENTITY useGlobalPrefs.accesskey     "G">
+
+
+<!ENTITY useCustomPrefs.label         "Pasmaak antwoordstrokies vir hierdie rekening">
+<!ENTITY useCustomPrefs.accesskey     "P">
+<!ENTITY requestReceipt.label         "Wanneer boodskappe gestuur word, vra altyd 'n antwoordstrokie aan">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "Wanneer 'n strokie aankom:">
+<!ENTITY leaveIt.label                "Los dit in my inmandjie">
+<!ENTITY leaveIt.accesskey            "i">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+
+<!ENTITY requestMDN.label             "Wanneer ek 'n versoek om antwoordstrokie ontvang:">
+<!ENTITY returnSome.label             "Laat antwoordstrokies vir sommige boodskappe toe">
+<!ENTITY returnSome.accesskey         "a">
+<!ENTITY never.label                  "Moet nooit 'n antwoordstrokie stuur nie">
+<!ENTITY never.accesskey              "M">
+<!ENTITY notInToCc.label              "As ek nie in die Aan- of CC-veld van die boodskap is nie:">
+<!ENTITY notInToCc.accesskey          "A">
+<!ENTITY outsideDomain.label          "As die afsender van buite my domein afkomstig is:">
+<!ENTITY outsideDomain.accesskey      "a">
+<!ENTITY otherCases.label             "In alle ander gevalle:">
+<!ENTITY otherCases.accesskey         "a">
+<!ENTITY askMe.label                  "Vra my">
+<!ENTITY alwaysSend.label             "Stuur altyd">
+<!ENTITY neverSend.label              "Stuur nooit nie">

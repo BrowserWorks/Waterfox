@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Póstsíur">
+<!ENTITY nameColumn.label "Nafn síu">
+<!ENTITY activeColumn.label "Virk">
+<!ENTITY newButton.label "Ný…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Afrita…">
+<!ENTITY newButton.popupCopy.accesskey "A">
+<!ENTITY editButton.label "Breyta…">
+<!ENTITY editButton.accesskey "B">
+<!ENTITY deleteButton.label "Eyða">
+<!ENTITY deleteButton.accesskey "E">
+<!ENTITY reorderTopButton "Færa efst">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "Endurraða síu þannig að hún keyri á undan öðrum">
+<!ENTITY reorderUpButton.label "Færa upp">
+<!ENTITY reorderUpButton.accesskey "u">
+<!ENTITY reorderDownButton.label "Færa niður">
+<!ENTITY reorderDownButton.accesskey "i">
+<!ENTITY reorderBottomButton "Færa neðst">
+<!ENTITY reorderBottomButton.accessKey "B">
+<!ENTITY reorderBottomButton.toolTip "Endurraða síu þannig að hún keyri á eftir öðrum">
+<!ENTITY filterHeader.label "Virkar síur eru keyrðar sjálfkrafa í þeirri röð sem er hér fyrir neðan.">
+<!ENTITY filtersForPrefix.label "Sía fyrir:">
+<!ENTITY filtersForPrefix.accesskey "f">
+<!ENTITY viewLogButton.label "Síu atburðaskrá">
+<!ENTITY viewLogButton.accesskey "a">
+<!ENTITY runFilters.label "Keyra núna">
+<!ENTITY runFilters.accesskey "r">
+<!ENTITY stopFilters.label "Stöðva">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Keyra síu(r) á:">
+<!ENTITY folderPickerPrefix.accesskey "K">
+<!ENTITY helpButton.label "Hjálp">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W">
+ 
+<!ENTITY searchBox.emptyText "Leita í síum eftir nafni…">

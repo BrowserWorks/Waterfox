@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Sbadu amiḍan-ik.m n yimayl yellan">
+<!ENTITY emailWizard.caption             "Seqdec tansa-inek.m imayl tamirant">
+<!ENTITY name.label                      "Isem-ik:">
+<!ENTITY name.accesskey                  "I">
+<!ENTITY fullname.placeholder            "Isem-ik.m akkit">
+<!ENTITY name.text                       "Isem-ik, akken tettwalin wiyaḍ">
+<!ENTITY name.error                      "Ma ulac aɣilif, mudd-d isem-ik">
+<!ENTITY email.label                     "Tansa imayl">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY email3.placeholder              "Tansa-inek imayl">
+<!ENTITY email.text                      "Tansa yinek imayl yellan">
+<!ENTITY email.error                     "Yir tansa n yimayl.">
+<!ENTITY password.label                  "Awal uffir:">
+<!ENTITY password.accesskey              "A">
+<!ENTITY password.placeholder            "Awal uffir">
+<!ENTITY password.text                   "Afrayan, ad ittuseqdec kan i weseɣbel n yisem n uqeddac">
+<!ENTITY password.toggle                 "Sken/Ffer awal uffir">
+<!ENTITY rememberPassword.label          "Cfu ɣef awal uffir">
+<!ENTITY rememberPassword.accesskey      "C">
+<!ENTITY usernameEx.label                "ISem-is n useqdac:">
+<!ENTITY usernameEx.accesskey            "l">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "TAƔULT-IK\isem-ikuseqdac">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "ISem n taɣult">
+
+<!ENTITY protocol.label                  "Aneggaf:">
+<!ENTITY imapLong.label                  "IMAP (ikaramen inmeggagen)">
+<!ENTITY pop3Long.label                  "POP3 (ḥrez imaylen ɣef uselkim-inek)">
+
+<!ENTITY manualConfigTable.summary       "Iɣewwaṛen n uqeddac">
+<!ENTITY incoming.label                  "Ad yekcem:">
+<!ENTITY incomingColumn.label            "Ad yekcem">
+<!ENTITY outgoing.label                  "Ad yeffeɣ:">
+<!ENTITY outgoingColumn.label            "Ad yeffeɣ">
+<!ENTITY username.label                  "Isem n useqdac:">
+<!ENTITY serverRow.label                 "Aqeddac:">
+<!ENTITY portRow.label                   "Tabburt:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Asesteb">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Tifin tawurmant">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Ula yiwen">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Aqeddac Exchange:">
+
+<!ENTITY advancedSetup.label             "Tawila leqqayen">
+<!ENTITY advancedSetup.accesskey         "q">
+<!ENTITY cancel.label                    "Sefsex">
+<!ENTITY cancel.accesskey                "S">
+<!ENTITY continue.label                  "Kemmel">
+<!ENTITY continue.accesskey              "K">
+<!ENTITY stop.label                      "Rken">
+<!ENTITY stop.accesskey                  "R">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Sekyed tikelt nniḍen">
+<!ENTITY half-manual-test.accesskey      "k">
+<!ENTITY manual-config.label             "Sbadu s ufus…">
+<!ENTITY manual-config.accesskey         "F">
+<!ENTITY open-provisioner.label          "Awi tansa n yimayl tamaynut...">
+<!ENTITY open-provisioner.accesskey      "g">
+
+
+<!ENTITY get-help.label                  "Awi-d tallalt">
+<!ENTITY get-help.accesskey              "L">
+
+
+<!ENTITY warning.label                   "Ɣur-k!">
+<!ENTITY incomingSettings.label          "Tawila n unekcum:">
+<!ENTITY outgoingSettings.label          "Tawila n tuffɣa:">
+<!ENTITY technicaldetails.label          "Talɣut tatiknikant leqqayen">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Gziɣ d acu ara d-yeḍrun">
+<!ENTITY confirmWarning.accesskey        "G">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Immed">
+<!ENTITY doneAccount.accesskey           "m">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Snifel tawila">
+<!ENTITY changeSettings.accesskey        "w">
+
+<!ENTITY contactYourProvider.description "&brandShortName; yezmer ak-isireg akken ad tawiḍ imayl inek s useqdec n twila d-ittunefken. Acu kan,  yessefk ad tenermseḍ anebdal-inek neɣ win i k-d-imudden imayl inek s tuqqniwin ur nwata yara. Wali Isteqsiyen FAQ yettwasnen n Thunderbird ɣef ugar n telɣut.">
+
+<!ENTITY insecureServer.tooltip.title    "Ɣur-k! W-agi d aqeddac araɣelsan.">
+<!ENTITY insecureServer.tooltip.details  "Si dagi i wugar n teqayt">
+
+<!ENTITY insecureUnencrypted.description "Imayl inek d usesteb-inek ttwaznen s war awgelhen, ihi awal-inek uffir (akked yizen-inek) zemren ad tneɣṛen yemdanen nniḍen. &brandShortName; ak-yeǧǧ ad tewḍeḍ ɣer tirawt-inek, acu kan yessefk ad tneremseḍ asaǧǧaw-inek n tirawt ɣef uswel n uqeddac s tuqqna taɣelsant.">
+<!ENTITY insecureSelfSigned.description  "Aqeddac yesseqdac aselkin ur nettwaman ara, ihi ur nezmir ara ad neḍmen d akken albaɛḍ ur yettakker ara talɣut i teddun gar &brandShortName; akked uqeddac-inek. &brandShortName; ak-yeǧǧ ad tawḍeḍ ɣer tirawt-inek, acu kan yessefk ad tneremseḍ asaǧǧaw-inek n tirawt ɣef uswel n uqeddac-inek s uselkin yettwamanen.">
+<!ENTITY secureServer.description        "Ayuz! W-agi d aqeddac aɣelsan">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.customize.title.label "Наладзіць Палічку">
+<!ENTITY sidebar.customize.current.label "Устаўкі на Палічцы:">
+<!ENTITY sidebar.customize.current.accesskey "У">
+<!ENTITY sidebar.customize.customize.label "Наладзіць устаўку…">
+<!ENTITY sidebar.customize.customize.accesskey "Н">
+<!ENTITY sidebar.customize.remove.label "Прыняць">
+<!ENTITY sidebar.customize.remove.accesskey "П">
+<!ENTITY sidebar.customize.additional.label "Даступныя ўстаўкі:">
+<!ENTITY sidebar.customize.additional.accesskey "с">
+<!ENTITY sidebar.customize.add.label "Дадаць">
+<!ENTITY sidebar.customize.add.accesskey "Д">
+<!ENTITY sidebar.customize.preview.label "Перадпрагляд…">
+<!ENTITY sidebar.customize.preview.accesskey "П">
+<!ENTITY sidebar.customize.up.label "Угору">
+<!ENTITY sidebar.customize.up.accesskey "г">
+<!ENTITY sidebar.customize.down.label "Уніз">
+<!ENTITY sidebar.customize.down.accesskey "н">
+<!ENTITY sidebar.more.label "Знайсці яшчэ ўстаўкі…">
+<!ENTITY sidebar.more.accesskey "З">

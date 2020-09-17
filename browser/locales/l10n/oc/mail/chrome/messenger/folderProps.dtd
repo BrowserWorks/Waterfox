@@ -1,0 +1,53 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Proprietats">
+
+<!ENTITY generalInfo.label                       "Informacions generalas">
+
+<!ENTITY retention.label "Règlas de conservacion">
+<!ENTITY daysOld.label "jorns">
+<!ENTITY message.label "darrièrs messatges">
+<!ENTITY retentionCleanup.label "Per ganhar d'espaci de disc, los  messatges ancians pòdon èsser suprimits definitivament.">
+<!ENTITY retentionCleanupImap.label "Per ganhar d'espaci de disc, los messatges ancians pòdon èsser suprimits definitivament, las còpias localas e los originals sul servidor distant.">
+<!ENTITY retentionCleanupPop.label "Per ganhar d'espaci de disc, los messatges ancians pòdon èsser suprimits definitivament, inclús sul servidor distant.">
+<!ENTITY retentionDeleteMsg.label "Suprimir los messatges qu'an mai de">
+<!ENTITY retentionDeleteMsg.accesskey "u">
+<!ENTITY retentionKeepAll.label "Suprimir pas cap de messatge">
+<!ENTITY retentionKeepAll.accesskey "N">
+<!ENTITY retentionApplyToFlagged.label "Conservar totjor los messatges seguits">
+<!ENTITY retentionApplyToFlagged.accesskey "o">
+
+<!ENTITY folderSynchronizationTab.label          "Sincronizacion">
+
+<!ENTITY offlineFolder.check.label               "Seleccionar aqueste dorsièr per una utilizacion fòra linha">
+<!ENTITY offlineFolder.check.accesskey           "l">
+<!ENTITY offlineFolder.button.label              "Telecargar ara">
+<!ENTITY offlineFolder.button.accesskey          "h">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Seleccionar aqueste grop per una utilizacion fòra linha">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Telecargar ara">
+<!ENTITY offlineNewsgroup.button.accesskey       "m">
+
+<!ENTITY folderProps.name.label                  "Nom :">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Emplaçament :">
+<!ENTITY folderProps.location.accesskey          "E">
+
+<!ENTITY folderSharingTab.label                  "Pertatge">
+<!ENTITY privileges.button.label                 "Privilègis…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Avètz las permissions seguentas :">
+<!ENTITY folderType.label                        "Tipe de dorsièr :">
+
+<!ENTITY folderQuotaTab.label                    "Quotas">
+<!ENTITY folderQuotaUsage.label                  "Utilizacion :">
+<!ENTITY folderQuotaStatus.label                 "Estatut :">
+

@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Fluxos subscribite">
+<!ENTITY learnMore.label             "Saper plus sur fluxos">
+
+<!ENTITY feedTitle.label             "Titulo:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL del fluxo:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Insere un adresse de fluxo valide">
+<!ENTITY locationValidate.label      "Validar">
+<!ENTITY validateText.label          "Verifica validation e obtene un url valide.">
+
+<!ENTITY feedFolder.label            "Immagazinar articulos in:">
+<!ENTITY feedFolder.accesskey        "I">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Cercar nove articulos cata ">
+<!ENTITY biffStart.accesskey         "c">
+<!ENTITY biffMinutes.label           "minutas">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "dies">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Consilios del editor:">
+
+<!ENTITY quickMode.label             "Monstrar le summario del articulo in vice de cargar le pagina web">
+<!ENTITY quickMode.accesskey         "o">
+
+<!ENTITY autotagEnable.label         "Crear automaticamente etiquettas ab nomines de &lt;categorias&gt; de fluxos">
+<!ENTITY autotagEnable.accesskey     "o">
+<!ENTITY autotagUsePrefix.label      "Prefixar le tags con:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Insere un prefixo de tag">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Adder">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.verifyFeed.label     "Verificar">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "Actualisar">
+<!ENTITY button.updateFeed.accesskey "c">
+<!ENTITY button.removeFeed.label     "Remover">
+<!ENTITY button.removeFeed.accesskey "R">
+<!ENTITY button.importOPML.label     "Importar">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exportar">
+<!ENTITY button.exportOPML.accesskey "X">
+<!ENTITY button.exportOPML.tooltip   "Exportar fluxos con structura de dossiers; Ctrl+clic o Ctrl+Enter pro exportar fluxos como lista">
+
+<!ENTITY cmd.close.commandKey        "c">
+<!ENTITY button.close.label          "Clauder">

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY searchHeading.label "Шукаць лісты ў:">
+<!ENTITY searchHeading.accesskey "ў">
+<!ENTITY searchSubfolders.label "Пошук у падпапках">
+<!ENTITY searchSubfolders.accesskey "о">
+<!ENTITY searchOnHeading.label "Выконваць пошук:">
+<!ENTITY searchOnHeading.accesskey "В">
+<!ENTITY searchOnRemote.label "на адлеглым паслугачы">
+<!ENTITY searchOnLocal.label "у мясцовай сістэме">
+<!ENTITY resetButton.label "Ачысціць">
+<!ENTITY resetButton.accesskey "ч">
+<!ENTITY openButton.label "Адчыніць">
+<!ENTITY openButton.accesskey "А">
+<!ENTITY deleteButton.label "Выдаліць">
+<!ENTITY deleteButton.accesskey "д">
+<!ENTITY searchDialogTitle.label "Пошук лістоў">
+<!ENTITY results.label "Вынікі">
+<!ENTITY moveHereMenu.label "Перамясціцца сюды">
+<!ENTITY moveHereMenu.accesskey "с">
+<!ENTITY moveButton.label "Перамясціць у">
+<!ENTITY moveButton.accesskey "у">
+<!ENTITY goToFolderButton.label "Адчыніць папку ліста">
+<!ENTITY goToFolderButton.accesskey "п">
+<!ENTITY saveAsVFButton.label "Захаваць як папку пошуку">
+<!ENTITY saveAsVFButton.accesskey "а">
+<!ENTITY abSearchHeading.label "Шукаць у:">
+<!ENTITY abSearchHeading.accesskey "Ш">
+<!ENTITY propertiesButton.label "Уласцівасці">
+<!ENTITY propertiesButton.accesskey "л">
+<!ENTITY composeButton.label "Укласці">
+<!ENTITY composeButton.accesskey "У">
+<!ENTITY abSearchDialogTitle.label "Удасканалены пошук у адраснай кнізе">

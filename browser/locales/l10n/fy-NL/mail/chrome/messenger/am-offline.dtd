@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Om skiifromte te besparjen, net downloade:">
+<!ENTITY doNotDownloadNntp.label "Om skiifromte te besparjen, net downloade foar offline gebrûk:">
+<!ENTITY doNotDownloadImap.label "Om skiifromte te besparjen, berjochten downloade fan de server en lokale kopyen bewarje foar offline gebrûk kin beheint wurde troch leeftiid of grutte.">
+<!ENTITY allFoldersOffline2.label "Berjochten yn alle mappen foar dizze account op dizze kompjûter bewarje.">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "Let op: dizze wiziging hat effekt op alle mappen yn dizze account. Brûk de knop Avansearre… om yndividuele mappen yn te stellen.">
+<!ENTITY offlineNotDownload.label "Berjochten grutter as">
+<!ENTITY offlineNotDownload.accesskey "r">
+<!ENTITY autosyncNotDownload.label "Berjochten net downloade dy't grutter binne as">
+<!ENTITY autosyncNotDownload.accesskey "b">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "dagen">
+<!ENTITY message.label "">
+<!ENTITY nntpNotDownloadRead.label "Lêzen berjochten">
+<!ENTITY nntpNotDownloadRead.accesskey "L">
+<!ENTITY nntpDownloadMsg.label "Berjochten âlder as">
+<!ENTITY nntpDownloadMsg.accesskey "a">
+<!ENTITY retentionCleanup.label "Om skiifromte frij te meitsjen, kinne âlde berjochten permanint fuortsmiten wurde">
+<!ENTITY retentionCleanupImap.label "Om skiifromte frij te meitsjen, kinne âlde berjochten permanint fuortsmiten wurde, sawol lokale kopyen as de orizjinele op de server.">
+<!ENTITY retentionCleanupPop.label "Om skiifromte frij te meitsjen, kinne âlde berjochten permanint fuortsmiten wurde, ynklusyf orizjinelen op de server.">
+<!ENTITY retentionKeepMsg.label "Berjochten fuortsmite dy't âlder binne as">
+<!ENTITY retentionKeepMsg.accesskey "u">
+<!ENTITY retentionKeepAll.label "Gjin berjochten fuortsmite">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "Alle fuortsmite, útsein de lêste">
+<!ENTITY retentionKeepRecent.accesskey "a">
+<!ENTITY retentionApplyToFlagged.label "Berjochten mei stjerke altyd bewarje">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+<!ENTITY nntpRemoveMsgBody.label "Berjochtkearnen fuortsmite âlder as">
+<!ENTITY nntpRemoveMsgBody.accesskey "k">
+<!ENTITY offlineSelectNntp.label "Nijsgroepen foar offline-gebrûk selektearje…">
+<!ENTITY offlineSelectNntp.accesskey "s">
+<!ENTITY offlineImapAdvancedOffline.label "Avansearre…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "A">
+<!ENTITY syncGroupTitle.label "Berjochten syngronisearje">
+<!ENTITY diskspaceGroupTitle.label "Skiifromte">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Syngronisearje alle berjichten lokaal sûnder omtinken om leeftiid">
+<!ENTITY allAutosync.accesskey           "n">
+<!ENTITY ageAutosyncBefore.label         "Syngronisearje de meast resinte">
+<!ENTITY ageAutosync.accesskey           "r">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Dagen">
+<!ENTITY weekAgeInterval.label           "Wiken">
+<!ENTITY monthAgeInterval.label          "Moannen">
+<!ENTITY yearAgeInterval.label           "jier">
+<!ENTITY ageAutosyncAfter.label          "">

@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Suojaus">
+<!ENTITY securityTab.label "Suojaus">
+<!ENTITY securityHeading.label "Jotta voisit lähettää ja vastaanottaa allekirjoitettuja tai salattuja viestejä, sinun tulee määrittää varmenteet sekä allekirjoittamista että salaamista varten.">
+<!ENTITY encryptionGroupTitle.label "Salaus">
+<!ENTITY encryptionChoiceLabel.label "Salauksen oletusasetukset viestejä lähetettäessä:">
+<!ENTITY neverEncrypt.label "Ei koskaan (älä käytä salausta)">
+<!ENTITY neverEncrypt.accesskey "E">
+<!ENTITY alwaysEncryptMessage.label "Vaadittu (viestiä ei voi lähettää, ellei kaikilla vastaanottajilla ole varmennetta)">
+<!ENTITY alwaysEncryptMessage.accesskey "d">
+<!ENTITY encryptionCert.message "Lähettämäsi viestit salataan ja avataan tällä avaimella:">
+<!ENTITY digitalSign.certificate.button "Valitse…">
+<!ENTITY digitalSign.certificate.accesskey "V">
+<!ENTITY digitalSign.certificate_clear.button "Tyhjennä">
+<!ENTITY digitalSign.certificate_clear.accesskey "y">
+<!ENTITY encryption.certificate.button "Valitse…">
+<!ENTITY encryption.certificate.accesskey "l">
+<!ENTITY encryption.certificate_clear.button "Tyhjennä">
+<!ENTITY encryption.certificate_clear.accesskey "n">
+<!ENTITY signingGroupTitle.label "Digitaalinen allekirjoittaminen">
+<!ENTITY signMessage.label "Allekirjoita viestit digitaalisesti (oletusarvoisesti)">
+<!ENTITY signMessage.accesskey "k">
+<!ENTITY signingCert.message "Lähettämäsi viestit allekirjoitetaan digitaalisesti tällä avaimella:">
+
+<!ENTITY certificates.label "Varmenteet">
+<!ENTITY manageCerts2.label "Varmenteiden hallinta...">
+<!ENTITY manageCerts2.accesskey "h">
+<!ENTITY manageDevices.label "Turvalaitteiden hallinta">
+<!ENTITY manageDevices.accesskey "T">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Valitse varmenne">
+<!ENTITY certPicker.info  "Varmenne:">
+<!ENTITY certPicker.detailsLabel "Valitun varmenteen tiedot:">

@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Levraoueg">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "470">
+<!ENTITY organize.label        "Aozañ">
+<!ENTITY organize.accesskey    "o">
+<!ENTITY organize.tooltip      "Aozañ ho sinedoù">
+
+<!ENTITY file.close.label               "Serriñ">
+<!ENTITY file.close.accesskey           "e">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Gwelioù">
+<!ENTITY views.accesskey                "w">
+<!ENTITY views.tooltip                  "Kemmañ ho kwelioù">
+<!ENTITY view.columns.label             "Diskouez ar bannoù">
+<!ENTITY view.columns.accesskey         "s">
+<!ENTITY view.sort.label                "Rummañ">
+<!ENTITY view.sort.accesskey            "R">
+<!ENTITY view.unsorted.label            "Dirummet">
+<!ENTITY view.unsorted.accesskey        "u">
+<!ENTITY view.sortAscending.label       "Urzh ar rummañ A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Urzh ar rummañ Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Enporzhiañ sinedoù diouzh ar mentrezh HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "i">
+<!ENTITY exportBookmarksToHTML.label       "Ezporzhiañ sinedoù etrezek ar mentrezh HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "z">
+<!ENTITY importOtherBrowser.label          "Enporzhiañ roadennoù diouzh ur merdeer all…">
+<!ENTITY importOtherBrowser.accesskey      "p">
+
+<!ENTITY cmd.backup.label               "Gwarediñ…">
+<!ENTITY cmd.backup.accesskey           "r">
+<!ENTITY cmd.restore2.label             "Assav">
+<!ENTITY cmd.restore2.accesskey         "s">
+<!ENTITY cmd.restoreFromFile.label      "Dibab ur restr…">
+<!ENTITY cmd.restoreFromFile.accesskey  "b">
+
+<!ENTITY col.name.label          "Anv">
+<!ENTITY col.tags.label          "Klavioù">
+<!ENTITY col.url.label           "Lec'hiadur">
+<!ENTITY col.mostrecentvisit.label "Gweladenn nevesañ">
+<!ENTITY col.visitcount.label    "Kont ar gweladenniñ">
+<!ENTITY col.dateadded.label     "Ouzhpennet">
+<!ENTITY col.lastmodified.label  "An hini kemmet diwezhañ">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Enporzhiañ ha gwarediñ">
+<!ENTITY maintenance.accesskey  "i">
+<!ENTITY maintenance.tooltip    "Enporzhiañ ha gwarediñ ho sinedoù">
+
+<!ENTITY backButton.tooltip  "Mont war-gil">
+
+<!ENTITY forwardButton.tooltip  "Mont war-raok">
+
+<!ENTITY detailsPane.selectAnItemText.description "Diuzañ an ergorenn evit gwelout he ferzhioù">
+

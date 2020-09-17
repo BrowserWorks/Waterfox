@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label         "URL сайту:">
+<!ENTITY docSubdir.label       "Підтека сторінки:">
+<!ENTITY otherSubdir.label     "Підтека зображення:">
+
+<!ENTITY status.label          "Публікація…">
+<!ENTITY fileList.label        "Стан публікації">
+<!ENTITY succeeded.label       "Успіх">
+<!ENTITY failed.label          "Невдача">
+
+<!ENTITY keepOpen              "Не ховати це вікно після закінчення публікації.">
+<!ENTITY closeButton.label     "Закрити">

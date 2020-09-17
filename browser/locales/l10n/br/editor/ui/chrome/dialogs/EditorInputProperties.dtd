@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Perzhioù maeziennoù ar furmskrid">
+<!ENTITY windowTitleImage.label "Perzhioù skeudennoù ar furmskrid">
+
+<!ENTITY InputType.label "Rizh ar vaezienn">
+<!ENTITY InputType.accesskey "R">
+<!ENTITY text.value "Testenn">
+<!ENTITY password.value "Ger-tremen">
+<!ENTITY checkbox.value "Log da gevaskañ">
+<!ENTITY radio.value "Afell radio">
+<!ENTITY submit.value "Afell treuzkas">
+<!ENTITY reset.value "Afell adderaouekaat">
+<!ENTITY file.value "Restr">
+<!ENTITY hidden.value "Kuzh">
+<!ENTITY image.value "Skeudenn">
+<!ENTITY button.value "Afell">
+
+<!ENTITY InputSettings.label "Arventennoù ar vaezienn">
+<!ENTITY InputName.label "Anv ar vaezienn:">
+<!ENTITY InputName.accesskey "A">
+<!ENTITY GroupName.label "Anv ar strollad:">
+<!ENTITY GroupName.accesskey "A">
+<!ENTITY InputValue.label "Talvoud ar vaezienn:">
+<!ENTITY InputValue.accesskey "T">
+<!ENTITY InitialValue.label "Talvoud kentañ:">
+<!ENTITY InitialValue.accesskey "T">
+<!ENTITY InputChecked.label "Kevask da gentañ">
+<!ENTITY InputChecked.accesskey "e">
+<!ENTITY InputSelected.label "Diuz da gentañ">
+<!ENTITY InputSelected.accesskey "u">
+<!ENTITY InputReadOnly.label "Lenn hepken">
+<!ENTITY InputReadOnly.accesskey "n">
+<!ENTITY InputDisabled.label "Diweredekaet">
+<!ENTITY InputDisabled.accesskey "r">
+<!ENTITY tabIndex.label "Menegva taolennata:">
+<!ENTITY tabIndex.accesskey "g">
+<!ENTITY TextSize.label "Ment ar vaezienn:">
+<!ENTITY TextSize.accesskey "v">
+<!ENTITY TextLength.label "Hirder brasañ:">
+<!ENTITY TextLength.accesskey "H">
+<!ENTITY AccessKey.label "Stokell moned:">
+<!ENTITY AccessKey.accesskey "k">
+<!ENTITY Accept.label "Degemer ar rizhoù:">
+<!ENTITY Accept.accesskey "m">
+
+<!ENTITY ImageProperties.label "Perzhioù ar skeudenn…">
+<!ENTITY ImageProperties.accesskey "z">

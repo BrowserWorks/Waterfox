@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Window title -->
+<!ENTITY siteUrl.label          "Adresa URL servera:">
+<!ENTITY docSubdir.label        "Priečinok pre stránku:">
+<!ENTITY otherSubdir.label      "Priečinok pre obrázky:">
+
+<!ENTITY status.label           "Publikuje sa…">
+<!ENTITY fileList.label         "Stav publikovania">
+<!ENTITY succeeded.label        "Prebehlo úspešne">
+<!ENTITY failed.label           "Zlyhalo">
+
+<!ENTITY keepOpen               "Po dokončení publikovania nechať toto okno otvorené">
+<!ENTITY closeButton.label      "Zavrieť">

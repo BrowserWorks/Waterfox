@@ -1,0 +1,123 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab "Сувязь">
+<!ENTITY Contact.accesskey "С">
+<!ENTITY Name.box "Імя">
+<!ENTITY NameField1.id "LastName">
+<!ENTITY NameField2.id "FirstName">
+<!ENTITY PhoneticField1.id "PhoneticLastName">
+<!ENTITY PhoneticField2.id "PhoneticFirstName">
+<!ENTITY NameField1.label "Імя:">
+<!ENTITY NameField1.accesskey "І">
+<!ENTITY NameField2.label "Прозвішча:">
+<!ENTITY NameField2.accesskey "А">
+<!ENTITY PhoneticField1.label "Фанетычны:">
+<!ENTITY PhoneticField2.label "Фанетычны:">
+<!ENTITY DisplayName.label "Адлюстроўваць як:">
+<!ENTITY DisplayName.accesskey "Я">
+<!ENTITY preferDisplayName.label "Заўсёды аддаваць перавагу адлюстроўнаму імя перад загалоўкам ліста">
+<!ENTITY preferDisplayName.accesskey "З">
+<!ENTITY NickName.label "Мянушка:">
+<!ENTITY NickName.accesskey "М">
+<!ENTITY PrimaryEmail.label "Э-Пошта:">
+<!ENTITY PrimaryEmail.accesskey "Э">
+<!ENTITY SecondEmail.label "Дадатковая Э-Пошта:">
+<!ENTITY SecondEmail.accesskey "ш">
+<!ENTITY PreferMailFormat.label "Аддае перавагу атрыманню лістоў у фармаце:">
+<!ENTITY PreferMailFormat.accesskey "д">
+<!ENTITY PlainText.label "Просты тэкст">
+<!ENTITY HTML.label "HTML">
+<!ENTITY Unknown.label "Невядома">
+<!ENTITY ScreenName.label "Экраннае імя:">
+<!ENTITY ScreenName.accesskey "я">
+<!ENTITY allowRemoteContent1.label "Дазволіць адлеглае змесціва.">
+<!ENTITY allowRemoteContent1.accesskey "д">
+<!ENTITY allowRemoteContent1.tooltip "Лісты ў фармаце HTML могуць змяшчаць
+змесціва з адлеглых крыніцаў. Адкрыццё такіх лістоў выкліча
+ўсталяванне злучэння з гэтымі вонкавымі крыніцамі. Гэта дазваляе даведацца,
+што ліст быў прачытаны. Адзначэнне гэтай скрынкі дазваляе такое вонкавае
+ўбудаванае змесціва ў лістах HTML з гэтага адраса.">
+<!ENTITY WorkPhone.label "Працоўны:">
+<!ENTITY WorkPhone.accesskey "ц">
+<!ENTITY HomePhone.label "Хатні:">
+<!ENTITY HomePhone.accesskey "Х">
+<!ENTITY FaxNumber.label "Факс:">
+<!ENTITY FaxNumber.accesskey "Ф">
+<!ENTITY PagerNumber.label "Гартач:">
+<!ENTITY PagerNumber.accesskey "Г">
+<!ENTITY CellularNumber.label "Мабільнік:">
+<!ENTITY CellularNumber.accesskey "б">
+<!ENTITY Home.tab "Асабістыя">
+<!ENTITY Home.accesskey "А">
+<!ENTITY HomeAddress.label "Адрас:">
+<!ENTITY HomeAddress.accesskey "А">
+<!ENTITY HomeAddress2.label "">
+<!ENTITY HomeAddress2.accesskey "">
+<!ENTITY HomeCity.label "Горад:">
+<!ENTITY HomeCity.accesskey "Г">
+<!ENTITY HomeState.label "Вобласць/Край:">
+<!ENTITY HomeState.accesskey "В">
+<!ENTITY HomeZipCode.label "Паштовы індэкс:">
+<!ENTITY HomeZipCode.accesskey "і">
+<!ENTITY HomeCountry.label "Краіна:">
+<!ENTITY HomeCountry.accesskey "К">
+<!ENTITY HomeWebPage.label "Старонка Сеціва:">
+<!ENTITY HomeWebPage.accesskey "С">
+<!ENTITY Birthday.label "Дзень нараджэння:">
+<!ENTITY Birthday.accesskey "р">
+<!ENTITY In.label "">
+<!ENTITY Year.placeholder "Год">
+<!ENTITY Or.value "ці">
+<!ENTITY Age.placeholder "Узрост">
+<!ENTITY YearsOld.label "">
+<!ENTITY Work.tab "Працоўныя">
+<!ENTITY Work.accesskey "П">
+<!ENTITY JobTitle.label "Пасада:">
+<!ENTITY JobTitle.accesskey "П">
+<!ENTITY Department.label "Аддзел:">
+<!ENTITY Department.accesskey "д">
+<!ENTITY Company.label "Установа:">
+<!ENTITY Company.accesskey "У">
+<!ENTITY WorkAddress.label "Адрас:">
+<!ENTITY WorkAddress.accesskey "А">
+<!ENTITY WorkAddress2.label "">
+<!ENTITY WorkAddress2.accesskey "">
+<!ENTITY WorkCity.label "Горад:">
+<!ENTITY WorkCity.accesskey "Г">
+<!ENTITY WorkState.label "Вобласць/Край:">
+<!ENTITY WorkState.accesskey "В">
+<!ENTITY WorkZipCode.label "Паштовы індэкс:">
+<!ENTITY WorkZipCode.accesskey "і">
+<!ENTITY WorkCountry.label "Краіна:">
+<!ENTITY WorkCountry.accesskey "К">
+<!ENTITY WorkWebPage.label "Старонка Сеціва:">
+<!ENTITY WorkWebPage.accesskey "С">
+<!ENTITY Other.tab "Іншае">
+<!ENTITY Other.accesskey "ш">
+<!ENTITY Custom1.label "Іншае 1:">
+<!ENTITY Custom1.accesskey "1">
+<!ENTITY Custom2.label "Іншае 2:">
+<!ENTITY Custom2.accesskey "2">
+<!ENTITY Custom3.label "Іншае 3:">
+<!ENTITY Custom3.accesskey "3">
+<!ENTITY Custom4.label "Іншае 4:">
+<!ENTITY Custom4.accesskey "4">
+<!ENTITY Notes.label "Заўвагі:">
+<!ENTITY Notes.accesskey "З">
+<!ENTITY Photo.tab "Здымак">
+<!ENTITY Photo.accesskey "д">
+<!ENTITY PhotoDesc.label "Узяць адзін з наступных:">
+<!ENTITY GenericPhoto.label "Агульны здымак">
+<!ENTITY GenericPhoto.accesskey "А">
+<!ENTITY DefaultPhoto.label "Змоўчны">
+<!ENTITY PhotoFile.label "На гэтым кампутары">
+<!ENTITY PhotoFile.accesskey "к">
+<!ENTITY BrowsePhoto.label "Агляд">
+<!ENTITY BrowsePhoto.accesskey "г">
+<!ENTITY PhotoURL.label "У Сеціве">
+<!ENTITY PhotoURL.accesskey "С">
+<!ENTITY PhotoURL.placeholder "Устаўце ці набярыце сеціўны адрас здымка">
+<!ENTITY UpdatePhoto.label "Абнавіць">
+<!ENTITY UpdatePhoto.accesskey "н">

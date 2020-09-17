@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.new.event "Nuovo evento…">
+<!ENTITY event.new.event.accesskey "u">
+<!ENTITY event.new.task "Nuova attività…">
+<!ENTITY event.new.task.accesskey "v">
+<!ENTITY calendar.import.label "Importa…">
+<!ENTITY calendar.import.accesskey "m">
+<!ENTITY calendar.export.label "Esporta…">
+<!ENTITY calendar.export.accesskey "E">
+<!ENTITY calendar.publish.label "Pubblica…">
+<!ENTITY calendar.publish.accesskey "b">
+<!ENTITY calendar.deletecalendar.label "Elimina il calendario selezionato…">
+<!ENTITY calendar.deletecalendar.accesskey "m">
+<!ENTITY calendar.unsubscribecalendar.label "Rimuovi la sottoscrizione dal calendario selezionato…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "u">
+<!ENTITY calendar.removecalendar.label "Rimuovi il calendario selezionato… (conserva i dati)">
+<!ENTITY calendar.removecalendar.accesskey "a">
+<!ENTITY calendar.menu.customize.label "Personalizza…">
+<!ENTITY calendar.menu.customize.accesskey "P">
+<!ENTITY showUnifinderCmd.label "Trova eventi">
+<!ENTITY showUnifinderCmd.accesskey "T">
+<!ENTITY showUnifinderCmd.tooltip "Attiva/disattiva il pannello Trova eventi">
+<!ENTITY calendar.displaytodos.checkbox.label "Mostra attività nel calendario">
+<!ENTITY calendar.displaytodos.checkbox.accesskey "T">
+<!ENTITY goTodayCmd.label "Vai a oggi">
+<!ENTITY goTodayCmd.accesskey "o">
+<!ENTITY showCurrentView.label "Vista corrente">
+<!ENTITY showCurrentView.accesskey "V">
+<!ENTITY calendar.properties.label "Proprietà calendario…">
+<!ENTITY calendar.properties.accesskey "P">

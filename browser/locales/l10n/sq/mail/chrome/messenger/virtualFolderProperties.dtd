@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Dosje e Re Kërkimi të Ruajtur">
+<!ENTITY name.label                 "Emër:">
+<!ENTITY name.accesskey             "E">
+<!ENTITY description.label          "Krijoje si nëndosje të:">
+<!ENTITY description.accesskey      "K">
+
+<!ENTITY searchTermCaption.label "Formësoni kriterin e kërkimit të përdorur për këtë dosje kërkimi të ruajtur: ">
+
+<!ENTITY folderSelectionCaption.label "Përzgjidhni dosjet për kërkim: ">
+<!ENTITY chooseFoldersButton.label "Zgjidhni…">
+<!ENTITY chooseFoldersButton.accesskey "Z">
+
+<!ENTITY searchOnline.label "Kërkoni në Internet (Jep përfundime të përditësuara për dosje IMAP dhe Lajmesh, por rrit kohën e hapjes së dosjes)">
+<!ENTITY searchOnline.accesskey "O">
+<!ENTITY newFolderButton.label       "Krijoje">
+<!ENTITY newFolderButton.accesskey   "o">
+<!ENTITY editFolderButton.label      "Përditësoje">
+<!ENTITY editFolderButton.accesskey  "P">

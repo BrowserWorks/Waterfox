@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Hľadať správy v priečinku:">
+<!ENTITY searchHeading.accesskey     "s">
+<!ENTITY searchSubfolders.label      "Hľadať v podpriečinkoch">
+<!ENTITY searchSubfolders.accesskey  "d">
+<!ENTITY searchOnHeading.label       "Vykonať operácie vyhľadávania na:">
+<!ENTITY searchOnHeading.accesskey   "e">
+<!ENTITY searchOnRemote.label        "vzdialenom serveri">
+<!ENTITY searchOnLocal.label         "lokálnom systéme">
+<!ENTITY resetButton.label           "Obnoviť">
+<!ENTITY resetButton.accesskey       "b">
+<!ENTITY openButton.label            "Otvoriť">
+<!ENTITY openButton.accesskey        "t">
+<!ENTITY deleteButton.label          "Odstrániť">
+<!ENTITY deleteButton.accesskey      "r">
+<!ENTITY searchDialogTitle.label     "Hľadanie v správach">
+<!ENTITY results.label               "Výsledky">
+<!ENTITY moveHereMenu.label          "Presunúť sem">
+<!ENTITY moveHereMenu.accesskey      "P">
+<!ENTITY moveButton.label            "Presunúť do">
+<!ENTITY moveButton.accesskey        "d">
+<!ENTITY goToFolderButton.label      "Otvoriť priečinok správy">
+<!ENTITY goToFolderButton.accesskey  "O">
+<!ENTITY saveAsVFButton.label        "Uložiť ako priečinok hľadania">
+<!ENTITY saveAsVFButton.accesskey    "k">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Hľadať v adresári:">
+<!ENTITY abSearchHeading.accesskey   "a">
+<!ENTITY propertiesButton.label      "Vlastnosti">
+<!ENTITY propertiesButton.accesskey  "V">
+<!ENTITY composeButton.label         "Nová správa">
+<!ENTITY composeButton.accesskey     "N">
+<!ENTITY abSearchDialogTitle.label   "Pokročilé hľadanie v adresári">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Iɣewwaṛen n usebter amaynut">
+
+<!ENTITY  authorName.label          "Ameskar:">
+<!ENTITY  authorName.accesskey      "m">
+<!ENTITY  pageColorHeader           "Arwes n usebter amezwer">
+
+<!ENTITY defaultColors.label        "Initen imezwar n umeɣri (Ur sbaduy ara initen ɣef usebter)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "Seqadec initen-inek:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "Aḍris amagnu">
+<!ENTITY normalText.accesskey       "g">
+<!ENTITY linkText.label             "Aḍris n useqwen">
+<!ENTITY linkText.accesskey         "r">
+<!ENTITY activeLinkText.label       "Aḍris n useɣwen urmid">
+<!ENTITY activeLinkText.accesskey   "m">
+<!ENTITY visitedLinkText.label      "Aḍris n useɣwen ittwarzan">
+<!ENTITY visitedLinkText.accesskey  "z">
+<!ENTITY background.label           "Agilal">
+<!ENTITY background.accesskey       "A">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Tugna n ugilal:">
+<!ENTITY backgroundImage.accesskey  "g">
+<!ENTITY chooseFile.label           "Fren afaylu…">
+<!ENTITY chooseFile.accesskey       "F">
+

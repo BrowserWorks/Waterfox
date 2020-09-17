@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Импортиране на данни">
+<!ENTITY migration.welcome "Добре дошли">
+<!ENTITY migration.importing "Импортиране">
+<!ENTITY migration.list.description "&brandShortName; може да импортира информация от календари от много популярни приложения. Информация от следните приложения беше намерена на вашия компютър. Моля, изберете тези, от които искате информацията да бъде импортирана.">
+<!ENTITY migration.progress.description "Импортиране на избраната информация.">

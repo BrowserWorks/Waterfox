@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title "Адрасаванне">
+<!ENTITY emailCollectiontitle.label "Збіранне адрасоў э-пошты">
+<!ENTITY emailCollectionPicker.label "Дадаваць адрасы э-пошты ў маю:">
+<!ENTITY emailCollectionPicker.accesskey "Д">
+<!ENTITY emailCollectiontext.label "Адрасы э-пошты з выходных лістоў могуць самастойна дадавацца ў мясцовую адрасную кнігу.">
+<!ENTITY addressingTitle.label "Самазавяршэнне адрасоў">
+<!ENTITY highlightNonMatches.label "Падфарбоўваць адрасы, якія нельга самазавяршыць">
+<!ENTITY highlightNonMatches.accesskey "ф">
+<!ENTITY addressingEnable.label "Мясцовых адрасных кнігах">
+<!ENTITY addressingEnable.accesskey "А">
+<!ENTITY autocompleteText.label "Калі адрасуюцца лісты, шукаць адпаведныя запісы ў:">
+<!ENTITY directories.label "Паслугачы дырэкторыяў:">
+<!ENTITY directories.accesskey "Д">
+<!ENTITY directoriesNone.label "Няма">
+<!ENTITY editDirectories.label "Рэдагаваць дырэкторыі…">
+<!ENTITY editDirectories.accesskey "Р">

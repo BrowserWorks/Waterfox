@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Aktifkan kemaskini semua suapan">
+<!ENTITY biffAll.accesskey             "A">
+
+<!ENTITY newFeedSettings.label         "Tetapan Piawai untuk Suapan Berita">
+
+<!ENTITY manageSubscriptions.label     "Urus Langganan…">
+<!ENTITY manageSubscriptions.accesskey "U">
+
+<!ENTITY feedWindowTitle.label         "Bestari Akaun Suapan">
+<!ENTITY feeds.accountName             "Blog &amp; Suapan Berita">

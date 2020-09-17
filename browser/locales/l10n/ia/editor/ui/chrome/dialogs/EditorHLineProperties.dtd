@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Proprietates del linea horizontal">
+
+<!ENTITY dimensionsBox.label "Dimensiones">
+<!ENTITY heightEditField.label "Altor:">
+<!ENTITY heightEditField.accessKey "A">
+<!ENTITY widthEditField.label "Largessa:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY pixelsPopup.value "pixels">
+<!ENTITY alignmentBox.label "Alineamento">
+<!ENTITY leftRadio.label "Sinistra">
+<!ENTITY leftRadio.accessKey "S">
+<!ENTITY centerRadio.label "Centro">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.label "Dextera">
+<!ENTITY rightRadio.accessKey "D">
+
+<!ENTITY threeDShading.label "Umbrar 3D">
+<!ENTITY threeDShading.accessKey "U">
+<!ENTITY saveSettings.label "Usar como predefinition">
+<!ENTITY saveSettings.accessKey "O">
+<!ENTITY saveSettings.tooltip "Salvar iste parametros pro  usar al insertion de nove lineas horizontal">

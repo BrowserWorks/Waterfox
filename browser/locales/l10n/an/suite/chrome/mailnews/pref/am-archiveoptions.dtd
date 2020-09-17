@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!ENTITY dialogTitle.label "Opciones d'archivado">
+<!ENTITY archiveGranularityPrefix.label "Al archivar mensaches, colocar-los en:">
+<!ENTITY archiveFlat.label "Una sola carpeta">
+<!ENTITY archiveFlat.accesskey "U">
+<!ENTITY archiveYearly.label "Carpetas archivadas por anyos">
+<!ENTITY archiveYearly.accesskey "a">
+<!ENTITY archiveMonthly.label "Carpetas archivadas por meses">
+<!ENTITY archiveMonthly.accesskey "m">
+<!ENTITY keepFolderStructure.label "Conservar estructura de carpetas existent d'os mensaches archivados">
+<!ENTITY keepFolderStructure.accesskey "e">
+<!ENTITY archiveExample.label "Eixemplo">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Fichers">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Servilla de dentrada">

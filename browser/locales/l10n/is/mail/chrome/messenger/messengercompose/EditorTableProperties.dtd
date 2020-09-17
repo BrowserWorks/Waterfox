@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title "Eiginleikar töflu">
+<!ENTITY applyButton.label "Staðfesta">
+<!ENTITY applyButton.accesskey "a">
+<!ENTITY closeButton.label "Loka">
+<!ENTITY tableTab.label "Tafla">
+<!ENTITY cellTab.label "Reitir">
+<!ENTITY tableRows.label "Raðir:">
+<!ENTITY tableRows.accessKey "R">
+<!ENTITY tableColumns.label "Dálkar:">
+<!ENTITY tableColumns.accessKey "D">
+<!ENTITY tableHeight.label "Hæð:">
+<!ENTITY tableHeight.accessKey "H">
+<!ENTITY tableWidth.label "Breidd:">
+<!ENTITY tableWidth.accessKey "B">
+<!ENTITY tableBorderSpacing.label "Rammar og breidd">
+<!ENTITY tableBorderWidth.label "Rammi:">
+<!ENTITY tableBorderWidth.accessKey "R">
+<!ENTITY tableSpacing.label "Millibil:">
+<!ENTITY tableSpacing.accessKey "M">
+<!ENTITY tablePadding.label "Útvíkkun:">
+<!ENTITY tablePadding.accessKey "t">
+<!ENTITY tablePxBetwCells.label "punktar á milli hólfa">
+<!ENTITY tablePxBetwBrdrCellContent.label "punktar á milli hólfa og efnis">
+<!ENTITY tableAlignment.label "Stilling töflu:">
+<!ENTITY tableAlignment.accessKey "t">
+<!ENTITY tableCaption.label "Fyrirsögn:">
+<!ENTITY tableCaption.accessKey "n">
+<!ENTITY tableCaptionAbove.label "Ofan töflu">
+<!ENTITY tableCaptionBelow.label "Neðan töflu">
+<!ENTITY tableCaptionLeft.label "Vinstra megin við töflu">
+<!ENTITY tableCaptionRight.label "Hægra megin við töflu">
+<!ENTITY tableCaptionNone.label "Engin">
+<!ENTITY tableInheritColor.label "(Leyfa síðulit að skína í gegn)">
+
+<!ENTITY cellSelection.label "Val">
+<!ENTITY cellSelectCell.label "Eining">
+<!ENTITY cellSelectRow.label "Röð">
+<!ENTITY cellSelectColumn.label "Dálkur">
+<!ENTITY cellSelectNext.label "Næsta">
+<!ENTITY cellSelectNext.accessKey "N">
+<!ENTITY cellSelectPrevious.label "Fyrri">
+<!ENTITY cellSelectPrevious.accessKey "F">
+<!ENTITY applyBeforeChange.label "Núverandi breytingar munu verða gerðar virkar áður en vali er breytt.">
+<!ENTITY cellContentAlignment.label "Jafna innihald">
+<!ENTITY cellHorizontal.label "Lárétt:">
+<!ENTITY cellHorizontal.accessKey "L">
+<!ENTITY cellVertical.label "Lóðrétt:">
+<!ENTITY cellVertical.accessKey "r">
+<!ENTITY cellStyle.label "Hólfa snið:">
+<!ENTITY cellStyle.accessKey "H">
+<!ENTITY cellNormal.label "Venjulegt">
+<!ENTITY cellHeader.label "Haus">
+<!ENTITY cellTextWrap.label "Textaskipting:">
+<!ENTITY cellTextWrap.accessKey "T">
+<!ENTITY cellWrap.label "Flétta">
+<!ENTITY cellNoWrap.label "Ekki skipta">
+<!ENTITY cellAlignTop.label "Efst">
+<!ENTITY cellAlignMiddle.label "Miðja">
+<!ENTITY cellAlignBottom.label "Botn">
+<!ENTITY cellAlignJustify.label "Jafna">
+<!ENTITY cellInheritColor.label "(Láta lit töflu skína í gegn)">
+<!ENTITY cellUseCheckboxHelp.label "Notaðu gátreiti til að sjá hvaða eiginleikar eru framkvæmdir á öll völd hólf">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label "Stærð">
+<!ENTITY pixels.label "punktar">
+<!ENTITY backgroundColor.label "Bakgrunnslitur:">
+<!ENTITY backgroundColor.accessKey "B">
+<!ENTITY AlignLeft.label "Vinstri">
+<!ENTITY AlignCenter.label "Miðjað">
+<!ENTITY AlignRight.label "Hægri">

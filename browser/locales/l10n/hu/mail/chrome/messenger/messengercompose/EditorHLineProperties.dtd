@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "A vízszintes vonal tulajdonságai">
+
+<!ENTITY dimensionsBox.label "Méretek">
+<!ENTITY heightEditField.label "Magasság:">
+<!ENTITY heightEditField.accessKey "M">
+<!ENTITY widthEditField.label "Szélesség:">
+<!ENTITY widthEditField.accessKey "z">
+<!ENTITY pixelsPopup.value "képpont">
+<!ENTITY alignmentBox.label "Igazítás">
+<!ENTITY leftRadio.label "Balra">
+<!ENTITY leftRadio.accessKey "B">
+<!ENTITY centerRadio.label "Középre">
+<!ENTITY centerRadio.accessKey "K">
+<!ENTITY rightRadio.label "Jobbra">
+<!ENTITY rightRadio.accessKey "J">
+
+<!ENTITY threeDShading.label "3D-s árnyékolás">
+<!ENTITY threeDShading.accessKey "D">
+<!ENTITY saveSettings.label "Legyen ez az alapbeállítás">
+<!ENTITY saveSettings.accessKey "L">
+<!ENTITY saveSettings.tooltip "Beállítások mentése, és a későbbiekben minden új vízszintes vonal beszúrásánál ezek használata">

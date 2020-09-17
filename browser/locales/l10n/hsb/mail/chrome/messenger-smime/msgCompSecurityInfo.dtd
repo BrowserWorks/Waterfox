@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Wěstota za powěsće">
+<!ENTITY subject.plaintextWarning "Prošu wobkedźbujće: Předmjetowe linki e-mejlowych powěsćow so ženje njezaklučuja.">
+<!ENTITY status.heading "Wobsah wašeje powěsće budźe so słać kaž slěduje:">
+<!ENTITY status.signed "Digitalnje signěrowana:">
+<!ENTITY status.encrypted "Zaklučowana:">
+<!ENTITY status.certificates "Certifikaty:">
+<!ENTITY view.label "Pokazać">
+<!ENTITY view.accesskey "P">
+<!ENTITY tree.recipient "Přijimar">
+<!ENTITY tree.status "Status">
+<!ENTITY tree.issuedDate "Wupisany">
+<!ENTITY tree.expiresDate "Płaćiwy do">

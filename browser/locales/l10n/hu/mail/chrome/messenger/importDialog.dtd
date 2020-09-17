@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Importálás">
+<!ENTITY importAll.label          "Minden importálása">
+<!ENTITY importAll.accesskey      "M">
+<!ENTITY importMail.label         "Levelek">
+<!ENTITY importMail.accesskey     "L">
+<!ENTITY importFeeds.label        "Feliratkozás hírforrásokra">
+<!ENTITY importFeeds.accesskey    "F">
+<!ENTITY importAddressbook.label  "Címjegyzékek">
+<!ENTITY importAddressbook.accesskey "C">
+<!ENTITY importSettings.label     "Beállítások">
+<!ENTITY importSettings.accesskey "B">
+<!ENTITY importFilters.label      "Szűrők">
+<!ENTITY importFilters.accesskey  "S">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; importáló varázsló">
+<!ENTITY importShortDesc.label    "Levelek, címjegyzékek, beállítások és szűrők importálása más programokból">
+
+<!ENTITY importDescription1.label "Ez a varázsló e-mail üzeneteket, címjegyzék-bejegyzéseket, hírforrás-feliratkozásokat, beállításokat, illetve szűrőket importál más levelezőprogramokból és közös címjegyzékekből a &brandShortName; levelezőbe.">
+<!ENTITY importDescription2.label "Az importálás után ezek az adatok hozzáférhetők lesznek a &brandShortName; levelezőben, illetve a címjegyzékben.">
+
+<!ENTITY selectDescription.label  "Válassza ki azt a fájltípust, amelyből importálni szeretne:">
+<!ENTITY selectDescriptionB.label "Válasszon egy meglévő fiókot, vagy hozzon létre egy újat:">
+<!ENTITY selectDescription.accesskey "V">
+<!ENTITY acctName.label           "Név:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Nem található alkalmazás vagy fájl az adatok importálásához.">
+
+<!ENTITY back.label               "&lt; Vissza">
+<!ENTITY forward.label            "Tovább &gt;">
+<!ENTITY finish.label             "Befejezés">
+<!ENTITY cancel.label             "Mégse">
+
+<!ENTITY select.label             "vagy válassza ki az importálandó adat típusát:">
+
+<!ENTITY title.label              "Cím">
+<!ENTITY processing.label         "Importálás…">

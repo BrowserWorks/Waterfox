@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Mirar">
+
+<!ENTITY newPref.namePlaceholder       "Nombre">
+
+<!ENTITY newPref.valueBoolean          "Booleán">
+<!ENTITY newPref.valueString           "Cadena">
+<!ENTITY newPref.valueInteger          "Entero">
+
+<!ENTITY newPref.stringPlaceholder     "Introducir una cadena">
+<!ENTITY newPref.numberPlaceholder     "Introducir un numero">
+
+<!ENTITY newPref.toggleButton          "Alternar">
+<!ENTITY newPref.cancelButton          "Cancelar">
+
+<!ENTITY contextMenu.copyPrefName      "Copiar o nombre">
+<!ENTITY contextMenu.copyPrefValue     "Copiar a valura">

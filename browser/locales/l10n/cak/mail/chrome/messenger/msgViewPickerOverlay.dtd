@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "Titz'et:">
+<!ENTITY viewPicker.accesskey "i">
+<!ENTITY viewAll.label "Ronojel">
+<!ENTITY viewAll.accesskey "R">
+<!ENTITY viewUnread.label "Man sik'in ta">
+<!ENTITY viewUnread.accesskey "M">
+<!ENTITY viewNotDeleted.label "Man Yujun ta">
+<!ENTITY viewNotDeleted.accesskey "Y">
+<!ENTITY viewTags.label "Taq etal">
+<!ENTITY viewTags.accesskey "e">
+<!ENTITY viewCustomViews.label "Ichinan taq Tz'etoj">
+<!ENTITY viewCustomViews.accesskey "T">
+<!ENTITY viewVirtualFolder.label "Tiyak Tz'etoj achi'el jun Yakwuj…">
+<!ENTITY viewVirtualFolder.accesskey "T">
+<!ENTITY viewCustomizeView.label "Tichinäx…">
+<!ENTITY viewCustomizeView.accesskey "c">

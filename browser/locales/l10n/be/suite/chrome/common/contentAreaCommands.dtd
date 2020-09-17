@@ -1,0 +1,145 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY popupWindowRejectCmd.label "Адхіляць вокны-вынырцы з гэтай сеціўнай пляцоўкі">
+<!ENTITY popupWindowRejectCmd.accesskey "в">
+<!ENTITY popupWindowAllowCmd.label "Дазваляць вокны-вынырцы з гэтай сеціўнай пляцоўкі">
+<!ENTITY popupWindowAllowCmd.accesskey "в">
+<!ENTITY openLinkCmdInTab.label "Адчыніць спасылку ў новай устаўцы">
+<!ENTITY openLinkCmdInTab.accesskey "й">
+<!ENTITY openLinkCmd.label "Адчыніць спасылку ў новым акне">
+<!ENTITY openLinkCmd.accesskey "п">
+<!ENTITY openLinkCmdInPrivateWindow.label "Адчыніць спасылку ў новым адасобленым акне">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey "д">
+<!ENTITY openLinkInWindowCmd.label "Адчыніць">
+<!ENTITY openLinkInWindowCmd.accesskey "А">
+<!ENTITY openFrameCmd.label "Адчыніць рамку ў новым акне">
+<!ENTITY openFrameCmd.accesskey "ч">
+<!ENTITY openFrameCmdInTab.label "Адчыніць рамку ў новай устаўцы">
+<!ENTITY openFrameCmdInTab.accesskey "ў">
+<!ENTITY keywordfield.label "Дадаць ключавое слова для гэтага пошуку…">
+<!ENTITY keywordfield.accesskey "к">
+<!ENTITY showOnlyThisFrameCmd.label "Паказваць толькі гэтую рамку">
+<!ENTITY showOnlyThisFrameCmd.accesskey "Г">
+<!ENTITY goBackCmd.label "Назад">
+<!ENTITY goBackCmd.accesskey "з">
+<!ENTITY goForwardCmd.label "Наперад">
+<!ENTITY goForwardCmd.accesskey "п">
+<!ENTITY goUpCmd.label "Угору">
+<!ENTITY goUpCmd.accesskey "У">
+<!ENTITY reloadCmd.label "Абнавіць">
+<!ENTITY reloadCmd.accesskey "в">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY stopCmd.label "Спыніць">
+<!ENTITY stopCmd.accesskey "С">
+<!ENTITY reloadFrameCmd.label "Абнавіць рамку">
+<!ENTITY reloadFrameCmd.accesskey "ь">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Праглядзець зыходнік вылучэння">
+<!ENTITY viewPartialSourceForMathMLCmd.label "Праглядзець зыходнік MathML">
+<!ENTITY viewPartialSourceCmd.accesskey "л">
+<!ENTITY viewPageSourceCmd.label "Праглядзець зыходнік старонкі">
+<!ENTITY viewPageSourceCmd.accesskey "З">
+<!ENTITY viewFrameSourceCmd.label "Праглядзець зыходнік рамкі">
+<!ENTITY viewFrameSourceCmd.accesskey "З">
+<!ENTITY viewPageInfoCmd.label "Праглядзець звесткі пра старонку">
+<!ENTITY viewPageInfoCmd.accesskey "З">
+<!ENTITY viewFrameInfoCmd.label "Праглядзець звесткі пра рамку">
+<!ENTITY viewFrameInfoCmd.accesskey "З">
+<!ENTITY fitImageCmd.label "Расцягнуць выяву ў вакне">
+<!ENTITY fitImageCmd.accesskey "ц">
+<!ENTITY reloadImageCmd.label "Абнавіць выяву">
+<!ENTITY reloadImageCmd.accesskey "б">
+<!ENTITY viewImageCmd.label "Праглядзець выяву">
+<!ENTITY viewImageCmd.accesskey "г">
+<!ENTITY viewVideoCmd.label "Пабачыць відэя">
+<!ENTITY viewVideoCmd.accesskey "в">
+<!ENTITY viewBGImageCmd.label "Праглядзець выяву фону">
+<!ENTITY viewBGImageCmd.accesskey "ф">
+<!ENTITY setDesktopBackgroundCmd.label "Прызначыць фон працоўнага стала…">
+<!ENTITY setDesktopBackgroundCmd.accesskey "ф">
+<!ENTITY bookmarkPageCmd.label "Закласці старонку…">
+<!ENTITY bookmarkPageCmd.accesskey "З">
+<!ENTITY bookmarkLinkCmd.label "Закласці спасылку…">
+<!ENTITY bookmarkLinkCmd.accesskey "с">
+<!ENTITY bookmarkFrameCmd.label "Закласці рамку…">
+<!ENTITY bookmarkFrameCmd.accesskey "р">
+<!ENTITY savePageAsCmd.label "Захаваць старонку як…">
+<!ENTITY savePageCmd.label "Захаваць старонку">
+<!ENTITY savePageCmd.accesskey "а">
+<!ENTITY savePageCmd.commandkey "s">
+<!ENTITY saveFrameAsCmd.label "Захаваць рамку як…">
+<!ENTITY saveFrameCmd.label "Захаваць рамку">
+<!ENTITY saveFrameCmd.accesskey "к">
+<!ENTITY saveLinkAsCmd.label "Захаваць мэту спасылкі як…">
+<!ENTITY saveLinkCmd.label "Захаваць мэту спасылкі">
+<!ENTITY saveLinkCmd.accesskey "т">
+<!ENTITY saveImageAsCmd.label "Захаваць выяву як…">
+<!ENTITY saveImageCmd.label "Захаваць выяву">
+<!ENTITY saveImageCmd.accesskey "я">
+<!ENTITY saveVideoCmd.label "Захаваць відэя як…">
+<!ENTITY saveVideoCmd.accesskey "З">
+<!ENTITY saveAudioCmd.label "Захаваць гук як…">
+<!ENTITY saveAudioCmd.accesskey "З">
+<!ENTITY copyLinkCmd.label "Капіяваць месцазнаходжанне спасылкі">
+<!ENTITY copyLinkCmd.accesskey "М">
+<!ENTITY copyImageCmd.label "Капіяваць выяву">
+<!ENTITY copyImageCmd.accesskey "я">
+<!ENTITY copyVideoURLCmd.label "Капіяваць месцазнаходжанне відэя">
+<!ENTITY copyVideoURLCmd.accesskey "К">
+<!ENTITY copyAudioURLCmd.label "Капіяваць месцазнаходжанне гуку">
+<!ENTITY copyAudioURLCmd.accesskey "К">
+<!ENTITY metadataCmd.label "Уласцівасці">
+<!ENTITY metadataCmd.accesskey "У">
+<!ENTITY copyEmailCmd.label "Капіяваць адрас э-пошты">
+<!ENTITY copyEmailCmd.accesskey "э">
+<!ENTITY thisFrameMenu.label "Гэтая рамка">
+<!ENTITY thisFrameMenu.accesskey "Р">
+<!ENTITY mediaPlay.label "Граць">
+<!ENTITY mediaPlay.accesskey "Г">
+<!ENTITY mediaPause.label "Прыпыніць">
+<!ENTITY mediaPause.accesskey "П">
+<!ENTITY mediaMute.label "Заглушыць">
+<!ENTITY mediaMute.accesskey "З">
+<!ENTITY mediaUnmute.label "Уключыць гук">
+<!ENTITY mediaUnmute.accesskey "У">
+<!ENTITY mediaPlaybackRate.label "Хуткасць грання">
+<!ENTITY mediaPlaybackRate.accesskey "г">
+<!ENTITY mediaPlaybackRate050.label "Нізкая хуткасць (0.5×)">
+<!ENTITY mediaPlaybackRate050.accesskey "Н">
+<!ENTITY mediaPlaybackRate100.label "Звычайная хуткасць">
+<!ENTITY mediaPlaybackRate100.accesskey "З">
+<!ENTITY mediaPlaybackRate150.label "Высокая хуткасць (1.5×)">
+<!ENTITY mediaPlaybackRate150.accesskey "В">
+<!ENTITY mediaPlaybackRate200.label "Двайная хуткасць">
+<!ENTITY mediaPlaybackRate200.accesskey "Д">
+<!ENTITY mediaShowControls.label "Паказаць медыя-кіроўцы">
+<!ENTITY mediaShowControls.accesskey "а">
+<!ENTITY mediaHideControls.label "Схаваць медыя-кіроўцы">
+<!ENTITY mediaHideControls.accesskey "а">
+<!ENTITY videoFullScreen.label "Увесь экран">
+<!ENTITY videoFullScreen.accesskey "У">
+<!ENTITY videoSaveImage.label "Захаваць здымак як…">
+<!ENTITY videoSaveImage.accesskey "З">
+<!ENTITY videoShowStats.label "Паказаць статыстыку">
+<!ENTITY videoShowStats.accesskey "с">
+<!ENTITY videoHideStats.label "Схаваць статыстыку">
+<!ENTITY videoHideStats.accesskey "с">
+<!ENTITY search.accesskey "ш">
+<!ENTITY bidiSwitchPageDirectionItem.label "Пераключыць кірунак старонкі">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "р">
+<!ENTITY bidiSwitchTextDirectionItem.label "Пераключыць кірунак тэксту">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey "т">
+<!ENTITY spellAddToDictionary.label "Дадаць у слоўнік">
+<!ENTITY spellAddToDictionary.accesskey "Д">
+<!ENTITY spellUndoAddToDictionary.label "Адмяніць даданне ў слоўнік">
+<!ENTITY spellUndoAddToDictionary.accesskey "А">
+<!ENTITY spellIgnoreWord.label "Ігнараваць слова">
+<!ENTITY spellIgnoreWord.accesskey "с">
+<!ENTITY spellCheckEnable.label "Правяраць правапіс">
+<!ENTITY spellCheckEnable.accesskey "п">
+<!ENTITY spellNoSuggestions.label "(няма прапановаў)">
+<!ENTITY spellDictionaries.label "Мовы">
+<!ENTITY spellDictionaries.accesskey "М">
+<!ENTITY spellAddDictionaries.label "Загрузіць іншыя слоўнікі…">
+<!ENTITY spellAddDictionaries.accesskey "З">

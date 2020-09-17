@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Edizio aurreratua…">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "Gehitu edo aldatu HTML atributuak, estilo-atributuak eta JavaScript">
+<!ENTITY chooseFileButton.label "Aukeratu fitxategia...">
+<!ENTITY chooseFileButton.accessKey "f">
+<!ENTITY chooseFileLinkButton.label "Aukeratu fitxategia...">
+<!ENTITY chooseFileLinkButton.accessKey "A">
+<!ENTITY makeUrlRelative.label "URLa orriaren helbidearekiko erlatiboa da">
+<!ENTITY makeUrlRelative.accessKey "R">
+<!ENTITY makeUrlRelative.tooltip "URL erlatibo eta absolutuaren artean aldaketak. Hau gordetzeko orria gorde behar duzu lehendabizi.">
+
+<!ENTITY LinkURLEditField2.label "Sartu web orri kokapena, fitxategi lokala, edo aukeratu izendatutako aingura edo izenburua eremuaren laster-menutik:">
+<!ENTITY LinkURLEditField2.accessKey "S">

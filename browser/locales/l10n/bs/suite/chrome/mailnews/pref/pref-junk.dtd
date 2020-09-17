@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Neželjena pošta i sumnjva pošta">
+<!ENTITY junkSettings.caption "Postavke globalne neželjene pošte">
+<!ENTITY junkMail.intro "Dodatne postavke za neželjenu poštu mogu se izvršiti u dijalogu postavki računa.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Kada označim poruke kao neželjenu poštu:">
+<!ENTITY manualMarkModeMove.label       "Premjesti ih u direktorij &quot;Neželjena pošta&quot;">
+<!ENTITY manualMarkModeDelete.label     "Izbriši ih">
+
+<!ENTITY markAsRead.intro               "Označi poruke kao pročitane:">
+<!ENTITY autoMarkAsRead.label           "Kada &brandShortName; odredi da su neželjena pošta">
+<!ENTITY manualMarkAsRead.label         "Kada ih ja ručno označim da su neželjena pošta">
+
+<!ENTITY enableJunkLogging.label        "Omogući zapisnik filtera neželjene pošte">
+<!ENTITY openJunkLog.label              "Prikaži zapisnik">
+<!ENTITY resetTrainingData.label        "Resetuj podatke o obuci">
+
+<!ENTITY pref.suspectMail.caption       "Sumnjiva pošta">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "E-mail prevare">
+<!ENTITY enablePhishingDetector.label     "Obavjesti me ako se sumnja da je poruka koju čitam prevara">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Antivirus">
+<!ENTITY antiVirus.label                  "Omogući antivirusu da skenira dolazne poruke još lakše">

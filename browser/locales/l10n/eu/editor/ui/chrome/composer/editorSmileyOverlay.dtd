@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Aurpegiera">
+<!ENTITY insertSmiley.accesskey "A">
+
+<!ENTITY smiley1Cmd.label "Irribarrea">
+<!ENTITY smiley1Cmd.accesskey "I">
+<!ENTITY smiley1Cmd.tooltip "Txertatu irribarre aurpegia">
+<!ENTITY smiley2Cmd.label "Zimurtua">
+<!ENTITY smiley2Cmd.accesskey "Z">
+<!ENTITY smiley2Cmd.tooltip "Txertatu zimurtutako aurpegia">
+<!ENTITY smiley3Cmd.label "Begi-keinua">
+<!ENTITY smiley3Cmd.accesskey "B">
+<!ENTITY smiley3Cmd.tooltip "Txertatu keinuka dagoen aurpegia">
+<!ENTITY smiley4Cmd.label "Mingaina kanpoan">
+<!ENTITY smiley4Cmd.accesskey "M">
+<!ENTITY smiley4Cmd.tooltip "Txertatu mingaina ateratzen duen aurpegia">
+<!ENTITY smiley5Cmd.label "Barrez">
+<!ENTITY smiley5Cmd.accesskey "r">
+<!ENTITY smiley5Cmd.tooltip "Txertatu barrezka dagoen aurpegia">
+<!ENTITY smiley6Cmd.label "Lotsatuta">
+<!ENTITY smiley6Cmd.accesskey "L">
+<!ENTITY smiley6Cmd.tooltip "Txertatu lotsatutako aurpegia">
+<!ENTITY smiley7Cmd.label "Zalantzati">
+<!ENTITY smiley7Cmd.accesskey "n">
+<!ENTITY smiley7Cmd.tooltip "Txertatu zalantzadun aurpegia">
+<!ENTITY smiley8Cmd.label "Ezustea">
+<!ENTITY smiley8Cmd.accesskey "u">
+<!ENTITY smiley8Cmd.tooltip "Txertatu zalantzadun aurpegia">
+<!ENTITY smiley9Cmd.label "Muxua">
+<!ENTITY smiley9Cmd.accesskey "M">
+<!ENTITY smiley9Cmd.tooltip "Txertatu muxu ematen duen aurpegia">
+<!ENTITY smiley10Cmd.label "Garrasia">
+<!ENTITY smiley10Cmd.accesskey "G">
+<!ENTITY smiley10Cmd.tooltip "Txertatu oihu egiten duen aurpegia">
+<!ENTITY smiley11Cmd.label "Primeran">
+<!ENTITY smiley11Cmd.accesskey "P">
+<!ENTITY smiley11Cmd.tooltip "Txertatu primerako aurpegia">
+<!ENTITY smiley12Cmd.label "Dirua ahoan">
+<!ENTITY smiley12Cmd.accesskey "D">
+<!ENTITY smiley12Cmd.tooltip "Txertatu dirua ahoan duen aurpegia">
+<!ENTITY smiley13Cmd.label "Oina ahoan">
+<!ENTITY smiley13Cmd.accesskey "i">
+<!ENTITY smiley13Cmd.tooltip "Txertatu oina ahoan duen aurpegia">
+<!ENTITY smiley14Cmd.label "Errugabea">
+<!ENTITY smiley14Cmd.accesskey "g">
+<!ENTITY smiley14Cmd.tooltip "Txertatu errugabe aurpegia">
+<!ENTITY smiley15Cmd.label "Negarrez">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "Txertatu negar egiten duen aurpegia">
+<!ENTITY smiley16Cmd.label "Ezpainak-itsatsita">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "Txertatu ezpainak itsatsita dituen aurpegia">
+<!ENTITY SmileButton.label "Txertatu aurpegiera">
+<!ENTITY SmileButton.tooltip "Txertatu aurpegi irrifartsua">

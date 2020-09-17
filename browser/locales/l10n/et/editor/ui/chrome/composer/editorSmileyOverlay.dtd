@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Smiley Menu items -->
+
+<!ENTITY insertSmiley.label     "Emotikon">
+<!ENTITY insertSmiley.accesskey "E">
+
+<!ENTITY smiley1Cmd.label       "Naeratab">
+<!ENTITY smiley1Cmd.accesskey   "N">
+<!ENTITY smiley1Cmd.tooltip     "Lisa naeratav nägu">
+<!ENTITY smiley2Cmd.label       "Mossitab">
+<!ENTITY smiley2Cmd.accesskey   "M">
+<!ENTITY smiley2Cmd.tooltip     "Lisa mossitav nägu">
+<!ENTITY smiley3Cmd.label       "Pilgutab silma">
+<!ENTITY smiley3Cmd.accesskey   "P">
+<!ENTITY smiley3Cmd.tooltip     "Lisa silma pilgutav nägu">
+<!ENTITY smiley4Cmd.label       "Naljatab">
+<!ENTITY smiley4Cmd.accesskey   "A">
+<!ENTITY smiley4Cmd.tooltip     "Lisa naljatav nägu">
+<!ENTITY smiley5Cmd.label       "Naerab">
+<!ENTITY smiley5Cmd.accesskey   "E">
+<!ENTITY smiley5Cmd.tooltip     "Lisa naerev nägu">
+<!ENTITY smiley6Cmd.label       "Punastab">
+<!ENTITY smiley6Cmd.accesskey   "P">
+<!ENTITY smiley6Cmd.tooltip     "Lisa punastav nägu">
+<!ENTITY smiley7Cmd.label       "Kahtlev">
+<!ENTITY smiley7Cmd.accesskey   "K">
+<!ENTITY smiley7Cmd.tooltip     "Lisa kahtlev nägu">
+<!ENTITY smiley8Cmd.label       "Üllatub">
+<!ENTITY smiley8Cmd.accesskey   "l">
+<!ENTITY smiley8Cmd.tooltip     "Lisa üllatunud nägu">
+<!ENTITY smiley9Cmd.label       "Suudleb">
+<!ENTITY smiley9Cmd.accesskey   "d">
+<!ENTITY smiley9Cmd.tooltip     "Lisa suudlev nägu">
+<!ENTITY smiley10Cmd.label      "Karjub">
+<!ENTITY smiley10Cmd.accesskey  "K">
+<!ENTITY smiley10Cmd.tooltip    "Lisa karjuv nägu">
+<!ENTITY smiley11Cmd.label      "Lahe">
+<!ENTITY smiley11Cmd.accesskey  "L">
+<!ENTITY smiley11Cmd.tooltip    "Lisa lahe nägu">
+<!ENTITY smiley12Cmd.label      "Raha suus">
+<!ENTITY smiley12Cmd.accesskey  "R">
+<!ENTITY smiley12Cmd.tooltip    "Lisa raha suus hoidev nägu">
+<!ENTITY smiley13Cmd.label      "Jalg suus">
+<!ENTITY smiley13Cmd.accesskey  "J">
+<!ENTITY smiley13Cmd.tooltip    "Lisa jalga suus hoidev nägu">
+<!ENTITY smiley14Cmd.label      "Süütuke">
+<!ENTITY smiley14Cmd.accesskey  "S">
+<!ENTITY smiley14Cmd.tooltip    "Lisa süütu nägu">
+<!ENTITY smiley15Cmd.label      "Nutmine">
+<!ENTITY smiley15Cmd.accesskey  "N">
+<!ENTITY smiley15Cmd.tooltip    "Lisa nuttev nägu">
+<!ENTITY smiley16Cmd.label      "Suu on suletud">
+<!ENTITY smiley16Cmd.accesskey  "u">
+<!ENTITY smiley16Cmd.tooltip    "Lisa suletud suuga nägu">
+<!ENTITY SmileButton.tooltip    "Lisa emotikon">

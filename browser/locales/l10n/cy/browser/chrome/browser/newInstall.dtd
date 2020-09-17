@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Newyddion Pwysig">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "I gydweddu gwybodaeth rydych chi eisoes wedi'i gadw i Firefox gyda'r gosodiad hwn o &brandShortName;, mewngofnodwch gyda'ch &syncBrand.fxAccount.label;.">
+<!ENTITY continue-button "Parhau">
+
+<!ENTITY mainText "Mae gan y gosodiad hwn o &brandShortName; broffil newydd. Nid yw'n rhannu nodau tudalen, cyfrineiriau a dewisiadau defnyddwyr gyda gosodiadau eraill o Firefox (gan gynnwys Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition, a Firefox Nightly) ar y cyfrifiadur hwn.">

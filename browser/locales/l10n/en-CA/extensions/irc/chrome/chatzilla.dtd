@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip    "Main Menu">
+<!ENTITY Toolbar.tooltip    "Main Toolbar">
+
+
+<!ENTITY multiline-expand.tooltip   "Switch to multi-line input (Ctrl+Up)">
+<!ENTITY multiline-contract.tooltip "Switch to single-line input (Ctrl+Down)">
+<!ENTITY multiline-send.tooltip     "Send this text (Ctrl+Enter)">
+<!ENTITY server-nick.tooltip        "Change nickname or set away state. To focus the input box, press Escape.">
+
+<!ENTITY Underline.label             "Underline">
+<!ENTITY Bold.label                  "Bold">
+<!ENTITY Reverse.label               "Reverse video">
+<!ENTITY Normal.label                "Normal">
+<!ENTITY Color.label                 "Colour">
+<!ENTITY ForeBack.label              "xx=Fore yy=Back">

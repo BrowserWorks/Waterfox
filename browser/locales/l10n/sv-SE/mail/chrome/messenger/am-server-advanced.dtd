@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Avancerade kontoinställningar">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP-serverkatalog:">
+<!ENTITY serverDirectory.accesskey "k">
+<!ENTITY usingSubscription.label "Visa endast mappar du prenumererar på">
+<!ENTITY usingSubscription.accesskey "V">
+<!ENTITY dualUseFolders.label "Servern kan hantera mappar med både undermappar och meddelanden">
+<!ENTITY dualUseFolders.accesskey "e">
+<!ENTITY maximumConnectionsNumber.label "Maximala antalet serveranslutningar att cacha">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Här ställer du in namnrymderna (namespace) på IMAP-servern">
+<!ENTITY personalNamespace.label "Personlig:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Publik (delad):">
+<!ENTITY publicNamespace.accesskey "b">
+<!ENTITY otherUsersNamespace.label "Andra användares:">
+<!ENTITY otherUsersNamespace.accesskey "A">
+<!ENTITY overrideNamespaces.label "Tillåt att servern bestämmer">
+<!ENTITY overrideNamespaces.accesskey "T">
+<!ENTITY pop3DeferringDesc.label "När du hämtar e-post från det här kontots server, använd följande mapp för att lagra nya meddelanden:" >
+<!ENTITY accountInbox.label "Inkorgen för det här kontot">
+<!ENTITY accountInbox.accesskey "h">
+<!ENTITY deferToServer.label "Inkorgen för ett annat konto">
+<!ENTITY deferToServer.accesskey "a">
+<!ENTITY deferGetNewMail.label "Inkludera denna server när du hämtar ny e-post">
+<!ENTITY deferGetNewMail.accesskey "I">

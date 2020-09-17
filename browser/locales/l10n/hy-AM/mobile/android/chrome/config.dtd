@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Որոնում">
+
+<!ENTITY newPref.namePlaceholder       "Անունը">
+
+<!ENTITY newPref.valueBoolean          "Բուլյան">
+<!ENTITY newPref.valueString           "Տեքստ">
+<!ENTITY newPref.valueInteger          "Ամբողջ">
+
+<!ENTITY newPref.stringPlaceholder     "Նշեք տողը">
+<!ENTITY newPref.numberPlaceholder     "Գրեք համարը">
+
+<!ENTITY newPref.toggleButton          "Հակառակը">
+<!ENTITY newPref.cancelButton          "Չեղարկել">
+
+<!ENTITY contextMenu.copyPrefName      "Պատճենել անունը">
+<!ENTITY contextMenu.copyPrefValue     "Պատճենել արժեքը ">

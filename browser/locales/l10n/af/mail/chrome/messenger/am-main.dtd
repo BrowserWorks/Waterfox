@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Rekeningopstelling">
+<!ENTITY accountName.label "Gebruikernaam:">
+<!ENTITY accountName.accesskey "n">
+<!ENTITY identityTitle.label "Verstekidentiteit">
+<!ENTITY identityDesc.label "Elke rekening het 'n identiteit. Die identiteit is die inligting wat ander mense sien wanneer hulle u boodskappe lees.">
+<!ENTITY name.label "U naam:">
+<!ENTITY name.accesskey "U">
+<!ENTITY email.label "E-posadres:">
+<!ENTITY email.accesskey "E">
+<!ENTITY replyTo.label "Antwoordadres:">
+<!ENTITY replyTo.accesskey "s">
+
+<!ENTITY organization.label "Organisasie:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Handtekeningteks:">
+<!ENTITY signatureText.accesskey "t">
+<!ENTITY signatureHtml.label "Gebruik HTML (bv &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "H">
+
+
+<!ENTITY edit.label "Redigeer…">
+<!ENTITY choose.label "Kies…">
+<!ENTITY choose.accesskey "K">
+<!ENTITY editVCard.label "Redigeer kaart…">
+<!ENTITY editVCard.accesskey "e">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Heg my vCard aan boodskappe">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Bestuur identiteite…">
+<!ENTITY manageIdentities.accesskey "B">
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+
+<!ENTITY smtpName.label "Uitgaande bediener (SMTP):">
+<!ENTITY smtpName.accesskey "U">
+<!ENTITY smtpDefaultServer.label "Gebruik verstekbediener">
+
+

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Bočna traka">
+<!ENTITY sidebar.reload.label           "Obnovi">
+<!ENTITY sidebar.picker.label           "Tabovi">
+<!ENTITY sidebar.customize.label        "Prilagodi bočnu traku…">
+<!ENTITY sidebar.hide.label             "Sakrij tab">
+<!ENTITY sidebar.switch.label           "Prebaci na tab">
+<!ENTITY sidebarCmd.label               "Bočna traka">
+<!ENTITY sidebar.loading.label          "Učitavanje…">
+<!ENTITY sidebar.loadstopped.label      "Učitavanje zaustavljeno">
+<!ENTITY sidebar.loading.stop.label     "Zaustavi">
+
+<!ENTITY sidebar.no-panels.state     "Bočna traka je trenutno prazna.">
+<!ENTITY sidebar.no-panels.add       'Možete dodati tabove klikom na dugme "Tabovi" iznad.'>
+<!ENTITY sidebar.no-panels.hide      'Ako želite da kompletno sakrijete bočnu traku, kliknite na meni "Pregled" iznad i izaberite "Bočna traka" iz "Prikaži/sakrij" podmenija.'>
+<!ENTITY sidebar.sbDirectory.label   "Adresar bočne trake…">
+
+<!ENTITY sidebar.pagenotfound.label  "Ovaj tab trenutno nije dostupan.">
+<!ENTITY sidebar.close.tooltip       "Zatvori bočnu traku">
+<!ENTITY sidebar.open.tooltip        "Otvori bočnu traku">
+
+<!ENTITY sidebar.search.label         "Traži">
+<!ENTITY sidebar.client-bookmarks.label     "Zabilješke">
+<!ENTITY sidebar.client-history.label       "Historija">
+<!ENTITY sidebar.client-addressbook.label   "Adresar">

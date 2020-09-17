@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Tambah Dalam Buku Alamat…">
+<!ENTITY AddToAddressBook.accesskey        "B">
+<!ENTITY EditContact.label                 "Edit Kenalan…">
+<!ENTITY EditContact.accesskey             "E">
+<!ENTITY ViewContact.label                 "Papar Kenalan">
+<!ENTITY ViewContact.accesskey             "P">
+<!ENTITY SendMailTo.label                  "Karang E-mel Kepada…">
+<!ENTITY SendMailTo.accesskey              "r">
+<!ENTITY CopyEmailAddress.label            "Salin Alamat E-mel">
+<!ENTITY CopyEmailAddress.accesskey        "S">
+<!ENTITY CreateFilterFrom.label            "Cipta Penapisan Daripada…">
+<!ENTITY CreateFilterFrom.accesskey        "D">
+<!ENTITY openInBrowser.label               "Buka dalam Pelayar">
+<!ENTITY openInBrowser.accesskey           "B">
+<!ENTITY bookmarkLinkCmd.label             "Tandabuku Pautan Ini…">
+<!ENTITY bookmarkLinkCmd.accesskey         "T">
+<!ENTITY copyLinkCmd.label                 "Salin Lokasi Pautan">
+<!ENTITY copyLinkCmd.accesskey             "S">
+<!ENTITY CopyMessageId.label               "Salin ID-Mesej">
+<!ENTITY CopyMessageId.accesskey           "S">
+<!ENTITY OpenMessageForMsgId.label         "Buka Mesej Untuk ID">
+<!ENTITY OpenMessageForMsgId.accesskey     "B">
+<!ENTITY OpenBrowserWithMsgId.label        "Buka Pelayar Dengan ID-Mesej">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "B">

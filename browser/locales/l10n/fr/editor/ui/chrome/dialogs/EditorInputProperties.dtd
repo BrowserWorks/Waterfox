@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propriétés des champs du formulaire">
+<!ENTITY windowTitleImage.label "Propriétés de l’image du formulaire">
+
+<!ENTITY InputType.label "Type de champ">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Texte">
+<!ENTITY password.value "Mot de passe">
+<!ENTITY checkbox.value "Case à cocher">
+<!ENTITY radio.value "Bouton radio">
+<!ENTITY submit.value "Bouton d’envoi">
+<!ENTITY reset.value "Bouton reset">
+<!ENTITY file.value "Fichier">
+<!ENTITY hidden.value "Caché">
+<!ENTITY image.value "Image">
+<!ENTITY button.value "Bouton">
+
+<!ENTITY InputSettings.label "Paramètres du champ">
+<!ENTITY InputName.label "Nom du champ :">
+<!ENTITY InputName.accesskey "o">
+<!ENTITY GroupName.label "Nom du groupe :">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Valeur du champ :">
+<!ENTITY InputValue.accesskey "u">
+<!ENTITY InitialValue.label "Valeur initiale :">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "Initialement coché">
+<!ENTITY InputChecked.accesskey "c">
+<!ENTITY InputSelected.label "Initialement sélectionné">
+<!ENTITY InputSelected.accesskey "s">
+<!ENTITY InputReadOnly.label "En lecture seule">
+<!ENTITY InputReadOnly.accesskey "l">
+<!ENTITY InputDisabled.label "Désactivé">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Index de tabulation :">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "Taille du champ :">
+<!ENTITY TextSize.accesskey "a">
+<!ENTITY TextLength.label "Longueur max. :">
+<!ENTITY TextLength.accesskey "x">
+<!ENTITY AccessKey.label "Touche d’accès :">
+<!ENTITY AccessKey.accesskey "h">
+<!ENTITY Accept.label "Accepter les types :">
+<!ENTITY Accept.accesskey "y">
+
+<!ENTITY ImageProperties.label "Propriétés de l’image…">
+<!ENTITY ImageProperties.accesskey "m">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Tijik'">
+<!ENTITY importAll.label          "Tijik' Ronojel">
+<!ENTITY importAll.accesskey      "R">
+<!ENTITY importMail.label         "Taqoya'l">
+<!ENTITY importMail.accesskey     "T">
+<!ENTITY importFeeds.label        "Tz'ib'anïk B'i'aj pa taq Q'asab'äl">
+<!ENTITY importFeeds.accesskey    "B">
+<!ENTITY importAddressbook.label  "Kiwujil taq Ochochib'äl">
+<!ENTITY importAddressbook.accesskey "O">
+<!ENTITY importSettings.label     "Taq nuk'ulem">
+<!ENTITY importSettings.accesskey "n">
+<!ENTITY importFilters.label      "Taq chayub'äl">
+<!ENTITY importFilters.accesskey  "c">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; Tijik' To'onel">
+<!ENTITY importShortDesc.label    "Tijik'Kitaqoya'l, Kitz'ib'awuj Ochochib'äl, taq Kinuk'ulem, chuqa' taq Kichayub'al ch'aqa' chik taq kema'">
+
+<!ENTITY importDescription1.label "Re to'onel re' xkerujïk' taq kitaqoya'l, kitz'ib'anik kitz'ib'awuj ochochib'äl, taq kinuk'ulem, chuqa' taq Kichayub'al ch'aqa' chik taq kikema' rub'i' taqoya'l chuqa' relik taq kib'anikil kitz'ib'awuj taq ochochib'äl pa &brandShortName;.">
+<!ENTITY importDescription2.label "Toq xkejik' el, xkatikïr xkatok chi kipam pa &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Tacha' ri ruwäch chi yakb'äl nawajo' najïk' el:">
+<!ENTITY selectDescriptionB.label "Ticha' jun rub'i' taqoya'l k'o wi o titz'uk jun k'ak'a' rub'i' taqoya'l:">
+<!ENTITY selectDescription.accesskey "n">
+<!ENTITY acctName.label           "B'i'aj:">
+<!ENTITY acctName.accesskey       "B">
+<!ENTITY noModulesFound.label     "Majun chokoy o yakb'äl k'o richin yejik' el taq tzij.">
+
+<!ENTITY back.label               "&lt; Chi rij">
+<!ENTITY forward.label            "Jun chik &gt;">
+<!ENTITY finish.label             "Tik'is">
+<!ENTITY cancel.label             "Tiq'at">
+
+<!ENTITY select.label             "o ticha' ri ruwäch samajib'äl xtijik' el:">
+
+<!ENTITY title.label              "B'i'aj">
+<!ENTITY processing.label         "Nijik…">

@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Zavihek brskalnika">
+<!ENTITY openFileCmd.label "Odpri datoteko …">
+
+<!ENTITY closeOtherTabs.label "Zapri ostale zavihke">
+
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Zapri zavihke na desni">
+
+<!ENTITY uploadFile.label "Naloži datoteko …">
+<!ENTITY uploadFile.accesskey "ž">
+
+<!ENTITY printSetupCmd.label "Priprava strani …">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Najdi na tej strani …">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Pokaži/Skrij">
+<!ENTITY taskbarCmd.label "Vrstica stanja">
+
+
+<!ENTITY useStyleSheetMenu.label "Uporabi slog">
+<!ENTITY useStyleSheetPersistentOnly.label "Privzeti slog">
+<!ENTITY pageSourceCmd.label "Vir strani">
+<!ENTITY pageInfoCmd.label "Podatki o strani">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Pojdi">
+<!ENTITY goHomeCmd.label "Domov">
+<!ENTITY historyCmd.label "Zgodovina">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY recentTabs.label "Nedavno zaprti zavihki">
+<!ENTITY recentWindows.label "Nedavno zaprta okna">
+<!ENTITY historyRestoreLastSession.label "Obnovi prejšnjo sejo">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Zaznamki">
+<!ENTITY addCurPageCmd.label "Dodaj stran med zaznamke">
+<!ENTITY manBookmarksCmd.label "Upravljanje zaznamkov ...">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Iskanje po spletu">
+<!ENTITY translateMenu.label "Prevedi stran">
+
+<!ENTITY cookieDisplayCookiesCmd.label "Upravljaj shranjene piškotke">
+<!ENTITY cookieAllowCookiesCmd.label "Dovoli piškotke s tega spletnega mesta">
+<!ENTITY cookieAllowCookiesMsg.label "Piškotki s tega spletnega mesta bodo vedno dovoljeni.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Dovoli piškotke seje s tega spletnega mesta">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Ta spletna stran bo lahko nastavila piškotke samo za trenutno sejo.">
+<!ENTITY cookieCookiesDefaultCmd.label "Uporabi privzeta dovoljenja za piškotke">
+<!ENTITY cookieCookiesDefaultMsg.label "Piškotki s tega spletnega mesta bodo sprejeti ali zavrnjeni na podlagi privzetih nastavitev.">
+<!ENTITY cookieBlockCookiesCmd.label "Blokiraj piškotke s tega spletnega mesta">
+<!ENTITY cookieBlockCookiesMsg.label "Piškotki s tega spletnega mesta bodo vedno zavrnjeni.">
+
+<!ENTITY cookieDisplayImagesCmd.label "Upravljaj dovoljenja slik">
+<!ENTITY cookieAllowImagesCmd.label "Dovoli slike s tega spletnega mesta">
+<!ENTITY cookieAllowImagesMsg.label "Slike s tega spletnega mesta bodo vedno naložene.">
+
+<!ENTITY popupAllowCmd.label "Dovoli pojavna okna s tega spletnega mesta">
+<!ENTITY popupAllowMsg.label "Pojavna okna s tega spletnega mesta bodo vedno prikazana.">
+<!ENTITY popupDefaultCmd.label "Uporabi privzeta dovoljenja za pojavna okna">
+<!ENTITY popupDefaultMsg.label "Pojavna okna s tega spletnega mesta bodo prikazana na podlagi privzetih nastavitev.">
+<!ENTITY popupBlockMsg.label "Pojavna okna s tega spletnega mesta ne bodo prikazana.">
+<!ENTITY popupsManage.label "Upravljaj pojavna okna">
+
+<!ENTITY cookieCookieManager.label "Upravitelj piškotkov">
+<!ENTITY cookieImageManager.label "Upravitelj slik">
+<!ENTITY popupsManager.label "Upravitelj pojavnih oken">
+
+

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding.title   "Codificació de caràcters">
+<!ENTITY messageDisplay.caption          "Visualització de missatges">
+<!ENTITY viewFallbackCharset.label       "Codificació de caràcters alternativa:">
+<!ENTITY viewFallbackCharset.accesskey   "e">
+<!ENTITY viewFallbackCharset.desc        "(S'utilitza per al contingut antic que no declara la seva codificació)">
+
+<!ENTITY composingMessages.caption       "Redacció de missatges">
+<!ENTITY useMIME.label                   "Per a aquells missatges que continguin caràcters de 8-bit, utilitzeu la codificació MIME 'quoted printable'. Desmarqueu-ho per enviar els missatges tal com són.">
+<!ENTITY useMIME.accesskey               "P">
+<!ENTITY sendDefaultCharset.label        "Codificació de caràcters per defecte:">
+<!ENTITY sendDefaultCharset.accesskey    "C">
+<!ENTITY replyInDefaultCharset2.label    "Quan sigui possible, utilitza la codificació de caràcters per defecte en les respostes. (Si es desmarca, només la utilitzaran els missatges nous.)">
+<!ENTITY replyInDefaultCharset2.accesskey "u">

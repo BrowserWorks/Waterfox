@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Hľadanie počas písania">
+<!ENTITY findAsYouTypeBehavior.label "Hľadať počas písania">
+<!ENTITY findAsYouTypeTip.label "Tip: Ak chcete ručne spustiť vyhľadávanie počas písania, na vyhľadávanie v texte zadajte znak / a za ním hľadaný text. Ak chcete vyhľadávať v odkazoch, zadajte znak ' a za ním hľadaný text.">
+<!ENTITY findAsYouTypeTimeout.label "Vymazať aktuálne vyhľadávanie po niekoľkých sekundách bez aktivity">
+<!ENTITY findAsYouTypeTimeout.accesskey "V">
+<!ENTITY findAsYouTypeSound.label "Prehrať zvuk, ak zadaný text nebol nájdený">
+<!ENTITY findAsYouTypeSound.accesskey "r">
+<!ENTITY findAsYouTypeEnableAuto.label "Hľadať automaticky pri písaní na webovej stránke:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "H">
+<!ENTITY findAsYouTypeAutoText.label "V ľubovoľnom texte na stránke">
+<!ENTITY findAsYouTypeAutoText.accesskey "u">
+<!ENTITY findAsYouTypeAutoLinks.label "Len v odkazoch">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "L">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Zobraziť vyhľadávací panel v režime Hľadať počas písania">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "Z">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Poznámka: v režime Hľadať počas písania bez zobrazeného vyhľadávacieho panela nie je možné zadávať medzinárodné znaky.">

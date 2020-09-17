@@ -1,0 +1,120 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+<!ENTITY  offlineGoOfflineCmd.label                 "Work Offline">
+<!ENTITY  offlineGoOfflineCmd.accesskey             "k">
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items --> 
+
+<!ENTITY fileMenu.label					"File"> 
+<!ENTITY fileMenu.accesskey				"f">
+<!ENTITY newMenu.label						"New">
+<!ENTITY newMenu.accesskey					"N">
+<!ENTITY newBlankPageCmd.label "Composer Page">
+<!ENTITY newBlankPageCmd.accesskey "P" >
+<!ENTITY newBlankPageCmd.key "n" >
+<!ENTITY newPageFromTemplateCmd.label "Page Using Template">
+<!ENTITY newPageFromTemplateCmd.accesskey "t">
+<!ENTITY newPageFromDraftCmd.label "Page Using Draft">
+<!ENTITY newPageFromDraftCmd.accesskey "d">
+<!ENTITY newNavigatorCmd.label "Browser Window">
+<!ENTITY newNavigatorCmd.key "N">
+<!ENTITY newNavigatorCmd.accesskey "B">
+
+<!ENTITY editMenu.label					"Edit"> 
+<!ENTITY editMenu.accesskey				"e"> 
+<!ENTITY undoCmd.label						"Undo">  
+<!ENTITY undoCmd.key						"Z">  
+<!ENTITY undoCmd.accesskey					"U"> 
+<!ENTITY redoCmd.label						"Redo">  
+<!ENTITY redoCmd.key						"Y">  
+<!ENTITY redoCmd.accesskey					"R"> 
+<!ENTITY cutCmd.label						"Cut">  
+<!ENTITY cutCmd.key							"X">  
+<!ENTITY cutCmd.accesskey					"t"> 
+<!ENTITY copyCmd.label						"Copy">  
+<!ENTITY copyCmd.key						"C">  
+<!ENTITY copyCmd.accesskey					"c"> 
+<!ENTITY pasteCmd.label						"Paste">  
+<!ENTITY pasteCmd.key						"V">  
+<!ENTITY pasteCmd.accesskey					"p"> 
+<!ENTITY pasteGoCmd.label					"Paste &amp; Go">
+<!ENTITY pasteGoCmd.accesskey				"G">
+<!ENTITY deleteCmd.label					"Delete">  
+<!ENTITY deleteCmd.accesskey				"d"> 
+<!ENTITY selectAllCmd.label					"Select All">  
+<!ENTITY selectAllCmd.key					"A">  
+<!ENTITY selectAllCmd.accesskey				"a"> 
+<!ENTITY preferencesCmd.label				"Preferences…">
+<!ENTITY preferencesCmd.key					"E">  
+<!ENTITY preferencesCmd.accesskey			"e"> 
+<!ENTITY findTypeTextCmd.label "Find Text As You Type">
+<!ENTITY findTypeTextCmd.accesskey "x">
+<!ENTITY findTypeLinksCmd.label "Find Links As You Type">
+<!ENTITY findTypeLinksCmd.accesskey "k">
+
+<!ENTITY viewMenu.label					"View"> 
+<!ENTITY viewMenu.accesskey				"v"> 
+<!ENTITY viewToolbarsMenu.label				"Show/Hide"> 
+<!ENTITY viewToolbarsMenu.accesskey			"w"> 
+<!ENTITY showTaskbarCmd.label					"Status Bar">  
+<!ENTITY showTaskbarCmd.accesskey				"S"> 
+
+<!ENTITY helpMenu.label					"Help"> 
+<!ENTITY helpMenu.accesskey				"h"> 
+
+<!ENTITY helpTroubleshootingInfo.label      "Troubleshooting Information">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+<!ENTITY releaseCmd.label				"Release Notes">
+<!ENTITY releaseCmd.accesskey                   "N">
+<!ENTITY updateCmd.label                        "Check for Updates…">
+<!ENTITY updateCmd.accesskey                    "C">
+<!ENTITY aboutCmd.label					"About &brandShortName;">
+<!ENTITY aboutCmd.accesskey				"A">
+<!ENTITY aboutCommPluginsCmd.label			"About Plugins">
+<!ENTITY aboutCommPluginsCmd.accesskey			"p">
+
+<!ENTITY direct.label                                   "Online (Proxy: None)">
+<!ENTITY direct.accesskey                               "N">
+<!ENTITY manual.label                                   "Online (Proxy: Manual)">
+<!ENTITY manual.accesskey                               "M">
+<!ENTITY pac.label                                      "Online (Proxy: Auto URL)">
+<!ENTITY pac.accesskey                                  "A">
+<!ENTITY wpad.label                                     "Online (Proxy: Auto Discover)">
+<!ENTITY wpad.accesskey                                 "D">
+<!ENTITY system.label                                   "Online (Proxy: System Proxy)">
+<!ENTITY system.accesskey                               "S">
+
+<!ENTITY proxy.label                                    "Proxy Configuration…">
+<!ENTITY proxy.accesskey                                "C">
+
+<!ENTITY bidiSwitchTextDirectionItem.label        "Switch Text Direction">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "w">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY customizeToolbarContext.label            "Customize…">
+<!ENTITY customizeToolbarContext.accesskey        "C">
+
+<!ENTITY customizeToolbar.toolbarmode.label       "Settings for this toolbar">
+<!ENTITY customizeToolbar.toolbarmode.accesskey   "e">
+<!ENTITY customizeToolbar.iconsAndText.label      "Icons and Text">
+<!ENTITY customizeToolbar.iconsAndText.accesskey  "a">
+<!ENTITY customizeToolbar.icons.label             "Icons">
+<!ENTITY customizeToolbar.icons.accesskey         "o">
+<!ENTITY customizeToolbar.text.label              "Text">
+<!ENTITY customizeToolbar.text.accesskey          "T">
+<!ENTITY customizeToolbar.useSmallIcons.label     "Use small icons">
+<!ENTITY customizeToolbar.useSmallIcons.accesskey "s">
+<!ENTITY customizeToolbar.labelAlignEnd.label     "Show text beside icon">
+<!ENTITY customizeToolbar.labelAlignEnd.accesskey "b">
+<!ENTITY customizeToolbar.useDefault.label        "Use default settings">
+<!ENTITY customizeToolbar.useDefault.accesskey    "U">
+
+<!-- Popup Blocked notification menu -->
+<!ENTITY allowPopups.accesskey        "p">
+<!ENTITY showPopupManager.label       "Manage Popups">
+<!ENTITY showPopupManager.accesskey   "M">
+<!ENTITY dontShowMessage.label        "Don't show this message when popups are blocked">
+<!ENTITY dontShowMessage.accesskey    "D">

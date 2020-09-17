@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "O neželjenoj pošti">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; automatski otkriva poštu koja bi mogla biti neželjena. Pored poruka za koje &brandShortName; misli da su neželjene, bit će prikazana ikona neželjene pošte">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "U početku morate naučiti &brandShortName; kako prepoznati neželjenu poštu koristeći tipku neželjene pošte u alatnoj traci na način da označite poruke kao neželjene ili željene.">
+<!ENTITY info3.label   "Nakon što &brandShortName; nauči ispravno prepoznavati neželjenu poštu, možete koristiti kontrole neželjene pošte kako biste automatski premjestili dolaznu neželjenu poštu u mapu neželjene pošte.">
+<!ENTITY info4.label   "Za više informacija kliknite na Pomoć.">

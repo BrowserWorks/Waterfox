@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Kişisel Sözlük">
+
+<!ENTITY wordEditField.label "Yeni sözcük:">
+<!ENTITY wordEditField.accessKey "n">
+<!ENTITY AddButton.label "Ekle">
+<!ENTITY AddButton.accessKey "E">
+<!ENTITY DictionaryList.label "Sözlükteki sözcükler:">
+<!ENTITY DictionaryList.accessKey "e">
+<!ENTITY RemoveButton.label "Kaldır">
+<!ENTITY RemoveButton.accessKey "K">
+
+<!ENTITY CloseButton.label "Kapat">
+<!ENTITY CloseButton.accessKey "K">

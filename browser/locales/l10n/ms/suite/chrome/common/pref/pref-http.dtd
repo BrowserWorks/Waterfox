@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "Rangkaian HTTP">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Pilihan Sambungan Terus">
+<!ENTITY prefProxy.label                     "Pilihan Sambungan Proksi">
+<!ENTITY prefEnableHTTP10.label              "Guna HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "G">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "a">
+<!ENTITY prefEnableHTTP11.label              "Guna HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "a">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "Sambungan HTTP boleh ditala halus menggunakan pilihan ini untuk meningkatkan prestasi atau keserasian. Sesetengah pelayan proksi, sebagai contoh, diketahui akan meminta HTTP/1.0 (lihat nota keluaran untuk butiran lanjut).">
+<!ENTITY prefUseragent.label                 "String Ejen Pengguna">
+<!ENTITY prefFirefoxCompat.label             "Mengiklankan keserasian Firefox">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "Mengiklankan pemasangan Lightning">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "Amaran: menyahdayakan tetapan ini boleh menyebabkan laman web atau perkhidmatan tidak berfungsi dengan betul.">

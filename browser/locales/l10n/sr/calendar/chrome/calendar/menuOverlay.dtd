@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Нови догађај…">
+<!ENTITY event.new.event.accesskey              "Н">
+
+<!ENTITY event.new.task                         "Нови задатак…">
+<!ENTITY event.new.task.accesskey               "к">
+
+<!ENTITY calendar.import.label                  "Увези…">
+<!ENTITY calendar.import.accesskey              "У">
+
+<!ENTITY calendar.export.label                  "Извези…">
+<!ENTITY calendar.export.accesskey              "з">
+
+<!ENTITY calendar.publish.label                 "Објави…">
+<!ENTITY calendar.publish.accesskey             "б">
+
+<!ENTITY calendar.deletecalendar.label          "Обриши изабрани календар…">
+<!ENTITY calendar.deletecalendar.accesskey      "д">
+<!ENTITY calendar.unsubscribecalendar.label     "Укини претплату за изабрани календар…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "т">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Уклони изабрани календар…">
+<!ENTITY calendar.removecalendar.accesskey      "л">
+
+
+<!ENTITY calendar.menu.customize.label          "Прилагоди…">
+<!ENTITY calendar.menu.customize.accesskey      "г">
+
+<!ENTITY showUnifinderCmd.label                 "Нађи догађаје">
+<!ENTITY showUnifinderCmd.accesskey             "ј">
+<!ENTITY showUnifinderCmd.tooltip               "Укључи или искључи површ за проналажење догађаја">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Прикажи задатке у календару">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "т">
+
+<!ENTITY goTodayCmd.label                       "Данас">
+<!ENTITY goTodayCmd.accesskey                   "Д">
+
+<!ENTITY showCurrentView.label                  "Тренутни преглед">
+<!ENTITY showCurrentView.accesskey              "г">
+
+<!ENTITY calendar.properties.label              "Својства календара…">
+<!ENTITY calendar.properties.accesskey          "а">

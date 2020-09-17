@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Suodatusehdot">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Suodattimen nimi:">
+<!ENTITY filterName.accesskey "S">
+
+<!ENTITY junk.label "Roskapostia">
+<!ENTITY notJunk.label "Ei roskapostia">
+
+<!ENTITY lowestPriorityCmd.label "Matalin">
+<!ENTITY lowPriorityCmd.label "Matala">
+<!ENTITY normalPriorityCmd.label "Normaali">
+<!ENTITY highPriorityCmd.label "Korkea">
+<!ENTITY highestPriorityCmd.label "Korkein">
+
+<!ENTITY contextDesc.label "Suodata viestit, kun:">
+<!ENTITY contextIncomingMail.label "Haetaan uusia viestejä:">
+<!ENTITY contextIncomingMail.accesskey "H">
+<!ENTITY contextManual.label "Suorita käsin">
+<!ENTITY contextManual.accesskey "k">
+<!ENTITY contextBeforeCls.label "Suodata ennen roskapostiluokitusta">
+<!ENTITY contextAfterCls.label "Suodata roskapostiluokituksen jälkeen">
+<!ENTITY contextOutgoing.label "Lähettämisen jälkeen">
+<!ENTITY contextOutgoing.accesskey "L">
+<!ENTITY contextArchive.label "Arkistoitaessa">
+<!ENTITY contextArchive.accesskey "A">
+<!ENTITY contextPeriodic.accesskey "i">
+
+<!ENTITY filterActionDesc.label "Suorita nämä toiminnot:">
+<!ENTITY filterActionDesc.accesskey "o">
+
+<!ENTITY filterActionOrderWarning.label "Huom.: Suodatintoiminnot suoritetaan eri järjestyksessä.">
+<!ENTITY filterActionOrder.label "Näytä suoritusjärjestys">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Siirrä kansioon">
+<!ENTITY copyMessage.label "Kopioi kansioon">
+<!ENTITY forwardTo.label "Välitä osoitteeseen">
+<!ENTITY replyWithTemplate.label "Vastaa mallipohjalla">
+<!ENTITY markMessageRead.label "Merkitse luetuksi">
+<!ENTITY markMessageUnread.label "Merkitse ei luetuksi">
+<!ENTITY markMessageStarred.label "Lisää tähti">
+<!ENTITY setPriority.label "Aseta tärkeysasteeksi">
+<!ENTITY addTag.label "Lisää tunnus">
+<!ENTITY setJunkScore.label "Aseta roskapostitila">
+<!ENTITY deleteMessage.label "Poista viesti">
+<!ENTITY deleteFromPOP.label "Poista viesti palvelimelta">
+<!ENTITY fetchFromPOP.label "Nouda viestin runko palvelimelta">
+<!ENTITY ignoreThread.label "Ohita viestiketju">
+<!ENTITY ignoreSubthread.label "Ohita aliketju">
+<!ENTITY watchThread.label "Seuraa viestiketjua">
+<!ENTITY stopExecution.label "Pysäytä suodattaminen">
+
+<!ENTITY addAction.tooltip "Lisää uusi tehtävä">
+<!ENTITY removeAction.tooltip "Poista tämä tehtävä">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

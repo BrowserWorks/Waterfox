@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+
+<!ENTITY windowTitle.label "Rekeningslimmerd">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Account Type page -->
+<!ENTITY accountTypeTitle.label "Stel nuwe rekening op">
+
+<!ENTITY accountTypeDirections.label "Selekteer die soort rekening wat u wil opstel:">
+<!ENTITY accountTypeMail.label "E-posrekening">
+<!ENTITY accountTypeMail.accesskey "p">
+<!ENTITY accountTypeNews.label "Nuusgroeprekening">
+<!ENTITY accountTypeNews.accesskey "u">
+
+<!-- Entities for Identity page -->
+
+
+<!ENTITY identityTitle.label "Identiteit">
+<!ENTITY identityDesc.label "'n Mens kan vir elke rekening 'n eie identiteit opstel. Die identiteit sê aan mense wat u boodskappe ontvang, wie u is.">
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameLabel.label "U naam:">
+<!ENTITY fullnameLabel.accesskey "U">
+
+<!ENTITY emailLabel.label "E-posadres:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!-- Entities for Incoming Server page -->
+<!ENTITY incomingServerTypeDesc.label "Selekteer die soort inkomende bediener wat u gebruik.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+
+
+<!ENTITY portNum.label "Poort:">
+<!ENTITY portNum.accesskey "P">
+<!ENTITY defaultPortLabel.label "Verstek:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.label "Inkomende bediener:">
+<!ENTITY incomingServer.accesskey "b">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+
+
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+
+
+<!-- Entities for Outgoing Server page -->
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+
+
+<!ENTITY outgoingUsername.description "Tik die uitgaande gebruikernaam in wat u e-posbediener aan u gegee het (dit is gewoonlik dieselfde as u inkomende gebruikernaam).">
+
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+
+<!-- Entities for Account name page -->
+
+
+<!ENTITY accnameTitle.label "Rekeningnaam">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameLabel.label "Rekeningnaam:">
+<!ENTITY accnameLabel.accesskey "R">
+
+<!-- Entities for Done (Congratulations) page -->
+
+
+<!ENTITY completionTitle.label "Baie geluk!">
+<!ENTITY completionText.label "Maak seker dat die inligting hieronder korrek is.">
+<!ENTITY serverTypePrefix.label "Soort inkomende bediener:">
+<!ENTITY serverNamePrefix.label "Inkomende bediener:">
+<!ENTITY smtpServerNamePrefix.label "Uitgaande bediener (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Nuusgroepbediener (NNTP):">
+<!ENTITY downloadOnLogin.label "Laai nou boodskappe af">
+<!ENTITY downloadOnLogin.accesskey "L">
+<!ENTITY deferStorageDesc.label "Ontmerk hierdie merkblokkie om pos vir hierdie rekening in sy eie gids te stoor. Dit sal hierdie rekening as 'n bovlak-rekening laat vertoon. Anders sal dit deel van die Plaaslike vouers se Globale inkassie-rekening wees.">
+<!ENTITY deferStorage.label "Gebruik Globale Inkassie (stoor pos in plaaslike vouers)">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "Kliek Klaar om hierdie opstelling te stoor en die rekeningslimmerd af te sluit.">
+<!ENTITY clickFinish.labelMac "Kliek Klaar om hierdie instellings te stoor en die rekeningslimmerd af te sluit.">

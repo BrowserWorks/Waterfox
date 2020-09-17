@@ -1,0 +1,162 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problemă la încărcarea paginii">
+<!ENTITY retry.label "Încearcă din nou">
+<!ENTITY returnToPreviousPage.label "Întoarce-te">
+<!ENTITY returnToPreviousPage1.label "Întoarce-te (Recomandat)">
+<!ENTITY advanced2.label "Avansat…">
+<!ENTITY viewCertificate.label "Vezi certificatul">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Server negăsit">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Dacă adresa este corectă, iată alte trei lucruri pe care le poți încerca:</strong>
+<ul>
+  <li>Încearcă din nou mai târziu.</li>
+  <li>Verifică conexiunea la rețea.</li>
+  <li>Dacă ești conectat, însă în spatele unui firewall, verifică dacă &brandShortName; are permisiunea de a accesa webul.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Verifică numele fișierului - să nu aibă erori de majuscule/minuscule sau alte erori de tastare.</li> <li>Verifică fișierul - să nu fi fost mutat, redenumit sau șters.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Este posibil să fi fost eliminat, mutat sau permisiunile fișierului pot împiedica accesul.</li> </ul>">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; nu poate încărca această pagină dintr-un motiv oarecare.</p>
+">
+
+<!ENTITY captivePortal.title "Autentificare în rețea">
+<!ENTITY captivePortal.longDesc2 "<p>Trebuie să te autentifici în această rețea ca să poți accesa internetul.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Deschide pagina de autentificare în rețea">
+
+<!ENTITY malformedURI.pageTitle "URL nevalid">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Documentul solicitat nu este disponibil în cache-ul &brandShortName;.</p><ul><li>Ca măsură de precauție pentru securitate, &brandShortName; nu cere din nou în mod automat documente sensibile.</li><li>Dă clic pe Încearcă din nou pentru a cere iar documentul de la site-ul web.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul> 
+  <li>Apasă pe „Încearcă din nou” pentru a comuta la modul online și a reîncărca pagina.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Te rugăm să contactezi proprietarii site-ului web pentru a-i informa despre această problemă.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Te rugăm să contactezi proprietarii site-ului web pentru a-i informa despre această problemă.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>S-ar putea să fie necesară instalarea altui program pentru a deschide această adresă.</li>
+</ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Verifică setările proxy pentru a te asigura că sunt corecte.</li> <li>Contactează administratorul rețelei pentru a te asigura că serverul proxy funcționează.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Verifică setările proxy pentru a te asigura că sunt corecte.</li> <li>Asigură-te că calculatorul are o conexiune funcțională la rețea.</li> <li>Dacă calculatorul sau rețeaua este protejat(ă) de un firewall sau proxy, asigură-te că &brandShortName; are permisiunea de a accesa webul.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Această problemă poate fi uneori cauzată de dezactivarea sau refuzarea
+    acceptării de cookie-uri.</li>
+</ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Verifică dacă sistemul are instalat Managerul personal de securitate.</li> <li>Se poate întâmpla și din cauza unei configurații atipice pe server.</li> </ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Pagina pe care încerci să o vezi nu poate fi afișată deoarece nu s-a putut verifica autenticitatea datelor primite.</li> <li>Te rugăm să contactezi proprietarii site-ului web pentru a-i informa despre această problemă</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; a detectat o posibilă amenințare de securitate și nu a continuat la <span class='hostname'/>. Dacă vizitezi acest site, atacatorii ar putea încerca să fure informații precum parolele, e-mailurile sau detaliile cardului de credit.">
+<!ENTITY certerror.sts.introPara "&brandShortName; a detectat o posibilă amenințare de securitate și nu a continuat la <span class='hostname'/>, deoarece acest site web necesită o conexiune securizată.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; a detectat o problemă și nu a continuat la <span class='hostname'/>. Site-ul web este fie configurat greșit, fie ceasul calculatorului este setat pe o oră greșită.">
+<!ENTITY certerror.expiredCert.secondPara2 "Probabil că certificatul site-ului web a expirat, ceea ce împiedică &brandShortName; să stabilească o conexiune securizată. Dacă vizitezi acest site, atacatorii ar putea încerca să fure informații precum parolele, e-mailurile sau detaliile cardului de credit.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Probabil că certificatul site-ului web a expirat, ceea ce împiedică &brandShortName; să stabilească o conexiune securizată.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Ce poți face?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Problema a apărut cel mai probabil din cauza site-ului web și nu poți face nimic.</p>
+<p>Dacă ești într-o rețea corporatistă sau folosești programe antivirus, poți contacta echipele de suport pentru asistență. De asemenea, poți notifica administratorul site-ului web.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Ceasul calculatorului este setat pe <span id='wrongSystemTime_systemDate2'/>. Asigură-te că ai calculatorul setat pe data, ora și fusul orar corecte în setările sistemului, apoi reîmprospătează <span class='hostname'/>.</p>
+<p>Dacă ceasul este deja setat la ora corectă, site-ul web este probabil configurat greșit și nu poți face nimic pentru a rezolva problema. Poți notifica administratorul site-ului web cu privire la problemă.</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Problema a apărut cel mai probabil din cauza site-ului web și nu poți face nimic. Poți notifica administratorul site-ului web.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Site-ul ar putea fi indisponibil temporar sau prea ocupat. Încearcă din nou
+    în câteva momente.</li>
+  <li>Dacă nu poți să încarci nicio pagină, verifică conexiunea la rețea a 
+    calculatorului.</li>
+  <li>Dacă calculatorul sau rețeaua este protejat(ă) de un firewall sau proxy,
+    asigură-te că &brandShortName; are permisiunea de a accesa webul.</li>
+</ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; a împiedicat această pagină să se încarce în acest mod deoarece pagina are o politică de securitate asupra conținutului ce nu permite asta.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; a împiedicat încărcarea paginii în acest context deoarece pagina are o politică de opțiuni X-Frame care nu o permite.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Pagina pe care încerci să o vezi nu poate fi afișată deoarece a fost detectată o eroare legată de transmiterea datelor.</p><ul><li>Te rugăm să contactezi proprietarii site-ului web pentru a-i informa despre această problemă.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Acceptă riscul și continuă">
+
+<!ENTITY errorReporting.automatic2 "Raportează erori precum aceasta pentru a ajuta Mozilla să identifice și să blocheze site-urile rău intenționate">
+<!ENTITY errorReporting.learnMore "Află mai multe…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Te rugăm să contactezi proprietarii site-ului web pentru a-i informa despre această problemă.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Informații avansate: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Avertisment: Urmează un posibil risc de securitate">
+<!ENTITY certerror.sts.pagetitle  "Nu s-a realizat conectarea: Posibilă problemă de securitate">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> are o politică de securitate numită HTTP Strict Transport Security (HSTS), ceea ce înseamnă că &brandShortName; se poate conecta la acesta numai în mod securizat. Nu poți adăuga o excepție pentru a vizita acest site.">
+<!ENTITY certerror.copyToClipboard.label "Copiază textul în clipboard">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> folosește o tehnologie de securitate depășită și vulnerabilă la atacuri. Un atacator ar putea dezvălui cu ușurință informații pe care le credeai în siguranță. Administratorul site-ului web va trebui să repare mai întâi serverul ca să poți intra pe site.</p><p>Codul erorii: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Pagină blocată">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> este, cel mai probabil, un site sigur, dar nu s-a putut stabili o conexiune securizată. Această problemă este produsă de <span class='mitm-name'/>, care este un program de pe calculatorul tău sau din rețeaua ta.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Dacă programul tău antivirus include o funcționalitate care scanează conexiuni criptate (adesea denumită „scanare web” sau „scanare https”), o poți dezactiva. Dacă dezactivarea nu funcționează, poți elimina și reinstala programul antivirus.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Dacă ești într-o rețea corporatistă, poți contacta departamentul IT al firmei.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Dacă nu ești familiarizat(ă) cu <span class='mitm-name'/>, atunci acesta poate fi un atac și nu ar trebui să intri pe site.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Dacă nu ești familiarizat(ă) cu <span class='mitm-name'/>, atunci acesta poate fi un atac și nu poți face nimic ca să accesezi site-ul.">
+
+<!ENTITY clockSkewError.longDesc "Calculatorul crede că este <span id='wrongSystemTime_systemDate1'/>, ceea ce împiedică &brandShortName; să stabilească o conexiune securizată. Pentru a vizita <span class='hostname'></span>, actualizează ceasul calculatorului în setările de sistem pe data, ora și fusul orar curente, apoi reîmprospătează <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Se pare că setările de securitate ale rețelei sunt de vină. Vrei să restaurezi setările implicite?">
+<!ENTITY prefReset.label "Restaurează setările implicite">
+
+<!ENTITY enableTls10.longDesc "Este posibil ca acest site să nu acccepte protocolul TLS 1.2, care este versiunea minimă acceptată de &brandShortName;. Activarea TLS 1.0 și TLS 1.1 ar putea permite realizarea acestei conexiuni cu succes.">
+<!ENTITY enableTls10.note "TLS 1.0 și TLS 1.1 vor fi dezactivate permanent în versiunile viitoare.">
+<!ENTITY enableTls10.label "Activează TLS 1.0 și 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Pagina pe care încerci să o vezi nu poate fi afișată, deoarece a fost detectată o eroare în protocolul de rețea.</p><ul><li>Te rugăm să contactezi proprietarii site-ului pentru a-i informa despre această problemă.</li></ul>">

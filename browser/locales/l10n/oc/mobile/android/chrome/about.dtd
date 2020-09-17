@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "A prepaus de &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; es experimental e pòt èsser instable.">
+<!ENTITY aboutPage.checkForUpdates.link         "Verificar las mesas a jorn »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Recèrca de mesas a jorn…">
+<!ENTITY aboutPage.checkForUpdates.none         "Cap de mesa a jorn pas disponibla">
+<!ENTITY aboutPage.checkForUpdates.available2   "Telecargament d’una mesa a jorn">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Telecargament d’una mesa a jorn…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Installar la mesa a jorn">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "Assisténcia">
+<!ENTITY aboutPage.privacyPolicy.label          "Politica de confidencialitat">
+<!ENTITY aboutPage.rights.label                 "A prepaus de vòstres dreches">
+<!ENTITY aboutPage.relNotes.label               "Nòtas de version">
+<!ENTITY aboutPage.credits.label                "Contributors">
+<!ENTITY aboutPage.license.label                "Las entresenhas sus la licéncia">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox e los lògos de Firefox son de marcas depausadas de la fondacion Mozilla.">

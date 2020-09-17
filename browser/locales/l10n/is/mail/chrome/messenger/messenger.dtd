@@ -1,0 +1,925 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY titledefault.label "&brandFullName;">
+<!ENTITY titleSeparator.label " - ">
+
+<!-- File Menu -->
+<!ENTITY newFolderCmd.label "Mappa…">
+<!ENTITY newFolderCmd.accesskey "M">
+<!ENTITY closeTabCmd2.label "Loka flipa">
+<!ENTITY closeTabCmd2.accesskey "L">
+<!ENTITY closeOtherTabsCmd2.label "Loka öðrum flipum">
+<!ENTITY closeOtherTabsCmd2.accesskey "o">
+<!ENTITY recentlyClosedTabsCmd.label "Nýlega lokaðir flipar">
+<!ENTITY recentlyClosedTabsCmd.accesskey "r">
+
+<!ENTITY undoCloseTabCmd.commandkey "T">
+<!-- LOCALIZATION NOTE (moveToNewWindow.label):
+     Menu option to cause the current tab to be migrated to a new Thunderbird
+     window.
+     -->
+<!ENTITY moveToNewWindow.label "Færa yfir í nýjan glugga">
+<!ENTITY moveToNewWindow.accesskey "g">
+<!ENTITY newVirtualFolderCmd.label "Vistuð leit…">
+<!ENTITY newVirtualFolderCmd.accesskey "V">
+<!ENTITY newOtherAccountsCmd.label "Aðrir reikningar…">
+<!ENTITY newOtherAccountsCmd.accesskey "A">
+<!ENTITY newCreateEmailAccountCmd.label "Búa til nýjan póstreikning…">
+<!ENTITY newCreateEmailAccountCmd.accesskey "g">
+<!ENTITY newExistingEmailAccountCmd.label "Póstreikningur sem er þegar til…">
+<!ENTITY newExistingEmailAccountCmd.accesskey "e">
+<!ENTITY newIMAccountCmd.label "Spjallreikningur…">
+<!ENTITY newIMAccountCmd.accesskey "S">
+<!ENTITY newFeedAccountCmd.label "Straum reikningur…">
+<!ENTITY newFeedAccountCmd.accesskey "S">
+<!ENTITY newIMContactCmd.label "Spjall tengiliður…">
+<!ENTITY newIMContactCmd.accesskey "p">
+<!ENTITY openMessageFileCmd.label "Opna vistaðan póst…">
+<!ENTITY openMessageFileCmd.accesskey "O">
+<!ENTITY saveAsMenu.label "Vista sem">
+<!ENTITY saveAsMenu.accesskey "s">
+<!ENTITY saveAsFileCmd.label "Skrá">
+<!ENTITY saveAsFileCmd.accesskey "S">
+<!ENTITY saveAsFileCmd.key "s">
+<!ENTITY saveAsTemplateCmd.label "Sniðmát">
+<!ENTITY saveAsTemplateCmd.accesskey "t">
+<!ENTITY getNewMsgForCmd.label "Ná í nýjan póst fyrir">
+<!ENTITY getNewMsgForCmd.accesskey "j">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "Alla reikninga">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "A">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.label "Núverandi reikning">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.accesskey "N">
+<!ENTITY sendUnsentCmd.label "Senda ósendan póst">
+<!ENTITY sendUnsentCmd.accesskey "d">
+<!ENTITY subscribeCmd.label "Gerast áskrifandi…">
+<!ENTITY subscribeCmd.accesskey "G">
+<!ENTITY deleteFolder.label "Eyða möppu">
+<!ENTITY deleteFolder.accesskey "E">
+<!ENTITY renameFolder.label "Endurnefna möppu…">
+<!ENTITY renameFolder.accesskey "m">
+<!ENTITY renameFolder.key "VK_F2">
+<!ENTITY compactFolders.label "Þjappa möppur">
+<!ENTITY compactFolders.accesskey "Þ">
+<!ENTITY emptyTrashCmd.label "Tæma rusl">
+<!ENTITY emptyTrashCmd.accesskey "T">
+<!ENTITY offlineMenu.label "Ónettengdur">
+<!ENTITY offlineMenu.accesskey "g">
+<!ENTITY offlineGoOfflineCmd.label "Vinna án nettengingar">
+<!ENTITY offlineGoOfflineCmd.accesskey "V">
+<!ENTITY synchronizeOfflineCmd.label "Niðurhala/Samstilla núna…">
+<!ENTITY synchronizeOfflineCmd.accesskey "S">
+<!ENTITY settingsOfflineCmd2.label "Stillingar fyrir ónettengdur">
+<!ENTITY settingsOfflineCmd2.accesskey "e">
+<!ENTITY downloadSelectedCmd.label "Ná í valinn póst">
+<!ENTITY downloadSelectedCmd.accesskey "l">
+<!ENTITY downloadStarredCmd.label "Ná í stjörnumerktan póst">
+<!ENTITY downloadStarredCmd.accesskey "a">
+<!ENTITY printCmd.label "Prenta…">
+<!ENTITY printCmd.accesskey "P">
+<!ENTITY printCmd.key "p">
+<!ENTITY printPreviewCmd.label "Prentskoðun">
+<!ENTITY printPreviewCmd.accesskey "ð">
+<!ENTITY printSetupCmd.label "Uppsetning síðu…">
+<!ENTITY printSetupCmd.accesskey "U">
+
+<!-- Edit Menu -->
+<!ENTITY deleteMsgCmd.label "Eyða pósti">
+<!ENTITY deleteMsgCmd.accesskey "y">
+<!ENTITY undeleteMsgCmd.label "Endurheimta póst">
+<!ENTITY undeleteMsgCmd.accesskey "d">
+<!ENTITY deleteMsgsCmd.label "Eyða völdum póstum">
+<!ENTITY deleteMsgsCmd.accesskey "E">
+<!ENTITY undeleteMsgsCmd.label "Endurheimta valinn póst">
+<!ENTITY undeleteMsgsCmd.accesskey "d">
+<!ENTITY deleteFolderCmd.label "Eyða möppu">
+<!ENTITY deleteFolderCmd.accesskey "E">
+<!ENTITY unsubscribeNewsgroupCmd.label "Afpanta áskrift">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "n">
+<!ENTITY selectMenu.label "Velja">
+<!ENTITY selectMenu.accesskey "V">
+<!ENTITY all.label "Allir">
+<!ENTITY all.accesskey "A">
+<!ENTITY selectThreadCmd.label "Umræða">
+<!ENTITY selectThreadCmd.accesskey "U">
+<!ENTITY selectThreadCmd.key "a">
+<!ENTITY selectFlaggedCmd.label "Stjörnumerktur póstur">
+<!ENTITY selectFlaggedCmd.accesskey "S">
+<!ENTITY menuFavoriteFolder.label "Eftirlætismappa">
+<!ENTITY menuFavoriteFolder.accesskey "t">
+<!ENTITY folderPropsCmd2.label "Eiginleikar">
+<!ENTITY folderPropsFolderCmd2.label "Eiginleikar möppu">
+<!ENTITY folderPropsNewsgroupCmd2.label "Eiginleikar fréttahóps">
+<!ENTITY folderPropsCmd.accesskey "g">
+<!ENTITY undoDeleteMsgCmd.label "Hætta við að eyða pósti">
+<!ENTITY redoDeleteMsgCmd.label "Eyða aftur pósti">
+<!ENTITY undoMoveMsgCmd.label "Hætta við að færa póst">
+<!ENTITY redoMoveMsgCmd.label "Færa aftur póst">
+<!ENTITY undoCopyMsgCmd.label "Hætta við að afrita póst">
+<!ENTITY redoCopyMsgCmd.label "Afrita aftur póst">
+<!ENTITY undoMarkAllCmd.label "Afturkalla merkja allt sem lesið">
+<!ENTITY redoMarkAllCmd.label "Merkja allt sem lesið aftur">
+<!ENTITY undoDefaultCmd.label "Afturkalla">
+<!ENTITY undoDefaultCmd.accesskey "u">
+<!ENTITY redoDefaultCmd.label "Endurtaka">
+<!ENTITY redoDefaultCmd.accesskey "r">
+
+<!-- View Menu -->
+<!ENTITY menubarCmd.label "Valmynd">
+<!ENTITY menubarCmd.accesskey "m">
+<!ENTITY showMessengerToolbarCmd.label "Póstslá">
+<!ENTITY showMessengerToolbarCmd.accesskey "P">
+<!ENTITY customizeToolbar.label "Sérsníða…">
+<!ENTITY customizeToolbar.accesskey "S">
+
+<!ENTITY messagePaneLayoutStyle.label "Útlit">
+<!ENTITY messagePaneLayoutStyle.accesskey "t">
+<!ENTITY messagePaneClassic.label "Hefðbundin sýn">
+<!ENTITY messagePaneClassic.accesskey "H">
+<!ENTITY messagePaneWide.label "Breið sýn">
+<!ENTITY messagePaneWide.accesskey "B">
+<!ENTITY messagePaneVertical.label "Lóðrétt sýn">
+<!ENTITY messagePaneVertical.accesskey "ð">
+<!ENTITY showFolderPaneCmd.label "Möppuflipi">
+<!ENTITY showFolderPaneCmd.accesskey "f">
+<!ENTITY showFolderPaneColsCmd.label "Dálkar möppuflipa">
+<!ENTITY showFolderPaneColsCmd.accesskey "p">
+<!ENTITY showMessageCmd.label "Lestrarrúða">
+<!ENTITY showMessageCmd.accesskey "L">
+
+<!ENTITY folderView.label "Möppur">
+<!ENTITY folderView.accesskey "M">
+<!ENTITY unifiedFolders.label "Sameinaðar möppur">
+<!ENTITY unifiedFolders.accesskey "S">
+<!ENTITY allFolders.label "Allar">
+<!ENTITY allFolders.accesskey "A">
+<!ENTITY unreadFolders.label "Ólesið">
+<!ENTITY unreadFolders.accesskey "l">
+<!ENTITY favoriteFolders.label "Eftirlætismappa">
+<!ENTITY favoriteFolders.accesskey "f">
+<!ENTITY recentFolders.label "Nýlegt">
+<!ENTITY recentFolders.accesskey "N">
+<!ENTITY compactVersion.label "Þjöppuð sýn">
+<!ENTITY compactVersion.accesskey "Þ">
+<!ENTITY folderPaneBar.label "Möppu flipa tækjaslá">
+<!ENTITY folderPaneBar.accesskey "f">
+
+<!-- Sort Menu -->
+<!ENTITY sortMenu.label "Raða eftir">
+<!ENTITY sortMenu.accesskey "R">
+<!ENTITY sortByDateCmd.label "Dagsetningu">
+<!ENTITY sortByDateCmd.accesskey "e">
+<!ENTITY sortByReceivedCmd.label "Móttekið">
+<!ENTITY sortByReceivedCmd.accesskey "M">
+<!ENTITY sortByStarCmd.label "Stjörnumerkt">
+<!ENTITY sortByStarCmd.accesskey "S">
+<!ENTITY sortByAttachmentsCmd.label "Viðhengi">
+<!ENTITY sortByAttachmentsCmd.accesskey "h">
+<!ENTITY sortByPriorityCmd.label "Forgangi">
+<!ENTITY sortByPriorityCmd.accesskey "g">
+<!ENTITY sortBySizeCmd.label "Stærð">
+<!ENTITY sortBySizeCmd.accesskey "æ">
+<!ENTITY sortByStatusCmd.label "Stöðu">
+<!ENTITY sortByStatusCmd.accesskey "ð">
+<!ENTITY sortByTagsCmd.label "Flokkum">
+<!ENTITY sortByTagsCmd.accesskey "k">
+<!ENTITY sortByJunkStatusCmd.label "Ruslpóstsstöðu">
+<!ENTITY sortByJunkStatusCmd.accesskey "p">
+<!ENTITY sortBySubjectCmd.label "Efni">
+<!ENTITY sortBySubjectCmd.accesskey "n">
+<!ENTITY sortByFromCmd.label "Frá">
+<!ENTITY sortByFromCmd.accesskey "F">
+<!ENTITY sortByRecipientCmd.label "Viðtakanda">
+<!ENTITY sortByRecipientCmd.accesskey "V">
+<!ENTITY sortByCorrespondentCmd.label "Þátttakendur">
+<!ENTITY sortByCorrespondentCmd.accesskey "e">
+<!ENTITY sortByUnreadCmd.label "Lesið">
+<!ENTITY sortByUnreadCmd.accesskey "L">
+<!ENTITY sortByOrderReceivedCmd.label "Í móttekinni röð">
+<!ENTITY sortByOrderReceivedCmd.accesskey "ö">
+<!ENTITY sortAscending.label "Hækkandi">
+<!ENTITY sortAscending.accesskey "a">
+<!ENTITY sortDescending.label "Lækkandi">
+<!ENTITY sortDescending.accesskey "d">
+<!ENTITY sortThreaded.label "Umræður">
+<!ENTITY sortThreaded.accesskey "U">
+<!ENTITY sortUnthreaded.label "Ekki umræða">
+<!ENTITY sortUnthreaded.accesskey "r">
+<!ENTITY groupBySort.label "Flokkað eftir röðun">
+<!ENTITY groupBySort.accesskey "o">
+<!ENTITY msgsMenu.label "Póstur">
+<!ENTITY msgsMenu.accesskey "P">
+<!ENTITY threads.label "Umræður">
+<!ENTITY threads.accesskey "U">
+<!ENTITY allMsgsCmd.label "Allar">
+<!ENTITY allMsgsCmd.accesskey "A">
+<!ENTITY expandAllThreadsCmd.label "Opna allar umræður">
+<!ENTITY expandAllThreadsCmd.accesskey "O">
+<!ENTITY expandAllThreadsCmd.key "*">
+<!ENTITY collapseAllThreadsCmd.label "Fella saman allar umræður">
+<!ENTITY collapseAllThreadsCmd.accesskey "e">
+<!ENTITY collapseAllThreadsCmd.key "\">
+<!ENTITY unreadMsgsCmd.label "Ólesið">
+<!ENTITY unreadMsgsCmd.accesskey "l">
+<!ENTITY threadsWithUnreadCmd.label "Ólesnar umræður">
+<!ENTITY threadsWithUnreadCmd.accesskey "u">
+<!ENTITY watchedThreadsWithUnreadCmd.label "Ólesnar umræður sem fylgst er með">
+<!ENTITY watchedThreadsWithUnreadCmd.accesskey "f">
+<!ENTITY ignoredThreadsCmd.label "Hunsaðar umræður">
+<!ENTITY ignoredThreadsCmd.accesskey "H">
+
+<!ENTITY headersMenu.label "Hausar">
+<!ENTITY headersMenu.accesskey "H">
+<!ENTITY headersAllCmd.label "Allt">
+<!ENTITY headersAllCmd.accesskey "A">
+<!ENTITY headersNormalCmd.label "Algengt">
+<!ENTITY headersNormalCmd.accesskey "l">
+<!ENTITY bodyMenu.label "Meginmál sem">
+<!ENTITY bodyMenu.accesskey "g">
+<!ENTITY bodyAllowHTML.label "Upprunalegt HTML">
+<!ENTITY bodyAllowHTML.accesskey "H">
+<!ENTITY bodySanitized.label "Einfalt HTML">
+<!ENTITY bodySanitized.accesskey "E">
+<!ENTITY bodyAsPlaintext.label "Ósniðinn texti">
+<!ENTITY bodyAsPlaintext.accesskey "s">
+<!ENTITY bodyAllParts.label "Allir meginmálshlutir">
+<!ENTITY bodyAllParts.accesskey "A">
+
+<!ENTITY bodyMenuFeed.label "Meginmál straums sem">
+<!ENTITY bodyMenuFeed.accesskey "M">
+<!ENTITY viewFeedWebPage.label "Vefsíða">
+<!ENTITY viewFeedWebPage.accesskey "V">
+<!ENTITY viewFeedSummary.label "Samantekt">
+<!ENTITY viewFeedSummary.accesskey "m">
+<!ENTITY viewFeedSummaryFeedPropsPref.label "Sjálfgefið snið">
+<!ENTITY viewFeedSummaryFeedPropsPref.accesskey "S">
+
+<!ENTITY viewAttachmentsInlineCmd.label "Sýna viðhengi innfelld">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "a">
+
+<!ENTITY pageSourceCmd.label "Frumkóði pósts">
+<!ENTITY pageSourceCmd.accesskey "p">
+<!ENTITY pageSourceCmd.key "u">
+<!ENTITY getNewMessagesCmd.key "y">
+<!ENTITY getAllNewMessagesCmd.key "Y">
+
+<!-- Search Menu -->
+<!ENTITY findMenu.label "Leita">
+<!ENTITY findMenu.accesskey "i">
+<!ENTITY findCmd.label "Leita í pósti…">
+<!ENTITY findCmd.accesskey "L">
+<!ENTITY findCmd.key "f">
+<!ENTITY findAgainCmd.label "Leita aftur">
+<!ENTITY findAgainCmd.accesskey "a">
+<!ENTITY findAgainCmd.key "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.key "g">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY searchMailCmd.label "Leita í pósti…">
+<!ENTITY searchMailCmd.accesskey "p">
+<!ENTITY searchMailCmd.key "f">
+<!ENTITY searchAddressesCmd.label "Leita í tengiliðaspjöldum…">
+<!ENTITY searchAddressesCmd.accesskey "t">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Fara">
+<!ENTITY goMenu.accesskey "F">
+<!ENTITY nextMenu.label "Næsti">
+<!ENTITY nextMenu.accesskey "N">
+<!ENTITY nextMsgCmd.label "Póstur">
+<!ENTITY nextMsgCmd.accesskey "P">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "Ólesinn póstur">
+<!ENTITY nextUnreadMsgCmd.accesskey "l">
+<!ENTITY nextUnreadMsgCmd.key "n">
+<!ENTITY nextStarredMsgCmd.label "Stjörnumerktur póstur">
+<!ENTITY nextStarredMsgCmd.accesskey "S">
+<!ENTITY nextUnreadThread.label "Ólesin umræða">
+<!ENTITY nextUnreadThread.accesskey "a">
+<!ENTITY nextUnreadThread.key "t">
+<!ENTITY prevMenu.label "Fyrri">
+<!ENTITY prevMenu.accesskey "F">
+<!ENTITY prevMsgCmd.label "Póstur">
+<!ENTITY prevMsgCmd.accesskey "P">
+<!ENTITY prevMsgCmd.key "b">
+<!ENTITY prevUnreadMsgCmd.label "Ólesinn póstur">
+<!ENTITY prevUnreadMsgCmd.accesskey "l">
+<!ENTITY prevUnreadMsgCmd.key "p">
+<!ENTITY goForwardCmd.label "Áframsenda">
+<!ENTITY goForwardCmd.accesskey "r">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goBackCmd.label "Til baka">
+<!ENTITY goBackCmd.accesskey "b">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goChatCmd.label "Spjall">
+<!ENTITY goChatCmd.accesskey "S">
+<!ENTITY prevStarredMsgCmd.label "Stjörnumerktur póstur">
+<!ENTITY prevStarredMsgCmd.accesskey "S">
+<!ENTITY folderMenu.label "Mappa">
+<!ENTITY folderMenu.accesskey "a">
+<!ENTITY goRecentlyClosedTabs.label "Nýlega lokaðir flipar">
+<!ENTITY goRecentlyClosedTabs.accesskey "r">
+<!ENTITY startPageCmd.label "Upphafssíða">
+<!ENTITY startPageCmd.accesskey "U">
+
+<!-- Message Menu -->
+<!ENTITY msgMenu.label "Póstur">
+<!ENTITY msgMenu.accesskey "P">
+<!ENTITY newMsgCmd.label "Nýr póstur">
+<!ENTITY newMsgCmd.accesskey "N">
+<!ENTITY newNewMsgCmd.label "Póstur">
+<!ENTITY newNewMsgCmd.accesskey "P">
+<!ENTITY archiveMsgCmd.label "Skjalageymsla">
+<!ENTITY archiveMsgCmd.accesskey "a">
+<!ENTITY archiveMsgCmd.key "a">
+<!ENTITY cancelNewsMsgCmd.label "Hætta við boð">
+<!ENTITY cancelNewsMsgCmd.accesskey "H">
+<!ENTITY replyMsgCmd.label "Svara">
+<!ENTITY replyMsgCmd.accesskey "r">
+<!ENTITY replyMsgCmd.key "r">
+<!ENTITY replySenderCmd.label "Svara sendanda">
+<!ENTITY replySenderCmd.accesskey "r">
+<!ENTITY replyNewsgroupCmd2.label "Svara fréttahóp">
+<!ENTITY replyNewsgroupCmd2.accesskey "v">
+<!ENTITY replyToAllMsgCmd.label "Svara öllum">
+<!ENTITY replyToAllMsgCmd.accesskey "ö">
+<!ENTITY replyToAllMsgCmd.key "r">
+<!ENTITY replyToListMsgCmd.label "Svara póstlista">
+<!ENTITY replyToListMsgCmd.accesskey "l">
+<!ENTITY replyToListMsgCmd.key "l">
+<!ENTITY forwardMsgCmd.label "Áfram">
+<!ENTITY forwardMsgCmd.accesskey "m">
+<!ENTITY forwardMsgCmd.key "l">
+<!ENTITY forwardAsMenu.label "Áframsenda sem">
+<!ENTITY forwardAsMenu.accesskey "d">
+<!ENTITY forwardAsInline.label "Innfellt">
+<!ENTITY forwardAsInline.accesskey "I">
+<!ENTITY forwardAsAttachmentCmd.label "Viðhengi">
+<!ENTITY forwardAsAttachmentCmd.accesskey "V">
+<!ENTITY editAsNewMsgCmd.label "Breyta sem nýjum pósti">
+<!ENTITY editAsNewMsgCmd.accesskey "e">
+<!ENTITY editAsNewMsgCmd.key "e">
+<!ENTITY editDraftMsgCmd.label "Breyta drögum">
+<!ENTITY editDraftMsgCmd.accesskey "d">
+<!ENTITY createFilter.label "Búa til síu út frá pósti…">
+<!ENTITY createFilter.accesskey "u">
+<!ENTITY moveMsgToMenu.label "Færa í">
+<!ENTITY moveMsgToMenu.accesskey "F">
+<!ENTITY moveCopyMsgRecentMenu.label "Nýlegt">
+<!ENTITY moveCopyMsgRecentMenu.accesskey "N">
+<!ENTITY copyMessageLocation.label "Afrita staðsetningu pósts">
+<!ENTITY copyMessageLocation.accesskey "A">
+<!ENTITY copyMsgToMenu.label "Afrita í">
+<!ENTITY copyMsgToMenu.accesskey "i">
+<!ENTITY moveToFolderAgain.label "Færa aftur">
+<!ENTITY moveToFolderAgain.accesskey "æ">
+<!ENTITY moveToFolderAgainCmd.key "m">
+<!ENTITY killThreadMenu.label "Hunsa umræðu">
+<!ENTITY killThreadMenu.accesskey "H">
+<!ENTITY killThreadMenu.key "k">
+<!ENTITY killSubthreadMenu.label "Hunsa undirumræðu">
+<!ENTITY killSubthreadMenu.accesskey "s">
+<!ENTITY killSubthreadMenu.key "k">
+<!ENTITY watchThreadMenu.label "Fylgjast með umræðu">
+<!ENTITY watchThreadMenu.accesskey "F">
+<!ENTITY watchThreadMenu.key "w">
+<!ENTITY tagMenu.label "Flokkur">
+<!ENTITY tagMenu.accesskey "o">
+<!ENTITY tagCmd0.key "0">
+<!ENTITY tagCmd1.key "1">
+<!ENTITY tagCmd2.key "2">
+<!ENTITY tagCmd3.key "3">
+<!ENTITY tagCmd4.key "4">
+<!ENTITY tagCmd5.key "5">
+<!ENTITY tagCmd6.key "6">
+<!ENTITY tagCmd7.key "7">
+<!ENTITY tagCmd8.key "8">
+<!ENTITY tagCmd9.key "9">
+<!ENTITY markMenu.label "Merkja">
+<!ENTITY markMenu.accesskey "k">
+<!ENTITY toggleReadCmd.key "m">
+<!ENTITY markAsReadCmd.label "Sem lesið">
+<!ENTITY markAsReadCmd.accesskey "l">
+<!ENTITY markAsUnreadCmd.label "Sem ólesið">
+<!ENTITY markAsUnreadCmd.accesskey "ð">
+<!ENTITY markThreadAsReadCmd.label "Umræðu sem lesna">
+<!ENTITY markThreadAsReadCmd.accesskey "U">
+<!ENTITY markThreadAsReadCmd.key "r">
+<!ENTITY markReadByDateCmd.label "Sem lesið eftir dagsetningu…">
+<!ENTITY markReadByDateCmd.accesskey "d">
+<!ENTITY markReadByDateCmd.key "c">
+<!ENTITY markAllReadCmd.label "Alla sem lesna">
+<!ENTITY markAllReadCmd.accesskey "A">
+<!ENTITY markAllReadCmd.key "c">
+<!ENTITY markStarredCmd.label "Stjörnumerkja">
+<!ENTITY markStarredCmd.accesskey "S">
+<!ENTITY markStarredCmd.key "S">
+<!ENTITY markAsJunkCmd.label "Sem ruslpóst">
+<!ENTITY markAsJunkCmd.accesskey "r">
+<!ENTITY markAsJunkCmd.key "j">
+<!ENTITY markAsNotJunkCmd.label "Ekki sem ruslpóst">
+<!ENTITY markAsNotJunkCmd.accesskey "E">
+<!ENTITY markAsNotJunkCmd.key "j">
+<!ENTITY recalculateJunkScoreCmd.label "Keyra ruslpóstsaðgerðir">
+<!ENTITY recalculateJunkScoreCmd.accesskey "K">
+<!ENTITY openMessageWindowCmd.label "Opna póst">
+<!ENTITY openMessageWindowCmd.accesskey "O">
+<!ENTITY openMessageWindowCmd.key "o">
+<!ENTITY openAttachmentListCmd.label "Viðhengi">
+<!ENTITY openAttachmentListCmd.accesskey "h">
+<!ENTITY openFeedMessage1.label "Þegar opnaður er póstur í straumi">
+<!ENTITY openFeedMessage1.accesskey "o">
+<!ENTITY openFeedWebPage.label "Opna sem vefsíðu">
+<!ENTITY openFeedWebPage.accesskey "v">
+<!ENTITY openFeedSummary.label "Opna sem samantekt">
+<!ENTITY openFeedSummary.accesskey "s">
+<!ENTITY openFeedWebPageInMP.label "Víxla vefsíðu og samantekt í lestrarrúðu">
+<!ENTITY openFeedWebPageInMP.accesskey "t">
+
+<!-- Windows Menu -->
+<!ENTITY windowMenu.label "Gluggi">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Verkfæri">
+<!ENTITY tasksMenu.accesskey "V">
+<!ENTITY messengerCmd.label "Póstur og fréttahópar">
+<!ENTITY messengerCmd.accesskey "P">
+<!ENTITY addressBookCmd.label "Nafnaskrá">
+<!ENTITY addressBookCmd.accesskey "N">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY addons.label "Viðbætur">
+<!ENTITY addons.accesskey "b">
+<!ENTITY activitymanager.label "Yfirlit aðgerða">
+<!ENTITY activitymanager.accesskey "a">
+<!ENTITY imAccountsStatus.label "Staða spjalls">
+<!ENTITY imAccountsStatus.accesskey "S">
+<!ENTITY imStatus.available "Tengdur">
+<!ENTITY imStatus.unavailable "Upptekinn">
+<!ENTITY imStatus.offline "Ótengdur">
+<!ENTITY imStatus.showAccounts "Sýna reikninga…">
+<!ENTITY joinChatCmd.label "Taka þátt í spjalli…">
+<!ENTITY joinChatCmd.accesskey "s">
+<!ENTITY savedFiles.label "Vistaðar skrár">
+<!ENTITY savedFiles.accesskey "V">
+<!ENTITY savedFiles.key "j">
+<!ENTITY filtersCmd2.label "Póstsíur">
+<!ENTITY filtersCmd2.accesskey "s">
+<!ENTITY filtersApply.label "Keyra síur á möppu">
+<!ENTITY filtersApply.accesskey "K">
+<!ENTITY filtersApplyToSelection.label "Keyra síur á valinn póst">
+<!ENTITY filtersApplyToSelection.accesskey "s">
+<!ENTITY filtersApplyToMessage.label "Keyra síur á póst">
+<!ENTITY filtersApplyToMessage.accesskey "e">
+<!ENTITY runJunkControls.label "Keyra ruslpóstsaðgerðir á möppu">
+<!ENTITY runJunkControls.accesskey "u">
+<!ENTITY deleteJunk.label "Eyða öllum merktum ruslpósti í möppu">
+<!ENTITY deleteJunk.accesskey "l">
+<!ENTITY importCmd.label "Flytja inn…">
+<!ENTITY importCmd.accesskey "i">
+<!ENTITY clearRecentHistory.label "Hreinsa nýlega ferla…">
+<!ENTITY clearRecentHistory.accesskey "H">
+<!ENTITY accountManagerCmd2.label "Stillingar reiknings">
+<!ENTITY accountManagerCmd2.accesskey "S">
+<!-- LOCALIZATION NOTE (accountManagerCmdUnix.accesskey):
+     Belongs to accountManagerCmd.label, which is placed under the Edit menu
+     on Unix systems
+  -->
+<!ENTITY accountManagerCmdUnix2.accesskey "A">
+
+<!-- Developer Tools Submenu -->
+<!ENTITY devtoolsMenu.label "Forritunarverkfæri">
+<!ENTITY devtoolsMenu.accesskey "o">
+<!ENTITY devToolboxCmd.label "Forritunarverkfæri">
+<!ENTITY devToolboxCmd.accesskey "t">
+<!ENTITY devToolboxCmd.commandkey "i">
+<!ENTITY tabsDebugCmd.label "Content Frame Debugger">
+<!ENTITY tabsDebugCmd.accesskey "C">
+<!ENTITY errorConsoleCmd.label "Villugluggi">
+<!ENTITY errorConsoleCmd.accesskey "g">
+<!ENTITY errorConsoleCmd.commandkey "j">
+
+<!-- Mail Toolbar -->
+<!ENTITY getMsgButton1.label "Ná í póst">
+<!ENTITY newMsgButton.label "Skrifa">
+<!ENTITY replyButton.label "Svara">
+<!ENTITY replyAllButton.label "Svara öllum">
+<!ENTITY replyListButton.label "Svara póstlista">
+<!ENTITY forwardButton.label "Áfram">
+<!ENTITY fileButton.label "Skrá">
+<!ENTITY archiveButton.label "Skjalageymsla">
+<!ENTITY openConversationButton.label "Samtal">
+<!ENTITY nextButton.label "Næsta">
+<!ENTITY nextButtonToolbarItem.label "Næsta ólesið">
+<!ENTITY nextMsgButton.label "Næsti">
+<!ENTITY previousButton.label "Fyrri">
+<!ENTITY previousButtonToolbarItem.label "Fyrri ólesin">
+<!ENTITY previousMsgButton.label "Fyrri">
+<!ENTITY backButton1.label "Til baka">
+<!ENTITY goForwardButton1.label "Áfram">
+<!ENTITY deleteItem.title "Eyða">
+<!ENTITY deleteButton.label "Eyða">
+<!ENTITY undeleteButton.label "Afturkalla eyðingu">
+<!ENTITY markButton.label "Merkja">
+<!ENTITY printButton.label "Prenta">
+<!ENTITY stopButton.label "Stöðva">
+<!ENTITY throbberItem.title "Virknimælir">
+<!ENTITY junkItem.title "Ruslpóstur">
+<!ENTITY junkButton.label "Ruslpóstur">
+<!ENTITY notJunkButton.label "Ekki ruslpóstur">
+<!ENTITY addressBookButton.label "Nafnaskrá">
+<!ENTITY chatButton.label "Spjall">
+<!ENTITY glodaSearch.title "Víðtæk leit">
+<!ENTITY searchItem.title "Flýtileit">
+<!ENTITY mailViewsToolbarItem.title "Póstsýn">
+<!ENTITY folderLocationToolbarItem.title "Möppustaðsetning">
+<!ENTITY tagButton.label "Flokkur">
+<!ENTITY compactButton.label "Þjappa">
+<!ENTITY appmenuButton.label "AppMenu">
+
+<!-- Mail Toolbar Tooltips-->
+<!ENTITY advancedButton.tooltip "Ítarleg póstleit">
+<!ENTITY getMsgButton.tooltip "Ná í nýjan póst">
+<!ENTITY getAllNewMsgCmd.label "Ná í nýjan póst">
+<!ENTITY getAllNewMsgCmd.accesskey "N">
+<!ENTITY newMsgButton.tooltip "Búa til nýjan póst">
+<!ENTITY replyButton.tooltip "Svara pósti">
+<!ENTITY replyAllButton.tooltip "Svara sendanda og öllum viðtakendum">
+<!ENTITY replyListButton.tooltip "Svara póstlista">
+<!ENTITY forwardButton.tooltip "Áframsenda völdum pósti">
+<!ENTITY forwardAsInline.tooltip "Áframsenda valda pósta sem innfelldan texta">
+<!ENTITY forwardAsAttachment.tooltip "Áframsenda valda pósta sem viðhengi">
+<!ENTITY fileButton.tooltip "Vista valinn póst">
+<!ENTITY archiveButton.tooltip "Setja valinn póst í skjalageymslu">
+<!ENTITY nextButton.tooltip "Fara yfir á næsta ólesna póst">
+<!ENTITY nextMsgButton.tooltip "Fara á næstu skilaboð">
+<!ENTITY previousButton.tooltip "Fara til baka í fyrri ólesin póst">
+<!ENTITY previousMsgButton.tooltip "Fara á fyrri skilaboð">
+<!ENTITY goForwardButton.tooltip "Áfram um einn póst">
+<!ENTITY goBackButton.tooltip "Til baka um einn póst">
+<!ENTITY deleteButton.tooltip "Eyða völdum pósti eða möppu">
+<!ENTITY undeleteButton.tooltip "Endurheimta valdan póst">
+<!ENTITY markButton.tooltip "Merkja póst">
+<!ENTITY printButton.tooltip "Prenta þennan póst">
+<!ENTITY stopButton.tooltip "Stöðva núverandi sendingu">
+<!ENTITY junkButton.tooltip "Merkja valinn póst sem ruslpóst">
+<!ENTITY notJunkButton.tooltip "Merkja valinn póst sem ekki ruslpóstur">
+<!ENTITY addressBookButton.tooltip "Fara í nafnaskrá">
+<!ENTITY chatButton.tooltip "Sýna spjallflipann">
+<!ENTITY tagButton.tooltip "Flokka póst">
+<!ENTITY compactButton.tooltip "Eyða eyddum póstum frá valinni möppu">
+<!ENTITY appmenuButton1.tooltip "Birta &brandShortName; valmynd">
+
+<!-- Toolbar Button Popup -->
+<!ENTITY buttonMenuForwardAsInline.label "Áframsenda innfellt">
+<!ENTITY buttonMenuForwardAsAttachment.label "Áframsenda sem viðhengi">
+
+<!-- Remote Content Button Popup -->
+<!ENTITY remoteContentOptionsAllowForMsg.label "Sýna fjarlægt innihald í þessum pósti">
+<!ENTITY remoteContentOptionsAllowForMsg.accesskey "S">
+<!ENTITY editRemoteContentSettings.label "Breyta fjartengdum stillingum innihalds…">
+<!ENTITY editRemoteContentSettings.accesskey "e">
+<!ENTITY editRemoteContentSettingsUnix.label "Breyta fjartengdum stillingum innihalds…">
+<!ENTITY editRemoteContentSettingsUnix.accesskey "e">
+
+<!-- Phishing Button Popup -->
+<!ENTITY phishingOptionIgnore.label "Hunsa aðvörun fyrir þennan póst">
+<!ENTITY phishingOptionIgnore.accesskey "n">
+<!ENTITY phishingOptionSettings.label "Breyta stillingum svikagreiningar…">
+<!ENTITY phishingOptionSettings.accesskey "B">
+<!ENTITY phishingOptionSettingsUnix.label "Breyta stillingum svikagreiningar…">
+<!ENTITY phishingOptionSettingsUnix.accesskey "B">
+
+<!-- AppMenu Popup -->
+<!ENTITY appmenuNewMsgCmd.label "Nýr póstur">
+<!ENTITY appmenuNewContactCmd.label "Tengiliður í nafnaskrá…">
+<!ENTITY appmenuEditMenu.label "Breyta">
+<!ENTITY appmenuToolbarLayout.label "Útlit tækjaslár…">
+<!ENTITY appmenuSelectThread.label "Velja umræðu">
+<!ENTITY appmenuSelectFlagged.label "Velja stjörnumerkt skilaboð">
+
+<!-- Tags Menu Popup -->
+<!ENTITY addNewTag.label "Nýr flokkur…">
+<!ENTITY addNewTag.accesskey "N">
+<!ENTITY manageTags.label "Sýsla með tög…">
+<!ENTITY manageTags.accesskey "m">
+
+<!-- Folder Pane -->
+<!ENTITY folderNameColumn.label "Nafn">
+<!ENTITY folderUnreadColumn.label "Ólesið">
+<!ENTITY folderTotalColumn.label "Allt">
+<!ENTITY folderSizeColumn.label "Stærð">
+
+<!-- Folder Pane Context Menu -->
+<!ENTITY folderContextGetMessages.label "Ná í póst">
+<!ENTITY folderContextGetMessages.accesskey "N">
+<!ENTITY folderContextOpenInNewWindow.label "Opna í nýjum glugga">
+<!ENTITY folderContextOpenInNewWindow.accesskey "O">
+<!ENTITY folderContextOpenNewTab.label "Opna í nýjum flipa">
+<!ENTITY folderContextOpenNewTab.accesskey "f">
+<!ENTITY folderContextNew.label "Ný undirmappa…">
+<!ENTITY folderContextNew.accesskey "N">
+<!ENTITY folderContextRename.label "Endurnefna">
+<!ENTITY folderContextRename.accesskey "r">
+<!ENTITY folderContextRemove.label "Eyða">
+<!ENTITY folderContextRemove.accesskey "E">
+<!ENTITY folderContextCompact.label "Þjappa">
+<!ENTITY folderContextCompact.accesskey "Þ">
+<!ENTITY folderContextEmptyTrash.label "Tæma rusl">
+<!ENTITY folderContextEmptyTrash.accesskey "æ">
+<!ENTITY folderContextEmptyJunk.label "Tæma ruslpóst">
+<!ENTITY folderContextEmptyJunk.accesskey "r">
+<!ENTITY folderContextSendUnsentMessages.label "Senda ósendan póst">
+<!ENTITY folderContextSendUnsentMessages.accesskey "d">
+<!ENTITY folderContextUnsubscribe.label "Afpanta áskrift">
+<!ENTITY folderContextUnsubscribe.accesskey "A">
+<!ENTITY folderContextMarkNewsgroupRead.label "Merkja fréttahóp sem lesinn">
+<!ENTITY folderContextMarkNewsgroupRead.accesskey "k">
+<!ENTITY folderContextMarkMailFolderRead.label "Merkja möppu sem lesna">
+<!ENTITY folderContextMarkMailFolderRead.accesskey "k">
+<!ENTITY folderContextSubscribe.label "Gerast áskrifandi…">
+<!ENTITY folderContextSubscribe.accesskey "e">
+<!ENTITY folderContextSearchForMessages.label "Leita í pósti…">
+<!ENTITY folderContextSearchForMessages.accesskey "s">
+<!ENTITY folderContextProperties2.label "Eiginleikar">
+<!ENTITY folderContextProperties2.accesskey "E">
+<!ENTITY folderContextFavoriteFolder.label "Eftirlætismappa">
+<!ENTITY folderContextFavoriteFolder.accesskey "t">
+<!ENTITY folderContextSettings2.label "Stillingar">
+<!ENTITY folderContextSettings2.accesskey "t">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label "Nafn eða tölvupóstfang inniheldur:">
+<!ENTITY SearchNameOrEmail.accesskey "N">
+
+<!-- Gloda Search Bar -->
+<!ENTITY glodaSearchBar.placeholder "Leita í póstum…">
+
+<!-- Quick Search Menu Bar -->
+<!ENTITY searchSubjectMenu.label "Efni">
+<!ENTITY searchFromMenu.label "Frá">
+<!ENTITY searchSubjectOrFromMenu.label "Efni eða frá">
+<!ENTITY searchRecipient.label "Til eða afrit">
+<!ENTITY searchSubjectOrRecipientMenu.label "Efni, til, eða afrit">
+<!ENTITY searchMessageBody.label "Allur pósturinn">
+<!ENTITY saveAsVirtualFolderMenu.label "Vista leit sem möppu…">
+
+<!-- Thread Pane -->
+<!ENTITY threadColumn.label "Umræða">
+<!ENTITY fromColumn.label "Frá">
+<!ENTITY recipientColumn.label "Viðtakandi">
+<!ENTITY correspondentColumn.label "Þátttakendur">
+<!ENTITY subjectColumn.label "Efni">
+<!ENTITY dateColumn.label "Dagsetning">
+<!ENTITY priorityColumn.label "Forgangur">
+<!ENTITY tagsColumn.label "Flokkur">
+<!ENTITY accountColumn.label "Þjónusta">
+<!ENTITY statusColumn.label "Staða">
+<!ENTITY sizeColumn.label "Stærð">
+<!ENTITY junkStatusColumn.label "Rusl staða">
+<!ENTITY unreadColumn.label "Ólesið">
+<!ENTITY totalColumn.label "Allt">
+<!ENTITY readColumn.label "Lesa">
+<!ENTITY receivedColumn.label "Móttekið">
+<!ENTITY starredColumn.label "Stjörnumerkt">
+<!ENTITY locationColumn.label "Staðsetning">
+<!ENTITY idColumn.label "Í móttekinni röð">
+<!ENTITY attachmentColumn.label "Viðhengi">
+
+<!-- Thread Pane Tooltips -->
+<!ENTITY columnChooser2.tooltip "Veldu dálka til að birta">
+<!ENTITY threadColumn2.tooltip "Birta póstþræði">
+<!ENTITY fromColumn2.tooltip "Raða eftir frá">
+<!ENTITY recipientColumn2.tooltip "Raða eftir móttakanda">
+<!ENTITY correspondentColumn2.tooltip "Raða eftir þátttakendum">
+<!ENTITY subjectColumn2.tooltip "Flokka eftir efnislínu">
+<!ENTITY dateColumn2.tooltip "Raða eftir Dags">
+<!ENTITY priorityColumn2.tooltip "Raða eftir forgangi">
+<!ENTITY tagsColumn2.tooltip "Raða eftir tögum">
+<!ENTITY accountColumn2.tooltip "Raða eftir reikningi">
+<!ENTITY statusColumn2.tooltip "Raða eftir stöðu">
+<!ENTITY sizeColumn2.tooltip "Raða eftir Stærð">
+<!ENTITY junkStatusColumn2.tooltip "Raða eftir ruslpóststöðu">
+<!ENTITY unreadColumn2.tooltip "Fjöldi ólesinna pósta í umræðu">
+<!ENTITY totalColumn2.tooltip "Heildarfjöldi pósta í umræðu">
+<!ENTITY readColumn2.tooltip "Raða eftir lesið">
+<!ENTITY receivedColumn2.tooltip "Raða eftir móttekinni dagsetningu">
+<!ENTITY starredColumn2.tooltip "Raða eftir stjörnumerkingu">
+<!ENTITY locationColumn2.tooltip "Raða eftir staðsetningu">
+<!ENTITY idColumn2.tooltip "Raða eftir móttekinni röð">
+<!ENTITY attachmentColumn2.tooltip "Raða eftir viðhengjum">
+
+<!-- Thread Pane Context Menu -->
+<!ENTITY contextOpenNewWindow.label "Opna póst í nýjum glugga">
+<!ENTITY contextOpenNewWindow.accesskey "O">
+<!-- The key potentially conflicts with cutCmd.accessKey which is defined in
+     textcontext.dtd from toolkit. Right now, both menu items can't be visible
+     at the same time, but should someone enable copy/paste of message, this key
+     would probably need to be changed. -->
+<!ENTITY contextOpenNewTab.label "Opna póst í nýjum flipa">
+<!ENTITY contextOpenNewTab.accesskey "t">
+<!ENTITY contextOpenConversation.label "Opna póst í samtali">
+<!ENTITY contextOpenConversation.accesskey "n">
+<!ENTITY contextOpenContainingFolder.label "Opna póst í þeirri möppu sem hann er í">
+<!ENTITY contextOpenContainingFolder.accesskey "n">
+<!ENTITY contextEditMsgAsNew.label "Breyta sem nýjum pósti">
+<!ENTITY contextEditMsgAsNew.accesskey "e">
+<!ENTITY contextEditDraftMsg.label "Breyta drögum">
+<!ENTITY contextArchive.label "Skjalageymsla">
+<!ENTITY contextArchive.accesskey "j">
+<!ENTITY contextReplySender.label "Svara aðeins sendanda">
+<!ENTITY contextReplySender.accesskey "r">
+<!ENTITY contextReplyNewsgroup2.label "Svara fréttahóp">
+<!ENTITY contextReplyNewsgroup2.accesskey "v">
+<!ENTITY contextReplyAll.label "Svara öllum">
+<!ENTITY contextReplyAll.accesskey "ö">
+<!ENTITY contextReplyList.label "Svara póstlista">
+<!ENTITY contextReplyList.accesskey "l">
+<!ENTITY contextForward.label "Áfram">
+<!ENTITY contextForward.accesskey "m">
+<!ENTITY contextForwardAsMenu.label "Áframsenda sem">
+<!ENTITY contextForwardAsMenu.accesskey "f">
+<!ENTITY contextForwardAsInline.label "Innfellt">
+<!ENTITY contextForwardAsInline.accesskey "I">
+<!ENTITY contextForwardAsAttachmentItem.label "Viðhengi">
+<!ENTITY contextForwardAsAttachmentItem.accesskey "V">
+<!ENTITY contextMultiForwardAsAttachment.label "Áframsenda sem viðhengi">
+<!ENTITY contextMultiForwardAsAttachment.accesskey "f">
+<!ENTITY contextMoveMsgMenu.label "Færa í">
+<!ENTITY contextMoveMsgMenu.accesskey "F">
+<!ENTITY contextMoveCopyMsgRecentMenu.label "Nýlegt">
+<!ENTITY contextMoveCopyMsgRecentMenu.accesskey "N">
+<!ENTITY contextCopyMsgMenu.label "Afrita í">
+<!ENTITY contextCopyMsgMenu.accesskey "A">
+<!ENTITY contextKillThreadMenu.label "Hunsa umræðu">
+<!ENTITY contextKillSubthreadMenu.accesskey "æ">
+<!ENTITY contextKillThreadMenu.accesskey "H">
+<!ENTITY contextKillSubthreadMenu.label "Hunsa undirumræðu">
+<!ENTITY contextWatchThreadMenu.label "Fylgjast með umræðu">
+<!-- LOCALIZATION NOTE (contextWatchThreadMenu.accesskey):
+     In the en-US locale we ran out of access keys, so there is an empty access key for
+     Watch Thread. Localizers can pick a suitable key
+  -->
+<!ENTITY contextWatchThreadMenu.accesskey "">
+<!ENTITY contextSaveAs.label "Vista sem…">
+<!ENTITY contextSaveAs.accesskey "s">
+<!ENTITY contextPrint.label "Prenta…">
+<!ENTITY contextPrint.accesskey "P">
+<!ENTITY contextPrintPreview.label "Prentskoðun">
+<!ENTITY contextPrintPreview.accesskey "ð">
+<!-- Thread Pane Column Picker -->
+
+<!-- LOCALIZATION NOTE (columnPicker.applyTo.label):
+     This option in the thread pane column picker pops up a sub-menu containing
+     the "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" options. This item indicates
+     a desire to apply the currently displayed set of columns to some other
+     folder(s). The sub-menu items indicate whether we want to apply it to just
+     a folder or also its children.
+  -->
+<!ENTITY columnPicker.applyTo.label "Beita dálkum á…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolder.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolderAndChildren.label". It indicates a desire to
+     apply the currently display thread pane column settings to a single folder
+     that the user selects using the same widget as the move to/copy to
+     mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolder.label "Möppu…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolderAndChildren.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolder.label". It indicates a desire to
+     apply the currently display thread pane column settings to a folder and all
+     of its descendents. The user selects the folder using the same widget as the
+     move to/copy to mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolderAndChildren.label "Möppu og undirmöppur…">
+<!-- LOCALIZATION NOTE (columnPicker.thisFolder.label):
+     This is used in the folder selection widget for the
+     "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" menu options. Whenever
+     a folder has children, it results in a menu popup; the first menu item
+     in that popup is given this label to indicate that that folder should be
+     selected. For example, if folder "A" has two children, "B" and "C", then
+     when the user hovers over "A", a new popup menu will be displayed whose
+     items are "This folder", "B", and "C". This is the equivalent of the
+     "File here" option for the move to/copy to widget.
+  -->
+<!ENTITY columnPicker.thisFolder.label "Þessi mappa">
+
+<!-- Media (video/audio) controls -->
+<!ENTITY contextPlay.label "Spila">
+<!ENTITY contextPlay.accesskey "S">
+<!ENTITY contextPause.label "Bið">
+<!ENTITY contextPause.accesskey "B">
+<!ENTITY contextMute.label "Hljóðdeyfa">
+<!ENTITY contextMute.accesskey "H">
+<!ENTITY contextUnmute.label "Virkja hljóð">
+<!ENTITY contextUnmute.accesskey "V">
+
+<!-- Quick Search Bar -->
+<!-- LOCALIZATION NOTE (quickSearchCmd.key):
+     This is actually the key used for the global message search box; we have
+     not changed
+  -->
+<!ENTITY quickSearchCmd.key "k">
+<!-- LOCALIZATION NOTE (search.label.base1):
+      This is the base of the empty text for the global search box. We replace
+     #1 with the contents of the appropriate search.keyLabel.* value for the
+     platform.
+     The goal is to convey to the user that typing in the box will allow them
+     to search for messages globally and that there is a hotkey they can press
+     to get to the box faster. If the global indexer is disabled, the search
+     box will be collapsed and the user will never see this message.
+  -->
+<!ENTITY search.label.base1 "Leita #1">
+<!-- LOCALIZATION NOTE (search.keyLabel.nonmac):
+     The description of the key-binding to get into the global search box on
+     windows and linux (which use the control key). We use the key defined in
+     the quickSearchCmd.key entity defined above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.nonmac "&lt;Ctrl+K&gt;">
+<!-- LOCALIZATION NOTE (search.keyLabel.mac):
+     The description of the key-binding to get into the global search box on mac
+     systems. We use the key defined in the quickSearchCmd.key entity defined
+     above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.mac "&lt;&#x2318;K&gt;">
+
+<!-- Message Header Context Menu -->
+<!ENTITY AddToAddressBook.label "Bæta við nafnaskrá…">
+<!ENTITY AddToAddressBook.accesskey "B">
+<!ENTITY AddDirectlyToAddressBook.label "Bæta við nafnaskrá">
+<!ENTITY AddDirectlyToAddressBook.accesskey "B">
+<!ENTITY EditContact1.label "Breyta tengilið">
+<!ENTITY EditContact1.accesskey "e">
+<!ENTITY ViewContact.label "Skoða tengilið">
+<!ENTITY ViewContact.accesskey "S">
+<!ENTITY SubscribeToNewsgroup.label "Gerast áskrifandi að fréttahóp">
+<!ENTITY SubscribeToNewsgroup.accesskey "G">
+<!ENTITY SendMessageTo.label "Semja nýjan póst til">
+<!ENTITY SendMessageTo.accesskey "S">
+<!ENTITY CopyEmailAddress.label "Afrita póstfang">
+<!ENTITY CopyEmailAddress.accesskey "A">
+<!ENTITY CopyNameAndEmailAddress.label "Afrita nafn og tölvupóstfang">
+<!ENTITY CopyNameAndEmailAddress.accesskey "n">
+<!ENTITY CopyNewsgroupName.label "Afrita nafn fréttahóps">
+<!ENTITY CopyNewsgroupName.accesskey "A">
+<!ENTITY CopyNewsgroupURL.label "Afrita URL fréttahóps">
+<!ENTITY CopyNewsgroupURL.accesskey "U">
+<!ENTITY CreateFilterFrom.label "Búa til síu út frá…">
+<!ENTITY CreateFilterFrom.accesskey "f">
+<!ENTITY reportPhishingURL.label "Tilkynna svikapóst">
+<!ENTITY reportPhishingURL.accesskey "T">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Bæta við orðasöfnum…">
+<!ENTITY spellAddDictionaries.accesskey "a">
+
+<!-- Content Pane Context Menu -->
+<!ENTITY saveLinkAsCmd.label "Vista tengil sem…">
+<!ENTITY saveLinkAsCmd.accesskey "V">
+<!ENTITY saveImageAsCmd.label "Vista mynd sem…">
+<!ENTITY saveImageAsCmd.accesskey "V">
+<!ENTITY copyLinkCmd.label "Afrita tengil">
+<!ENTITY copyLinkCmd.accesskey "A">
+<!ENTITY copyImageAllCmd.label "Afrita mynd">
+<!ENTITY copyImageAllCmd.accesskey "i">
+<!ENTITY copyEmailCmd.label "Afrita póstfang">
+<!ENTITY copyEmailCmd.accesskey "p">
+<!ENTITY stopCmd.label "Stöðva">
+<!ENTITY stopCmd.accesskey "S">
+<!ENTITY reloadCmd.label "Endurnýja">
+<!ENTITY reloadCmd.accesskey "E">
+<!ENTITY openInBrowser.label "Opna í vafra">
+<!ENTITY openInBrowser.accesskey "O">
+<!ENTITY openLinkInBrowser.label "Opna tengil í vafra">
+<!ENTITY openLinkInBrowser.accesskey "O">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label "Ljúka">
+
+<!-- Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.label "Minnka">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "Endurheimta">
+<!ENTITY zoomWindow.label "Aðdráttur">
+
+<!-- Mac OS X Application Menu (Cocoa widgets) -->
+<!ENTITY preferencesCmdMac2.label "Valkostir">
+<!ENTITY preferencesCmdMac.commandkey ",">
+<!ENTITY preferencesCmdMac.modifiers "accel">
+<!ENTITY servicesMenuMac.label "Þjónustur">
+<!ENTITY hideThisAppCmdMac.label "Fela &brandShortName;">
+<!ENTITY hideThisAppCmdMac.commandkey "H">
+<!ENTITY hideThisAppCmdMac.modifiers "accel">
+<!ENTITY hideOtherAppsCmdMac.label "Fela aðra">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+<!ENTITY hideOtherAppsCmdMac.modifiers "accel,alt">
+<!ENTITY showAllAppsCmdMac.label "Sýna allt">
+
+<!-- Mac OS X Dock Icon pop-up menu -->
+<!ENTITY dockOptions.label "App Icon valkostir…">
+

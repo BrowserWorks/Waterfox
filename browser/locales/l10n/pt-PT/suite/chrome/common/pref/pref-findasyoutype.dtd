@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Localizar ao escrever">
+<!ENTITY findAsYouTypeBehavior.label "Localizar ao escrever">
+<!ENTITY findAsYouTypeTip.label "Dica: para iniciar manualmente a opção Localizar ao escrever, digite uma / para procurar texto ou ' para procurar ligações, seguido do texto que deseja localizar.">
+<!ENTITY findAsYouTypeTimeout.label "Limpar a pesquisa atual após alguns segundos de inatividade">
+<!ENTITY findAsYouTypeTimeout.accesskey "d">
+<!ENTITY findAsYouTypeSound.label "Reproduzir um som se o texto não for encontrado">
+<!ENTITY findAsYouTypeSound.accesskey "p">
+<!ENTITY findAsYouTypeEnableAuto.label "Localizar automaticamente ao escrever numa página web:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "L">
+<!ENTITY findAsYouTypeAutoText.label "Qualquer texto na página">
+<!ENTITY findAsYouTypeAutoText.accesskey "a">
+<!ENTITY findAsYouTypeAutoLinks.label "Apenas ligações">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "l">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Mostrar barra de ferramentas Localizar ao escrever">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "s">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Nota: Localizar ao escrever sem mostrar a barra de pesquisa não permite entradas de texto internacionais.">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label "URL на местото:">
+<!ENTITY docSubdir.label "Поддиректориум на страницата:">
+<!ENTITY otherSubdir.label "Поддиректориум на слика:">
+
+<!ENTITY status.label "Објавувам…">
+<!ENTITY fileList.label "Статус на објавување">
+<!ENTITY statusHeader.label "Статус">
+<!ENTITY filenameHeader.label "Име на датотека">
+<!ENTITY succeeded.label "Успеа">
+<!ENTITY failed.label "Не успеа">
+<!ENTITY troubleshooting.label "Решевање на проблеми">
+<!ENTITY troubleshooting.accessKey "п">
+
+<!ENTITY keepOpen "Не го затворај прозорецот откако ќе заврши објаувањето.">
+<!ENTITY closeButton.label "Затвори">

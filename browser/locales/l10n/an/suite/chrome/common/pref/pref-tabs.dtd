@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Navegación con pestanyas">
+<!ENTITY tabDisplay.label "Visualización de pestanyas">
+<!ENTITY autoHide.label "Esconder a barra de pestanyas quan solament i haiga una ubierta">
+<!ENTITY autoHide.accesskey "d">
+<!ENTITY background.label "Cambiar a as nuevas pestanyas ubiertas a partir d'enlaces">
+<!ENTITY background.accesskey "s">
+<!ENTITY warnOnClose.label "Alvertir-me en zarrar una finestra con multiples pestanyas">
+<!ENTITY warnOnClose.accesskey "m">
+<!ENTITY relatedAfterCurrent.label "Abrir pestanyas relacionadas dimpués d'a pestanya actual">
+<!ENTITY relatedAfterCurrent.accesskey "b">
+<!ENTITY loadGroup.label "Al ubrir un grupo de pestanyas">
+<!ENTITY loadGroupAppend.label "Adhibir pestanyas">
+<!ENTITY loadGroupAppend.accesskey "A">
+<!ENTITY loadGroupReplace.label "Reemplazar pestanyas existents">
+<!ENTITY loadGroupReplace.accesskey "R">
+<!ENTITY openTabs.label "Ubrir pestanyas en cuenta de finestras quan:">

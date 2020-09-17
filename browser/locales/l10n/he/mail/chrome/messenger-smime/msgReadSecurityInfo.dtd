@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "אבטחת הודעה">
+<!ENTITY signatureCert.label "הצג אישור חתימה">
+<!ENTITY encryptionCert.label "הצג אישור הצפנה">
+
+<!ENTITY signer.name "נחתם על־ידי:">
+<!ENTITY recipient.name "הוצפן עבור:">
+<!ENTITY email.address "כתובת דוא״ל:">
+<!ENTITY issuer.name "אישור הונפק על־ידי:">
+

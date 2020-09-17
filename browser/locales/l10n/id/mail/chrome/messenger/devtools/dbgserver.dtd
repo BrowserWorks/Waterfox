@@ -1,0 +1,4 @@
+<!ENTITY options.title "Pilihan Perangkat Pengembang">
+<!ENTITY options.status.label "Status:">
+<!ENTITY options.port.label "Port:">
+<!ENTITY options.forcelocal.label "Izinkan koneksi dari komputer lain">

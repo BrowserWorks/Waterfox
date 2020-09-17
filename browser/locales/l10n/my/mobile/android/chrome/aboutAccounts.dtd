@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "မီးမြေခွေး အကောင့်များ">
+<!ENTITY aboutAccounts.connected.description "သင်သည် ချိက်ဆက်ထားသည်။">
+<!ENTITY aboutAccounts.syncPreferences.label "ထပ်တူပြုပြိုင်တူအပြင်အဆင်များကို စစ်ဆေးရန် ဒီနေရာမှာ ထိပါ">
+
+<!ENTITY aboutAccounts.noConnection.title "အင်တာနက် ချိတ်ဆက်မှု မရှိပါ">
+<!ENTITY aboutAccounts.retry.label "ထပ်မံ ဆောင်ရွက်ကြည့်ပါ">
+
+<!ENTITY aboutAccounts.restrictedError.title "တားမြစ်ထားသည်">
+<!ENTITY aboutAccounts.restrictedError.description "ဒီပရိုဖိုင်းကနေ မီးမြေခွေးအကောင့်များကို မစီမံနိုင်ပါ။">

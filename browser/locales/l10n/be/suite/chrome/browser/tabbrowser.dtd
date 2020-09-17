@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY untitledTab "(Без загалоўка)">
+<!ENTITY newTab.label "Новая ўстаўка">
+<!ENTITY newTab.accesskey "Н">
+<!ENTITY closeTab.label "Зачыніць устаўку">
+<!ENTITY closeTab.accesskey "З">
+<!ENTITY closeOtherTabs.label "Зачыніць другія ўстаўкі">
+<!ENTITY closeOtherTabs.accesskey "Д">
+<!ENTITY reloadAllTabs.label "Абнавіць усе ўстаўкі">
+<!ENTITY reloadAllTabs.accesskey "У">
+<!ENTITY reloadTab.label "Абнавіць устаўку">
+<!ENTITY reloadTab.accesskey "в">
+<!ENTITY bookmarkGroup.label "Дадаць закладку да гэтай групы ўставак">
+<!ENTITY bookmarkGroup.accesskey "Г">
+<!ENTITY closeTabButton.tooltip "зачыніць гэтачасовую ўстаўку">
+<!ENTITY newTabButton.tooltip "Адчыніць новую ўстаўку">
+<!ENTITY listAllTabs.tooltip "Пералічыць усе ўстаўкі">
+<!ENTITY undoCloseTab.label "Адмяніць закрыццё ўстаўкі">
+<!ENTITY undoCloseTab.accesskey "А">

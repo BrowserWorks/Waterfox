@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "您启动了旧版的 &brandProductName;">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "新版本的 &brandProductName; 可能已对您的个人资料进行了不再与此旧版本兼容的修改。此配置文件现在只能搭配较新的版本使用，您或者可以为此 &brandShortName; 版本创建一个全新的配置文件。创建新的配置文件需要重新设定您的账户、日历和附加组件。">
+
+<!ENTITY window.moreinfo "更多信息…">
+<!ENTITY window.create "创建新配置文件">
+<!ENTITY window.quit-win "退出">
+<!ENTITY window.quit-nonwin "退出">

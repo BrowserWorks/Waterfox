@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Importo">
+<!ENTITY importAll.label          "Importo Gjithçka">
+<!ENTITY importAll.accesskey      "G">
+<!ENTITY importMail.label         "Postë">
+<!ENTITY importMail.accesskey     "P">
+<!ENTITY importFeeds.label        "Pajtime Në Prurje">
+<!ENTITY importFeeds.accesskey    "u">
+<!ENTITY importAddressbook.label  "Libra Adresash">
+<!ENTITY importAddressbook.accesskey "L">
+<!ENTITY importSettings.label     "Rregullime">
+<!ENTITY importSettings.accesskey "R">
+<!ENTITY importFilters.label      "Filtra">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Ndihmësi &brandShortName; për Importim Poste">
+<!ENTITY importShortDesc.label    "Importoni prej programesh të tjerë Postë, Libra Adresash, Rregullime dhe Filtra">
+
+<!ENTITY importDescription1.label "Ky ndihmës do të importojë te &brandShortName;-i mesazhe poste, zëra librash adresash, pajtime në prurje, parapëlqime, dhe/ose filtra prej programesh të tjerë poste, si dhe formate të zakonshëm librash adresash.">
+<!ENTITY importDescription2.label "Pasi të jenë importuar, do të jeni në gjendje t&apos;i përdorni që nga &brandShortName;-i.">
+
+<!ENTITY selectDescription.label  "Ju lutemi, përzgjidhni llojin e kartelës që doni të importohet:">
+<!ENTITY selectDescriptionB.label "Ju lutemi, përzgjidhni një llogari ekzistuese ose krijoni një llogari të re:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Emër:">
+<!ENTITY acctName.accesskey       "E">
+<!ENTITY noModulesFound.label     "S&apos;u gjet aplikacion apo kartelë prej nga të importohen të dhëna.">
+
+<!ENTITY back.label               "&lt; Mbrapsht">
+<!ENTITY forward.label            "Pasuesi &gt;">
+<!ENTITY finish.label             "Përfundoje">
+<!ENTITY cancel.label             "Anuloje">
+
+<!ENTITY select.label             "ose përzgjidhni llojin e materialit për t&apos;u importuar:">
+
+<!ENTITY title.label              "Titull">
+<!ENTITY processing.label         "Po importohet…">

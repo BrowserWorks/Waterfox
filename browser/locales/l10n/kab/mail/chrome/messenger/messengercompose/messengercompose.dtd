@@ -1,0 +1,345 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Aru: (ulac amgay)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Afaylu">
+<!ENTITY fileMenu.accesskey "A">
+<!ENTITY newMenu.label "Amaynut">
+<!ENTITY newMenu.accesskey "m">
+<!ENTITY newMessage.label "Izen">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "I">
+<!ENTITY newContact.label "Anermis n imedlis n tensa…">
+<!ENTITY newContact.accesskey "n">
+<!ENTITY attachMenu.label "Rnu taceqquf">
+<!ENTITY attachMenu.accesskey "q">
+<!ENTITY attachFileCmd.label "Afaylu(i-a)…">
+<!ENTITY attachFileCmd.accesskey "A">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Aseɣwen n ufaylu">
+<!ENTITY attachCloudCmd.accesskey "f">
+<!ENTITY attachPageCmd.label "Asebter web…">
+<!ENTITY attachPageCmd.accesskey "w">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Takarda tudmawant (vCard)">
+<!ENTITY attachVCardCmd.accesskey "d">
+<!ENTITY remindLater.label "Mekti-yi-d ticki">
+<!ENTITY remindLater.accesskey "M">
+<!ENTITY closeCmd.label "Mdel">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "M">
+<!ENTITY saveCmd.label "Sekles">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "k">
+<!ENTITY saveAsCmd.label "Kles daw">
+<!ENTITY saveAsCmd.accesskey "d">
+<!ENTITY saveAsFileCmd.label "Afaylu…">
+<!ENTITY saveAsFileCmd.accesskey "A">
+<!ENTITY saveAsDraftCmd.label "Arewway">
+<!ENTITY saveAsDraftCmd.accesskey "A">
+<!ENTITY saveAsTemplateCmd.label "Taneɣruft">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY sendNowCmd.label "Azen tura">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "t">
+<!ENTITY sendLaterCmd.label "Azen ticki">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "c">
+<!ENTITY printSetupCmd.label "Asbadu n usebter…">
+<!ENTITY printSetupCmd.accesskey "b">
+<!ENTITY printPreviewCmd.label "Wali send asiggez">
+<!ENTITY printPreviewCmd.accesskey "g">
+<!ENTITY printCmd.label "Siggez…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "S">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Ẓreg">
+<!ENTITY editMenu.accesskey "Ẓ">
+<!ENTITY undoCmd.label "Sefsax">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "S">
+<!ENTITY redoCmd.label "Err-d">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "E">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "Z">
+<!ENTITY deleteCmd.label "Kkes">
+<!ENTITY deleteCmd.accesskey "K">
+<!ENTITY editRewrapCmd.label "Zzi-yas i uḍris tikelt nniḍen">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Snifel isem n tceqquft yeddan…">
+<!ENTITY renameAttachmentCmd.accesskey "f">
+<!ENTITY reorderAttachmentsCmd.label "Ales asmizzwer n ifuyla yeddan…">
+<!ENTITY reorderAttachmentsCmd.accesskey "s">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Agalis n yifuyla yeddan">
+<!ENTITY toggleAttachmentPaneCmd.accesskey "f">
+<!ENTITY selectAllCmd.accesskey "I">
+<!ENTITY findBarCmd.label "Nadi…">
+<!ENTITY findBarCmd.accesskey "N">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Nadi u semselsi…">
+<!ENTITY findReplaceCmd.accesskey "m">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Nadi tikelt nniḍen">
+<!ENTITY findAgainCmd.accesskey "k">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Nadi ɣer deffir">
+<!ENTITY findPrevCmd.accesskey "d">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Smizwer imeddayen">
+<!ENTITY moveAttachmentTopPanelBtn.label "Senkez s afella">
+<!ENTITY moveAttachmentUpPanelBtn.label "Ali">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Senkez akk">
+<!ENTITY moveAttachmentDownPanelBtn.label "Ader">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Senkez s adda">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Smizzwer: A-Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Smizzwer: Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Smiyezwar tafrant: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Smiyezwar tafrant: Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Sken">
+<!ENTITY viewMenu.accesskey "e">
+<!ENTITY viewToolbarsMenuNew.label "Afeggag n ifecka">
+<!ENTITY viewToolbarsMenuNew.accesskey "A">
+<!ENTITY menubarCmd.label "Afeggag n wumuɣ">
+<!ENTITY menubarCmd.accesskey "f">
+<!ENTITY showCompositionToolbarCmd.label "Afeggag n isefka n usuddes">
+<!ENTITY showCompositionToolbarCmd.accesskey "g">
+<!ENTITY showFormattingBarCmd.label "Afeggag n umasal">
+<!ENTITY showFormattingBarCmd.accesskey "g">
+<!ENTITY showTaskbarCmd.label "Afeggag n waddad">
+<!ENTITY showTaskbarCmd.accesskey "f">
+<!ENTITY customizeToolbar.label "Sagen…">
+<!ENTITY customizeToolbar.accesskey "S">
+
+<!ENTITY addressSidebar.label "Agalis adisan n inermisen">
+<!ENTITY addressSidebar.accesskey "g">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Amasal">
+<!ENTITY formatMenu.accesskey "a">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Iɣewwaṛen">
+<!ENTITY optionsMenu.accesskey "w">
+<!ENTITY checkSpellingCmd2.label "Senqed taɣdira…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "S">
+<!ENTITY enableInlineSpellChecker.label "Senqed taɣdira mara  teţaruḍ">
+<!ENTITY enableInlineSpellChecker.accesskey "q">
+<!ENTITY quoteCmd.label "Bder-d izen">
+<!ENTITY quoteCmd.accesskey "B">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Seddu takarda tudmawant (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Anagi n waggaḍ">
+<!ENTITY returnReceiptMenu.accesskey "n">
+<!ENTITY dsnMenu.label "Alɣu n waddad n usiweḍ">
+<!ENTITY dsnMenu.accesskey "d">
+<!ENTITY deliveryFormatMenu.label "Amasal n usiweḍ">
+<!ENTITY deliveryFormatMenu.accesskey "s">
+<!ENTITY autoFormatCmd.label "Tuṭṭfa tawurmant">
+<!ENTITY autoFormatCmd.accesskey "u">
+<!ENTITY plainTextFormatCmd.label "Aḍris aččuran kan">
+<!ENTITY plainTextFormatCmd.accesskey "č">
+<!ENTITY htmlFormatCmd.label "Aḍris anesbaɣuṛ kan (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "ḍ">
+<!ENTITY bothFormatCmd.label "Aḍris aččuran akked anesbaɣuṛ (HTML)">
+<!ENTITY bothFormatCmd.accesskey "ɣ">
+<!ENTITY priorityMenu.label "Tazwart">
+<!ENTITY priorityMenu.accesskey "z">
+<!ENTITY priorityButton.title "Tazwart">
+<!ENTITY priorityButton.tooltiptext "Snifel tazwart n yizen">
+<!ENTITY priorityButton.label "Tazwart:">
+<!ENTITY lowestPriorityCmd.label "Ameẓyan s waṭas">
+<!ENTITY lowestPriorityCmd.accesskey "m">
+<!ENTITY lowPriorityCmd.label "Ameẓyan">
+<!ENTITY lowPriorityCmd.accesskey "ẓ">
+<!ENTITY normalPriorityCmd.label "Amagnu">
+<!ENTITY normalPriorityCmd.accesskey "m">
+<!ENTITY highPriorityCmd.label "Ameqqran">
+<!ENTITY highPriorityCmd.accesskey "q">
+<!ENTITY highestPriorityCmd.label "Ameqqran s waṭas">
+<!ENTITY highestPriorityCmd.accesskey "ṭ">
+<!ENTITY fileCarbonCopyCmd.label "Azen anɣel i">
+<!ENTITY fileCarbonCopyCmd.accesskey "z">
+<!ENTITY fileHereMenu.label "Afaylu dagi">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Ifecka">
+<!ENTITY tasksMenu.accesskey "f">
+<!ENTITY messengerCmd.label "Tirawt &amp; igrawen n isalen">
+<!ENTITY messengerCmd.accesskey "s">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Imedlis n tensa">
+<!ENTITY addressBookCmd.accesskey "m">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Amiḍan d iɣewwaṛen">
+<!ENTITY accountManagerCmd2.accesskey "w">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label "Iɣewwaṛen">
+<!ENTITY preferencesCmd2.accesskey "w">
+<!ENTITY preferencesCmdUnix.label "Ismenyifen">
+<!ENTITY preferencesCmdUnix.accesskey "s">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Semẓi">
+<!ENTITY bringAllToFront.label "Awid kullec ɣer zdat">
+<!ENTITY zoomWindow.label "Zoom">
+<!ENTITY windowMenu.label "Asfaylu">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Azen">
+<!ENTITY quoteButton.label "Amur">
+<!ENTITY addressButton.label "Inermisen">
+<!ENTITY attachButton.label "Seddu afaylu">
+<!ENTITY spellingButton.label "Taɣdira">
+<!ENTITY saveButton.label "Kles">
+<!ENTITY printButton.label "Siggez">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Azen Izen-agi tura">
+<!ENTITY sendlaterButton.tooltip "Azen izen-agi ticki">
+<!ENTITY quoteButton.tooltip "Bder-d izen yezrin">
+<!ENTITY addressButton.tooltip "Fren aɣerwaḍ seg imedlis n tensa">
+<!ENTITY attachButton.tooltip2 "Rnu afaylu">
+<!ENTITY spellingButton.tooltip "Seɣti taɣdira n ufran neɣ izen imeṛṛa">
+<!ENTITY saveButton.tooltip "Sekles izen-agi">
+<!ENTITY cutButton.tooltip              "Gzem">
+<!ENTITY copyButton.tooltip             "Nɣel">
+<!ENTITY pasteButton.tooltip            "Senteḍ">
+<!ENTITY printButton.tooltip "Siggez izen-agi">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style "width: 8em;">
+<!ENTITY extraRecipients.tooltip "Anawen-nniḍen n wurtan n tansiwin">
+<!ENTITY fromAddr2.label "Seg">
+<!ENTITY fromAddr.accesskey "S">
+<!ENTITY toAddr2.label "I">
+<!ENTITY ccAddr2.label "Anɣ.I">
+<!ENTITY bccAddr2.label "Anɣ.Uff.I">
+<!ENTITY replyAddr2.label "Err-i">
+<!ENTITY newsgroupsAddr2.label "Agraw n yisallen">
+<!ENTITY followupAddr2.label "Seḍfer-I">
+<!ENTITY subject2.label "Asentel">
+<!ENTITY subject.accesskey "A">
+<!ENTITY attachmentBucketCloseButton.tooltip "Ffer agalis n yifuyla yeddan">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "Ger udem n ucmumeḥ">
+<!ENTITY smiley1Cmd.label "Acmumeḥ">
+<!ENTITY smiley2Cmd.label "Yekres anyir">
+<!ENTITY smiley3Cmd.label "Aɣemmez">
+<!ENTITY smiley4Cmd.label "Yessiɣzef iles">
+<!ENTITY smiley5Cmd.label "Yettaḍṣa">
+<!ENTITY smiley6Cmd.label "Yettumerret">
+<!ENTITY smiley7Cmd.label "Ur yerkid ara">
+<!ENTITY smiley8Cmd.label "Yewhem">
+<!ENTITY smiley9Cmd.label "Asuden">
+<!ENTITY smiley10Cmd.label "Aɛeggeḍ">
+<!ENTITY smiley11Cmd.label "Yers">
+<!ENTITY smiley12Cmd.label "Aqemmuc n yedrimen">
+<!ENTITY smiley13Cmd.label "Aḍar deg uqemmuc">
+<!ENTITY smiley14Cmd.label "Ilemri">
+<!ENTITY smiley15Cmd.label "Yettru">
+<!ENTITY smiley16Cmd.label "Ḥmimuc">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Ulac isumar yettwafen">
+<!ENTITY spellCheckIgnoreWord.label "Zgel awal">
+<!ENTITY spellCheckIgnoreWord.accesskey "Z">
+<!ENTITY spellCheckAddToDictionary.label "Rnu ɣer umawal">
+<!ENTITY spellCheckAddToDictionary.accesskey "w">
+<!ENTITY undo.label "Sefsax">
+<!ENTITY undo.accesskey "S">
+<!ENTITY cut.label "Gzem">
+<!ENTITY cut.accesskey "G">
+<!ENTITY copy.label "Nɣel">
+<!ENTITY copy.accesskey "N">
+<!ENTITY paste.label "Senteḍ">
+<!ENTITY paste.accesskey "n">
+<!ENTITY pasteQuote.label "Sented am ubder">
+<!ENTITY pasteQuote.accesskey "b">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Ldi">
+<!ENTITY openAttachment.accesskey "L">
+<!ENTITY delete.label "Kkes">
+<!ENTITY delete.accesskey "K">
+<!ENTITY removeAttachment.label "Kkes amedday">
+<!ENTITY removeAttachment.accesskey "d">
+<!ENTITY renameAttachment.label "Snifel isem…">
+<!ENTITY renameAttachment.accesskey "n">
+<!ENTITY reorderAttachments.label "Smizwer imeddayen…">
+<!ENTITY reorderAttachments.accesskey "s">
+<!ENTITY removeAllAttachments.label "Kkes akk ifuyla yeddan">
+<!ENTITY removeAllAttachments.accesskey "d">
+<!ENTITY selectAll.label "Fren Imaṛṛa">
+<!ENTITY selectAll.accesskey "I">
+<!ENTITY attachFile.label "Seddu afaylu (i-a)…">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachCloud.label "Aseɣwen n ufaylu…">
+<!ENTITY attachCloud.accesskey "f">
+<!ENTITY convertCloud.label "Selket ɣer…">
+<!ENTITY convertCloud.accesskey "e">
+<!ENTITY cancelUpload.label "Sefsex asali">
+<!ENTITY cancelUpload.accesskey "s">
+<!ENTITY convertRegularAttachment.label "Amedday amagnu">
+<!ENTITY convertRegularAttachment.accesskey "d">
+<!ENTITY attachPage.label "Seddu asebter Web…">
+<!ENTITY attachPage.accesskey "W">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Sken di tazwara agalis n yifuyla yeddan">
+<!ENTITY initiallyShowAttachmentPane.accesskey "s">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Rnu imawalen...">
+<!ENTITY spellAddDictionaries.accesskey "n">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Inermisen">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Sugen tansa n umazan…">
+<!ENTITY customizeFromAddress.accesskey "g">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Tafekka n yizen">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Tutlayt n useɣti n teɣdira">
+<!ENTITY encodingStatusPanel.tooltip "Asettengel n uḍris">

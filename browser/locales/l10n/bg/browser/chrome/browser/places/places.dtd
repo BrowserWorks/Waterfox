@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Библиотека">
+<!ENTITY places.library.width  "800">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Подреждане">
+<!ENTITY organize.accesskey    "р">
+<!ENTITY organize.tooltip      "Подреждане на отметки">
+
+<!ENTITY file.close.label               "Затваряне">
+<!ENTITY file.close.accesskey           "З">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Изгледи">
+<!ENTITY views.accesskey                "И">
+<!ENTITY views.tooltip                  "Промяна на изгледа">
+<!ENTITY view.columns.label             "Показване на колони">
+<!ENTITY view.columns.accesskey         "к">
+<!ENTITY view.sort.label                "Сортиране по">
+<!ENTITY view.sort.accesskey            "С">
+<!ENTITY view.unsorted.label            "Без">
+<!ENTITY view.unsorted.accesskey        "Б">
+<!ENTITY view.sortAscending.label       "А > Я">
+<!ENTITY view.sortAscending.accesskey   "А">
+<!ENTITY view.sortDescending.label      "Я > А">
+<!ENTITY view.sortDescending.accesskey  "Я">
+
+<!ENTITY importBookmarksFromHTML.label     "Внасяне на отметки от HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "В">
+<!ENTITY exportBookmarksToHTML.label       "Изнасяне на отметки в HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "И">
+<!ENTITY importOtherBrowser.label          "Внасяне на данни от друг четец…">
+<!ENTITY importOtherBrowser.accesskey      "ч">
+
+<!ENTITY cmd.backup.label               "Резервно копие…">
+<!ENTITY cmd.backup.accesskey           "Р">
+<!ENTITY cmd.restore2.label             "Възстановяване">
+<!ENTITY cmd.restore2.accesskey         "В">
+<!ENTITY cmd.restoreFromFile.label      "Избиране на файл…">
+<!ENTITY cmd.restoreFromFile.accesskey  "И">
+
+<!ENTITY col.name.label          "Наименование">
+<!ENTITY col.tags.label          "Етикети">
+<!ENTITY col.url.label           "Местоположение">
+<!ENTITY col.mostrecentvisit.label "Последно посещение">
+<!ENTITY col.visitcount.label    "Брой посещения">
+<!ENTITY col.dateadded.label     "Добавена на">
+<!ENTITY col.lastmodified.label  "Последна промяна">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Внасяне и резервно копие">
+<!ENTITY maintenance.accesskey  "В">
+<!ENTITY maintenance.tooltip    "Внасяне и възстановяване на отметки">
+
+<!ENTITY backButton.tooltip  "Връщане назад">
+
+<!ENTITY forwardButton.tooltip  "Отиване напред">
+
+<!ENTITY detailsPane.selectAnItemText.description "Изберете елемент, който да разгледате и редактирате">
+

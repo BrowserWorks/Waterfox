@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY % brandDTD
+     SYSTEM "chrome://branding/locale/brand.dtd">
+   %brandDTD;
+<!ENTITY aboutLogins.title                       "כניסות">
+<!ENTITY aboutLogins.update                      "עדכון">
+<!ENTITY aboutLogins.emptyLoginText              "שמירה על פרטי הכניסה שלך מוגנים">
+<!ENTITY aboutLogins.emptyLoginHint              "פרטי כניסה ופרטים מזהים שנשמרים על ידך ב־&brandShortName; יופיעו כאן.">

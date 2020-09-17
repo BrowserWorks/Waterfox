@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title "Уласцівасці табліцы">
+<!ENTITY applyButton.label "Ужыць">
+<!ENTITY applyButton.accesskey "У">
+<!ENTITY closeButton.label "Зачыніць">
+<!ENTITY tableTab.label "Табліца">
+<!ENTITY cellTab.label "Ячэйкі">
+<!ENTITY tableRows.label "Шэрагі:">
+<!ENTITY tableRows.accessKey "Ш">
+<!ENTITY tableColumns.label "Слупкі:">
+<!ENTITY tableColumns.accessKey "С">
+<!ENTITY tableHeight.label "Вышыня:">
+<!ENTITY tableHeight.accessKey "В">
+<!ENTITY tableWidth.label "Шырыня:">
+<!ENTITY tableWidth.accessKey "Ш">
+<!ENTITY tableBorderSpacing.label "Межы і прагалы">
+<!ENTITY tableBorderWidth.label "Мяжа:">
+<!ENTITY tableBorderWidth.accessKey "М">
+<!ENTITY tableSpacing.label "Прагалы:">
+<!ENTITY tableSpacing.accessKey "П">
+<!ENTITY tablePadding.label "Набіўка:">
+<!ENTITY tablePadding.accessKey "Н">
+<!ENTITY tablePxBetwCells.label "пікселяў паміж ячэйкамі">
+<!ENTITY tablePxBetwBrdrCellContent.label "пікселяў паміж мяжой ячэйкі і змесцівам">
+<!ENTITY tableAlignment.label "Выраўноўванне табліцы:">
+<!ENTITY tableAlignment.accessKey "ы">
+<!ENTITY tableCaption.label "Загаловак:">
+<!ENTITY tableCaption.accessKey "З">
+<!ENTITY tableCaptionAbove.label "Над табліцаю">
+<!ENTITY tableCaptionBelow.label "Пад табліцаю">
+<!ENTITY tableCaptionLeft.label "Злева ад табліцы">
+<!ENTITY tableCaptionRight.label "Справа ад табліцы">
+<!ENTITY tableCaptionNone.label "Няма">
+<!ENTITY tableInheritColor.label "(Няхай колеры старонкі будуць бачны скрозь)">
+
+<!ENTITY cellSelection.label "Вылучэнне">
+<!ENTITY cellSelectCell.label "Ячэйка">
+<!ENTITY cellSelectRow.label "Шэраг">
+<!ENTITY cellSelectColumn.label "Слупок">
+<!ENTITY cellSelectNext.label "Наступная">
+<!ENTITY cellSelectNext.accessKey "Н">
+<!ENTITY cellSelectPrevious.label "Папярэдні">
+<!ENTITY cellSelectPrevious.accessKey "П">
+<!ENTITY applyBeforeChange.label "Гэтачасовыя змяненні будуць ужытыя перад змяненнем вылучэння.">
+<!ENTITY cellContentAlignment.label "Выраўноўванне змесціва">
+<!ENTITY cellHorizontal.label "Гарызантальнае:">
+<!ENTITY cellHorizontal.accessKey "Г">
+<!ENTITY cellVertical.label "Вертыкальнае:">
+<!ENTITY cellVertical.accessKey "В">
+<!ENTITY cellStyle.label "Стыль ячэйкі:">
+<!ENTITY cellStyle.accessKey "С">
+<!ENTITY cellNormal.label "Звычайны">
+<!ENTITY cellHeader.label "Загаловак">
+<!ENTITY cellTextWrap.label "Загінанне тэксту:">
+<!ENTITY cellTextWrap.accessKey "З">
+<!ENTITY cellWrap.label "Загінаць">
+<!ENTITY cellNoWrap.label "Не загінаць">
+<!ENTITY cellAlignTop.label "Даверху">
+<!ENTITY cellAlignMiddle.label "Пасярэдзіне">
+<!ENTITY cellAlignBottom.label "Данізу">
+<!ENTITY cellAlignJustify.label "Разасяроджана">
+<!ENTITY cellInheritColor.label "(Няхай колеры табліцы будуць бачны скрозь)">
+<!ENTITY cellUseCheckboxHelp.label "Ужывайце скрынкі адзнакаў для вызначэння ўласцівасцяў усіх вылучаных ячэйкаў">
+
+<!ENTITY size.label "Памер">
+<!ENTITY pixels.label "пікселяў">
+<!ENTITY backgroundColor.label "Колер фону:">
+<!ENTITY backgroundColor.accessKey "Ф">
+<!ENTITY AlignLeft.label "Улева">
+<!ENTITY AlignCenter.label "Пасярэдзіне">
+<!ENTITY AlignRight.label "Направа">

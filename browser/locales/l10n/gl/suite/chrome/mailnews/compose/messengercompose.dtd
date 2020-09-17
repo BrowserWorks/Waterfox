@@ -1,0 +1,134 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Redacción: (sen asunto)">
+
+<!ENTITY fromAddr.label "De:">
+<!ENTITY fromAddr.accesskey "D">
+<!ENTITY subject.label  "Asunto: ">
+<!ENTITY subject.accesskey "s">
+<!ENTITY attachments.label "Anexos:">
+<!ENTITY attachments.accesskey "A">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Gardar">
+<!ENTITY saveCmd.accesskey "G">
+<!ENTITY saveAsCmd.label "Gardar como">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsFileCmd.label "Ficheiro…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Borrador">
+<!ENTITY saveAsDraftCmd.accesskey "d">
+<!ENTITY saveAsTemplateCmd.label "Modelo">
+<!ENTITY saveAsTemplateCmd.accesskey "M">
+<!ENTITY attachMenu.label "Anexar">
+<!ENTITY attachMenu.accesskey "A">
+<!ENTITY attachFileCmd.label "Ficheiro(s)…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "Páxina web…">
+<!ENTITY attachPageCmd.accesskey "w">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Tarxeta persoal (vCard)">
+<!ENTITY attachVCardCmd.accesskey "p">
+<!ENTITY sendNowCmd.label "Enviar agora">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "E">
+<!ENTITY sendLaterCmd.label "Enviar máis tarde">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "E">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Reaxustar">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "R">
+<!ENTITY accountManagerCmd.label "Configuración de contas de correo e novas…">
+<!ENTITY accountManagerCmd.accesskey "C">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "Barra de ferramentas do correo">
+<!ENTITY showComposeToolbarCmd.accesskey "o">
+<!ENTITY showFormatToolbarCmd.label "Barra de formatación">
+<!ENTITY showFormatToolbarCmd.accesskey "f">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Formato">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Opcións">
+<!ENTITY optionsMenu.accesskey "p">
+
+<!ENTITY quoteCmd.label "Citar mensaxe">
+<!ENTITY quoteCmd.accesskey "C">
+<!ENTITY selectAddressCmd.label "Seleccionar enderezos…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "a">
+
+<!ENTITY priorityMenu.label "Prioridade">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY lowestPriorityCmd.label "A máis baixa">
+<!ENTITY lowestPriorityCmd.accesskey "A">
+<!ENTITY lowPriorityCmd.label "Baixa">
+<!ENTITY lowPriorityCmd.accesskey "B">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Alta">
+<!ENTITY highPriorityCmd.accesskey "A">
+<!ENTITY highestPriorityCmd.label "A máis alta">
+<!ENTITY highestPriorityCmd.accesskey "A">
+
+<!ENTITY returnReceiptMenu.label "Aviso de recepción">
+<!ENTITY returnReceiptMenu.accesskey "A">
+<!ENTITY dsnMenu.label "Notificación do estado de envío">
+<!ENTITY dsnMenu.accesskey "N">
+
+<!ENTITY outputFormatMenu.label "Formato">
+<!ENTITY outputFormatMenu.accesskey  "F">
+<!ENTITY autoFormatCmd.label "Detección automática">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "Só texto sen formato">
+<!ENTITY plainTextFormatCmd.accesskey "S">
+<!ENTITY htmlFormatCmd.label "Só texto enriquecido (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "r">
+<!ENTITY bothFormatCmd.label "Texto sen formato e texto enriquecido (HTML)">
+<!ENTITY bothFormatCmd.accesskey "L">
+
+<!ENTITY fileCarbonCopyCmd.label "Enviar unha copia a">
+<!ENTITY fileCarbonCopyCmd.accesskey "E">
+<!ENTITY fileHereMenu.label "Gardar aquí">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Enviar">
+<!ENTITY addressButton.label "Enderezo">
+<!ENTITY attachButton.label "Anexar">
+<!ENTITY spellingButton.label "Ortografía">
+<!ENTITY saveButton.label "Gardar">
+<!ENTITY stopButton.label "Deter">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Barra de enderezos">
+<!ENTITY formatToolbar.tooltip "Barra de formatación">
+<!ENTITY sendButton.tooltip "Enviar esta mensaxe agora"> 
+<!ENTITY sendlaterButton.tooltip "Enviar esta mensaxe máis tarde"> 
+<!ENTITY addressButton.tooltip "Seleccionar un destinatario dunha axenda de enderezos"> 
+<!ENTITY attachButton.tooltip "Incluír un anexo"> 
+<!ENTITY saveButton.tooltip "Gardar esta mensaxe"> 
+<!ENTITY stopButton.tooltip "Deter a transferencia actual"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Abrir">
+<!ENTITY openAttachment.accesskey "A">
+<!ENTITY renameAttachment.label "Renomear…">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY deleteAttachment.accesskey "r">
+<!ENTITY selectAllAttachments.accesskey "a">
+<!ENTITY attachFile.label "Anexar ficheiro(s)…">
+<!ENTITY attachFile.accesskey "f">
+<!ENTITY attachPage.label "Anexar páxina web…">
+<!ENTITY attachPage.accesskey "w">

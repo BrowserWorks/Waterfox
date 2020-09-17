@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "Imiḍanen - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Addad n tirawt taskudant">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Amiḍan amaynut">
+<!ENTITY accountManager.newAccount.accesskey "A">
+<!ENTITY accountManager.close.label          "Mdel">
+<!ENTITY accountManager.close.accesskey      "M">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Ula d yiwen n umiḍan ur yettuswel">
+<!ENTITY accountManager.noAccount.description "Sit ɣef tqeffalt &accountManager.newAccount.label; akken ad teǧǧeḍ &brandShortName; ak-d-yefk tallalt deg ukala n uswel n yiwen. ">
+<!ENTITY account.autoSignOn.label     "Kcem di tnekra ">
+<!ENTITY account.autoSignOn.accesskey "K">
+<!ENTITY account.connect.label        "Qqen ">
+<!ENTITY account.connect.accesskey    "q">
+<!ENTITY account.disconnect.label     "Ffeɣ si tuqqna ">
+<!ENTITY account.disconnect.accesskey "F">
+<!ENTITY account.delete.label         "Kkes ">
+<!ENTITY account.delete.accesskey     "K">
+<!ENTITY account.edit.label           "Timeẓliyin ">
+<!ENTITY account.edit.accesskey       "T">
+<!ENTITY account.moveup.label         "Ddu d asawen ">
+<!ENTITY account.movedown.label       "Ddu d akessar ">
+<!ENTITY account.cancelReconnection.label         "Sefsex tuqqna ">
+<!ENTITY account.cancelReconnection.accesskey     "S">
+<!ENTITY account.copyDebugLog.label     "Nɣel aɣmis n temseɣtayt ">
+<!ENTITY account.copyDebugLog.accesskey "N">
+<!ENTITY account.showDebugLog.label     "Sken aɣmis n temseɣtayt ">
+<!ENTITY account.showDebugLog.accesskey "n">
+<!ENTITY account.connecting           "Tuqqna… ">
+<!ENTITY account.disconnecting        "Tuffɣa si tuqqna… ">
+<!ENTITY account.disconnected         "Ur yeqqin ara">

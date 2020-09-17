@@ -1,0 +1,10002 @@
+SET UTF-8
+FLAG num
+SFX 4412 Y 1
+SFX 4412 0 linguistic .
+SFX 632 Y 1
+SFX 632 0 A .
+SFX 1097 Y 1
+SFX 1097 0 C .
+SFX 4843 Y 1
+SFX 4843 0 D .
+SFX 1002 Y 1
+SFX 1002 0 lina .
+SFX 1181 Y 1
+SFX 1181 0 E .
+SFX 1559 Y 1
+SFX 1559 0 F .
+SFX 1177 Y 1
+SFX 1177 0 G .
+SFX 4414 Y 1
+SFX 4414 0 line .
+SFX 2670 Y 1
+SFX 2670 0 I .
+SFX 1868 Y 1
+SFX 1868 0 ling .
+SFX 4744 Y 1
+SFX 4744 0 erica .
+SFX 1664 Y 1
+SFX 1664 0 L .
+SFX 1270 Y 1
+SFX 1270 0 M .
+SFX 2551 Y 1
+SFX 2551 0 N .
+SFX 1472 Y 1
+SFX 1472 0 P .
+SFX 4187 Y 1
+SFX 4187 0 R .
+SFX 821 Y 1
+SFX 821 0 S .
+SFX 2085 Y 1
+SFX 2085 0 T .
+SFX 2575 Y 1
+SFX 2575 0 lins .
+SFX 805 Y 1
+SFX 805 0 ulada .
+SFX 5 Y 1
+SFX 5 0 a .
+SFX 1308 Y 1
+SFX 1308 0 b .
+SFX 235 Y 1
+SFX 235 0 c .
+SFX 55 Y 1
+SFX 55 0 d .
+SFX 326 Y 1
+SFX 326 0 e .
+SFX 1071 Y 1
+SFX 1071 0 f .
+SFX 310 Y 1
+SFX 310 0 g .
+SFX 1059 Y 1
+SFX 1059 0 h .
+SFX 9 Y 1
+SFX 9 0 i .
+SFX 4465 Y 1
+SFX 4465 0 j .
+SFX 2179 Y 1
+SFX 2179 0 k .
+SFX 79 Y 1
+SFX 79 0 l .
+SFX 308 Y 1
+SFX 308 0 m .
+SFX 2 Y 1
+SFX 2 0 n .
+SFX 183 Y 1
+SFX 183 0 o .
+SFX 850 Y 1
+SFX 850 0 ulads .
+SFX 482 Y 1
+SFX 482 0 p .
+SFX 11 Y 1
+SFX 11 0 r .
+SFX 1 Y 1
+SFX 1 0 s .
+SFX 56 Y 1
+SFX 56 0 t .
+SFX 634 Y 1
+SFX 634 0 u .
+SFX 517 Y 1
+SFX 517 0 v .
+SFX 1578 Y 1
+SFX 1578 0 x .
+SFX 1312 Y 1
+SFX 1312 0 y .
+SFX 606 Y 1
+SFX 606 0 z .
+SFX 3343 Y 1
+SFX 3343 0 glian .
+SFX 1288 Y 1
+SFX 1288 0 glias .
+SFX 3880 Y 1
+SFX 3880 0 tivavan .
+SFX 3879 Y 1
+SFX 3879 0 tivavas .
+SFX 1975 Y 1
+SFX 1975 0 zzassan .
+SFX 1974 Y 1
+SFX 1974 0 zzassas .
+SFX 4322 Y 1
+SFX 4322 0 ntaria .
+SFX 1367 Y 1
+SFX 1367 0 iunà .
+SFX 838 Y 1
+SFX 838 0 chess .
+SFX 3301 Y 1
+SFX 3301 0 igls .
+SFX 4889 Y 1
+SFX 4889 0 cladas .
+SFX 3288 Y 1
+SFX 3288 0 ilavan .
+SFX 3287 Y 1
+SFX 3287 0 ilavas .
+SFX 4598 Y 1
+SFX 4598 0 iculà .
+SFX 604 Y 1
+SFX 604 0 antas .
+SFX 2652 Y 1
+SFX 2652 0 igna .
+SFX 1613 Y 1
+SFX 1613 0 risond .
+SFX 2531 Y 1
+SFX 2531 0 ppada .
+SFX 2529 Y 1
+SFX 2529 0 ppads .
+SFX 4295 Y 1
+SFX 4295 0 occupà .
+SFX 3074 Y 1
+SFX 3074 0 scritta .
+SFX 837 Y 1
+SFX 837 0 cheva .
+SFX 4443 Y 1
+SFX 4443 0 legel .
+SFX 1070 Y 1
+SFX 1070 0 fon .
+SFX 3220 Y 1
+SFX 3220 0 mentescha .
+SFX 779 Y 1
+SFX 779 0 list .
+SFX 848 Y 1
+SFX 848 0 ulain .
+SFX 847 Y 1
+SFX 847 0 ulais .
+SFX 48 Y 1
+SFX 48 0 esch .
+SFX 596 Y 1
+SFX 596 0 lisà .
+SFX 2014 Y 1
+SFX 2014 0 vian .
+SFX 1411 Y 1
+SFX 1411 0 vias .
+SFX 3491 Y 1
+SFX 3491 0 chentai .
+SFX 3488 Y 1
+SFX 3488 0 chentan .
+SFX 3487 Y 1
+SFX 3487 0 chentar .
+SFX 3486 Y 1
+SFX 3486 0 chentas .
+SFX 4408 Y 1
+SFX 4408 0 liun .
+SFX 3485 Y 1
+SFX 3485 0 chentass .
+SFX 3001 Y 1
+SFX 3001 0 tgissan .
+SFX 3000 Y 1
+SFX 3000 0 tgissas .
+SFX 319 Y 1
+SFX 319 0 tescha .
+SFX 2178 Y 1
+SFX 2178 0 ladra .
+SFX 4442 Y 1
+SFX 4442 0 legia .
+SFX 2546 Y 1
+SFX 2546 0 odia .
+SFX 2527 Y 1
+SFX 2527 0 ppain .
+SFX 2526 Y 1
+SFX 2526 0 ppais .
+SFX 2879 Y 1
+SFX 2879 0 vida .
+SFX 4331 Y 1
+SFX 4331 0 ntà .
+SFX 616 Y 1
+SFX 616 0 sadas .
+SFX 3482 Y 1
+SFX 3482 0 chentava .
+SFX 1949 Y 1
+SFX 1949 0 arisesch .
+SFX 4535 Y 1
+SFX 4535 0 ireschian .
+SFX 4534 Y 1
+SFX 4534 0 ireschias .
+SFX 2377 Y 1
+SFX 2377 0 ulant .
+SFX 3357 Y 1
+SFX 3357 0 fun .
+SFX 2690 Y 1
+SFX 2690 0 fus .
+SFX 4865 Y 1
+SFX 4865 0 culada .
+SFX 2553 Y 1
+SFX 2553 0 mettian .
+SFX 2552 Y 1
+SFX 2552 0 mettias .
+SFX 4742 Y 1
+SFX 4742 0 erina .
+SFX 4066 Y 1
+SFX 4066 0 scrivessan .
+SFX 4065 Y 1
+SFX 4065 0 scrivessas .
+SFX 4427 Y 1
+SFX 4427 0 linada .
+SFX 4425 Y 1
+SFX 4425 0 linads .
+SFX 513 Y 1
+SFX 513 0 alisadas .
+SFX 4494 Y 1
+SFX 4494 0 istreschan .
+SFX 4493 Y 1
+SFX 4493 0 istreschas .
+SFX 2047 Y 1
+SFX 2047 0 uai .
+SFX 674 Y 1
+SFX 674 0 ual .
+SFX 2385 Y 1
+SFX 2385 0 uan .
+SFX 1425 Y 1
+SFX 1425 0 uar .
+SFX 2384 Y 1
+SFX 2384 0 uas .
+SFX 1503 Y 1
+SFX 1503 0 ivai .
+SFX 148 Y 1
+SFX 148 0 ivan .
+SFX 1500 Y 1
+SFX 1500 0 ivar .
+SFX 135 Y 1
+SFX 135 0 ivas .
+SFX 3535 Y 1
+SFX 3535 0 ccai .
+SFX 3532 Y 1
+SFX 3532 0 ccar .
+SFX 2319 Y 1
+SFX 2319 0 ccas .
+SFX 662 Y 1
+SFX 662 0 heschan .
+SFX 691 Y 1
+SFX 691 0 heschas .
+SFX 4659 Y 1
+SFX 4659 0 glina .
+SFX 4140 Y 1
+SFX 4140 0 sader .
+SFX 2050 Y 1
+SFX 2050 0 uada .
+SFX 2036 Y 1
+SFX 2036 0 ulara .
+SFX 2048 Y 1
+SFX 2048 0 uads .
+SFX 1635 Y 1
+SFX 1635 0 rella .
+SFX 3479 Y 1
+SFX 3479 0 chentia .
+SFX 2287 Y 1
+SFX 2287 0 fegl .
+SFX 846 Y 1
+SFX 846 0 ulass .
+SFX 1794 Y 1
+SFX 1794 0 uda .
+SFX 4525 Y 1
+SFX 4525 0 istì .
+SFX 3111 Y 1
+SFX 3111 0 rabel .
+SFX 3899 Y 1
+SFX 3899 0 tissan .
+SFX 3898 Y 1
+SFX 3898 0 tissas .
+SFX 1528 Y 1
+SFX 1528 0 itsch .
+SFX 4423 Y 1
+SFX 4423 0 linain .
+SFX 4422 Y 1
+SFX 4422 0 linais .
+SFX 4238 Y 1
+SFX 4238 0 orisond .
+SFX 286 Y 1
+SFX 286 0 ivel .
+SFX 4468 Y 1
+SFX 4468 0 iver .
+SFX 4740 Y 1
+SFX 4740 0 eriur .
+SFX 843 Y 1
+SFX 843 0 ulava .
+SFX 3601 Y 1
+SFX 3601 0 aditsch .
+SFX 2168 Y 1
+SFX 2168 0 milli .
+SFX 163 Y 1
+SFX 163 0 tond .
+SFX 3756 Y 1
+SFX 3756 0 uga .
+SFX 2942 Y 1
+SFX 2942 0 ugl .
+SFX 3755 Y 1
+SFX 3755 0 ugn .
+SFX 2523 Y 1
+SFX 2523 0 ppass .
+SFX 2046 Y 1
+SFX 2046 0 uain .
+SFX 2045 Y 1
+SFX 2045 0 uais .
+SFX 3223 Y 1
+SFX 3223 0 martgà .
+SFX 2878 Y 1
+SFX 2878 0 vina .
+SFX 3869 Y 1
+SFX 3869 0 tiziun .
+SFX 2399 Y 1
+SFX 2399 0 tissem .
+SFX 3953 Y 1
+SFX 3953 0 tegiavan .
+SFX 3952 Y 1
+SFX 3952 0 tegiavas .
+SFX 115 Y 1
+SFX 115 0 isavan .
+SFX 114 Y 1
+SFX 114 0 isavas .
+SFX 4492 Y 1
+SFX 4492 0 istreschia .
+SFX 3342 Y 1
+SFX 3342 0 gliun .
+SFX 1793 Y 1
+SFX 1793 0 uin .
+SFX 1584 Y 1
+SFX 1584 0 uir .
+SFX 2937 Y 1
+SFX 2937 0 uis .
+SFX 661 Y 1
+SFX 661 0 heschia .
+SFX 626 Y 1
+SFX 626 0 essa .
+SFX 3211 Y 1
+SFX 3211 0 minà .
+SFX 1811 Y 1
+SFX 1811 0 tschà .
+SFX 2520 Y 1
+SFX 2520 0 ppava .
+SFX 2409 Y 1
+SFX 2409 0 tgeschian .
+SFX 884 Y 1
+SFX 884 0 uala .
+SFX 2408 Y 1
+SFX 2408 0 tgeschias .
+SFX 3914 Y 1
+SFX 3914 0 tifitgesch .
+SFX 1892 Y 1
+SFX 1892 0 igliavan .
+SFX 3029 Y 1
+SFX 3029 0 strescha .
+SFX 1891 Y 1
+SFX 1891 0 igliavas .
+SFX 2044 Y 1
+SFX 2044 0 uals .
+SFX 714 Y 1
+SFX 714 0 ifitgassan .
+SFX 713 Y 1
+SFX 713 0 ifitgassas .
+SFX 1429 Y 1
+SFX 1429 0 tori .
+SFX 1207 Y 1
+SFX 1207 0 ula .
+SFX 597 Y 1
+SFX 597 0 ivla .
+SFX 2946 Y 1
+SFX 2946 0 uaziun .
+SFX 1188 Y 1
+SFX 1188 0 dessan .
+SFX 1187 Y 1
+SFX 1187 0 dessas .
+SFX 1791 Y 1
+SFX 1791 0 ums .
+SFX 3636 Y 1
+SFX 3636 0 vita .
+SFX 351 Y 1
+SFX 351 0 una .
+SFX 3698 Y 1
+SFX 3698 0 und .
+SFX 3565 Y 1
+SFX 3565 0 arada .
+SFX 368 Y 1
+SFX 368 0 uns .
+SFX 672 Y 1
+SFX 672 0 unz .
+SFX 4420 Y 1
+SFX 4420 0 linass .
+SFX 418 Y 1
+SFX 418 0 zadas .
+SFX 1271 Y 1
+SFX 1271 0 logia .
+SFX 1866 Y 1
+SFX 1866 0 logic .
+SFX 3473 Y 1
+SFX 3473 0 clada .
+SFX 4887 Y 1
+SFX 4887 0 clads .
+SFX 1658 Y 1
+SFX 1658 0 mentadas .
+SFX 4229 Y 1
+SFX 4229 0 patic .
+SFX 4417 Y 1
+SFX 4417 0 linava .
+SFX 2043 Y 1
+SFX 2043 0 uass .
+SFX 192 Y 1
+SFX 192 0 ura .
+SFX 2372 Y 1
+SFX 2372 0 urn .
+SFX 400 Y 1
+SFX 400 0 urs .
+SFX 4501 Y 1
+SFX 4501 0 istrassan .
+SFX 4500 Y 1
+SFX 4500 0 istrassas .
+SFX 1705 Y 1
+SFX 1705 0 idond .
+SFX 291 Y 1
+SFX 291 0 usa .
+SFX 3727 Y 1
+SFX 3727 0 unalisai .
+SFX 3724 Y 1
+SFX 3724 0 unalisar .
+SFX 2369 Y 1
+SFX 2369 0 uta .
+SFX 3176 Y 1
+SFX 3176 0 ndavan .
+SFX 4057 Y 1
+SFX 4057 0 segna .
+SFX 3175 Y 1
+SFX 3175 0 ndavas .
+SFX 2875 Y 1
+SFX 2875 0 zader .
+SFX 2040 Y 1
+SFX 2040 0 uava .
+SFX 2389 Y 1
+SFX 2389 0 tureschan .
+SFX 2388 Y 1
+SFX 2388 0 tureschas .
+SFX 719 Y 1
+SFX 719 0 ientscha .
+SFX 3471 Y 1
+SFX 3471 0 clain .
+SFX 3470 Y 1
+SFX 3470 0 clais .
+SFX 3166 Y 1
+SFX 3166 0 nisada .
+SFX 3164 Y 1
+SFX 3164 0 nisads .
+SFX 3909 Y 1
+SFX 3909 0 tifitgeschian .
+SFX 3908 Y 1
+SFX 3908 0 tifitgeschias .
+SFX 1925 Y 1
+SFX 1925 0 gesch .
+SFX 1221 Y 1
+SFX 1221 0 tisesch .
+SFX 4868 Y 1
+SFX 4868 0 crap .
+SFX 3466 Y 1
+SFX 3466 0 crat .
+SFX 2042 Y 1
+SFX 2042 0 uassan .
+SFX 2041 Y 1
+SFX 2041 0 uassas .
+SFX 3165 Y 1
+SFX 3165 0 nisadas .
+SFX 4785 Y 1
+SFX 4785 0 elar .
+SFX 4703 Y 1
+SFX 4703 0 ettain .
+SFX 4701 Y 1
+SFX 4701 0 ettais .
+SFX 3418 Y 1
+SFX 3418 0 ellada .
+SFX 2030 Y 1
+SFX 2030 0 upel .
+SFX 4780 Y 1
+SFX 4780 0 ellads .
+SFX 1427 Y 1
+SFX 1427 0 tschient .
+SFX 725 Y 1
+SFX 725 0 egiai .
+SFX 786 Y 1
+SFX 786 0 egian .
+SFX 642 Y 1
+SFX 642 0 egiar .
+SFX 722 Y 1
+SFX 722 0 egias .
+SFX 4144 Y 1
+SFX 4144 0 ruts .
+SFX 3162 Y 1
+SFX 3162 0 nisain .
+SFX 3161 Y 1
+SFX 3161 0 nisais .
+SFX 3995 Y 1
+SFX 3995 0 statal .
+SFX 2073 Y 1
+SFX 2073 0 tinà .
+SFX 1967 Y 1
+SFX 1967 0 aina .
+SFX 2535 Y 1
+SFX 2535 0 pels .
+SFX 2387 Y 1
+SFX 2387 0 tureschia .
+SFX 4665 Y 1
+SFX 4665 0 givan .
+SFX 3345 Y 1
+SFX 3345 0 givas .
+SFX 4385 Y 1
+SFX 4385 0 mineschan .
+SFX 4384 Y 1
+SFX 4384 0 mineschas .
+SFX 4778 Y 1
+SFX 4778 0 ellain .
+SFX 4777 Y 1
+SFX 4777 0 ellais .
+SFX 3465 Y 1
+SFX 3465 0 crit .
+SFX 2317 Y 1
+SFX 2317 0 class .
+SFX 933 Y 1
+SFX 933 0 uleschan .
+SFX 932 Y 1
+SFX 932 0 uleschas .
+SFX 3478 Y 1
+SFX 3478 0 chentian .
+SFX 3477 Y 1
+SFX 3477 0 chentias .
+SFX 2735 Y 1
+SFX 2735 0 elin .
+SFX 3687 Y 1
+SFX 3687 0 upla .
+SFX 3685 Y 1
+SFX 3685 0 uplada .
+SFX 3683 Y 1
+SFX 3683 0 uplads .
+SFX 1770 Y 1
+SFX 1770 0 aisa .
+SFX 3216 Y 1
+SFX 3216 0 menteschian .
+SFX 531 Y 1
+SFX 531 0 nai .
+SFX 1643 Y 1
+SFX 1643 0 nal .
+SFX 3215 Y 1
+SFX 3215 0 menteschias .
+SFX 658 Y 1
+SFX 658 0 nan .
+SFX 483 Y 1
+SFX 483 0 nar .
+SFX 301 Y 1
+SFX 301 0 nas .
+SFX 2624 Y 1
+SFX 2624 0 imeter .
+SFX 2534 Y 1
+SFX 2534 0 pera .
+SFX 2316 Y 1
+SFX 2316 0 clava .
+SFX 4189 Y 1
+SFX 4189 0 pussanza .
+SFX 3325 Y 1
+SFX 3325 0 icaziun .
+SFX 2072 Y 1
+SFX 2072 0 tinada .
+SFX 243 Y 1
+SFX 243 0 ella .
+SFX 2402 Y 1
+SFX 2402 0 tinads .
+SFX 1326 Y 1
+SFX 1326 0 urà .
+SFX 945 Y 1
+SFX 945 0 nda .
+SFX 4622 Y 1
+SFX 4622 0 hettond .
+SFX 3159 Y 1
+SFX 3159 0 nisass .
+SFX 1641 Y 1
+SFX 1641 0 nel .
+SFX 1351 Y 1
+SFX 1351 0 ner .
+SFX 1136 Y 1
+SFX 1136 0 net .
+SFX 4383 Y 1
+SFX 4383 0 mineschia .
+SFX 485 Y 1
+SFX 485 0 inond .
+SFX 3681 Y 1
+SFX 3681 0 uplain .
+SFX 3680 Y 1
+SFX 3680 0 uplais .
+SFX 1478 Y 1
+SFX 1478 0 nzas .
+SFX 931 Y 1
+SFX 931 0 uleschia .
+SFX 3156 Y 1
+SFX 3156 0 nisava .
+SFX 2069 Y 1
+SFX 2069 0 tinain .
+SFX 2068 Y 1
+SFX 2068 0 tinais .
+SFX 1268 Y 1
+SFX 1268 0 nesch .
+SFX 4776 Y 1
+SFX 4776 0 ellass .
+SFX 3599 Y 1
+SFX 3599 0 agliada .
+SFX 1959 Y 1
+SFX 1959 0 arisai .
+SFX 1956 Y 1
+SFX 1956 0 arisar .
+SFX 446 Y 1
+SFX 446 0 nia .
+SFX 1855 Y 1
+SFX 1855 0 nic .
+SFX 4336 Y 1
+SFX 4336 0 nim .
+SFX 1135 Y 1
+SFX 1135 0 nin .
+SFX 153 Y 1
+SFX 153 0 ament .
+SFX 659 Y 1
+SFX 659 0 ivladad .
+SFX 772 Y 1
+SFX 772 0 unadas .
+SFX 4463 Y 1
+SFX 4463 0 jada .
+SFX 4297 Y 1
+SFX 4297 0 ocavan .
+SFX 4296 Y 1
+SFX 4296 0 ocavas .
+SFX 4773 Y 1
+SFX 4773 0 ellava .
+SFX 1595 Y 1
+SFX 1595 0 ticher .
+SFX 4200 Y 1
+SFX 4200 0 ppian .
+SFX 4199 Y 1
+SFX 4199 0 ppias .
+SFX 2615 Y 1
+SFX 2615 0 iola .
+SFX 2759 Y 1
+SFX 2759 0 dradas .
+SFX 3040 Y 1
+SFX 3040 0 strai .
+SFX 3037 Y 1
+SFX 3037 0 strar .
+SFX 3985 Y 1
+SFX 3985 0 stras .
+SFX 3984 Y 1
+SFX 3984 0 strat .
+SFX 3597 Y 1
+SFX 3597 0 agliais .
+SFX 2904 Y 1
+SFX 2904 0 unader .
+SFX 4333 Y 1
+SFX 4333 0 nna .
+SFX 3196 Y 1
+SFX 3196 0 mobil .
+SFX 2397 Y 1
+SFX 2397 0 torica .
+SFX 212 Y 1
+SFX 212 0 iond .
+SFX 4329 Y 1
+SFX 4329 0 ntadas .
+SFX 3808 Y 1
+SFX 3808 0 ttavan .
+SFX 3807 Y 1
+SFX 3807 0 ttavas .
+SFX 1633 Y 1
+SFX 1633 0 risada .
+SFX 1631 Y 1
+SFX 1631 0 risads .
+SFX 2160 Y 1
+SFX 2160 0 nom .
+SFX 464 Y 1
+SFX 464 0 pà .
+SFX 3678 Y 1
+SFX 3678 0 uplass .
+SFX 623 Y 1
+SFX 623 0 leschian .
+SFX 622 Y 1
+SFX 622 0 leschias .
+SFX 4224 Y 1
+SFX 4224 0 politic .
+SFX 1783 Y 1
+SFX 1783 0 usitad .
+SFX 2164 Y 1
+SFX 2164 0 ndai .
+SFX 3181 Y 1
+SFX 3181 0 ndar .
+SFX 4345 Y 1
+SFX 4345 0 ndas .
+SFX 3682 Y 1
+SFX 3682 0 uplai .
+SFX 3679 Y 1
+SFX 3679 0 uplar .
+SFX 1509 Y 1
+SFX 1509 0 iuneschian .
+SFX 1508 Y 1
+SFX 1508 0 iuneschias .
+SFX 1530 Y 1
+SFX 1530 0 iteschian .
+SFX 1529 Y 1
+SFX 1529 0 iteschias .
+SFX 1533 Y 1
+SFX 1533 0 iteschan .
+SFX 1532 Y 1
+SFX 1532 0 iteschas .
+SFX 4639 Y 1
+SFX 4639 0 hettai .
+SFX 2066 Y 1
+SFX 2066 0 tinass .
+SFX 4636 Y 1
+SFX 4636 0 hettar .
+SFX 4405 Y 1
+SFX 4405 0 logica .
+SFX 3675 Y 1
+SFX 3675 0 uplava .
+SFX 4404 Y 1
+SFX 4404 0 logics .
+SFX 3231 Y 1
+SFX 3231 0 lateral .
+SFX 710 Y 1
+SFX 710 0 ifitgesch .
+SFX 842 Y 1
+SFX 842 0 ulavan .
+SFX 2159 Y 1
+SFX 2159 0 nsa .
+SFX 841 Y 1
+SFX 841 0 ulavas .
+SFX 1379 Y 1
+SFX 1379 0 ibilitad .
+SFX 154 Y 1
+SFX 154 0 abel .
+SFX 172 Y 1
+SFX 172 0 nta .
+SFX 1629 Y 1
+SFX 1629 0 risain .
+SFX 1628 Y 1
+SFX 1628 0 risais .
+SFX 321 Y 1
+SFX 321 0 nts .
+SFX 3174 Y 1
+SFX 3174 0 nder .
+SFX 2907 Y 1
+SFX 2907 0 ulina .
+SFX 2063 Y 1
+SFX 2063 0 tinava .
+SFX 4311 Y 1
+SFX 4311 0 ntond .
+SFX 4310 Y 1
+SFX 4310 0 num .
+SFX 1134 Y 1
+SFX 1134 0 nus .
+SFX 3768 Y 1
+SFX 3768 0 ualisescha .
+SFX 49 Y 1
+SFX 49 0 escha .
+SFX 298 Y 1
+SFX 298 0 aziuns .
+SFX 4045 Y 1
+SFX 4045 0 segnavan .
+SFX 4044 Y 1
+SFX 4044 0 segnavas .
+SFX 2747 Y 1
+SFX 2747 0 drond .
+SFX 1803 Y 1
+SFX 1803 0 tschavan .
+SFX 1802 Y 1
+SFX 1802 0 tschavas .
+SFX 2379 Y 1
+SFX 2379 0 uida .
+SFX 2939 Y 1
+SFX 2939 0 uids .
+SFX 2580 Y 1
+SFX 2580 0 liavan .
+SFX 2579 Y 1
+SFX 2579 0 liavas .
+SFX 1001 Y 1
+SFX 1001 0 olog .
+SFX 3030 Y 1
+SFX 3030 0 stresch .
+SFX 3912 Y 1
+SFX 3912 0 tifitgeschan .
+SFX 3911 Y 1
+SFX 3911 0 tifitgeschas .
+SFX 1531 Y 1
+SFX 1531 0 iteschia .
+SFX 767 Y 1
+SFX 767 0 unassan .
+SFX 766 Y 1
+SFX 766 0 unassas .
+SFX 4264 Y 1
+SFX 4264 0 orala .
+SFX 250 Y 1
+SFX 250 0 nza .
+SFX 4996 Y 1
+SFX 4996 0 angular .
+SFX 3983 Y 1
+SFX 3983 0 streschian .
+SFX 3982 Y 1
+SFX 3982 0 streschias .
+SFX 265 Y 1
+SFX 265 0 abla .
+SFX 1334 Y 1
+SFX 1334 0 uesch .
+SFX 4259 Y 1
+SFX 4259 0 orisada .
+SFX 4257 Y 1
+SFX 4257 0 orisads .
+SFX 3811 Y 1
+SFX 3811 0 ttassan .
+SFX 3810 Y 1
+SFX 3810 0 ttassas .
+SFX 3872 Y 1
+SFX 3872 0 tiveschian .
+SFX 3871 Y 1
+SFX 3871 0 tiveschias .
+SFX 166 Y 1
+SFX 166 0 tada .
+SFX 3022 Y 1
+SFX 3022 0 tadi .
+SFX 819 Y 1
+SFX 819 0 schessan .
+SFX 818 Y 1
+SFX 818 0 schessas .
+SFX 59 Y 1
+SFX 59 0 eschian .
+SFX 160 Y 1
+SFX 160 0 tads .
+SFX 58 Y 1
+SFX 58 0 eschias .
+SFX 1619 Y 1
+SFX 1619 0 risescha .
+SFX 1626 Y 1
+SFX 1626 0 risass .
+SFX 3690 Y 1
+SFX 3690 0 untà .
+SFX 3481 Y 1
+SFX 3481 0 chentavan .
+SFX 3480 Y 1
+SFX 3480 0 chentavas .
+SFX 3928 Y 1
+SFX 3928 0 tiers .
+SFX 1846 Y 1
+SFX 1846 0 ologica .
+SFX 1486 Y 1
+SFX 1486 0 listic .
+SFX 1754 Y 1
+SFX 1754 0 entamain .
+SFX 2083 Y 1
+SFX 2083 0 tagl .
+SFX 4255 Y 1
+SFX 4255 0 orisain .
+SFX 4440 Y 1
+SFX 4440 0 legiain .
+SFX 4254 Y 1
+SFX 4254 0 orisais .
+SFX 4439 Y 1
+SFX 4439 0 legiais .
+SFX 1623 Y 1
+SFX 1623 0 risava .
+SFX 706 Y 1
+SFX 706 0 iziun .
+SFX 3106 Y 1
+SFX 3106 0 retta .
+SFX 908 Y 1
+SFX 908 0 inescha .
+SFX 2162 Y 1
+SFX 2162 0 ndra .
+SFX 1310 Y 1
+SFX 1310 0 arias .
+SFX 4987 Y 1
+SFX 4987 0 ariat .
+SFX 4866 Y 1
+SFX 4866 0 ctivitad .
+SFX 3910 Y 1
+SFX 3910 0 tifitgeschia .
+SFX 1068 Y 1
+SFX 1068 0 gai .
+SFX 2932 Y 1
+SFX 2932 0 uivan .
+SFX 1009 Y 1
+SFX 1009 0 gan .
+SFX 869 Y 1
+SFX 869 0 gar .
+SFX 2931 Y 1
+SFX 2931 0 uivas .
+SFX 609 Y 1
+SFX 609 0 sond .
+SFX 664 Y 1
+SFX 664 0 gas .
+SFX 3081 Y 1
+SFX 3081 0 schella .
+SFX 140 Y 1
+SFX 140 0 tain .
+SFX 138 Y 1
+SFX 138 0 tais .
+SFX 3989 Y 1
+SFX 3989 0 steschian .
+SFX 4188 Y 1
+SFX 4188 0 quai .
+SFX 3988 Y 1
+SFX 3988 0 steschias .
+SFX 2938 Y 1
+SFX 2938 0 uind .
+SFX 3561 Y 1
+SFX 3561 0 arica .
+SFX 820 Y 1
+SFX 820 0 schà .
+SFX 1347 Y 1
+SFX 1347 0 schì .
+SFX 4873 Y 1
+SFX 4873 0 clian .
+SFX 1292 Y 1
+SFX 1292 0 favan .
+SFX 4872 Y 1
+SFX 4872 0 clias .
+SFX 1291 Y 1
+SFX 1291 0 favas .
+SFX 1600 Y 1
+SFX 1600 0 tanta .
+SFX 2406 Y 1
+SFX 2406 0 tgetta .
+SFX 2802 Y 1
+SFX 2802 0 atisesch .
+SFX 3560 Y 1
+SFX 3560 0 ariel .
+SFX 2082 Y 1
+SFX 2082 0 tala .
+SFX 3021 Y 1
+SFX 3021 0 tals .
+SFX 1176 Y 1
+SFX 1176 0 gel .
+SFX 1289 Y 1
+SFX 1289 0 gen .
+SFX 1061 Y 1
+SFX 1061 0 ger .
+SFX 1920 Y 1
+SFX 1920 0 get .
+SFX 4177 Y 1
+SFX 4177 0 retscha .
+SFX 3779 Y 1
+SFX 3779 0 ualisai .
+SFX 3776 Y 1
+SFX 3776 0 ualisar .
+SFX 702 Y 1
+SFX 702 0 tant .
+SFX 4634 Y 1
+SFX 4634 0 hettassan .
+SFX 4633 Y 1
+SFX 4633 0 hettassas .
+SFX 2936 Y 1
+SFX 2936 0 uiss .
+SFX 3896 Y 1
+SFX 3896 0 titel .
+SFX 3114 Y 1
+SFX 3114 0 professiunal .
+SFX 3143 Y 1
+SFX 3143 0 nsch .
+SFX 690 Y 1
+SFX 690 0 ifitgà .
+SFX 4294 Y 1
+SFX 4294 0 occupaziun .
+SFX 1715 Y 1
+SFX 1715 0 idada .
+SFX 1713 Y 1
+SFX 1713 0 idads .
+SFX 373 Y 1
+SFX 373 0 gia .
+SFX 4672 Y 1
+SFX 4672 0 gim .
+SFX 1919 Y 1
+SFX 1919 0 gin .
+SFX 4670 Y 1
+SFX 4670 0 gir .
+SFX 2243 Y 1
+SFX 2243 0 gis .
+SFX 3347 Y 1
+SFX 3347 0 giu .
+SFX 4603 Y 1
+SFX 4603 0 iclavan .
+SFX 4602 Y 1
+SFX 4602 0 iclavas .
+SFX 1112 Y 1
+SFX 1112 0 tanza .
+SFX 2933 Y 1
+SFX 2933 0 uiva .
+SFX 1739 Y 1
+SFX 1739 0 giond .
+SFX 4252 Y 1
+SFX 4252 0 orisass .
+SFX 2413 Y 1
+SFX 2413 0 tara .
+SFX 3972 Y 1
+SFX 3972 0 tard .
+SFX 4431 Y 1
+SFX 4431 0 lettas .
+SFX 3020 Y 1
+SFX 3020 0 tari .
+SFX 149 Y 1
+SFX 149 0 issan .
+SFX 147 Y 1
+SFX 147 0 issas .
+SFX 158 Y 1
+SFX 158 0 tass .
+SFX 2242 Y 1
+SFX 2242 0 gls .
+SFX 3522 Y 1
+SFX 3522 0 cedan .
+SFX 3521 Y 1
+SFX 3521 0 cedas .
+SFX 4249 Y 1
+SFX 4249 0 orisava .
+SFX 1546 Y 1
+SFX 1546 0 idain .
+SFX 1545 Y 1
+SFX 1545 0 idais .
+SFX 4986 Y 1
+SFX 4986 0 arina .
+SFX 1174 Y 1
+SFX 1174 0 gna .
+SFX 2390 Y 1
+SFX 2390 0 turescha .
+SFX 3386 Y 1
+SFX 3386 0 etar .
+SFX 1576 Y 1
+SFX 1576 0 abels .
+SFX 157 Y 1
+SFX 157 0 tava .
+SFX 3496 Y 1
+SFX 3496 0 chenta .
+SFX 3333 Y 1
+SFX 3333 0 gol .
+SFX 3332 Y 1
+SFX 3332 0 gon .
+SFX 1734 Y 1
+SFX 1734 0 gnai .
+SFX 1917 Y 1
+SFX 1917 0 gnan .
+SFX 1552 Y 1
+SFX 1552 0 gnar .
+SFX 1287 Y 1
+SFX 1287 0 gnas .
+SFX 202 Y 1
+SFX 202 0 ià .
+SFX 95 Y 1
+SFX 95 0 issem .
+SFX 3652 Y 1
+SFX 3652 0 vaiders .
+SFX 1117 Y 1
+SFX 1117 0 schend .
+SFX 3520 Y 1
+SFX 3520 0 ceder .
+SFX 3078 Y 1
+SFX 3078 0 schent .
+SFX 2198 Y 1
+SFX 2198 0 itgà .
+SFX 1856 Y 1
+SFX 1856 0 nella .
+SFX 3895 Y 1
+SFX 3895 0 tivà .
+SFX 4724 Y 1
+SFX 4724 0 està .
+SFX 4710 Y 1
+SFX 4710 0 eter .
+SFX 1319 Y 1
+SFX 1319 0 urassan .
+SFX 1318 Y 1
+SFX 1318 0 urassas .
+SFX 1928 Y 1
+SFX 1928 0 etsch .
+SFX 800 Y 1
+SFX 800 0 chadas .
+SFX 958 Y 1
+SFX 958 0 ivitad .
+SFX 3385 Y 1
+SFX 3385 0 etga .
+SFX 3517 Y 1
+SFX 3517 0 cedia .
+SFX 3511 Y 1
+SFX 3511 0 cedin .
+SFX 1410 Y 1
+SFX 1410 0 ac .
+SFX 1575 Y 1
+SFX 1575 0 ad .
+SFX 3509 Y 1
+SFX 3509 0 cedis .
+SFX 32 Y 1
+SFX 32 0 ai .
+SFX 78 Y 1
+SFX 78 0 al .
+SFX 1769 Y 1
+SFX 1769 0 am .
+SFX 4 Y 1
+SFX 4 0 an .
+SFX 4991 Y 1
+SFX 4991 0 ap .
+SFX 33 Y 1
+SFX 33 0 ar .
+SFX 3 Y 1
+SFX 3 0 as .
+SFX 177 Y 1
+SFX 177 0 at .
+SFX 3552 Y 1
+SFX 3552 0 au .
+SFX 4962 Y 1
+SFX 4962 0 av .
+SFX 3548 Y 1
+SFX 3548 0 az .
+SFX 3331 Y 1
+SFX 3331 0 gul .
+SFX 2674 Y 1
+SFX 2674 0 gun .
+SFX 948 Y 1
+SFX 948 0 mavan .
+SFX 947 Y 1
+SFX 947 0 mavas .
+SFX 1406 Y 1
+SFX 1406 0 ba .
+SFX 4923 Y 1
+SFX 4923 0 bilisavan .
+SFX 4032 Y 1
+SFX 4032 0 siunà .
+SFX 3543 Y 1
+SFX 3543 0 bo .
+SFX 776 Y 1
+SFX 776 0 schess .
+SFX 4922 Y 1
+SFX 4922 0 bilisavas .
+SFX 4909 Y 1
+SFX 4909 0 bs .
+SFX 2291 Y 1
+SFX 2291 0 etic .
+SFX 2373 Y 1
+SFX 2373 0 uraziun .
+SFX 2401 Y 1
+SFX 2401 0 tinian .
+SFX 2989 Y 1
+SFX 2989 0 tinias .
+SFX 1970 Y 1
+SFX 1970 0 zzond .
+SFX 203 Y 1
+SFX 203 0 ca .
+SFX 290 Y 1
+SFX 290 0 ch .
+SFX 1760 Y 1
+SFX 1760 0 co .
+SFX 3408 Y 1
+SFX 3408 0 erlà .
+SFX 759 Y 1
+SFX 759 0 cs .
+SFX 3464 Y 1
+SFX 3464 0 ct .
+SFX 4356 Y 1
+SFX 4356 0 mustgas .
+SFX 1915 Y 1
+SFX 1915 0 gnia .
+SFX 2367 Y 1
+SFX 2367 0 vai .
+SFX 3651 Y 1
+SFX 3651 0 val .
+SFX 3336 Y 1
+SFX 3336 0 gnim .
+SFX 18 Y 1
+SFX 18 0 van .
+SFX 2022 Y 1
+SFX 2022 0 var .
+SFX 16 Y 1
+SFX 16 0 vas .
+SFX 4902 Y 1
+SFX 4902 0 chader .
+SFX 1712 Y 1
+SFX 1712 0 idass .
+SFX 630 Y 1
+SFX 630 0 aivladad .
+SFX 12 Y 1
+SFX 12 0 da .
+SFX 234 Y 1
+SFX 234 0 di .
+SFX 4554 Y 1
+SFX 4554 0 igraf .
+SFX 3449 Y 1
+SFX 3449 0 do .
+SFX 3448 Y 1
+SFX 3448 0 dr .
+SFX 24 Y 1
+SFX 24 0 ds .
+SFX 3797 Y 1
+SFX 3797 0 tunai .
+SFX 2962 Y 1
+SFX 2962 0 tunar .
+SFX 3794 Y 1
+SFX 3794 0 tunas .
+SFX 3400 Y 1
+SFX 3400 0 erlassan .
+SFX 3399 Y 1
+SFX 3399 0 erlassas .
+SFX 1924 Y 1
+SFX 1924 0 gescha .
+SFX 817 Y 1
+SFX 817 0 scheva .
+SFX 1759 Y 1
+SFX 1759 0 ea .
+SFX 3439 Y 1
+SFX 3439 0 ed .
+SFX 105 Y 1
+SFX 105 0 el .
+SFX 1180 Y 1
+SFX 1180 0 em .
+SFX 381 Y 1
+SFX 381 0 en .
+SFX 57 Y 1
+SFX 57 0 er .
+SFX 1560 Y 1
+SFX 1560 0 es .
+SFX 102 Y 1
+SFX 102 0 et .
+SFX 4695 Y 1
+SFX 4695 0 ev .
+SFX 917 Y 1
+SFX 917 0 ez .
+SFX 3416 Y 1
+SFX 3416 0 ellins .
+SFX 3300 Y 1
+SFX 3300 0 ignadas .
+SFX 720 Y 1
+SFX 720 0 fa .
+SFX 2611 Y 1
+SFX 2611 0 irescha .
+SFX 1709 Y 1
+SFX 1709 0 idava .
+SFX 758 Y 1
+SFX 758 0 dassan .
+SFX 757 Y 1
+SFX 757 0 dassas .
+SFX 363 Y 1
+SFX 363 0 ga .
+SFX 4677 Y 1
+SFX 4677 0 ge .
+SFX 785 Y 1
+SFX 785 0 gi .
+SFX 423 Y 1
+SFX 423 0 gl .
+SFX 1553 Y 1
+SFX 1553 0 gn .
+SFX 1912 Y 1
+SFX 1912 0 go .
+SFX 784 Y 1
+SFX 784 0 gs .
+SFX 4642 Y 1
+SFX 4642 0 hettada .
+SFX 236 Y 1
+SFX 236 0 vel .
+SFX 1777 Y 1
+SFX 1777 0 ver .
+SFX 4640 Y 1
+SFX 4640 0 hettads .
+SFX 3265 Y 1
+SFX 3265 0 inissem .
+SFX 451 Y 1
+SFX 451 0 inada .
+SFX 532 Y 1
+SFX 532 0 inads .
+SFX 6 Y 1
+SFX 6 0 ia .
+SFX 67 Y 1
+SFX 67 0 ic .
+SFX 748 Y 1
+SFX 748 0 id .
+SFX 1276 Y 1
+SFX 1276 0 ii .
+SFX 556 Y 1
+SFX 556 0 il .
+SFX 194 Y 1
+SFX 194 0 im .
+SFX 10 Y 1
+SFX 10 0 in .
+SFX 1695 Y 1
+SFX 1695 0 io .
+SFX 151 Y 1
+SFX 151 0 ir .
+SFX 15 Y 1
+SFX 15 0 is .
+SFX 369 Y 1
+SFX 369 0 it .
+SFX 196 Y 1
+SFX 196 0 iv .
+SFX 4467 Y 1
+SFX 4467 0 iz .
+SFX 4894 Y 1
+SFX 4894 0 chuna .
+SFX 3367 Y 1
+SFX 3367 0 fitgavan .
+SFX 3366 Y 1
+SFX 3366 0 fitgavas .
+SFX 1871 Y 1
+SFX 1871 0 ja .
+SFX 4367 Y 1
+SFX 4367 0 mpassan .
+SFX 4366 Y 1
+SFX 4366 0 mpassas .
+SFX 3066 Y 1
+SFX 3066 0 ssadas .
+SFX 4019 Y 1
+SFX 4019 0 siunesch .
+SFX 2312 Y 1
+SFX 2312 0 daziun .
+SFX 2984 Y 1
+SFX 2984 0 trà .
+SFX 2892 Y 1
+SFX 2892 0 vadas .
+SFX 2359 Y 1
+SFX 2359 0 vegnan .
+SFX 839 Y 1
+SFX 839 0 via .
+SFX 2013 Y 1
+SFX 2013 0 vis .
+SFX 500 Y 1
+SFX 500 0 aliseschan .
+SFX 499 Y 1
+SFX 499 0 aliseschas .
+SFX 77 Y 1
+SFX 77 0 la .
+SFX 2593 Y 1
+SFX 2593 0 le .
+SFX 2592 Y 1
+SFX 2592 0 li .
+SFX 3732 Y 1
+SFX 3732 0 unalas .
+SFX 251 Y 1
+SFX 251 0 ls .
+SFX 4638 Y 1
+SFX 4638 0 hettain .
+SFX 4637 Y 1
+SFX 4637 0 hettais .
+SFX 436 Y 1
+SFX 436 0 ma .
+SFX 3213 Y 1
+SFX 3213 0 mi .
+SFX 3194 Y 1
+SFX 3194 0 mp .
+SFX 1860 Y 1
+SFX 1860 0 ms .
+SFX 3310 Y 1
+SFX 3310 0 ideschan .
+SFX 492 Y 1
+SFX 492 0 inain .
+SFX 3309 Y 1
+SFX 3309 0 ideschas .
+SFX 469 Y 1
+SFX 469 0 inais .
+SFX 188 Y 1
+SFX 188 0 etta .
+SFX 432 Y 1
+SFX 432 0 tessan .
+SFX 165 Y 1
+SFX 165 0 na .
+SFX 810 Y 1
+SFX 810 0 seschan .
+SFX 1219 Y 1
+SFX 1219 0 tiseschan .
+SFX 431 Y 1
+SFX 431 0 tessas .
+SFX 61 Y 1
+SFX 61 0 nd .
+SFX 4342 Y 1
+SFX 4342 0 ne .
+SFX 809 Y 1
+SFX 809 0 seschas .
+SFX 1218 Y 1
+SFX 1218 0 tiseschas .
+SFX 1046 Y 1
+SFX 1046 0 ni .
+SFX 3144 Y 1
+SFX 3144 0 no .
+SFX 352 Y 1
+SFX 352 0 ns .
+SFX 75 Y 1
+SFX 75 0 nt .
+SFX 540 Y 1
+SFX 540 0 vla .
+SFX 3897 Y 1
+SFX 3897 0 tistic .
+SFX 1482 Y 1
+SFX 1482 0 neschian .
+SFX 1481 Y 1
+SFX 1481 0 neschias .
+SFX 3137 Y 1
+SFX 3137 0 oc .
+SFX 1023 Y 1
+SFX 1023 0 cheschan .
+SFX 1022 Y 1
+SFX 1022 0 cheschas .
+SFX 944 Y 1
+SFX 944 0 ol .
+SFX 1131 Y 1
+SFX 1131 0 om .
+SFX 465 Y 1
+SFX 465 0 on .
+SFX 4266 Y 1
+SFX 4266 0 op .
+SFX 741 Y 1
+SFX 741 0 or .
+SFX 1045 Y 1
+SFX 1045 0 os .
+SFX 1000 Y 1
+SFX 1000 0 ot .
+SFX 3334 Y 1
+SFX 3334 0 gnus .
+SFX 261 Y 1
+SFX 261 0 pa .
+SFX 2537 Y 1
+SFX 2537 0 pe .
+SFX 1471 Y 1
+SFX 1471 0 pi .
+SFX 2623 Y 1
+SFX 2623 0 inala .
+SFX 1468 Y 1
+SFX 1468 0 ps .
+SFX 3760 Y 1
+SFX 3760 0 udì .
+SFX 2519 Y 1
+SFX 2519 0 ppavan .
+SFX 2518 Y 1
+SFX 2518 0 ppavas .
+SFX 4901 Y 1
+SFX 4901 0 chadra .
+SFX 1007 Y 1
+SFX 1007 0 icher .
+SFX 1667 Y 1
+SFX 1667 0 iveschian .
+SFX 190 Y 1
+SFX 190 0 iada .
+SFX 1666 Y 1
+SFX 1666 0 iveschias .
+SFX 220 Y 1
+SFX 220 0 iads .
+SFX 1105 Y 1
+SFX 1105 0 uneschan .
+SFX 1104 Y 1
+SFX 1104 0 uneschas .
+SFX 83 Y 1
+SFX 83 0 ra .
+SFX 4181 Y 1
+SFX 4181 0 rc .
+SFX 1348 Y 1
+SFX 1348 0 rd .
+SFX 575 Y 1
+SFX 575 0 ologia .
+SFX 900 Y 1
+SFX 900 0 ologic .
+SFX 257 Y 1
+SFX 257 0 ri .
+SFX 4168 Y 1
+SFX 4168 0 rm .
+SFX 3091 Y 1
+SFX 3091 0 ro .
+SFX 360 Y 1
+SFX 360 0 rs .
+SFX 1833 Y 1
+SFX 1833 0 rt .
+SFX 4142 Y 1
+SFX 4142 0 ry .
+SFX 3268 Y 1
+SFX 3268 0 inant .
+SFX 4447 Y 1
+SFX 4447 0 lavà .
+SFX 201 Y 1
+SFX 201 0 sa .
+SFX 734 Y 1
+SFX 734 0 alissem .
+SFX 1245 Y 1
+SFX 1245 0 si .
+SFX 4015 Y 1
+SFX 4015 0 so .
+SFX 14 Y 1
+SFX 14 0 ss .
+SFX 573 Y 1
+SFX 573 0 st .
+SFX 2358 Y 1
+SFX 2358 0 vegnia .
+SFX 2355 Y 1
+SFX 2355 0 vegnin .
+SFX 2135 Y 1
+SFX 2135 0 orica .
+SFX 2017 Y 1
+SFX 2017 0 vegnir .
+SFX 2353 Y 1
+SFX 2353 0 vegnis .
+SFX 4262 Y 1
+SFX 4262 0 orics .
+SFX 498 Y 1
+SFX 498 0 aliseschia .
+SFX 589 Y 1
+SFX 589 0 lisassan .
+SFX 588 Y 1
+SFX 588 0 lisassas .
+SFX 60 Y 1
+SFX 60 0 ta .
+SFX 168 Y 1
+SFX 168 0 tavan .
+SFX 1599 Y 1
+SFX 1599 0 te .
+SFX 167 Y 1
+SFX 167 0 tavas .
+SFX 327 Y 1
+SFX 327 0 tg .
+SFX 936 Y 1
+SFX 936 0 ti .
+SFX 1030 Y 1
+SFX 1030 0 to .
+SFX 180 Y 1
+SFX 180 0 ts .
+SFX 3967 Y 1
+SFX 3967 0 tatsch .
+SFX 1028 Y 1
+SFX 1028 0 ua .
+SFX 1795 Y 1
+SFX 1795 0 ud .
+SFX 2596 Y 1
+SFX 2596 0 iziuns .
+SFX 2941 Y 1
+SFX 2941 0 ui .
+SFX 1583 Y 1
+SFX 1583 0 ul .
+SFX 292 Y 1
+SFX 292 0 um .
+SFX 144 Y 1
+SFX 144 0 un .
+SFX 3308 Y 1
+SFX 3308 0 ideschia .
+SFX 3688 Y 1
+SFX 3688 0 up .
+SFX 181 Y 1
+SFX 181 0 ur .
+SFX 98 Y 1
+SFX 98 0 us .
+SFX 1027 Y 1
+SFX 1027 0 ut .
+SFX 1397 Y 1
+SFX 1397 0 entesch .
+SFX 1495 Y 1
+SFX 1495 0 ivavan .
+SFX 1494 Y 1
+SFX 1494 0 ivavas .
+SFX 808 Y 1
+SFX 808 0 seschia .
+SFX 1217 Y 1
+SFX 1217 0 tiseschia .
+SFX 13 Y 1
+SFX 13 0 va .
+SFX 4476 Y 1
+SFX 4476 0 iunalissem .
+SFX 1202 Y 1
+SFX 1202 0 vi .
+SFX 208 Y 1
+SFX 208 0 iain .
+SFX 207 Y 1
+SFX 207 0 iais .
+SFX 1776 Y 1
+SFX 1776 0 vs .
+SFX 2327 Y 1
+SFX 2327 0 aivlamain .
+SFX 4731 Y 1
+SFX 4731 0 ernain .
+SFX 3394 Y 1
+SFX 3394 0 ernais .
+SFX 4635 Y 1
+SFX 4635 0 hettass .
+SFX 2016 Y 1
+SFX 2016 0 venziun .
+SFX 1021 Y 1
+SFX 1021 0 cheschia .
+SFX 640 Y 1
+SFX 640 0 lisaziun .
+SFX 3230 Y 1
+SFX 3230 0 latta .
+SFX 491 Y 1
+SFX 491 0 inass .
+SFX 4787 Y 1
+SFX 4787 0 egnond .
+SFX 4711 Y 1
+SFX 4711 0 etaria .
+SFX 4330 Y 1
+SFX 4330 0 ntada .
+SFX 3966 Y 1
+SFX 3966 0 tavel .
+SFX 4328 Y 1
+SFX 4328 0 ntads .
+SFX 4545 Y 1
+SFX 4545 0 imeschan .
+SFX 4544 Y 1
+SFX 4544 0 imeschas .
+SFX 1170 Y 1
+SFX 1170 0 iala .
+SFX 4619 Y 1
+SFX 4619 0 ials .
+SFX 4730 Y 1
+SFX 4730 0 ernala .
+SFX 4632 Y 1
+SFX 4632 0 hettava .
+SFX 1103 Y 1
+SFX 1103 0 uneschia .
+SFX 179 Y 1
+SFX 179 0 za .
+SFX 1775 Y 1
+SFX 1775 0 zi .
+SFX 488 Y 1
+SFX 488 0 inava .
+SFX 3607 Y 1
+SFX 3607 0 zs .
+SFX 2308 Y 1
+SFX 2308 0 drada .
+SFX 1516 Y 1
+SFX 1516 0 iunavan .
+SFX 1515 Y 1
+SFX 1515 0 iunavas .
+SFX 1910 Y 1
+SFX 1910 0 iana .
+SFX 2758 Y 1
+SFX 2758 0 drads .
+SFX 3329 Y 1
+SFX 3329 0 ians .
+SFX 1280 Y 1
+SFX 1280 0 iant .
+SFX 3270 Y 1
+SFX 3270 0 imond .
+SFX 4821 Y 1
+SFX 4821 0 duras .
+SFX 4667 Y 1
+SFX 4667 0 gissan .
+SFX 4666 Y 1
+SFX 4666 0 gissas .
+SFX 4956 Y 1
+SFX 4956 0 bà .
+SFX 4830 Y 1
+SFX 4830 0 ditgas .
+SFX 173 Y 1
+SFX 173 0 tian .
+SFX 2899 Y 1
+SFX 2899 0 undas .
+SFX 175 Y 1
+SFX 175 0 tias .
+SFX 4326 Y 1
+SFX 4326 0 ntain .
+SFX 4325 Y 1
+SFX 4325 0 ntais .
+SFX 1220 Y 1
+SFX 1220 0 tisescha .
+SFX 1513 Y 1
+SFX 1513 0 iunescha .
+SFX 3658 Y 1
+SFX 3658 0 urusadad .
+SFX 648 Y 1
+SFX 648 0 tica .
+SFX 1594 Y 1
+SFX 1594 0 tics .
+SFX 875 Y 1
+SFX 875 0 chevan .
+SFX 836 Y 1
+SFX 836 0 chevas .
+SFX 1671 Y 1
+SFX 1671 0 ivescha .
+SFX 2721 Y 1
+SFX 2721 0 erassan .
+SFX 2720 Y 1
+SFX 2720 0 erassas .
+SFX 887 Y 1
+SFX 887 0 tida .
+SFX 2848 Y 1
+SFX 2848 0 alà .
+SFX 885 Y 1
+SFX 885 0 tids .
+SFX 2756 Y 1
+SFX 2756 0 drain .
+SFX 2755 Y 1
+SFX 2755 0 drais .
+SFX 205 Y 1
+SFX 205 0 iass .
+SFX 1812 Y 1
+SFX 1812 0 tradas .
+SFX 4543 Y 1
+SFX 4543 0 imeschia .
+SFX 1128 Y 1
+SFX 1128 0 otta .
+SFX 3929 Y 1
+SFX 3929 0 tier .
+SFX 3927 Y 1
+SFX 3927 0 tiez .
+SFX 118 Y 1
+SFX 118 0 isassan .
+SFX 117 Y 1
+SFX 117 0 isassas .
+SFX 3600 Y 1
+SFX 3600 0 afain .
+SFX 4960 Y 1
+SFX 4960 0 avels .
+SFX 4815 Y 1
+SFX 4815 0 ectadas .
+SFX 204 Y 1
+SFX 204 0 iava .
+SFX 1931 Y 1
+SFX 1931 0 eraziun .
+SFX 3877 Y 1
+SFX 3877 0 tivesch .
+SFX 4959 Y 1
+SFX 4959 0 avent .
+SFX 1670 Y 1
+SFX 1670 0 iveschan .
+SFX 1669 Y 1
+SFX 1669 0 iveschas .
+SFX 521 Y 1
+SFX 521 0 sada .
+SFX 3084 Y 1
+SFX 3084 0 sadi .
+SFX 2635 Y 1
+SFX 2635 0 ilesch .
+SFX 636 Y 1
+SFX 636 0 sads .
+SFX 134 Y 1
+SFX 134 0 isaziun .
+SFX 1942 Y 1
+SFX 1942 0 arisond .
+SFX 1849 Y 1
+SFX 1849 0 oda .
+SFX 4320 Y 1
+SFX 4320 0 ntass .
+SFX 3355 Y 1
+SFX 3355 0 furm .
+SFX 2231 Y 1
+SFX 2231 0 idian .
+SFX 2658 Y 1
+SFX 2658 0 idias .
+SFX 3905 Y 1
+SFX 3905 0 tima .
+SFX 3252 Y 1
+SFX 3252 0 itaras .
+SFX 3769 Y 1
+SFX 3769 0 ualisesch .
+SFX 542 Y 1
+SFX 542 0 sain .
+SFX 574 Y 1
+SFX 574 0 sais .
+SFX 647 Y 1
+SFX 647 0 tina .
+SFX 3903 Y 1
+SFX 3903 0 tind .
+SFX 3902 Y 1
+SFX 3902 0 ting .
+SFX 1557 Y 1
+SFX 1557 0 getta .
+SFX 4317 Y 1
+SFX 4317 0 ntava .
+SFX 2059 Y 1
+SFX 2059 0 tins .
+SFX 2753 Y 1
+SFX 2753 0 drass .
+SFX 2141 Y 1
+SFX 2141 0 ogn .
+SFX 1748 Y 1
+SFX 1748 0 già .
+SFX 1377 Y 1
+SFX 1377 0 icamain .
+SFX 3424 Y 1
+SFX 3424 0 egliond .
+SFX 239 Y 1
+SFX 239 0 lassan .
+SFX 238 Y 1
+SFX 238 0 lassas .
+SFX 2229 Y 1
+SFX 2229 0 iditad .
+SFX 4585 Y 1
+SFX 4585 0 ificaziuns .
+SFX 2322 Y 1
+SFX 2322 0 aritad .
+SFX 2598 Y 1
+SFX 2598 0 ivissem .
+SFX 1350 Y 1
+SFX 1350 0 oid .
+SFX 1668 Y 1
+SFX 1668 0 iveschia .
+SFX 2320 Y 1
+SFX 2320 0 aturas .
+SFX 2471 Y 1
+SFX 2471 0 schetta .
+SFX 1190 Y 1
+SFX 1190 0 dend .
+SFX 2949 Y 1
+SFX 2949 0 turavan .
+SFX 2948 Y 1
+SFX 2948 0 turavas .
+SFX 2771 Y 1
+SFX 2771 0 dent .
+SFX 2012 Y 1
+SFX 2012 0 visiun .
+SFX 2750 Y 1
+SFX 2750 0 drava .
+SFX 2235 Y 1
+SFX 2235 0 ianta .
+SFX 1175 Y 1
+SFX 1175 0 giada .
+SFX 1746 Y 1
+SFX 1746 0 giads .
+SFX 2057 Y 1
+SFX 2057 0 tira .
+SFX 3919 Y 1
+SFX 3919 0 tifitgassan .
+SFX 3918 Y 1
+SFX 3918 0 tifitgassas .
+SFX 955 Y 1
+SFX 955 0 laziun .
+SFX 1845 Y 1
+SFX 1845 0 omat .
+SFX 4646 Y 1
+SFX 4646 0 grafias .
+SFX 683 Y 1
+SFX 683 0 ola .
+SFX 3900 Y 1
+SFX 3900 0 tiss .
+SFX 1430 Y 1
+SFX 1430 0 tist .
+SFX 4279 Y 1
+SFX 4279 0 ols .
+SFX 1660 Y 1
+SFX 1660 0 mentà .
+SFX 1780 Y 1
+SFX 1780 0 vegna .
+SFX 1779 Y 1
+SFX 1779 0 vegni .
+SFX 2346 Y 1
+SFX 2346 0 vegns .
+SFX 1101 Y 1
+SFX 1101 0 aments .
+SFX 2947 Y 1
+SFX 2947 0 turond .
+SFX 927 Y 1
+SFX 927 0 ascha .
+SFX 2238 Y 1
+SFX 2238 0 grafica .
+SFX 2640 Y 1
+SFX 2640 0 ignond .
+SFX 3870 Y 1
+SFX 3870 0 tivond .
+SFX 289 Y 1
+SFX 289 0 ders .
+SFX 2137 Y 1
+SFX 2137 0 ona .
+SFX 38 Y 1
+SFX 38 0 ond .
+SFX 4753 Y 1
+SFX 4753 0 enzial .
+SFX 4734 Y 1
+SFX 4734 0 erleschian .
+SFX 4733 Y 1
+SFX 4733 0 erleschias .
+SFX 4837 Y 1
+SFX 4837 0 dents .
+SFX 1189 Y 1
+SFX 1189 0 dess .
+SFX 427 Y 1
+SFX 427 0 tiva .
+SFX 4390 Y 1
+SFX 4390 0 metrica .
+SFX 1814 Y 1
+SFX 1814 0 tivs .
+SFX 1694 Y 1
+SFX 1694 0 irà .
+SFX 1389 Y 1
+SFX 1389 0 giain .
+SFX 3358 Y 1
+SFX 3358 0 fitgond .
+SFX 1744 Y 1
+SFX 1744 0 giais .
+SFX 2668 Y 1
+SFX 2668 0 ianza .
+SFX 1843 Y 1
+SFX 1843 0 peschian .
+SFX 1842 Y 1
+SFX 1842 0 peschias .
+SFX 615 Y 1
+SFX 615 0 sass .
+SFX 3684 Y 1
+SFX 3684 0 upladas .
+SFX 3605 Y 1
+SFX 3605 0 acca .
+SFX 1024 Y 1
+SFX 1024 0 chescha .
+SFX 1186 Y 1
+SFX 1186 0 deva .
+SFX 1260 Y 1
+SFX 1260 0 ora .
+SFX 1637 Y 1
+SFX 1637 0 ori .
+SFX 4842 Y 1
+SFX 4842 0 dadad .
+SFX 728 Y 1
+SFX 728 0 dadas .
+SFX 1248 Y 1
+SFX 1248 0 rola .
+SFX 822 Y 1
+SFX 822 0 osa .
+SFX 4234 Y 1
+SFX 4234 0 oss .
+SFX 4024 Y 1
+SFX 4024 0 siunassan .
+SFX 3122 Y 1
+SFX 3122 0 ost .
+SFX 4023 Y 1
+SFX 4023 0 siunassas .
+SFX 612 Y 1
+SFX 612 0 sava .
+SFX 3113 Y 1
+SFX 3113 0 puna .
+SFX 4966 Y 1
+SFX 4966 0 atissem .
+SFX 129 Y 1
+SFX 129 0 isesch .
+SFX 4233 Y 1
+SFX 4233 0 otg .
+SFX 4982 Y 1
+SFX 4982 0 atadas .
+SFX 3349 Y 1
+SFX 3349 0 giant .
+SFX 676 Y 1
+SFX 676 0 rond .
+SFX 4511 Y 1
+SFX 4511 0 istivan .
+SFX 4510 Y 1
+SFX 4510 0 istivas .
+SFX 3709 Y 1
+SFX 3709 0 unalisond .
+SFX 4712 Y 1
+SFX 4712 0 estond .
+SFX 3458 Y 1
+SFX 3458 0 dader .
+SFX 1984 Y 1
+SFX 1984 0 zzada .
+SFX 1982 Y 1
+SFX 1982 0 zzads .
+SFX 3472 Y 1
+SFX 3472 0 clai .
+SFX 4882 Y 1
+SFX 4882 0 clan .
+SFX 1936 Y 1
+SFX 1936 0 clar .
+SFX 1306 Y 1
+SFX 1306 0 clas .
+SFX 3356 Y 1
+SFX 3356 0 fundà .
+SFX 3623 Y 1
+SFX 3623 0 ziunament .
+SFX 4190 Y 1
+SFX 4190 0 pusa .
+SFX 1005 Y 1
+SFX 1005 0 inian .
+SFX 1004 Y 1
+SFX 1004 0 inias .
+SFX 1480 Y 1
+SFX 1480 0 netta .
+SFX 1555 Y 1
+SFX 1555 0 giass .
+SFX 4800 Y 1
+SFX 4800 0 ecziunar .
+SFX 4341 Y 1
+SFX 4341 0 nels .
+SFX 4874 Y 1
+SFX 4874 0 clel .
+SFX 1980 Y 1
+SFX 1980 0 zzain .
+SFX 4947 Y 1
+SFX 4947 0 bavan .
+SFX 1979 Y 1
+SFX 1979 0 zzais .
+SFX 4946 Y 1
+SFX 4946 0 bavas .
+SFX 2062 Y 1
+SFX 2062 0 tinavan .
+SFX 2061 Y 1
+SFX 2061 0 tinavas .
+SFX 4074 Y 1
+SFX 4074 0 scrivai .
+SFX 4071 Y 1
+SFX 4071 0 scrivan .
+SFX 4070 Y 1
+SFX 4070 0 scrivas .
+SFX 1742 Y 1
+SFX 1742 0 giava .
+SFX 1708 Y 1
+SFX 1708 0 idavan .
+SFX 1707 Y 1
+SFX 1707 0 idavas .
+SFX 2185 Y 1
+SFX 2185 0 itgond .
+SFX 1195 Y 1
+SFX 1195 0 cheschian .
+SFX 1194 Y 1
+SFX 1194 0 cheschias .
+SFX 1366 Y 1
+SFX 1366 0 iunai .
+SFX 2601 Y 1
+SFX 2601 0 iunal .
+SFX 1521 Y 1
+SFX 1521 0 iunar .
+SFX 3907 Y 1
+SFX 3907 0 tifitgond .
+SFX 3993 Y 1
+SFX 3993 0 stescha .
+SFX 811 Y 1
+SFX 811 0 sescha .
+SFX 4597 Y 1
+SFX 4597 0 icular .
+SFX 3468 Y 1
+SFX 3468 0 clia .
+SFX 3381 Y 1
+SFX 3381 0 final .
+SFX 4068 Y 1
+SFX 4068 0 scriver .
+SFX 4244 Y 1
+SFX 4244 0 orisescha .
+SFX 463 Y 1
+SFX 463 0 passan .
+SFX 462 Y 1
+SFX 462 0 passas .
+SFX 1483 Y 1
+SFX 1483 0 nera .
+SFX 4048 Y 1
+SFX 4048 0 segnassan .
+SFX 4047 Y 1
+SFX 4047 0 segnassas .
+SFX 1035 Y 1
+SFX 1035 0 tgassan .
+SFX 1034 Y 1
+SFX 1034 0 tgassas .
+SFX 2455 Y 1
+SFX 2455 0 spina .
+SFX 593 Y 1
+SFX 593 0 lisai .
+SFX 554 Y 1
+SFX 554 0 lisar .
+SFX 4340 Y 1
+SFX 4340 0 nets .
+SFX 2816 Y 1
+SFX 2816 0 atisà .
+SFX 773 Y 1
+SFX 773 0 ulà .
+SFX 1992 Y 1
+SFX 1992 0 ziunescha .
+SFX 3158 Y 1
+SFX 3158 0 nisassan .
+SFX 3157 Y 1
+SFX 3157 0 nisassas .
+SFX 4061 Y 1
+SFX 4061 0 scrivia .
+SFX 3559 Y 1
+SFX 3559 0 armain .
+SFX 4727 Y 1
+SFX 4727 0 essai .
+SFX 100 Y 1
+SFX 100 0 essan .
+SFX 895 Y 1
+SFX 895 0 schassan .
+SFX 97 Y 1
+SFX 97 0 essas .
+SFX 894 Y 1
+SFX 894 0 schassas .
+SFX 4091 Y 1
+SFX 4091 0 schentavan .
+SFX 4090 Y 1
+SFX 4090 0 schentavas .
+SFX 4990 Y 1
+SFX 4990 0 aran .
+SFX 644 Y 1
+SFX 644 0 aras .
+SFX 2673 Y 1
+SFX 2673 0 hel .
+SFX 221 Y 1
+SFX 221 0 her .
+SFX 1387 Y 1
+SFX 1387 0 het .
+SFX 1976 Y 1
+SFX 1976 0 zzass .
+SFX 497 Y 1
+SFX 497 0 aliseschian .
+SFX 496 Y 1
+SFX 496 0 aliseschias .
+SFX 448 Y 1
+SFX 448 0 leschan .
+SFX 437 Y 1
+SFX 437 0 leschas .
+SFX 4327 Y 1
+SFX 4327 0 ntai .
+SFX 4323 Y 1
+SFX 4323 0 ntar .
+SFX 528 Y 1
+SFX 528 0 ntas .
+SFX 1585 Y 1
+SFX 1585 0 ualitad .
+SFX 4178 Y 1
+SFX 4178 0 responsabladad .
+SFX 4781 Y 1
+SFX 4781 0 elladas .
+SFX 3906 Y 1
+SFX 3906 0 tiglia .
+SFX 3397 Y 1
+SFX 3397 0 erlavan .
+SFX 3396 Y 1
+SFX 3396 0 erlavas .
+SFX 3153 Y 1
+SFX 3153 0 nisaziun .
+SFX 568 Y 1
+SFX 568 0 bladad .
+SFX 2007 Y 1
+SFX 2007 0 ziunadas .
+SFX 3564 Y 1
+SFX 3564 0 arda .
+SFX 2293 Y 1
+SFX 2293 0 esser .
+SFX 1973 Y 1
+SFX 1973 0 zzava .
+SFX 3563 Y 1
+SFX 3563 0 arel .
+SFX 362 Y 1
+SFX 362 0 hia .
+SFX 4988 Y 1
+SFX 4988 0 aret .
+SFX 2639 Y 1
+SFX 2639 0 iiii .
+SFX 3141 Y 1
+SFX 3141 0 nter .
+SFX 4906 Y 1
+SFX 4906 0 calmain .
+SFX 3757 Y 1
+SFX 3757 0 uetta .
+SFX 1771 Y 1
+SFX 1771 0 aglià .
+SFX 3420 Y 1
+SFX 3420 0 egnada .
+SFX 761 Y 1
+SFX 761 0 atsch .
+SFX 4795 Y 1
+SFX 4795 0 egnads .
+SFX 4825 Y 1
+SFX 4825 0 drian .
+SFX 4824 Y 1
+SFX 4824 0 drias .
+SFX 4997 Y 1
+SFX 4997 0 angul .
+SFX 1874 Y 1
+SFX 1874 0 istan .
+SFX 1538 Y 1
+SFX 1538 0 istas .
+SFX 4498 Y 1
+SFX 4498 0 istravan .
+SFX 4497 Y 1
+SFX 4497 0 istravas .
+SFX 191 Y 1
+SFX 191 0 aria .
+SFX 3562 Y 1
+SFX 3562 0 aric .
+SFX 2839 Y 1
+SFX 2839 0 arin .
+SFX 733 Y 1
+SFX 733 0 aris .
+SFX 4399 Y 1
+SFX 4399 0 maticra .
+SFX 447 Y 1
+SFX 447 0 leschia .
+SFX 214 Y 1
+SFX 214 0 iavan .
+SFX 213 Y 1
+SFX 213 0 iavas .
+SFX 649 Y 1
+SFX 649 0 taziun .
+SFX 4765 Y 1
+SFX 4765 0 endain .
+SFX 4764 Y 1
+SFX 4764 0 endais .
+SFX 2627 Y 1
+SFX 2627 0 imada .
+SFX 3281 Y 1
+SFX 3281 0 imads .
+SFX 4464 Y 1
+SFX 4464 0 jà .
+SFX 1537 Y 1
+SFX 1537 0 ister .
+SFX 2739 Y 1
+SFX 2739 0 egnain .
+SFX 2738 Y 1
+SFX 2738 0 egnais .
+SFX 2224 Y 1
+SFX 2224 0 iments .
+SFX 4705 Y 1
+SFX 4705 0 ettai .
+SFX 721 Y 1
+SFX 721 0 ettas .
+SFX 1332 Y 1
+SFX 1332 0 ueschan .
+SFX 1331 Y 1
+SFX 1331 0 ueschas .
+SFX 1185 Y 1
+SFX 1185 0 devan .
+SFX 1184 Y 1
+SFX 1184 0 devas .
+SFX 1507 Y 1
+SFX 1507 0 iunond .
+SFX 3207 Y 1
+SFX 3207 0 minai .
+SFX 2890 Y 1
+SFX 2890 0 valur .
+SFX 3204 Y 1
+SFX 3204 0 minar .
+SFX 3664 Y 1
+SFX 3664 0 'ura .
+SFX 2167 Y 1
+SFX 2167 0 minas .
+SFX 1592 Y 1
+SFX 1592 0 tschai .
+SFX 1810 Y 1
+SFX 1810 0 tschan .
+SFX 1808 Y 1
+SFX 1808 0 tschar .
+SFX 1211 Y 1
+SFX 1211 0 tschas .
+SFX 4984 Y 1
+SFX 4984 0 atà .
+SFX 3284 Y 1
+SFX 3284 0 ilond .
+SFX 3133 Y 1
+SFX 3133 0 ofil .
+SFX 3998 Y 1
+SFX 3998 0 stanza .
+SFX 4524 Y 1
+SFX 4524 0 istia .
+SFX 197 Y 1
+SFX 197 0 istic .
+SFX 3256 Y 1
+SFX 3256 0 istin .
+SFX 4516 Y 1
+SFX 4516 0 istis .
+SFX 3279 Y 1
+SFX 3279 0 imain .
+SFX 3278 Y 1
+SFX 3278 0 imais .
+SFX 4191 Y 1
+SFX 4191 0 punet .
+SFX 3282 Y 1
+SFX 3282 0 imadas .
+SFX 775 Y 1
+SFX 775 0 sian .
+SFX 941 Y 1
+SFX 941 0 sias .
+SFX 4755 Y 1
+SFX 4755 0 entera .
+SFX 3140 Y 1
+SFX 3140 0 ntina .
+SFX 2532 Y 1
+SFX 2532 0 ppà .
+SFX 4410 Y 1
+SFX 4410 0 lista .
+SFX 1213 Y 1
+SFX 1213 0 toric .
+SFX 3643 Y 1
+SFX 3643 0 ventar .
+SFX 4409 Y 1
+SFX 4409 0 lists .
+SFX 4221 Y 1
+SFX 4221 0 portadas .
+SFX 682 Y 1
+SFX 682 0 radas .
+SFX 579 Y 1
+SFX 579 0 liseschian .
+SFX 578 Y 1
+SFX 578 0 liseschias .
+SFX 4291 Y 1
+SFX 4291 0 ocheschan .
+SFX 2718 Y 1
+SFX 2718 0 eravan .
+SFX 4290 Y 1
+SFX 4290 0 ocheschas .
+SFX 2717 Y 1
+SFX 2717 0 eravas .
+SFX 1651 Y 1
+SFX 1651 0 mentassan .
+SFX 1650 Y 1
+SFX 1650 0 mentassas .
+SFX 4223 Y 1
+SFX 4223 0 portà .
+SFX 2583 Y 1
+SFX 2583 0 liassan .
+SFX 2582 Y 1
+SFX 2582 0 liassas .
+SFX 3390 Y 1
+SFX 3390 0 essur .
+SFX 1730 Y 1
+SFX 1730 0 gnassan .
+SFX 1729 Y 1
+SFX 1729 0 gnassas .
+SFX 4236 Y 1
+SFX 4236 0 oscop .
+SFX 1330 Y 1
+SFX 1330 0 ueschia .
+SFX 2793 Y 1
+SFX 2793 0 atorica .
+SFX 1262 Y 1
+SFX 1262 0 ofon .
+SFX 170 Y 1
+SFX 170 0 tassan .
+SFX 169 Y 1
+SFX 169 0 tassas .
+SFX 3943 Y 1
+SFX 3943 0 tgadad .
+SFX 4648 Y 1
+SFX 4648 0 gola .
+SFX 1589 Y 1
+SFX 1589 0 tschia .
+SFX 4793 Y 1
+SFX 4793 0 egnass .
+SFX 1039 Y 1
+SFX 1039 0 tgadas .
+SFX 1962 Y 1
+SFX 1962 0 arisada .
+SFX 4647 Y 1
+SFX 4647 0 gols .
+SFX 1960 Y 1
+SFX 1960 0 arisads .
+SFX 4394 Y 1
+SFX 4394 0 mentaziun .
+SFX 3523 Y 1
+SFX 3523 0 ceda .
+SFX 1466 Y 1
+SFX 1466 0 rader .
+SFX 3519 Y 1
+SFX 3519 0 cedi .
+SFX 3017 Y 1
+SFX 3017 0 tecnica .
+SFX 3864 Y 1
+SFX 3864 0 tracziun .
+SFX 1632 Y 1
+SFX 1632 0 risadas .
+SFX 1060 Y 1
+SFX 1060 0 gond .
+SFX 3395 Y 1
+SFX 3395 0 erlond .
+SFX 4790 Y 1
+SFX 4790 0 egnava .
+SFX 4288 Y 1
+SFX 4288 0 ocheschian .
+SFX 3134 Y 1
+SFX 3134 0 ocheschias .
+SFX 1756 Y 1
+SFX 1756 0 egliada .
+SFX 3276 Y 1
+SFX 3276 0 imass .
+SFX 935 Y 1
+SFX 935 0 ulesch .
+SFX 4797 Y 1
+SFX 4797 0 egliads .
+SFX 4289 Y 1
+SFX 4289 0 ocheschia .
+SFX 2357 Y 1
+SFX 2357 0 vegnian .
+SFX 2356 Y 1
+SFX 2356 0 vegnias .
+SFX 1958 Y 1
+SFX 1958 0 arisain .
+SFX 1957 Y 1
+SFX 1957 0 arisais .
+SFX 4536 Y 1
+SFX 4536 0 'instanza .
+SFX 525 Y 1
+SFX 525 0 pavan .
+SFX 524 Y 1
+SFX 524 0 pavas .
+SFX 3273 Y 1
+SFX 3273 0 imava .
+SFX 2128 Y 1
+SFX 2128 0 renta .
+SFX 934 Y 1
+SFX 934 0 ulescha .
+SFX 2209 Y 1
+SFX 2209 0 iravan .
+SFX 2208 Y 1
+SFX 2208 0 iravas .
+SFX 1821 Y 1
+SFX 1821 0 terapia .
+SFX 3715 Y 1
+SFX 3715 0 unalisescha .
+SFX 1853 Y 1
+SFX 1853 0 nomia .
+SFX 4332 Y 1
+SFX 4332 0 nomic .
+SFX 4037 Y 1
+SFX 4037 0 sina .
+SFX 2019 Y 1
+SFX 2019 0 vegnida .
+SFX 4094 Y 1
+SFX 4094 0 schentassan .
+SFX 4093 Y 1
+SFX 4093 0 schentassas .
+SFX 1778 Y 1
+SFX 1778 0 vegnids .
+SFX 1191 Y 1
+SFX 1191 0 damain .
+SFX 3434 Y 1
+SFX 3434 0 egliain .
+SFX 3433 Y 1
+SFX 3433 0 egliais .
+SFX 1258 Y 1
+SFX 1258 0 reschian .
+SFX 1257 Y 1
+SFX 1257 0 reschias .
+SFX 3602 Y 1
+SFX 3602 0 act .
+SFX 1894 Y 1
+SFX 1894 0 igliassan .
+SFX 1893 Y 1
+SFX 1893 0 igliassas .
+SFX 2970 Y 1
+SFX 2970 0 trescha .
+SFX 2070 Y 1
+SFX 2070 0 tinai .
+SFX 2991 Y 1
+SFX 2991 0 tinan .
+SFX 2742 Y 1
+SFX 2742 0 eglià .
+SFX 2067 Y 1
+SFX 2067 0 tinar .
+SFX 1339 Y 1
+SFX 1339 0 tinas .
+SFX 2650 Y 1
+SFX 2650 0 ignada .
+SFX 3894 Y 1
+SFX 3894 0 tivada .
+SFX 3299 Y 1
+SFX 3299 0 ignads .
+SFX 3892 Y 1
+SFX 3892 0 tivads .
+SFX 35 Y 1
+SFX 35 0 ada .
+SFX 315 Y 1
+SFX 315 0 adi .
+SFX 44 Y 1
+SFX 44 0 ads .
+SFX 4858 Y 1
+SFX 4858 0 currian .
+SFX 4857 Y 1
+SFX 4857 0 currias .
+SFX 1634 Y 1
+SFX 1634 0 risà .
+SFX 372 Y 1
+SFX 372 0 ibel .
+SFX 3378 Y 1
+SFX 3378 0 fitgada .
+SFX 788 Y 1
+SFX 788 0 egiadas .
+SFX 3376 Y 1
+SFX 3376 0 fitgads .
+SFX 2578 Y 1
+SFX 2578 0 lieunga .
+SFX 1492 Y 1
+SFX 1492 0 ivond .
+SFX 3077 Y 1
+SFX 3077 0 schuna .
+SFX 1150 Y 1
+SFX 1150 0 itadas .
+SFX 2458 Y 1
+SFX 2458 0 sist .
+SFX 2344 Y 1
+SFX 2344 0 vlamain .
+SFX 3109 Y 1
+SFX 3109 0 radra .
+SFX 3640 Y 1
+SFX 3640 0 vesida .
+SFX 1574 Y 1
+SFX 1574 0 agi .
+SFX 2467 Y 1
+SFX 2467 0 scripziun .
+SFX 570 Y 1
+SFX 570 0 agl .
+SFX 4035 Y 1
+SFX 4035 0 sista .
+SFX 3035 Y 1
+SFX 3035 0 strassan .
+SFX 3034 Y 1
+SFX 3034 0 strassas .
+SFX 4856 Y 1
+SFX 4856 0 currida .
+SFX 4624 Y 1
+SFX 4624 0 hetteschian .
+SFX 4623 Y 1
+SFX 4623 0 hetteschias .
+SFX 4854 Y 1
+SFX 4854 0 currids .
+SFX 890 Y 1
+SFX 890 0 siun .
+SFX 2648 Y 1
+SFX 2648 0 ignain .
+SFX 1955 Y 1
+SFX 1955 0 arisass .
+SFX 3889 Y 1
+SFX 3889 0 tivain .
+SFX 2647 Y 1
+SFX 2647 0 ignais .
+SFX 3888 Y 1
+SFX 3888 0 tivais .
+SFX 3598 Y 1
+SFX 3598 0 agliadas .
+SFX 1799 Y 1
+SFX 1799 0 tschond .
+SFX 2602 Y 1
+SFX 2602 0 itura .
+SFX 31 Y 1
+SFX 31 0 ain .
+SFX 3069 Y 1
+SFX 3069 0 siva .
+SFX 472 Y 1
+SFX 472 0 air .
+SFX 30 Y 1
+SFX 30 0 ais .
+SFX 2849 Y 1
+SFX 2849 0 aiv .
+SFX 4477 Y 1
+SFX 4477 0 iturs .
+SFX 2331 Y 1
+SFX 2331 0 zzian .
+SFX 2330 Y 1
+SFX 2330 0 zzias .
+SFX 2745 Y 1
+SFX 2745 0 egiader .
+SFX 4935 Y 1
+SFX 4935 0 bilisà .
+SFX 1965 Y 1
+SFX 1965 0 alistic .
+SFX 3513 Y 1
+SFX 3513 0 cedidas .
+SFX 4488 Y 1
+SFX 4488 0 itader .
+SFX 461 Y 1
+SFX 461 0 rada .
+SFX 3374 Y 1
+SFX 3374 0 fitgain .
+SFX 3373 Y 1
+SFX 3373 0 fitgais .
+SFX 681 Y 1
+SFX 681 0 rads .
+SFX 1205 Y 1
+SFX 1205 0 urai .
+SFX 1204 Y 1
+SFX 1204 0 urar .
+SFX 3730 Y 1
+SFX 3730 0 unalisada .
+SFX 671 Y 1
+SFX 671 0 uras .
+SFX 2990 Y 1
+SFX 2990 0 tinia .
+SFX 3728 Y 1
+SFX 3728 0 unalisads .
+SFX 2354 Y 1
+SFX 2354 0 vegnind .
+SFX 1952 Y 1
+SFX 1952 0 arisava .
+SFX 146 Y 1
+SFX 146 0 ala .
+SFX 3188 Y 1
+SFX 3188 0 naria .
+SFX 217 Y 1
+SFX 217 0 als .
+SFX 913 Y 1
+SFX 913 0 ibla .
+SFX 3938 Y 1
+SFX 3938 0 tgera .
+SFX 4723 Y 1
+SFX 4723 0 estada .
+SFX 1275 Y 1
+SFX 1275 0 isabel .
+SFX 3430 Y 1
+SFX 3430 0 egliass .
+SFX 4248 Y 1
+SFX 4248 0 orisavan .
+SFX 4247 Y 1
+SFX 4247 0 orisavas .
+SFX 1373 Y 1
+SFX 1373 0 iglià .
+SFX 802 Y 1
+SFX 802 0 ana .
+SFX 3568 Y 1
+SFX 3568 0 and .
+SFX 1100 Y 1
+SFX 1100 0 ani .
+SFX 1766 Y 1
+SFX 1766 0 ans .
+SFX 80 Y 1
+SFX 80 0 ant .
+SFX 2734 Y 1
+SFX 2734 0 enas .
+SFX 538 Y 1
+SFX 538 0 cà .
+SFX 1716 Y 1
+SFX 1716 0 idà .
+SFX 3427 Y 1
+SFX 3427 0 egliava .
+SFX 654 Y 1
+SFX 654 0 rain .
+SFX 653 Y 1
+SFX 653 0 rais .
+SFX 1796 Y 1
+SFX 1796 0 ualmain .
+SFX 3726 Y 1
+SFX 3726 0 unalisain .
+SFX 3725 Y 1
+SFX 3725 0 unalisais .
+SFX 2352 Y 1
+SFX 2352 0 vegniss .
+SFX 4428 Y 1
+SFX 4428 0 linà .
+SFX 3049 Y 1
+SFX 3049 0 stavan .
+SFX 1741 Y 1
+SFX 1741 0 giavan .
+SFX 3048 Y 1
+SFX 3048 0 stavas .
+SFX 1740 Y 1
+SFX 1740 0 giavas .
+SFX 2733 Y 1
+SFX 2733 0 enda .
+SFX 3413 Y 1
+SFX 3413 0 endi .
+SFX 4852 Y 1
+SFX 4852 0 currind .
+SFX 4615 Y 1
+SFX 4615 0 icist .
+SFX 1098 Y 1
+SFX 1098 0 blas .
+SFX 247 Y 1
+SFX 247 0 ara .
+SFX 1964 Y 1
+SFX 1964 0 ard .
+SFX 224 Y 1
+SFX 224 0 ari .
+SFX 2960 Y 1
+SFX 2960 0 turada .
+SFX 670 Y 1
+SFX 670 0 ars .
+SFX 2958 Y 1
+SFX 2958 0 turads .
+SFX 3108 Y 1
+SFX 3108 0 rala .
+SFX 2646 Y 1
+SFX 2646 0 ignass .
+SFX 3884 Y 1
+SFX 3884 0 tivass .
+SFX 3043 Y 1
+SFX 3043 0 stituziun .
+SFX 36 Y 1
+SFX 36 0 ass .
+SFX 2817 Y 1
+SFX 2817 0 ast .
+SFX 2029 Y 1
+SFX 2029 0 uria .
+SFX 4849 Y 1
+SFX 4849 0 currissan .
+SFX 2197 Y 1
+SFX 2197 0 itgada .
+SFX 4848 Y 1
+SFX 4848 0 currissas .
+SFX 3671 Y 1
+SFX 3671 0 uplescha .
+SFX 4833 Y 1
+SFX 4833 0 dicat .
+SFX 2195 Y 1
+SFX 2195 0 itgads .
+SFX 2349 Y 1
+SFX 2349 0 vegniva .
+SFX 3582 Y 1
+SFX 3582 0 aleschas .
+SFX 1099 Y 1
+SFX 1099 0 ata .
+SFX 1940 Y 1
+SFX 1940 0 atg .
+SFX 926 Y 1
+SFX 926 0 ats .
+SFX 4676 Y 1
+SFX 4676 0 gettas .
+SFX 4783 Y 1
+SFX 4783 0 electrica .
+SFX 3455 Y 1
+SFX 3455 0 detgna .
+SFX 1314 Y 1
+SFX 1314 0 urond .
+SFX 2993 Y 1
+SFX 2993 0 tifitgada .
+SFX 3925 Y 1
+SFX 3925 0 tifitgads .
+SFX 3371 Y 1
+SFX 3371 0 fitgass .
+SFX 1837 Y 1
+SFX 1837 0 rant .
+SFX 925 Y 1
+SFX 925 0 aun .
+SFX 3076 Y 1
+SFX 3076 0 scola .
+SFX 3556 Y 1
+SFX 3556 0 aticas .
+SFX 2643 Y 1
+SFX 2643 0 ignava .
+SFX 3881 Y 1
+SFX 3881 0 tivava .
+SFX 37 Y 1
+SFX 37 0 ava .
+SFX 3199 Y 1
+SFX 3199 0 minavan .
+SFX 4958 Y 1
+SFX 4958 0 avi .
+SFX 3198 Y 1
+SFX 3198 0 minavas .
+SFX 4457 Y 1
+SFX 4457 0 ladira .
+SFX 4850 Y 1
+SFX 4850 0 curriss .
+SFX 2656 Y 1
+SFX 2656 0 ieras .
+SFX 4965 Y 1
+SFX 4965 0 atlon .
+SFX 479 Y 1
+SFX 479 0 pai .
+SFX 546 Y 1
+SFX 546 0 pan .
+SFX 444 Y 1
+SFX 444 0 par .
+SFX 406 Y 1
+SFX 406 0 pas .
+SFX 2956 Y 1
+SFX 2956 0 turain .
+SFX 2955 Y 1
+SFX 2955 0 turais .
+SFX 87 Y 1
+SFX 87 0 ment .
+SFX 3368 Y 1
+SFX 3368 0 fitgava .
+SFX 3789 Y 1
+SFX 3789 0 tunavan .
+SFX 3788 Y 1
+SFX 3788 0 tunavas .
+SFX 2193 Y 1
+SFX 2193 0 itgain .
+SFX 4426 Y 1
+SFX 4426 0 linadas .
+SFX 1677 Y 1
+SFX 1677 0 itgais .
+SFX 4487 Y 1
+SFX 4487 0 itaivel .
+SFX 3249 Y 1
+SFX 3249 0 itgescha .
+SFX 4847 Y 1
+SFX 4847 0 curriva .
+SFX 3923 Y 1
+SFX 3923 0 tifitgain .
+SFX 3922 Y 1
+SFX 3922 0 tifitgais .
+SFX 652 Y 1
+SFX 652 0 rass .
+SFX 3723 Y 1
+SFX 3723 0 unalisass .
+SFX 3566 Y 1
+SFX 3566 0 anond .
+SFX 3234 Y 1
+SFX 3234 0 landa .
+SFX 4759 Y 1
+SFX 4759 0 enna .
+SFX 2536 Y 1
+SFX 2536 0 pel .
+SFX 1044 Y 1
+SFX 1044 0 per .
+SFX 4228 Y 1
+SFX 4228 0 pes .
+SFX 1841 Y 1
+SFX 1841 0 pet .
+SFX 4721 Y 1
+SFX 4721 0 estass .
+SFX 391 Y 1
+SFX 391 0 hian .
+SFX 408 Y 1
+SFX 408 0 hias .
+SFX 2172 Y 1
+SFX 2172 0 mess .
+SFX 4904 Y 1
+SFX 4904 0 centric .
+SFX 651 Y 1
+SFX 651 0 rava .
+SFX 4761 Y 1
+SFX 4761 0 endian .
+SFX 4760 Y 1
+SFX 4760 0 endias .
+SFX 4542 Y 1
+SFX 4542 0 imeschian .
+SFX 4541 Y 1
+SFX 4541 0 imeschias .
+SFX 628 Y 1
+SFX 628 0 chond .
+SFX 3720 Y 1
+SFX 3720 0 unalisava .
+SFX 2303 Y 1
+SFX 2303 0 egnian .
+SFX 2302 Y 1
+SFX 2302 0 egnias .
+SFX 1758 Y 1
+SFX 1758 0 ecziun .
+SFX 4720 Y 1
+SFX 4720 0 estava .
+SFX 3046 Y 1
+SFX 3046 0 sters .
+SFX 545 Y 1
+SFX 545 0 pia .
+SFX 1349 Y 1
+SFX 1349 0 pin .
+SFX 3118 Y 1
+SFX 3118 0 pir .
+SFX 2027 Y 1
+SFX 2027 0 urus .
+SFX 4690 Y 1
+SFX 4690 0 fecziun .
+SFX 910 Y 1
+SFX 910 0 iglia .
+SFX 4822 Y 1
+SFX 4822 0 ducziun .
+SFX 1361 Y 1
+SFX 1361 0 mesch .
+SFX 3956 Y 1
+SFX 3956 0 tegiassan .
+SFX 3955 Y 1
+SFX 3955 0 tegiassas .
+SFX 4631 Y 1
+SFX 4631 0 hettavan .
+SFX 3697 Y 1
+SFX 3697 0 unera .
+SFX 4921 Y 1
+SFX 4921 0 bilisesch .
+SFX 4630 Y 1
+SFX 4630 0 hettavas .
+SFX 195 Y 1
+SFX 195 0 enta .
+SFX 4789 Y 1
+SFX 4789 0 egnavan .
+SFX 3463 Y 1
+SFX 3463 0 ctur .
+SFX 600 Y 1
+SFX 600 0 ents .
+SFX 4788 Y 1
+SFX 4788 0 egnavas .
+SFX 3364 Y 1
+SFX 3364 0 fitgescha .
+SFX 2953 Y 1
+SFX 2953 0 turass .
+SFX 4645 Y 1
+SFX 4645 0 grams .
+SFX 4942 Y 1
+SFX 4942 0 bescha .
+SFX 2191 Y 1
+SFX 2191 0 itgass .
+SFX 1763 Y 1
+SFX 1763 0 azia .
+SFX 4546 Y 1
+SFX 4546 0 imescha .
+SFX 3920 Y 1
+SFX 3920 0 tifitgass .
+SFX 2950 Y 1
+SFX 2950 0 turava .
+SFX 3127 Y 1
+SFX 3127 0 onda .
+SFX 637 Y 1
+SFX 637 0 rà .
+SFX 132 Y 1
+SFX 132 0 adad .
+SFX 2188 Y 1
+SFX 2188 0 itgava .
+SFX 1256 Y 1
+SFX 1256 0 rì .
+SFX 43 Y 1
+SFX 43 0 adas .
+SFX 110 Y 1
+SFX 110 0 isà .
+SFX 1569 Y 1
+SFX 1569 0 chidas .
+SFX 2651 Y 1
+SFX 2651 0 ignà .
+SFX 1636 Y 1
+SFX 1636 0 ppa .
+SFX 4038 Y 1
+SFX 4038 0 silvan .
+SFX 3689 Y 1
+SFX 3689 0 untar .
+SFX 3917 Y 1
+SFX 3917 0 tifitgava .
+SFX 313 Y 1
+SFX 313 0 enza .
+SFX 68 Y 1
+SFX 68 0 aziun .
+SFX 2516 Y 1
+SFX 2516 0 pra .
+SFX 1525 Y 1
+SFX 1525 0 iunada .
+SFX 1524 Y 1
+SFX 1524 0 iunads .
+SFX 1239 Y 1
+SFX 1239 0 tezza .
+SFX 4273 Y 1
+SFX 4273 0 onia .
+SFX 70 Y 1
+SFX 70 0 ader .
+SFX 4271 Y 1
+SFX 4271 0 onic .
+SFX 1183 Y 1
+SFX 1183 0 diras .
+SFX 4270 Y 1
+SFX 4270 0 onim .
+SFX 2637 Y 1
+SFX 2637 0 ilada .
+SFX 3296 Y 1
+SFX 3296 0 ilads .
+SFX 1961 Y 1
+SFX 1961 0 arisadas .
+SFX 4587 Y 1
+SFX 4587 0 iffà .
+SFX 4451 Y 1
+SFX 4451 0 lanta .
+SFX 3446 Y 1
+SFX 3446 0 duct .
+SFX 434 Y 1
+SFX 434 0 schai .
+SFX 476 Y 1
+SFX 476 0 schan .
+SFX 777 Y 1
+SFX 777 0 schar .
+SFX 1467 Y 1
+SFX 1467 0 pun .
+SFX 403 Y 1
+SFX 403 0 schas .
+SFX 1838 Y 1
+SFX 1838 0 pus .
+SFX 1266 Y 1
+SFX 1266 0 neschan .
+SFX 1265 Y 1
+SFX 1265 0 neschas .
+SFX 3570 Y 1
+SFX 3570 0 anavan .
+SFX 3569 Y 1
+SFX 3569 0 anavas .
+SFX 4193 Y 1
+SFX 4193 0 provediment .
+SFX 2800 Y 1
+SFX 2800 0 atiseschan .
+SFX 2799 Y 1
+SFX 2799 0 atiseschas .
+SFX 3516 Y 1
+SFX 3516 0 cedian .
+SFX 1618 Y 1
+SFX 1618 0 riseschan .
+SFX 3515 Y 1
+SFX 3515 0 cedias .
+SFX 1617 Y 1
+SFX 1617 0 riseschas .
+SFX 1523 Y 1
+SFX 1523 0 iunain .
+SFX 1522 Y 1
+SFX 1522 0 iunais .
+SFX 2329 Y 1
+SFX 2329 0 adis .
+SFX 2923 Y 1
+SFX 2923 0 ularitad .
+SFX 2671 Y 1
+SFX 2671 0 hist .
+SFX 4905 Y 1
+SFX 4905 0 capacitad .
+SFX 3294 Y 1
+SFX 3294 0 ilain .
+SFX 4708 Y 1
+SFX 4708 0 eticas .
+SFX 2636 Y 1
+SFX 2636 0 ilais .
+SFX 2108 Y 1
+SFX 2108 0 schel .
+SFX 3079 Y 1
+SFX 3079 0 schen .
+SFX 1611 Y 1
+SFX 1611 0 scher .
+SFX 2472 Y 1
+SFX 2472 0 schet .
+SFX 2851 Y 1
+SFX 2851 0 adads .
+SFX 879 Y 1
+SFX 879 0 atscha .
+SFX 3514 Y 1
+SFX 3514 0 cedida .
+SFX 2600 Y 1
+SFX 2600 0 iunala .
+SFX 3512 Y 1
+SFX 3512 0 cedids .
+SFX 717 Y 1
+SFX 717 0 ifitgai .
+SFX 4473 Y 1
+SFX 4473 0 iunals .
+SFX 660 Y 1
+SFX 660 0 ifitgar .
+SFX 2568 Y 1
+SFX 2568 0 messa .
+SFX 4419 Y 1
+SFX 4419 0 linassan .
+SFX 4418 Y 1
+SFX 4418 0 linassas .
+SFX 1933 Y 1
+SFX 1933 0 duir .
+SFX 4691 Y 1
+SFX 4691 0 fatscha .
+SFX 3719 Y 1
+SFX 3719 0 unalisavan .
+SFX 3718 Y 1
+SFX 3718 0 unalisavas .
+SFX 4063 Y 1
+SFX 4063 0 scrivevan .
+SFX 4062 Y 1
+SFX 4062 0 scrivevas .
+SFX 967 Y 1
+SFX 967 0 gada .
+SFX 3774 Y 1
+SFX 3774 0 ualisassan .
+SFX 830 Y 1
+SFX 830 0 egel .
+SFX 3773 Y 1
+SFX 3773 0 ualisassas .
+SFX 40 Y 1
+SFX 40 0 assan .
+SFX 1012 Y 1
+SFX 1012 0 gads .
+SFX 39 Y 1
+SFX 39 0 assas .
+SFX 3792 Y 1
+SFX 3792 0 tunassan .
+SFX 3791 Y 1
+SFX 3791 0 tunassas .
+SFX 320 Y 1
+SFX 320 0 tesch .
+SFX 2709 Y 1
+SFX 2709 0 erlada .
+SFX 420 Y 1
+SFX 420 0 schia .
+SFX 3406 Y 1
+SFX 3406 0 erlads .
+SFX 1013 Y 1
+SFX 1013 0 gadas .
+SFX 4082 Y 1
+SFX 4082 0 schim .
+SFX 2469 Y 1
+SFX 2469 0 schin .
+SFX 2850 Y 1
+SFX 2850 0 ador .
+SFX 1264 Y 1
+SFX 1264 0 neschia .
+SFX 3547 Y 1
+SFX 3547 0 azza .
+SFX 586 Y 1
+SFX 586 0 lisavan .
+SFX 585 Y 1
+SFX 585 0 lisavas .
+SFX 4429 Y 1
+SFX 4429 0 liera .
+SFX 2798 Y 1
+SFX 2798 0 atiseschia .
+SFX 1616 Y 1
+SFX 1616 0 riseschia .
+SFX 3444 Y 1
+SFX 3444 0 duna .
+SFX 860 Y 1
+SFX 860 0 schadas .
+SFX 4081 Y 1
+SFX 4081 0 schla .
+SFX 3219 Y 1
+SFX 3219 0 menteschan .
+SFX 2386 Y 1
+SFX 2386 0 ualisaziun .
+SFX 3926 Y 1
+SFX 3926 0 tifitgadas .
+SFX 2183 Y 1
+SFX 2183 0 iunari .
+SFX 3218 Y 1
+SFX 3218 0 menteschas .
+SFX 141 Y 1
+SFX 141 0 adra .
+SFX 333 Y 1
+SFX 333 0 teschian .
+SFX 332 Y 1
+SFX 332 0 teschias .
+SFX 667 Y 1
+SFX 667 0 egia .
+SFX 876 Y 1
+SFX 876 0 chessan .
+SFX 794 Y 1
+SFX 794 0 chessas .
+SFX 1069 Y 1
+SFX 1069 0 fond .
+SFX 4680 Y 1
+SFX 4680 0 gader .
+SFX 1520 Y 1
+SFX 1520 0 iunass .
+SFX 3365 Y 1
+SFX 3365 0 fitgesch .
+SFX 4556 Y 1
+SFX 4556 0 ignian .
+SFX 4555 Y 1
+SFX 4555 0 ignias .
+SFX 209 Y 1
+SFX 209 0 iai .
+SFX 868 Y 1
+SFX 868 0 ial .
+SFX 1011 Y 1
+SFX 1011 0 gain .
+SFX 8 Y 1
+SFX 8 0 ian .
+SFX 198 Y 1
+SFX 198 0 iar .
+SFX 1010 Y 1
+SFX 1010 0 gais .
+SFX 7 Y 1
+SFX 7 0 ias .
+SFX 1008 Y 1
+SFX 1008 0 iat .
+SFX 3404 Y 1
+SFX 3404 0 erlain .
+SFX 3403 Y 1
+SFX 3403 0 erlais .
+SFX 4382 Y 1
+SFX 4382 0 mineschian .
+SFX 4381 Y 1
+SFX 4381 0 mineschias .
+SFX 3292 Y 1
+SFX 3292 0 ilass .
+SFX 4014 Y 1
+SFX 4014 0 ssà .
+SFX 467 Y 1
+SFX 467 0 litad .
+SFX 2194 Y 1
+SFX 2194 0 itgai .
+SFX 2192 Y 1
+SFX 2192 0 itgar .
+SFX 1199 Y 1
+SFX 1199 0 adur .
+SFX 99 Y 1
+SFX 99 0 ica .
+SFX 3423 Y 1
+SFX 3423 0 egls .
+SFX 354 Y 1
+SFX 354 0 ics .
+SFX 2110 Y 1
+SFX 2110 0 schader .
+SFX 2307 Y 1
+SFX 2307 0 dura .
+SFX 3510 Y 1
+SFX 3510 0 cedind .
+SFX 2746 Y 1
+SFX 2746 0 durs .
+SFX 3891 Y 1
+SFX 3891 0 tivai .
+SFX 1517 Y 1
+SFX 1517 0 iunava .
+SFX 3886 Y 1
+SFX 3886 0 tivan .
+SFX 3885 Y 1
+SFX 3885 0 tivar .
+SFX 1338 Y 1
+SFX 1338 0 tivas .
+SFX 2416 Y 1
+SFX 2416 0 tadira .
+SFX 501 Y 1
+SFX 501 0 alisescha .
+SFX 71 Y 1
+SFX 71 0 ida .
+SFX 4722 Y 1
+SFX 4722 0 estar .
+SFX 74 Y 1
+SFX 74 0 ids .
+SFX 1625 Y 1
+SFX 1625 0 risassan .
+SFX 1624 Y 1
+SFX 1624 0 risassas .
+SFX 1562 Y 1
+SFX 1562 0 egna .
+SFX 911 Y 1
+SFX 911 0 iel .
+SFX 3289 Y 1
+SFX 3289 0 ilava .
+SFX 325 Y 1
+SFX 325 0 ier .
+SFX 4588 Y 1
+SFX 4588 0 ies .
+SFX 1704 Y 1
+SFX 1704 0 iet .
+SFX 1544 Y 1
+SFX 1544 0 ieu .
+SFX 338 Y 1
+SFX 338 0 iez .
+SFX 3352 Y 1
+SFX 3352 0 gant .
+SFX 562 Y 1
+SFX 562 0 cassan .
+SFX 1506 Y 1
+SFX 1506 0 ivada .
+SFX 561 Y 1
+SFX 561 0 cassas .
+SFX 4482 Y 1
+SFX 4482 0 itgel .
+SFX 1504 Y 1
+SFX 1504 0 ivads .
+SFX 983 Y 1
+SFX 983 0 bels .
+SFX 2321 Y 1
+SFX 2321 0 asch .
+SFX 1316 Y 1
+SFX 1316 0 uravan .
+SFX 965 Y 1
+SFX 965 0 igl .
+SFX 2653 Y 1
+SFX 2653 0 ign .
+SFX 1315 Y 1
+SFX 1315 0 uravas .
+SFX 3217 Y 1
+SFX 3217 0 menteschia .
+SFX 4029 Y 1
+SFX 4029 0 siunai .
+SFX 4026 Y 1
+SFX 4026 0 siunar .
+SFX 490 Y 1
+SFX 490 0 inassan .
+SFX 544 Y 1
+SFX 544 0 rian .
+SFX 489 Y 1
+SFX 489 0 inassas .
+SFX 336 Y 1
+SFX 336 0 rias .
+SFX 2292 Y 1
+SFX 2292 0 ester .
+SFX 1464 Y 1
+SFX 1464 0 risaziun .
+SFX 2187 Y 1
+SFX 2187 0 itgavan .
+SFX 2186 Y 1
+SFX 2186 0 itgavas .
+SFX 3508 Y 1
+SFX 3508 0 cediss .
+SFX 1461 Y 1
+SFX 1461 0 schun .
+SFX 3462 Y 1
+SFX 3462 0 cudeschs .
+SFX 3405 Y 1
+SFX 3405 0 erlai .
+SFX 3402 Y 1
+SFX 3402 0 erlar .
+SFX 2245 Y 1
+SFX 2245 0 geschian .
+SFX 2244 Y 1
+SFX 2244 0 geschias .
+SFX 4407 Y 1
+SFX 4407 0 locaziun .
+SFX 1890 Y 1
+SFX 1890 0 iii .
+SFX 3801 Y 1
+SFX 3801 0 ttond .
+SFX 3639 Y 1
+SFX 3639 0 vidas .
+SFX 1428 Y 1
+SFX 1428 0 tschada .
+SFX 2055 Y 1
+SFX 2055 0 tschads .
+SFX 4106 Y 1
+SFX 4106 0 schenta .
+SFX 1835 Y 1
+SFX 1835 0 rica .
+SFX 4175 Y 1
+SFX 4175 0 rics .
+SFX 2786 Y 1
+SFX 2786 0 caziun .
+SFX 4226 Y 1
+SFX 4226 0 plain .
+SFX 2994 Y 1
+SFX 2994 0 tifitgà .
+SFX 995 Y 1
+SFX 995 0 rida .
+SFX 1254 Y 1
+SFX 1254 0 rids .
+SFX 1067 Y 1
+SFX 1067 0 gass .
+SFX 2326 Y 1
+SFX 2326 0 aivlas .
+SFX 1698 Y 1
+SFX 1698 0 inaziun .
+SFX 3505 Y 1
+SFX 3505 0 cediva .
+SFX 1232 Y 1
+SFX 1232 0 tisadas .
+SFX 3401 Y 1
+SFX 3401 0 erlass .
+SFX 1502 Y 1
+SFX 1502 0 ivain .
+SFX 1501 Y 1
+SFX 1501 0 ivais .
+SFX 1465 Y 1
+SFX 1465 0 riel .
+SFX 1054 Y 1
+SFX 1054 0 ila .
+SFX 1167 Y 1
+SFX 1167 0 ils .
+SFX 1672 Y 1
+SFX 1672 0 ivesch .
+SFX 2628 Y 1
+SFX 2628 0 ima .
+SFX 4069 Y 1
+SFX 4069 0 scrivend .
+SFX 3638 Y 1
+SFX 3638 0 vider .
+SFX 3946 Y 1
+SFX 3946 0 testa .
+SFX 143 Y 1
+SFX 143 0 ina .
+SFX 1064 Y 1
+SFX 1064 0 gava .
+SFX 152 Y 1
+SFX 152 0 ind .
+SFX 904 Y 1
+SFX 904 0 ing .
+SFX 1697 Y 1
+SFX 1697 0 ino .
+SFX 104 Y 1
+SFX 104 0 evan .
+SFX 303 Y 1
+SFX 303 0 ins .
+SFX 2221 Y 1
+SFX 2221 0 int .
+SFX 103 Y 1
+SFX 103 0 evas .
+SFX 3398 Y 1
+SFX 3398 0 erlava .
+SFX 1591 Y 1
+SFX 1591 0 tschain .
+SFX 1590 Y 1
+SFX 1590 0 tschais .
+SFX 553 Y 1
+SFX 553 0 nadas .
+SFX 1884 Y 1
+SFX 1884 0 ion .
+SFX 2638 Y 1
+SFX 2638 0 ilà .
+SFX 2142 Y 1
+SFX 2142 0 ogen .
+SFX 2982 Y 1
+SFX 2982 0 trai .
+SFX 3863 Y 1
+SFX 3863 0 tral .
+SFX 2477 Y 1
+SFX 2477 0 schadra .
+SFX 2979 Y 1
+SFX 2979 0 trar .
+SFX 2978 Y 1
+SFX 2978 0 tras .
+SFX 4508 Y 1
+SFX 4508 0 istrà .
+SFX 646 Y 1
+SFX 646 0 vladad .
+SFX 2010 Y 1
+SFX 2010 0 vlas .
+SFX 3126 Y 1
+SFX 3126 0 onomia .
+SFX 376 Y 1
+SFX 376 0 ira .
+SFX 1514 Y 1
+SFX 1514 0 iunesch .
+SFX 4532 Y 1
+SFX 4532 0 iri .
+SFX 2206 Y 1
+SFX 2206 0 irs .
+SFX 4067 Y 1
+SFX 4067 0 scrivess .
+SFX 3540 Y 1
+SFX 3540 0 caria .
+SFX 2370 Y 1
+SFX 2370 0 usiun .
+SFX 3384 Y 1
+SFX 3384 0 etscha .
+SFX 1047 Y 1
+SFX 1047 0 nader .
+SFX 3587 Y 1
+SFX 3587 0 alassan .
+SFX 1153 Y 1
+SFX 1153 0 isa .
+SFX 3586 Y 1
+SFX 3586 0 alassas .
+SFX 145 Y 1
+SFX 145 0 iss .
+SFX 88 Y 1
+SFX 88 0 ist .
+SFX 4300 Y 1
+SFX 4300 0 ocassan .
+SFX 4299 Y 1
+SFX 4299 0 ocassas .
+SFX 1414 Y 1
+SFX 1414 0 ureschan .
+SFX 1413 Y 1
+SFX 1413 0 ureschas .
+SFX 523 Y 1
+SFX 523 0 pond .
+SFX 826 Y 1
+SFX 826 0 ita .
+SFX 4714 Y 1
+SFX 4714 0 esteschian .
+SFX 4713 Y 1
+SFX 4713 0 esteschias .
+SFX 4483 Y 1
+SFX 4483 0 itg .
+SFX 1139 Y 1
+SFX 1139 0 its .
+SFX 994 Y 1
+SFX 994 0 rina .
+SFX 1253 Y 1
+SFX 1253 0 rind .
+SFX 3388 Y 1
+SFX 3388 0 estra .
+SFX 3105 Y 1
+SFX 3105 0 rins .
+SFX 2391 Y 1
+SFX 2391 0 turesch .
+SFX 1325 Y 1
+SFX 1325 0 urada .
+SFX 4064 Y 1
+SFX 4064 0 scriveva .
+SFX 1526 Y 1
+SFX 1526 0 ium .
+SFX 211 Y 1
+SFX 211 0 iun .
+SFX 4472 Y 1
+SFX 4472 0 iur .
+SFX 1323 Y 1
+SFX 1323 0 urads .
+SFX 1138 Y 1
+SFX 1138 0 ius .
+SFX 2952 Y 1
+SFX 2952 0 turassan .
+SFX 2951 Y 1
+SFX 2951 0 turassas .
+SFX 2711 Y 1
+SFX 2711 0 ereschian .
+SFX 2710 Y 1
+SFX 2710 0 ereschias .
+SFX 2945 Y 1
+SFX 2945 0 udai .
+SFX 1499 Y 1
+SFX 1499 0 ivass .
+SFX 2383 Y 1
+SFX 2383 0 udan .
+SFX 2037 Y 1
+SFX 2037 0 udas .
+SFX 4260 Y 1
+SFX 4260 0 orisà .
+SFX 86 Y 1
+SFX 86 0 iva .
+SFX 4726 Y 1
+SFX 4726 0 essain .
+SFX 4725 Y 1
+SFX 4725 0 essais .
+SFX 957 Y 1
+SFX 957 0 ivs .
+SFX 4243 Y 1
+SFX 4243 0 oriseschan .
+SFX 4242 Y 1
+SFX 4242 0 oriseschas .
+SFX 2819 Y 1
+SFX 2819 0 assa .
+SFX 3135 Y 1
+SFX 3135 0 ocaziun .
+SFX 2533 Y 1
+SFX 2533 0 port .
+SFX 229 Y 1
+SFX 229 0 lavan .
+SFX 228 Y 1
+SFX 228 0 lavas .
+SFX 1639 Y 1
+SFX 1639 0 ogna .
+SFX 1807 Y 1
+SFX 1807 0 tschass .
+SFX 1496 Y 1
+SFX 1496 0 ivava .
+SFX 1470 Y 1
+SFX 1470 0 porta .
+SFX 1469 Y 1
+SFX 1469 0 posiziun .
+SFX 2132 Y 1
+SFX 2132 0 post .
+SFX 487 Y 1
+SFX 487 0 inavan .
+SFX 486 Y 1
+SFX 486 0 inavas .
+SFX 4489 Y 1
+SFX 4489 0 istrond .
+SFX 1252 Y 1
+SFX 1252 0 riss .
+SFX 1463 Y 1
+SFX 1463 0 rist .
+SFX 1873 Y 1
+SFX 1873 0 izi .
+SFX 1322 Y 1
+SFX 1322 0 urain .
+SFX 1321 Y 1
+SFX 1321 0 urais .
+SFX 3024 Y 1
+SFX 3024 0 tabilitad .
+SFX 2325 Y 1
+SFX 2325 0 anada .
+SFX 3578 Y 1
+SFX 3578 0 anads .
+SFX 1804 Y 1
+SFX 1804 0 tschava .
+SFX 1412 Y 1
+SFX 1412 0 ureschia .
+SFX 1120 Y 1
+SFX 1120 0 riva .
+SFX 745 Y 1
+SFX 745 0 ifitgeschian .
+SFX 744 Y 1
+SFX 744 0 ifitgeschias .
+SFX 3603 Y 1
+SFX 3603 0 acitad .
+SFX 801 Y 1
+SFX 801 0 chada .
+SFX 3167 Y 1
+SFX 3167 0 nisà .
+SFX 799 Y 1
+SFX 799 0 chads .
+SFX 2382 Y 1
+SFX 2382 0 udia .
+SFX 3821 Y 1
+SFX 3821 0 ttà .
+SFX 865 Y 1
+SFX 865 0 lmain .
+SFX 4241 Y 1
+SFX 4241 0 oriseschia .
+SFX 3661 Y 1
+SFX 3661 0 urant .
+SFX 1858 Y 1
+SFX 1858 0 nadra .
+SFX 3604 Y 1
+SFX 3604 0 achau .
+SFX 1066 Y 1
+SFX 1066 0 gassan .
+SFX 1065 Y 1
+SFX 1065 0 gassas .
+SFX 3576 Y 1
+SFX 3576 0 anain .
+SFX 2324 Y 1
+SFX 2324 0 anais .
+SFX 2572 Y 1
+SFX 2572 0 litads .
+SFX 2212 Y 1
+SFX 2212 0 irassan .
+SFX 2211 Y 1
+SFX 2211 0 irassas .
+SFX 4953 Y 1
+SFX 4953 0 bai .
+SFX 1762 Y 1
+SFX 1762 0 bar .
+SFX 4951 Y 1
+SFX 4951 0 bas .
+SFX 3326 Y 1
+SFX 3326 0 ical .
+SFX 370 Y 1
+SFX 370 0 icas .
+SFX 4617 Y 1
+SFX 4617 0 icat .
+SFX 1822 Y 1
+SFX 1822 0 tamain .
+SFX 2778 Y 1
+SFX 2778 0 clavan .
+SFX 2777 Y 1
+SFX 2777 0 clavas .
+SFX 365 Y 1
+SFX 365 0 chain .
+SFX 392 Y 1
+SFX 392 0 chais .
+SFX 4523 Y 1
+SFX 4523 0 istian .
+SFX 4522 Y 1
+SFX 4522 0 istias .
+SFX 4855 Y 1
+SFX 4855 0 curridas .
+SFX 4910 Y 1
+SFX 4910 0 bratsch .
+SFX 3117 Y 1
+SFX 3117 0 ponida .
+SFX 5000 Y 1
+SFX 5000 0 aneschan .
+SFX 4999 Y 1
+SFX 4999 0 aneschas .
+SFX 985 Y 1
+SFX 985 0 abladad .
+SFX 1320 Y 1
+SFX 1320 0 urass .
+SFX 577 Y 1
+SFX 577 0 lisond .
+SFX 3248 Y 1
+SFX 3248 0 itgeschan .
+SFX 3247 Y 1
+SFX 3247 0 itgeschas .
+SFX 422 Y 1
+SFX 422 0 istica .
+SFX 4521 Y 1
+SFX 4521 0 istics .
+SFX 4203 Y 1
+SFX 4203 0 postas .
+SFX 399 Y 1
+SFX 399 0 zà .
+SFX 3591 Y 1
+SFX 3591 0 alai .
+SFX 3589 Y 1
+SFX 3589 0 alar .
+SFX 252 Y 1
+SFX 252 0 alas .
+SFX 4520 Y 1
+SFX 4520 0 istida .
+SFX 107 Y 1
+SFX 107 0 bel .
+SFX 4944 Y 1
+SFX 4944 0 ber .
+SFX 4936 Y 1
+SFX 4936 0 bet .
+SFX 3013 Y 1
+SFX 3013 0 tella .
+SFX 4040 Y 1
+SFX 4040 0 segnond .
+SFX 730 Y 1
+SFX 730 0 chà .
+SFX 4518 Y 1
+SFX 4518 0 istids .
+SFX 1402 Y 1
+SFX 1402 0 chì .
+SFX 2961 Y 1
+SFX 2961 0 turà .
+SFX 1317 Y 1
+SFX 1317 0 urava .
+SFX 4943 Y 1
+SFX 4943 0 besch .
+SFX 394 Y 1
+SFX 394 0 zond .
+SFX 3245 Y 1
+SFX 3245 0 itgeschian .
+SFX 3244 Y 1
+SFX 3244 0 itgeschias .
+SFX 688 Y 1
+SFX 688 0 ifitgadas .
+SFX 2539 Y 1
+SFX 2539 0 oteca .
+SFX 1267 Y 1
+SFX 1267 0 nescha .
+SFX 1988 Y 1
+SFX 1988 0 ziunond .
+SFX 3312 Y 1
+SFX 3312 0 idesch .
+SFX 3762 Y 1
+SFX 3762 0 ualisond .
+SFX 611 Y 1
+SFX 611 0 savan .
+SFX 610 Y 1
+SFX 610 0 savas .
+SFX 3574 Y 1
+SFX 3574 0 anass .
+SFX 3436 Y 1
+SFX 3436 0 egliadas .
+SFX 4435 Y 1
+SFX 4435 0 lent .
+SFX 4998 Y 1
+SFX 4998 0 aneschia .
+SFX 3241 Y 1
+SFX 3241 0 itscha .
+SFX 883 Y 1
+SFX 883 0 usas .
+SFX 4581 Y 1
+SFX 4581 0 ifitgader .
+SFX 504 Y 1
+SFX 504 0 alisavan .
+SFX 503 Y 1
+SFX 503 0 alisavas .
+SFX 1700 Y 1
+SFX 1700 0 igliond .
+SFX 3246 Y 1
+SFX 3246 0 itgeschia .
+SFX 1477 Y 1
+SFX 1477 0 ograf .
+SFX 2139 Y 1
+SFX 2139 0 ogram .
+SFX 200 Y 1
+SFX 200 0 bla .
+SFX 760 Y 1
+SFX 760 0 chass .
+SFX 2234 Y 1
+SFX 2234 0 icla .
+SFX 3571 Y 1
+SFX 3571 0 anava .
+SFX 3581 Y 1
+SFX 3581 0 alia .
+SFX 816 Y 1
+SFX 816 0 schevan .
+SFX 815 Y 1
+SFX 815 0 schevas .
+SFX 4509 Y 1
+SFX 4509 0 istorgia .
+SFX 3322 Y 1
+SFX 3322 0 iclà .
+SFX 2086 Y 1
+SFX 2086 0 stradas .
+SFX 1363 Y 1
+SFX 1363 0 lera .
+SFX 1493 Y 1
+SFX 1493 0 ivaziun .
+SFX 4432 Y 1
+SFX 4432 0 lers .
+SFX 4433 Y 1
+SFX 4433 0 lentà .
+SFX 729 Y 1
+SFX 729 0 chava .
+SFX 3379 Y 1
+SFX 3379 0 fitgà .
+SFX 4517 Y 1
+SFX 4517 0 istind .
+SFX 1745 Y 1
+SFX 1745 0 giai .
+SFX 916 Y 1
+SFX 916 0 gian .
+SFX 1556 Y 1
+SFX 1556 0 giar .
+SFX 2049 Y 1
+SFX 2049 0 uadas .
+SFX 750 Y 1
+SFX 750 0 gias .
+SFX 669 Y 1
+SFX 669 0 dà .
+SFX 1095 Y 1
+SFX 1095 0 dì .
+SFX 4287 Y 1
+SFX 4287 0 ocond .
+SFX 1923 Y 1
+SFX 1923 0 geschan .
+SFX 1922 Y 1
+SFX 1922 0 geschas .
+SFX 2011 Y 1
+SFX 2011 0 vista .
+SFX 3544 Y 1
+SFX 3544 0 biologia .
+SFX 4739 Y 1
+SFX 4739 0 erlesch .
+SFX 3348 Y 1
+SFX 3348 0 gida .
+SFX 1376 Y 1
+SFX 1376 0 icra .
+SFX 4673 Y 1
+SFX 4673 0 gids .
+SFX 2844 Y 1
+SFX 2844 0 anà .
+SFX 1094 Y 1
+SFX 1094 0 didas .
+SFX 2009 Y 1
+SFX 2009 0 ziunà .
+SFX 4515 Y 1
+SFX 4515 0 istiss .
+SFX 1656 Y 1
+SFX 1656 0 mentai .
+SFX 4395 Y 1
+SFX 4395 0 mentan .
+SFX 1653 Y 1
+SFX 1653 0 mentar .
+SFX 3222 Y 1
+SFX 3222 0 mentas .
+SFX 3714 Y 1
+SFX 3714 0 unaliseschan .
+SFX 3992 Y 1
+SFX 3992 0 steschan .
+SFX 4908 Y 1
+SFX 4908 0 bun .
+SFX 3713 Y 1
+SFX 3713 0 unaliseschas .
+SFX 3991 Y 1
+SFX 3991 0 steschas .
+SFX 4184 Y 1
+SFX 4184 0 rament .
+SFX 1307 Y 1
+SFX 1307 0 bus .
+SFX 4594 Y 1
+SFX 4594 0 icum .
+SFX 3876 Y 1
+SFX 3876 0 tivescha .
+SFX 1242 Y 1
+SFX 1242 0 tabel .
+SFX 4975 Y 1
+SFX 4975 0 atassan .
+SFX 4974 Y 1
+SFX 4974 0 atassas .
+SFX 1991 Y 1
+SFX 1991 0 ziuneschan .
+SFX 1966 Y 1
+SFX 1966 0 aivels .
+SFX 1990 Y 1
+SFX 1990 0 ziuneschas .
+SFX 1299 Y 1
+SFX 1299 0 fada .
+SFX 1391 Y 1
+SFX 1391 0 fads .
+SFX 4512 Y 1
+SFX 4512 0 istiva .
+SFX 2360 Y 1
+SFX 2360 0 vegn .
+SFX 2995 Y 1
+SFX 2995 0 tificaziun .
+SFX 2217 Y 1
+SFX 2217 0 irai .
+SFX 2613 Y 1
+SFX 2613 0 iran .
+SFX 2214 Y 1
+SFX 2214 0 irar .
+SFX 961 Y 1
+SFX 961 0 iras .
+SFX 1226 Y 1
+SFX 1226 0 tisassan .
+SFX 3454 Y 1
+SFX 3454 0 dider .
+SFX 1225 Y 1
+SFX 1225 0 tisassas .
+SFX 1921 Y 1
+SFX 1921 0 geschia .
+SFX 4379 Y 1
+SFX 4379 0 missiun .
+SFX 2797 Y 1
+SFX 2797 0 atiseschian .
+SFX 2796 Y 1
+SFX 2796 0 atiseschias .
+SFX 4376 Y 1
+SFX 4376 0 mpadas .
+SFX 1757 Y 1
+SFX 1757 0 eglia .
+SFX 1519 Y 1
+SFX 1519 0 iunassan .
+SFX 2314 Y 1
+SFX 2314 0 cultura .
+SFX 1518 Y 1
+SFX 1518 0 iunassas .
+SFX 1058 Y 1
+SFX 1058 0 iesch .
+SFX 2814 Y 1
+SFX 2814 0 atisadas .
+SFX 1216 Y 1
+SFX 1216 0 tiseschian .
+SFX 1498 Y 1
+SFX 1498 0 ivassan .
+SFX 1215 Y 1
+SFX 1215 0 tiseschias .
+SFX 1497 Y 1
+SFX 1497 0 ivassas .
+SFX 2987 Y 1
+SFX 2987 0 tisaziun .
+SFX 1126 Y 1
+SFX 1126 0 peschan .
+SFX 1125 Y 1
+SFX 1125 0 peschas .
+SFX 242 Y 1
+SFX 242 0 scha .
+SFX 2107 Y 1
+SFX 2107 0 schi .
+SFX 411 Y 1
+SFX 411 0 zavan .
+SFX 4232 Y 1
+SFX 4232 0 ottar .
+SFX 1608 Y 1
+SFX 1608 0 schs .
+SFX 4231 Y 1
+SFX 4231 0 ottas .
+SFX 1374 Y 1
+SFX 1374 0 ieschian .
+SFX 410 Y 1
+SFX 410 0 zavas .
+SFX 1278 Y 1
+SFX 1278 0 ieschias .
+SFX 871 Y 1
+SFX 871 0 fain .
+SFX 1297 Y 1
+SFX 1297 0 fais .
+SFX 4671 Y 1
+SFX 4671 0 gind .
+SFX 1203 Y 1
+SFX 1203 0 vels .
+SFX 4718 Y 1
+SFX 4718 0 estescha .
+SFX 2836 Y 1
+SFX 2836 0 aschadas .
+SFX 4393 Y 1
+SFX 4393 0 mentia .
+SFX 2084 Y 1
+SFX 2084 0 tabla .
+SFX 1801 Y 1
+SFX 1801 0 tschian .
+SFX 1800 Y 1
+SFX 1800 0 tschias .
+SFX 4105 Y 1
+SFX 4105 0 schentà .
+SFX 516 Y 1
+SFX 516 0 adira .
+SFX 3712 Y 1
+SFX 3712 0 unaliseschia .
+SFX 3990 Y 1
+SFX 3990 0 steschia .
+SFX 1648 Y 1
+SFX 1648 0 mentavan .
+SFX 1647 Y 1
+SFX 1647 0 mentavas .
+SFX 2893 Y 1
+SFX 2893 0 ussa .
+SFX 2018 Y 1
+SFX 2018 0 vegnidas .
+SFX 3761 Y 1
+SFX 3761 0 ucziun .
+SFX 3553 Y 1
+SFX 3553 0 atschas .
+SFX 1989 Y 1
+SFX 1989 0 ziuneschia .
+SFX 1579 Y 1
+SFX 1579 0 vent .
+SFX 3422 Y 1
+SFX 3422 0 egnà .
+SFX 2313 Y 1
+SFX 2313 0 curs .
+SFX 3951 Y 1
+SFX 3951 0 tegiond .
+SFX 3391 Y 1
+SFX 3391 0 ertas .
+SFX 3263 Y 1
+SFX 3263 0 iria .
+SFX 3507 Y 1
+SFX 3507 0 cedissan .
+SFX 2394 Y 1
+SFX 2394 0 ttada .
+SFX 3506 Y 1
+SFX 3506 0 cedissas .
+SFX 3819 Y 1
+SFX 3819 0 ttads .
+SFX 4669 Y 1
+SFX 4669 0 gira .
+SFX 4860 Y 1
+SFX 4860 0 currì .
+SFX 1736 Y 1
+SFX 1736 0 gnadas .
+SFX 998 Y 1
+SFX 998 0 rescha .
+SFX 4668 Y 1
+SFX 4668 0 giss .
+SFX 1743 Y 1
+SFX 1743 0 giassan .
+SFX 1554 Y 1
+SFX 1554 0 giassas .
+SFX 2716 Y 1
+SFX 2716 0 eresch .
+SFX 2345 Y 1
+SFX 2345 0 vers .
+SFX 901 Y 1
+SFX 901 0 meter .
+SFX 2468 Y 1
+SFX 2468 0 scop .
+SFX 2161 Y 1
+SFX 2161 0 nissem .
+SFX 1124 Y 1
+SFX 1124 0 peschia .
+SFX 3155 Y 1
+SFX 3155 0 nisavan .
+SFX 3154 Y 1
+SFX 3154 0 nisavas .
+SFX 3128 Y 1
+SFX 3128 0 onais .
+SFX 3346 Y 1
+SFX 3346 0 giva .
+SFX 3251 Y 1
+SFX 3251 0 itativ .
+SFX 3817 Y 1
+SFX 3817 0 ttain .
+SFX 3816 Y 1
+SFX 3816 0 ttais .
+SFX 3551 Y 1
+SFX 3551 0 aunas .
+SFX 543 Y 1
+SFX 543 0 sà .
+SFX 2845 Y 1
+SFX 2845 0 'alva .
+SFX 1152 Y 1
+SFX 1152 0 ità .
+SFX 1140 Y 1
+SFX 1140 0 itond .
+SFX 1296 Y 1
+SFX 1296 0 fass .
+SFX 4496 Y 1
+SFX 4496 0 istresch .
+SFX 675 Y 1
+SFX 675 0 schond .
+SFX 2700 Y 1
+SFX 2700 0 fatg .
+SFX 3307 Y 1
+SFX 3307 0 ideschian .
+SFX 3306 Y 1
+SFX 3306 0 ideschias .
+SFX 1214 Y 1
+SFX 1214 0 tisond .
+SFX 3123 Y 1
+SFX 3123 0 oricas .
+SFX 1293 Y 1
+SFX 1293 0 fava .
+SFX 3593 Y 1
+SFX 3593 0 aladas .
+SFX 515 Y 1
+SFX 515 0 alisà .
+SFX 481 Y 1
+SFX 481 0 pada .
+SFX 480 Y 1
+SFX 480 0 pads .
+SFX 1043 Y 1
+SFX 1043 0 pesch .
+SFX 2789 Y 1
+SFX 2789 0 cadad .
+SFX 537 Y 1
+SFX 537 0 cadas .
+SFX 2812 Y 1
+SFX 2812 0 atisai .
+SFX 4900 Y 1
+SFX 4900 0 chalzers .
+SFX 4832 Y 1
+SFX 4832 0 discs .
+SFX 2809 Y 1
+SFX 2809 0 atisar .
+SFX 849 Y 1
+SFX 849 0 ulai .
+SFX 739 Y 1
+SFX 739 0 ular .
+SFX 3749 Y 1
+SFX 3749 0 ulas .
+SFX 4397 Y 1
+SFX 4397 0 mecanist .
+SFX 4358 Y 1
+SFX 4358 0 munt .
+SFX 2415 Y 1
+SFX 2415 0 taglia .
+SFX 1772 Y 1
+SFX 1772 0 adamain .
+SFX 1983 Y 1
+SFX 1983 0 zzadas .
+SFX 798 Y 1
+SFX 798 0 chassan .
+SFX 797 Y 1
+SFX 797 0 chassas .
+SFX 3813 Y 1
+SFX 3813 0 ttass .
+SFX 3542 Y 1
+SFX 3542 0 cader .
+SFX 478 Y 1
+SFX 478 0 pain .
+SFX 445 Y 1
+SFX 445 0 pais .
+SFX 4507 Y 1
+SFX 4507 0 istrada .
+SFX 4945 Y 1
+SFX 4945 0 bella .
+SFX 3567 Y 1
+SFX 3567 0 anica .
+SFX 4179 Y 1
+SFX 4179 0 redactur .
+SFX 470 Y 1
+SFX 470 0 chian .
+SFX 453 Y 1
+SFX 453 0 chias .
+SFX 3460 Y 1
+SFX 3460 0 curra .
+SFX 4861 Y 1
+SFX 4861 0 curri .
+SFX 862 Y 1
+SFX 862 0 saziun .
+SFX 2562 Y 1
+SFX 2562 0 mettend .
+SFX 1301 Y 1
+SFX 1301 0 ezzas .
+SFX 2171 Y 1
+SFX 2171 0 metta .
+SFX 3809 Y 1
+SFX 3809 0 ttava .
+SFX 4621 Y 1
+SFX 4621 0 iaders .
+SFX 4989 Y 1
+SFX 4989 0 arella .
+SFX 4246 Y 1
+SFX 4246 0 orisaziun .
+SFX 2559 Y 1
+SFX 2559 0 mettessan .
+SFX 2558 Y 1
+SFX 2558 0 mettessas .
+SFX 3596 Y 1
+SFX 3596 0 aglian .
+SFX 1968 Y 1
+SFX 1968 0 aglias .
+SFX 1401 Y 1
+SFX 1401 0 chida .
+SFX 1568 Y 1
+SFX 1568 0 chids .
+SFX 4505 Y 1
+SFX 4505 0 istrain .
+SFX 4504 Y 1
+SFX 4504 0 istrais .
+SFX 764 Y 1
+SFX 764 0 unavan .
+SFX 763 Y 1
+SFX 763 0 unavas .
+SFX 4792 Y 1
+SFX 4792 0 egnassan .
+SFX 2560 Y 1
+SFX 2560 0 mettess .
+SFX 4791 Y 1
+SFX 4791 0 egnassas .
+SFX 1573 Y 1
+SFX 1573 0 aster .
+SFX 3237 Y 1
+SFX 3237 0 jan .
+SFX 2180 Y 1
+SFX 2180 0 jas .
+SFX 1255 Y 1
+SFX 1255 0 ridas .
+SFX 1251 Y 1
+SFX 1251 0 rissan .
+SFX 2701 Y 1
+SFX 2701 0 essiun .
+SFX 1250 Y 1
+SFX 1250 0 rissas .
+SFX 2874 Y 1
+SFX 2874 0 zament .
+SFX 1824 Y 1
+SFX 1824 0 stà .
+SFX 2780 Y 1
+SFX 2780 0 classan .
+SFX 2779 Y 1
+SFX 2779 0 classas .
+SFX 2557 Y 1
+SFX 2557 0 metteva .
+SFX 4245 Y 1
+SFX 4245 0 orisesch .
+SFX 2173 Y 1
+SFX 2173 0 matica .
+SFX 2749 Y 1
+SFX 2749 0 dravan .
+SFX 405 Y 1
+SFX 405 0 pass .
+SFX 2748 Y 1
+SFX 2748 0 dravas .
+SFX 738 Y 1
+SFX 738 0 unà .
+SFX 3580 Y 1
+SFX 3580 0 alond .
+SFX 4985 Y 1
+SFX 4985 0 astic .
+SFX 4316 Y 1
+SFX 4316 0 ntavan .
+SFX 4315 Y 1
+SFX 4315 0 ntavas .
+SFX 555 Y 1
+SFX 555 0 lisada .
+SFX 81 Y 1
+SFX 81 0 amain .
+SFX 594 Y 1
+SFX 594 0 lisads .
+SFX 2612 Y 1
+SFX 2612 0 iresch .
+SFX 4601 Y 1
+SFX 4601 0 iclond .
+SFX 4980 Y 1
+SFX 4980 0 atai .
+SFX 3934 Y 1
+SFX 3934 0 tgidas .
+SFX 3558 Y 1
+SFX 3558 0 atar .
+SFX 3557 Y 1
+SFX 3557 0 atas .
+SFX 3052 Y 1
+SFX 3052 0 stassan .
+SFX 3051 Y 1
+SFX 3051 0 stassas .
+SFX 3072 Y 1
+SFX 3072 0 segnada .
+SFX 526 Y 1
+SFX 526 0 pava .
+SFX 614 Y 1
+SFX 614 0 sassan .
+SFX 4055 Y 1
+SFX 4055 0 segnads .
+SFX 613 Y 1
+SFX 613 0 sassas .
+SFX 3994 Y 1
+SFX 3994 0 stesch .
+SFX 2528 Y 1
+SFX 2528 0 ppai .
+SFX 4202 Y 1
+SFX 4202 0 ppan .
+SFX 2525 Y 1
+SFX 2525 0 ppar .
+SFX 2524 Y 1
+SFX 2524 0 ppas .
+SFX 1020 Y 1
+SFX 1020 0 china .
+SFX 398 Y 1
+SFX 398 0 zada .
+SFX 417 Y 1
+SFX 417 0 zads .
+SFX 3363 Y 1
+SFX 3363 0 fitgeschan .
+SFX 3362 Y 1
+SFX 3362 0 fitgeschas .
+SFX 4251 Y 1
+SFX 4251 0 orisassan .
+SFX 4250 Y 1
+SFX 4250 0 orisassas .
+SFX 356 Y 1
+SFX 356 0 entadas .
+SFX 4768 Y 1
+SFX 4768 0 ember .
+SFX 2008 Y 1
+SFX 2008 0 ziunada .
+SFX 2006 Y 1
+SFX 2006 0 ziunads .
+SFX 4502 Y 1
+SFX 4502 0 istrass .
+SFX 4219 Y 1
+SFX 4219 0 portai .
+SFX 4216 Y 1
+SFX 4216 0 portan .
+SFX 2425 Y 1
+SFX 2425 0 staziun .
+SFX 535 Y 1
+SFX 535 0 ificaziun .
+SFX 4215 Y 1
+SFX 4215 0 portar .
+SFX 4214 Y 1
+SFX 4214 0 portas .
+SFX 3484 Y 1
+SFX 3484 0 chentassan .
+SFX 3483 Y 1
+SFX 3483 0 chentassas .
+SFX 592 Y 1
+SFX 592 0 lisain .
+SFX 591 Y 1
+SFX 591 0 lisais .
+SFX 127 Y 1
+SFX 127 0 iseschan .
+SFX 4912 Y 1
+SFX 4912 0 bolic .
+SFX 126 Y 1
+SFX 126 0 iseschas .
+SFX 4053 Y 1
+SFX 4053 0 segnain .
+SFX 4052 Y 1
+SFX 4052 0 segnais .
+SFX 4970 Y 1
+SFX 4970 0 atga .
+SFX 4969 Y 1
+SFX 4969 0 atgi .
+SFX 1998 Y 1
+SFX 1998 0 ziunassan .
+SFX 1997 Y 1
+SFX 1997 0 ziunassas .
+SFX 4387 Y 1
+SFX 4387 0 minesch .
+SFX 4499 Y 1
+SFX 4499 0 istrava .
+SFX 2732 Y 1
+SFX 2732 0 entader .
+SFX 3311 Y 1
+SFX 3311 0 idescha .
+SFX 1543 Y 1
+SFX 1543 0 igliada .
+SFX 4896 Y 1
+SFX 4896 0 chist .
+SFX 1899 Y 1
+SFX 1899 0 igliads .
+SFX 415 Y 1
+SFX 415 0 zain .
+SFX 397 Y 1
+SFX 397 0 zais .
+SFX 4017 Y 1
+SFX 4017 0 siunond .
+SFX 4484 Y 1
+SFX 4484 0 itativa .
+SFX 3781 Y 1
+SFX 3781 0 ualisadas .
+SFX 880 Y 1
+SFX 880 0 atic .
+SFX 539 Y 1
+SFX 539 0 ativ .
+SFX 2004 Y 1
+SFX 2004 0 ziunain .
+SFX 2003 Y 1
+SFX 2003 0 ziunais .
+SFX 1645 Y 1
+SFX 1645 0 mentond .
+SFX 3537 Y 1
+SFX 3537 0 ccadas .
+SFX 3380 Y 1
+SFX 3380 0 finanziaziun .
+SFX 3116 Y 1
+SFX 3116 0 ppia .
+SFX 4491 Y 1
+SFX 4491 0 istreschian .
+SFX 4490 Y 1
+SFX 4490 0 istreschias .
+SFX 1426 Y 1
+SFX 1426 0 ualas .
+SFX 210 Y 1
+SFX 210 0 là .
+SFX 3361 Y 1
+SFX 3361 0 fitgeschia .
+SFX 4430 Y 1
+SFX 4430 0 lì .
+SFX 3283 Y 1
+SFX 3283 0 imà .
+SFX 4307 Y 1
+SFX 4307 0 ocada .
+SFX 2002 Y 1
+SFX 2002 0 ziunala .
+SFX 4305 Y 1
+SFX 4305 0 ocads .
+SFX 1768 Y 1
+SFX 1768 0 amaun .
+SFX 4207 Y 1
+SFX 4207 0 portia .
+SFX 1897 Y 1
+SFX 1897 0 igliain .
+SFX 1896 Y 1
+SFX 1896 0 igliais .
+SFX 2237 Y 1
+SFX 2237 0 gular .
+SFX 125 Y 1
+SFX 125 0 iseschia .
+SFX 296 Y 1
+SFX 296 0 tsch .
+SFX 590 Y 1
+SFX 590 0 lisass .
+SFX 1178 Y 1
+SFX 1178 0 fian .
+SFX 1390 Y 1
+SFX 1390 0 fias .
+SFX 4049 Y 1
+SFX 4049 0 segnass .
+SFX 2915 Y 1
+SFX 2915 0 ulent .
+SFX 4303 Y 1
+SFX 4303 0 ocain .
+SFX 4302 Y 1
+SFX 4302 0 ocais .
+SFX 4527 Y 1
+SFX 4527 0 istenza .
+SFX 3893 Y 1
+SFX 3893 0 tivadas .
+SFX 3435 Y 1
+SFX 3435 0 egliai .
+SFX 3432 Y 1
+SFX 3432 0 eglian .
+SFX 3431 Y 1
+SFX 3431 0 egliar .
+SFX 1932 Y 1
+SFX 1932 0 eglias .
+SFX 4629 Y 1
+SFX 4629 0 hettesch .
+SFX 587 Y 1
+SFX 587 0 lisava .
+SFX 384 Y 1
+SFX 384 0 zass .
+SFX 4687 Y 1
+SFX 4687 0 fida .
+SFX 3297 Y 1
+SFX 3297 0 iladas .
+SFX 1630 Y 1
+SFX 1630 0 risai .
+SFX 1627 Y 1
+SFX 1627 0 risar .
+SFX 1999 Y 1
+SFX 1999 0 ziunass .
+SFX 4046 Y 1
+SFX 4046 0 segnava .
+SFX 2792 Y 1
+SFX 2792 0 atta .
+SFX 1749 Y 1
+SFX 1749 0 fier .
+SFX 2698 Y 1
+SFX 2698 0 fieu .
+SFX 3502 Y 1
+SFX 3502 0 cellular .
+SFX 3782 Y 1
+SFX 3782 0 ualisada .
+SFX 3780 Y 1
+SFX 3780 0 ualisads .
+SFX 4378 Y 1
+SFX 4378 0 mpà .
+SFX 4717 Y 1
+SFX 4717 0 esteschan .
+SFX 4716 Y 1
+SFX 4716 0 esteschas .
+SFX 295 Y 1
+SFX 295 0 atur .
+SFX 383 Y 1
+SFX 383 0 zava .
+SFX 643 Y 1
+SFX 643 0 atura .
+SFX 878 Y 1
+SFX 878 0 aturs .
+SFX 1996 Y 1
+SFX 1996 0 ziunava .
+SFX 796 Y 1
+SFX 796 0 chavan .
+SFX 795 Y 1
+SFX 795 0 chavas .
+SFX 124 Y 1
+SFX 124 0 iseschian .
+SFX 123 Y 1
+SFX 123 0 iseschias .
+SFX 4528 Y 1
+SFX 4528 0 issiun .
+SFX 1702 Y 1
+SFX 1702 0 igliass .
+SFX 2236 Y 1
+SFX 2236 0 iabel .
+SFX 4931 Y 1
+SFX 4931 0 bilisai .
+SFX 4928 Y 1
+SFX 4928 0 bilisar .
+SFX 3804 Y 1
+SFX 3804 0 ttian .
+SFX 3803 Y 1
+SFX 3803 0 ttias .
+SFX 3778 Y 1
+SFX 3778 0 ualisain .
+SFX 3777 Y 1
+SFX 3777 0 ualisais .
+SFX 1701 Y 1
+SFX 1701 0 igliava .
+SFX 4143 Y 1
+SFX 4143 0 rutta .
+SFX 4737 Y 1
+SFX 4737 0 erleschan .
+SFX 4736 Y 1
+SFX 4736 0 erleschas .
+SFX 4799 Y 1
+SFX 4799 0 educaziun .
+SFX 3236 Y 1
+SFX 3236 0 jecziun .
+SFX 3964 Y 1
+SFX 3964 0 tegiada .
+SFX 1872 Y 1
+SFX 1872 0 izia .
+SFX 4301 Y 1
+SFX 4301 0 ocass .
+SFX 3962 Y 1
+SFX 3962 0 tegiads .
+SFX 1056 Y 1
+SFX 1056 0 ieschan .
+SFX 697 Y 1
+SFX 697 0 dond .
+SFX 1055 Y 1
+SFX 1055 0 ieschas .
+SFX 1898 Y 1
+SFX 1898 0 igliai .
+SFX 2227 Y 1
+SFX 2227 0 iglian .
+SFX 1703 Y 1
+SFX 1703 0 igliar .
+SFX 1895 Y 1
+SFX 1895 0 iglias .
+SFX 4715 Y 1
+SFX 4715 0 esteschia .
+SFX 566 Y 1
+SFX 566 0 cai .
+SFX 1404 Y 1
+SFX 1404 0 cal .
+SFX 731 Y 1
+SFX 731 0 can .
+SFX 454 Y 1
+SFX 454 0 car .
+SFX 393 Y 1
+SFX 393 0 cas .
+SFX 2787 Y 1
+SFX 2787 0 cat .
+SFX 1547 Y 1
+SFX 1547 0 idai .
+SFX 2663 Y 1
+SFX 2663 0 idan .
+SFX 1375 Y 1
+SFX 1375 0 idar .
+SFX 73 Y 1
+SFX 73 0 idas .
+SFX 2096 Y 1
+SFX 2096 0 siuns .
+SFX 4298 Y 1
+SFX 4298 0 ocava .
+SFX 1947 Y 1
+SFX 1947 0 ariseschan .
+SFX 1946 Y 1
+SFX 1946 0 ariseschas .
+SFX 4424 Y 1
+SFX 4424 0 linai .
+SFX 4421 Y 1
+SFX 4421 0 linar .
+SFX 2176 Y 1
+SFX 2176 0 linas .
+SFX 1570 Y 1
+SFX 1570 0 cca .
+SFX 3641 Y 1
+SFX 3641 0 vesì .
+SFX 3960 Y 1
+SFX 3960 0 tegiain .
+SFX 3959 Y 1
+SFX 3959 0 tegiais .
+SFX 3524 Y 1
+SFX 3524 0 ced .
+SFX 309 Y 1
+SFX 309 0 ider .
+SFX 3746 Y 1
+SFX 3746 0 ultim .
+SFX 4685 Y 1
+SFX 4685 0 fist .
+SFX 1151 Y 1
+SFX 1151 0 itada .
+SFX 4735 Y 1
+SFX 4735 0 erleschia .
+SFX 357 Y 1
+SFX 357 0 itads .
+SFX 3716 Y 1
+SFX 3716 0 unalisesch .
+SFX 861 Y 1
+SFX 861 0 schada .
+SFX 859 Y 1
+SFX 859 0 schads .
+SFX 638 Y 1
+SFX 638 0 pian .
+SFX 619 Y 1
+SFX 619 0 pias .
+SFX 3775 Y 1
+SFX 3775 0 ualisass .
+SFX 1169 Y 1
+SFX 1169 0 ieschia .
+SFX 845 Y 1
+SFX 845 0 ulassan .
+SFX 246 Y 1
+SFX 246 0 cha .
+SFX 844 Y 1
+SFX 844 0 ulassas .
+SFX 1193 Y 1
+SFX 1193 0 chs .
+SFX 3360 Y 1
+SFX 3360 0 fitgeschian .
+SFX 3722 Y 1
+SFX 3722 0 unalisassan .
+SFX 3359 Y 1
+SFX 3359 0 fitgeschias .
+SFX 3721 Y 1
+SFX 3721 0 unalisassas .
+SFX 584 Y 1
+SFX 584 0 lisesch .
+SFX 131 Y 1
+SFX 131 0 isadas .
+SFX 4893 Y 1
+SFX 4893 0 cia .
+SFX 3451 Y 1
+SFX 3451 0 divisiun .
+SFX 4692 Y 1
+SFX 4692 0 fatsch .
+SFX 2232 Y 1
+SFX 2232 0 idia .
+SFX 1945 Y 1
+SFX 1945 0 ariseschia .
+SFX 3119 Y 1
+SFX 3119 0 pida .
+SFX 3772 Y 1
+SFX 3772 0 ualisava .
+SFX 2976 Y 1
+SFX 2976 0 trassan .
+SFX 2975 Y 1
+SFX 2975 0 trassas .
+SFX 4907 Y 1
+SFX 4907 0 calas .
+SFX 1148 Y 1
+SFX 1148 0 itain .
+SFX 1147 Y 1
+SFX 1147 0 itais .
+SFX 1900 Y 1
+SFX 1900 0 igliadas .
+SFX 2594 Y 1
+SFX 2594 0 landais .
+SFX 3419 Y 1
+SFX 3419 0 elina .
+SFX 1424 Y 1
+SFX 1424 0 ulaziun .
+SFX 3717 Y 1
+SFX 3717 0 unalisaziun .
+SFX 404 Y 1
+SFX 404 0 schain .
+SFX 433 Y 1
+SFX 433 0 schais .
+SFX 1192 Y 1
+SFX 1192 0 cla .
+SFX 1051 Y 1
+SFX 1051 0 isader .
+SFX 4267 Y 1
+SFX 4267 0 onist .
+SFX 3957 Y 1
+SFX 3957 0 tegiass .
+SFX 4920 Y 1
+SFX 4920 0 bilisescha .
+SFX 685 Y 1
+SFX 685 0 ifitgond .
+SFX 2642 Y 1
+SFX 2642 0 ignavan .
+SFX 2641 Y 1
+SFX 2641 0 ignavas .
+SFX 4870 Y 1
+SFX 4870 0 cor .
+SFX 2634 Y 1
+SFX 2634 0 ilescha .
+SFX 4916 Y 1
+SFX 4916 0 biliseschian .
+SFX 4915 Y 1
+SFX 4915 0 biliseschias .
+SFX 4486 Y 1
+SFX 4486 0 itant .
+SFX 631 Y 1
+SFX 631 0 aglia .
+SFX 3954 Y 1
+SFX 3954 0 tegiava .
+SFX 4120 Y 1
+SFX 4120 0 schant .
+SFX 782 Y 1
+SFX 782 0 idra .
+SFX 4212 Y 1
+SFX 4212 0 portassan .
+SFX 4211 Y 1
+SFX 4211 0 portassas .
+SFX 529 Y 1
+SFX 529 0 nond .
+SFX 1475 Y 1
+SFX 1475 0 ometer .
+SFX 4003 Y 1
+SFX 4003 0 ssavan .
+SFX 4002 Y 1
+SFX 4002 0 ssavas .
+SFX 1370 Y 1
+SFX 1370 0 itara .
+SFX 266 Y 1
+SFX 266 0 ziuns .
+SFX 1840 Y 1
+SFX 1840 0 pina .
+SFX 4485 Y 1
+SFX 4485 0 itars .
+SFX 2226 Y 1
+SFX 2226 0 igliun .
+SFX 3648 Y 1
+SFX 3648 0 vavan .
+SFX 3647 Y 1
+SFX 3647 0 vavas .
+SFX 3184 Y 1
+SFX 3184 0 ndadas .
+SFX 1146 Y 1
+SFX 1146 0 itass .
+SFX 314 Y 1
+SFX 314 0 entà .
+SFX 2775 Y 1
+SFX 2775 0 cul .
+SFX 1566 Y 1
+SFX 1566 0 cun .
+SFX 3461 Y 1
+SFX 3461 0 cur .
+SFX 1565 Y 1
+SFX 1565 0 cus .
+SFX 896 Y 1
+SFX 896 0 schass .
+SFX 1233 Y 1
+SFX 1233 0 tisada .
+SFX 1231 Y 1
+SFX 1231 0 tisads .
+SFX 2966 Y 1
+SFX 2966 0 trond .
+SFX 655 Y 1
+SFX 655 0 rai .
+SFX 2131 Y 1
+SFX 2131 0 ral .
+SFX 522 Y 1
+SFX 522 0 ran .
+SFX 618 Y 1
+SFX 618 0 rar .
+SFX 244 Y 1
+SFX 244 0 ras .
+SFX 4182 Y 1
+SFX 4182 0 rat .
+SFX 122 Y 1
+SFX 122 0 isai .
+SFX 2607 Y 1
+SFX 2607 0 isan .
+SFX 106 Y 1
+SFX 106 0 isar .
+SFX 1539 Y 1
+SFX 1539 0 isas .
+SFX 3963 Y 1
+SFX 3963 0 tegiadas .
+SFX 1143 Y 1
+SFX 1143 0 itava .
+SFX 1948 Y 1
+SFX 1948 0 arisescha .
+SFX 2649 Y 1
+SFX 2649 0 ignai .
+SFX 4559 Y 1
+SFX 4559 0 ignan .
+SFX 2225 Y 1
+SFX 2225 0 ignar .
+SFX 3298 Y 1
+SFX 3298 0 ignas .
+SFX 3195 Y 1
+SFX 3195 0 modern .
+SFX 893 Y 1
+SFX 893 0 schava .
+SFX 113 Y 1
+SFX 113 0 isond .
+SFX 4995 Y 1
+SFX 4995 0 angulara .
+SFX 4042 Y 1
+SFX 4042 0 segnian .
+SFX 4041 Y 1
+SFX 4041 0 segnias .
+SFX 1883 Y 1
+SFX 1883 0 isch .
+SFX 4530 Y 1
+SFX 4530 0 isadra .
+SFX 997 Y 1
+SFX 997 0 reschan .
+SFX 4308 Y 1
+SFX 4308 0 ocà .
+SFX 996 Y 1
+SFX 996 0 reschas .
+SFX 3594 Y 1
+SFX 3594 0 alada .
+SFX 2515 Y 1
+SFX 2515 0 rda .
+SFX 3787 Y 1
+SFX 3787 0 tunond .
+SFX 3592 Y 1
+SFX 3592 0 alads .
+SFX 2341 Y 1
+SFX 2341 0 zial .
+SFX 396 Y 1
+SFX 396 0 zian .
+SFX 395 Y 1
+SFX 395 0 zias .
+SFX 3677 Y 1
+SFX 3677 0 uplassan .
+SFX 3676 Y 1
+SFX 3676 0 uplassas .
+SFX 863 Y 1
+SFX 863 0 rel .
+SFX 1122 Y 1
+SFX 1122 0 rer .
+SFX 897 Y 1
+SFX 897 0 ret .
+SFX 4614 Y 1
+SFX 4614 0 iclada .
+SFX 1229 Y 1
+SFX 1229 0 tisain .
+SFX 4612 Y 1
+SFX 4612 0 iclads .
+SFX 1228 Y 1
+SFX 1228 0 tisais .
+SFX 4758 Y 1
+SFX 4758 0 ennitad .
+SFX 4227 Y 1
+SFX 4227 0 piva .
+SFX 2838 Y 1
+SFX 2838 0 aschà .
+SFX 2297 Y 1
+SFX 2297 0 erà .
+SFX 930 Y 1
+SFX 930 0 uleschian .
+SFX 929 Y 1
+SFX 929 0 uleschias .
+SFX 1356 Y 1
+SFX 1356 0 meschian .
+SFX 1355 Y 1
+SFX 1355 0 meschias .
+SFX 4674 Y 1
+SFX 4674 0 gidas .
+SFX 4844 Y 1
+SFX 4844 0 cziuns .
+SFX 2025 Y 1
+SFX 2025 0 utta .
+SFX 3028 Y 1
+SFX 3028 0 streschan .
+SFX 3027 Y 1
+SFX 3027 0 streschas .
+SFX 155 Y 1
+SFX 155 0 ria .
+SFX 1121 Y 1
+SFX 1121 0 ric .
+SFX 2847 Y 1
+SFX 2847 0 alain .
+SFX 3590 Y 1
+SFX 3590 0 alais .
+SFX 4171 Y 1
+SFX 4171 0 rim .
+SFX 443 Y 1
+SFX 443 0 rin .
+SFX 3104 Y 1
+SFX 3104 0 rir .
+SFX 617 Y 1
+SFX 617 0 ris .
+SFX 3179 Y 1
+SFX 3179 0 ndassan .
+SFX 3178 Y 1
+SFX 3178 0 ndassas .
+SFX 4557 Y 1
+SFX 4557 0 ignia .
+SFX 2660 Y 1
+SFX 2660 0 'idea .
+SFX 4610 Y 1
+SFX 4610 0 iclain .
+SFX 4609 Y 1
+SFX 4609 0 iclais .
+SFX 1610 Y 1
+SFX 1610 0 schidas .
+SFX 2190 Y 1
+SFX 2190 0 itgassan .
+SFX 2189 Y 1
+SFX 2189 0 itgassas .
+SFX 1416 Y 1
+SFX 1416 0 uresch .
+SFX 942 Y 1
+SFX 942 0 reschia .
+SFX 1272 Y 1
+SFX 1272 0 ivamain .
+SFX 3250 Y 1
+SFX 3250 0 itgesch .
+SFX 4030 Y 1
+SFX 4030 0 siunada .
+SFX 438 Y 1
+SFX 438 0 lesch .
+SFX 3258 Y 1
+SFX 3258 0 isma .
+SFX 1659 Y 1
+SFX 1659 0 mentada .
+SFX 1657 Y 1
+SFX 1657 0 mentads .
+SFX 2633 Y 1
+SFX 2633 0 ileschan .
+SFX 2632 Y 1
+SFX 2632 0 ileschas .
+SFX 4086 Y 1
+SFX 4086 0 schentond .
+SFX 161 Y 1
+SFX 161 0 tà .
+SFX 3018 Y 1
+SFX 3018 0 tè .
+SFX 853 Y 1
+SFX 853 0 tì .
+SFX 1227 Y 1
+SFX 1227 0 tisass .
+SFX 4401 Y 1
+SFX 4401 0 lusa .
+SFX 4658 Y 1
+SFX 4658 0 glinas .
+SFX 3026 Y 1
+SFX 3026 0 streschia .
+SFX 340 Y 1
+SFX 340 0 entond .
+SFX 3073 Y 1
+SFX 3073 0 segnà .
+SFX 4028 Y 1
+SFX 4028 0 siunain .
+SFX 4027 Y 1
+SFX 4027 0 siunais .
+SFX 1224 Y 1
+SFX 1224 0 tisava .
+SFX 3370 Y 1
+SFX 3370 0 fitgassan .
+SFX 3369 Y 1
+SFX 3369 0 fitgassas .
+SFX 3588 Y 1
+SFX 3588 0 alass .
+SFX 4950 Y 1
+SFX 4950 0 bassan .
+SFX 1655 Y 1
+SFX 1655 0 mentain .
+SFX 1875 Y 1
+SFX 1875 0 issa .
+SFX 4949 Y 1
+SFX 4949 0 bassas .
+SFX 1654 Y 1
+SFX 1654 0 mentais .
+SFX 3452 Y 1
+SFX 3452 0 ditas .
+SFX 2973 Y 1
+SFX 2973 0 travan .
+SFX 2655 Y 1
+SFX 2655 0 ietta .
+SFX 2972 Y 1
+SFX 2972 0 travas .
+SFX 2512 Y 1
+SFX 2512 0 rta .
+SFX 3088 Y 1
+SFX 3088 0 rts .
+SFX 450 Y 1
+SFX 450 0 ista .
+SFX 4526 Y 1
+SFX 4526 0 isti .
+SFX 484 Y 1
+SFX 484 0 ists .
+SFX 3275 Y 1
+SFX 3275 0 imassan .
+SFX 4306 Y 1
+SFX 4306 0 ocadas .
+SFX 4607 Y 1
+SFX 4607 0 iclass .
+SFX 3274 Y 1
+SFX 3274 0 imassas .
+SFX 4012 Y 1
+SFX 4012 0 ssai .
+SFX 19 Y 1
+SFX 19 0 ssan .
+SFX 4008 Y 1
+SFX 4008 0 ssar .
+SFX 17 Y 1
+SFX 17 0 ssas .
+SFX 1118 Y 1
+SFX 1118 0 run .
+SFX 2752 Y 1
+SFX 2752 0 drassan .
+SFX 4145 Y 1
+SFX 4145 0 rus .
+SFX 3086 Y 1
+SFX 3086 0 rut .
+SFX 2751 Y 1
+SFX 2751 0 drassas .
+SFX 4806 Y 1
+SFX 4806 0 ectavan .
+SFX 4805 Y 1
+SFX 4805 0 ectavas .
+SFX 4540 Y 1
+SFX 4540 0 'impurtanza .
+SFX 2375 Y 1
+SFX 2375 0 uman .
+SFX 3585 Y 1
+SFX 3585 0 alava .
+SFX 2631 Y 1
+SFX 2631 0 ileschia .
+SFX 4604 Y 1
+SFX 4604 0 iclava .
+SFX 3169 Y 1
+SFX 3169 0 ndond .
+SFX 2625 Y 1
+SFX 2625 0 imaziun .
+SFX 66 Y 1
+SFX 66 0 ziun .
+SFX 4686 Y 1
+SFX 4686 0 fidà .
+SFX 1696 Y 1
+SFX 1696 0 'ins .
+SFX 1606 Y 1
+SFX 1606 0 ssem .
+SFX 3748 Y 1
+SFX 3748 0 ulenta .
+SFX 4386 Y 1
+SFX 4386 0 minescha .
+SFX 1725 Y 1
+SFX 1725 0 gnond .
+SFX 3820 Y 1
+SFX 3820 0 ttadas .
+SFX 2761 Y 1
+SFX 2761 0 ditga .
+SFX 1454 Y 1
+SFX 1454 0 taria .
+SFX 495 Y 1
+SFX 495 0 alisond .
+SFX 4265 Y 1
+SFX 4265 0 orà .
+SFX 1172 Y 1
+SFX 1172 0 grafia .
+SFX 1551 Y 1
+SFX 1551 0 grafic .
+SFX 2556 Y 1
+SFX 2556 0 mettevan .
+SFX 2555 Y 1
+SFX 2555 0 mettevas .
+SFX 4025 Y 1
+SFX 4025 0 siunass .
+SFX 1823 Y 1
+SFX 1823 0 taivel .
+SFX 2437 Y 1
+SFX 2437 0 ssia .
+SFX 3924 Y 1
+SFX 3924 0 tifitgai .
+SFX 3921 Y 1
+SFX 3921 0 tifitgar .
+SFX 1652 Y 1
+SFX 1652 0 mentass .
+SFX 909 Y 1
+SFX 909 0 inesch .
+SFX 4277 Y 1
+SFX 4277 0 ometria .
+SFX 4276 Y 1
+SFX 4276 0 ometric .
+SFX 851 Y 1
+SFX 851 0 uladas .
+SFX 4514 Y 1
+SFX 4514 0 istissan .
+SFX 4513 Y 1
+SFX 4513 0 istissas .
+SFX 4022 Y 1
+SFX 4022 0 siunava .
+SFX 3747 Y 1
+SFX 3747 0 ulenza .
+SFX 2846 Y 1
+SFX 2846 0 alpin .
+SFX 812 Y 1
+SFX 812 0 sesch .
+SFX 4899 Y 1
+SFX 4899 0 chazzetta .
+SFX 3257 Y 1
+SFX 3257 0 isticas .
+SFX 1649 Y 1
+SFX 1649 0 mentava .
+SFX 3354 Y 1
+SFX 3354 0 furma .
+SFX 668 Y 1
+SFX 668 0 dada .
+SFX 494 Y 1
+SFX 494 0 dads .
+SFX 3950 Y 1
+SFX 3950 0 tegn .
+SFX 2645 Y 1
+SFX 2645 0 ignassan .
+SFX 502 Y 1
+SFX 502 0 alisesch .
+SFX 2644 Y 1
+SFX 2644 0 ignassas .
+SFX 4056 Y 1
+SFX 4056 0 segnadas .
+SFX 4961 Y 1
+SFX 4961 0 avant .
+SFX 3295 Y 1
+SFX 3295 0 ilai .
+SFX 3293 Y 1
+SFX 3293 0 ilar .
+SFX 3467 Y 1
+SFX 3467 0 cola .
+SFX 2056 Y 1
+SFX 2056 0 tschadas .
+SFX 4506 Y 1
+SFX 4506 0 istrai .
+SFX 4503 Y 1
+SFX 4503 0 istrar .
+SFX 4480 Y 1
+SFX 4480 0 itian .
+SFX 4479 Y 1
+SFX 4479 0 itias .
+SFX 2768 Y 1
+SFX 2768 0 diever .
+SFX 2590 Y 1
+SFX 2590 0 liadas .
+SFX 4941 Y 1
+SFX 4941 0 beschan .
+SFX 4940 Y 1
+SFX 4940 0 beschas .
+SFX 518 Y 1
+SFX 518 0 schian .
+SFX 541 Y 1
+SFX 541 0 schias .
+SFX 557 Y 1
+SFX 557 0 cond .
+SFX 441 Y 1
+SFX 441 0 dain .
+SFX 409 Y 1
+SFX 409 0 dais .
+SFX 1453 Y 1
+SFX 1453 0 tels .
+SFX 693 Y 1
+SFX 693 0 egiond .
+SFX 4817 Y 1
+SFX 4817 0 ectà .
+SFX 3674 Y 1
+SFX 3674 0 uplavan .
+SFX 3673 Y 1
+SFX 3673 0 uplavas .
+SFX 1116 Y 1
+SFX 1116 0 schida .
+SFX 1561 Y 1
+SFX 1561 0 enzas .
+SFX 1133 Y 1
+SFX 1133 0 ografia .
+SFX 1476 Y 1
+SFX 1476 0 ografic .
+SFX 1609 Y 1
+SFX 1609 0 schids .
+SFX 419 Y 1
+SFX 419 0 tend .
+SFX 1240 Y 1
+SFX 1240 0 tent .
+SFX 4256 Y 1
+SFX 4256 0 orisai .
+SFX 4841 Y 1
+SFX 4841 0 dala .
+SFX 4253 Y 1
+SFX 4253 0 orisar .
+SFX 1985 Y 1
+SFX 1985 0 zzà .
+SFX 4869 Y 1
+SFX 4869 0 corean .
+SFX 889 Y 1
+SFX 889 0 tgà .
+SFX 756 Y 1
+SFX 756 0 davan .
+SFX 3493 Y 1
+SFX 3493 0 chentadas .
+SFX 755 Y 1
+SFX 755 0 davas .
+SFX 988 Y 1
+SFX 988 0 tgond .
+SFX 3005 Y 1
+SFX 3005 0 tgì .
+SFX 4732 Y 1
+SFX 4732 0 ernai .
+SFX 3393 Y 1
+SFX 3393 0 ernal .
+SFX 2773 Y 1
+SFX 2773 0 dant .
+SFX 2315 Y 1
+SFX 2315 0 cular .
+SFX 1057 Y 1
+SFX 1057 0 iescha .
+SFX 4972 Y 1
+SFX 4972 0 atavan .
+SFX 4971 Y 1
+SFX 4971 0 atavas .
+SFX 2065 Y 1
+SFX 2065 0 tinassan .
+SFX 2064 Y 1
+SFX 2064 0 tinassas .
+SFX 2079 Y 1
+SFX 2079 0 tera .
+SFX 1340 Y 1
+SFX 1340 0 ters .
+SFX 1534 Y 1
+SFX 1534 0 itescha .
+SFX 507 Y 1
+SFX 507 0 alisassan .
+SFX 506 Y 1
+SFX 506 0 alisassas .
+SFX 4939 Y 1
+SFX 4939 0 beschia .
+SFX 2378 Y 1
+SFX 2378 0 uidas .
+SFX 3010 Y 1
+SFX 3010 0 tesa .
+SFX 1969 Y 1
+SFX 1969 0 adras .
+SFX 1295 Y 1
+SFX 1295 0 fassan .
+SFX 1294 Y 1
+SFX 1294 0 fassas .
+SFX 402 Y 1
+SFX 402 0 tess .
+SFX 3285 Y 1
+SFX 3285 0 illa .
+SFX 4173 Y 1
+SFX 4173 0 riels .
+SFX 1302 Y 1
+SFX 1302 0 entscha .
+SFX 4281 Y 1
+SFX 4281 0 olais .
+SFX 1558 Y 1
+SFX 1558 0 fadas .
+SFX 2772 Y 1
+SFX 2772 0 democratic .
+SFX 645 Y 1
+SFX 645 0 alisaziun .
+SFX 2595 Y 1
+SFX 2595 0 laina .
+SFX 727 Y 1
+SFX 727 0 dass .
+SFX 4183 Y 1
+SFX 4183 0 ranza .
+SFX 401 Y 1
+SFX 401 0 teva .
+SFX 803 Y 1
+SFX 803 0 usadad .
+SFX 1173 Y 1
+SFX 1173 0 graf .
+SFX 1171 Y 1
+SFX 1171 0 gram .
+SFX 903 Y 1
+SFX 903 0 mà .
+SFX 2181 Y 1
+SFX 2181 0 ivlamain .
+SFX 3163 Y 1
+SFX 3163 0 nisai .
+SFX 439 Y 1
+SFX 439 0 inà .
+SFX 3160 Y 1
+SFX 3160 0 nisar .
+SFX 3818 Y 1
+SFX 3818 0 ttai .
+SFX 1798 Y 1
+SFX 1798 0 ttan .
+SFX 3815 Y 1
+SFX 3815 0 ttar .
+SFX 1587 Y 1
+SFX 1587 0 ttas .
+SFX 1396 Y 1
+SFX 1396 0 entescha .
+SFX 2228 Y 1
+SFX 2228 0 ientschas .
+SFX 4204 Y 1
+SFX 4204 0 portond .
+SFX 2106 Y 1
+SFX 2106 0 schina .
+SFX 3009 Y 1
+SFX 3009 0 text .
+SFX 4335 Y 1
+SFX 4335 0 nisch .
+SFX 726 Y 1
+SFX 726 0 dava .
+SFX 1764 Y 1
+SFX 1764 0 auna .
+SFX 4693 Y 1
+SFX 4693 0 fader .
+SFX 2691 Y 1
+SFX 2691 0 fonia .
+SFX 4682 Y 1
+SFX 4682 0 fonic .
+SFX 389 Y 1
+SFX 389 0 nada .
+SFX 3197 Y 1
+SFX 3197 0 minond .
+SFX 576 Y 1
+SFX 576 0 nads .
+SFX 4613 Y 1
+SFX 4613 0 icladas .
+SFX 3806 Y 1
+SFX 3806 0 tter .
+SFX 1360 Y 1
+SFX 1360 0 mescha .
+SFX 2801 Y 1
+SFX 2801 0 atisescha .
+SFX 3112 Y 1
+SFX 3112 0 punais .
+SFX 3429 Y 1
+SFX 3429 0 egliassan .
+SFX 3428 Y 1
+SFX 3428 0 egliassas .
+SFX 4963 Y 1
+SFX 4963 0 aura .
+SFX 4784 Y 1
+SFX 4784 0 electric .
+SFX 1706 Y 1
+SFX 1706 0 iders .
+SFX 416 Y 1
+SFX 416 0 zai .
+SFX 414 Y 1
+SFX 414 0 zan .
+SFX 1834 Y 1
+SFX 1834 0 ritad .
+SFX 367 Y 1
+SFX 367 0 zar .
+SFX 306 Y 1
+SFX 306 0 zas .
+SFX 946 Y 1
+SFX 946 0 mond .
+SFX 1336 Y 1
+SFX 1336 0 trada .
+SFX 374 Y 1
+SFX 374 0 chai .
+SFX 603 Y 1
+SFX 603 0 chan .
+SFX 2983 Y 1
+SFX 2983 0 trads .
+SFX 699 Y 1
+SFX 699 0 char .
+SFX 471 Y 1
+SFX 471 0 chas .
+SFX 2785 Y 1
+SFX 2785 0 chau .
+SFX 3805 Y 1
+SFX 3805 0 ttia .
+SFX 2957 Y 1
+SFX 2957 0 turai .
+SFX 3802 Y 1
+SFX 3802 0 ttin .
+SFX 2954 Y 1
+SFX 2954 0 turar .
+SFX 4994 Y 1
+SFX 4994 0 anissem .
+SFX 987 Y 1
+SFX 987 0 turas .
+SFX 530 Y 1
+SFX 530 0 nain .
+SFX 421 Y 1
+SFX 421 0 nais .
+SFX 2550 Y 1
+SFX 2550 0 naiv .
+SFX 3152 Y 1
+SFX 3152 0 nisesch .
+SFX 109 Y 1
+SFX 109 0 isada .
+SFX 130 Y 1
+SFX 130 0 isads .
+SFX 1422 Y 1
+SFX 1422 0 uneschian .
+SFX 1421 Y 1
+SFX 1421 0 uneschias .
+SFX 2422 Y 1
+SFX 2422 0 stond .
+SFX 2392 Y 1
+SFX 2392 0 tunada .
+SFX 3798 Y 1
+SFX 3798 0 tunads .
+SFX 3632 Y 1
+SFX 3632 0 zer .
+SFX 3191 Y 1
+SFX 3191 0 nals .
+SFX 1362 Y 1
+SFX 1362 0 menta .
+SFX 1403 Y 1
+SFX 1403 0 chel .
+SFX 3497 Y 1
+SFX 3497 0 chen .
+SFX 1196 Y 1
+SFX 1196 0 cher .
+SFX 1938 Y 1
+SFX 1938 0 chet .
+SFX 621 Y 1
+SFX 621 0 ments .
+SFX 2351 Y 1
+SFX 2351 0 vegnissan .
+SFX 2350 Y 1
+SFX 2350 0 vegnissas .
+SFX 4596 Y 1
+SFX 4596 0 iculara .
+SFX 2820 Y 1
+SFX 2820 0 aschond .
+SFX 629 Y 1
+SFX 629 0 bilitad .
+SFX 3973 Y 1
+SFX 3973 0 tanzas .
+SFX 2981 Y 1
+SFX 2981 0 train .
+SFX 2980 Y 1
+SFX 2980 0 trais .
+SFX 4772 Y 1
+SFX 4772 0 ellavan .
+SFX 2795 Y 1
+SFX 2795 0 atisond .
+SFX 4771 Y 1
+SFX 4771 0 ellavas .
+SFX 762 Y 1
+SFX 762 0 unond .
+SFX 689 Y 1
+SFX 689 0 ifitgada .
+SFX 4444 Y 1
+SFX 4444 0 lecziun .
+SFX 2207 Y 1
+SFX 2207 0 irond .
+SFX 718 Y 1
+SFX 718 0 ifitgads .
+SFX 1995 Y 1
+SFX 1995 0 ziunavan .
+SFX 1994 Y 1
+SFX 1994 0 ziunavas .
+SFX 121 Y 1
+SFX 121 0 isain .
+SFX 120 Y 1
+SFX 120 0 isais .
+SFX 323 Y 1
+SFX 323 0 zia .
+SFX 3629 Y 1
+SFX 3629 0 zis .
+SFX 382 Y 1
+SFX 382 0 chia .
+SFX 4897 Y 1
+SFX 4897 0 chim .
+SFX 2784 Y 1
+SFX 2784 0 chin .
+SFX 3475 Y 1
+SFX 3475 0 chis .
+SFX 3796 Y 1
+SFX 3796 0 tunain .
+SFX 3795 Y 1
+SFX 3795 0 tunais .
+SFX 4766 Y 1
+SFX 4766 0 endai .
+SFX 4763 Y 1
+SFX 4763 0 endan .
+SFX 864 Y 1
+SFX 864 0 madas .
+SFX 2300 Y 1
+SFX 2300 0 endas .
+SFX 4611 Y 1
+SFX 4611 0 iclai .
+SFX 4933 Y 1
+SFX 4933 0 bilisadas .
+SFX 4608 Y 1
+SFX 4608 0 iclar .
+SFX 3321 Y 1
+SFX 3321 0 iclas .
+SFX 2309 Y 1
+SFX 2309 0 drà .
+SFX 3221 Y 1
+SFX 3221 0 mentesch .
+SFX 3189 Y 1
+SFX 3189 0 nari .
+SFX 4392 Y 1
+SFX 4392 0 mentian .
+SFX 4391 Y 1
+SFX 4391 0 mentias .
+SFX 3375 Y 1
+SFX 3375 0 fitgai .
+SFX 3372 Y 1
+SFX 3372 0 fitgar .
+SFX 3550 Y 1
+SFX 3550 0 'aura .
+SFX 76 Y 1
+SFX 76 0 dad .
+SFX 425 Y 1
+SFX 425 0 dai .
+SFX 2774 Y 1
+SFX 2774 0 dal .
+SFX 924 Y 1
+SFX 924 0 dan .
+SFX 602 Y 1
+SFX 602 0 dar .
+SFX 22 Y 1
+SFX 22 0 das .
+SFX 4839 Y 1
+SFX 4839 0 dat .
+SFX 4380 Y 1
+SFX 4380 0 misaziun .
+SFX 3530 Y 1
+SFX 3530 0 ccassan .
+SFX 3529 Y 1
+SFX 3529 0 ccassas .
+SFX 552 Y 1
+SFX 552 0 nass .
+SFX 2318 Y 1
+SFX 2318 0 chla .
+SFX 716 Y 1
+SFX 716 0 ifitgain .
+SFX 715 Y 1
+SFX 715 0 ifitgais .
+SFX 4938 Y 1
+SFX 4938 0 beschian .
+SFX 4937 Y 1
+SFX 4937 0 beschias .
+SFX 2205 Y 1
+SFX 2205 0 isant .
+SFX 3225 Y 1
+SFX 3225 0 mader .
+SFX 3414 Y 1
+SFX 3414 0 ender .
+SFX 549 Y 1
+SFX 549 0 nava .
+SFX 4104 Y 1
+SFX 4104 0 schentada .
+SFX 3577 Y 1
+SFX 3577 0 anai .
+SFX 4102 Y 1
+SFX 4102 0 schentads .
+SFX 2842 Y 1
+SFX 2842 0 anar .
+SFX 3575 Y 1
+SFX 3575 0 anas .
+SFX 1935 Y 1
+SFX 1935 0 del .
+SFX 3457 Y 1
+SFX 3457 0 den .
+SFX 54 Y 1
+SFX 54 0 der .
+SFX 3456 Y 1
+SFX 3456 0 det .
+SFX 3015 Y 1
+SFX 3015 0 tegià .
+SFX 2783 Y 1
+SFX 2783 0 chinas .
+SFX 3267 Y 1
+SFX 3267 0 inella .
+SFX 2005 Y 1
+SFX 2005 0 ziunai .
+SFX 1774 Y 1
+SFX 1774 0 ziunal .
+SFX 2001 Y 1
+SFX 2001 0 ziunar .
+SFX 2977 Y 1
+SFX 2977 0 trass .
+SFX 330 Y 1
+SFX 330 0 entada .
+SFX 355 Y 1
+SFX 355 0 entads .
+SFX 1277 Y 1
+SFX 1277 0 ifitgant .
+SFX 3377 Y 1
+SFX 3377 0 fitgadas .
+SFX 4762 Y 1
+SFX 4762 0 endia .
+SFX 1767 Y 1
+SFX 1767 0 anda .
+SFX 119 Y 1
+SFX 119 0 isass .
+SFX 1026 Y 1
+SFX 1026 0 alist .
+SFX 2974 Y 1
+SFX 2974 0 trava .
+SFX 698 Y 1
+SFX 698 0 dia .
+SFX 754 Y 1
+SFX 754 0 egiassan .
+SFX 753 Y 1
+SFX 753 0 egiassas .
+SFX 2767 Y 1
+SFX 2767 0 dim .
+SFX 923 Y 1
+SFX 923 0 din .
+SFX 1399 Y 1
+SFX 1399 0 dir .
+SFX 789 Y 1
+SFX 789 0 dis .
+SFX 3793 Y 1
+SFX 3793 0 tunass .
+SFX 318 Y 1
+SFX 318 0 teschan .
+SFX 317 Y 1
+SFX 317 0 teschas .
+SFX 4100 Y 1
+SFX 4100 0 schentain .
+SFX 4099 Y 1
+SFX 4099 0 schentais .
+SFX 3272 Y 1
+SFX 3272 0 imavan .
+SFX 3271 Y 1
+SFX 3271 0 imavas .
+SFX 116 Y 1
+SFX 116 0 isava .
+SFX 1986 Y 1
+SFX 1986 0 zun .
+SFX 1567 Y 1
+SFX 1567 0 chun .
+SFX 4075 Y 1
+SFX 4075 0 scriva .
+SFX 4209 Y 1
+SFX 4209 0 portavan .
+SFX 4208 Y 1
+SFX 4208 0 portavas .
+SFX 2177 Y 1
+SFX 2177 0 lià .
+SFX 348 Y 1
+SFX 348 0 entain .
+SFX 3450 Y 1
+SFX 3450 0 dla .
+SFX 3790 Y 1
+SFX 3790 0 tunava .
+SFX 347 Y 1
+SFX 347 0 entais .
+SFX 687 Y 1
+SFX 687 0 ifitgass .
+SFX 678 Y 1
+SFX 678 0 ravan .
+SFX 677 Y 1
+SFX 677 0 ravas .
+SFX 3304 Y 1
+SFX 3304 0 iels .
+SFX 4798 Y 1
+SFX 4798 0 egiaziun .
+SFX 2301 Y 1
+SFX 2301 0 ellà .
+SFX 2841 Y 1
+SFX 2841 0 ania .
+SFX 2840 Y 1
+SFX 2840 0 anic .
+SFX 4803 Y 1
+SFX 4803 0 ectond .
+SFX 2411 Y 1
+SFX 2411 0 tenta .
+SFX 3185 Y 1
+SFX 3185 0 ndada .
+SFX 3183 Y 1
+SFX 3183 0 ndads .
+SFX 2530 Y 1
+SFX 2530 0 ppadas .
+SFX 1909 Y 1
+SFX 1909 0 ient .
+SFX 4101 Y 1
+SFX 4101 0 schentai .
+SFX 4098 Y 1
+SFX 4098 0 schentan .
+SFX 4097 Y 1
+SFX 4097 0 schentar .
+SFX 4096 Y 1
+SFX 4096 0 schentas .
+SFX 686 Y 1
+SFX 686 0 ifitgava .
+SFX 3986 Y 1
+SFX 3986 0 stituescha .
+SFX 1737 Y 1
+SFX 1737 0 gnada .
+SFX 551 Y 1
+SFX 551 0 nassan .
+SFX 550 Y 1
+SFX 550 0 nassas .
+SFX 4829 Y 1
+SFX 4829 0 dor .
+SFX 1735 Y 1
+SFX 1735 0 gnads .
+SFX 1300 Y 1
+SFX 1300 0 fà .
+SFX 514 Y 1
+SFX 514 0 alisada .
+SFX 1102 Y 1
+SFX 1102 0 zza .
+SFX 2574 Y 1
+SFX 2574 0 liond .
+SFX 1033 Y 1
+SFX 1033 0 tgavan .
+SFX 1679 Y 1
+SFX 1679 0 isaziuns .
+SFX 512 Y 1
+SFX 512 0 alisads .
+SFX 1032 Y 1
+SFX 1032 0 tgavas .
+SFX 4180 Y 1
+SFX 4180 0 rdia .
+SFX 2740 Y 1
+SFX 2740 0 egnai .
+SFX 2305 Y 1
+SFX 2305 0 egnan .
+SFX 4794 Y 1
+SFX 4794 0 egnar .
+SFX 2737 Y 1
+SFX 2737 0 egnas .
+SFX 4914 Y 1
+SFX 4914 0 bilisond .
+SFX 3409 Y 1
+SFX 3409 0 ergia .
+SFX 316 Y 1
+SFX 316 0 teschia .
+SFX 3878 Y 1
+SFX 3878 0 tivaziun .
+SFX 1622 Y 1
+SFX 1622 0 risavan .
+SFX 1621 Y 1
+SFX 1621 0 risavas .
+SFX 1241 Y 1
+SFX 1241 0 tadad .
+SFX 1911 Y 1
+SFX 1911 0 hezza .
+SFX 171 Y 1
+SFX 171 0 tadas .
+SFX 1234 Y 1
+SFX 1234 0 tisà .
+SFX 4553 Y 1
+SFX 4553 0 iiiii .
+SFX 84 Y 1
+SFX 84 0 dra .
+SFX 4863 Y 1
+SFX 4863 0 curran .
+SFX 599 Y 1
+SFX 599 0 iera .
+SFX 4862 Y 1
+SFX 4862 0 curras .
+SFX 781 Y 1
+SFX 781 0 iers .
+SFX 3102 Y 1
+SFX 3102 0 rmain .
+SFX 2077 Y 1
+SFX 2077 0 tgeschan .
+SFX 2076 Y 1
+SFX 2076 0 tgeschas .
+SFX 4192 Y 1
+SFX 4192 0 pulvra .
+SFX 2105 Y 1
+SFX 2105 0 scrit .
+SFX 4076 Y 1
+SFX 4076 0 scriv .
+SFX 831 Y 1
+SFX 831 0 dian .
+SFX 790 Y 1
+SFX 790 0 dias .
+SFX 2163 Y 1
+SFX 2163 0 ndain .
+SFX 1354 Y 1
+SFX 1354 0 ndais .
+SFX 1505 Y 1
+SFX 1505 0 ivadas .
+SFX 4314 Y 1
+SFX 4314 0 ntaziun .
+SFX 4891 Y 1
+SFX 4891 0 cizia .
+SFX 4627 Y 1
+SFX 4627 0 hetteschan .
+SFX 4626 Y 1
+SFX 4626 0 hetteschas .
+SFX 4095 Y 1
+SFX 4095 0 schentass .
+SFX 907 Y 1
+SFX 907 0 ineschan .
+SFX 906 Y 1
+SFX 906 0 ineschas .
+SFX 1733 Y 1
+SFX 1733 0 gnain .
+SFX 1732 Y 1
+SFX 1732 0 gnais .
+SFX 264 Y 1
+SFX 264 0 aivel .
+SFX 510 Y 1
+SFX 510 0 alisain .
+SFX 509 Y 1
+SFX 509 0 alisais .
+SFX 1092 Y 1
+SFX 1092 0 dun .
+SFX 1091 Y 1
+SFX 1091 0 dur .
+SFX 4820 Y 1
+SFX 4820 0 dus .
+SFX 572 Y 1
+SFX 572 0 tader .
+SFX 3867 Y 1
+SFX 3867 0 tonic .
+SFX 982 Y 1
+SFX 982 0 dida .
+SFX 1093 Y 1
+SFX 1093 0 dids .
+SFX 4964 Y 1
+SFX 4964 0 atond .
+SFX 346 Y 1
+SFX 346 0 entass .
+SFX 3459 Y 1
+SFX 3459 0 currer .
+SFX 2992 Y 1
+SFX 2992 0 timent .
+SFX 4089 Y 1
+SFX 4089 0 schentia .
+SFX 4864 Y 1
+SFX 4864 0 culaziun .
+SFX 4092 Y 1
+SFX 4092 0 schentava .
+SFX 520 Y 1
+SFX 520 0 sai .
+SFX 27 Y 1
+SFX 27 0 san .
+SFX 519 Y 1
+SFX 519 0 sar .
+SFX 23 Y 1
+SFX 23 0 sas .
+SFX 64 Y 1
+SFX 64 0 itad .
+SFX 1149 Y 1
+SFX 1149 0 itai .
+SFX 3254 Y 1
+SFX 3254 0 ital .
+SFX 3253 Y 1
+SFX 3253 0 itan .
+SFX 707 Y 1
+SFX 707 0 itar .
+SFX 1273 Y 1
+SFX 1273 0 itas .
+SFX 1333 Y 1
+SFX 1333 0 uescha .
+SFX 199 Y 1
+SFX 199 0 anta .
+SFX 2304 Y 1
+SFX 2304 0 egnia .
+SFX 442 Y 1
+SFX 442 0 ants .
+SFX 3085 Y 1
+SFX 3085 0 sabel .
+SFX 343 Y 1
+SFX 343 0 entava .
+SFX 4992 Y 1
+SFX 4992 0 anus .
+SFX 248 Y 1
+SFX 248 0 sch .
+SFX 1107 Y 1
+SFX 1107 0 unesch .
+SFX 2688 Y 1
+SFX 2688 0 glià .
+SFX 709 Y 1
+SFX 709 0 ifitgescha .
+SFX 4403 Y 1
+SFX 4403 0 londer .
+SFX 1572 Y 1
+SFX 1572 0 atori .
+SFX 4859 Y 1
+SFX 4859 0 curria .
+SFX 4853 Y 1
+SFX 4853 0 currin .
+SFX 4851 Y 1
+SFX 4851 0 curris .
+SFX 455 Y 1
+SFX 455 0 cada .
+SFX 1818 Y 1
+SFX 1818 0 tgeschia .
+SFX 567 Y 1
+SFX 567 0 cads .
+SFX 4058 Y 1
+SFX 4058 0 segn .
+SFX 2769 Y 1
+SFX 2769 0 dicaziun .
+SFX 1830 Y 1
+SFX 1830 0 sem .
+SFX 4039 Y 1
+SFX 4039 0 sen .
+SFX 605 Y 1
+SFX 605 0 aivla .
+SFX 692 Y 1
+SFX 692 0 hesch .
+SFX 2466 Y 1
+SFX 2466 0 ser .
+SFX 2881 Y 1
+SFX 2881 0 versiun .
+SFX 1041 Y 1
+SFX 1041 0 set .
+SFX 4625 Y 1
+SFX 4625 0 hetteschia .
+SFX 752 Y 1
+SFX 752 0 egiavan .
+SFX 511 Y 1
+SFX 511 0 alisai .
+SFX 751 Y 1
+SFX 751 0 egiavas .
+SFX 456 Y 1
+SFX 456 0 alisar .
+SFX 905 Y 1
+SFX 905 0 ineschia .
+SFX 1142 Y 1
+SFX 1142 0 itavan .
+SFX 1141 Y 1
+SFX 1141 0 itavas .
+SFX 666 Y 1
+SFX 666 0 egiada .
+SFX 787 Y 1
+SFX 787 0 egiads .
+SFX 3883 Y 1
+SFX 3883 0 tivassan .
+SFX 3882 Y 1
+SFX 3882 0 tivassas .
+SFX 4957 Y 1
+SFX 4957 0 avita .
+SFX 3180 Y 1
+SFX 3180 0 ndass .
+SFX 2199 Y 1
+SFX 2199 0 itga .
+SFX 331 Y 1
+SFX 331 0 anza .
+SFX 1731 Y 1
+SFX 1731 0 gnass .
+SFX 2827 Y 1
+SFX 2827 0 aschassan .
+SFX 4319 Y 1
+SFX 4319 0 ntassan .
+SFX 2826 Y 1
+SFX 2826 0 aschassas .
+SFX 4318 Y 1
+SFX 4318 0 ntassas .
+SFX 508 Y 1
+SFX 508 0 alisass .
+SFX 4911 Y 1
+SFX 4911 0 bond .
+SFX 991 Y 1
+SFX 991 0 tgada .
+SFX 3016 Y 1
+SFX 3016 0 tegel .
+SFX 990 Y 1
+SFX 990 0 tgads .
+SFX 4141 Y 1
+SFX 4141 0 sabla .
+SFX 3150 Y 1
+SFX 3150 0 niseschan .
+SFX 3149 Y 1
+SFX 3149 0 niseschas .
+SFX 854 Y 1
+SFX 854 0 sia .
+SFX 1829 Y 1
+SFX 1829 0 sin .
+SFX 4036 Y 1
+SFX 4036 0 sis .
+SFX 4481 Y 1
+SFX 4481 0 itia .
+SFX 2603 Y 1
+SFX 2603 0 itic .
+SFX 2095 Y 1
+SFX 2095 0 siv .
+SFX 3243 Y 1
+SFX 3243 0 itis .
+SFX 1368 Y 1
+SFX 1368 0 itiv .
+SFX 2882 Y 1
+SFX 2882 0 venziuns .
+SFX 565 Y 1
+SFX 565 0 cain .
+SFX 564 Y 1
+SFX 564 0 cais .
+SFX 3495 Y 1
+SFX 3495 0 chentà .
+SFX 2766 Y 1
+SFX 2766 0 dina .
+SFX 2765 Y 1
+SFX 2765 0 dind .
+SFX 3177 Y 1
+SFX 3177 0 ndava .
+SFX 3504 Y 1
+SFX 3504 0 cedivan .
+SFX 3503 Y 1
+SFX 3503 0 cedivas .
+SFX 3025 Y 1
+SFX 3025 0 strond .
+SFX 4892 Y 1
+SFX 4892 0 ciclic .
+SFX 4495 Y 1
+SFX 4495 0 istrescha .
+SFX 1728 Y 1
+SFX 1728 0 gnava .
+SFX 505 Y 1
+SFX 505 0 alisava .
+SFX 724 Y 1
+SFX 724 0 egiain .
+SFX 723 Y 1
+SFX 723 0 egiais .
+SFX 3070 Y 1
+SFX 3070 0 senn .
+SFX 4016 Y 1
+SFX 4016 0 sla .
+SFX 2788 Y 1
+SFX 2788 0 cala .
+SFX 1113 Y 1
+SFX 1113 0 tadra .
+SFX 2080 Y 1
+SFX 2080 0 tegia .
+SFX 2093 Y 1
+SFX 2093 0 sma .
+SFX 294 Y 1
+SFX 294 0 dira .
+SFX 1037 Y 1
+SFX 1037 0 tgain .
+SFX 1036 Y 1
+SFX 1036 0 tgais .
+SFX 4359 Y 1
+SFX 4359 0 mpond .
+SFX 1571 Y 1
+SFX 1571 0 cant .
+SFX 2764 Y 1
+SFX 2764 0 diss .
+SFX 2944 Y 1
+SFX 2944 0 udain .
+SFX 2943 Y 1
+SFX 2943 0 udais .
+SFX 2051 Y 1
+SFX 2051 0 uà .
+SFX 2940 Y 1
+SFX 2940 0 uì .
+SFX 1365 Y 1
+SFX 1365 0 ivà .
+SFX 3539 Y 1
+SFX 3539 0 ccà .
+SFX 3453 Y 1
+SFX 3453 0 dita .
+SFX 4831 Y 1
+SFX 4831 0 ditg .
+SFX 657 Y 1
+SFX 657 0 nian .
+SFX 639 Y 1
+SFX 639 0 nias .
+SFX 2744 Y 1
+SFX 2744 0 egiant .
+SFX 3148 Y 1
+SFX 3148 0 niseschia .
+SFX 4222 Y 1
+SFX 4222 0 portada .
+SFX 4220 Y 1
+SFX 4220 0 portads .
+SFX 1675 Y 1
+SFX 1675 0 iunadas .
+SFX 3949 Y 1
+SFX 3949 0 tegna .
+SFX 1934 Y 1
+SFX 1934 0 diva .
+SFX 4919 Y 1
+SFX 4919 0 biliseschan .
+SFX 4918 Y 1
+SFX 4918 0 biliseschas .
+SFX 4006 Y 1
+SFX 4006 0 ssassan .
+SFX 2547 Y 1
+SFX 2547 0 nica .
+SFX 4478 Y 1
+SFX 4478 0 itschada .
+SFX 4005 Y 1
+SFX 4005 0 ssassas .
+SFX 3785 Y 1
+SFX 3785 0 tureschian .
+SFX 680 Y 1
+SFX 680 0 rassan .
+SFX 3784 Y 1
+SFX 3784 0 tureschias .
+SFX 679 Y 1
+SFX 679 0 rassas .
+SFX 3541 Y 1
+SFX 3541 0 card .
+SFX 703 Y 1
+SFX 703 0 ssa .
+SFX 3168 Y 1
+SFX 3168 0 nida .
+SFX 563 Y 1
+SFX 563 0 cass .
+SFX 3210 Y 1
+SFX 3210 0 minada .
+SFX 835 Y 1
+SFX 835 0 deschan .
+SFX 834 Y 1
+SFX 834 0 deschas .
+SFX 3208 Y 1
+SFX 3208 0 minads .
+SFX 1458 Y 1
+SFX 1458 0 sta .
+SFX 2420 Y 1
+SFX 2420 0 sts .
+SFX 4337 Y 1
+SFX 4337 0 nier .
+SFX 2959 Y 1
+SFX 2959 0 turadas .
+SFX 2430 Y 1
+SFX 2430 0 stai .
+SFX 1243 Y 1
+SFX 1243 0 star .
+SFX 3054 Y 1
+SFX 3054 0 stas .
+SFX 1602 Y 1
+SFX 1602 0 sum .
+SFX 2419 Y 1
+SFX 2419 0 sun .
+SFX 3979 Y 1
+SFX 3979 0 sur .
+SFX 1527 Y 1
+SFX 1527 0 itur .
+SFX 695 Y 1
+SFX 695 0 egiass .
+SFX 770 Y 1
+SFX 770 0 unai .
+SFX 3734 Y 1
+SFX 3734 0 unal .
+SFX 1423 Y 1
+SFX 1423 0 unan .
+SFX 2129 Y 1
+SFX 2129 0 raziun .
+SFX 737 Y 1
+SFX 737 0 unar .
+SFX 736 Y 1
+SFX 736 0 unas .
+SFX 4218 Y 1
+SFX 4218 0 portain .
+SFX 4217 Y 1
+SFX 4217 0 portais .
+SFX 560 Y 1
+SFX 560 0 cava .
+SFX 938 Y 1
+SFX 938 0 tgass .
+SFX 694 Y 1
+SFX 694 0 egiava .
+SFX 4416 Y 1
+SFX 4416 0 linavan .
+SFX 2935 Y 1
+SFX 2935 0 uissan .
+SFX 4415 Y 1
+SFX 4415 0 linavas .
+SFX 2934 Y 1
+SFX 2934 0 uissas .
+SFX 2033 Y 1
+SFX 2033 0 unda .
+SFX 1114 Y 1
+SFX 1114 0 ster .
+SFX 3206 Y 1
+SFX 3206 0 minain .
+SFX 3205 Y 1
+SFX 3205 0 minais .
+SFX 4770 Y 1
+SFX 4770 0 ellaziun .
+SFX 1790 Y 1
+SFX 1790 0 uner .
+SFX 2032 Y 1
+SFX 2032 0 unet .
+SFX 4917 Y 1
+SFX 4917 0 biliseschia .
+SFX 2328 Y 1
+SFX 2328 0 agls .
+SFX 989 Y 1
+SFX 989 0 tgava .
+SFX 430 Y 1
+SFX 430 0 tevan .
+SFX 429 Y 1
+SFX 429 0 tevas .
+SFX 2433 Y 1
+SFX 2433 0 stada .
+SFX 2431 Y 1
+SFX 2431 0 stads .
+SFX 791 Y 1
+SFX 791 0 deschia .
+SFX 3595 Y 1
+SFX 3595 0 agna .
+SFX 2837 Y 1
+SFX 2837 0 aschada .
+SFX 3751 Y 1
+SFX 3751 0 uissem .
+SFX 2835 Y 1
+SFX 2835 0 aschads .
+SFX 3045 Y 1
+SFX 3045 0 stia .
+SFX 940 Y 1
+SFX 940 0 stic .
+SFX 2606 Y 1
+SFX 2606 0 isatur .
+SFX 3650 Y 1
+SFX 3650 0 vassan .
+SFX 3649 Y 1
+SFX 3649 0 vassas .
+SFX 2815 Y 1
+SFX 2815 0 atisada .
+SFX 4709 Y 1
+SFX 4709 0 etica .
+SFX 2813 Y 1
+SFX 2813 0 atisads .
+SFX 673 Y 1
+SFX 673 0 unada .
+SFX 771 Y 1
+SFX 771 0 unads .
+SFX 1327 Y 1
+SFX 1327 0 unia .
+SFX 1693 Y 1
+SFX 1693 0 irada .
+SFX 1487 Y 1
+SFX 1487 0 letta .
+SFX 2218 Y 1
+SFX 2218 0 irads .
+SFX 1025 Y 1
+SFX 1025 0 chesch .
+SFX 3999 Y 1
+SFX 3999 0 ssond .
+SFX 4519 Y 1
+SFX 4519 0 istidas .
+SFX 833 Y 1
+SFX 833 0 deschian .
+SFX 832 Y 1
+SFX 832 0 deschias .
+SFX 2429 Y 1
+SFX 2429 0 stain .
+SFX 3767 Y 1
+SFX 3767 0 ualiseschan .
+SFX 4213 Y 1
+SFX 4213 0 portass .
+SFX 2428 Y 1
+SFX 2428 0 stais .
+SFX 3766 Y 1
+SFX 3766 0 ualiseschas .
+SFX 3731 Y 1
+SFX 3731 0 unalisà .
+SFX 2833 Y 1
+SFX 2833 0 aschain .
+SFX 2630 Y 1
+SFX 2630 0 ileschian .
+SFX 2832 Y 1
+SFX 2832 0 aschais .
+SFX 2629 Y 1
+SFX 2629 0 ileschias .
+SFX 240 Y 1
+SFX 240 0 lai .
+SFX 353 Y 1
+SFX 353 0 lan .
+SFX 3745 Y 1
+SFX 3745 0 umond .
+SFX 223 Y 1
+SFX 223 0 lar .
+SFX 156 Y 1
+SFX 156 0 las .
+SFX 3232 Y 1
+SFX 3232 0 lat .
+SFX 3280 Y 1
+SFX 3280 0 imai .
+SFX 4548 Y 1
+SFX 4548 0 imal .
+SFX 2626 Y 1
+SFX 2626 0 imar .
+SFX 3277 Y 1
+SFX 3277 0 imas .
+SFX 2811 Y 1
+SFX 2811 0 atisain .
+SFX 4334 Y 1
+SFX 4334 0 nist .
+SFX 2810 Y 1
+SFX 2810 0 atisais .
+SFX 4088 Y 1
+SFX 4088 0 schentian .
+SFX 4087 Y 1
+SFX 4087 0 schentias .
+SFX 769 Y 1
+SFX 769 0 unain .
+SFX 701 Y 1
+SFX 701 0 unais .
+SFX 3125 Y 1
+SFX 3125 0 oraziun .
+SFX 3203 Y 1
+SFX 3203 0 minass .
+SFX 4210 Y 1
+SFX 4210 0 portava .
+SFX 2216 Y 1
+SFX 2216 0 irain .
+SFX 2215 Y 1
+SFX 2215 0 irais .
+SFX 928 Y 1
+SFX 928 0 abilitad .
+SFX 4406 Y 1
+SFX 4406 0 loga .
+SFX 378 Y 1
+SFX 378 0 entian .
+SFX 377 Y 1
+SFX 377 0 entias .
+SFX 4775 Y 1
+SFX 4775 0 ellassan .
+SFX 4774 Y 1
+SFX 4774 0 ellassas .
+SFX 3733 Y 1
+SFX 3733 0 unala .
+SFX 42 Y 1
+SFX 42 0 avan .
+SFX 41 Y 1
+SFX 41 0 avas .
+SFX 3708 Y 1
+SFX 3708 0 unals .
+SFX 866 Y 1
+SFX 866 0 lel .
+SFX 4436 Y 1
+SFX 4436 0 len .
+SFX 1342 Y 1
+SFX 1342 0 stra .
+SFX 954 Y 1
+SFX 954 0 ler .
+SFX 3200 Y 1
+SFX 3200 0 minava .
+SFX 743 Y 1
+SFX 743 0 let .
+SFX 4955 Y 1
+SFX 4955 0 badas .
+SFX 2071 Y 1
+SFX 2071 0 tinadas .
+SFX 705 Y 1
+SFX 705 0 mada .
+SFX 4786 Y 1
+SFX 4786 0 elà .
+SFX 953 Y 1
+SFX 953 0 mads .
+SFX 4993 Y 1
+SFX 4993 0 antina .
+SFX 2903 Y 1
+SFX 2903 0 unament .
+SFX 4198 Y 1
+SFX 4198 0 prai .
+SFX 4196 Y 1
+SFX 4196 0 pran .
+SFX 3115 Y 1
+SFX 3115 0 pras .
+SFX 1407 Y 1
+SFX 1407 0 atoric .
+SFX 1714 Y 1
+SFX 1714 0 idadas .
+SFX 3765 Y 1
+SFX 3765 0 ualiseschia .
+SFX 2540 Y 1
+SFX 2540 0 oritad .
+SFX 696 Y 1
+SFX 696 0 egià .
+SFX 3691 Y 1
+SFX 3691 0 unta .
+SFX 877 Y 1
+SFX 877 0 avel .
+SFX 253 Y 1
+SFX 253 0 lia .
+SFX 3228 Y 1
+SFX 3228 0 lic .
+SFX 1869 Y 1
+SFX 1869 0 lim .
+SFX 780 Y 1
+SFX 780 0 lin .
+SFX 2573 Y 1
+SFX 2573 0 lit .
+SFX 1951 Y 1
+SFX 1951 0 arisavan .
+SFX 1950 Y 1
+SFX 1950 0 arisavas .
+SFX 3053 Y 1
+SFX 3053 0 stass .
+SFX 2140 Y 1
+SFX 2140 0 ografica .
+SFX 3259 Y 1
+SFX 3259 0 isiun .
+SFX 3667 Y 1
+SFX 3667 0 upleschian .
+SFX 3666 Y 1
+SFX 3666 0 upleschias .
+SFX 4374 Y 1
+SFX 4374 0 mpai .
+SFX 4371 Y 1
+SFX 4371 0 mpan .
+SFX 227 Y 1
+SFX 227 0 lond .
+SFX 4370 Y 1
+SFX 4370 0 mpar .
+SFX 4369 Y 1
+SFX 4369 0 mpas .
+SFX 4293 Y 1
+SFX 4293 0 ochesch .
+SFX 2828 Y 1
+SFX 2828 0 aschass .
+SFX 65 Y 1
+SFX 65 0 main .
+SFX 824 Y 1
+SFX 824 0 mais .
+SFX 2808 Y 1
+SFX 2808 0 atisass .
+SFX 2571 Y 1
+SFX 2571 0 lla .
+SFX 768 Y 1
+SFX 768 0 unass .
+SFX 1914 Y 1
+SFX 1914 0 gnian .
+SFX 1913 Y 1
+SFX 1913 0 gnias .
+SFX 1400 Y 1
+SFX 1400 0 cziun .
+SFX 3050 Y 1
+SFX 3050 0 stava .
+SFX 2213 Y 1
+SFX 2213 0 irass .
+SFX 3549 Y 1
+SFX 3549 0 avia .
+SFX 4816 Y 1
+SFX 4816 0 ectada .
+SFX 4292 Y 1
+SFX 4292 0 ochescha .
+SFX 4814 Y 1
+SFX 4814 0 ectads .
+SFX 4809 Y 1
+SFX 4809 0 ectassan .
+SFX 4808 Y 1
+SFX 4808 0 ectassas .
+SFX 1359 Y 1
+SFX 1359 0 meschan .
+SFX 1358 Y 1
+SFX 1358 0 meschas .
+SFX 1198 Y 1
+SFX 1198 0 anzas .
+SFX 2825 Y 1
+SFX 2825 0 aschava .
+SFX 1815 Y 1
+SFX 1815 0 ticas .
+SFX 986 Y 1
+SFX 986 0 unza .
+SFX 2569 Y 1
+SFX 2569 0 mala .
+SFX 4103 Y 1
+SFX 4103 0 schentadas .
+SFX 2805 Y 1
+SFX 2805 0 atisava .
+SFX 4195 Y 1
+SFX 4195 0 pria .
+SFX 4400 Y 1
+SFX 4400 0 maticher .
+SFX 765 Y 1
+SFX 765 0 unava .
+SFX 1048 Y 1
+SFX 1048 0 log .
+SFX 3227 Y 1
+SFX 3227 0 lon .
+SFX 2570 Y 1
+SFX 2570 0 lot .
+SFX 390 Y 1
+SFX 390 0 nà .
+SFX 1854 Y 1
+SFX 1854 0 nitad .
+SFX 2210 Y 1
+SFX 2210 0 irava .
+SFX 2548 Y 1
+SFX 2548 0 nì .
+SFX 2097 Y 1
+SFX 2097 0 setta .
+SFX 1309 Y 1
+SFX 1309 0 avla .
+SFX 2591 Y 1
+SFX 2591 0 liada .
+SFX 2589 Y 1
+SFX 2589 0 liads .
+SFX 4934 Y 1
+SFX 4934 0 bilisada .
+SFX 4932 Y 1
+SFX 4932 0 bilisads .
+SFX 3407 Y 1
+SFX 3407 0 erladas .
+SFX 1182 Y 1
+SFX 1182 0 ditsch .
+SFX 3975 Y 1
+SFX 3975 0 talas .
+SFX 4362 Y 1
+SFX 4362 0 mpia .
+SFX 4812 Y 1
+SFX 4812 0 ectain .
+SFX 4811 Y 1
+SFX 4811 0 ectais .
+SFX 1063 Y 1
+SFX 1063 0 gavan .
+SFX 1106 Y 1
+SFX 1106 0 unescha .
+SFX 1062 Y 1
+SFX 1062 0 gavas .
+SFX 2714 Y 1
+SFX 2714 0 ereschan .
+SFX 2713 Y 1
+SFX 2713 0 ereschas .
+SFX 4644 Y 1
+SFX 4644 0 hent .
+SFX 1711 Y 1
+SFX 1711 0 idassan .
+SFX 1710 Y 1
+SFX 1710 0 idassas .
+SFX 2667 Y 1
+SFX 2667 0 iblas .
+SFX 3303 Y 1
+SFX 3303 0 ienta .
+SFX 4077 Y 1
+SFX 4077 0 schunas .
+SFX 4197 Y 1
+SFX 4197 0 prais .
+SFX 1662 Y 1
+SFX 1662 0 lun .
+SFX 2587 Y 1
+SFX 2587 0 liain .
+SFX 1661 Y 1
+SFX 1661 0 lus .
+SFX 2586 Y 1
+SFX 2586 0 liais .
+SFX 892 Y 1
+SFX 892 0 schavan .
+SFX 2522 Y 1
+SFX 2522 0 ppassan .
+SFX 891 Y 1
+SFX 891 0 schavas .
+SFX 2521 Y 1
+SFX 2521 0 ppassas .
+SFX 952 Y 1
+SFX 952 0 mass .
+SFX 413 Y 1
+SFX 413 0 zassan .
+SFX 1357 Y 1
+SFX 1357 0 meschia .
+SFX 3916 Y 1
+SFX 3916 0 tifitgavan .
+SFX 412 Y 1
+SFX 412 0 zassas .
+SFX 2708 Y 1
+SFX 2708 0 erond .
+SFX 3915 Y 1
+SFX 3915 0 tifitgavas .
+SFX 3226 Y 1
+SFX 3226 0 lva .
+SFX 4930 Y 1
+SFX 4930 0 bilisain .
+SFX 4929 Y 1
+SFX 4929 0 bilisais .
+SFX 4983 Y 1
+SFX 4983 0 atada .
+SFX 4981 Y 1
+SFX 4981 0 atads .
+SFX 4590 Y 1
+SFX 4590 0 idaziun .
+SFX 1963 Y 1
+SFX 1963 0 arisà .
+SFX 2672 Y 1
+SFX 2672 0 hers .
+SFX 1269 Y 1
+SFX 1269 0 maun .
+SFX 3382 Y 1
+SFX 3382 0 ficaziun .
+SFX 1717 Y 1
+SFX 1717 0 iadad .
+SFX 219 Y 1
+SFX 219 0 iadas .
+SFX 949 Y 1
+SFX 949 0 mava .
+SFX 3525 Y 1
+SFX 3525 0 ccond .
+SFX 3330 Y 1
+SFX 3330 0 hets .
+SFX 534 Y 1
+SFX 534 0 iment .
+SFX 2712 Y 1
+SFX 2712 0 ereschia .
+SFX 856 Y 1
+SFX 856 0 seschian .
+SFX 855 Y 1
+SFX 855 0 seschias .
+SFX 2576 Y 1
+SFX 2576 0 lingia .
+SFX 4979 Y 1
+SFX 4979 0 atain .
+SFX 4978 Y 1
+SFX 4978 0 atais .
+SFX 3042 Y 1
+SFX 3042 0 strà .
+SFX 1236 Y 1
+SFX 1236 0 tgian .
+SFX 1235 Y 1
+SFX 1235 0 tgias .
+SFX 915 Y 1
+SFX 915 0 iader .
+SFX 4810 Y 1
+SFX 4810 0 ectass .
+SFX 3501 Y 1
+SFX 3501 0 cessiun .
+SFX 3800 Y 1
+SFX 3800 0 tuna .
+SFX 2381 Y 1
+SFX 2381 0 udian .
+SFX 2053 Y 1
+SFX 2053 0 tuns .
+SFX 2380 Y 1
+SFX 2380 0 udias .
+SFX 3786 Y 1
+SFX 3786 0 tunz .
+SFX 2877 Y 1
+SFX 2877 0 vond .
+SFX 3186 Y 1
+SFX 3186 0 ndà .
+SFX 3935 Y 1
+SFX 3935 0 tgida .
+SFX 2075 Y 1
+SFX 2075 0 ticra .
+SFX 3933 Y 1
+SFX 3933 0 tgids .
+SFX 2584 Y 1
+SFX 2584 0 liass .
+SFX 3686 Y 1
+SFX 3686 0 uplà .
+SFX 4807 Y 1
+SFX 4807 0 ectava .
+SFX 3759 Y 1
+SFX 3759 0 udida .
+SFX 4927 Y 1
+SFX 4927 0 bilisass .
+SFX 4643 Y 1
+SFX 4643 0 hettà .
+SFX 4628 Y 1
+SFX 4628 0 hettescha .
+SFX 249 Y 1
+SFX 249 0 tura .
+SFX 4595 Y 1
+SFX 4595 0 icultura .
+SFX 1603 Y 1
+SFX 1603 0 strada .
+SFX 607 Y 1
+SFX 607 0 turs .
+SFX 2728 Y 1
+SFX 2728 0 eradas .
+SFX 3041 Y 1
+SFX 3041 0 strads .
+SFX 1223 Y 1
+SFX 1223 0 tisavan .
+SFX 1222 Y 1
+SFX 1222 0 tisavas .
+SFX 1792 Y 1
+SFX 1792 0 uitad .
+SFX 3147 Y 1
+SFX 3147 0 niseschian .
+SFX 3146 Y 1
+SFX 3146 0 niseschias .
+SFX 4819 Y 1
+SFX 4819 0 eal .
+SFX 2581 Y 1
+SFX 2581 0 liava .
+SFX 3711 Y 1
+SFX 3711 0 unaliseschian .
+SFX 3710 Y 1
+SFX 3710 0 unaliseschias .
+SFX 3754 Y 1
+SFX 3754 0 ugna .
+SFX 4924 Y 1
+SFX 4924 0 bilisava .
+SFX 2567 Y 1
+SFX 2567 0 messas .
+SFX 2306 Y 1
+SFX 2306 0 ect .
+SFX 4206 Y 1
+SFX 4206 0 portian .
+SFX 2988 Y 1
+SFX 2988 0 tiras .
+SFX 4205 Y 1
+SFX 4205 0 portias .
+SFX 4977 Y 1
+SFX 4977 0 atari .
+SFX 548 Y 1
+SFX 548 0 navan .
+SFX 4377 Y 1
+SFX 4377 0 mpada .
+SFX 547 Y 1
+SFX 547 0 navas .
+SFX 4375 Y 1
+SFX 4375 0 mpads .
+SFX 3968 Y 1
+SFX 3968 0 tativa .
+SFX 4976 Y 1
+SFX 4976 0 atass .
+SFX 3039 Y 1
+SFX 3039 0 strain .
+SFX 3038 Y 1
+SFX 3038 0 strais .
+SFX 1867 Y 1
+SFX 1867 0 lingua .
+SFX 4413 Y 1
+SFX 4413 0 linguissem .
+SFX 349 Y 1
+SFX 349 0 entai .
+SFX 380 Y 1
+SFX 380 0 entan .
+SFX 329 Y 1
+SFX 329 0 entar .
+SFX 254 Y 1
+SFX 254 0 entas .
+SFX 3499 Y 1
+SFX 3499 0 chella .
+SFX 1018 Y 1
+SFX 1018 0 egl .
+SFX 1398 Y 1
+SFX 1398 0 egn .
+SFX 3875 Y 1
+SFX 3875 0 tiveschan .
+SFX 3874 Y 1
+SFX 3874 0 tiveschas .
+SFX 4973 Y 1
+SFX 4973 0 atava .
+SFX 4073 Y 1
+SFX 4073 0 scrivain .
+SFX 4072 Y 1
+SFX 4072 0 scrivais .
+SFX 2405 Y 1
+SFX 2405 0 tgina .
+SFX 3003 Y 1
+SFX 3003 0 tgind .
+SFX 1548 Y 1
+SFX 1548 0 iadra .
+SFX 1582 Y 1
+SFX 1582 0 ureschian .
+SFX 1581 Y 1
+SFX 1581 0 ureschias .
+SFX 4586 Y 1
+SFX 4586 0 ific .
+SFX 4373 Y 1
+SFX 4373 0 mpain .
+SFX 4372 Y 1
+SFX 4372 0 mpais .
+SFX 527 Y 1
+SFX 527 0 padas .
+SFX 2169 Y 1
+SFX 2169 0 mian .
+SFX 1861 Y 1
+SFX 1861 0 mias .
+SFX 2219 Y 1
+SFX 2219 0 iradas .
+SFX 1415 Y 1
+SFX 1415 0 urescha .
+SFX 4304 Y 1
+SFX 4304 0 ocai .
+SFX 3136 Y 1
+SFX 3136 0 ocar .
+SFX 4782 Y 1
+SFX 4782 0 eli .
+SFX 1409 Y 1
+SFX 1409 0 adiras .
+SFX 627 Y 1
+SFX 627 0 els .
+SFX 4389 Y 1
+SFX 4389 0 mica .
+SFX 2971 Y 1
+SFX 2971 0 tresch .
+SFX 4388 Y 1
+SFX 4388 0 mida .
+SFX 2404 Y 1
+SFX 2404 0 tgiss .
+SFX 3546 Y 1
+SFX 3546 0 bada .
+SFX 2834 Y 1
+SFX 2834 0 aschai .
+SFX 2831 Y 1
+SFX 2831 0 aschan .
+SFX 2830 Y 1
+SFX 2830 0 aschar .
+SFX 4954 Y 1
+SFX 4954 0 bads .
+SFX 2829 Y 1
+SFX 2829 0 aschas .
+SFX 2538 Y 1
+SFX 2538 0 pader .
+SFX 1179 Y 1
+SFX 1179 0 ena .
+SFX 101 Y 1
+SFX 101 0 end .
+SFX 2726 Y 1
+SFX 2726 0 erai .
+SFX 4752 Y 1
+SFX 4752 0 eral .
+SFX 1755 Y 1
+SFX 1755 0 ens .
+SFX 136 Y 1
+SFX 136 0 ent .
+SFX 2296 Y 1
+SFX 2296 0 erar .
+SFX 1392 Y 1
+SFX 1392 0 eras .
+SFX 379 Y 1
+SFX 379 0 entia .
+SFX 4230 Y 1
+SFX 4230 0 participaziun .
+SFX 4754 Y 1
+SFX 4754 0 entin .
+SFX 2822 Y 1
+SFX 2822 0 aschian .
+SFX 2821 Y 1
+SFX 2821 0 aschias .
+SFX 870 Y 1
+SFX 870 0 gà .
+SFX 4675 Y 1
+SFX 4675 0 gì .
+SFX 1343 Y 1
+SFX 1343 0 stica .
+SFX 3873 Y 1
+SFX 3873 0 tiveschia .
+SFX 3036 Y 1
+SFX 3036 0 strass .
+SFX 1420 Y 1
+SFX 1420 0 unian .
+SFX 1419 Y 1
+SFX 1419 0 unias .
+SFX 2403 Y 1
+SFX 2403 0 tgiva .
+SFX 3262 Y 1
+SFX 3262 0 irian .
+SFX 3261 Y 1
+SFX 3261 0 irias .
+SFX 4738 Y 1
+SFX 4738 0 erlescha .
+SFX 176 Y 1
+SFX 176 0 era .
+SFX 1929 Y 1
+SFX 1929 0 ern .
+SFX 339 Y 1
+SFX 339 0 ers .
+SFX 1751 Y 1
+SFX 1751 0 ert .
+SFX 3033 Y 1
+SFX 3033 0 strava .
+SFX 1405 Y 1
+SFX 1405 0 bain .
+SFX 4952 Y 1
+SFX 4952 0 bais .
+SFX 4728 Y 1
+SFX 4728 0 esc .
+SFX 85 Y 1
+SFX 85 0 ess .
+SFX 3389 Y 1
+SFX 3389 0 est .
+SFX 792 Y 1
+SFX 792 0 descha .
+SFX 4661 Y 1
+SFX 4661 0 gliada .
+SFX 793 Y 1
+SFX 793 0 desch .
+SFX 4368 Y 1
+SFX 4368 0 mpass .
+SFX 964 Y 1
+SFX 964 0 ineschian .
+SFX 3387 Y 1
+SFX 3387 0 eta .
+SFX 963 Y 1
+SFX 963 0 ineschias .
+SFX 1750 Y 1
+SFX 1750 0 etg .
+SFX 452 Y 1
+SFX 452 0 ets .
+SFX 3783 Y 1
+SFX 3783 0 ualisà .
+SFX 1836 Y 1
+SFX 1836 0 rent .
+SFX 4696 Y 1
+SFX 4696 0 eum .
+SFX 3067 Y 1
+SFX 3067 0 ssada .
+SFX 1927 Y 1
+SFX 1927 0 eur .
+SFX 4926 Y 1
+SFX 4926 0 bilisassan .
+SFX 4013 Y 1
+SFX 4013 0 ssads .
+SFX 4925 Y 1
+SFX 4925 0 bilisassas .
+SFX 1941 Y 1
+SFX 1941 0 aschia .
+SFX 94 Y 1
+SFX 94 0 eva .
+SFX 1930 Y 1
+SFX 1930 0 eria .
+SFX 1753 Y 1
+SFX 1753 0 eric .
+SFX 4743 Y 1
+SFX 4743 0 erin .
+SFX 4365 Y 1
+SFX 4365 0 mpava .
+SFX 3291 Y 1
+SFX 3291 0 ilassan .
+SFX 3290 Y 1
+SFX 3290 0 ilassas .
+SFX 457 Y 1
+SFX 457 0 tscha .
+SFX 2395 Y 1
+SFX 2395 0 tschs .
+SFX 440 Y 1
+SFX 440 0 glia .
+SFX 939 Y 1
+SFX 939 0 tad .
+SFX 142 Y 1
+SFX 142 0 tai .
+SFX 992 Y 1
+SFX 992 0 tal .
+SFX 159 Y 1
+SFX 159 0 tan .
+SFX 150 Y 1
+SFX 150 0 tar .
+SFX 82 Y 1
+SFX 82 0 tas .
+SFX 3019 Y 1
+SFX 3019 0 tat .
+SFX 4353 Y 1
+SFX 4353 0 namain .
+SFX 2514 Y 1
+SFX 2514 0 rinas .
+SFX 4258 Y 1
+SFX 4258 0 orisadas .
+SFX 4846 Y 1
+SFX 4846 0 currivan .
+SFX 4845 Y 1
+SFX 4845 0 currivas .
+SFX 4054 Y 1
+SFX 4054 0 segnai .
+SFX 4051 Y 1
+SFX 4051 0 segnan .
+SFX 4050 Y 1
+SFX 4050 0 segnar .
+SFX 3071 Y 1
+SFX 3071 0 segnas .
+SFX 2597 Y 1
+SFX 2597 0 ivlas .
+SFX 2336 Y 1
+SFX 2336 0 ziuneschian .
+SFX 4551 Y 1
+SFX 4551 0 ilaziun .
+SFX 2335 Y 1
+SFX 2335 0 ziuneschias .
+SFX 4011 Y 1
+SFX 4011 0 ssain .
+SFX 4010 Y 1
+SFX 4010 0 ssais .
+SFX 4475 Y 1
+SFX 4475 0 iunalitad .
+SFX 3107 Y 1
+SFX 3107 0 rets .
+SFX 3518 Y 1
+SFX 3518 0 cedì .
+SFX 1752 Y 1
+SFX 1752 0 erna .
+SFX 1040 Y 1
+SFX 1040 0 tel .
+SFX 225 Y 1
+SFX 225 0 ter .
+SFX 2410 Y 1
+SFX 2410 0 tet .
+SFX 3945 Y 1
+SFX 3945 0 tex .
+SFX 2432 Y 1
+SFX 2432 0 stadas .
+SFX 1747 Y 1
+SFX 1747 0 giadas .
+SFX 4441 Y 1
+SFX 4441 0 legiai .
+SFX 4438 Y 1
+SFX 4438 0 legian .
+SFX 4437 Y 1
+SFX 4437 0 legias .
+SFX 366 Y 1
+SFX 366 0 alitad .
+SFX 1806 Y 1
+SFX 1806 0 tschassan .
+SFX 1805 Y 1
+SFX 1805 0 tschassas .
+SFX 2340 Y 1
+SFX 2340 0 ziala .
+SFX 4275 Y 1
+SFX 4275 0 ondas .
+SFX 3948 Y 1
+SFX 3948 0 tellar .
+SFX 2969 Y 1
+SFX 2969 0 treschan .
+SFX 2968 Y 1
+SFX 2968 0 treschas .
+SFX 2791 Y 1
+SFX 2791 0 bass .
+SFX 359 Y 1
+SFX 359 0 tga .
+SFX 3006 Y 1
+SFX 3006 0 tgi .
+SFX 807 Y 1
+SFX 807 0 tgs .
+SFX 1738 Y 1
+SFX 1738 0 gnà .
+SFX 2174 Y 1
+SFX 2174 0 matic .
+SFX 1473 Y 1
+SFX 1473 0 oterapia .
+SFX 712 Y 1
+SFX 712 0 ifitgavan .
+SFX 711 Y 1
+SFX 711 0 ifitgavas .
+SFX 3327 Y 1
+SFX 3327 0 ibels .
+SFX 2566 Y 1
+SFX 2566 0 mettai .
+SFX 2563 Y 1
+SFX 2563 0 mettan .
+SFX 4364 Y 1
+SFX 4364 0 mpavan .
+SFX 2170 Y 1
+SFX 2170 0 mettas .
+SFX 4363 Y 1
+SFX 4363 0 mpavas .
+SFX 164 Y 1
+SFX 164 0 tia .
+SFX 300 Y 1
+SFX 300 0 tic .
+SFX 1954 Y 1
+SFX 1954 0 arisassan .
+SFX 2074 Y 1
+SFX 2074 0 til .
+SFX 1953 Y 1
+SFX 1953 0 arisassas .
+SFX 1031 Y 1
+SFX 1031 0 tim .
+SFX 428 Y 1
+SFX 428 0 tin .
+SFX 3901 Y 1
+SFX 3901 0 tip .
+SFX 2058 Y 1
+SFX 2058 0 tir .
+SFX 1593 Y 1
+SFX 1593 0 tis .
+SFX 324 Y 1
+SFX 324 0 tiv .
+SFX 4948 Y 1
+SFX 4948 0 bava .
+SFX 1364 Y 1
+SFX 1364 0 laria .
+SFX 3426 Y 1
+SFX 3426 0 egliavan .
+SFX 3425 Y 1
+SFX 3425 0 egliavas .
+SFX 583 Y 1
+SFX 583 0 lisescha .
+SFX 3209 Y 1
+SFX 3209 0 minadas .
+SFX 3672 Y 1
+SFX 3672 0 uplesch .
+SFX 3645 Y 1
+SFX 3645 0 vella .
+SFX 1395 Y 1
+SFX 1395 0 enteschan .
+SFX 1394 Y 1
+SFX 1394 0 enteschas .
+SFX 218 Y 1
+SFX 218 0 lada .
+SFX 2707 Y 1
+SFX 2707 0 erta .
+SFX 4458 Y 1
+SFX 4458 0 ladi .
+SFX 241 Y 1
+SFX 241 0 lads .
+SFX 4729 Y 1
+SFX 4729 0 erts .
+SFX 3110 Y 1
+SFX 3110 0 radira .
+SFX 4043 Y 1
+SFX 4043 0 segnia .
+SFX 2541 Y 1
+SFX 2541 0 oral .
+SFX 4263 Y 1
+SFX 4263 0 orar .
+SFX 3799 Y 1
+SFX 3799 0 tunadas .
+SFX 2323 Y 1
+SFX 2323 0 arisaziun .
+SFX 3476 Y 1
+SFX 3476 0 chentond .
+SFX 4194 Y 1
+SFX 4194 0 prias .
+SFX 2561 Y 1
+SFX 2561 0 metter .
+SFX 2824 Y 1
+SFX 2824 0 aschavan .
+SFX 2823 Y 1
+SFX 2823 0 aschavas .
+SFX 4007 Y 1
+SFX 4007 0 ssass .
+SFX 3032 Y 1
+SFX 3032 0 stravan .
+SFX 641 Y 1
+SFX 641 0 iuns .
+SFX 2967 Y 1
+SFX 2967 0 treschia .
+SFX 3031 Y 1
+SFX 3031 0 stravas .
+SFX 3868 Y 1
+SFX 3868 0 tom .
+SFX 2985 Y 1
+SFX 2985 0 ton .
+SFX 2398 Y 1
+SFX 2398 0 top .
+SFX 2039 Y 1
+SFX 2039 0 uavan .
+SFX 2038 Y 1
+SFX 2038 0 uavas .
+SFX 2024 Y 1
+SFX 2024 0 và .
+SFX 1512 Y 1
+SFX 1512 0 iuneschan .
+SFX 1511 Y 1
+SFX 1511 0 iuneschas .
+SFX 232 Y 1
+SFX 232 0 lain .
+SFX 2963 Y 1
+SFX 2963 0 tunà .
+SFX 231 Y 1
+SFX 231 0 lais .
+SFX 2554 Y 1
+SFX 2554 0 mettia .
+SFX 2299 Y 1
+SFX 2299 0 enteschian .
+SFX 2884 Y 1
+SFX 2884 0 veglia .
+SFX 2298 Y 1
+SFX 2298 0 enteschias .
+SFX 52 Y 1
+SFX 52 0 eschan .
+SFX 51 Y 1
+SFX 51 0 eschas .
+SFX 4004 Y 1
+SFX 4004 0 ssava .
+SFX 1029 Y 1
+SFX 1029 0 tra .
+SFX 3239 Y 1
+SFX 3239 0 iura .
+SFX 4471 Y 1
+SFX 4471 0 iurs .
+SFX 3579 Y 1
+SFX 3579 0 american .
+SFX 1993 Y 1
+SFX 1993 0 ziunesch .
+SFX 1393 Y 1
+SFX 1393 0 enteschia .
+SFX 3238 Y 1
+SFX 3238 0 iusa .
+SFX 1474 Y 1
+SFX 1474 0 oric .
+SFX 2760 Y 1
+SFX 2760 0 divan .
+SFX 2310 Y 1
+SFX 2310 0 divas .
+SFX 4261 Y 1
+SFX 4261 0 oris .
+SFX 2818 Y 1
+SFX 2818 0 assicuranza .
+SFX 774 Y 1
+SFX 774 0 tta .
+SFX 2763 Y 1
+SFX 2763 0 dissan .
+SFX 2762 Y 1
+SFX 2762 0 dissas .
+SFX 840 Y 1
+SFX 840 0 ulond .
+SFX 3235 Y 1
+SFX 3235 0 lament .
+SFX 2393 Y 1
+SFX 2393 0 tum .
+SFX 806 Y 1
+SFX 806 0 tun .
+SFX 1488 Y 1
+SFX 1488 0 lant .
+SFX 185 Y 1
+SFX 185 0 tur .
+SFX 1208 Y 1
+SFX 1208 0 tus .
+SFX 2052 Y 1
+SFX 2052 0 tut .
+SFX 1408 Y 1
+SFX 1408 0 atica .
+SFX 4641 Y 1
+SFX 4641 0 hettadas .
+SFX 3555 Y 1
+SFX 3555 0 atics .
+SFX 2794 Y 1
+SFX 2794 0 ativas .
+SFX 4796 Y 1
+SFX 4796 0 egnadas .
+SFX 2715 Y 1
+SFX 2715 0 erescha .
+SFX 2729 Y 1
+SFX 2729 0 erada .
+SFX 2727 Y 1
+SFX 2727 0 erads .
+SFX 4285 Y 1
+SFX 4285 0 ognan .
+SFX 1848 Y 1
+SFX 1848 0 ognas .
+SFX 663 Y 1
+SFX 663 0 hescha .
+SFX 1944 Y 1
+SFX 1944 0 ariseschian .
+SFX 2020 Y 1
+SFX 2020 0 vegnì .
+SFX 1943 Y 1
+SFX 1943 0 ariseschias .
+SFX 1329 Y 1
+SFX 1329 0 ueschian .
+SFX 1328 Y 1
+SFX 1328 0 ueschias .
+SFX 1510 Y 1
+SFX 1510 0 iuneschia .
+SFX 128 Y 1
+SFX 128 0 isescha .
+SFX 2669 Y 1
+SFX 2669 0 ialas .
+SFX 4813 Y 1
+SFX 4813 0 ectai .
+SFX 3442 Y 1
+SFX 3442 0 ectar .
+SFX 2517 Y 1
+SFX 2517 0 ppond .
+SFX 50 Y 1
+SFX 50 0 eschia .
+SFX 3538 Y 1
+SFX 3538 0 ccada .
+SFX 3536 Y 1
+SFX 3536 0 ccads .
+SFX 3965 Y 1
+SFX 3965 0 taziuns .
+SFX 2804 Y 1
+SFX 2804 0 atisavan .
+SFX 2803 Y 1
+SFX 2803 0 atisavas .
+SFX 230 Y 1
+SFX 230 0 lass .
+SFX 4606 Y 1
+SFX 4606 0 iclassan .
+SFX 4531 Y 1
+SFX 4531 0 isabladad .
+SFX 4605 Y 1
+SFX 4605 0 iclassas .
+SFX 1981 Y 1
+SFX 1981 0 zzai .
+SFX 2334 Y 1
+SFX 2334 0 zzan .
+SFX 1978 Y 1
+SFX 1978 0 zzar .
+SFX 1977 Y 1
+SFX 1977 0 zzas .
+SFX 1038 Y 1
+SFX 1038 0 tgai .
+SFX 1238 Y 1
+SFX 1238 0 tgan .
+SFX 888 Y 1
+SFX 888 0 tgar .
+SFX 571 Y 1
+SFX 571 0 tgas .
+SFX 4895 Y 1
+SFX 4895 0 chlas .
+SFX 2725 Y 1
+SFX 2725 0 erain .
+SFX 2724 Y 1
+SFX 2724 0 erais .
+SFX 34 Y 1
+SFX 34 0 à .
+SFX 3443 Y 1
+SFX 3443 0 è .
+SFX 1305 Y 1
+SFX 1305 0 é .
+SFX 72 Y 1
+SFX 72 0 ì .
+SFX 4757 Y 1
+SFX 4757 0 ensiun .
+SFX 222 Y 1
+SFX 222 0 lava .
+SFX 4283 Y 1
+SFX 4283 0 ognian .
+SFX 4282 Y 1
+SFX 4282 0 ognias .
+SFX 2348 Y 1
+SFX 2348 0 vegnivan .
+SFX 2347 Y 1
+SFX 2347 0 vegnivas .
+SFX 3534 Y 1
+SFX 3534 0 ccain .
+SFX 3533 Y 1
+SFX 3533 0 ccais .
+SFX 4284 Y 1
+SFX 4284 0 ognia .
+SFX 2368 Y 1
+SFX 2368 0 vada .
+SFX 4237 Y 1
+SFX 4237 0 orta .
+SFX 2407 Y 1
+SFX 2407 0 tget .
+SFX 2891 Y 1
+SFX 2891 0 vads .
+SFX 3670 Y 1
+SFX 3670 0 upleschan .
+SFX 3669 Y 1
+SFX 3669 0 upleschas .
+SFX 3440 Y 1
+SFX 3440 0 ectiva .
+SFX 4804 Y 1
+SFX 4804 0 ectivs .
+SFX 4547 Y 1
+SFX 4547 0 imesch .
+SFX 4411 Y 1
+SFX 4411 0 linond .
+SFX 4474 Y 1
+SFX 4474 0 iunalmain .
+SFX 4968 Y 1
+SFX 4968 0 atina .
+SFX 828 Y 1
+SFX 828 0 heschian .
+SFX 827 Y 1
+SFX 827 0 heschias .
+SFX 3202 Y 1
+SFX 3202 0 minassan .
+SFX 1378 Y 1
+SFX 1378 0 ibladad .
+SFX 3441 Y 1
+SFX 3441 0 ectiv .
+SFX 3201 Y 1
+SFX 3201 0 minassas .
+SFX 2843 Y 1
+SFX 2843 0 anadas .
+SFX 4060 Y 1
+SFX 4060 0 scrivian .
+SFX 4059 Y 1
+SFX 4059 0 scrivias .
+SFX 1727 Y 1
+SFX 1727 0 gnavan .
+SFX 1726 Y 1
+SFX 1726 0 gnavas .
+SFX 449 Y 1
+SFX 449 0 lescha .
+SFX 569 Y 1
+SFX 569 0 almain .
+SFX 778 Y 1
+SFX 778 0 mai .
+SFX 2175 Y 1
+SFX 2175 0 mal .
+SFX 1485 Y 1
+SFX 1485 0 man .
+SFX 742 Y 1
+SFX 742 0 mar .
+SFX 902 Y 1
+SFX 902 0 mas .
+SFX 1864 Y 1
+SFX 1864 0 mat .
+SFX 493 Y 1
+SFX 493 0 inai .
+SFX 1699 Y 1
+SFX 1699 0 inal .
+SFX 1006 Y 1
+SFX 1006 0 inan .
+SFX 4361 Y 1
+SFX 4361 0 mpian .
+SFX 468 Y 1
+SFX 468 0 inar .
+SFX 337 Y 1
+SFX 337 0 inas .
+SFX 4360 Y 1
+SFX 4360 0 mpias .
+SFX 2332 Y 1
+SFX 2332 0 zzia .
+SFX 1111 Y 1
+SFX 1111 0 tgia .
+SFX 3004 Y 1
+SFX 3004 0 tgin .
+SFX 1817 Y 1
+SFX 1817 0 tgir .
+SFX 3002 Y 1
+SFX 3002 0 tgis .
+SFX 2031 Y 1
+SFX 2031 0 uond .
+SFX 2365 Y 1
+SFX 2365 0 vain .
+SFX 2364 Y 1
+SFX 2364 0 vais .
+SFX 3913 Y 1
+SFX 3913 0 tifitgescha .
+SFX 4021 Y 1
+SFX 4021 0 siunavan .
+SFX 4020 Y 1
+SFX 4020 0 siunavas .
+SFX 3573 Y 1
+SFX 3573 0 anassan .
+SFX 3572 Y 1
+SFX 3572 0 anassas .
+SFX 2722 Y 1
+SFX 2722 0 erass .
+SFX 4396 Y 1
+SFX 4396 0 mel .
+SFX 3978 Y 1
+SFX 3978 0 sura .
+SFX 3214 Y 1
+SFX 3214 0 mer .
+SFX 1862 Y 1
+SFX 1862 0 met .
+SFX 4537 Y 1
+SFX 4537 0 iner .
+SFX 3729 Y 1
+SFX 3729 0 unalisadas .
+SFX 914 Y 1
+SFX 914 0 iaziun .
+SFX 2311 Y 1
+SFX 2311 0 della .
+SFX 3668 Y 1
+SFX 3668 0 upleschia .
+SFX 1620 Y 1
+SFX 1620 0 risesch .
+SFX 426 Y 1
+SFX 426 0 aders .
+SFX 1369 Y 1
+SFX 1369 0 itaziun .
+SFX 2719 Y 1
+SFX 2719 0 erava .
+SFX 3531 Y 1
+SFX 3531 0 ccass .
+SFX 732 Y 1
+SFX 732 0 ativa .
+SFX 1615 Y 1
+SFX 1615 0 riseschian .
+SFX 595 Y 1
+SFX 595 0 lisadas .
+SFX 1614 Y 1
+SFX 1614 0 riseschias .
+SFX 3554 Y 1
+SFX 3554 0 ativs .
+SFX 1782 Y 1
+SFX 1782 0 vant .
+SFX 2790 Y 1
+SFX 2790 0 bina .
+SFX 4529 Y 1
+SFX 4529 0 isanat .
+SFX 3286 Y 1
+SFX 3286 0 ilitad .
+SFX 1137 Y 1
+SFX 1137 0 mia .
+SFX 3212 Y 1
+SFX 3212 0 mic .
+SFX 1644 Y 1
+SFX 1644 0 min .
+SFX 962 Y 1
+SFX 962 0 inia .
+SFX 3584 Y 1
+SFX 3584 0 alavan .
+SFX 3583 Y 1
+SFX 3583 0 alavas .
+SFX 3351 Y 1
+SFX 3351 0 gera .
+SFX 3528 Y 1
+SFX 3528 0 ccava .
+SFX 559 Y 1
+SFX 559 0 cavan .
+SFX 558 Y 1
+SFX 558 0 cavas .
+SFX 3240 Y 1
+SFX 3240 0 itschas .
+SFX 1765 Y 1
+SFX 1765 0 arola .
+SFX 4802 Y 1
+SFX 4802 0 ectur .
+SFX 2021 Y 1
+SFX 2021 0 vart .
+SFX 2886 Y 1
+SFX 2886 0 vass .
+SFX 1972 Y 1
+SFX 1972 0 zzavan .
+SFX 1971 Y 1
+SFX 1971 0 zzavas .
+SFX 361 Y 1
+SFX 361 0 ischem .
+SFX 886 Y 1
+SFX 886 0 tidas .
+SFX 1673 Y 1
+SFX 1673 0 ivels .
+SFX 1937 Y 1
+SFX 1937 0 chetta .
+SFX 2885 Y 1
+SFX 2885 0 vava .
+SFX 3193 Y 1
+SFX 3193 0 mpa .
+SFX 999 Y 1
+SFX 999 0 resch .
+SFX 2776 Y 1
+SFX 2776 0 clond .
+SFX 3075 Y 1
+SFX 3075 0 scopic .
+SFX 216 Y 1
+SFX 216 0 iassan .
+SFX 215 Y 1
+SFX 215 0 iassas .
+SFX 1535 Y 1
+SFX 1535 0 itesch .
+SFX 1324 Y 1
+SFX 1324 0 uradas .
+SFX 3187 Y 1
+SFX 3187 0 naziunal .
+SFX 2996 Y 1
+SFX 2996 0 tider .
+SFX 1827 Y 1
+SFX 1827 0 ssian .
+SFX 3060 Y 1
+SFX 3060 0 ssias .
+SFX 1145 Y 1
+SFX 1145 0 itassan .
+SFX 1144 Y 1
+SFX 1144 0 itassas .
+SFX 2757 Y 1
+SFX 2757 0 drai .
+SFX 4828 Y 1
+SFX 4828 0 dran .
+SFX 2196 Y 1
+SFX 2196 0 itgadas .
+SFX 2754 Y 1
+SFX 2754 0 drar .
+SFX 1019 Y 1
+SFX 1019 0 dras .
+SFX 3264 Y 1
+SFX 3264 0 insa .
+SFX 2078 Y 1
+SFX 2078 0 tgesch .
+SFX 2616 Y 1
+SFX 2616 0 inta .
+SFX 582 Y 1
+SFX 582 0 liseschan .
+SFX 581 Y 1
+SFX 581 0 liseschas .
+SFX 4818 Y 1
+SFX 4818 0 economic .
+SFX 3764 Y 1
+SFX 3764 0 ualiseschian .
+SFX 3763 Y 1
+SFX 3763 0 ualiseschias .
+SFX 4357 Y 1
+SFX 4357 0 mus .
+SFX 2220 Y 1
+SFX 2220 0 inus .
+SFX 4354 Y 1
+SFX 4354 0 nalisaziun .
+SFX 3663 Y 1
+SFX 3663 0 urader .
+SFX 2204 Y 1
+SFX 2204 0 ischma .
+SFX 3145 Y 1
+SFX 3145 0 nisond .
+SFX 2565 Y 1
+SFX 2565 0 mettain .
+SFX 2564 Y 1
+SFX 2564 0 mettais .
+SFX 4240 Y 1
+SFX 4240 0 oriseschian .
+SFX 4239 Y 1
+SFX 4239 0 oriseschias .
+SFX 4827 Y 1
+SFX 4827 0 drel .
+SFX 1249 Y 1
+SFX 1249 0 rivan .
+SFX 1119 Y 1
+SFX 1119 0 rivas .
+SFX 345 Y 1
+SFX 345 0 entassan .
+SFX 344 Y 1
+SFX 344 0 entassas .
+SFX 3961 Y 1
+SFX 3961 0 tegiai .
+SFX 3014 Y 1
+SFX 3014 0 tegian .
+SFX 3958 Y 1
+SFX 3958 0 tegiar .
+SFX 2412 Y 1
+SFX 2412 0 tegias .
+SFX 4769 Y 1
+SFX 4769 0 ellond .
+SFX 1127 Y 1
+SFX 1127 0 pescha .
+SFX 4826 Y 1
+SFX 4826 0 dria .
+SFX 2999 Y 1
+SFX 2999 0 tgivan .
+SFX 3412 Y 1
+SFX 3412 0 entaziun .
+SFX 2998 Y 1
+SFX 2998 0 tgivas .
+SFX 1819 Y 1
+SFX 1819 0 tgescha .
+SFX 1049 Y 1
+SFX 1049 0 lissem .
+SFX 4591 Y 1
+SFX 4591 0 idamain .
+SFX 951 Y 1
+SFX 951 0 massan .
+SFX 950 Y 1
+SFX 950 0 massas .
+SFX 2807 Y 1
+SFX 2807 0 atisassan .
+SFX 2806 Y 1
+SFX 2806 0 atisassas .
+SFX 580 Y 1
+SFX 580 0 liseschia .
+SFX 3415 Y 1
+SFX 3415 0 ematica .
+SFX 3438 Y 1
+SFX 3438 0 eder .
+SFX 747 Y 1
+SFX 747 0 ifitgeschan .
+SFX 746 Y 1
+SFX 746 0 ifitgeschas .
+SFX 3151 Y 1
+SFX 3151 0 nisescha .
+SFX 2605 Y 1
+SFX 2605 0 ischa .
+SFX 342 Y 1
+SFX 342 0 entavan .
+SFX 341 Y 1
+SFX 341 0 entavas .
+SFX 4434 Y 1
+SFX 4434 0 lenta .
+SFX 4235 Y 1
+SFX 4235 0 oscopia .
+SFX 2588 Y 1
+SFX 2588 0 liai .
+SFX 302 Y 1
+SFX 302 0 lian .
+SFX 2585 Y 1
+SFX 2585 0 liar .
+SFX 262 Y 1
+SFX 262 0 lias .
+SFX 4867 Y 1
+SFX 4867 0 crappa .
+SFX 4779 Y 1
+SFX 4779 0 ellai .
+SFX 3417 Y 1
+SFX 3417 0 ellar .
+SFX 1304 Y 1
+SFX 1304 0 ellas .
+SFX 4398 Y 1
+SFX 4398 0 maziun .
+SFX 4967 Y 1
+SFX 4967 0 atisaziun .
+SFX 4719 Y 1
+SFX 4719 0 estesch .
+SFX 3665 Y 1
+SFX 3665 0 uplond .
+SFX 4823 Y 1
+SFX 4823 0 drom .
+SFX 1298 Y 1
+SFX 1298 0 fai .
+SFX 968 Y 1
+SFX 968 0 fan .
+SFX 1015 Y 1
+SFX 1015 0 far .
+SFX 1014 Y 1
+SFX 1014 0 fas .
+SFX 1663 Y 1
+SFX 1663 0 lier .
+SFX 2577 Y 1
+SFX 2577 0 liez .
+SFX 2610 Y 1
+SFX 2610 0 ireschan .
+SFX 233 Y 1
+SFX 233 0 ladas .
+SFX 2609 Y 1
+SFX 2609 0 ireschas .
+SFX 3771 Y 1
+SFX 3771 0 ualisavan .
+SFX 3770 Y 1
+SFX 3770 0 ualisavas .
+SFX 2060 Y 1
+SFX 2060 0 tinond .
+SFX 3494 Y 1
+SFX 3494 0 chentada .
+SFX 3492 Y 1
+SFX 3492 0 chentads .
+SFX 533 Y 1
+SFX 533 0 inadas .
+SFX 1230 Y 1
+SFX 1230 0 tisai .
+SFX 3527 Y 1
+SFX 3527 0 ccavan .
+SFX 3526 Y 1
+SFX 3526 0 ccavas .
+SFX 1110 Y 1
+SFX 1110 0 tisar .
+SFX 3124 Y 1
+SFX 3124 0 ordinà .
+SFX 4898 Y 1
+SFX 4898 0 chemia .
+SFX 708 Y 1
+SFX 708 0 ifitgeschia .
+SFX 3498 Y 1
+SFX 3498 0 chels .
+SFX 2782 Y 1
+SFX 2782 0 clà .
+SFX 956 Y 1
+SFX 956 0 lader .
+SFX 2286 Y 1
+SFX 2286 0 ffa .
+SFX 162 Y 1
+SFX 162 0 ezza .
+SFX 1601 Y 1
+SFX 1601 0 tament .
+SFX 4225 Y 1
+SFX 4225 0 plan .
+SFX 1197 Y 1
+SFX 1197 0 chend .
+SFX 1939 Y 1
+SFX 1939 0 chent .
+SFX 4539 Y 1
+SFX 4539 0 inader .
+SFX 3490 Y 1
+SFX 3490 0 chentain .
+SFX 4801 Y 1
+SFX 4801 0 ecziunà .
+SFX 4269 Y 1
+SFX 4269 0 onimia .
+SFX 3489 Y 1
+SFX 3489 0 chentais .
+SFX 2880 Y 1
+SFX 2880 0 vetta .
+SFX 1290 Y 1
+SFX 1290 0 fia .
+SFX 4688 Y 1
+SFX 4688 0 fid .
+SFX 1926 Y 1
+SFX 1926 0 fil .
+SFX 2284 Y 1
+SFX 2284 0 fin .
+SFX 4684 Y 1
+SFX 4684 0 fit .
+SFX 3445 Y 1
+SFX 3445 0 duira .
+SFX 2608 Y 1
+SFX 2608 0 ireschia .
+SFX 3319 Y 1
+SFX 3319 a idada a
+SFX 2427 Y 1
+SFX 2427 r sta r
+SFX 4835 Y 1
+SFX 4835 c desch c
+SFX 4576 Y 1
+SFX 4576 a ifitgar a
+SFX 4312 Y 1
+SFX 4312 l nter l
+SFX 4469 Y 1
+SFX 4469 d ivel d
+SFX 2910 Y 1
+SFX 2910 a uleschia a
+SFX 3752 Y 1
+SFX 3752 s uir s
+SFX 3224 Y 1
+SFX 3224 l mar l
+SFX 2901 Y 1
+SFX 2901 t unas t
+SFX 2909 Y 1
+SFX 2909 a uleschian a
+SFX 749 Y 1
+SFX 749 a ial a
+SFX 4159 Y 1
+SFX 4159 n rmassan n
+SFX 2439 Y 1
+SFX 2439 r ssavas r
+SFX 4111 Y 1
+SFX 4111 g schavan g
+SFX 2273 Y 1
+SFX 2273 a fitgain a
+SFX 2443 Y 1
+SFX 2443 r ssassas r
+SFX 4878 Y 1
+SFX 4878 a classas a
+SFX 2272 Y 1
+SFX 2272 c fitgain c
+SFX 4346 Y 1
+SFX 4346 l ndar l
+SFX 4344 Y 1
+SFX 4344 l nder l
+SFX 4110 Y 1
+SFX 4110 n schavan n
+SFX 3743 Y 1
+SFX 3743 i unada i
+SFX 2259 Y 1
+SFX 2259 a fitgavan a
+SFX 4618 Y 1
+SFX 4618 a ials a
+SFX 2258 Y 1
+SFX 2258 c fitgavan c
+SFX 1452 Y 1
+SFX 1452 c tgà c
+SFX 2859 Y 1
+SFX 2859 t ziescha t
+SFX 2400 Y 1
+SFX 2400 s tin s
+SFX 1690 Y 1
+SFX 1690 a isadas a
+SFX 1082 Y 1
+SFX 1082 a entar a
+SFX 4599 Y 1
+SFX 4599 a ics a
+SFX 2123 Y 1
+SFX 2123 a sadas a
+SFX 1372 Y 1
+SFX 1372 a iond a
+SFX 2233 Y 1
+SFX 2233 a id a
+SFX 311 Y 1
+SFX 311 a evas a
+SFX 259 Y 1
+SFX 259 c sadas c
+SFX 977 Y 1
+SFX 977 a egiain a
+SFX 1283 Y 1
+SFX 1283 a iain a
+SFX 1079 Y 1
+SFX 1079 a entassas a
+SFX 3814 Y 1
+SFX 3814 l ttas l
+SFX 4121 Y 1
+SFX 4121 g schan g
+SFX 3836 Y 1
+SFX 3836 n tschavan n
+SFX 3545 Y 1
+SFX 3545 a bilitad a
+SFX 1588 Y 1
+SFX 1588 n tsch n
+SFX 475 Y 1
+SFX 475 l schan l
+SFX 1209 Y 1
+SFX 1209 r ttas r
+SFX 3835 Y 1
+SFX 3835 r tschavan r
+SFX 3812 Y 1
+SFX 3812 s ttas s
+SFX 2491 Y 1
+SFX 2491 n sadas n
+SFX 1839 Y 1
+SFX 1839 n ppa n
+SFX 1166 Y 1
+SFX 1166 a inadas a
+SFX 2922 Y 1
+SFX 2922 a ulass a
+SFX 1247 Y 1
+SFX 1247 n schan n
+SFX 1160 Y 1
+SFX 1160 a inass a
+SFX 825 Y 1
+SFX 825 a itad a
+SFX 1335 Y 1
+SFX 1335 r tsch r
+SFX 3823 Y 1
+SFX 3823 s tsch s
+SFX 2342 Y 1
+SFX 2342 t zar t
+SFX 2223 Y 1
+SFX 2223 a ineschian a
+SFX 328 Y 1
+SFX 328 r schan r
+SFX 4001 Y 1
+SFX 4001 r sser r
+SFX 2445 Y 1
+SFX 2445 r ssar r
+SFX 1450 Y 1
+SFX 1450 c tgadas c
+SFX 912 Y 1
+SFX 912 a ids a
+SFX 2182 Y 1
+SFX 2182 a ivan a
+SFX 2165 Y 1
+SFX 2165 a nd a
+SFX 1549 Y 1
+SFX 1549 a iadas a
+SFX 4272 Y 1
+SFX 4272 a onia a
+SFX 1901 Y 1
+SFX 1901 a igl a
+SFX 4343 Y 1
+SFX 4343 g nd g
+SFX 625 Y 1
+SFX 625 a ettas a
+SFX 3173 Y 1
+SFX 3173 i nd i
+SFX 2622 Y 1
+SFX 2622 a inan a
+SFX 980 Y 1
+SFX 980 a egiadas a
+SFX 4455 Y 1
+SFX 4455 i là i
+SFX 435 Y 1
+SFX 435 l nd l
+SFX 1352 Y 1
+SFX 1352 m nd m
+SFX 4134 Y 1
+SFX 4134 g schada g
+SFX 1448 Y 1
+SFX 1448 c tgai c
+SFX 3612 Y 1
+SFX 3612 t ziuneschias t
+SFX 4593 Y 1
+SFX 4593 a idadas a
+SFX 4174 Y 1
+SFX 4174 d ri d
+SFX 3302 Y 1
+SFX 3302 a ificaziun a
+SFX 1441 Y 1
+SFX 1441 c tgava c
+SFX 2906 Y 1
+SFX 2906 a ulond a
+SFX 4756 Y 1
+SFX 4756 a entader a
+SFX 4133 Y 1
+SFX 4133 n schada n
+SFX 4130 Y 1
+SFX 4130 g schà g
+SFX 2338 Y 1
+SFX 2338 t ziar t
+SFX 2925 Y 1
+SFX 2925 a ulain a
+SFX 62 Y 1
+SFX 62 a ias a
+SFX 1163 Y 1
+SFX 1163 a inain a
+SFX 4172 Y 1
+SFX 4172 l ri l
+SFX 4169 Y 1
+SFX 4169 n ri n
+SFX 4122 Y 1
+SFX 4122 n schà n
+SFX 1484 Y 1
+SFX 1484 a ment a
+SFX 918 Y 1
+SFX 918 a entscha a
+SFX 3707 Y 1
+SFX 3707 i unan i
+SFX 3750 Y 1
+SFX 3750 i ulain i
+SFX 2239 Y 1
+SFX 2239 c gnia c
+SFX 4651 Y 1
+SFX 4651 d gnia d
+SFX 2853 Y 1
+SFX 2853 t zi t
+SFX 2457 Y 1
+SFX 2457 d siva d
+SFX 206 Y 1
+SFX 206 i ment i
+SFX 2114 Y 1
+SFX 2114 a sava a
+SFX 1646 Y 1
+SFX 1646 l ment l
+SFX 278 Y 1
+SFX 278 c sava c
+SFX 2150 Y 1
+SFX 2150 l ntava l
+SFX 1607 Y 1
+SFX 1607 n siziun n
+SFX 1385 Y 1
+SFX 1385 a iass a
+SFX 2441 Y 1
+SFX 2441 r ssavan r
+SFX 2444 Y 1
+SFX 2444 r ssassan r
+SFX 4879 Y 1
+SFX 4879 a classan a
+SFX 1053 Y 1
+SFX 1053 a inà a
+SFX 3611 Y 1
+SFX 3611 t ziuneschia t
+SFX 1003 Y 1
+SFX 1003 a ins a
+SFX 2147 Y 1
+SFX 2147 l ntia l
+SFX 2481 Y 1
+SFX 2481 n sava n
+SFX 3827 Y 1
+SFX 3827 n tschias n
+SFX 4454 Y 1
+SFX 4454 i lai i
+SFX 1303 Y 1
+SFX 1303 a ents a
+SFX 3826 Y 1
+SFX 3826 r tschias r
+SFX 2361 Y 1
+SFX 2361 i vas i
+SFX 3744 Y 1
+SFX 3744 a unà a
+SFX 2166 Y 1
+SFX 2166 a nas a
+SFX 2094 Y 1
+SFX 2094 d siv d
+SFX 312 Y 1
+SFX 312 a evan a
+SFX 1108 Y 1
+SFX 1108 a una a
+SFX 3627 Y 1
+SFX 3627 t ziunads t
+SFX 2887 Y 1
+SFX 2887 l vas l
+SFX 2438 Y 1
+SFX 2438 a ssem a
+SFX 334 Y 1
+SFX 334 c ssem c
+SFX 1080 Y 1
+SFX 1080 a entassan a
+SFX 3172 Y 1
+SFX 3172 l ndia l
+SFX 2620 Y 1
+SFX 2620 a ing a
+SFX 4129 Y 1
+SFX 4129 g schai g
+SFX 3831 Y 1
+SFX 3831 n tschia n
+SFX 3739 Y 1
+SFX 3739 i unà i
+SFX 28 Y 1
+SFX 28 r vas r
+SFX 3740 Y 1
+SFX 3740 i una i
+SFX 1781 Y 1
+SFX 1781 s vas s
+SFX 3828 Y 1
+SFX 3828 r tschia r
+SFX 1773 Y 1
+SFX 1773 t ziunà t
+SFX 375 Y 1
+SFX 375 t vas t
+SFX 2549 Y 1
+SFX 2549 l nas l
+SFX 4128 Y 1
+SFX 4128 n schai n
+SFX 3656 Y 1
+SFX 3656 a usas a
+SFX 3063 Y 1
+SFX 3063 n ssem n
+SFX 2497 Y 1
+SFX 2497 n rtavas n
+SFX 1075 Y 1
+SFX 1075 a entia a
+SFX 2654 Y 1
+SFX 2654 a iglia a
+SFX 3841 Y 1
+SFX 3841 n tschassas n
+SFX 2900 Y 1
+SFX 2900 t una t
+SFX 2098 Y 1
+SFX 2098 a seschias a
+SFX 4573 Y 1
+SFX 4573 a ifitgassas a
+SFX 3840 Y 1
+SFX 3840 r tschassas r
+SFX 1638 Y 1
+SFX 1638 a ografia a
+SFX 268 Y 1
+SFX 268 c seschias c
+SFX 633 Y 1
+SFX 633 a usa a
+SFX 2496 Y 1
+SFX 2496 n rtia n
+SFX 2511 Y 1
+SFX 2511 n rtada n
+SFX 3083 Y 1
+SFX 3083 c sant c
+SFX 1168 Y 1
+SFX 1168 a iez a
+SFX 3315 Y 1
+SFX 3315 a idava a
+SFX 2460 Y 1
+SFX 2460 n seschias n
+SFX 1164 Y 1
+SFX 1164 a inai a
+SFX 2896 Y 1
+SFX 2896 o urna o
+SFX 3613 Y 1
+SFX 3613 t ziuneschian t
+SFX 2883 Y 1
+SFX 2883 s vel s
+SFX 3644 Y 1
+SFX 3644 t vel t
+SFX 3260 Y 1
+SFX 3260 a isaziun a
+SFX 3657 Y 1
+SFX 3657 s usa s
+SFX 2454 Y 1
+SFX 2454 r ssada r
+SFX 2103 Y 1
+SFX 2103 a sescha a
+SFX 63 Y 1
+SFX 63 a ian a
+SFX 3097 Y 1
+SFX 3097 n rmeschas n
+SFX 274 Y 1
+SFX 274 c sescha c
+SFX 2614 Y 1
+SFX 2614 a ir a
+SFX 45 Y 1
+SFX 45 a er a
+SFX 3411 Y 1
+SFX 3411 c er c
+SFX 47 Y 1
+SFX 47 a ond a
+SFX 3738 Y 1
+SFX 3738 i unai i
+SFX 3701 Y 1
+SFX 3701 i unava i
+SFX 3410 Y 1
+SFX 3410 d er d
+SFX 3624 Y 1
+SFX 3624 t ziunai t
+SFX 4533 Y 1
+SFX 4533 g ir g
+SFX 2542 Y 1
+SFX 2542 e ond e
+SFX 2465 Y 1
+SFX 2465 n sescha n
+SFX 943 Y 1
+SFX 943 i ond i
+SFX 624 Y 1
+SFX 624 a ezza a
+SFX 4470 Y 1
+SFX 4470 a ius a
+SFX 1130 Y 1
+SFX 1130 m ond m
+SFX 1434 Y 1
+SFX 1434 c tgeschia c
+SFX 1129 Y 1
+SFX 1129 n ond n
+SFX 3023 Y 1
+SFX 3023 a tad a
+SFX 4466 Y 1
+SFX 4466 a iziun a
+SFX 2417 Y 1
+SFX 2417 c tad c
+SFX 4152 Y 1
+SFX 4152 l rnais l
+SFX 424 Y 1
+SFX 424 a ent a
+SFX 3610 Y 1
+SFX 3610 t ziunesch t
+SFX 4456 Y 1
+SFX 4456 i lads i
+SFX 3976 Y 1
+SFX 3976 n tad n
+SFX 3858 Y 1
+SFX 3858 n tschads n
+SFX 2889 Y 1
+SFX 2889 a van a
+SFX 1680 Y 1
+SFX 1680 a isavas a
+SFX 1723 Y 1
+SFX 1723 a hesch a
+SFX 4589 Y 1
+SFX 4589 a ider a
+SFX 2661 Y 1
+SFX 2661 a idar a
+SFX 3830 Y 1
+SFX 3830 n tschian n
+SFX 2112 Y 1
+SFX 2112 a savas a
+SFX 3857 Y 1
+SFX 3857 r tschads r
+SFX 276 Y 1
+SFX 276 c savas c
+SFX 3866 Y 1
+SFX 3866 r tori r
+SFX 4563 Y 1
+SFX 4563 a ifitgeschias a
+SFX 3829 Y 1
+SFX 3829 r tschian r
+SFX 4890 Y 1
+SFX 4890 a clada a
+SFX 3825 Y 1
+SFX 3825 n tschond n
+SFX 2376 Y 1
+SFX 2376 a ular a
+SFX 2362 Y 1
+SFX 2362 i van i
+SFX 2888 Y 1
+SFX 2888 l van l
+SFX 2873 Y 1
+SFX 2873 t ziada t
+SFX 1286 Y 1
+SFX 1286 a ià a
+SFX 3824 Y 1
+SFX 3824 r tschond r
+SFX 184 Y 1
+SFX 184 r ziuns r
+SFX 473 Y 1
+SFX 473 t ziuns t
+SFX 3469 Y 1
+SFX 3469 a clas a
+SFX 2479 Y 1
+SFX 2479 n savas n
+SFX 1888 Y 1
+SFX 1888 a inescha a
+SFX 1155 Y 1
+SFX 1155 a inavas a
+SFX 29 Y 1
+SFX 29 r van r
+SFX 2023 Y 1
+SFX 2023 s van s
+SFX 385 Y 1
+SFX 385 t van t
+SFX 4745 Y 1
+SFX 4745 a ereschias a
+SFX 4561 Y 1
+SFX 4561 a ign a
+SFX 874 Y 1
+SFX 874 a egia a
+SFX 2498 Y 1
+SFX 2498 n rtavan n
+SFX 1886 Y 1
+SFX 1886 a ineschas a
+SFX 2374 Y 1
+SFX 2374 a ura a
+SFX 2184 Y 1
+SFX 2184 a itscha a
+SFX 1844 Y 1
+SFX 1844 a or a
+SFX 4452 Y 1
+SFX 4452 i lais i
+SFX 3852 Y 1
+SFX 3852 n tschais n
+SFX 2473 Y 1
+SFX 2473 g schava g
+SFX 1439 Y 1
+SFX 1439 c tgavas c
+SFX 3843 Y 1
+SFX 3843 n tschassan n
+SFX 1016 Y 1
+SFX 1016 a entada a
+SFX 1096 Y 1
+SFX 1096 a ca a
+SFX 3851 Y 1
+SFX 3851 r tschais r
+SFX 2099 Y 1
+SFX 2099 a seschian a
+SFX 4574 Y 1
+SFX 4574 a ifitgassan a
+SFX 3842 Y 1
+SFX 3842 r tschassan r
+SFX 3662 Y 1
+SFX 3662 i ura i
+SFX 269 Y 1
+SFX 269 c seschian c
+SFX 4112 Y 1
+SFX 4112 n schava n
+SFX 3609 Y 1
+SFX 3609 t ziunond t
+SFX 1380 Y 1
+SFX 1380 a iavas a
+SFX 2203 Y 1
+SFX 2203 a iss a
+SFX 91 Y 1
+SFX 91 a eschas a
+SFX 4135 Y 1
+SFX 4135 d scha d
+SFX 3742 Y 1
+SFX 3742 i unadas i
+SFX 3660 Y 1
+SFX 3660 o ura o
+SFX 3850 Y 1
+SFX 3850 m tscha m
+SFX 2920 Y 1
+SFX 2920 a ulassas a
+SFX 2704 Y 1
+SFX 2704 d eschas d
+SFX 970 Y 1
+SFX 970 a egiavas a
+SFX 1809 Y 1
+SFX 1809 n tscha n
+SFX 2109 Y 1
+SFX 2109 g scha g
+SFX 4767 Y 1
+SFX 4767 a ena a
+SFX 4704 Y 1
+SFX 4704 a ettai a
+SFX 4170 Y 1
+SFX 4170 o rim o
+SFX 3637 Y 1
+SFX 3637 t vì t
+SFX 293 Y 1
+SFX 293 a eva a
+SFX 1787 Y 1
+SFX 1787 s ura s
+SFX 322 Y 1
+SFX 322 a era a
+SFX 3057 Y 1
+SFX 3057 d ssur d
+SFX 2461 Y 1
+SFX 2461 n seschian n
+SFX 2396 Y 1
+SFX 2396 r tscha r
+SFX 3844 Y 1
+SFX 3844 s tscha s
+SFX 388 Y 1
+SFX 388 l scha l
+SFX 4123 Y 1
+SFX 4123 m scha m
+SFX 3313 Y 1
+SFX 3313 a idavas a
+SFX 858 Y 1
+SFX 858 n scha n
+SFX 1692 Y 1
+SFX 1692 a isà a
+SFX 3082 Y 1
+SFX 3082 p scha p
+SFX 4355 Y 1
+SFX 4355 l nada l
+SFX 3625 Y 1
+SFX 3625 t ziunais t
+SFX 226 Y 1
+SFX 226 r scha r
+SFX 133 Y 1
+SFX 133 a da a
+SFX 1564 Y 1
+SFX 1564 c da c
+SFX 882 Y 1
+SFX 882 t zia t
+SFX 2158 Y 1
+SFX 2158 l ntadas l
+SFX 3635 Y 1
+SFX 3635 t vras t
+SFX 4176 Y 1
+SFX 4176 n ria n
+SFX 3100 Y 1
+SFX 3100 n rma n
+SFX 1284 Y 1
+SFX 1284 a iai a
+SFX 3098 Y 1
+SFX 3098 n rmeschan n
+SFX 3061 Y 1
+SFX 3061 r ssia r
+SFX 1904 Y 1
+SFX 1904 a ieschia a
+SFX 2275 Y 1
+SFX 2275 a fitgai a
+SFX 684 Y 1
+SFX 684 a im a
+SFX 3138 Y 1
+SFX 3138 i nzas i
+SFX 2274 Y 1
+SFX 2274 c fitgai c
+SFX 4748 Y 1
+SFX 4748 a ereschas a
+SFX 1720 Y 1
+SFX 1720 a heschia a
+SFX 2426 Y 1
+SFX 2426 l stas l
+SFX 959 Y 1
+SFX 959 a itsch a
+SFX 3633 Y 1
+SFX 3633 t zada t
+SFX 1604 Y 1
+SFX 1604 n stas n
+SFX 1676 Y 1
+SFX 1676 a iun a
+SFX 3628 Y 1
+SFX 3628 t ziunadas t
+SFX 3094 Y 1
+SFX 3094 n rmeschias n
+SFX 3996 Y 1
+SFX 3996 r stas r
+SFX 700 Y 1
+SFX 700 a ur a
+SFX 3839 Y 1
+SFX 3839 n tschass n
+SFX 3233 Y 1
+SFX 3233 i lass i
+SFX 2694 Y 1
+SFX 2694 a fitgeschia a
+SFX 53 Y 1
+SFX 53 a ia a
+SFX 3838 Y 1
+SFX 3838 r tschass r
+SFX 2860 Y 1
+SFX 2860 t zieschas t
+SFX 2250 Y 1
+SFX 2250 c fitgeschia c
+SFX 4151 Y 1
+SFX 4151 l rna l
+SFX 4888 Y 1
+SFX 4888 a cladas a
+SFX 1786 Y 1
+SFX 1786 i ur i
+SFX 3090 Y 1
+SFX 3090 n rra n
+SFX 1691 Y 1
+SFX 1691 a isada a
+SFX 4560 Y 1
+SFX 4560 a igna a
+SFX 1681 Y 1
+SFX 1681 a isavan a
+SFX 1785 Y 1
+SFX 1785 o ur o
+SFX 2868 Y 1
+SFX 2868 t ziassas t
+SFX 2113 Y 1
+SFX 2113 a savan a
+SFX 804 Y 1
+SFX 804 s ur s
+SFX 3392 Y 1
+SFX 3392 a ert a
+SFX 277 Y 1
+SFX 277 c savan c
+SFX 4564 Y 1
+SFX 4564 a ifitgeschian a
+SFX 1688 Y 1
+SFX 1688 a isai a
+SFX 3500 Y 1
+SFX 3500 a ch a
+SFX 2200 Y 1
+SFX 2200 a ists a
+SFX 4162 Y 1
+SFX 4162 l rmà l
+SFX 1445 Y 1
+SFX 1445 c tgar c
+SFX 3620 Y 1
+SFX 3620 t ziunass t
+SFX 2544 Y 1
+SFX 2544 a ografic a
+SFX 1879 Y 1
+SFX 1879 a iseschas a
+SFX 4161 Y 1
+SFX 4161 n rmà n
+SFX 1274 Y 1
+SFX 1274 a istic a
+SFX 2499 Y 1
+SFX 2499 n rtava n
+SFX 2480 Y 1
+SFX 2480 n savan n
+SFX 1156 Y 1
+SFX 1156 a inavan a
+SFX 4694 Y 1
+SFX 4694 a fa a
+SFX 466 Y 1
+SFX 466 a na a
+SFX 1859 Y 1
+SFX 1859 c na c
+SFX 620 Y 1
+SFX 620 i nts i
+SFX 4746 Y 1
+SFX 4746 a ereschian a
+SFX 4402 Y 1
+SFX 4402 i lond i
+SFX 2281 Y 1
+SFX 2281 a fitgada a
+SFX 1479 Y 1
+SFX 1479 l nts l
+SFX 3947 Y 1
+SFX 3947 s tent s
+SFX 2280 Y 1
+SFX 2280 c fitgada c
+SFX 1491 Y 1
+SFX 1491 i ja i
+SFX 1261 Y 1
+SFX 1261 a om a
+SFX 2339 Y 1
+SFX 2339 t ziala t
+SFX 4453 Y 1
+SFX 4453 i lain i
+SFX 3855 Y 1
+SFX 3855 n tschain n
+SFX 1440 Y 1
+SFX 1440 c tgavan c
+SFX 3941 Y 1
+SFX 3941 r tgar r
+SFX 1857 Y 1
+SFX 1857 l na l
+SFX 3940 Y 1
+SFX 3940 s tgar s
+SFX 3190 Y 1
+SFX 3190 m na m
+SFX 2283 Y 1
+SFX 2283 a fitgà a
+SFX 3854 Y 1
+SFX 3854 r tschain r
+SFX 2282 Y 1
+SFX 2282 c fitgà c
+SFX 3337 Y 1
+SFX 3337 c gnias c
+SFX 4649 Y 1
+SFX 4649 d gnias d
+SFX 3129 Y 1
+SFX 3129 i om i
+SFX 1381 Y 1
+SFX 1381 a iavan a
+SFX 2440 Y 1
+SFX 2440 r ssava r
+SFX 92 Y 1
+SFX 92 a eschan a
+SFX 2921 Y 1
+SFX 2921 a ulassan a
+SFX 2705 Y 1
+SFX 2705 d eschan d
+SFX 971 Y 1
+SFX 971 a egiavan a
+SFX 1813 Y 1
+SFX 1813 r tivs r
+SFX 3353 Y 1
+SFX 3353 a ga a
+SFX 3255 Y 1
+SFX 3255 a it a
+SFX 364 Y 1
+SFX 364 a et a
+SFX 2689 Y 1
+SFX 2689 c ga c
+SFX 4148 Y 1
+SFX 4148 l rta l
+SFX 3314 Y 1
+SFX 3314 a idavan a
+SFX 4679 Y 1
+SFX 4679 f ga f
+SFX 3093 Y 1
+SFX 3093 n rmesch n
+SFX 1612 Y 1
+SFX 1612 n rta n
+SFX 4582 Y 1
+SFX 4582 a ifitgadas a
+SFX 1682 Y 1
+SFX 1682 a isava a
+SFX 829 Y 1
+SFX 829 a ella a
+SFX 3626 Y 1
+SFX 3626 t ziunain t
+SFX 3971 Y 1
+SFX 3971 m tar m
+SFX 1761 Y 1
+SFX 1761 a bla a
+SFX 2486 Y 1
+SFX 2486 m sa m
+SFX 4137 Y 1
+SFX 4137 n sa n
+SFX 1109 Y 1
+SFX 1109 r tura r
+SFX 4450 Y 1
+SFX 4450 i lar i
+SFX 3012 Y 1
+SFX 3012 r ter r
+SFX 4840 Y 1
+SFX 4840 a dar a
+SFX 3011 Y 1
+SFX 3011 s ter s
+SFX 601 Y 1
+SFX 601 a der a
+SFX 1462 Y 1
+SFX 1462 r sa r
+SFX 2770 Y 1
+SFX 2770 c der c
+SFX 4164 Y 1
+SFX 4164 n rmai n
+SFX 4749 Y 1
+SFX 4749 a ereschan a
+SFX 3642 Y 1
+SFX 3642 t vers t
+SFX 2476 Y 1
+SFX 2476 g schar g
+SFX 1870 Y 1
+SFX 1870 a la a
+SFX 1455 Y 1
+SFX 1455 a ta a
+SFX 4462 Y 1
+SFX 4462 c la c
+SFX 4461 Y 1
+SFX 4461 d la d
+SFX 2418 Y 1
+SFX 2418 d ta d
+SFX 4313 Y 1
+SFX 4313 d nt d
+SFX 4751 Y 1
+SFX 4751 a eresch a
+SFX 4569 Y 1
+SFX 4569 a ifitgesch a
+SFX 4877 Y 1
+SFX 4877 a clava a
+SFX 4119 Y 1
+SFX 4119 n schar n
+SFX 3095 Y 1
+SFX 3095 n rmeschian n
+SFX 2905 Y 1
+SFX 2905 a um a
+SFX 1489 Y 1
+SFX 1489 i la i
+SFX 2862 Y 1
+SFX 2862 t ziava t
+SFX 108 Y 1
+SFX 108 i nt i
+SFX 4697 Y 1
+SFX 4697 a ettias a
+SFX 3170 Y 1
+SFX 3170 l ndias l
+SFX 407 Y 1
+SFX 407 l nt l
+SFX 4549 Y 1
+SFX 4549 a iliescha a
+SFX 4149 Y 1
+SFX 4149 n rtader n
+SFX 3974 Y 1
+SFX 3974 n ta n
+SFX 3887 Y 1
+SFX 3887 r tivamain r
+SFX 3139 Y 1
+SFX 3139 m nt m
+SFX 2861 Y 1
+SFX 2861 t zieschan t
+SFX 2699 Y 1
+SFX 2699 a ficaziun a
+SFX 1847 Y 1
+SFX 1847 a ola a
+SFX 2285 Y 1
+SFX 2285 c ficaziun c
+SFX 2657 Y 1
+SFX 2657 a idias a
+SFX 2621 Y 1
+SFX 2621 a ind a
+SFX 2414 Y 1
+SFX 2414 r ta r
+SFX 1907 Y 1
+SFX 1907 a iescha a
+SFX 2081 Y 1
+SFX 2081 s ta s
+SFX 89 Y 1
+SFX 89 a escha a
+SFX 2035 Y 1
+SFX 2035 o um o
+SFX 1158 Y 1
+SFX 1158 a inassas a
+SFX 3132 Y 1
+SFX 3132 i ola i
+SFX 2869 Y 1
+SFX 2869 t ziassan t
+SFX 2706 Y 1
+SFX 2706 d escha d
+SFX 1449 Y 1
+SFX 1449 c tgads c
+SFX 2333 Y 1
+SFX 2333 r zza r
+SFX 1078 Y 1
+SFX 1078 a entava a
+SFX 3131 Y 1
+SFX 3131 n ola n
+SFX 2133 Y 1
+SFX 2133 a ot a
+SFX 608 Y 1
+SFX 608 a st a
+SFX 1161 Y 1
+SFX 1161 a inar a
+SFX 1577 Y 1
+SFX 1577 t zza t
+SFX 635 Y 1
+SFX 635 c st c
+SFX 4565 Y 1
+SFX 4565 a ifitgeschia a
+SFX 3606 Y 1
+SFX 3606 v zza v
+SFX 4459 Y 1
+SFX 4459 i ladas i
+SFX 4115 Y 1
+SFX 4115 g schassas g
+SFX 2681 Y 1
+SFX 2681 c gnassas c
+SFX 3121 Y 1
+SFX 3121 i ot i
+SFX 1880 Y 1
+SFX 1880 a iseschan a
+SFX 4885 Y 1
+SFX 4885 a clai a
+SFX 2126 Y 1
+SFX 2126 a sà a
+SFX 1865 Y 1
+SFX 1865 l ma l
+SFX 1456 Y 1
+SFX 1456 l st l
+SFX 256 Y 1
+SFX 256 c sà c
+SFX 3694 Y 1
+SFX 3694 i unias i
+SFX 4114 Y 1
+SFX 4114 n schassas n
+SFX 650 Y 1
+SFX 650 n st n
+SFX 2902 Y 1
+SFX 2902 a unar a
+SFX 2421 Y 1
+SFX 2421 r st r
+SFX 4165 Y 1
+SFX 4165 n rmads n
+SFX 4580 Y 1
+SFX 4580 a ifitgads a
+SFX 3614 Y 1
+SFX 3614 t ziunescha t
+SFX 3130 Y 1
+SFX 3130 a olog a
+SFX 2122 Y 1
+SFX 2122 a sads a
+SFX 285 Y 1
+SFX 285 c sads c
+SFX 2485 Y 1
+SFX 2485 n sà n
+SFX 2157 Y 1
+SFX 2157 l ntads l
+SFX 3706 Y 1
+SFX 3706 i unar i
+SFX 3350 Y 1
+SFX 3350 a gia a
+SFX 3339 Y 1
+SFX 3339 c gnads c
+SFX 2000 Y 1
+SFX 2000 t ziunar t
+SFX 1446 Y 1
+SFX 1446 c tgais c
+SFX 4153 Y 1
+SFX 4153 n rmond n
+SFX 2676 Y 1
+SFX 2676 c gnian c
+SFX 69 Y 1
+SFX 69 a ra a
+SFX 1313 Y 1
+SFX 1313 a va a
+SFX 4650 Y 1
+SFX 4650 d gnian d
+SFX 4562 Y 1
+SFX 4562 a ifitgond a
+SFX 973 Y 1
+SFX 973 a egiassas a
+SFX 3699 Y 1
+SFX 3699 i unavas i
+SFX 2876 Y 1
+SFX 2876 d za d
+SFX 2659 Y 1
+SFX 2659 a idia a
+SFX 2675 Y 1
+SFX 2675 c gnond c
+SFX 4166 Y 1
+SFX 4166 n rmadas n
+SFX 2490 Y 1
+SFX 2490 n sads n
+SFX 1887 Y 1
+SFX 1887 a ineschan a
+SFX 2366 Y 1
+SFX 2366 i va i
+SFX 1259 Y 1
+SFX 1259 i ra i
+SFX 2100 Y 1
+SFX 2100 a seschia a
+SFX 2363 Y 1
+SFX 2363 l va l
+SFX 899 Y 1
+SFX 899 l ra l
+SFX 3937 Y 1
+SFX 3937 s tger s
+SFX 2130 Y 1
+SFX 2130 m ra m
+SFX 270 Y 1
+SFX 270 c seschia c
+SFX 1123 Y 1
+SFX 1123 n ra n
+SFX 2145 Y 1
+SFX 2145 l ntias l
+SFX 21 Y 1
+SFX 21 r va r
+SFX 1580 Y 1
+SFX 1580 s va s
+SFX 3101 Y 1
+SFX 3101 n rmais n
+SFX 96 Y 1
+SFX 96 t za t
+SFX 350 Y 1
+SFX 350 t va t
+SFX 4577 Y 1
+SFX 4577 a ifitgais a
+SFX 2119 Y 1
+SFX 2119 a sais a
+SFX 2148 Y 1
+SFX 2148 l ntavas l
+SFX 282 Y 1
+SFX 282 c sais c
+SFX 2462 Y 1
+SFX 2462 n seschia n
+SFX 2154 Y 1
+SFX 2154 l ntais l
+SFX 4657 Y 1
+SFX 4657 a gna a
+SFX 2685 Y 1
+SFX 2685 c gnais c
+SFX 981 Y 1
+SFX 981 a egiada a
+SFX 1388 Y 1
+SFX 1388 c gna c
+SFX 186 Y 1
+SFX 186 a etta a
+SFX 3341 Y 1
+SFX 3341 d gna d
+SFX 1285 Y 1
+SFX 1285 a iada a
+SFX 3383 Y 1
+SFX 3383 c etta c
+SFX 2115 Y 1
+SFX 2115 a sassas a
+SFX 4706 Y 1
+SFX 4706 d etta d
+SFX 4656 Y 1
+SFX 4656 f gna f
+SFX 280 Y 1
+SFX 280 c sassas c
+SFX 2371 Y 1
+SFX 2371 a usitad a
+SFX 371 Y 1
+SFX 371 a ic a
+SFX 4139 Y 1
+SFX 4139 c sader c
+SFX 2487 Y 1
+SFX 2487 n sais n
+SFX 2121 Y 1
+SFX 2121 a sai a
+SFX 4616 Y 1
+SFX 4616 d ic d
+SFX 284 Y 1
+SFX 284 c sai c
+SFX 3324 Y 1
+SFX 3324 e ic e
+SFX 919 Y 1
+SFX 919 a egias a
+SFX 3981 Y 1
+SFX 3981 c sts c
+SFX 3618 Y 1
+SFX 3618 t ziunavas t
+SFX 3474 Y 1
+SFX 3474 a clà a
+SFX 2483 Y 1
+SFX 2483 n sassas n
+SFX 2134 Y 1
+SFX 2134 a osa a
+SFX 193 Y 1
+SFX 193 r tur r
+SFX 3653 Y 1
+SFX 3653 r ut r
+SFX 2697 Y 1
+SFX 2697 a fitgescha a
+SFX 2489 Y 1
+SFX 2489 n sai n
+SFX 3980 Y 1
+SFX 3980 l sts l
+SFX 2254 Y 1
+SFX 2254 c fitgescha c
+SFX 1341 Y 1
+SFX 1341 n sts n
+SFX 4138 Y 1
+SFX 4138 r sai r
+SFX 4698 Y 1
+SFX 4698 a ettian a
+SFX 3171 Y 1
+SFX 3171 l ndian l
+SFX 4592 Y 1
+SFX 4592 a idads a
+SFX 2916 Y 1
+SFX 2916 a ulaziun a
+SFX 960 Y 1
+SFX 960 a iras a
+SFX 2230 Y 1
+SFX 2230 a idian a
+SFX 823 Y 1
+SFX 823 i ntas i
+SFX 2911 Y 1
+SFX 2911 a uleschas a
+SFX 1263 Y 1
+SFX 1263 l ntas l
+SFX 2261 Y 1
+SFX 2261 a fitgava a
+SFX 3305 Y 1
+SFX 3305 a idond a
+SFX 1371 Y 1
+SFX 1371 a issem a
+SFX 1159 Y 1
+SFX 1159 a inassan a
+SFX 2260 Y 1
+SFX 2260 c fitgava c
+SFX 1902 Y 1
+SFX 1902 a ieschias a
+SFX 2493 Y 1
+SFX 2493 l rt l
+SFX 1832 Y 1
+SFX 1832 n rt n
+SFX 4352 Y 1
+SFX 4352 l nc l
+SFX 4147 Y 1
+SFX 4147 p rt p
+SFX 4157 Y 1
+SFX 4157 n rmass n
+SFX 4117 Y 1
+SFX 4117 g schassan g
+SFX 2682 Y 1
+SFX 2682 c gnassan c
+SFX 4575 Y 1
+SFX 4575 a ifitgass a
+SFX 4700 Y 1
+SFX 4700 a ettais a
+SFX 4348 Y 1
+SFX 4348 l ndais l
+SFX 3741 Y 1
+SFX 3741 i unads i
+SFX 2929 Y 1
+SFX 2929 a ulada a
+SFX 2026 Y 1
+SFX 2026 a usadad a
+SFX 1052 Y 1
+SFX 1052 a inada a
+SFX 2680 Y 1
+SFX 2680 c gnass c
+SFX 2054 Y 1
+SFX 2054 n tschas n
+SFX 3695 Y 1
+SFX 3695 i unian i
+SFX 3323 Y 1
+SFX 3323 a icher a
+SFX 1132 Y 1
+SFX 1132 a ologia a
+SFX 4116 Y 1
+SFX 4116 n schassan n
+SFX 2664 Y 1
+SFX 2664 a idais a
+SFX 2964 Y 1
+SFX 2964 r tschas r
+SFX 3008 Y 1
+SFX 3008 a tga a
+SFX 3692 Y 1
+SFX 3692 i unond i
+SFX 2545 Y 1
+SFX 2545 a ograf a
+SFX 1279 Y 1
+SFX 1279 a iar a
+SFX 966 Y 1
+SFX 966 a ier a
+SFX 2599 Y 1
+SFX 2599 a iv a
+SFX 2269 Y 1
+SFX 2269 a fitgar a
+SFX 1431 Y 1
+SFX 1431 c tgond c
+SFX 2268 Y 1
+SFX 2268 c fitgar c
+SFX 4280 Y 1
+SFX 4280 n ologia n
+SFX 974 Y 1
+SFX 974 a egiassan a
+SFX 3736 Y 1
+SFX 3736 a unais a
+SFX 3700 Y 1
+SFX 3700 i unavan i
+SFX 3942 Y 1
+SFX 3942 n tga n
+SFX 1820 Y 1
+SFX 1820 r tga r
+SFX 1237 Y 1
+SFX 1237 s tga s
+SFX 2127 Y 1
+SFX 2127 n rtas n
+SFX 3735 Y 1
+SFX 3735 i unais i
+SFX 3328 Y 1
+SFX 3328 a ibel a
+SFX 3758 Y 1
+SFX 3758 o udida o
+SFX 2146 Y 1
+SFX 2146 l ntian l
+SFX 4033 Y 1
+SFX 4033 n situr n
+SFX 2290 Y 1
+SFX 2290 a etschia a
+SFX 2092 Y 1
+SFX 2092 a sond a
+SFX 267 Y 1
+SFX 267 c sond c
+SFX 4163 Y 1
+SFX 4163 n rmain n
+SFX 3865 Y 1
+SFX 3865 s to s
+SFX 2144 Y 1
+SFX 2144 l ntond l
+SFX 4578 Y 1
+SFX 4578 a ifitgain a
+SFX 2731 Y 1
+SFX 2731 a entschas a
+SFX 2149 Y 1
+SFX 2149 l ntavan l
+SFX 1438 Y 1
+SFX 1438 c tgescha c
+SFX 2155 Y 1
+SFX 2155 l ntain l
+SFX 2686 Y 1
+SFX 2686 c gnain c
+SFX 2723 Y 1
+SFX 2723 a eras a
+SFX 2494 Y 1
+SFX 2494 n rtias n
+SFX 2116 Y 1
+SFX 2116 a sassan a
+SFX 1210 Y 1
+SFX 1210 l tta l
+SFX 2456 Y 1
+SFX 2456 n sond n
+SFX 1797 Y 1
+SFX 1797 n tta n
+SFX 281 Y 1
+SFX 281 c sassan c
+SFX 1540 Y 1
+SFX 1540 a isar a
+SFX 852 Y 1
+SFX 852 r tta r
+SFX 1586 Y 1
+SFX 1586 s tta s
+SFX 921 Y 1
+SFX 921 a egian a
+SFX 3703 Y 1
+SFX 3703 i unassas i
+SFX 1383 Y 1
+SFX 1383 a iassas a
+SFX 3619 Y 1
+SFX 3619 t ziunavan t
+SFX 3437 Y 1
+SFX 3437 a egiant a
+SFX 3318 Y 1
+SFX 3318 a idass a
+SFX 2484 Y 1
+SFX 2484 n sassan n
+SFX 1281 Y 1
+SFX 1281 a iala a
+SFX 4131 Y 1
+SFX 4131 n schads n
+SFX 1088 Y 1
+SFX 1088 a entadas a
+SFX 867 Y 1
+SFX 867 a ica a
+SFX 4083 Y 1
+SFX 4083 g schias g
+SFX 2683 Y 1
+SFX 2683 c gnas c
+SFX 2912 Y 1
+SFX 2912 a uleschan a
+SFX 2743 Y 1
+SFX 2743 a egl a
+SFX 813 Y 1
+SFX 813 l schias l
+SFX 1640 Y 1
+SFX 1640 l ntan l
+SFX 4324 Y 1
+SFX 4324 m ntan m
+SFX 3080 Y 1
+SFX 3080 n schem n
+SFX 1345 Y 1
+SFX 1345 n schias n
+SFX 4125 Y 1
+SFX 4125 g schais g
+SFX 3702 Y 1
+SFX 3702 i unass i
+SFX 1903 Y 1
+SFX 1903 a ieschian a
+SFX 4875 Y 1
+SFX 4875 a clavas a
+SFX 386 Y 1
+SFX 386 r schias r
+SFX 2288 Y 1
+SFX 2288 a etschias a
+SFX 2152 Y 1
+SFX 2152 l ntassas l
+SFX 1442 Y 1
+SFX 1442 c tgass c
+SFX 4085 Y 1
+SFX 4085 d schia d
+SFX 4124 Y 1
+SFX 4124 n schais n
+SFX 3621 Y 1
+SFX 3621 t ziunassas t
+SFX 2470 Y 1
+SFX 2470 g schia g
+SFX 3615 Y 1
+SFX 3615 t ziuneschas t
+SFX 4702 Y 1
+SFX 4702 a ettain a
+SFX 4349 Y 1
+SFX 4349 l ndain l
+SFX 1863 Y 1
+SFX 1863 i ments i
+SFX 536 Y 1
+SFX 536 a ida a
+SFX 3634 Y 1
+SFX 3634 t zadas t
+SFX 474 Y 1
+SFX 474 l schia l
+SFX 3848 Y 1
+SFX 3848 n tschan n
+SFX 1042 Y 1
+SFX 1042 n schia n
+SFX 873 Y 1
+SFX 873 a egià a
+SFX 2665 Y 1
+SFX 2665 a idain a
+SFX 3847 Y 1
+SFX 3847 r tschan r
+SFX 1311 Y 1
+SFX 1311 t zial t
+SFX 335 Y 1
+SFX 335 r schia r
+SFX 3936 Y 1
+SFX 3936 s tget s
+SFX 4160 Y 1
+SFX 4160 n rmar n
+SFX 3316 Y 1
+SFX 3316 a idassas a
+SFX 1206 Y 1
+SFX 1206 a uns a
+SFX 2117 Y 1
+SFX 2117 a sass a
+SFX 1563 Y 1
+SFX 1563 a dra a
+SFX 3447 Y 1
+SFX 3447 c dra c
+SFX 279 Y 1
+SFX 279 c sass c
+SFX 2151 Y 1
+SFX 2151 l ntass l
+SFX 1642 Y 1
+SFX 1642 l ndas l
+SFX 4154 Y 1
+SFX 4154 n rmavas n
+SFX 972 Y 1
+SFX 972 a egiava a
+SFX 2914 Y 1
+SFX 2914 a ulesch a
+SFX 1382 Y 1
+SFX 1382 a iava a
+SFX 4448 Y 1
+SFX 4448 i lassas i
+SFX 2619 Y 1
+SFX 2619 a inia a
+SFX 2504 Y 1
+SFX 2504 n rtan n
+SFX 2482 Y 1
+SFX 2482 n sass n
+SFX 1851 Y 1
+SFX 1851 l ntà l
+SFX 3737 Y 1
+SFX 3737 i unain i
+SFX 872 Y 1
+SFX 872 a entas a
+SFX 2897 Y 1
+SFX 2897 t uns t
+SFX 1447 Y 1
+SFX 1447 c tgain c
+SFX 1073 Y 1
+SFX 1073 a entias a
+SFX 898 Y 1
+SFX 898 a ras a
+SFX 2692 Y 1
+SFX 2692 a fitgeschias a
+SFX 2090 Y 1
+SFX 2090 i ssas i
+SFX 2509 Y 1
+SFX 2509 n rtads n
+SFX 2248 Y 1
+SFX 2248 c fitgeschias c
+SFX 4031 Y 1
+SFX 4031 a siun a
+SFX 3058 Y 1
+SFX 3058 r ssi r
+SFX 2089 Y 1
+SFX 2089 l ssas l
+SFX 4741 Y 1
+SFX 4741 a erin a
+SFX 3931 Y 1
+SFX 3931 r tic r
+SFX 3753 Y 1
+SFX 3753 s uira s
+SFX 922 Y 1
+SFX 922 a egel a
+SFX 4570 Y 1
+SFX 4570 a ifitgavas a
+SFX 3930 Y 1
+SFX 3930 s tic s
+SFX 2495 Y 1
+SFX 2495 n rtian n
+SFX 735 Y 1
+SFX 735 t zas t
+SFX 1550 Y 1
+SFX 1550 a hescha a
+SFX 1244 Y 1
+SFX 1244 d siun d
+SFX 2264 Y 1
+SFX 2264 a fitgassas a
+SFX 3696 Y 1
+SFX 3696 i unia i
+SFX 2263 Y 1
+SFX 2263 c fitgassas c
+SFX 25 Y 1
+SFX 25 r ssas r
+SFX 1905 Y 1
+SFX 1905 a ieschas a
+SFX 2492 Y 1
+SFX 2492 n rtond n
+SFX 2120 Y 1
+SFX 2120 a sain a
+SFX 978 Y 1
+SFX 978 a egiai a
+SFX 283 Y 1
+SFX 283 c sain c
+SFX 1721 Y 1
+SFX 1721 a heschas a
+SFX 189 Y 1
+SFX 189 a ina a
+SFX 4881 Y 1
+SFX 4881 a clar a
+SFX 2855 Y 1
+SFX 2855 t ziesch t
+SFX 4018 Y 1
+SFX 4018 n siun n
+SFX 3704 Y 1
+SFX 3704 i unassan i
+SFX 1384 Y 1
+SFX 1384 a iassan a
+SFX 3269 Y 1
+SFX 3269 e ina e
+SFX 1718 Y 1
+SFX 1718 a heschias a
+SFX 4538 Y 1
+SFX 4538 g ina g
+SFX 3340 Y 1
+SFX 3340 c gnadas c
+SFX 2452 Y 1
+SFX 2452 r ssads r
+SFX 1432 Y 1
+SFX 1432 c tgeschias c
+SFX 4620 Y 1
+SFX 4620 a ialmain a
+SFX 3099 Y 1
+SFX 3099 n rmescha n
+SFX 2488 Y 1
+SFX 2488 n sain n
+SFX 2279 Y 1
+SFX 2279 a fitgadas a
+SFX 665 Y 1
+SFX 665 a enta a
+SFX 2278 Y 1
+SFX 2278 c fitgadas c
+SFX 2919 Y 1
+SFX 2919 a ulava a
+SFX 2506 Y 1
+SFX 2506 n rtais n
+SFX 2505 Y 1
+SFX 2505 n rtà n
+SFX 1157 Y 1
+SFX 1157 a inava a
+SFX 2695 Y 1
+SFX 2695 a fitgeschas a
+SFX 4084 Y 1
+SFX 4084 g schian g
+SFX 3338 Y 1
+SFX 3338 c gnan c
+SFX 4655 Y 1
+SFX 4655 d gnan d
+SFX 2252 Y 1
+SFX 2252 c fitgeschas c
+SFX 2015 Y 1
+SFX 2015 t ver t
+SFX 4080 Y 1
+SFX 4080 g schond g
+SFX 2156 Y 1
+SFX 2156 l ntai l
+SFX 814 Y 1
+SFX 814 l schian l
+SFX 2138 Y 1
+SFX 2138 a ologic a
+SFX 1346 Y 1
+SFX 1346 n schian n
+SFX 4127 Y 1
+SFX 4127 g schain g
+SFX 3059 Y 1
+SFX 3059 r ssias r
+SFX 2866 Y 1
+SFX 2866 t zias t
+SFX 1436 Y 1
+SFX 1436 c tgeschas c
+SFX 2501 Y 1
+SFX 2501 n rtassas n
+SFX 4876 Y 1
+SFX 4876 a clavan a
+SFX 387 Y 1
+SFX 387 r schian r
+SFX 4079 Y 1
+SFX 4079 n schond n
+SFX 3860 Y 1
+SFX 3860 n tschadas n
+SFX 4707 Y 1
+SFX 4707 a ets a
+SFX 2289 Y 1
+SFX 2289 a etschian a
+SFX 2153 Y 1
+SFX 2153 l ntassan l
+SFX 1017 Y 1
+SFX 1017 a els a
+SFX 1788 Y 1
+SFX 1788 a unz a
+SFX 4126 Y 1
+SFX 4126 n schain n
+SFX 3859 Y 1
+SFX 3859 r tschadas r
+SFX 3622 Y 1
+SFX 3622 t ziunassan t
+SFX 984 Y 1
+SFX 984 a bel a
+SFX 1881 Y 1
+SFX 1881 a isescha a
+SFX 2449 Y 1
+SFX 2449 r ssais r
+SFX 2111 Y 1
+SFX 2111 a saziun a
+SFX 3616 Y 1
+SFX 3616 t ziuneschan t
+SFX 2986 Y 1
+SFX 2986 i tiv i
+SFX 2255 Y 1
+SFX 2255 a fitgesch a
+SFX 477 Y 1
+SFX 477 c saziun c
+SFX 2251 Y 1
+SFX 2251 c fitgesch c
+SFX 3856 Y 1
+SFX 3856 n tschai n
+SFX 4445 Y 1
+SFX 4445 i lavas i
+SFX 3853 Y 1
+SFX 3853 r tschai r
+SFX 2997 Y 1
+SFX 2997 r tica r
+SFX 299 Y 1
+SFX 299 r tiv r
+SFX 4136 Y 1
+SFX 4136 n saziun n
+SFX 2928 Y 1
+SFX 2928 a uladas a
+SFX 4886 Y 1
+SFX 4886 a clads a
+SFX 174 Y 1
+SFX 174 a el a
+SFX 1542 Y 1
+SFX 1542 a il a
+SFX 3317 Y 1
+SFX 3317 a idassan a
+SFX 1831 Y 1
+SFX 1831 a sar a
+SFX 3630 Y 1
+SFX 3630 t ziads t
+SFX 2736 Y 1
+SFX 2736 c el c
+SFX 258 Y 1
+SFX 258 c sar c
+SFX 4552 Y 1
+SFX 4552 a ila a
+SFX 3182 Y 1
+SFX 3182 l ndan l
+SFX 4155 Y 1
+SFX 4155 n rmavan n
+SFX 3089 Y 1
+SFX 3089 n rtabel n
+SFX 4449 Y 1
+SFX 4449 i lassan i
+SFX 2241 Y 1
+SFX 2241 c gnà c
+SFX 3047 Y 1
+SFX 3047 n ster n
+SFX 4699 Y 1
+SFX 4699 a ettia a
+SFX 2118 Y 1
+SFX 2118 n sar n
+SFX 2730 Y 1
+SFX 2730 a enza a
+SFX 2508 Y 1
+SFX 2508 n rtai n
+SFX 1457 Y 1
+SFX 1457 r ster r
+SFX 2028 Y 1
+SFX 2028 a urs a
+SFX 1083 Y 1
+SFX 1083 a entan a
+SFX 2500 Y 1
+SFX 2500 n rtass n
+SFX 1087 Y 1
+SFX 1087 a entads a
+SFX 3065 Y 1
+SFX 3065 a ssan a
+SFX 1074 Y 1
+SFX 1074 a entian a
+SFX 4883 Y 1
+SFX 4883 a clais a
+SFX 1072 Y 1
+SFX 1072 a entond a
+SFX 4584 Y 1
+SFX 4584 a ifitgà a
+SFX 2871 Y 1
+SFX 2871 t ziais t
+SFX 2693 Y 1
+SFX 2693 a fitgeschian a
+SFX 2447 Y 1
+SFX 2447 i ssan i
+SFX 3659 Y 1
+SFX 3659 o urs o
+SFX 2249 Y 1
+SFX 2249 c fitgeschian c
+SFX 2091 Y 1
+SFX 2091 l ssan l
+SFX 3631 Y 1
+SFX 3631 t ziadas t
+SFX 4571 Y 1
+SFX 4571 a ifitgavan a
+SFX 2895 Y 1
+SFX 2895 s urs s
+SFX 740 Y 1
+SFX 740 r turs r
+SFX 187 Y 1
+SFX 187 a ers a
+SFX 4838 Y 1
+SFX 4838 c dels c
+SFX 2266 Y 1
+SFX 2266 a fitgassan a
+SFX 4660 Y 1
+SFX 4660 a gliada a
+SFX 2265 Y 1
+SFX 2265 c fitgassan c
+SFX 26 Y 1
+SFX 26 r ssan r
+SFX 1906 Y 1
+SFX 1906 a ieschan a
+SFX 2442 Y 1
+SFX 2442 r ssass r
+SFX 3103 Y 1
+SFX 3103 d ris d
+SFX 1722 Y 1
+SFX 1722 a heschan a
+SFX 2474 Y 1
+SFX 2474 g schass g
+SFX 3421 Y 1
+SFX 3421 a egn a
+SFX 1212 Y 1
+SFX 1212 r toric r
+SFX 1084 Y 1
+SFX 1084 a entais a
+SFX 1719 Y 1
+SFX 1719 a heschian a
+SFX 139 Y 1
+SFX 139 a ds a
+SFX 4460 Y 1
+SFX 4460 i lada i
+SFX 3862 Y 1
+SFX 3862 n tschada n
+SFX 3849 Y 1
+SFX 3849 n tschà n
+SFX 93 Y 1
+SFX 93 a esch a
+SFX 4351 Y 1
+SFX 4351 g nda g
+SFX 1433 Y 1
+SFX 1433 c tgeschian c
+SFX 4113 Y 1
+SFX 4113 n schass n
+SFX 3861 Y 1
+SFX 3861 r tschada r
+SFX 2295 Y 1
+SFX 2295 d esch d
+SFX 3846 Y 1
+SFX 3846 r tschà r
+SFX 3344 Y 1
+SFX 3344 a gl a
+SFX 4664 Y 1
+SFX 4664 c gl c
+SFX 1353 Y 1
+SFX 1353 l nda l
+SFX 1490 Y 1
+SFX 1490 i jas i
+SFX 4347 Y 1
+SFX 4347 m nda m
+SFX 1918 Y 1
+SFX 1918 d gl d
+SFX 2507 Y 1
+SFX 2507 n rtain n
+SFX 297 Y 1
+SFX 297 a ira a
+SFX 1050 Y 1
+SFX 1050 a iva a
+SFX 2696 Y 1
+SFX 2696 a fitgeschan a
+SFX 1089 Y 1
+SFX 1089 a entà a
+SFX 2687 Y 1
+SFX 2687 c gnai c
+SFX 2253 Y 1
+SFX 2253 c fitgeschan c
+SFX 263 Y 1
+SFX 263 a ess a
+SFX 2543 Y 1
+SFX 2543 i ol i
+SFX 4286 Y 1
+SFX 4286 a ogna a
+SFX 4132 Y 1
+SFX 4132 n schadas n
+SFX 3062 Y 1
+SFX 3062 r ssian r
+SFX 1437 Y 1
+SFX 1437 c tgeschan c
+SFX 3192 Y 1
+SFX 3192 l nais l
+SFX 2502 Y 1
+SFX 2502 n rtassan n
+SFX 2852 Y 1
+SFX 2852 t ziunada t
+SFX 2435 Y 1
+SFX 2435 r ssond r
+SFX 1541 Y 1
+SFX 1541 a is a
+SFX 287 Y 1
+SFX 287 a essas a
+SFX 3904 Y 1
+SFX 3904 s tina s
+SFX 4566 Y 1
+SFX 4566 a ifitgeschas a
+SFX 3068 Y 1
+SFX 3068 n siziuns n
+SFX 2451 Y 1
+SFX 2451 r ssain r
+SFX 4579 Y 1
+SFX 4579 a ifitgai a
+SFX 4880 Y 1
+SFX 4880 a class a
+SFX 2446 Y 1
+SFX 2446 r ssà r
+SFX 1689 Y 1
+SFX 1689 a isads a
+SFX 2867 Y 1
+SFX 2867 t ziass t
+SFX 4836 Y 1
+SFX 4836 a ders a
+SFX 4446 Y 1
+SFX 4446 i lavan i
+SFX 3242 Y 1
+SFX 3242 a itis a
+SFX 1678 Y 1
+SFX 1678 a isond a
+SFX 4350 Y 1
+SFX 4350 l ndai l
+SFX 4678 Y 1
+SFX 4678 c gas c
+SFX 1081 Y 1
+SFX 1081 a entass a
+SFX 3837 Y 1
+SFX 3837 n tschava n
+SFX 783 Y 1
+SFX 783 a idas a
+SFX 3834 Y 1
+SFX 3834 r tschava r
+SFX 2277 Y 1
+SFX 2277 a fitgads a
+SFX 1686 Y 1
+SFX 1686 a isais a
+SFX 2343 Y 1
+SFX 2343 t vra t
+SFX 2276 Y 1
+SFX 2276 c fitgads c
+SFX 1086 Y 1
+SFX 1086 a entai a
+SFX 4689 Y 1
+SFX 4689 d ffa d
+SFX 2101 Y 1
+SFX 2101 a seschas a
+SFX 3142 Y 1
+SFX 3142 l ns l
+SFX 2865 Y 1
+SFX 2865 t zià t
+SFX 272 Y 1
+SFX 272 c seschas c
+SFX 4871 Y 1
+SFX 4871 a clond a
+SFX 4600 Y 1
+SFX 4600 a icra a
+SFX 2854 Y 1
+SFX 2854 t ziond t
+SFX 4884 Y 1
+SFX 4884 a clain a
+SFX 4339 Y 1
+SFX 4339 a ng a
+SFX 1443 Y 1
+SFX 1443 c tgassas c
+SFX 4278 Y 1
+SFX 4278 a ometer a
+SFX 3044 Y 1
+SFX 3044 l stia l
+SFX 2872 Y 1
+SFX 2872 t ziain t
+SFX 2463 Y 1
+SFX 2463 n seschas n
+SFX 4558 Y 1
+SFX 4558 a ignas a
+SFX 3096 Y 1
+SFX 3096 n rmeschia n
+SFX 3617 Y 1
+SFX 3617 t ziunava t
+SFX 1460 Y 1
+SFX 1460 a ss a
+SFX 3087 Y 1
+SFX 3087 l rts l
+SFX 3064 Y 1
+SFX 3064 d ss d
+SFX 2450 Y 1
+SFX 2450 r ssai r
+SFX 4146 Y 1
+SFX 4146 n rts n
+SFX 2856 Y 1
+SFX 2856 t zieschia t
+SFX 2271 Y 1
+SFX 2271 a fitgais a
+SFX 2270 Y 1
+SFX 2270 c fitgais c
+SFX 1828 Y 1
+SFX 1828 i ss i
+SFX 2677 Y 1
+SFX 2677 c gnavas c
+SFX 1459 Y 1
+SFX 1459 l ss l
+SFX 1085 Y 1
+SFX 1085 a entain a
+SFX 358 Y 1
+SFX 358 a ist a
+SFX 1825 Y 1
+SFX 1825 n ss n
+SFX 2513 Y 1
+SFX 2513 l rin l
+SFX 2434 Y 1
+SFX 2434 p ss p
+SFX 20 Y 1
+SFX 20 r ss r
+SFX 304 Y 1
+SFX 304 a ez a
+SFX 1665 Y 1
+SFX 1665 i jan i
+SFX 2604 Y 1
+SFX 2604 a ista a
+SFX 2453 Y 1
+SFX 2453 r ssadas r
+SFX 1683 Y 1
+SFX 1683 a isassas a
+SFX 1076 Y 1
+SFX 1076 a entavas a
+SFX 1876 Y 1
+SFX 1876 a iseschias a
+SFX 237 Y 1
+SFX 237 i nta i
+SFX 2870 Y 1
+SFX 2870 t ziai t
+SFX 1685 Y 1
+SFX 1685 a isass a
+SFX 1826 Y 1
+SFX 1826 d ssiun d
+SFX 704 Y 1
+SFX 704 l nta l
+SFX 4683 Y 1
+SFX 4683 d fla d
+SFX 245 Y 1
+SFX 245 a in a
+SFX 1090 Y 1
+SFX 1090 a en a
+SFX 1724 Y 1
+SFX 1724 a her a
+SFX 305 Y 1
+SFX 305 a essan a
+SFX 4567 Y 1
+SFX 4567 a ifitgeschan a
+SFX 3822 Y 1
+SFX 3822 r ts r
+SFX 4000 Y 1
+SFX 4000 n ssiun n
+SFX 3266 Y 1
+SFX 3266 g in g
+SFX 3944 Y 1
+SFX 3944 a tg a
+SFX 4186 Y 1
+SFX 4186 a rà a
+SFX 3890 Y 1
+SFX 3890 i tiva i
+SFX 2436 Y 1
+SFX 2436 r ssiun r
+SFX 111 Y 1
+SFX 111 a eschias a
+SFX 2917 Y 1
+SFX 2917 a ulavas a
+SFX 1885 Y 1
+SFX 1885 a ineschia a
+SFX 2702 Y 1
+SFX 2702 d eschias d
+SFX 2424 Y 1
+SFX 2424 r stga r
+SFX 2201 Y 1
+SFX 2201 a issas a
+SFX 182 Y 1
+SFX 182 a us a
+SFX 3655 Y 1
+SFX 3655 c us c
+SFX 458 Y 1
+SFX 458 r tiva r
+SFX 3932 Y 1
+SFX 3932 l tg l
+SFX 4185 Y 1
+SFX 4185 l rà l
+SFX 1816 Y 1
+SFX 1816 n tg n
+SFX 920 Y 1
+SFX 920 a egiar a
+SFX 1784 Y 1
+SFX 1784 i us i
+SFX 1597 Y 1
+SFX 1597 r tg r
+SFX 4568 Y 1
+SFX 4568 a ifitgescha a
+SFX 3608 Y 1
+SFX 3608 t zius t
+SFX 937 Y 1
+SFX 937 s tg s
+SFX 90 Y 1
+SFX 90 a eschia a
+SFX 2617 Y 1
+SFX 2617 a inias a
+SFX 2894 Y 1
+SFX 2894 o us o
+SFX 1536 Y 1
+SFX 1536 a istica a
+SFX 2294 Y 1
+SFX 2294 d eschia d
+SFX 2662 Y 1
+SFX 2662 a idan a
+SFX 4550 Y 1
+SFX 4550 a iliar a
+SFX 3654 Y 1
+SFX 3654 s us s
+SFX 1687 Y 1
+SFX 1687 a isain a
+SFX 2102 Y 1
+SFX 2102 a seschan a
+SFX 273 Y 1
+SFX 273 c seschan c
+SFX 3007 Y 1
+SFX 3007 a tgas a
+SFX 3229 Y 1
+SFX 3229 i lava i
+SFX 4903 Y 1
+SFX 4903 a cha a
+SFX 4663 Y 1
+SFX 4663 a glia a
+SFX 3987 Y 1
+SFX 3987 n stica n
+SFX 3646 Y 1
+SFX 3646 t veglia t
+SFX 2781 Y 1
+SFX 2781 a cla a
+SFX 1444 Y 1
+SFX 1444 c tgassan c
+SFX 1850 Y 1
+SFX 1850 l ntar l
+SFX 4321 Y 1
+SFX 4321 m ntar m
+SFX 2863 Y 1
+SFX 2863 t ziavas t
+SFX 656 Y 1
+SFX 656 i nza i
+SFX 2857 Y 1
+SFX 2857 t zieschias t
+SFX 2464 Y 1
+SFX 2464 n seschan n
+SFX 2143 Y 1
+SFX 2143 l nza l
+SFX 4309 Y 1
+SFX 4309 m nza m
+SFX 3977 Y 1
+SFX 3977 d sur d
+SFX 2136 Y 1
+SFX 2136 a on a
+SFX 4747 Y 1
+SFX 4747 a ereschia a
+SFX 2247 Y 1
+SFX 2247 a fitgond a
+SFX 1916 Y 1
+SFX 1916 c gn c
+SFX 4653 Y 1
+SFX 4653 d gn d
+SFX 3939 Y 1
+SFX 3939 r tgas r
+SFX 2246 Y 1
+SFX 2246 c fitgond c
+SFX 1598 Y 1
+SFX 1598 s tgas s
+SFX 4652 Y 1
+SFX 4652 f gn f
+SFX 4274 Y 1
+SFX 4274 i on i
+SFX 3845 Y 1
+SFX 3845 n tschar n
+SFX 2678 Y 1
+SFX 2678 c gnavan c
+SFX 979 Y 1
+SFX 979 a egiads a
+SFX 4913 Y 1
+SFX 4913 a bladad a
+SFX 4834 Y 1
+SFX 4834 c di c
+SFX 3335 Y 1
+SFX 3335 c gns c
+SFX 2965 Y 1
+SFX 2965 r tschar r
+SFX 1386 Y 1
+SFX 1386 a iads a
+SFX 2908 Y 1
+SFX 2908 a uleschias a
+SFX 3970 Y 1
+SFX 3970 a tas a
+SFX 1451 Y 1
+SFX 1451 c tgada c
+SFX 4158 Y 1
+SFX 4158 n rmassas n
+SFX 4201 Y 1
+SFX 4201 n ppar n
+SFX 3320 Y 1
+SFX 3320 a idà a
+SFX 2478 Y 1
+SFX 2478 a sch a
+SFX 4109 Y 1
+SFX 4109 g schavas g
+SFX 969 Y 1
+SFX 969 a egiond a
+SFX 4107 Y 1
+SFX 4107 d sch d
+SFX 4268 Y 1
+SFX 4268 a onisaziun a
+SFX 2337 Y 1
+SFX 2337 t ziunal t
+SFX 1684 Y 1
+SFX 1684 a isassan a
+SFX 2930 Y 1
+SFX 2930 a ulà a
+SFX 857 Y 1
+SFX 857 g sch g
+SFX 4681 Y 1
+SFX 4681 f gada f
+SFX 4108 Y 1
+SFX 4108 n schavas n
+SFX 1077 Y 1
+SFX 1077 a entavan a
+SFX 2257 Y 1
+SFX 2257 a fitgavas a
+SFX 4338 Y 1
+SFX 4338 m nic m
+SFX 2741 Y 1
+SFX 2741 a eglia a
+SFX 2256 Y 1
+SFX 2256 c fitgavas c
+SFX 1877 Y 1
+SFX 1877 a iseschian a
+SFX 459 Y 1
+SFX 459 l sch l
+SFX 993 Y 1
+SFX 993 n sch n
+SFX 4750 Y 1
+SFX 4750 a erescha a
+SFX 4078 Y 1
+SFX 4078 p sch p
+SFX 3969 Y 1
+SFX 3969 s tas s
+SFX 2503 Y 1
+SFX 2503 n rtar n
+SFX 137 Y 1
+SFX 137 a das a
+SFX 4662 Y 1
+SFX 4662 a glià a
+SFX 4167 Y 1
+SFX 4167 n rmada n
+SFX 3120 Y 1
+SFX 3120 a otta a
+SFX 275 Y 1
+SFX 275 r sch r
+SFX 4583 Y 1
+SFX 4583 a ifitgada a
+SFX 2125 Y 1
+SFX 2125 a sada a
+SFX 260 Y 1
+SFX 260 c sada c
+SFX 976 Y 1
+SFX 976 a egiais a
+SFX 1852 Y 1
+SFX 1852 l ntada l
+SFX 4118 Y 1
+SFX 4118 d schas d
+SFX 2240 Y 1
+SFX 2240 c gnada c
+SFX 1878 Y 1
+SFX 1878 a iseschia a
+SFX 1282 Y 1
+SFX 1282 a iais a
+SFX 2475 Y 1
+SFX 2475 g schas g
+SFX 1201 Y 1
+SFX 1201 a ziun a
+SFX 1882 Y 1
+SFX 1882 a isesch a
+SFX 3833 Y 1
+SFX 3833 n tschavas n
+SFX 2104 Y 1
+SFX 2104 a sesch a
+SFX 460 Y 1
+SFX 460 l schas l
+SFX 112 Y 1
+SFX 112 a eschian a
+SFX 3832 Y 1
+SFX 3832 r tschavas r
+SFX 2918 Y 1
+SFX 2918 a ulavan a
+SFX 2124 Y 1
+SFX 2124 n sada n
+SFX 271 Y 1
+SFX 271 c sesch c
+SFX 1246 Y 1
+SFX 1246 n schas n
+SFX 2703 Y 1
+SFX 2703 d eschian d
+SFX 2202 Y 1
+SFX 2202 a issan a
+SFX 881 Y 1
+SFX 881 i ziun i
+SFX 255 Y 1
+SFX 255 a un a
+SFX 2222 Y 1
+SFX 2222 a ineschias a
+SFX 2088 Y 1
+SFX 2088 a stic a
+SFX 307 Y 1
+SFX 307 r schas r
+SFX 1200 Y 1
+SFX 1200 l ziun l
+SFX 2087 Y 1
+SFX 2087 c stic c
+SFX 2510 Y 1
+SFX 2510 n rtadas n
+SFX 2898 Y 1
+SFX 2898 i un i
+SFX 2459 Y 1
+SFX 2459 n sesch n
+SFX 1889 Y 1
+SFX 1889 a inesch a
+SFX 46 Y 1
+SFX 46 r ziun r
+SFX 2927 Y 1
+SFX 2927 a ulads a
+SFX 1165 Y 1
+SFX 1165 a inads a
+SFX 178 Y 1
+SFX 178 t ziun t
+SFX 3693 Y 1
+SFX 3693 l un l
+SFX 2448 Y 1
+SFX 2448 l ssa l
+SFX 1674 Y 1
+SFX 1674 a ivas a
+SFX 1987 Y 1
+SFX 1987 v ziun v
+SFX 4009 Y 1
+SFX 4009 n ssa n
+SFX 2618 Y 1
+SFX 2618 a inian a
+SFX 1418 Y 1
+SFX 1418 n un n
+SFX 2423 Y 1
+SFX 2423 n stic n
+SFX 2666 Y 1
+SFX 2666 a idai a
+SFX 1115 Y 1
+SFX 1115 r ssa r
+SFX 4034 Y 1
+SFX 4034 r sit r
+SFX 2913 Y 1
+SFX 2913 a ulescha a
+SFX 1789 Y 1
+SFX 1789 s un s
+SFX 1154 Y 1
+SFX 1154 a inond a
+SFX 1435 Y 1
+SFX 1435 c tgesch c
+SFX 1417 Y 1
+SFX 1417 t un t
+SFX 598 Y 1
+SFX 598 a inas a
+SFX 1337 Y 1
+SFX 1337 r tivas r
+SFX 2267 Y 1
+SFX 2267 a fitgass a
+SFX 2926 Y 1
+SFX 2926 a ulai a
+SFX 2262 Y 1
+SFX 2262 c fitgass c
+SFX 4654 Y 1
+SFX 4654 a gnar a
+SFX 2684 Y 1
+SFX 2684 c gnar c
+SFX 1908 Y 1
+SFX 1908 a iesch a
+SFX 3056 Y 1
+SFX 3056 c sta c
+SFX 3055 Y 1
+SFX 3055 d sta d
+SFX 2864 Y 1
+SFX 2864 t ziavan t
+SFX 2858 Y 1
+SFX 2858 t zieschian t
+SFX 2034 Y 1
+SFX 2034 a unas a
+SFX 1596 Y 1
+SFX 1596 s tgs s
+SFX 4156 Y 1
+SFX 4156 n rmava n
+SFX 2924 Y 1
+SFX 2924 a ulais a
+SFX 1162 Y 1
+SFX 1162 a inais a
+SFX 4572 Y 1
+SFX 4572 a ifitgava a
+SFX 3092 Y 1
+SFX 3092 l rn l
+SFX 1605 Y 1
+SFX 1605 l sta l
+SFX 288 Y 1
+SFX 288 a end a
+SFX 4150 Y 1
+SFX 4150 n rn n
+SFX 975 Y 1
+SFX 975 a egiass a
+SFX 1344 Y 1
+SFX 1344 n sta n
+SFX 3997 Y 1
+SFX 3997 p sta p
+SFX 2679 Y 1
+SFX 2679 c gnava c
+SFX 3705 Y 1
+SFX 3705 i unas i

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "উচ্চ পর্যায়ের অ্যাকাউন্ট সেটিংসমূহ">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP সার্ভার ডিরেক্টরি: (d)">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "শুধুমাত্র সাবস্ক্রাইব ফোল্ডার দেখান হবে (w)">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "সার্ভার এমন ফোল্ডার সমর্থন করে, যার মধ্যে সাবফোল্ডার এবং বার্তা রয়েছে (f)">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "ক্যাশের সর্বোচ্চ সংখ্যক সার্ভার সংযোগ (M)">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "এই পছন্দসমূহ আপনার IMAP সার্ভারে নেমস্পেস উল্লেখ করে">
+<!ENTITY personalNamespace.label "ব্যক্তিগত নেমস্পেস: (P)">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "পাবলিক (শেয়ারকৃত): (u)">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "অন্যান্য ব্যবহারকারী: (O)">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "এই নেমস্পেসসমূহ উপেক্ষা করতে, সার্ভারকে অনুমোদন করা হবে (A)">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY deferToServer.label "ভিন্ন অ্যাকাউন্টের ইনবক্স (d)">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "যখন নতুন মেইল পাবেন, এই সার্ভারটি অন্তর্ভুক্ত করা হবে (I)">
+<!ENTITY deferGetNewMail.accesskey "I">

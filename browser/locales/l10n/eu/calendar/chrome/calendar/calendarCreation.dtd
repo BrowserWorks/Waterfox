@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Sortu egutegi berria" >
+<!ENTITY wizard.label             "Sortu egutegi berri bat" >
+<!ENTITY wizard.description       "Kokatu zure egutegia" >
+
+<!ENTITY initialpage.description    "Zure egutegia zure ordenagailuan gorde edo urruneko sarrera ziurtatzen duen zerbitzari batean gorde daiteke zure lagun edo lankideekin partekatzeko." >
+<!ENTITY initialpage.computer.label  "Nire ordenagailuan">
+<!ENTITY initialpage.network.label  "Sarean">
+
+<!ENTITY locationpage.description         "Ezarri zure urruneko egutegia eskuratzeko behar diren argibideak" >
+<!ENTITY locationpage.login.description   "Aukerakoa: sartu erabiltzaile-izena eta pasahitza" >
+<!ENTITY locationpage.username.label      "Erabiltzaile-izena:" >
+<!ENTITY locationpage.password.label      "Pasahitza:" >
+
+<!ENTITY custompage.shortdescription  "Pertsonalizatu zure egutegia" >
+<!ENTITY custompage.longdescription   "Zure egutegiari ezizen bat eman eta egutegi honen gertaerak koloreztatu ditzakezu." >
+
+<!ENTITY finishpage.shortdescription  "Egutegia sortuta" >
+<!ENTITY finishpage.longdescription   "Zure egutegia sortu da." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Besteak">
+
+<!ENTITY buttons.create.label "Sortu egutegi berria">
+<!ENTITY buttons.create.accesskey "S">
+
+<!ENTITY buttons.find.label "Bilatu egutegiak">
+<!ENTITY buttons.find.accesskey "B">
+
+<!ENTITY buttons.back.label "Atzera">
+<!ENTITY buttons.back.accesskey "A">
+
+<!ENTITY buttons.subscribe.label "Harpidetu">
+<!ENTITY buttons.subscribe.accesskey "H">
+
+<!ENTITY calendartype.label "Egutegi mota:">
+<!ENTITY location.label "Kokapena:">
+<!ENTITY location.placeholder "Egutegi zerbitzuaren URL edo ostalari izena">
+
+<!ENTITY network.nocredentials.label "Kokapen honek ez du kredentzialik behar">
+<!ENTITY network.loading.description "Mesedez itxaron zure egutegiak bilatu artean.">
+<!ENTITY network.notfound.description "Ezin bilatu egutegirik kokapen honetan. Mesedez begiratu zure ezarpenak.">
+<!ENTITY network.authfail.description "Zuk sartutako kredentzialak ez dira onartu. Mesedez begiratu zure ezarpenak.">
+
+<!ENTITY network.subscribe.single.description "Mesedez aukeratu harpidetu nahi duzun egutegiak.">
+<!ENTITY network.subscribe.multiple.description "Kokapen honetan hainbat egutegi mota daude eskuragarri. Mesedez aukeratu egutegi mota, ondoren markatu harpidetu nahi zaren egutegiak.">

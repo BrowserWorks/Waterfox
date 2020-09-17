@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title "সূচীপত্র">
+<!ENTITY buildToc.label "এখান থেকে সূচীপত্র তৈরি করা হবে:">
+<!ENTITY tag.label "ট্যাগ:">
+<!ENTITY class.label "ক্লাস:">
+<!ENTITY header1.label "স্তর ১">
+<!ENTITY header2.label "স্তর ২">
+<!ENTITY header3.label "স্তর ৩">
+<!ENTITY header4.label "স্তর ৪">
+<!ENTITY header5.label "স্তর ৫">
+<!ENTITY header6.label "স্তর ৬">
+<!ENTITY makeReadOnly.label "সূচীপত্রটি শুধুমাত্র পাঠযোগ্য হবে">
+<!ENTITY orderedList.label "সূচীপত্রে ভুক্তির সংখ্যা">

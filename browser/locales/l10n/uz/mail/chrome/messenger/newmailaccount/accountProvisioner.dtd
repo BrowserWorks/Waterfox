@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "&brandShortName; dasturiga xush kelibsiz">
+<!ENTITY header2.label "Yangi e-pochta manzilini olishni xohlaysizmi?">
+<!ENTITY other.languages "Biz faqat hududingizdagi manzillar taklif qilgan ta’minotchilarni ko‘rsatyapmiz. Barcha ta’minotchilarni ko‘rish uchun bu yerga bosing.">
+<!ENTITY error.line1 "Kechirasiz, biz tavsiya qilinga e-pochta manzillarini topa olmadik.">
+<!ENTITY error.line2 "Siz ko‘proq e-pochta manzillarini topishda taxalluslar yoki har qanday boshqa atamani topish uchun urinib ko‘rishingiz mumkin.">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "Shuningdek, quyidagi muqobil ">
+<!ENTITY error.suggest.middle "bepul e-pochta hisoblaridan birini sinab ko‘rishingiz mumkin">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "Salom ">
+<!ENTITY success.title.after ", quyidagi e-pochta manzillari siz uchun mavjud:">
+<!ENTITY success.tip "(Siz ko‘proq e-pochta manzillarini topishda taxalluslar yoki har qanday boshqa atamani topish uchun urinib ko‘rishingiz mumkin)">
+<!ENTITY partnership.description "&brandShortName; ba’zi ta’minotchilar bilan hamkorlikda sizga yangi e-pochta hisobini taqdim qilishi mumkin. Faqatgina ismingiz va familiyangizni  yoki xohlagan so‘zingizni tepadagi maydonchaga kiritib, foydalanishni boshlashingiz mumkin.">
+<!ENTITY existing.header "Foydalanish uchun e-pochta manziligiz bormi?">
+<!ENTITY tinyheader.title "Manzilingiz bormi?">
+<!ENTITY tinyheader.existing "Buni tashlab ketaman va mavjud e-pochtamdan foydalanaman">
+<!ENTITY content.close "Menimcha, hisobimni keyinroq sozlaganim ma’qul.">
+<!ENTITY successful.title "Tabriklaymiz!">
+<!ENTITY successful.successMessage "Siz muvaffaqiyatli ravishda hisobingizni sozladingiz.">
+<!ENTITY successful.write "Bir nechta xat yozish">
+<!ENTITY successful.write.desc "Yangi e-pochta manzilingiz haqida do‘stlaringiz va oila a’zolaringizga xabar bering.<br/> Aslida shu maqsadda e-pochta ochmaganmisiz?">
+<!ENTITY successful.customize "&brandShortName; dasturini ba’zi ajoyib qo‘shimcha dasturlar bilan moslab olish">
+<!ENTITY successful.customize.desc "Minglab qo‘shimcha dasturlar bor. Ular sizga &brandShortName; dasturini ehtiyojingizga mos foydalanishingizda yordam beradi.">
+<!ENTITY successful.attach "Xatlarimga shaxsiy imzom biriktirilsin">
+<!ENTITY successful.attach.desc "Siz jo‘natilayotgan har bir xabarnig oxiriga o‘zingiz haqingizda ma’lumot yoki birorta iqtibosni avtomatik biriktirishingiz mumkin.">
+<!ENTITY successful.close "Bu oyna yopilsin.">
+<!ENTITY input.namePlaceholder "Ismingiz yoki taxallusingiz">
+<!ENTITY input.search "Izlash">
+<!ENTITY search_engine.title "Qidiruv tizimini o‘zingizga moslab oling">
+<!ENTITY search_engine.message "E-pochta ta’minotchisi internetdan qidirish imkoniyatini ham berishi mumkin.">
+<!ENTITY search_engine.button "Tugatish">

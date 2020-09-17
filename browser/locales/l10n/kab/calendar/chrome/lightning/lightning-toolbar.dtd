@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Afeggag n ifecka n uwitay">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "C">
+<!ENTITY lightning.toolbar.task.name "Afeggag n ifecka n twuri">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "Mtawi">
+<!ENTITY lightning.toolbar.sync.tooltip "Sal-id tikelt nniḍen iwitayen u mtawi isnifal">
+<!ENTITY lightning.toolbar.delete.label "Kkes">
+<!ENTITY lightning.toolbar.delete.tooltip "Kkes tidyanin neɣ tiwuriwin yettwafernen">
+<!ENTITY lightning.toolbar.edit.label "Ẓreg">
+<!ENTITY lightning.toolbar.edit.tooltip "Ẓreg tadyant neɣ tawuri yettwafernen">
+<!ENTITY lightning.toolbar.gototoday.label "Ddu ɣer Ass-a">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Ddu ɣer Ass-a">
+<!ENTITY lightning.toolbar.print.label "Siggez">
+<!ENTITY lightning.toolbar.print.tooltip "Siggez tidyanin neɣ tiwuriwin">
+<!-- Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.calendar.label     "Awitay">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Ddu ɣer yiccer n uwitay">
+<!ENTITY lightning.toolbar.calendar.accesskey "w">
+<!ENTITY lightning.toolbar.task.label         "Tiwuriwin">
+<!ENTITY lightning.toolbar.task.tooltip       "Ddu ɣer yiccer n twuriwin">
+<!ENTITY lightning.toolbar.task.accesskey     "i">
+<!-- Toolbar write button -->
+
+<!ENTITY lightning.toolbar.newevent.label     "Tadyant">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Rnu tadyant tamaynut">
+<!ENTITY lightning.toolbar.newtask.label      "Tawuri">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Rnu tawuri tamaynut">
+<!-- Calendar and Task Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.day.label                 "Ass">
+<!ENTITY lightning.toolbar.day.accesskey             "s">
+<!ENTITY lightning.toolbar.week.label                "Dduṛt">
+<!ENTITY lightning.toolbar.week.accesskey            "D">
+<!ENTITY lightning.toolbar.multiweek.label           "Aget n dduṛtat">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "u">
+<!ENTITY lightning.toolbar.month.label               "Aggur">
+<!ENTITY lightning.toolbar.month.accesskey           "g">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Umuɣ n usnas">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Sken umuɣ n &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Agalis n uwitay">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "l">
+<!ENTITY lightning.toolbar.calendarpane.label        "Sken agalis n uwitay">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "w">

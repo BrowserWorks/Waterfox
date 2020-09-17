@@ -1,0 +1,417 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "עריכת פריט" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "שמור על המשכיות בעת שינוי תאריך הסיום">
+<!ENTITY event.dialog.keepDurationButton.accesskey "ה">
+
+<!ENTITY newevent.from.label                "מאת" >
+<!ENTITY newevent.to.label                  "עבור" >
+
+<!ENTITY newevent.status.label                    "מצב" >
+<!ENTITY newevent.status.accesskey                "מ" >
+<!ENTITY newevent.eventStatus.none.label          "לא צוין" >
+<!ENTITY newevent.eventStatus.none.accesskey      "ל" >
+<!ENTITY newevent.todoStatus.none.label           "לא צוין" >
+<!ENTITY newevent.eventStatus.cancelled.label     "בוטל" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "ב" >
+<!ENTITY newevent.todoStatus.cancelled.label      "בוטל" >
+<!ENTITY newevent.status.tentative.label          "טנטטיבי" >
+<!ENTITY newevent.status.tentative.accesskey      "ט" >
+<!ENTITY newevent.status.confirmed.label          "אושר" >
+<!ENTITY newevent.status.confirmed.accesskey      "א" >
+<!ENTITY newevent.status.needsaction.label        "דורש פעולה" >
+<!ENTITY newevent.status.inprogress.label         "בביצוע" >
+<!ENTITY newevent.status.completed.label          "הסתיים בתאריך" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#37; הושלמו">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "הודעה למשתתפים">
+<!ENTITY event.attendees.notify.accesskey            "ד">
+<!ENTITY event.attendees.notifyundisclosed.label     "הזמנה נפרדת לכל משתתף">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "פ">
+<!ENTITY event.attendees.disallowcounter.label       "השבתת הצעות סותרות">
+<!ENTITY event.attendees.disallowcounter.accesskey   "ס">
+<!ENTITY event.attendees.disallowcounter.tooltip     "ציון לכך שלא תתקבלנה הצעות חלופיות">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "חדש">
+<!ENTITY  event.menu.item.new.accesskey                   "ח">
+<!ENTITY  event.menu.item.new.event.label                 "אירוע">
+<!ENTITY  event.menu.item.new.event.accesskey             "א">
+<!ENTITY  event.menu.item.new.task.label                  "משימה">
+<!ENTITY  event.menu.item.new.task.accesskey              "מ">
+<!ENTITY  event.menu.item.new.message.label               "הודעה">
+<!ENTITY  event.menu.item.new.message.accesskey           "ה">
+<!ENTITY  event.menu.item.new.contact.label               "איש קשר מספר הכתובות">
+<!ENTITY  event.menu.item.new.contact.accesskey           "ק">
+<!ENTITY  event.menu.item.close.label                     "סגירה">
+<!ENTITY  event.menu.item.close.accesskey                 "ס">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "שמירה">
+<!ENTITY  event.menu.item.save.accesskey                  "ש">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "שמירה וסגירה">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "ו">
+
+<!ENTITY  event.menu.item.delete.label                    "מחיקה…">
+<!ENTITY  event.menu.item.delete.accesskey                "מ">
+<!ENTITY  event.menu.item.page.setup.label                "הגדרת עמוד">
+<!ENTITY  event.menu.item.page.setup.accesskey            "ה">
+<!ENTITY  event.menu.item.print.label                     "הדפסה">
+<!ENTITY  event.menu.item.print.accesskey                 "ה">
+
+<!ENTITY  event.menu.edit.label                           "עריכה">
+<!ENTITY  event.menu.edit.accesskey                       "ע">
+<!ENTITY  event.menu.edit.undo.label                      "ביטול">
+<!ENTITY  event.menu.edit.undo.accesskey                  "ב">
+<!ENTITY  event.menu.edit.redo.label                      "בצע שוב">
+<!ENTITY  event.menu.edit.redo.accesskey                  "ש">
+<!ENTITY  event.menu.edit.cut.label                       "גזור">
+<!ENTITY  event.menu.edit.cut.accesskey                   "ג">
+<!ENTITY  event.menu.edit.copy.label                      "העתק">
+<!ENTITY  event.menu.edit.copy.accesskey                  "ע">
+<!ENTITY  event.menu.edit.paste.label                     "הדבק">
+<!ENTITY  event.menu.edit.paste.accesskey                 "ד">
+<!ENTITY  event.menu.edit.select.all.label                "בחר הכול">
+<!ENTITY  event.menu.edit.select.all.accesskey            "ב">
+
+<!ENTITY  event.menu.view.label                           "תצוגה">
+<!ENTITY  event.menu.view.accesskey                       "ת">
+<!ENTITY  event.menu.view.toolbars.label                  "סרגלים">
+<!ENTITY  event.menu.view.toolbars.accesskey              "ס">
+<!ENTITY  event.menu.view.toolbars.event.label            "סרגל אירועים">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "א">
+<!ENTITY  event.menu.view.toolbars.customize.label        "התאמה אישית…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "ה">
+<!ENTITY  event.menu.view.showlink.label                  "הצג קישורים קשורים">
+<!ENTITY  event.menu.view.showlink.accesskey              "ק">
+
+<!ENTITY  event.menu.options.label                            "אפשרויות">
+<!ENTITY  event.menu.options.accesskey                        "א">
+<!ENTITY  event.menu.options.attendees.label                  "הזמן אורחים…">
+<!ENTITY  event.menu.options.attendees.accesskey              "ה">
+<!ENTITY  event.menu.options.timezone2.label                  "הצגת אזורי זמן">
+<!ENTITY  event.menu.options.timezone2.accesskey              "ז">
+<!ENTITY  event.menu.options.priority2.label                  "דחיפות">
+<!ENTITY  event.menu.options.priority2.accesskey              "ד">
+<!ENTITY  event.menu.options.priority.notspecified.label      "לא צוינה">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "ל">
+<!ENTITY  event.menu.options.priority.low.label               "נמוכה">
+<!ENTITY  event.menu.options.priority.low.accesskey           "נ">
+<!ENTITY  event.menu.options.priority.normal.label            "רגילה">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "ר">
+<!ENTITY  event.menu.options.priority.high.label              "גבוהה">
+<!ENTITY  event.menu.options.priority.high.accesskey          "ג">
+<!ENTITY  event.menu.options.privacy.label                    "פרטיות">
+<!ENTITY  event.menu.options.privacy.accesskey                "פ">
+<!ENTITY  event.menu.options.privacy.public.label             "אירוע ציבורי">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "צ">
+<!ENTITY  event.menu.options.privacy.confidential.label       "הצג זמן ותאריך בלבד">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "ז">
+<!ENTITY  event.menu.options.privacy.private.label            "אירוע פרטי">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "פ">
+<!ENTITY  event.menu.options.show.time.label                  "הצג זמן בתור">
+<!ENTITY  event.menu.options.show.time.accesskey              "ב">
+<!ENTITY  event.menu.options.show.time.busy.label             "עסוק">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "ע">
+<!ENTITY  event.menu.options.show.time.free.label             "פנוי">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "פ">
+
+<!ENTITY event.invite.attendees.label                     "הזמן אורחים…">
+<!ENTITY event.invite.attendees.accesskey                 "ה">
+<!ENTITY event.email.attendees.label                      "כתוב דוא״ל לכל האורחים…">
+<!ENTITY event.email.attendees.accesskey                  "כ">
+<!ENTITY event.email.tentative.attendees.label            "כתוב דוא״ל לאורחים שדחו את האירוע…">
+<!ENTITY event.email.tentative.attendees.accesskey        "ד">
+<!ENTITY event.remove.attendees.label2                    "הסרת כל המשתתפים">
+<!ENTITY event.remove.attendees.accesskey                 "ס">
+<!ENTITY event.remove.attendee.label                      "הסרת משתתף">
+<!ENTITY event.remove.attendee.accesskey                  "ש">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "שמירה">
+<!ENTITY  event.toolbar.saveandclose.label                "שמירה וסגירה">
+<!ENTITY  event.toolbar.delete.label                      "מחיקה">
+<!ENTITY  event.toolbar.attendees.label                   "הזמן אורחים">
+<!ENTITY  event.toolbar.privacy.label                     "פרטיות">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "שמירה">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "שמירה וסגירה">
+<!ENTITY  event.toolbar.delete.tooltip                    "מחיקה">
+<!ENTITY  event.toolbar.attendees.tooltip                 "הזמנת משתתפים">
+<!ENTITY  event.toolbar.attachments.tooltip               "הוספת קבצים">
+<!ENTITY  event.toolbar.privacy.tooltip                   "שינוי הגדרות פרטיות">
+<!ENTITY  event.toolbar.priority.tooltip                  "שינוי עדיפות">
+<!ENTITY  event.toolbar.status.tooltip                    "שינוי מצב">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "שינוי זמן פנוי/תפוס">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "החלת ההצעה">
+<!ENTITY counter.button.proposal.accesskey                "צ">
+<!ENTITY counter.button.original.label                    "החלת הנתונים המקוריים">
+<!ENTITY counter.button.original.accesskey                "ק">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "כותרת:" >
+<!ENTITY event.title.textbox.accesskey                    "כ">
+<!ENTITY event.location.label                             "מיקום:" >
+<!ENTITY event.location.accesskey                         "מ">
+<!ENTITY event.categories.label                           "קטגוריה:">
+<!ENTITY event.categories.accesskey                       "ק">
+<!ENTITY event.categories.textbox.label                   "הוספת קטגוריה חדשה" >
+<!ENTITY event.calendar.label                             "לוח שנה:" >
+<!ENTITY event.calendar.accesskey                         "ל">
+<!ENTITY event.attendees.label                            "אורחים:" >
+<!ENTITY event.attendees.accesskey                        "א">
+<!ENTITY event.alldayevent.label                          "אירוע לכל היום" >
+<!ENTITY event.alldayevent.accesskey                      "כ">
+<!ENTITY event.from.label                                 "התחלה:" >
+<!ENTITY event.from.accesskey                             "ה">
+<!ENTITY task.from.label                                  "התחלה:" >
+<!ENTITY task.from.accesskey                              "ה">
+<!ENTITY event.to.label                                   "סוף:" >
+<!ENTITY event.to.accesskey                               "ס">
+<!ENTITY task.to.label                                    "סיום בתאריך:" >
+<!ENTITY task.to.accesskey                                "ס">
+<!ENTITY task.status.label                                "מצב:" >
+<!ENTITY task.status.accesskey                            "מ">
+<!ENTITY event.repeat.label                               "חזרה:" >
+<!ENTITY event.repeat.accesskey                           "ח">
+<!ENTITY event.until.label                                "עד:">
+<!ENTITY event.reminder.label                             "תזכורת:" >
+<!ENTITY event.reminder.accesskey                         "ת">
+<!ENTITY event.description.label                          "תיאור:" >
+<!ENTITY event.description.accesskey                      "א">
+<!ENTITY event.attachments.label                          "מצורפים:" >
+<!ENTITY event.attachments.accesskey                      "מ" >
+<!ENTITY event.attachments.menubutton.label               "צירוף">
+<!ENTITY event.attachments.menubutton.accesskey           "צ">
+<!ENTITY event.attachments.url.label                      "אתר…">
+<!ENTITY event.attachments.url.accesskey                  "א">
+<!ENTITY event.attachments.popup.remove.label             "הסר" >
+<!ENTITY event.attachments.popup.remove.accesskey         "ס" >
+<!ENTITY event.attachments.popup.open.label               "פתח" >
+<!ENTITY event.attachments.popup.open.accesskey           "פ" >
+<!ENTITY event.attachments.popup.removeAll.label          "הסר הכול" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "כ" >
+<!ENTITY event.attachments.popup.attachPage.label         "צרף דף…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "ד" >
+<!ENTITY event.url.label                                  "קישורים קשורים:" >
+<!ENTITY event.priority2.label                            "דחיפות:">
+
+<!ENTITY event.reminder.none.label                        "אין תזכורת " >
+<!ENTITY event.reminder.0minutes.before.label             "0 דקות לפני" >
+<!ENTITY event.reminder.5minutes.before.label             "5 דקות לפני" >
+<!ENTITY event.reminder.15minutes.before.label            "15 דקות לפני" >
+<!ENTITY event.reminder.30minutes.before.label            "30 דקות לפני" >
+<!ENTITY event.reminder.1hour.before.label                "שעה לפני" >
+<!ENTITY event.reminder.2hours.before.label               "שעתיים לפני" >
+<!ENTITY event.reminder.12hours.before.label              "12 שעות לפני" >
+<!ENTITY event.reminder.1day.before.label                 "יום לפני" >
+<!ENTITY event.reminder.2days.before.label                "יומיים לפני" >
+<!ENTITY event.reminder.1week.before.label                "שבוע לפני" >
+<!ENTITY event.reminder.custom.label                      "מותאם אישית…" >
+
+<!ENTITY event.reminder.multiple.label                    "מספר תזכורות…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "הצגת הפרק הזמן בתור:">
+<!ENTITY event.statusbarpanel.privacy.label               "פרטיות:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "ערוך חזרה">
+
+<!ENTITY event.repeat.does.not.repeat.label             "ללא חזרה">
+<!ENTITY event.repeat.daily.label                       "יומי">
+<!ENTITY event.repeat.weekly.label                      "שבועי">
+<!ENTITY event.repeat.every.weekday.label               "בכל יום בשבוע">
+<!ENTITY event.repeat.bi.weekly.label                   "דו־שבועי">
+<!ENTITY event.repeat.monthly.label                     "חודשי">
+<!ENTITY event.repeat.yearly.label                      "שנתי">
+<!ENTITY event.repeat.custom.label                      "מותאם אישית…">
+
+<!ENTITY event.recurrence.pattern.label                 "תבנית חזרה">
+<!ENTITY event.recurrence.occurs.label                  "חזור" >
+<!ENTITY event.recurrence.day.label                     "יום" >
+<!ENTITY event.recurrence.week.label                    "שבוע" >
+<!ENTITY event.recurrence.month.label                   "חודש" >
+<!ENTITY event.recurrence.year.label                    "שנה" >
+
+<!ENTITY event.recurrence.pattern.every.label           "בכל" >
+<!ENTITY repeat.units.days.both                         "ימים" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "בכל יום בשבוע" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "בכל" >
+<!ENTITY repeat.units.weeks.both                        "שבועות" >
+<!ENTITY event.recurrence.on.label                      "ב:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "בכל" >
+<!ENTITY repeat.units.months.both                       "חודשים" >
+<!ENTITY event.recurrence.monthly.every.label           "בכל" >
+<!ENTITY event.recurrence.monthly.first.label           "הראשון">
+<!ENTITY event.recurrence.monthly.second.label          "השני">
+<!ENTITY event.recurrence.monthly.third.label           "השלישי">
+<!ENTITY event.recurrence.monthly.fourth.label          "הרביעי">
+<!ENTITY event.recurrence.monthly.fifth.label           "החמישי">
+<!ENTITY event.recurrence.monthly.last.label            "האחרון">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "יום ראשון" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "יום שני" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "יום שלישי" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "יום רביעי" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "יום חמישי" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "יום שישי" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "יום שבת" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "יום בחודש">
+<!ENTITY event.recurrence.repeat.recur.label            "חזור בימים">
+
+<!ENTITY event.recurrence.every.label                        "בכל:" >
+<!ENTITY repeat.units.years.both                             "שנים" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "בכל" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "בינואר" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "בפברואר" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "במרץ" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "באפריל" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "במאי" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "ביוני" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "ביולי" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "באוגוסט" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "בספטמבר" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "באוקטובר" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "בנובמבר" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "בדצמבר" >
+<!ENTITY event.recurrence.yearly.every.label                 "בכל">
+<!ENTITY event.recurrence.yearly.first.label                 "הראשון">
+<!ENTITY event.recurrence.yearly.second.label                "השני">
+<!ENTITY event.recurrence.yearly.third.label                 "השלישי">
+<!ENTITY event.recurrence.yearly.fourth.label                "הרביעי">
+<!ENTITY event.recurrence.yearly.fifth.label                 "החמישי">
+<!ENTITY event.recurrence.yearly.last.label                  "האחרון">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "יום ראשון" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "יום שני" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "יום שלישי" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "יום רביעי" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "יום חמישי" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "יום שישי" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "יום שבת" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "יום" >
+<!ENTITY event.recurrence.of.label                           "מתוך" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "בינואר" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "בפברואר" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "במרץ" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "באפריל" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "במאי" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "ביוני" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "ביולי" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "באוגוסט" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "בספטמבר" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "באוקטובר" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "בנובמבר" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "בדצמבר" >
+
+<!ENTITY event.recurrence.range.label                   "תווך חזרה">
+<!ENTITY event.recurrence.forever.label                 "אין תאריך סיום" >
+<!ENTITY event.recurrence.repeat.for.label              "צור" >
+<!ENTITY event.recurrence.appointments.label            "פגישות" >
+<!ENTITY event.repeat.until.label                       "חזור עד" >
+<!ENTITY event.recurrence.preview.label                 "תצוגה מקדימה">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "הזמן אורחים">
+<!ENTITY event.organizer.label                  "מארגן">
+<!ENTITY event.freebusy.suggest.slot            "המלץ על משבצת זמן:">
+<!ENTITY event.freebusy.button.next.slot        "החלון הבא">
+<!ENTITY event.freebusy.button.previous.slot    "החלון הקודם">
+<!ENTITY event.freebusy.zoom                    "התקרבות:">
+<!ENTITY event.freebusy.legend.free             "פנוי" >
+<!ENTITY event.freebusy.legend.busy             "עסוק" >
+<!ENTITY event.freebusy.legend.busy_tentative   "לא סופי" >
+<!ENTITY event.freebusy.legend.busy_unavailable "מחוץ למשרד" >
+<!ENTITY event.freebusy.legend.unknown          "אין מידע" >
+<!ENTITY event.attendee.role.required           "נוכחות נדרשת">
+<!ENTITY event.attendee.role.optional           "נוכחות בלתי מחייבת">
+<!ENTITY event.attendee.role.chair              "כיסא">
+<!ENTITY event.attendee.role.nonparticipant     "ללא השתתפות">
+<!ENTITY event.attendee.usertype.group          "קבוצה">
+<!ENTITY event.attendee.usertype.resource       "משאב">
+<!ENTITY event.attendee.usertype.room           "חדר">
+<!ENTITY event.attendee.usertype.unknown        "לא ידוע">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "בבקשה לציין את אזור הזמן">
+<!ENTITY event.timezone.custom.label     "אזורי זמן נוספים…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "כללי">
+<!ENTITY read.only.title.label           "כותרת:">
+<!ENTITY read.only.calendar.label        "לוח שנה:">
+<!ENTITY read.only.event.start.label     "תאריך התחלה:">
+<!ENTITY read.only.task.start.label      "תאריך התחלה:">
+<!ENTITY read.only.event.end.label       "תאריך סיום:">
+<!ENTITY read.only.task.due.label        "תאריך סיום:">
+<!ENTITY read.only.repeat.label          "חזרה:">
+<!ENTITY read.only.location.label        "מיקום:">
+<!ENTITY read.only.category.label        "קטגוריה:">
+<!ENTITY read.only.organizer.label       "מארגן:">
+<!ENTITY read.only.reminder.label        "תזכורת:">
+<!ENTITY read.only.attachments.label     "קבצים מצורפים:">
+<!ENTITY read.only.attendees.label       "מוזמנים">
+<!ENTITY read.only.description.label     "תיאור">
+<!ENTITY read.only.link.label            "קישורים קשורים">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "שמירה וסגירה">
+<!ENTITY summary.dialog.accept.label            "קבלה">
+<!ENTITY summary.dialog.accept.tooltiptext      "קבלת ההזמנה">
+<!ENTITY summary.dialog.decline.label           "סירוב">
+<!ENTITY summary.dialog.decline.tooltiptext     "סירוב להזמנה">
+<!ENTITY summary.dialog.dontsend.label          "לא לשלוח תגובה">
+<!ENTITY summary.dialog.send.label              "שליחת תגובה כעת">
+<!ENTITY summary.dialog.send.tooltiptext        "שליחת הודעה למארגן/נת ולסגור את החלון">

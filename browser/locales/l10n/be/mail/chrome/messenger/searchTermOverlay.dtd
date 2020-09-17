@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY matchAll.label "Адпавядаюць усім з наступных">
+<!ENTITY matchAll.accesskey "у">
+<!ENTITY matchAny.label "Адпавядаюць якому-небудзь з наступных">
+<!ENTITY matchAny.accesskey "я">
+<!ENTITY matchAllMsgs.label "Адпавядаюць усім лістам">
+<!ENTITY matchAllMsgs.accesskey "А">
+
+<!ENTITY searchTermListAttributesFlexValue "6">
+<!ENTITY searchTermListOperatorsFlexValue "6">
+<!ENTITY searchTermListValueFlexValue "6">

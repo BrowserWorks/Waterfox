@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "HTML ආකාර ලිපි ගැටළු">
+
+<!ENTITY recipient.label "සමහර ලබන්නන් HTML ආකාර ලිපි ලැබීමට හැකි අය බව ලැයිස්තු ගත කර නොමැත.">
+
+<!ENTITY question.label "පණිවිඩය සාමාන්‍ය පාඨ (plain text) බවට පරිවර්තනය කරන්නේද නොඑසේනම් කෙසේ හෝ HTML ආකාරයෙන් යවන්නද?">
+
+<!ENTITY plainTextAndHtml.label "සාමාන්‍ය පාඨ (plain text)හා HTML දෙයාකාරයෙන්ම යවන්න">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "සාමාන්‍ය පාඨ (plain text) ආකාරයෙන් පමණත් යවන්න">
+<!ENTITY plainTextOnly.accesskey "P">
+<!ENTITY htmlOnly.label "HTML ආකාරයෙන් පමණත් යවන්න">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "යවන්න">
+<!ENTITY send.accesskey "S">
+

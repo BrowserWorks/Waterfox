@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Neteja les dades privades">
+<!ENTITY sanitizeItems.label             "Neteja els elements següents:">
+
+<!ENTITY itemHistory.label               "Historial de navegació">
+<!ENTITY itemHistory.accesskey           "n">
+<!ENTITY itemUrlBar.label                "Historial de la barra d'ubicació">
+<!ENTITY itemUrlBar.accesskey            "u">
+<!ENTITY itemDownloads.label             "Historial de baixades">
+<!ENTITY itemDownloads.accesskey         "b">
+<!ENTITY itemFormSearchHistory.label     "Formularis desats i historial de cerca">
+<!ENTITY itemFormSearchHistory.accesskey "F">
+<!ENTITY itemCache.label                 "Memòria cau">
+<!ENTITY itemCache.accesskey             "a">
+<!ENTITY itemCookies.label               "Galetes">
+<!ENTITY itemCookies.accesskey           "G">
+<!ENTITY itemOfflineApps.label           "Dades de llocs web fora de línia">
+<!ENTITY itemOfflineApps.accesskey       "o">
+<!ENTITY itemPasswords.label             "Contrasenyes desades">
+<!ENTITY itemPasswords.accesskey         "C">
+<!ENTITY itemSessions.label              "Sessions autenticades">
+<!ENTITY itemSessions.accesskey          "S">
+
+<!ENTITY sanitizeButton.label            "Neteja les dades privades ara">

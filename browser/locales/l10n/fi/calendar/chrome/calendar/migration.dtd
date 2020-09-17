@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Tietojen tuonti">
+<!ENTITY migration.welcome "Tervetuloa">
+<!ENTITY migration.importing "Tuonti käynnissä">
+<!ENTITY migration.list.description "&brandShortName;iin voi tuoda tiedot monista yleisimmistä sovelluksista. Tältä tietokoneelta löytyi seuraavien sovellusten tietoja. Valitse ne sovellukset, joista haluat tuoda tiedot.">
+<!ENTITY migration.progress.description "Tuodaan valittuja tietoja">

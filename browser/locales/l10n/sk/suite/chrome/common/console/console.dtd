@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "Chybová konzola">
+
+<!ENTITY errFile.label        "Zdrojový súbor:">
+<!ENTITY errLine.label        "Riadok:">
+<!ENTITY errColumn.label      "Stĺpec:">
+
+<!ENTITY all.label            "Všetko">
+<!ENTITY all.accesskey        "V">
+<!ENTITY errors.label         "Chyby">
+<!ENTITY errors.accesskey     "C">
+<!ENTITY warnings.label       "Upozornenia">
+<!ENTITY warnings.accesskey   "U">
+<!ENTITY messages.label       "Správy">
+<!ENTITY messages.accesskey   "S">
+<!ENTITY clear.label          "Vymazať">
+<!ENTITY clear.accesskey      "V">
+<!ENTITY codeEval.label       "Kód:">
+<!ENTITY codeEval.accesskey   "K">
+<!ENTITY evaluate.label       "Vyhodnotiť">
+<!ENTITY evaluate.accesskey   "h">
+<!ENTITY filter2.label        "Filter:">
+<!ENTITY filter2.accesskey    "F">
+
+<!ENTITY copyCmd.label         "Kopírovať">
+<!ENTITY copyCmd.accesskey     "K">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "Usporiadať od prvého">
+<!ENTITY sortFirst.accesskey   "r">
+<!ENTITY sortLast.label        "Usporiadať od posledného">
+<!ENTITY sortLast.accesskey    "o">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "Hlavná ponuka">
+<!ENTITY modeToolbar.tooltip   "Panel režimu">
+<!ENTITY entryToolbar.tooltip  "Panel položiek JavaScriptu">
+<!ENTITY toolbarsCmd.label     "Zobraziť/Skryť">
+<!ENTITY toolbarsCmd.accesskey "b">
+<!ENTITY toolbarMode.label     "Režim">
+<!ENTITY toolbarMode.accesskey "M">
+<!ENTITY toolbarEval.label     "Položka JavaScriptu">
+<!ENTITY toolbarEval.accesskey "J">

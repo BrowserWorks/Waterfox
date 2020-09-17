@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "Сіз ескірген &brandProductName; нұсқасын жөнелттіңіз">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "&brandProductName; жаңалау нұсқасы сіздің профиліңізге ескілеу нұсқасымен үйлесімсіз өзгерістерді енгізген сияқты. Бұл профильді тек жаңалау нұсқасымен қолданыңыз, немесе бұл &brandShortName; орнатуы үшін жаңа профильді жасаңыз. Жаңа профильді жасау тіркелгілер, күнтізбелер және қосымшаларды қайтадан баптауды талап етеді.">
+
+<!ENTITY window.moreinfo "Көбірек білу…">
+<!ENTITY window.create "Жаңа профильді жасау">
+<!ENTITY window.quit-win "Шығу">
+<!ENTITY window.quit-nonwin "Шығу">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox ఖాతాలు">
+<!ENTITY aboutAccounts.connected.description "మీరు ఇలా కనెస్ట్ చేయబడ్డారు">
+<!ENTITY aboutAccounts.syncPreferences.label "సింక్ సెట్టింగులు తనిఖీ చేయడానికి ఇక్కడ నొక్కండి">
+
+<!ENTITY aboutAccounts.noConnection.title "అంతర్జాల అనుసంధానం లేదు">
+<!ENTITY aboutAccounts.retry.label "మళ్ళీ ప్రయత్నించండి">
+
+<!ENTITY aboutAccounts.restrictedError.title "నియంత్రించబడింది">
+<!ENTITY aboutAccounts.restrictedError.description "మీరు ఈ ప్రొఫైల్ నుంచి మీ Firefox ఖాతాలను నిర్వహించలేము.">

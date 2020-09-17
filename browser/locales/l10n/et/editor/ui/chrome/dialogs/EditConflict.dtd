@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label           "Muudetud muudatuste valimine">
+<!ENTITY conflictWarning.label       "Seda lehte on muudetud teise programmi poolt, aga sul on salvestamata muudatusi ka Koostajas.">
+<!ENTITY conflictResolve.label       "Vali, milline versioon säilitada:">
+<!ENTITY keepCurrentPageButton.label "säilitatakse olemasoleva lehe muudatused">
+<!ENTITY useOtherPageButton.label    "asendatakse olemasolev leht teiste muudatustega">

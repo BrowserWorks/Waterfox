@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Cari mesej dalam:">
+<!ENTITY searchHeading.accesskey     "e">
+<!ENTITY searchSubfolders.label      "Cari sub-folder">
+<!ENTITY searchSubfolders.accesskey  "u">
+<!ENTITY searchOnHeading.label       "Laksanakan operasi mencari dalam:">
+<!ENTITY searchOnHeading.accesskey   "L">
+<!ENTITY searchOnRemote.label        "Pelayan jauh">
+<!ENTITY searchOnLocal.label         "Sistem lokal">
+<!ENTITY resetButton.label           "Buang">
+<!ENTITY resetButton.accesskey       "B">
+<!ENTITY openButton.label            "Buka">
+<!ENTITY openButton.accesskey        "B">
+<!ENTITY deleteButton.label          "Buang">
+<!ENTITY deleteButton.accesskey      "B">
+<!ENTITY searchDialogTitle.label     "Cari Mesej">
+<!ENTITY results.label               "Hasil">
+<!ENTITY moveHereMenu.label          "Pindah Sini">
+<!ENTITY moveHereMenu.accesskey      "S">
+<!ENTITY moveButton.label            "Pindah Ke">
+<!ENTITY moveButton.accesskey        "K">
+<!ENTITY goToFolderButton.label      "Buka Folder Mesej">
+<!ENTITY goToFolderButton.accesskey  "k">
+<!ENTITY saveAsVFButton.label        "Simpan sebagai Folder Carian">
+<!ENTITY saveAsVFButton.accesskey    "p">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Cari dalam:">
+<!ENTITY abSearchHeading.accesskey   "d">
+<!ENTITY propertiesButton.label      "Sifat">
+<!ENTITY propertiesButton.accesskey  "S">
+<!ENTITY composeButton.label         "Karang">
+<!ENTITY composeButton.accesskey     "r">
+<!ENTITY abSearchDialogTitle.label   "Carian Buku Alamat Lanjutan">

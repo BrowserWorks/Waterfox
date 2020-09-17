@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "წერილების ძიების არე:">
+<!ENTITY searchHeading.accesskey     "ძ">
+<!ENTITY searchSubfolders.label      "ძიება ქვესაქაღალდეებში">
+<!ENTITY searchSubfolders.accesskey  "ქ">
+<!ENTITY searchOnServer.label        "ძიების შესრულება სერვერზე">
+<!ENTITY searchOnServer.accesskey    "ე">
+<!ENTITY resetButton.label           "გასუფთავება">
+<!ENTITY resetButton.accesskey       "ფ">
+<!ENTITY openButton.label            "გახსნა">
+<!ENTITY openButton.accesskey        "ხ">
+<!ENTITY deleteButton.label          "წაშლა">
+<!ENTITY deleteButton.accesskey      "წ">
+<!ENTITY searchDialogTitle.label     "წერილების ძიება">
+<!ENTITY results.label               "შედეგები">
+<!ENTITY moveButton.label            "გადატანა">
+<!ENTITY moveButton.accesskey        "ტ">
+<!ENTITY closeCmd.key                "W">
+<!ENTITY openInFolder.label          "გახსნა საქაღალდეში">
+<!ENTITY openInFolder.accesskey      "ქ">
+<!ENTITY saveAsVFButton.label        "საქაღლდის სახით შენახვა">
+<!ENTITY saveAsVFButton.accesskey    "ხ">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "ძიების არე:">
+<!ENTITY abSearchHeading.accesskey   "რ">
+<!ENTITY propertiesButton.label      "პარამეტრები">
+<!ENTITY propertiesButton.accesskey  "პ">
+<!ENTITY composeButton.label         "შედგენა">
+<!ENTITY composeButton.accesskey     "დ">
+<!ENTITY deleteCardButton.label      "წაშლა">
+<!ENTITY deleteCardButton.accesskey  "წ">
+<!ENTITY abSearchDialogTitle.label   "დეტალური ძიება წიგნაკში">

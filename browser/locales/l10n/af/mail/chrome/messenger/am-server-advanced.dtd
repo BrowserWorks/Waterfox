@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Gevorderde rekeningopstelling">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP-bedienergids:">
+<!ENTITY serverDirectory.accesskey "g">
+<!ENTITY usingSubscription.label "Wys net vouers waarop ingeteken">
+<!ENTITY usingSubscription.accesskey "W">
+<!ENTITY dualUseFolders.label "Bediener werk met vouers wat subgidse en boodskappe bevat">
+<!ENTITY dualUseFolders.accesskey "v">
+<!ENTITY maximumConnectionsNumber.label "Maksimum getal bedienerverbindings om te kas">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Hierdie voorkeure handel oor die naamsruimte op jou IMAP-bediener">
+<!ENTITY personalNamespace.label "Persoonlike naamruimte:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Openbaar (gedeel):">
+<!ENTITY publicNamespace.accesskey "p">
+<!ENTITY otherUsersNamespace.label "Ander gebruikers:">
+<!ENTITY otherUsersNamespace.accesskey "A">
+<!ENTITY overrideNamespaces.label "Laat bediener toe om hierdie naamruimtes te oorheers">
+<!ENTITY overrideNamespaces.accesskey "L">
+
+
+
+<!ENTITY deferToServer.label "Inkassie vir 'n ander rekening">
+<!ENTITY deferToServer.accesskey "a">
+<!ENTITY deferGetNewMail.label "Sluit hierdie bediener in wanneer u nuwe pos kry">
+<!ENTITY deferGetNewMail.accesskey "S">

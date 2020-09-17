@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!ENTITY dialogTitle.label "Archiválási beállítások">
+<!ENTITY archiveGranularityPrefix.label "Az archivált üzeneteket helyezze el:">
+<!ENTITY archiveFlat.label "Egyetlen mappában">
+<!ENTITY archiveFlat.accesskey "E">
+<!ENTITY archiveYearly.label "Évenként külön mappában">
+<!ENTITY archiveYearly.accesskey "v">
+<!ENTITY archiveMonthly.label "Havonként külön mappában">
+<!ENTITY archiveMonthly.accesskey "H">
+<!ENTITY keepFolderStructure.label "Az archivált üzenetek mappastruktújának megtartása">
+<!ENTITY keepFolderStructure.accesskey "A">
+<!ENTITY archiveExample.label "Példa">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Archívum">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Beérkezett üzenetek">

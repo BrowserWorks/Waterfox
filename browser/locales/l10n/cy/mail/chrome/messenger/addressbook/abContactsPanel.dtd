@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Priodweddau">
+<!ENTITY propertiesMenu.accesskey           "P">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Priodweddau Llyfr Cyfeiriadau">
+<!ENTITY abPropertiesMenu.accesskey         "P">
+<!ENTITY contactPropertiesMenu.label        "Priodweddau Cyswllt">
+<!ENTITY contactPropertiesMenu.accesskey    "r">
+<!ENTITY mailingListPropertiesMenu.label    "Priodweddau Rhestr E-bostio">
+<!ENTITY mailingListPropertiesMenu.accesskey "o">
+
+<!ENTITY abContextMenuButton.tooltip        "Dangos Cyd-destun Dewislen y Llyfr Cyfeiriadau">
+<!ENTITY addressbookPicker.label            "Llyfr Cyfeiriadau:">
+<!ENTITY addressbookPicker.accesskey        "L">
+<!ENTITY searchContacts.label               "Chwilio drwy'r Cysylltiadau:">
+<!ENTITY searchContacts.accesskey           "d">
+<!ENTITY SearchNameOrEmail.label            "Enw neu E-bost">
+
+<!ENTITY addtoToFieldMenu.label             "Ychwanegu i'r maes">
+<!ENTITY addtoToFieldMenu.accesskey         "m">
+<!ENTITY addtoCcFieldMenu.label             "Ychwanegu i faes Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Ychwanegu i faed Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Dileu">
+<!ENTITY deleteAddrBookCard.accesskey       "D">
+<!ENTITY propertiesContext.label            "Priodweddau">
+<!ENTITY propertiesContext.accesskey        "P">
+<!ENTITY abPropertiesContext.label          "Priodweddau">
+<!ENTITY abPropertiesContext.accesskey      "P">
+<!ENTITY editContactContext.label           "Golygu Cysylltiad">
+<!ENTITY editContactContext.accesskey       "G">
+<!ENTITY editMailingListContext.label       "Golygu Rhestr">
+<!ENTITY editMailingListContext.accesskey   "G">
+
+<!ENTITY newContactAbContext.label          "Cysylltiad Newydd">
+<!ENTITY newContactAbContext.accesskey      "C">
+<!ENTITY newListAbContext.label             "Rhestr Newydd">
+<!ENTITY newListAbContext.accesskey         "R">
+
+<!ENTITY toButton.label                     "Ychwanegu at:">
+<!ENTITY toButton.accesskey                 "a">
+<!ENTITY ccButton.label                     "Ychwanegu at Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Ychwanegu at Bcc:">
+<!ENTITY bccButton.accesskey                "B">

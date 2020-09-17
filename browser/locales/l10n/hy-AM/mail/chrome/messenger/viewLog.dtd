@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Զտիչի մատյանը">
+<!ENTITY viewLogInfo.text "Զտիչի մատյանի ֆայլերը պարունակում են այս փոստարկղի բացված զտիչները։ Ընտրեք՝ միացնելու համար։">
+<!ENTITY clearLog.label "Մաքրել մատյանը">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "Միացնել զտիչի մատյանը">
+<!ENTITY enableLog.accesskey "Մ">
+<!ENTITY closeLog.label "Փակել">
+<!ENTITY closeLog.accesskey "o">

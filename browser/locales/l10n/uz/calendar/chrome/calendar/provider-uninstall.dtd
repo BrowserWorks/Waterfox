@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Provayderni o‘chirish">
+<!ENTITY providerUninstall.accept.label                    "Tanlanganlardan obunani bekor qilish">
+<!ENTITY providerUninstall.accept.accesskey                "o">
+<!ENTITY providerUninstall.cancel.label                    "Qo‘sh. dasturni saqlash">
+<!ENTITY providerUninstall.cancel.accesskey                "s">
+<!ENTITY providerUninstall.preName.label                   "Siz o‘chirib tashlashni yoki o‘chirib qo‘yishni so‘ragansiz:">
+<!ENTITY providerUninstall.postName.label                  "Bu quyidagi taqvimlarning o‘chirib qo‘yilishiga sabab bo‘ladi:">
+<!ENTITY providerUninstall.reinstallNote.label             "Ushbu ta’minotchini o‘chirib tashlashni rejalashtirmagan bo‘lsngiz, siz ushbu ta’minotchining taqvimidan obunani bekor qiishni tanlashingiz mumkin.">

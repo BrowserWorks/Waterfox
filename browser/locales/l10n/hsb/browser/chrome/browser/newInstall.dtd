@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Wažne nowinki">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Zo byšće informacije synchronizował, kotrež sće hižo do Firefox z tutej instalaciju &brandShortName; składował, přizjewće so ze swojim &syncBrand.fxAccount.label;.">
+<!ENTITY continue-button "Dale">
+
+<!ENTITY mainText "Tuta instalacija &brandShortName; ma nowy profil. Njedźěli zapołožki, hesła a wužiwarske nastajenja z druhimi instalacijemi Firefox (Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition a Firefox Nightly) na tutym ličaku.">

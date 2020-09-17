@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Panel nástrojov Composera">
+<!ENTITY previewToolbarCmd.label "Ukážka">
+<!ENTITY previewToolbarCmd.tooltip "Ukážka stránky ako v prehliadači">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Exportovať ako text…">
+<!ENTITY exportToTextCmd.accesskey "x">
+<!ENTITY previewCmd.label "Zobraziť stránku">
+<!ENTITY previewCmd.accesskey "n">
+<!ENTITY sendPageCmd.label "Odoslať stránku…">
+<!ENTITY sendPageCmd.accesskey "s">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Panel Nová správa">
+<!ENTITY compositionToolbarCmd.accesskey "N">
+<!ENTITY formattingToolbarCmd.label "Panel Formátovanie">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Panel Režimy úprav">
+<!ENTITY editmodeToolbarCmd.accesskey "R">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Formát">
+<!ENTITY formatMenu.accesskey "F">
+<!ENTITY grid.label "Polohovacia mriežka">
+<!ENTITY grid.accesskey "h">
+<!ENTITY pageProperties.label "Titulok a vlastnosti stránky…">
+<!ENTITY pageProperties.accesskey "T">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Overiť správnosť kódu HTML">
+<!ENTITY validateCmd.accesskey "v">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normálne">
+<!ENTITY NormalMode.label "Normálny režim úprav">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Zobraziť okraje tabuľky a pomenované kotvy">
+<!ENTITY AllTagsModeTab.label "Značky HTML">
+<!ENTITY AllTagsMode.label "Značky HTML">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Zobraziť ikony pre všetky značky HTML">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Zdroj">
+<!ENTITY HTMLSourceMode.label "Zdrojový kód HTML">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Upraviť zdrojový kód HTML">
+<!ENTITY PreviewModeTab.label "Ukážka">
+<!ENTITY PreviewMode.label "Ukážka">
+<!ENTITY PreviewMode.accesskey "U">
+<!ENTITY PreviewMode.tooltip "Zobraziť ako WYSIWYG (ako v prehliadači)">

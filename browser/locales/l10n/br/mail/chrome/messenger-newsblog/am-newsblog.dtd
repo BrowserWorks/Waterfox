@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Gweredekaat an hizivadurioù evit an holl lanvioù">
+<!ENTITY biffAll.accesskey             "h">
+
+<!ENTITY newFeedSettings.label         "Arventennoù dre ziouer evit al lanvioù nevez">
+
+<!ENTITY manageSubscriptions.label     "Ardeiñ ar c'houmanantoù…">
+<!ENTITY manageSubscriptions.accesskey "m">
+
+<!ENTITY feedWindowTitle.label         "Skoazeller ar c'hontoù lanvioù">
+<!ENTITY feeds.accountName             "Blogoù &amp; Lanvioù keleier">

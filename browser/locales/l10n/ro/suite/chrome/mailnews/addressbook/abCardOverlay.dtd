@@ -1,0 +1,158 @@
+<!--
+# Translator(s):
+#
+# nicubunu <nicubunu@gmail.com>
+# Sergiu Bivol <sbivol87@gmail.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# janimo <jani@ubuntu.com>
+# iulianv <iulianv@email.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Contact">
+<!ENTITY Contact.accesskey               "C">
+<!ENTITY Name.box                        "Denumire">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Prenume:">
+<!ENTITY NameField1.accesskey           "P">
+<!ENTITY NameField2.label               "Nume:">
+<!ENTITY NameField2.accesskey           "N">
+<!ENTITY PhoneticField1.label           "Fonetic:">
+<!ENTITY PhoneticField2.label           "Fonetic:">
+<!ENTITY DisplayName.label              "Afișare:">
+<!ENTITY DisplayName.accesskey          "A">
+<!ENTITY NickName.label                 "Pseudonim:">
+<!ENTITY NickName.accesskey             "n">
+
+<!ENTITY PrimaryEmail.label             "Email:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "Email suplimentar:">
+<!ENTITY SecondEmail.accesskey          "i">
+<!ENTITY PreferMailFormat.label         "Preferă să primească mesaje în format:">
+<!ENTITY PreferMailFormat.accesskey     "P">
+<!ENTITY PlainText.label                "Text">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Necunoscut">
+<!ENTITY ScreenName.label               "Nume afișat:">
+<!ENTITY ScreenName.accesskey           "N">
+
+<!ENTITY allowRemoteContent1.label      "Allow remote content.">
+<!ENTITY allowRemoteContent1.accesskey  "r">
+<!ENTITY allowRemoteContent1.tooltip    "In HTML messages it is possible to
+embed content from remote sources. Opening such a message will open a
+connection to this external source. This may allow tracking of the
+message being read. Checking this box will allow such external embedded
+content in HTML messages from this contact.">
+
+<!ENTITY WorkPhone.label                "Lucru:">
+<!ENTITY WorkPhone.accesskey            "L">
+<!ENTITY HomePhone.label                "Acasă:">
+<!ENTITY HomePhone.accesskey            "A">
+<!ENTITY FaxNumber.label                "Fax:">
+<!ENTITY FaxNumber.accesskey            "x">
+<!ENTITY PagerNumber.label              "Pager:">
+<!ENTITY PagerNumber.accesskey          "g">
+<!ENTITY CellularNumber.label           "Mobil:">
+<!ENTITY CellularNumber.accesskey       "M">
+
+<!ENTITY Home.tab                       "Privat">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Adresă:">
+<!ENTITY HomeAddress.accesskey          "A">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Localitate:">
+<!ENTITY HomeCity.accesskey             "L">
+<!ENTITY HomeState.label                "Județ:">
+<!ENTITY HomeState.accesskey            "J">
+<!ENTITY HomeZipCode.label              "Cod poștal:">
+<!ENTITY HomeZipCode.accesskey          "C">
+<!ENTITY HomeCountry.label              "Țară:">
+<!ENTITY HomeCountry.accesskey          "a">
+<!ENTITY HomeWebPage.label              "Pagină web:">
+<!ENTITY HomeWebPage.accesskey          "e">
+<!ENTITY Birthday.label                 "Zi de naștere:">
+<!ENTITY Birthday.accesskey             "Z">
+<!ENTITY In.label                       "">
+<!ENTITY Year.placeholder               "Year">
+<!ENTITY Or.value                       "sau">
+<!ENTITY Age.placeholder                "Age">
+<!ENTITY YearsOld.label                 "">
+
+<!ENTITY Work.tab                       "Lucru">
+<!ENTITY Work.accesskey                 "W">
+<!ENTITY JobTitle.label                 "Denumire:">
+<!ENTITY JobTitle.accesskey             "i">
+<!ENTITY Department.label               "Departament:">
+<!ENTITY Department.accesskey           "m">
+<!ENTITY Company.label                  "Organizație:">
+<!ENTITY Company.accesskey              "O">
+<!ENTITY WorkAddress.label              "Adresă:">
+<!ENTITY WorkAddress.accesskey          "A">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Localitate:">
+<!ENTITY WorkCity.accesskey             "L">
+<!ENTITY WorkState.label                "Județ:">
+<!ENTITY WorkState.accesskey            "J">
+<!ENTITY WorkZipCode.label              "Cod poștal:">
+<!ENTITY WorkZipCode.accesskey          "C">
+<!ENTITY WorkCountry.label              "Țară:">
+<!ENTITY WorkCountry.accesskey          "a">
+<!ENTITY WorkWebPage.label              "Pagină web:">
+<!ENTITY WorkWebPage.accesskey          "e">
+
+<!ENTITY Other.tab                      "Other">
+<!ENTITY Other.accesskey                "h">
+<!ENTITY Custom1.label                  "Personalizat 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Personalizat 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Personalizat 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Diverse 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Note:">
+<!ENTITY Notes.accesskey                "N">
+
+<!ENTITY Photo.tab                      "Photo">
+<!ENTITY Photo.accesskey                "o">
+<!ENTITY PhotoDesc.label                "Pick one of the following:">
+<!ENTITY GenericPhoto.label             "Generic Photo">
+<!ENTITY GenericPhoto.accesskey         "G">
+<!ENTITY DefaultPhoto.label             "Default">
+<!ENTITY PhotoFile.label                "On this Computer">
+<!ENTITY PhotoFile.accesskey            "n">
+<!ENTITY BrowsePhoto.label              "Browse">
+<!ENTITY BrowsePhoto.accesskey          "r">
+<!ENTITY PhotoURL.label                 "On the Web">
+<!ENTITY PhotoURL.accesskey             "b">
+<!ENTITY PhotoURL.placeholder           "Paste or type the web address of a photo">
+<!ENTITY UpdatePhoto.label              "Update">
+<!ENTITY UpdatePhoto.accesskey          "U">

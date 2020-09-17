@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Välilehdet">
+
+<!ENTITY tabDisplay.label "Välilehtien asetukset">
+<!ENTITY autoHide.label "Piilota välilehtipalkki, kun auki on vain yksi välilehti">
+<!ENTITY autoHide.accesskey2 "P">
+<!ENTITY background.label "Valitse linkistä avattu välilehti">
+<!ENTITY background.accesskey "V">
+<!ENTITY warnOnClose.label "Varoita, kun yritän sulkea ikkunan, jossa on useita välilehtiä">
+<!ENTITY warnOnClose.accesskey "a">
+<!ENTITY relatedAfterCurrent.label "Avaa linkistä avatut välilehdet nykyisen välilehden viereen">
+<!ENTITY relatedAfterCurrent.accesskey "n">
+
+<!ENTITY loadGroup.label "Kirjanmerkkiryhmää avattaessa">
+<!ENTITY loadGroupAppend.label "Käytä uusia välilehtiä">
+<!ENTITY loadGroupAppend.accesskey "u">
+<!ENTITY loadGroupReplace.label "Käytä vanhoja välilehtiä">
+<!ENTITY loadGroupReplace.accesskey "y">
+
+<!ENTITY openTabs.label "Avaa välilehti ikkunan sijaan">
+
+<!ENTITY middleClick.label "Keskinapsautus, Ctrl+napsautus tai Ctrl+Enter verkkosivujen linkeissä">
+<!ENTITY middleClick.accesskey "K">
+<!ENTITY middleClickMac.label "Keskinapsautus, &#8984;+napsautus tai &#8984;+Return verkkosivujen linkeissä">
+<!ENTITY middleClickMac.accesskey "K">
+<!ENTITY urlbar.label "Ctrl+Enter osoitepalkissa">
+<!ENTITY urlbar.accesskey "o">
+<!ENTITY urlbarMac.label "&#8984;+Return osoitepalkissa">
+<!ENTITY urlbarMac.accesskey "o">
+
+<!ENTITY openManagers.label "Avaa uudessa välilehdessä erillisen ikkunan sijaan">
+<!ENTITY openDataManager.label "Tietojen hallinta">
+<!ENTITY openDataManager.accesskey "T">
+<!ENTITY openAddOnsManager.label "Lisäosien hallinta">
+<!ENTITY openAddOnsManager.accesskey "L">

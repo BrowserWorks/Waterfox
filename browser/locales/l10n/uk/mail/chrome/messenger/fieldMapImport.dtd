@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Імпорт адресної книги">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Запис:">
+<!ENTITY fieldMapImport.next.label "Далі">
+<!ENTITY fieldMapImport.next.accesskey "Д">
+<!ENTITY fieldMapImport.previous.label "Назад">
+<!ENTITY fieldMapImport.previous.accesskey "з">
+<!ENTITY fieldMapImport.text "Використовуйте кнопки «Вгору» та «Вниз», щоб впорядкувати адресні книжки зліва відповідно до імпортованих даних справа. Зніміть прапорці з даних, які ви не хочете імпортувати.">
+<!ENTITY fieldMapImport.up.label "Вгору">
+<!ENTITY fieldMapImport.up.accesskey "г">
+<!ENTITY fieldMapImport.down.label "Донизу">
+<!ENTITY fieldMapImport.down.accesskey "н">
+<!ENTITY fieldMapImport.fieldListTitle "Поля адресної книги">
+<!ENTITY fieldMapImport.dataTitle "Дані записів для імпорту">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Перший запис містить назви полів">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "П">

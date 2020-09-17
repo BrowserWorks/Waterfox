@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Innstillingar for ny side">
+
+<!ENTITY  authorName.label          "Forfattar:">
+<!ENTITY  authorName.accesskey      "F">
+<!ENTITY  pageColorHeader           "Standardutsjånad">
+
+<!ENTITY defaultColors.label        "Lesaren sine standarfargar (Ikkje vel fargar på sida)">
+<!ENTITY defaultColors.accesskey    "L">
+<!ENTITY customColors.label         "Bruk standardfargar:">
+<!ENTITY customColors.accesskey     "B">
+
+<!ENTITY normalText.label           "Normal tekst">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "Lenketekst">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "Aktiv lenketekst">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "Vitja lenketekst">
+<!ENTITY visitedLinkText.accesskey  "e">
+<!ENTITY background.label           "Bakgrunn:">
+<!ENTITY background.accesskey       "a">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Bakgrunnsbilde:">
+<!ENTITY backgroundImage.accesskey  "k">
+<!ENTITY chooseFile.label           "Vel fil…">
+<!ENTITY chooseFile.accesskey       "V">
+

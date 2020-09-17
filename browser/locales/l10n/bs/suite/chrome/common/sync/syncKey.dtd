@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Vaš &syncBrand.fullName.label; ključ">
+<!ENTITY syncKey.page.description         "Vaš ključ je korišten da dekodira podatke u vašem &syncBrand.fullName.label; računu. Morat ćete unijeti ključ svaki puta kada konfigurišete &syncBrand.fullName.label; na novom računaru ili uređaju.">
+<!ENTITY syncKey.keepItSecret.heading     "Čuvajte ga u tajnosti">
+<!ENTITY syncKey.keepItSecret.description "Vaš &syncBrand.fullName.label; račun je šifrovan da zaštiti vašu privatnost. Bez ovog ključa, to bi moglo potrajati godinama za nekoga da dekodira vaše lične informacije. Vi ste jedina osoba koja čuva ovaj ključ. To znači da jedino vi možete pristupiti vašim &syncBrand.fullName.label; podacima.">
+<!ENTITY syncKey.keepItSafe.heading       "Čuvajte ga na sigurnom">
+<!ENTITY syncKey.keepItSafe1.description  "Nemojte izgubiti ovaj ključ.">
+<!ENTITY syncKey.keepItSafe2.description  " Ne čuvamo kopiju vašeg ključa (to bi značilo da više nije u tajnosti!) tako da ">
+<!ENTITY syncKey.keepItSafe3.description  "vam ne možemo pomoći oporaviti ga">
+<!ENTITY syncKey.keepItSafe4.description  " ako ga izgubite. Morat ćete koristiti ovaj ključ svaki put kada povezujete novi računar ili uređaj na &syncBrand.fullName.label;.">
+<!ENTITY syncKey.findOutMore1.label       "Saznajte više o &syncBrand.fullName.label; i vašoj privatnosti na ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "&syncBrand.fullName.label; Uslovi servisa dostupni su na ">
+<!ENTITY syncKey.footer2.label            ". Polica privatnosti dostupna je na ">
+<!ENTITY syncKey.footer3.label            ".">

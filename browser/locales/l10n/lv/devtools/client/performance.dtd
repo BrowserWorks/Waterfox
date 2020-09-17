@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "Profilators glabā paraugus cikliskā buferī. Sasniedzot limitu jaunie ieraksti tiek rakstīti pa virsu vecajiem.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Aktivējiet vairāku procesu Firefox iestatījumos, lai reālajā laikā renderētu ieraksta datus.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "Buferis ir pilns. Vecie paraugi tiek pārrakstīti.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "Profila ierakstīšana šobrīd nav pieejama. Lūdzu aizveriet visus privātos logus un mēģiniet vēlreiz.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "Ielādē…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Ūdenskritums">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Attēlo dažādas pārlūka darbības, kas tiek veiktas ieraksta laikā, kā secību elementu ūdenskritumu.">
+<!ENTITY performanceUI.toolbar.js-calltree "Izsaukumu koks">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Izgaismo JavaScript funkcijas, kas ieraksta laikā prasīja vis vairāk laika.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Piešķiršanas">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Parāda kur ieraksta laikā tika izdalīta atmiņa.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS Flame grafiks">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Rāda ieraksta laika JavaScript izsaukumu steku.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Piešķiršanas liesmu grafiks">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "Kopējais laiks">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Laiks, kas tika patērēts apstrādājot šo funkciju un funkcijas, kuras tā izsauca.">
+<!ENTITY performanceUI.table.selfDuration             "Paša laiks">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Laiks, kas tika patērēts tikai šīs funkcijas izsaukumam.">
+<!ENTITY performanceUI.table.totalPercentage          "Kopējais patēriņš">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Laiks procentuāli, kas tika patērēts apstrādājot šo funkciju un funkcijas, kuras tā izsauca. ">
+<!ENTITY performanceUI.table.selfPercentage           "Paša patēriņš">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Laiks procentuiāli, kas tika patērēts tikai šīs funkcijas izsaukumam. ">
+<!ENTITY performanceUI.table.samples                  "Paraugi">
+<!ENTITY performanceUI.table.samples.tooltip          "Reižu skaits, kuras šī funkcija bija stekā, kamēr profilators apkopoja paraugus.">
+<!ENTITY performanceUI.table.function                 "Funkcija">
+<!ENTITY performanceUI.table.function.tooltip         "Apskatītās funkcijas nosaukums un atrašanās vieta.">
+<!ENTITY performanceUI.table.totalAlloc               "Kopā apskatītās piešķiršanas">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Kopējais apskatīto objekta piešķīrumu skaits šajā vietā un izsaucējos">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "Izvēlieties kādus datus attēlot laika joslā">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "Konfigurēt veiktspējas iestatījumus.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "Apvērst izsaukumu koku">
+<!ENTITY performanceUI.invertTree.tooltiptext "Apvēršot izsaukumu koku vispirms tiek attēloti profilētie izsaukumi sākot ar jaunākajiem.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Invertēt grafiku">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Apvēršot izsaukumu koku vispirms tiek attēloti profilētie izsaukumi sākot ar jaunākajiem.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Rādīt Gecko platformas datus">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Platformas datu attēlošana aktivē iespēju, ka JavaScript profilatora ziņojumos tiks iekļauti Gecko platformas simboli.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "Rādīt JIT optimizācijas">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Rādīt JIT optimizāciju datus katrā no apskatītajiem JavaScript ietvariem.">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "Saplacināt koka rekursijas">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Saplacināt rekursijas izmeklējot funkcijas.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "Ierakstīt atmiņu">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Veicot profilēšanu ierakstīt atmiņas patēriņu.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "Ierakstīt izdalījumus">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Profilējot ierakstīt objektu izdalījumu.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "Ierakstīt kadru ātrumu">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Profilējot ierakstīt kadru ātrumu.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "Šobrīd ieraksta izmantojot">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "Pārtraukt ierakstīšanu ievadot">
+<!ENTITY performanceUI.console.stopCommandEnd   "konsolē.">

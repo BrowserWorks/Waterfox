@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Filterlogg">
+<!ENTITY viewLogInfo.text "Filterloggen er en fil som viser hvilke filtre som er brukt. Bruk avkryssingsboksen nedenfor for å slå på logging.">
+<!ENTITY clearLog.label "Tøm logg">
+<!ENTITY clearLog.accesskey "T">
+<!ENTITY enableLog.label "Slå på filterlogg">
+<!ENTITY enableLog.accesskey "S">
+<!ENTITY closeLog.label "Lukk">
+<!ENTITY closeLog.accesskey "L">

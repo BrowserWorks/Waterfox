@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Väliaikaistiedostot">
+<!ENTITY pref.cache.caption              "Väliaikaistiedostojen asetukset">
+<!ENTITY cachePara                       "Väliaikaistiedostot ovat kiintolevyllesi tallennettuja kopioita usein avatuista sivuista. (Sivun päivittäminen avaa aina viimeisimmän version sivusta.)">
+<!ENTITY cacheCheck.label                "Anna &brandShortName;n päättää väliaikaistiedostoille annettavasta levytilasta">
+<!ENTITY cacheCheck.accesskey            "A">
+<!ENTITY diskCacheUpTo.label             "Salli väliaikaistiedostojen käyttää enintään">
+<!ENTITY diskCacheUpTo.accesskey         "S">
+<!ENTITY spaceMbytes                     "Mt levytilaa">
+<!ENTITY diskCacheFolder.label           "Väliaikaistiedostojen kansion sijainti:">
+<!ENTITY clearDiskCache.label            "Tyhjennä väliaikaistiedostot">
+<!ENTITY clearDiskCache.accesskey        "T">
+<!ENTITY chooseDiskCacheFolder.label     "Valitse kansio…">
+<!ENTITY chooseDiskCacheFolder.accesskey "V">
+<!ENTITY diskCacheFolderExplanation      "Väliaikaistiedostot tallennetaan antamasi kansion alikansioon &quot;Cache&quot;. Muutos tulee voimaan, kun käynnistät &brandShortName;n uudelleen.">
+<!ENTITY docCache.label                  "Vertaa väliaikaistiedostoihin tallennettua sivua verkossa olevaan sivuun:">
+<!ENTITY docCache.accesskey              "V">
+<!ENTITY checkOncePerSession.label       "Kerran istunnon aikana">
+<!ENTITY checkEveryTime.label            "Joka kerta, kun sivu avataan">
+<!ENTITY checkNever.label                "Ei koskaan">
+<!ENTITY checkAutomatically.label        "Silloin, kun sivu on vanhentunut">
+
+<!ENTITY prefetchTitle.label             "Linkkien esinoutaminen">
+<!ENTITY enablePrefetch.label            "Esinouda verkkosivut joutenolon aikana niin, että esinoutamista varten suunnitellut verkkosivut latautuvat nopeammin">
+<!ENTITY enablePrefetch.accesskey        "n">

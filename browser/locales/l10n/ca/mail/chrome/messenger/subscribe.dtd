@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Gestiona les subscripcions">
+<!ENTITY subscribeButton.label        "Subscriu-m'hi">
+<!ENTITY subscribeButton.accesskey    "S">
+<!ENTITY unsubscribeButton.label      "Cancel·la la subscripció">
+<!ENTITY unsubscribeButton.accesskey  "u">
+<!ENTITY newGroupsTab.label           "Grups nous">
+<!ENTITY newGroupsTab.accesskey       "n">
+<!ENTITY refreshButton.label          "Actualitza">
+<!ENTITY refreshButton.accesskey      "z">
+<!ENTITY stopButton.label             "Atura">
+<!ENTITY stopButton.accesskey         "t">
+<!ENTITY server.label                 "Compte:">
+<!ENTITY server.accesskey             "C">
+<!ENTITY subscribedHeader.label       "Subscriu-m'hi">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Mostra els elements que continguin:">
+<!ENTITY namefield.accesskey          "o">

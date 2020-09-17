@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Ongewensteberichteninstellingen">
+<!ENTITY trainingDescription.label "Als dit is ingeschakeld, moet &brandShortName; eerst worden getraind in het identificeren van ongewenste berichten. Dit gebeurt door met de werkbalkknop Ongewenst aan te geven of berichten wel of niet ongewenst zijn. U moet zowel ongewenste als gewenste berichten identificeren. Daarna zal &brandShortName; ongewenste berichten automatisch kunnen markeren.">
+<!ENTITY level.label "Zelflerende ongewensteberichtendetectie voor deze account inschakelen">
+<!ENTITY level.accesskey "Z">
+
+<!ENTITY move.label "Nieuwe ongewenste berichten verplaatsen naar:">
+<!ENTITY move.accesskey "N">
+<!ENTITY junkFolderOn.label "Map ‘Ongewenst’ in:">
+<!ENTITY junkFolderOn.accesskey "w">
+<!ENTITY otherFolder.label "Anders:">
+<!ENTITY otherFolder.accesskey "A">
+<!ENTITY purge1.label "Ongewenste berichten ouder dan">
+<!ENTITY purge1.accesskey "d">
+<!ENTITY purge2.label "dagen automatisch verwijderen">
+
+<!ENTITY whitelistHeader.label "Berichten niet automatisch als ongewenst markeren als de afzender voorkomt in mijn: ">
+<!ENTITY whitelistHeader.accesskey "m">
+
+<!ENTITY ispHeadersWarning.label "Als dit is ingeschakeld, zal &brandShortName; berichten die door deze externe classificeerder zijn gemarkeerd automatisch als ongewenst beschouwen.">
+<!ENTITY ispHeaders.label "Ongewenstberichtkopregels vertrouwen die zijn ingesteld door: ">
+<!ENTITY ispHeaders.accesskey "u">
+
+<!ENTITY junkClassification.label "Selectie">
+<!ENTITY junkActions.label "Doel en behoud">
+
+<!ENTITY globalJunkPrefs.label "Globale ongewensteberichteninstellingen…">
+<!ENTITY globalJunkPrefs.accesskey "G">

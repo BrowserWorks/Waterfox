@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox खाता">
+<!ENTITY aboutAccounts.connected.description "आप इस प्रकार जुड़े हुए हैं">
+<!ENTITY aboutAccounts.syncPreferences.label "सिंक सेटिंग्स की जाँच करने के लिए यहां टैप करें">
+
+<!ENTITY aboutAccounts.noConnection.title "कोई इंटरनेट कनेक्शन नहीं">
+<!ENTITY aboutAccounts.retry.label "फिर कोशिश करें">
+
+<!ENTITY aboutAccounts.restrictedError.title "सीमित">
+<!ENTITY aboutAccounts.restrictedError.description "आप इस प्रोफाइल से Firefox खाते प्रबंधित नहीं कर सकते हैं.">

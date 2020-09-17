@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Sessie herstellen">
+<!ENTITY restorepage.pagetitle      "Wilt u uw sessie herstellen?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Uw laatste &brandShortName;-sessie is onverwacht afgesloten. Onze welgemeende excuses voor het ongemak. U kunt de tabbladen en vensters van uw vorige sessie herstellen, of een nieuwe sessie starten als deze niet meer nodig zijn.">
+<!ENTITY restorepage.remedies       "Als &brandShortName; herhaaldelijk afsluit:">
+<!ENTITY restorepage.dueToChrome    "Probeer onlangs toegevoegde extensies in de add-onbeheerder uit te schakelen.">
+<!ENTITY restorepage.dueToContent   "Probeer uw sessie te herstellen zonder webpagina’s die volgens u het probleem zouden kunnen veroorzaken:">
+
+<!ENTITY restorepage.restoreButton  "Vorige sessie herstellen">
+<!ENTITY restorepage.restore.access "V">
+<!ENTITY restorepage.cancelButton   "Nieuwe sessie starten">
+<!ENTITY restorepage.cancel.access  "N">
+
+<!ENTITY restorepage.restoreHeader  "Herstellen">
+<!ENTITY restorepage.listHeader     "Vensters en tabbladen">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Venster &#37;S">

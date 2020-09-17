@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+
+<!ENTITY window.width2                    "485">
+<!ENTITY window.height                    "300">
+
+<!ENTITY activity.title                  "Zastojnik aktiwnosći">
+
+<!ENTITY cmd.pause.label                  "Pawza">
+<!ENTITY cmd.pause.accesskey              "P">
+<!ENTITY cmd.resume.label                 "Pókšacowaś">
+<!ENTITY cmd.resume.accesskey             "k">
+<!ENTITY cmd.cancel.label                 "Pśetergnuś">
+<!ENTITY cmd.cancel.accesskey             "t">
+<!ENTITY cmd.undo.label                   "Slědk wześ">
+<!ENTITY cmd.undo.accesskey               "S">
+<!ENTITY cmd.recover.label                "Wótnowiś">
+<!ENTITY cmd.recover.accesskey            "W">
+<!ENTITY cmd.retry.label                  "Znowego wopytaś">
+<!ENTITY cmd.retry.accesskey              "Z">
+<!ENTITY cmd.removeFromList.label         "Z lisćiny wótpóraś">
+<!ENTITY cmd.removeFromList.accesskey     "l">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "Lisćinu wuprozniś">
+<!ENTITY cmd.clearList.tooltip            "Wótwónoźujo dokóńcone, pśetergnjone a njeraźone zapiski z lisćiny">
+<!ENTITY cmd.clearList.accesskey          "L">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "Pytaś…">

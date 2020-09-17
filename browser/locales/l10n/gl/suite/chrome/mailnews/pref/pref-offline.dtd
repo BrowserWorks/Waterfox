@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Rede e espazo no disco">
+<!ENTITY pref.offline.caption             "Sen conexión">
+<!ENTITY textStartUp                      "Ao iniciar:">
+<!ENTITY textStartUp.accesskey            "A">
+<!ENTITY menuitemRememberPrevState        "Lembrar o estado de cando estaba conectado">
+<!ENTITY menuitemAskMe                    "Preguntar se devolver a conexión ao iniciar">
+<!ENTITY menuitemAlwaysOnline             "Sempre iniciar conectado">
+<!ENTITY menuitemAlwaysOffline            "Sempre iniciar desconectado">
+<!ENTITY menuitemAutomatic                "Detectar automaticamente (se está dispoñíbel)">
+<!ENTITY textGoingOnline                  "Enviar as mensaxes non enviadas ao desconectar?">
+<!ENTITY radioAutoSend                    "Si">
+<!ENTITY radioAutoSend.accesskey          "S">
+<!ENTITY radioNotSend                     "Non">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "Preguntar">
+<!ENTITY radioAskUnsent.accesskey         "P">
+<!ENTITY textGoingOffline                 "Descargar as mensaxes para utilizalas despois de desconectar?">
+<!ENTITY radioAutoDownload                "Si">
+<!ENTITY radioAutoDownload.accesskey      "S">
+<!ENTITY radioNotDownload                 "Non">
+<!ENTITY radioNotDownload.accesskey       "o">
+<!ENTITY radioAskDownload                 "Preguntar">
+<!ENTITY radioAskDownload.accesskey       "P">
+<!ENTITY mailConnections.caption          "Conexións de correo">
+<!ENTITY mailnewsTimeout.label            "Caducidade da conexión:">
+<!ENTITY mailnewsTimeout.accesskey        "C">
+<!ENTITY mailnewsTimeoutSeconds.label     "segundos">
+<!ENTITY Diskspace                        "Espazo no disco">
+<!ENTITY offlineCompactFolders.label      "Compactar todos os cartafoles ao liberar">
+<!ENTITY offlineCompactFolders.accesskey  "C">
+<!ENTITY offlineCompactFoldersMB.label    "MB en total">

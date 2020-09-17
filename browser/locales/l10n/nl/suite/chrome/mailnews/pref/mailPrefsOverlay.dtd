@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+<!ENTITY enbPluginCheckMailNews.label     "E-mail &amp; nieuwsgroepen">
+<!ENTITY enbPluginCheckMailNews.accesskey "a">
+
+<!-- These are added to the Window menu -->
+<!ENTITY mail.label                       "E-mail &amp; nieuwsgroepen">
+<!ENTITY mail.accesskey                   "m">
+<!ENTITY addressbook.label                "Adresboek">
+<!ENTITY addressbook.accesskey            "A">
+
+<!-- These are added to Preferences dialog -->
+<!ENTITY viewingMessages.label            "Berichtenweergave">
+<!ENTITY notifications.label              "Notificaties">
+<!ENTITY composingMessages.label          "Opstellen">
+<!ENTITY format.label                     "Verzendopmaak">
+<!ENTITY address.label                    "Adressering">
+<!ENTITY junk.label                       "Ongewenste berichten">
+<!ENTITY tags.label                       "Labels">
+<!ENTITY return.label                     "Leesbevestigingen">
+<!ENTITY characterEncoding2.label         "Tekstcodering">
+<!ENTITY networkStorage.label             "Netwerk &amp; opslag">

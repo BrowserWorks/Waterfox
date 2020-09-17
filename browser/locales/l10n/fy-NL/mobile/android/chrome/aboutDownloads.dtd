@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Downloads">
+<!ENTITY aboutDownloads.header                     "Jo downloads">
+<!ENTITY aboutDownloads.empty                      "Gjin downloads">
+
+<!ENTITY aboutDownloads.open                       "Iepenje">
+<!ENTITY aboutDownloads.remove                     "Fuortsmite">
+<!ENTITY aboutDownloads.removeAll                  "Alles fuortsmite">
+<!ENTITY aboutDownloads.pause                      "Pauzearje">
+<!ENTITY aboutDownloads.resume                     "Ferfetsje">
+<!ENTITY aboutDownloads.cancel                     "Annulearje">
+<!ENTITY aboutDownloads.retry                      "Opnij probearje">

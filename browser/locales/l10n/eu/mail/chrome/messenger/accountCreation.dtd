@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Ezarri baduzun posta elektroniko helbide bat">
+<!ENTITY emailWizard.caption             "Erabili zure oraingo posta elektronikoa">
+<!ENTITY name.label                      "Zure izena:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY fullname.placeholder            "Zure izen osoa">
+<!ENTITY name.text                       "Zure izena, besteei erakutsiko zaien bezala">
+<!ENTITY name.error                      "Idatzi zure izena mesedez">
+<!ENTITY email.label                     "Helbide elektronikoa:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY email3.placeholder              "Zure posta-helbidea">
+<!ENTITY email.text                      "Zure posta elektroniko bat">
+<!ENTITY email.error                     "Posta-helbide baliogabea">
+<!ENTITY password.label                  "Pasahitza:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "Pasahitza">
+<!ENTITY password.text                   "Aukerazkoa, erabiltzaile-izena egiaztatzeko erabiliko da soilik">
+<!ENTITY password.toggle                 "Erakutsi/ezkutatu pasahitza">
+<!ENTITY rememberPassword.label          "Gogoratu pasahitza">
+<!ENTITY rememberPassword.accesskey      "G">
+<!ENTITY usernameEx.label                "Zure saio hasiera:">
+<!ENTITY usernameEx.accesskey            "s">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "ZUREDOMEINUA\zureerabiltzailea">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Saio domeinua">
+
+<!ENTITY protocol.label                  "Protokoloa:">
+<!ENTITY imapLong.label                  "IMAP (urruneko karpetak)">
+<!ENTITY pop3Long.label                  "POP3 (mantendu posta zure ordenagailuan)">
+
+<!ENTITY manualConfigTable.summary       "Zerbitzariaren ezarpenak">
+<!ENTITY incoming.label                  "Sarrerakoa:">
+<!ENTITY incomingColumn.label            "Sarrerakoa">
+<!ENTITY outgoing.label                  "Irteerakoa:">
+<!ENTITY outgoingColumn.label            "Irteerakoa">
+<!ENTITY username.label                  "Erabiltzaile-izena:">
+<!ENTITY serverRow.label                 "Zerbitzaria:">
+<!ENTITY portRow.label                   "Ataka:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Autentifikazioa">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Autodetektatu">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Bat ere ez">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Exchange serbitzaria:">
+
+<!ENTITY advancedSetup.label             "Konfigurazio aurreratua">
+<!ENTITY advancedSetup.accesskey         "a">
+<!ENTITY cancel.label                    "Utzi">
+<!ENTITY cancel.accesskey                "U">
+<!ENTITY continue.label                  "Jarraitu">
+<!ENTITY continue.accesskey              "J">
+<!ENTITY stop.label                      "Gelditu">
+<!ENTITY stop.accesskey                  "G">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Birprobatu">
+<!ENTITY half-manual-test.accesskey      "B">
+<!ENTITY manual-config.label             "Eskouz konfiguratu…">
+<!ENTITY manual-config.accesskey         "E">
+<!ENTITY open-provisioner.label          "Eskuratu posta elektroniko berri bat…">
+<!ENTITY open-provisioner.accesskey      "p">
+
+
+<!ENTITY get-help.label                  "Lortu laguntza">
+<!ENTITY get-help.accesskey              "L">
+
+
+<!ENTITY warning.label                   "Kontuz!">
+<!ENTITY incomingSettings.label          "Hartzeko ezarpenak:">
+<!ENTITY outgoingSettings.label          "Irteerako ezarpenak:">
+<!ENTITY technicaldetails.label          "Xehetasun teknikoak">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Arriskuak ulertzen ditut.">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Eginda">
+<!ENTITY doneAccount.accesskey           "d">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Aldatu ezarpenak">
+<!ENTITY changeSettings.accesskey        "z">
+
+<!ENTITY contactYourProvider.description "&brandShortName;(e)k dakartzan konfigurazioekin zure posta eskura dezakezu. Halere, konexio desegokiak horiek direla-eta, zure sistemaren kudeatzailearekin jarri behar zenuke harremanetan. Ikusi Thunderbirden FAQa argibide gehiagorako.">
+
+<!ENTITY insecureServer.tooltip.title    "Abisua! Zerbitzari hau ez da segurua.">
+<!ENTITY insecureServer.tooltip.details  "Egin klik zirkuluan xehetasun gehiagorako.">
+
+<!ENTITY insecureUnencrypted.description "Zure mezu elektronikoa eta autentifikazioa zifratu gabe bidaltzen dira, beraz zure pasahitza (eta mezua) beste norbaitek erraz irakur lezake. &brandShortName;(e)k posta eskuratuko du, baina posta-hornitzailearekin jarri beharko zinateke harremanetan zerbitzaria konexio seguru bidez konfiguratzeko.">
+<!ENTITY insecureSelfSigned.description  "Zerbitzariak fida ezin gaitezkeen ziurtagiria erabiltzen du, beraz ezin dugu ziur egon zure inor zerbitzariaren eta &brandShortName;(e)n arteko trafikoa atzematen dabilenik. &brandShortName;(e)k zure posta eskuratuko du, baina zure posta-hornitzaileak fidatzeko moduko ziurtagiria erabiltzea lortu behar zenuke.">
+<!ENTITY secureServer.description        "Zorionak! Zerbitzari segurua da hau.">

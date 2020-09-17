@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Location Bar">
+
+<!ENTITY autoComplete.label                    "Autocomplete">
+<!ENTITY enableAutoComplete.label              "Autocomplete from your browsing history as you type">
+<!ENTITY enableAutoComplete.accesskey          "A">
+<!ENTITY autoCompleteAutoFill.label            "Automatically prefill the best match">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "Show list of matching results">
+<!ENTITY autoCompleteShowPopup.accesskey       "S">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Match only websites you've typed previously">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "M">
+
+<!ENTITY searchEngine.label                    "Internet Search Engine">
+<!ENTITY showSearchEngine.label                "Show default search engine">
+<!ENTITY showSearchEngine.accesskey            "e">
+
+<!ENTITY unknownLocations.label                "Unknown Locations">
+<!ENTITY domainGuessing.label                  "Add &quot;www.&quot; and &quot;.com&quot; to the location if a web page is not found">
+<!ENTITY domainGuessing.accesskey              "d">
+<!ENTITY keywords.label                        "Perform a web search when entered text is not a web location">
+<!ENTITY keywords.accesskey                    "P">
+
+
+<!--
+Entities below were automatically added by compare-locales,
+ based on en-US entities.
+-->
+
+<!ENTITY autoCompleteMatch.accesskey "M">
+<!ENTITY autoCompleteMatchOnlyURLs.label "Only match locations, not website titles">
+<!ENTITY autoCompleteMatchStart "Only at the beginning of the location or title">
+<!ENTITY autoCompleteMatchOnlyURLs.accesskey "n">
+<!ENTITY autoCompleteMatchWords "Only on word boundaries">
+<!ENTITY autoCompleteMatchAnywhere "Anywhere in the location or title">
+<!ENTITY autoCompleteMatchWordsFirst "Anywhere but preferring word boundaries">
+<!ENTITY autoCompleteMatch.label "Match">

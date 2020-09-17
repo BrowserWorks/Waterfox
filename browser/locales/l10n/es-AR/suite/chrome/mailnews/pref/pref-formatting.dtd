@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Formato de envío">
+<!ENTITY sendMaildesc.label           "Al enviar mensajes con formato (HTML) y uno o más destinatarios no están listados como capaces de recibir HTML:">
+<!ENTITY askMe.label                  "Preguntarme qué hacer (Mail le pide elegir un formato)">
+<!ENTITY askMe.accesskey              "P">
+<!ENTITY convertPlain2.label          "Convertir el mensaje a texto plano (se puede perder algún formato)">
+<!ENTITY convertPlain2.accesskey      "C">
+<!ENTITY sendHTML2.label              "Enviar el mensaje como HTML solamente (puede causar problemas)">
+<!ENTITY sendHTML2.accesskey          "s">
+<!ENTITY sendBoth2.label              "Enviar el mensaje tanto en texto plano como en HTML (tendrá más tamaño)">
+<!ENTITY sendBoth2.accesskey          "n">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "Dominios HTML y texto plano">
+<!ENTITY domaindesc.label             "Cuando envíe un mensaje a una dirección de alguno de los dominios listados debajo, Mail enviará automáticamente el mensaje en el formato preferido (texto con formato o texto plano).">
+<!ENTITY HTMLdomaintitle.label        "Dominios HTML">
+<!ENTITY HTMLdomaintitle.accesskey    "M">
+<!ENTITY PlainTexttitle.label         "Dominios de texto plano">
+<!ENTITY PlainTexttitle.accesskey     "t">
+<!ENTITY AddButton.label              "Agregar…">
+<!ENTITY AddHtmlDomain.accesskey      "A">
+<!ENTITY AddPlainText.accesskey       "g">
+<!ENTITY DeleteButton.label           "Borrar">
+<!ENTITY DeleteHtmlDomain.accesskey   "B">
+<!ENTITY DeletePlainText.accesskey    "r">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "Agregar un nombre de dominio HTML">
+<!ENTITY add.htmldomain               "Agregar un nombre de dominio HTML">
+<!ENTITY add.plaintexttitle           "Nombre de dominio HTML:">
+<!ENTITY add.plaintextdomain          "Nombre de dominio de texto plano:">
+
+<!ENTITY domainnameError.title        "Error en el nombre de dominio">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "El nombre de dominio @string@ no es válido y será ignorado. Los nombres de dominio válidos deben incluír al menos un '.' y caracteres a ambos lados del mismo.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Enviar el mensaje como texto plano automáticamente si no hay formato significativo (anula otras opcione)">
+<!ENTITY autoDowngrade.accesskey      "o">

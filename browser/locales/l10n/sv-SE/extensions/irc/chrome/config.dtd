@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZilla-inställningar">
+
+<!ENTITY loading.label  "Vänta, laddar…">
+
+<!ENTITY homepage.url   "http://www.hacksrus.com/~ginda/chatzilla/">
+<!ENTITY homepage.label "ChatZillas webbplats">
+
+<!ENTITY object.add.label       "Lägg till…">
+<!ENTITY object.add.hint        "Lägg till ett nätverk, en kanal eller användare att ange inställningar för">
+<!ENTITY object.add.accesskey   "L">
+
+<!ENTITY object.del.label       "Ta bort">
+<!ENTITY object.del.hint        "Tar bort det aktuella objektet och rensar alla dess inställningar">
+<!ENTITY object.del.accesskey   "T">
+
+<!ENTITY object.reset.label     "Återställ">
+<!ENTITY object.reset.hint      "Återställer det här objektets inställningar till standardläget">
+<!ENTITY object.reset.accesskey "Å">
+
+<!ENTITY dialog.apply   "Verkställ">
+
+<!ENTITY network "Nätverk">
+<!ENTITY channel "Kanal">
+<!ENTITY user    "Användare">
+
+<!ENTITY config.add.title "Lägg till inställningsobjektet">
+
+<!ENTITY config.type.label        "Typ:">
+<!ENTITY config.type.hint         "Typ av objekt att ange inställningar för">
+<!ENTITY config.type.accesskey    "T">
+<!ENTITY config.network.label     "Nätverk:">
+<!ENTITY config.network.hint      "Känt namn på nätverket, eller serverns namn">
+<!ENTITY config.network.accesskey "K">
+<!ENTITY config.target.label      "Mål:">
+<!ENTITY config.target.hint       "Målkanal eller användarnamn">
+<!ENTITY config.target.accesskey  "M">

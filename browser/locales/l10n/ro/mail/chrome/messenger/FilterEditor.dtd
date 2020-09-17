@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Reguli pentru filtrare">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Denumire filtru:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Nesolicitat">
+<!ENTITY notJunk.label "Nu e nesolicitat">
+
+<!ENTITY lowestPriorityCmd.label "Cea mai mică">
+<!ENTITY lowPriorityCmd.label "Mică">
+<!ENTITY normalPriorityCmd.label "Normală">
+<!ENTITY highPriorityCmd.label "Mare">
+<!ENTITY highestPriorityCmd.label "Cea mai mare">
+
+<!ENTITY contextDesc.label "Aplică filtrul:">
+<!ENTITY contextIncomingMail.label "La obținerea unui mail nou:">
+<!ENTITY contextIncomingMail.accesskey "m">
+<!ENTITY contextManual.label "La rularea manuală">
+<!ENTITY contextManual.accesskey "R">
+<!ENTITY contextBeforeCls.label "Filtrează înainte de clasificarea ca mesaj nesolicitat">
+<!ENTITY contextAfterCls.label "Filtrează după clasificarea ca mesaj nesolicitat">
+<!ENTITY contextOutgoing.label "După trimitere">
+<!ENTITY contextOutgoing.accesskey "u">
+<!ENTITY contextArchive.label "La arhivare">
+<!ENTITY contextArchive.accesskey "A">
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Efectuează următoarele acțiuni:">
+<!ENTITY filterActionDesc.accesskey "E">
+
+<!ENTITY filterActionOrderWarning.label "Notă: Acțiunile filtrului vor fi executate într-o ordine diferită.">
+<!ENTITY filterActionOrder.label "Vezi ordinea de execuție">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Mută mesajul în">
+<!ENTITY copyMessage.label "Copiază mesajul în">
+<!ENTITY forwardTo.label "Redirecționează mesajul către">
+<!ENTITY replyWithTemplate.label "Răspunde cu un șablon">
+<!ENTITY markMessageRead.label "Marchează ca citit">
+<!ENTITY markMessageUnread.label "Marchează ca necitit">
+<!ENTITY markMessageStarred.label "Adaugă steluță">
+<!ENTITY setPriority.label "Schimbă prioritatea în">
+<!ENTITY addTag.label "Etichetează mesaj">
+<!ENTITY setJunkScore.label "Setează starea de nesolicitare la">
+<!ENTITY deleteMessage.label "Șterge mesajul">
+<!ENTITY deleteFromPOP.label "Șterge de pe serverul POP">
+<!ENTITY fetchFromPOP.label "Adu de pe serverul POP">
+<!ENTITY ignoreThread.label "Ignoră conversația">
+<!ENTITY ignoreSubthread.label "Ignoră conversația subordonată">
+<!ENTITY watchThread.label "Urmărește conversația">
+<!ENTITY stopExecution.label "Oprește executarea filtrului">
+
+<!ENTITY addAction.tooltip "Adaugă o secțiune nouă">
+<!ENTITY removeAction.tooltip "Elimină această acțiune">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

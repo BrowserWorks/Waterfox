@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Ñemboguejy">
+<!ENTITY aboutDownloads.header                     "Ne ñemboguejy">
+<!ENTITY aboutDownloads.empty                      "Ñemboguejy'ỹ">
+
+<!ENTITY aboutDownloads.open                       "Jeike">
+<!ENTITY aboutDownloads.remove                     "Mboguete">
+<!ENTITY aboutDownloads.removeAll                  "Emboguepaite">
+<!ENTITY aboutDownloads.pause                      "Mombyta">
+<!ENTITY aboutDownloads.resume                     "Ku'ejey">
+<!ENTITY aboutDownloads.cancel                     "Heja">
+<!ENTITY aboutDownloads.retry                      "Ha'ãjey">

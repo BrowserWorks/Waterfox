@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Roghainnean na loidhne chòmhnard">
+
+<!ENTITY dimensionsBox.label "Meudachd">
+<!ENTITY heightEditField.label "Àirde:">
+<!ENTITY heightEditField.accessKey "r">
+<!ENTITY widthEditField.label "Leud:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY pixelsPopup.value "pixel">
+<!ENTITY alignmentBox.label "Co-thaobhachadh">
+<!ENTITY leftRadio.label "Clì">
+<!ENTITY leftRadio.accessKey "l">
+<!ENTITY centerRadio.label "Cuir sa mheadhan">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.label "Deas">
+<!ENTITY rightRadio.accessKey "s">
+
+<!ENTITY threeDShading.label "Duibhreachadh 3-D">
+<!ENTITY threeDShading.accessKey "3">
+<!ENTITY saveSettings.label "Cleachd mar an roghainn bhunaiteach">
+<!ENTITY saveSettings.accessKey "d">
+<!ENTITY saveSettings.tooltip "Sàbhail na roghainnean seo 's cleachd iad nuair a chuireas mi a-steach loidhnichean còmhnard ùra">

@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label "Nome:">
+<!ENTITY name.accesskey "N">
+<!ENTITY name.text "El nome que se va amosar a los demás">
+<!ENTITY email.label "Direición de corréu:">
+<!ENTITY email.accesskey "D">
+<!ENTITY password.label "Contraseña:">
+<!ENTITY password.accesskey "a">
+<!ENTITY password.placeholder "Contraseña">
+<!ENTITY password.text "Opcional, namái va usase pa validar el nome d'usuariu">
+<!ENTITY rememberPassword.label "Recordar contraseña">
+<!ENTITY rememberPassword.accesskey "R">
+
+<!ENTITY imapLong.label "IMAP (carpetes remotes)">
+<!ENTITY pop3Long.label "POP3 (caltener corréu nel to equipu)">
+
+<!ENTITY incoming.label "Entrante:">
+<!ENTITY outgoing.label "Saliente:">
+<!ENTITY username.label "Nome d'usuariu:">
+<!ENTITY auth.label "Identificación">
+<!ENTITY imap.label "IMAP">
+<!ENTITY pop3.label "POP3">
+<!ENTITY smtp.label "SMTP">
+<!ENTITY autodetect.label "Autodeteutar">
+<!ENTITY noEncryption.label "Dengún">
+<!ENTITY starttls.label "STARTTLS">
+<!ENTITY sslTls.label "SSL/TLS">
+
+<!ENTITY advancedSetup.label "Config. avanzada">
+<!ENTITY advancedSetup.accesskey "C">
+<!ENTITY cancel.label "Encaboxar">
+<!ENTITY cancel.accesskey "n">
+<!ENTITY continue.label "Continuar">
+<!ENTITY continue.accesskey "o">
+<!ENTITY stop.label "Parar">
+<!ENTITY stop.accesskey "P">
+<!ENTITY half-manual-test.label "Volver a probar">
+<!ENTITY half-manual-test.accesskey "V">
+
+
+<!ENTITY warning.label "¡Avisu!">
+<!ENTITY incomingSettings.label "Configuración d'entrada:">
+<!ENTITY outgoingSettings.label "Configuración de salida:">
+<!ENTITY technicaldetails.label "Detalles téunicos">
+<!ENTITY confirmWarning.label "Atalanto los riesgos.">
+<!ENTITY confirmWarning.accesskey "A">
+<!ENTITY doneAccount.label "Fecho">
+<!ENTITY doneAccount.accesskey "F">
+<!ENTITY changeSettings.label "Camudar configuración">
+<!ENTITY changeSettings.accesskey "b">
+
+<!ENTITY contactYourProvider.description "&brandShortName; permite recuperar el corréu usando la configuración proporcionada. Sicasí, tendríes de contautar col to alministrador o fornidor de corréu-e en rellación a estes conexones inadecuaes. Llei la FAQ de Thunderbird pa más información.">
+
+<!ENTITY insecureServer.tooltip.title "¡Avisu! Esti sirvidor ye inseguro.">
+<!ENTITY insecureServer.tooltip.details "Primi nel círculu pa más detalles.">
+
+<!ENTITY insecureUnencrypted.description "Les tos credenciales y corréu únviense ensin cifrar, polo que la to contraseña (y el mensaxe) puen lleese cenciellamente por otres persones. &brandShortName; va permitite acceder al corréu, pero tendríes de contautar col to fornidor de corréu-e pa configurar el sirvidor con una conexón segura.">
+<!ENTITY insecureSelfSigned.description "El sirvidor usa un certificáu nel que nun se pue confiar, polo que nun ye dable asegurar que nun hai naide interceutando'l tráficu ente &brandShortName; y el sirvidor. &brandShortName; va permitite acceder al corréu, pero tendríes de facer que'l to fornidor de corréu-e configure'l sirvidor con un certificáu confiable.">
+<!ENTITY secureServer.description "¡Felicidaes! Esti sirvidor ye seguru.">

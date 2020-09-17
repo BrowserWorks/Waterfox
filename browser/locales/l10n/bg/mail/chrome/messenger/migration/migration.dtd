@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Помощник при внасяне">
+
+<!ENTITY importFromWin.label            "Внасяне на настройки, настройки на регистрация, адресник, филтри и други данни от:">
+<!ENTITY importFromNonWin.label         "Внасяне на настройки, настройки на регистрация, адресник, филтри и други данни от:">
+<!ENTITY importSourceNotFound.label     "Не е намерено приложение, от което да бъдат внесени данни.">
+
+<!ENTITY importFromNothing.label        "Нищо не се внася">
+<!ENTITY importFromNothing.accesskey    "Н">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 или по-нов">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Внасяне на настройки и папки с писма">
+<!ENTITY importItems.title              "Позиции за внасяне">
+<!ENTITY importItems.label              "Изберете елементите за внасяне:">
+
+<!ENTITY migrating.title                "Внасяне…">
+<!ENTITY migrating.label                "В момента се внасят следните елементи…">
+
+<!ENTITY selectProfile.title            "Избиране на профил">
+<!ENTITY selectProfile.label            "Следните профили могат да бъдат внесени:">
+
+<!ENTITY done.title                     "Внасянето завършено">
+<!ENTITY done.label                     "Следните елементи са внесени успешно:">

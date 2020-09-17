@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle "Fjarlægja reikning og gögn">
+<!ENTITY removeButton.label "Fjarlægja">
+<!ENTITY removeButton.accesskey "r">
+<!ENTITY removeAccount.label "Fjarlægja upplýsingar reiknings">
+<!ENTITY removeAccount.accesskey "a">
+<!ENTITY removeAccount.desc "Fjarlægir aðeins upplýsingar sem &brandShortName; hefur fyrir þennan reikning. Hefur ekki áhrif á reikninginn sjálfan á netþjóninum.">
+<!ENTITY removeData.label "Fjarlægja gögn fyrir skilaboð">
+<!ENTITY removeData.accesskey "ð">
+<!ENTITY removeDataChat.label "Fjarlægja samtalsgögn">
+<!ENTITY removeDataChat.accesskey "">
+<!ENTITY removeDataLocalAccount.desc "Fjarlægir öll skilaboð, möppur og síur fyrir þennan reikning frá staðbundnum diski. Þetta hefur ekki áhrif á skilaboð sem gætu ennþá verið á netþjóni. Ekki velja þetta ef þú ætlar að geyma staðbundin gögn eða endurnota þau í &brandShortName; seinna.">
+<!ENTITY removeDataServerAccount.desc "Fjarlægir öll skilaboð, möppur og síur fyrir þennan reikning frá staðbundnum diski. Skilaboð og möppur verða ennþá til á netþjóni.">
+<!ENTITY removeDataChatAccount.desc "Fjarlægir öll gögn fyrir samtöl á staðbundnum diski sem eru geymd á þessum reikningi.">
+<!ENTITY showData.label "Sýna staðsetningu gagna">
+<!ENTITY showData.accesskey "S">
+<!ENTITY progressPending "Fjarlægi valin gögn…">
+<!ENTITY progressSuccess "Tókst að fjarlægja.">
+<!ENTITY progressFailure "Ekki tókst að fjarlægja.">

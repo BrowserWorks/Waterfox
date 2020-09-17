@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Nuwebladsy-opstelling">
+
+<!ENTITY  authorName.label          "Outeur:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "Verstek-bladsyvoorkoms">
+
+
+<!ENTITY customColors.label         "Gebruik doelgemaakte kleure:">
+<!ENTITY customColors.accesskey     "d">
+
+<!ENTITY normalText.label           "Gewone teks">
+<!ENTITY normalText.accesskey       "G">
+<!ENTITY linkText.label             "Skakelteks">
+<!ENTITY linkText.accesskey         "S">
+<!ENTITY activeLinkText.label       "Teks van aktiewe skakels">
+<!ENTITY activeLinkText.accesskey   "a">
+<!ENTITY visitedLinkText.label      "Teks van besoekte skakels">
+<!ENTITY visitedLinkText.accesskey  "b">
+<!ENTITY background.label           "Agtergrond:">
+<!ENTITY background.accesskey       "A">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Agtergrondprent:">
+<!ENTITY backgroundImage.accesskey  "p">
+<!ENTITY chooseFile.label           "Kies lêer…">
+<!ENTITY chooseFile.accesskey       "l">
+

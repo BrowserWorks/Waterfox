@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Kime: ">
+<!ENTITY fromField.label "Kimden: ">
+<!ENTITY senderField.label "Gönderen: ">
+<!ENTITY organizationField.label "Kurum: ">
+<!ENTITY replyToField.label "Yanıt adresi: ">
+
+<!ENTITY subjectField.label "Konu: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "Gizli kopya: ">
+<!ENTITY newsgroupsField.label "Haber grupları: ">
+<!ENTITY followupToField.label "Followup-To: ">
+
+<!ENTITY tagsHdr.label "Etiketler: ">
+<!ENTITY dateField.label "Tarih: ">
+<!ENTITY userAgentField.label "User-Agent: ">
+<!ENTITY referencesField.label "Referanslar: ">
+<!ENTITY messageIdField.label "Message-ID: ">
+<!ENTITY inReplyToField.label "In-Reply-To: ">
+<!ENTITY originalWebsite.label "Web sitesi: ">
+
+<!ENTITY editMessage.label "Taslağı düzenle…">
+<!ENTITY editMessage.accesskey "T">
+
+<!ENTITY attachmentsTree.label "Ekler:">
+<!ENTITY attachmentsTree.accesskey "E">
+<!ENTITY openAttachmentCmd.label "Aç">
+<!ENTITY openAttachmentCmd.accesskey "A">
+<!ENTITY viewAttachmentCmd.label "Kaynağını göster">
+<!ENTITY viewAttachmentCmd.accesskey "K">
+<!ENTITY saveAsAttachmentCmd.label "Farklı kaydet…">
+<!ENTITY saveAsAttachmentCmd.accesskey "a">
+<!ENTITY detachAttachmentCmd.label "Çıkart…">
+<!ENTITY detachAttachmentCmd.accesskey "ı">
+<!ENTITY deleteAttachmentCmd.label "Sil">
+<!ENTITY deleteAttachmentCmd.accesskey "l">
+<!ENTITY saveAllAttachmentsCmd.label "Tümünü kaydet…">
+<!ENTITY saveAllAttachmentsCmd.accesskey "e">
+<!ENTITY detachAllAttachmentsCmd.label "Tümünü çıkart…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "T">
+<!ENTITY deleteAllAttachmentsCmd.label "Tümünü sil…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "m">

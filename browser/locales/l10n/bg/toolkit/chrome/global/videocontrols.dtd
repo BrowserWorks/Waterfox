@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Изпълняване">
+<!ENTITY playButton.pauseLabel "Пауза">
+<!ENTITY muteButton.muteLabel "Без звук">
+<!ENTITY muteButton.unmuteLabel "Със звук">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Цял екран">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Излизане от цял екран">
+<!ENTITY castingButton.castingLabel "Пускане на екрана">
+<!ENTITY closedCaption.off "Изключено">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Регулатор на звука">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Картина в картината">
+
+<!ENTITY error.aborted "Зареждането на видео спря.">
+<!ENTITY error.network "Зареждането на видео е прекъснато поради мрежова грешка.">
+<!ENTITY error.decode "Видеото не може да бъде възпроизведено, защото файлът е развален.">
+<!ENTITY error.srcNotSupported "Видеоформатът или този вид MIME не се поддържа.">
+<!ENTITY error.noSource2 "Не е намерен поддържан видео формат и вид MIME.">
+<!ENTITY error.generic "Възпроизвеждането на видео прекъсна поради неизвестна грешка.">
+
+<!ENTITY status.pictureInPicture "Видеоклипът се възпроизвежда в режим картина в картината.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

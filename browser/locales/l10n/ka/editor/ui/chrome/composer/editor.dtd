@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "შემდგენი">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "წერილის შესადგენი ხელსაწყოთა ზოლი">
+<!ENTITY previewToolbarCmd.label "ნუსხა">
+<!ENTITY previewToolbarCmd.tooltip "ამ გვერდის ჩატვირთვა ბრაუზერში">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "გატანა ტექსტად…">
+<!ENTITY exportToTextCmd.accesskey "გ">
+<!ENTITY previewCmd.label "გვერდის გადახედვა">
+<!ENTITY previewCmd.accesskey "ე">
+<!ENTITY sendPageCmd.label "გვერდის გაგზავნა…">
+<!ENTITY sendPageCmd.accesskey "ზ">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "წერილის შესადგენი ხელსაწყოთა ზოლი">
+<!ENTITY compositionToolbarCmd.accesskey "შ">
+<!ENTITY formattingToolbarCmd.label "გაფორმების ხელსაწყოთა ზოლი">
+<!ENTITY formattingToolbarCmd.accesskey "ფ">
+<!ENTITY editmodeToolbarCmd.label "ჩასწორების ხელსაწყოთა ზოლი">
+<!ENTITY editmodeToolbarCmd.accesskey "ზ">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "ფორმატი">
+<!ENTITY formatMenu.accesskey "ო">
+<!ENTITY grid.label "განთავსების ბადე">
+<!ENTITY grid.accesskey "ბ">
+<!ENTITY pageProperties.label "გვერდის სათაური და პარამეტრები…">
+<!ENTITY pageProperties.accesskey "თ">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "HTML კოდის შემოწმება">
+<!ENTITY validateCmd.accesskey "კ">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "ჩვეულებრივი">
+<!ENTITY NormalMode.label "ჩასწორების ჩვეულებრივი რეჟიმი">
+<!ENTITY NormalMode.accesskey "ჩ">
+<!ENTITY NormalMode.tooltip "ცხრილის ჩარჩოსა და სახელობითი ღუზების ჩვენება">
+<!ENTITY AllTagsModeTab.label "HTML ჭდეები">
+<!ENTITY AllTagsMode.label "HTML ჭდეები">
+<!ENTITY AllTagsMode.accesskey "ე">
+<!ENTITY AllTagsMode.tooltip "ხატულების ჩვენება ყველა HTML ჭდისთვის">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "წყარო">
+<!ENTITY HTMLSourceMode.label "HTML კოდი">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "HTML კოდის ჩასწორება">
+<!ENTITY PreviewModeTab.label "შეთვალიერება">
+<!ENTITY PreviewMode.label "შეთვალიერება">
+<!ENTITY PreviewMode.accesskey "შ">
+<!ENTITY PreviewMode.tooltip "WYSIWYG-სახით ჩვენება (როგორც ბრაუზერში)">

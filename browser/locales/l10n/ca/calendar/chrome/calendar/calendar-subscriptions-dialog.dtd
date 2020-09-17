@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Subscriptions Dialog -->
+
+<!ENTITY calendar.subscriptions.dialog.title                            "Subscripció de calendaris">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Mostra els calendaris que continguin:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Cerca">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Selecciona els calendaris on subscriure's:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Subscriu-me">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Cancel·la la subscripció">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "S'està cercant…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "No s'ha trobat cap coincidència.">

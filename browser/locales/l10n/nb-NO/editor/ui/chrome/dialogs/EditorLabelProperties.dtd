@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Etikettegenskaper">
+
+<!ENTITY Settings.label "Innstillinger">
+<!ENTITY Settings.accesskey "s">
+
+<!ENTITY EditLabelText.label "Rediger tekst:">
+<!ENTITY EditLabelText.accesskey "t">
+<!ENTITY LabelFor.label "For kontroll:">
+<!ENTITY LabelFor.accesskey "F">
+<!ENTITY AccessKey.label "Tilgangstast:">
+<!ENTITY AccessKey.accesskey "T">
+
+<!ENTITY RemoveLabel.label "Fjern etikett">
+<!ENTITY RemoveLabel.accesskey "r">

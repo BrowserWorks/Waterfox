@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importuj książkę adresową">
+<!ENTITY fieldMapImport.size "width: 48em; height: 34em;">
+<!ENTITY fieldMapImport.recordNumber "Dane importowanego rekordu numer:">
+<!ENTITY fieldMapImport.next.label "Następny">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "Poprzedni">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "Użyj przycisku Przenieś w górę oraz Przenieś w dół, aby pola po lewej stronie były zgodne z danymi po prawej stronie. Odznacz elementy, których nie chcesz importować.">
+<!ENTITY fieldMapImport.up.label "Przesuń w górę">
+<!ENTITY fieldMapImport.up.accesskey "g">
+<!ENTITY fieldMapImport.down.label "Przesuń w dół">
+<!ENTITY fieldMapImport.down.accesskey "d">
+<!ENTITY fieldMapImport.fieldListTitle "Pole książki adresowej">
+<!ENTITY fieldMapImport.dataTitle "Importowane dane rekordu">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Pierwszy rekord zawiera nazwy pól">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "r">

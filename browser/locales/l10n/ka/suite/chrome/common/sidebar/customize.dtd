@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "&sidebarName; - მორგება">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "&sidebarName; - ჩანართები:">
+<!ENTITY sidebar.customize.current.accesskey    "ა">
+
+<!ENTITY sidebar.customize.title                "გვერდითი ზოლის მორგება">
+<!ENTITY sidebar.customize.current2.label       "ჩანართები გვერდით ზოლზე:">
+<!ENTITY sidebar.customize.current2.accesskey   "გ">
+<!ENTITY sidebar.customize.customize.label      "ჩანართების მორგება…">
+<!ENTITY sidebar.customize.customize.accesskey  "ბ">
+<!ENTITY sidebar.customize.remove.label         "ამოშლა">
+<!ENTITY sidebar.customize.remove.accesskey     "მ">
+<!ENTITY sidebar.customize.additional.label     "არსებული ჩანართები:">
+<!ENTITY sidebar.customize.additional.accesskey "ე">
+<!ENTITY sidebar.customize.add.label            "დამატება">
+<!ENTITY sidebar.customize.add.accesskey        "დ">
+<!ENTITY sidebar.customize.preview.label        "შეთვალიერება…">
+<!ENTITY sidebar.customize.preview.accesskey    "შ">
+<!ENTITY sidebar.customize.up.label             "აწევა">
+<!ENTITY sidebar.customize.up.accesskey         "წ">
+<!ENTITY sidebar.customize.down.label           "ჩამოწევა">
+<!ENTITY sidebar.customize.down.accesskey       "ო">
+<!ENTITY sidebar.more.label                     "სხვა ჩანართების პოვნა…">
+<!ENTITY sidebar.more.accesskey                 "F">

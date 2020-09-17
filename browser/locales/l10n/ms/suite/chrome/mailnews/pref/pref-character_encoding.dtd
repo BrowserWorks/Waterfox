@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Pengekodan Teks">
+<!ENTITY messageDisplay.caption          "Paparan Mesej">
+<!ENTITY viewFallbackCharset2.label      "Pengekodan Teks Unduran:">
+<!ENTITY viewFallbackCharset2.accesskey  "U">
+<!ENTITY viewFallbackCharset.desc        "(Digunakan untuk kandungan legasi yang gagal mengisytiharkan pengekodan.)">
+
+<!ENTITY composingMessages.caption       "Mengarang Mesej">
+<!ENTITY useMIME.label                   "Untuk mesej yang mengandungi aksara 8-bit, gunakan pengekodan MIME 'petikan boleh-dicetak'. Biarkan sahaja kotak semakan tanpa tanda.">
+<!ENTITY useMIME.accesskey               "U">
+<!ENTITY sendDefaultCharset2.label       "Pengekodan Teks Piawai:">
+<!ENTITY sendDefaultCharset2.accesskey   "T">
+<!ENTITY replyInDefaultCharset3.label    "Jika boleh, gunakan pengekodan teks piawai apabila membalas. (Apabila kotak semakan dibiarkan tanpa tanda, hanya mesej baru akan menggunakan tetapan piawai ini.)">
+<!ENTITY replyInDefaultCharset3.accesskey "J">

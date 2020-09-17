@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Konta Firefox">
+<!ENTITY aboutAccounts.connected.description "Sće zwjazany jako">
+<!ENTITY aboutAccounts.syncPreferences.label "Podótkńće so, zo byšće synchronizowanske nastajenja přepruwował">
+
+<!ENTITY aboutAccounts.noConnection.title "Žadyn internetny zwisk">
+<!ENTITY aboutAccounts.retry.label "Hišće raz spytać">
+
+<!ENTITY aboutAccounts.restrictedError.title "Wobmjezowany">
+<!ENTITY aboutAccounts.restrictedError.description "Njemóžeće konta Firefox z tutoho profila rjadować.">

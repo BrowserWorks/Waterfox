@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Imiḍanen Firefox">
+<!ENTITY aboutAccounts.connected.description "Teqqneḍ s yisem">
+<!ENTITY aboutAccounts.syncPreferences.label "Ssit dagi akken ad tesneqdeḍ iɣewwaṛen n Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "Ulac tuqqna Internet">
+<!ENTITY aboutAccounts.retry.label "Ɛreḍ tikelt-nniḍen.">
+
+<!ENTITY aboutAccounts.restrictedError.title "Yettwaqeyyed">
+<!ENTITY aboutAccounts.restrictedError.description "Ur tezmireḍ ara ad tesferkeḍ imiḍanen Firefox seg umaɣnu-agi.">

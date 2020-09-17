@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kontakto">
+<!ENTITY Contact.accesskey               "K">
+<!ENTITY Name.box                        "Nomo">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Persona nomo:">
+<!ENTITY NameField1.accesskey           "r">
+<!ENTITY NameField2.label               "Familia nomo:">
+<!ENTITY NameField2.accesskey           "a">
+<!ENTITY PhoneticField1.label           "Elparolo:">
+<!ENTITY PhoneticField2.label           "Elparolo:">
+<!ENTITY DisplayName.label              "Vidigi kiel:">
+<!ENTITY DisplayName.accesskey          "V">
+<!ENTITY preferDisplayName.label        "Uzi nomon de kontakto el la adresaro anstataŭ nomon el mesaĝa kapo">
+<!ENTITY preferDisplayName.accesskey    "a">
+<!ENTITY NickName.label                 "Kaŝnomo:">
+<!ENTITY NickName.accesskey             "n">
+
+<!ENTITY PrimaryEmail.label             "Retpoŝta adreso:">
+<!ENTITY PrimaryEmail.accesskey         "R">
+<!ENTITY SecondEmail.label              "Plia retpoŝta adreso:">
+<!ENTITY SecondEmail.accesskey          "i">
+<!ENTITY PreferMailFormat.label         "Preferas ricevi mesaĝojn kiel:">
+<!ENTITY PreferMailFormat.accesskey     "e">
+<!ENTITY PlainText.label                "platteksto">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "nedifinita">
+<!ENTITY chatName.label                 "Tujmesaĝila nomo:">
+
+<!ENTITY WorkPhone.label                "Laborejo:">
+<!ENTITY WorkPhone.accesskey            "b">
+<!ENTITY HomePhone.label                "Hejmo:">
+<!ENTITY HomePhone.accesskey            "H">
+<!ENTITY FaxNumber.label                "Telekopiilo:">
+<!ENTITY FaxNumber.accesskey            "e">
+<!ENTITY PagerNumber.label              "Televokilo:">
+<!ENTITY PagerNumber.accesskey          "v">
+<!ENTITY CellularNumber.label           "Poŝtelefono:">
+<!ENTITY CellularNumber.accesskey       "t">
+
+<!ENTITY Home.tab                       "Privata">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Adreso:">
+<!ENTITY HomeAddress.accesskey          "d">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Urbo:">
+<!ENTITY HomeCity.accesskey             "U">
+<!ENTITY HomeState.label                "Provinco:">
+<!ENTITY HomeState.accesskey            "r">
+<!ENTITY HomeZipCode.label              "Poŝtkodo:">
+<!ENTITY HomeZipCode.accesskey          "o">
+<!ENTITY HomeCountry.label              "Lando:">
+<!ENTITY HomeCountry.accesskey          "n">
+<!ENTITY HomeWebPage.label              "Retpaĝo:">
+<!ENTITY HomeWebPage.accesskey          "e">
+<!ENTITY Birthday.label                 "Naskiĝtago:">
+<!ENTITY Birthday.accesskey             "N">
+<!ENTITY Month.placeholder              "monato">
+<!ENTITY Day.placeholder                "tago">
+<!ENTITY Year.placeholder               "jaro">
+<!ENTITY Age.label                      "Aĝo:">
+<!ENTITY Age.placeholder                "aĝo">
+
+<!ENTITY Work.tab                       "Laborejo">
+<!ENTITY Work.accesskey                 "L">
+<!ENTITY JobTitle.label                 "Posteno:">
+<!ENTITY JobTitle.accesskey             "o">
+<!ENTITY Department.label               "Sekcio:">
+<!ENTITY Department.accesskey           "S">
+<!ENTITY Company.label                  "Firmao/organizaĵo:">
+<!ENTITY Company.accesskey              "g">
+<!ENTITY WorkAddress.label              "Adreso:">
+<!ENTITY WorkAddress.accesskey          "d">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Urbo:">
+<!ENTITY WorkCity.accesskey             "U">
+<!ENTITY WorkState.label                "Provinco:">
+<!ENTITY WorkState.accesskey            "r">
+<!ENTITY WorkZipCode.label              "Poŝtkodo:">
+<!ENTITY WorkZipCode.accesskey          "o">
+<!ENTITY WorkCountry.label              "Lando:">
+<!ENTITY WorkCountry.accesskey          "n">
+<!ENTITY WorkWebPage.label              "Retpaĝo:">
+<!ENTITY WorkWebPage.accesskey          "e">
+
+<!ENTITY Other.tab                      "Aliaj">
+<!ENTITY Other.accesskey                "A">
+<!ENTITY Custom1.label                  "Informo 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Informo 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Informo 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Informo 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Notoj:">
+<!ENTITY Notes.accesskey                "N">
+
+<!ENTITY Chat.tab                       "Tujmesaĝiloj">
+<!ENTITY Chat.accesskey                 "T">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "I">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "M">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "C">
+<!ENTITY XMPP.label                     "XMPP (Jabber):">
+<!ENTITY XMPP.accesskey                 "X">
+<!ENTITY IRC.label                      "IRC:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Foto">
+<!ENTITY Photo.accesskey                "F">
+<!ENTITY GenericPhoto.label             "Implicita foto">
+<!ENTITY GenericPhoto.accesskey         "I">
+<!ENTITY DefaultPhoto.label             "Implicita">
+<!ENTITY PhotoFile.label                "Loka dosiero">
+<!ENTITY PhotoFile.accesskey            "d">
+<!ENTITY BrowsePhoto.label              "Esplori">
+<!ENTITY BrowsePhoto.accesskey          "E">
+<!ENTITY PhotoURL.label                 "Enreta">
+<!ENTITY PhotoURL.accesskey             "r">
+<!ENTITY PhotoURL.placeholder           "Algluu aŭ entajpu retadreson de foto">
+<!ENTITY UpdatePhoto.label              "Ĝisdatigi">
+<!ENTITY UpdatePhoto.accesskey          "s">
+<!ENTITY PhotoDropTarget.label          "Trenu ĉi tien novan foton">

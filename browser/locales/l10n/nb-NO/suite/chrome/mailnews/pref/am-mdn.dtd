@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Returkvitteringer">
+<!ENTITY useGlobalPrefs.label         "Bruk globale kvitteringsinnstillinger for denne kontoen">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY globalReceipts.label         "Globale innstillinger …">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "Innstillinger for kvitteringer for denne kontoen">
+<!ENTITY useCustomPrefs.accesskey     "I">
+<!ENTITY requestReceipt.label         "Alltid be om kvittering">
+<!ENTITY requestReceipt.accesskey     "b">
+<!ENTITY receiptArrive.label          "Når en kvittering ankommer:">
+<!ENTITY leaveIt.label                "La den være i Innboksen">
+<!ENTITY leaveIt.accesskey            "L">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Flytt til «Sendt»-mappen">
+<!ENTITY moveToSent.accesskey         "F">
+<!ENTITY requestMDN.label             "Når jeg mottar en forespørsel for returkvittering:">
+<!ENTITY returnSome.label             "Tillat for noen meldinger">
+<!ENTITY returnSome.accesskey         "T">
+<!ENTITY never.label                  "Aldri send">
+<!ENTITY never.accesskey              "A">
+<!ENTITY notInToCc.label              "Dersom jeg ikke er i Til eller Kopi-feltet:">
+<!ENTITY notInToCc.accesskey          "k">
+<!ENTITY outsideDomain.label          "Dersom avsenderen er utenfor mitt domene:">
+<!ENTITY outsideDomain.accesskey      "D">
+<!ENTITY otherCases.label             "I alle andre tilfeller:">
+<!ENTITY otherCases.accesskey         "I">
+<!ENTITY askMe.label                  "Spør meg">
+<!ENTITY alwaysSend.label             "Alltid send">
+<!ENTITY neverSend.label              "Aldri send">

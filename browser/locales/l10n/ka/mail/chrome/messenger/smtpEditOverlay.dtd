@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "პარამეტრები">
+<!ENTITY security.caption "უსაფრთხოება და აუთენტიფიკაცია">
+<!ENTITY serverName.label "სერვერის სახელი:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "აღწერილობა:">
+<!ENTITY serverDescription.accesskey "D">
+<!ENTITY serverPort.label "პორტი:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "სახელი:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "კავშირის უსაფრთხოება:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "არა">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, თუ მისაწვდომია">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP სერვერი">
+<!ENTITY serverPortDefault.label "ნაგულისხმები:">
+<!ENTITY authMethod.label "აუთენტიფიკაციის მეთოდი:">
+<!ENTITY authMethod.accesskey "i">

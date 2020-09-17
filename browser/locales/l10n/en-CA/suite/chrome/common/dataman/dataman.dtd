@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Data Manager">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "All data types">
+<!ENTITY select.cookies.label "Cookies only">
+<!ENTITY select.permissions.label "Permissions only">
+<!ENTITY select.preferences.label "Preferences only">
+<!ENTITY select.passwords.label "Passwords only">
+<!ENTITY select.storage.label "Storage only">
+
+<!ENTITY domain.search.placeholder "Search Domains">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Domain">
+
+<!ENTITY domain.ctx.forgetdomain.label "Forget About This Domain">
+<!ENTITY domain.ctx.forgetdomain.accesskey "F">
+<!ENTITY domain.ctx.forgetglobal.label "Forget Global Data">
+<!ENTITY domain.ctx.forgetglobal.accesskey "F">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Cookies">
+<!ENTITY tab.permissions.label "Permissions">
+<!ENTITY tab.preferences.label "Preferences">
+<!ENTITY tab.passwords.label "Passwords">
+<!ENTITY tab.storage.label "Storage">
+<!ENTITY tab.formdata.label "Form Data">
+<!ENTITY tab.forget.label "Forget">
+
+<!-- cookies -->
+<!ENTITY cookies.description "This domain has stored the following cookies on your computer:">
+
+<!ENTITY cookies.tree.host.label "Web Site">
+<!ENTITY cookies.tree.name.label "Cookie Name">
+<!ENTITY cookies.tree.expires.label "Expires">
+
+<!ENTITY cookies.infobox.label "Information about the selected Cookie">
+
+<!ENTITY cookies.info.name.label "Name:">
+<!ENTITY cookies.info.value.label "Content:">
+<!ENTITY cookies.info.host.label "Host:">
+<!ENTITY cookies.info.domain.label "Domain:">
+<!ENTITY cookies.info.path.label "Path:">
+<!ENTITY cookies.info.sendtype.label "Send For:">
+<!ENTITY cookies.info.expires.label "Expires:">
+
+<!ENTITY cookies.ctx.remove.label "Remove">
+<!ENTITY cookies.ctx.remove.accesskey "R">
+<!ENTITY cookies.ctx.selectAll.label "Select All">
+<!ENTITY cookies.ctx.selectAll.accesskey "A">
+
+<!ENTITY cookies.button.remove.label "Remove">
+<!ENTITY cookies.button.remove.accesskey "R">
+
+<!ENTITY cookies.blockOnRemove.label "When removing, block the listed web sites from setting future cookies">
+<!ENTITY cookies.blockOnRemove.accesskey "W">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "Use Default">
+<!ENTITY perm.AskAlways "Always ask">
+<!ENTITY perm.NeverSave "Never save">
+<!ENTITY perm.Allow "Allow">
+<!ENTITY perm.AllowSameDomain "Allow for Same Domain">
+<!ENTITY perm.AllowSession "Allow for Session">
+<!ENTITY perm.Block "Block">
+
+<!ENTITY perm.host.placeholder "Enter a host name">
+<!ENTITY perm.button.add.label "Add">
+<!ENTITY perm.button.add.accesskey "A">
+
+<!-- preferences -->
+<!ENTITY prefs.description "Content preferences are a way for &brandShortName; to save its settings, like zoom levels, specifically for a web site.">
+
+<!ENTITY prefs.tree.host.label "Web Site">
+<!ENTITY prefs.tree.name.label "Preference Name">
+<!ENTITY prefs.tree.value.label "Value">
+
+<!ENTITY prefs.ctx.remove.label "Remove">
+<!ENTITY prefs.ctx.remove.accesskey "R">
+<!ENTITY prefs.ctx.selectAll.label "Select All">
+<!ENTITY prefs.ctx.selectAll.accesskey "A">
+
+<!ENTITY prefs.button.remove.label "Remove">
+<!ENTITY prefs.button.remove.accesskey "R">
+
+<!-- passwords -->
+<!ENTITY pwd.description "You have the following passwords stored for this domain:">
+
+<!ENTITY pwd.tree.host.label "Web Site">
+<!ENTITY pwd.tree.username.label "Username">
+<!ENTITY pwd.tree.password.label "Password">
+
+<!ENTITY pwd.ctx.remove.label "Remove">
+<!ENTITY pwd.ctx.remove.accesskey "R">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Copy Password">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "C">
+<!ENTITY pwd.ctx.selectAll.label "Select All">
+<!ENTITY pwd.ctx.selectAll.accesskey "A">
+
+<!ENTITY pwd.button.remove.label "Remove">
+<!ENTITY pwd.button.remove.accesskey "R">
+
+<!-- storage -->
+<!ENTITY storage.description "This domain uses the following web storages on your computer:">
+
+<!ENTITY storage.tree.host.label "Web site">
+<!ENTITY storage.tree.type.label "Type">
+<!ENTITY storage.tree.size.label "Size">
+
+<!ENTITY storage.ctx.remove.label "Remove">
+<!ENTITY storage.ctx.remove.accesskey "R">
+<!ENTITY storage.ctx.selectAll.label "Select All">
+<!ENTITY storage.ctx.selectAll.accesskey "A">
+
+<!ENTITY storage.button.remove.label "Remove">
+<!ENTITY storage.button.remove.accesskey "R">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "Search Field Data">
+
+<!ENTITY fdata.tree.fieldname.label "Field Name">
+<!ENTITY fdata.tree.value.label "Entered Value">
+<!ENTITY fdata.tree.usecount.label "Use Count">
+<!ENTITY fdata.tree.firstused.label "First Used">
+<!ENTITY fdata.tree.lastused.label "Last Used">
+
+<!ENTITY fdata.ctx.remove.label "Remove">
+<!ENTITY fdata.ctx.remove.accesskey "R">
+<!ENTITY fdata.ctx.selectAll.label "Select All">
+<!ENTITY fdata.ctx.selectAll.accesskey "A">
+
+<!ENTITY fdata.button.remove.label "Remove">
+<!ENTITY fdata.button.remove.accesskey "R">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Cookies">
+<!ENTITY forget.cookies.accesskey "C">
+<!ENTITY forget.permissions.label "Permissions">
+<!ENTITY forget.permissions.accesskey "P">
+<!ENTITY forget.preferences.label "Content Preferences">
+<!ENTITY forget.preferences.accesskey "o">
+<!ENTITY forget.passwords.label "Passwords">
+<!ENTITY forget.passwords.accesskey "a">
+<!ENTITY forget.storage.label "Storage">
+<!ENTITY forget.storage.accesskey "S">
+<!ENTITY forget.formdata.label "Form Data">
+<!ENTITY forget.formdata.accesskey "D">
+
+<!ENTITY forget.button.label "Forget This Data">
+<!ENTITY forget.button.accesskey "F">

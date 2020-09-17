@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Eigenschaften">
+<!ENTITY propertiesMenu.accesskey           "E">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Adressbucheigenschaften">
+<!ENTITY abPropertiesMenu.accesskey         "A">
+<!ENTITY contactPropertiesMenu.label        "Kontakteigenschaften">
+<!ENTITY contactPropertiesMenu.accesskey    "K">
+<!ENTITY mailingListPropertiesMenu.label    "Verteilerlisteeigenschaften">
+<!ENTITY mailingListPropertiesMenu.accesskey "V">
+
+<!ENTITY abContextMenuButton.tooltip        "Kontextmenü für Adressbuch öffnen">
+<!ENTITY addressbookPicker.label            "Adressbuch:">
+<!ENTITY addressbookPicker.accesskey        "u">
+<!ENTITY searchContacts.label               "Kontakte suchen:">
+<!ENTITY searchContacts.accesskey           "S">
+<!ENTITY SearchNameOrEmail.label            "Name oder E-Mail-Adresse">
+
+<!ENTITY addtoToFieldMenu.label             "Zu &quot;An&quot; hinzufügen">
+<!ENTITY addtoToFieldMenu.accesskey         "A">
+<!ENTITY addtoCcFieldMenu.label             "Zu &quot;Kopie (CC)&quot; hinzufügen">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Zu &quot;Blindkopie (BCC)&quot; hinzufügen">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Löschen">
+<!ENTITY deleteAddrBookCard.accesskey       "L">
+<!ENTITY propertiesContext.label            "Eigenschaften">
+<!ENTITY propertiesContext.accesskey        "E">
+<!ENTITY abPropertiesContext.label          "Eigenschaften">
+<!ENTITY abPropertiesContext.accesskey      "E">
+<!ENTITY editContactContext.label           "Kontakt bearbeiten">
+<!ENTITY editContactContext.accesskey       "K">
+<!ENTITY editMailingListContext.label       "Liste bearbeiten">
+<!ENTITY editMailingListContext.accesskey   "s">
+
+<!ENTITY newContactAbContext.label          "Neuer Kontakt">
+<!ENTITY newContactAbContext.accesskey      "K">
+<!ENTITY newListAbContext.label             "Neue Liste">
+<!ENTITY newListAbContext.accesskey         "L">
+
+<!ENTITY toButton.label                     ">> &quot;An:&quot;">
+<!ENTITY toButton.accesskey                 "n">
+<!ENTITY ccButton.label                     ">> &quot;Kopie (CC):&quot;">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    ">> &quot;Blindkopie (BCC):&quot;">
+<!ENTITY bccButton.accesskey                "p">

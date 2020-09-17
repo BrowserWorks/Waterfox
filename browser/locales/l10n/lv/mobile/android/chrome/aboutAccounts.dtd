@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox konti">
+<!ENTITY aboutAccounts.connected.description "Jūs esat pieslēdzies kā">
+<!ENTITY aboutAccounts.syncPreferences.label "Pieskarieties te, lai pārbaudītu Sync iestatījumus">
+
+<!ENTITY aboutAccounts.noConnection.title "Nav savienojuma ar internetu">
+<!ENTITY aboutAccounts.retry.label "Mēģināt vēlreiz">
+
+<!ENTITY aboutAccounts.restrictedError.title "Aizsargāts">
+<!ENTITY aboutAccounts.restrictedError.description "Jūs nevarat pārvaldīt Firefox kontus no šī profila.">

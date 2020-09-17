@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Issalen s wazal">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Akken ad temtawi telɣut i teslekseḍ deg Firefox s usbeddi-a n &brandShortName;, qqen s &syncBrand.fxAccount.label;-inek.">
+<!ENTITY continue-button "Kemmel">
+
+<!ENTITY mainText "Asbeddi-a n &brandShortName; ɣur-s amaɣnu amaynut. Ur ibeṭṭu ara ticraḍ n iyisebtar, awalen uffiren neɣ ismenyifen n useqdac akked isbeddiyen-nniden n Firefox (ama d Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition, neq Firefox Nightly) ɣef uselkim-a.">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Gnàthaich na bannan-cinn">
+<!ENTITY addButton.label "Cuir ris">
+<!ENTITY addButton.accesskey "C">
+<!ENTITY removeButton.label "Thoir air falbh">
+<!ENTITY removeButton.accesskey "r">
+<!ENTITY newMsgHeader.label "Bann-cinn teachdaireachd ùr:">
+<!ENTITY newMsgHeader.accesskey "n">

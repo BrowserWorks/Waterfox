@@ -1,0 +1,203 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Fel vid sidhämtning">
+<!ENTITY retry.label "Försök igen">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Anslutningen misslyckades">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Adressen har säkerhetsrestriktioner">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Servern hittades inte">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Kontrollera om det finns något skrivfel i adressen, som
+    <strong>ww</strong>.example.com i stället för
+    <strong>www</strong>.example.com</li>
+  <li>Om du inte kan hämta någon sida alls, kontrollera datorns
+    nätverksanslutning.</li>
+  <li>Om datorn eller nätverket skyddas av en brandvägg eller proxy, kontrollera
+    att &brandShortName; har tillstånd att ansluta till webben.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Filen kan inte hittas">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Kontrollera om det finns stavfel eller andra typografiska fel i
+    filnamnet.</li>
+  <li>Kontrollera om den flyttats, fått ett annat namn eller tagits bort.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Åtkomst till filen nekades">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Den kan ha tagits bort, flyttats eller filrättigheter kan förhindra tillgång.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Hoppsan!">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; kan av någon anledning inte visa sidan.</p>
+">
+
+<!ENTITY malformedURI.title "Adressen är inte giltig">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Webbadresser skrivs vanligen som
+    <strong>http://www.example.com/</strong></li>
+  <li>Kontrollera att du använder framåtlutande snedstreck (dvs
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Anslutningen avbröts">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Utgånget dokument">
+<!ENTITY notCached.longDesc "<p>Det efterfrågade dokumentet finns inte längre i cachen.</p><ul><li>Av säkerhetsskäl försöker inte &brandShortName; automatiskt att hämta om känsliga dokument.</li><li>Klicka på Försök igen för att åter hämta dokumentet från webbplatsen.</li></ul>">
+
+<!ENTITY netOffline.title "Nedkopplat läge">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Klicka på &#8221;Försök igen&#8221; för att koppla upp och hämta om sidan.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Kodningsfel av innehållet">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Kontakta webbplatsens ägare och informera dem om detta problem.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Osäker filtyp">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Kontakta webbplatsens ägare för att informera dem om detta problem.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Anslutningen avbröts">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Anslutningen avbröts">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Adressen kan inte tolkas">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Du kan behöva installera andra program för att öppna den här adressen.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Proxyservern avvisar anslutningen">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Kontrollera att proxyinställningarna är riktiga.</li>
+  <li>Kontakta nätverksadministratören för att säkerställa att proxyservern
+    fungerar.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Kan inte hitta proxyservern">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Kontrollera att proxyinställningarna är riktiga.</li>
+  <li>Kontrollera att datorn har en fungerande nätverksanslutning.</li>
+  <li>Om datorn eller nätverket skyddas av en brandvägg eller proxy, kontrollera
+    att &brandShortName; har tillstånd att ansluta till webben.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Sidan dirigeras om felaktigt">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Det här problemet kan ibland uppstå om du inaktiverat eller nekat att ta
+    emot kakor.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Oväntat svar från servern">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Kontrollera om Personal Security Manager finns installerat på datorn.</li>
+  <li>Det här kan ibland bero på en ovanlig konfiguration på servern.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Säker anslutning misslyckades">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Sidan du försöker se kan inte visas eftersom äktheten inte kunde verifieras på den mottagna datan.</li>
+  <li>Kontakta webbplatsens ägare för att informera dem om detta problem.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Säker anslutning misslyckades">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Detta kan bero på ett problem med serverns konfiguration, eller så kanske
+    någon annan felaktigt utger sig för att vara servern.</li>
+  <li>Om du tidigare utan problem har anslutit till den här servern kanske felet
+    är tillfälligt och du kan försöka igen senare.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Platsen kan tillfälligt vara nere eller upptagen. Försök igen om en
+    stund.</li>
+  <li>Om du inte kan öppna någon sida alls, kontrollera datorns
+    nätverksanslutning.</li>
+  <li>Om datorn eller nätverket skyddas av en brandvägg eller proxy, kontrollera
+    att &brandShortName; har tillstånd att ansluta till webben.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Blockerad av säkerhetspolicyn för innehåll">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; förhindrade den här sidan från att laddas på detta sätt eftersom sidan har en säkerhetspolicy för innehåll som inte tillåter detta.</p>">
+
+<!ENTITY xfoBlocked.title "Blockerad av X-Frame-Options policy">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; förhindrade att denna sida laddas i detta sammanhang eftersom sidan har en X-Frame-Options policy som inte tillåter det.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Skadat innehållsfel">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Sidan du försöker visa kan inte visas eftersom ett fel i dataöverföringen upptäcktes.</p><ul><li>Kontakta webbplatsens ägare för att informera dem om detta problem.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Eller så kan du lägga till ett undantag…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Ta mig härifrån!">
+<!ENTITY securityOverride.exceptionButtonLabel "Lägg till undantag…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Du bör endast lägga till ett undantag om du använder en internetanslutning som du har ett fullständigt förtroende för, eller om du är van vid att se en varning för den här servern.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Extern XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontakta ägaren av webbplatsen för att informera dem om detta problem.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Din anslutning är inte säker">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> använder en säkerhetsteknologi som är föråldrad och sårbar för angrepp. En angripare kan lätt avslöja information som du tänkt ska vara säker. Webbplatsens administratör måste rätta till servern innan du kan besöka webbplatsen.</p><p>Felkod: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blockerad sida">
+
+<!ENTITY networkProtocolError.title "Nätverksprotokollfel">
+<!ENTITY networkProtocolError.longDesc "<p>Sidan du försöker visa kan inte visas eftersom ett fel i nätverksprotokollet upptäcktes.</p><ul><li>Vänligen kontakta webbplatsens ägare för att informera dem om detta problem.</li></ul>">

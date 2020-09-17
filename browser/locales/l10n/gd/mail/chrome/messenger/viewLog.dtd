@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "An loga criathraidh">
+<!ENTITY viewLogInfo.text "Tha an loga criathraidh a' clàrachadh nan criathran a chaidh a chleachdadh sa chunntas seo. Cuir cromag sa bhogsa gu h-ìosal gus logadh a chur an comas.">
+<!ENTITY clearLog.label "Falamhaich an loga">
+<!ENTITY clearLog.accesskey "c">
+<!ENTITY enableLog.label "Cuir an loga criathraidh an comas">
+<!ENTITY enableLog.accesskey "C">
+<!ENTITY closeLog.label "Dùin">
+<!ENTITY closeLog.accesskey "D">

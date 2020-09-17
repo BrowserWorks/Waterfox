@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Zabor-postari buruz">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName;(e)k automatikoki atzematen ditu zaborra izateko itxura duten mezuak (zabor-posta deitu ohi direnak). &brandShortName;(e)k zabortzat dituen mezuek zabor-posta ikonotxo bat izango dute ondoan">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Hasieran, &brandShortName;(r)i irakatsi behar diozu zabor-posta zer den zure tresna-barrako zabor-posta botoia erabiliz mezuak zabor gisa markatuz edo desmarkatuz.">
+<!ENTITY info3.label   "Behin &brandShortName;(e)k zabor-posta ondo identifikatzen duela, zabor-postaren kontrolak erabil ditzakezu jasotako zaborra Zaborra karpetara bidaltzeko automatikoki.">
+<!ENTITY info4.label   "Argibide gehiagorako, egin klik laguntzan.">

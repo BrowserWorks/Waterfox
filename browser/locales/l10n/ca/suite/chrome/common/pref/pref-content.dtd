@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+
+<!ENTITY pref.content.title                     "Contingut">
+<!ENTITY pref.content.description               "Aquests paràmetres influencien com els llocs web i els missatges de correu apareixen en el &brandShortName;.">
+<!ENTITY siteIcons.label                        "Icones dels llocs web">
+<!ENTITY useSiteIcons.label                     "Mostra les icones dels llocs web">
+<!ENTITY useSiteIcons.accesskey                 "s">
+<!ENTITY useFavIcons.label                      "Cerca de forma agressiva si hi ha icones del lloc web si la pàgina no en defineix cap">
+<!ENTITY useFavIcons.accesskey                  "a">
+<!ENTITY enableAutomaticImageResizing.label     "Redimensiona les imatges grans per tal que s'encabeixin a la finestra del navegador">
+<!ENTITY enableAutomaticImageResizing.accesskey "R">
+<!ENTITY useSmoothScroll.label                  "Utilitza el desplaçament suau">
+<!ENTITY useSmoothScroll.accesskey              "U">
+<!ENTITY allowHWAccel.label                     "Utilitza l'acceleració de maquinari quan sigui disponible">
+<!ENTITY allowHWAccel.accesskey                 "e">
+<!ENTITY textZoomOnly.label                     "Augmenta o redueix només el text en comptes de tota la pàgina">
+<!ENTITY textZoomOnly.accesskey                 "x">
+<!ENTITY blockAutoRefresh.label                 "Avisa'm quan els llocs web provin de redirigir o actualitzar la pàgina">
+<!ENTITY blockAutoRefresh.accesskey             "v">
+<!ENTITY siteSpecific.label                     "Recorda els nivells de zoom de cada lloc web">
+<!ENTITY siteSpecific.accesskey                 "m">

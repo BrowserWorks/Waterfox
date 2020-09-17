@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Именик">
+<!ENTITY Addrbook.accesskey                    "м">
+<!ENTITY GeneratedName.label                   "Име">
+<!ENTITY GeneratedName.accesskey               "е">
+<!ENTITY PrimaryEmail.label                    "Мејл">
+<!ENTITY PrimaryEmail.accesskey                "М">
+<!ENTITY Company.label                         "Организација">
+<!ENTITY Company.accesskey                     "з">
+<!ENTITY _PhoneticName.label                   "Фонетско име">
+<!ENTITY _PhoneticName.accesskey               "о">
+<!ENTITY NickName.label                        "Надимак">
+<!ENTITY NickName.accesskey                    "и">
+<!ENTITY SecondEmail.label                     "Додатни мејл">
+<!ENTITY SecondEmail.accesskey                 "л">
+<!ENTITY Department.label                      "Одељење">
+<!ENTITY Department.accesskey                  "д">
+<!ENTITY JobTitle.label                        "Титула">
+<!ENTITY JobTitle.accesskey                    "Т">
+<!ENTITY CellularNumber.label                  "Мобилни">
+<!ENTITY CellularNumber.accesskey              "М">
+<!ENTITY PagerNumber.label                     "Пејџер">
+<!ENTITY PagerNumber.accesskey                 "П">
+<!ENTITY FaxNumber.label                       "Факс">
+<!ENTITY FaxNumber.accesskey                   "Ф">
+<!ENTITY HomePhone.label                       "Кућни телефон">
+<!ENTITY HomePhone.accesskey                   "К">
+<!ENTITY WorkPhone.label                       "Пословни телефон">
+<!ENTITY WorkPhone.accesskey                   "в">
+<!ENTITY ChatName.label                        "Име за ћаскање">
+<!ENTITY ChatName.accesskey                    "з">
+<!ENTITY sortAscending.label                   "Узлазно">
+<!ENTITY sortAscending.accesskey               "У">
+<!ENTITY sortDescending.label                  "Силазно">
+<!ENTITY sortDescending.accesskey              "С">

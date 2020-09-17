@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Seçim Listesi Özellikleri">
+
+<!ENTITY Select.label "Seçim Listesi">
+<!ENTITY SelectName.label "Liste adı:">
+<!ENTITY SelectName.accesskey "L">
+<!ENTITY SelectSize.label "Yükseklik:">
+<!ENTITY SelectSize.accesskey "Y">
+<!ENTITY SelectMultiple.label "Çoklu seçim">
+<!ENTITY SelectMultiple.accesskey "e">
+<!ENTITY SelectDisabled.label "Kullanılamaz">
+<!ENTITY SelectDisabled.accesskey "K">
+<!ENTITY SelectTabIndex.label "Sekme Endeksi:">
+<!ENTITY SelectTabIndex.accesskey "e">
+
+<!ENTITY OptGroup.label "Seçenek Grubu">
+<!ENTITY OptGroupLabel.label "Etiket:">
+<!ENTITY OptGroupLabel.accesskey "E">
+<!ENTITY OptGroupDisabled.label "Kullanılamaz">
+<!ENTITY OptGroupDisabled.accesskey "K">
+
+<!ENTITY Option.label "Seçenek">
+<!ENTITY OptionText.label "Metin:">
+<!ENTITY OptionText.accesskey "t">
+<!ENTITY OptionValue.label "Değer:">
+<!ENTITY OptionValue.accesskey "D">
+<!ENTITY OptionSelected.label "Başlangıçta Seçili">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "Kullanılamaz">
+<!ENTITY OptionDisabled.accesskey "K">
+
+<!ENTITY TextHeader.label "Metin">
+<!ENTITY ValueHeader.label "Değer">
+<!ENTITY SelectedHeader.label "Seçilmiş">
+
+<!ENTITY AddOption.label "Seçenek ekle">
+<!ENTITY AddOption.accesskey "n">
+<!ENTITY AddOptGroup.label "Grup ekle">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "Kaldır">
+<!ENTITY RemoveElement.accesskey "r">
+<!ENTITY MoveElementUp.label "Yukarı Taşı">
+<!ENTITY MoveElementUp.accesskey "u">
+<!ENTITY MoveElementDown.label "Aşağı Taşı">
+<!ENTITY MoveElementDown.accesskey "A">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Tetapan Halaman Baru">
+
+<!ENTITY  authorName.label          "Pengarang:">
+<!ENTITY  authorName.accesskey      "r">
+<!ENTITY  pageColorHeader           "Penampilan Halaman Piawai">
+
+<!ENTITY defaultColors.label        "Warna piawai pembaca (Jangan tetapkan warna dalam halaman)">
+<!ENTITY defaultColors.accesskey    "p">
+<!ENTITY customColors.label         "Guna warna penyesuaian:">
+<!ENTITY customColors.accesskey     "p">
+
+<!ENTITY normalText.label           "Teks normal">
+<!ENTITY normalText.accesskey       "T">
+<!ENTITY linkText.label             "Teks pautan">
+<!ENTITY linkText.accesskey         "T">
+<!ENTITY activeLinkText.label       "Teks pautan aktif">
+<!ENTITY activeLinkText.accesskey   "T">
+<!ENTITY visitedLinkText.label      "Teks pautan dilayari">
+<!ENTITY visitedLinkText.accesskey  "T">
+<!ENTITY background.label           "Latar belakang:">
+<!ENTITY background.accesskey       "L">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Imej latar belakang:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "Pilih Fail…">
+<!ENTITY chooseFile.accesskey       "a">
+

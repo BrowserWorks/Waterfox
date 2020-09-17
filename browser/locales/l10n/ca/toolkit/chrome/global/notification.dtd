@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeNotification.tooltip "Tanca aquest missatge">
+
+<!ENTITY checkForUpdates "Cerca actualitzacions…">
+
+<!ENTITY learnMoreNoEllipsis "Més informació">
+
+<!ENTITY defaultButton.label "D'acord">
+<!ENTITY defaultButton.accesskey "D">
+
+<!ENTITY moreActionsButton.accessibleLabel "Més accions">

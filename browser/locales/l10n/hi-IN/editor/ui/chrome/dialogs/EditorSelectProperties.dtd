@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "चयन सूची गुण">
+
+<!ENTITY Select.label "चयन सूची">
+<!ENTITY SelectName.label "सूची नाम:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "ऊंचाई:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "बहुल चयन">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "निष्क्रिय किया">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "टैब सूची:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "विकल्प समूह">
+<!ENTITY OptGroupLabel.label "स्तर:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "निष्क्रिय किया">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "विकल्प">
+<!ENTITY OptionText.label "पाठ:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "मान:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "आरंभिक रूप से चयनित">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "निष्क्रिय किया">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "पाठ">
+<!ENTITY ValueHeader.label "मान">
+<!ENTITY SelectedHeader.label "चयनित">
+
+<!ENTITY AddOption.label "विकल्प जोड़ें">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "समूह जोड़ें">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "हटायें">
+<!ENTITY RemoveElement.accesskey "R">
+<!ENTITY MoveElementUp.label "ऊंपर जायें">
+<!ENTITY MoveElementUp.accesskey "U">
+<!ENTITY MoveElementDown.label "नीचे जायें">
+<!ENTITY MoveElementDown.accesskey "D">

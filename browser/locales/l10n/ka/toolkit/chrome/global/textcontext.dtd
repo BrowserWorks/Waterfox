@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "ლექსიკონში დამატება">
+<!ENTITY spellAddToDictionary.accesskey "ლ">
+<!ENTITY spellUndoAddToDictionary.label "ლექსიკონში დამატების გაუქმება">
+<!ENTITY spellUndoAddToDictionary.accesskey "გ">
+<!ENTITY spellCheckToggle.label "მართლწერის შემოწმება">
+<!ENTITY spellCheckToggle.accesskey "თ">
+<!ENTITY spellNoSuggestions.label "(მართლწერის შემოთავაზებები არაა)">
+<!ENTITY spellDictionaries.label "ენები">
+<!ENTITY spellDictionaries.accesskey "ე">
+
+<!ENTITY searchTextBox.clear.label "გასუფთავება">
+
+<!ENTITY fillLoginMenu.label          "შესვლის მონაცემების შევსება">
+<!ENTITY fillLoginMenu.accesskey      "მ">
+<!ENTITY fillPasswordMenu.label       "პაროლის შევსება">
+<!ENTITY fillPasswordMenu.accesskey   "პ">
+<!ENTITY fillUsernameMenu.label       "მომხმარებლის სახელის შევსება">
+<!ENTITY fillUsernameMenu.accesskey   "შ">
+<!ENTITY noLoginSuggestions.label     "(შესვლის შემოთავაზებები არაა)">
+<!ENTITY viewSavedLogins.label        "შენახული შესვლების ნახვა">

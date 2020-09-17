@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Karned chomlec'hioù">
+<!ENTITY Addrbook.accesskey                    "B">
+<!ENTITY GeneratedName.label                   "Anv">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "Postel">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Aozadur">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "Anv fonetek">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Lesanv">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "Postel Ouzhpenn">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "Departamant">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "Titl">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Hezougell">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Pajenner">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Pelleiler">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Pellgomz er gêr">
+<!ENTITY HomePhone.accesskey                   "H">
+<!ENTITY WorkPhone.label                       "Pellgomz Labour">
+<!ENTITY WorkPhone.accesskey                   "W">
+<!ENTITY ChatName.label                        "Anv ar flapva">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "War-gresk">
+<!ENTITY sortAscending.accesskey               "A">
+<!ENTITY sortDescending.label                  "War-zigresk">
+<!ENTITY sortDescending.accesskey              "D">

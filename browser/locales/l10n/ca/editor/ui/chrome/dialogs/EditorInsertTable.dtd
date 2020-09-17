@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Insereix una taula">
+
+<!ENTITY size.label "Mida">
+<!ENTITY numRowsEditField.label "Files:">
+<!ENTITY numRowsEditField.accessKey "F">
+<!ENTITY numColumnsEditField.label "Columnes:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "Amplada:">
+<!ENTITY widthEditField.accessKey "d">
+<!ENTITY borderEditField.label "Contorn:">
+<!ENTITY borderEditField.accessKey "o">
+<!ENTITY borderEditField.tooltip "Escriviu un número per al contorn de la taula, o zero (0) si no voleu contorn">
+<!ENTITY pixels.label "píxels">

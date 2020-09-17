@@ -1,0 +1,293 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+
+<!ENTITY msgComposeWindow.title "Scríobh: (gan ábhar)">
+<!-- File Menu -->
+
+<!ENTITY fileMenu.label "Comhad">
+<!ENTITY fileMenu.accesskey "C">
+<!ENTITY newMenu.label "Nua">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "Teachtaireacht">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "T">
+<!ENTITY newContact.label "Teagmháil Leabhair Seoltaí…">
+<!ENTITY newContact.accesskey "T">
+<!ENTITY attachMenu.label "Iatán">
+<!ENTITY attachMenu.accesskey "n">
+<!ENTITY attachFileCmd.label "Comha(i)d…">
+<!ENTITY attachFileCmd.accesskey "C">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Leathanach Gréasáin…">
+<!ENTITY attachPageCmd.accesskey "L">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Cárta Pearsanta (v-Chárta)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY remindLater.label "Meabhraigh Dom Níos Déanaí">
+<!ENTITY remindLater.accesskey "N">
+<!ENTITY closeCmd.label "Dún">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "D">
+<!ENTITY saveCmd.label "Sábháil">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Sábháil Mar">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsFileCmd.label "Comhad…">
+<!ENTITY saveAsFileCmd.accesskey "C">
+<!ENTITY saveAsDraftCmd.label "Dréacht">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "Teimpléad">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY sendNowCmd.label "Seol Anois">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "l">
+<!ENTITY sendLaterCmd.label "Seol Níos Déanaí">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "l">
+<!ENTITY printSetupCmd.label "Socrú Leathanaigh…">
+<!ENTITY printSetupCmd.accesskey "L">
+<!ENTITY printPreviewCmd.label "Réamhamharc Priontála">
+<!ENTITY printPreviewCmd.accesskey "R">
+<!ENTITY printCmd.label "Priontáil…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "P">
+<!-- Edit Menu -->
+
+<!ENTITY editMenu.label "Eagar">
+<!ENTITY editMenu.accesskey "E">
+<!ENTITY undoCmd.label "Cealaigh">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "e">
+<!ENTITY redoCmd.label "Athfheidhmigh">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "f">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "T">
+<!ENTITY deleteCmd.label "Scrios">
+<!ENTITY deleteCmd.accesskey "S">
+<!ENTITY editRewrapCmd.label "Timfhill Arís">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Athainmnigh an tIatán…">
+<!ENTITY renameAttachmentCmd.accesskey "t">
+<!ENTITY selectAllCmd.accesskey "U">
+<!ENTITY findBarCmd.label "Aimsigh…">
+<!ENTITY findBarCmd.accesskey "A">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Aimsigh agus Ionadaigh…">
+<!ENTITY findReplaceCmd.accesskey "I">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Aimsigh Arís">
+<!ENTITY findAgainCmd.accesskey "m">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Roimhe Seo">
+<!ENTITY findPrevCmd.accesskey "R">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!-- View Menu -->
+
+<!ENTITY viewMenu.label "Amharc">
+<!ENTITY viewMenu.accesskey "A">
+<!ENTITY viewToolbarsMenuNew.label "Barraí Uirlisí">
+<!ENTITY viewToolbarsMenuNew.accesskey "U">
+<!ENTITY menubarCmd.label "Barra Roghchláir">
+<!ENTITY menubarCmd.accesskey "B">
+<!ENTITY showCompositionToolbarCmd.label "Barra Cumadóireachta">
+<!ENTITY showCompositionToolbarCmd.accesskey "u">
+<!ENTITY showFormattingBarCmd.label "Barra Formáidithe">
+<!ENTITY showFormattingBarCmd.accesskey "F">
+<!ENTITY showTaskbarCmd.label "Barra Stádais">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "Saincheap…">
+<!ENTITY customizeToolbar.accesskey "c">
+
+<!ENTITY addressSidebar.label "Barra Teagmhálaithe">
+<!ENTITY addressSidebar.accesskey "T">
+<!-- Format Menu -->
+
+<!ENTITY formatMenu.label "Formáid">
+<!ENTITY formatMenu.accesskey "o">
+<!-- Options Menu -->
+
+<!ENTITY optionsMenu.label "Roghanna">
+<!ENTITY optionsMenu.accesskey "R">
+<!ENTITY checkSpellingCmd2.label "Seiceáil an Litriú…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "L">
+<!ENTITY enableInlineSpellChecker.label "Litriú Beo">
+<!ENTITY enableInlineSpellChecker.accesskey "L">
+<!ENTITY quoteCmd.label "Luaigh Teachtaireacht">
+<!ENTITY quoteCmd.accesskey "L">
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+
+<!ENTITY attachVCard.label "Ceangail Cárta Pearsanta (v-Chárta)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Admháil Léite">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Fógairt Stádais Sheachadta">
+<!ENTITY dsnMenu.accesskey "F">
+<!ENTITY deliveryFormatMenu.label "Formáid Seachadta">
+<!ENTITY deliveryFormatMenu.accesskey "F">
+<!ENTITY autoFormatCmd.label "Uath-Bhrathadóireacht">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "Gnáth-Théacs Amháin">
+<!ENTITY plainTextFormatCmd.accesskey "A">
+<!ENTITY htmlFormatCmd.label "Méith-théacs (HTML) Amháin">
+<!ENTITY htmlFormatCmd.accesskey "M">
+<!ENTITY bothFormatCmd.label "Gnáth-Théacs agus Méith-Théacs (HTML)">
+<!ENTITY bothFormatCmd.accesskey "n">
+<!ENTITY priorityMenu.label "Tosaíocht">
+<!ENTITY priorityMenu.accesskey "T">
+<!ENTITY priorityButton.title "Tosaíocht">
+<!ENTITY priorityButton.tooltiptext "Athraigh tosaíocht na teachtaireachta">
+<!ENTITY priorityButton.label "Tosaíocht:">
+<!ENTITY lowestPriorityCmd.label "Is Ísle">
+<!ENTITY lowestPriorityCmd.accesskey "l">
+<!ENTITY lowPriorityCmd.label "Íseal">
+<!ENTITY lowPriorityCmd.accesskey "s">
+<!ENTITY normalPriorityCmd.label "Gnáthmhéid">
+<!ENTITY normalPriorityCmd.accesskey "n">
+<!ENTITY highPriorityCmd.label "Ard">
+<!ENTITY highPriorityCmd.accesskey "A">
+<!ENTITY highestPriorityCmd.label "Is Airde">
+<!ENTITY highestPriorityCmd.accesskey "d">
+<!ENTITY fileCarbonCopyCmd.label "Seol Cóip Chuig">
+<!ENTITY fileCarbonCopyCmd.accesskey "l">
+<!ENTITY fileHereMenu.label "Comhdaigh Anseo">
+<!-- Tools Menu -->
+
+<!ENTITY tasksMenu.label "Uirlisí">
+<!ENTITY tasksMenu.accesskey "U">
+<!ENTITY messengerCmd.label "Ríomhphost agus Grúpaí Nuachta">
+<!ENTITY messengerCmd.accesskey "m">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Leabhar Seoltaí">
+<!ENTITY addressBookCmd.accesskey "a">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Socruithe an Chuntais">
+<!ENTITY accountManagerCmd2.accesskey "S">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label "Roghanna">
+<!ENTITY preferencesCmd2.accesskey "o">
+<!ENTITY preferencesCmdUnix.label "Sainroghanna">
+<!ENTITY preferencesCmdUnix.accesskey "n">
+<!--  Mac OS X Window Menu -->
+
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Íoslaghdaigh">
+<!ENTITY bringAllToFront.label "Tabhair an tIomlán chun Tosaigh">
+<!ENTITY zoomWindow.label "Súmáil">
+<!ENTITY windowMenu.label "Fuinneog">
+<!-- Mail Toolbar -->
+
+<!ENTITY sendButton.label "Seol">
+<!ENTITY quoteButton.label "Luaigh">
+<!ENTITY addressButton.label "Teagmhálaithe">
+<!ENTITY attachButton.label "Ceangail">
+<!ENTITY spellingButton.label "Litriú">
+<!ENTITY saveButton.label "Sábháil">
+<!ENTITY printButton.label "Priontáil">
+<!-- Mail Toolbar Tooltips -->
+
+<!ENTITY sendButton.tooltip "Seol an teachtaireacht seo anois">
+<!ENTITY sendlaterButton.tooltip "Seol an teachtaireacht seo níos déanaí">
+<!ENTITY quoteButton.tooltip "Luaigh an teachtaireacht roimhe seo">
+<!ENTITY addressButton.tooltip "Roghnaigh faighteoir as Leabhar Seoltaí">
+<!ENTITY spellingButton.tooltip "Seiceáil litriú an roghnaithe nó na teachtaireachta iomláine">
+<!ENTITY saveButton.tooltip "Sábháil an teachtaireacht seo">
+<!ENTITY cutButton.tooltip              "Gearr">
+<!ENTITY copyButton.tooltip             "Cóipeáil">
+<!ENTITY pasteButton.tooltip            "Greamaigh">
+<!ENTITY printButton.tooltip "Priontáil an teachtaireacht seo">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpace.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY subject.accesskey "b">
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+
+<!ENTITY SmileButton.tooltip "Ionsáigh miongháire">
+<!ENTITY smiley1Cmd.label "Miongháire">
+<!ENTITY smiley2Cmd.label "Púicín">
+<!ENTITY smiley3Cmd.label "Caoch">
+<!ENTITY smiley4Cmd.label "Teanga amach">
+<!ENTITY smiley5Cmd.label "Gáire">
+<!ENTITY smiley6Cmd.label "Aiféaltas">
+<!ENTITY smiley7Cmd.label "Idir Dhá Chomhairle">
+<!ENTITY smiley8Cmd.label "Iontas">
+<!ENTITY smiley9Cmd.label "Póg">
+<!ENTITY smiley10Cmd.label "Béic">
+<!ENTITY smiley11Cmd.label "Snasta">
+<!ENTITY smiley12Cmd.label "Béal airgid">
+<!ENTITY smiley13Cmd.label "Cos sa bhéal">
+<!ENTITY smiley14Cmd.label "Soineanta">
+<!ENTITY smiley15Cmd.label "Gol">
+<!ENTITY smiley16Cmd.label "Glas ar an teanga">
+<!-- Message Pane Context Menu -->
+
+<!ENTITY spellCheckNoSuggestions.label "Níl Aon Mholadh">
+<!ENTITY spellCheckIgnoreWord.label "Tabhair neamhaird ar an bhFocal Seo">
+<!ENTITY spellCheckIgnoreWord.accesskey "i">
+<!ENTITY spellCheckAddToDictionary.label "Cuir san Fhoclóir">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "Cealaigh">
+<!ENTITY undo.accesskey "e">
+<!ENTITY cut.label "Gearr">
+<!ENTITY cut.accesskey "G">
+<!ENTITY copy.label "Cóipeáil">
+<!ENTITY copy.accesskey "C">
+<!ENTITY paste.label "Greamaigh">
+<!ENTITY paste.accesskey "m">
+<!ENTITY pasteQuote.label "Greamaigh mar Athfhriotal">
+<!ENTITY pasteQuote.accesskey "A">
+
+<!ENTITY openAttachment.label "Oscail">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "Scrios">
+<!ENTITY delete.accesskey "S">
+<!ENTITY removeAttachment.label "Bain Iatán">
+<!ENTITY removeAttachment.accesskey "B">
+<!ENTITY renameAttachment.label "Athainmnigh…">
+<!ENTITY renameAttachment.accesskey "A">
+<!ENTITY selectAll.label "Roghnaigh Uile">
+<!ENTITY selectAll.accesskey "U">
+<!ENTITY attachFile.label "Cuir comha(i)d faoi iamh…">
+<!ENTITY attachFile.accesskey "f">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "Tiontaigh go…">
+<!ENTITY convertCloud.accesskey "T">
+<!ENTITY cancelUpload.label "Cealaigh an Uaslódáil">
+<!ENTITY cancelUpload.accesskey "e">
+<!ENTITY convertRegularAttachment.label "Gnáthiatán">
+<!ENTITY convertRegularAttachment.accesskey "i">
+<!ENTITY attachPage.label "Ceangail Leathanach Gréasáin…">
+<!ENTITY attachPage.accesskey "G">
+<!-- Spell checker context menu items -->
+
+<!-- Attachment Pane Header Bar Context Menu -->
+
+<!ENTITY spellAddDictionaries.label "Cuir Foclóirí Leis…">
+<!ENTITY spellAddDictionaries.accesskey "C">
+<!-- Title for the address picker panel -->
+
+<!ENTITY addressesSidebarTitle.label "Teagmhálaithe">
+<!-- Identity popup customize menuitem -->
+
+<!ENTITY customizeFromAddress.label "Ríomhphost ó Sheoladh Saincheaptha…">
+<!ENTITY customizeFromAddress.accesskey "a">
+

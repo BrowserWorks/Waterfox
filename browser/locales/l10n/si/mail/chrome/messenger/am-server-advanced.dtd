@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "වැඩිමනත් ගිණුම් සැකසුම්">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP සේවාදායක ඩිරෙක්ටරි:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "දායක වූ ෆෝල්ඩර පමණක් පෙන්වන්න">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "ලිපි සහ උප-ෆෝල්ඩර අඩංගු සේවාදායකය ආධාර කරන ෆෝල්ඩර">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "කෑෂ් වෙතට උපරිම සේවාදායක සබඳතා ගණන">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "These preferences specify the namespaces on your IMAP server">
+<!ENTITY personalNamespace.label "Personal namespace:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "පොදු (බෙදාගත්shared):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "වෙනත් පරිශීලකයින්:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "Allow server to override these namespaces">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY deferToServer.label "වෙනත් ගිණුම් සඳහා ලදලිපි">
+<!ENTITY deferToServer.accesskey "D">
+<!ENTITY deferGetNewMail.label "නව ලිපි ලබාගන්නා විට මෙම සේවාදායකය ඇතුලත් කරන්න">
+<!ENTITY deferGetNewMail.accesskey "I">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ਟੇਬਲ ਸ਼ਾਮਿਲ">
+
+<!ENTITY size.label "ਅਕਾਰ">
+<!ENTITY numRowsEditField.label "ਕਤਾਰਾਂ:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "ਕਾਲਮ:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "ਚੌੜਾਈ:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY borderEditField.label "ਹਾਸ਼ੀਆ:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "ਟੇਬਲ ਦੇ ਹਾਸ਼ੀਏ ਲਈ ਕੋਈ ਅੰਕ ਦਿਓ ਜਾਂ ਨਾ-ਹਾਸ਼ੀਏ ਲਈ ਸਿਫਰ(0) ਦਿਓ">
+<!ENTITY pixels.label "ਪਿਕਸਲ">

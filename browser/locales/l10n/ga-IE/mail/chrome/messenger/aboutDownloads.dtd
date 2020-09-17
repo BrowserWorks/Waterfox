@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Comhaid Shábháilte">
+<!ENTITY aboutDownloads.empty                      "Níl aon chomhaid shábháilte ann">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Oscail an Fillteán ina bhfuil an Comhad">
+<!ENTITY cmd.show.accesskey                        "F">
+<!ENTITY cmd.showMac.label                         "Taispeáin San Aimsitheoir">
+<!ENTITY cmd.showMac.accesskey                     "A">
+<!ENTITY cmd.open.label                            "Oscail">
+<!ENTITY cmd.open.accesskey                        "O">
+<!ENTITY cmd.removeFromHistory.label               "Bain ón Stair">
+<!ENTITY cmd.removeFromHistory.accesskey           "B">
+<!ENTITY cmd.clearList.label                       "Glan an Liosta">
+<!ENTITY cmd.clearList.accesskey                   "G">
+<!ENTITY cmd.clearList.tooltip                     "Bain na hiontrálacha go léir de liosta na gcomhad sábháilte, seachas íoslódálacha gníomhacha.">
+<!ENTITY cmd.searchDownloads.label                 "Cuardaigh…">
+<!ENTITY cmd.searchDownloads.key                   "F">

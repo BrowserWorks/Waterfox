@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Dobro došli u &brandShortName;">
+<!ENTITY header2.label "Želite li novu adresu e-pošte?">
+<!ENTITY other.languages "Prikazuju se samo pružatelji usluga koji nude adrese e-pošte na vašem područiju.  Kliknite ovdje kako bi prikazali sve pružatelje usluga.">
+<!ENTITY error.line1 "Nije pronađena niti jedna adresa e-pošte za predložiti.">
+<!ENTITY error.line2 "Možete pokušati tražiti prema nadimku ili nekom drugom pojmu kako biste našli više adresa e-pošte.">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "Možete također probati jedan od ">
+<!ENTITY error.suggest.middle "besplatnih alternativnih računa e-pošte">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "Pozdrav ">
+<!ENTITY success.title.after ", sljedeće adrese e-pošte su vam dostupne:">
+<!ENTITY success.tip "(Možete pokušati tražiti prema nadimku ili nekom drugom pojmu kako bi našli više adresa e-pošte)">
+<!ENTITY partnership.description "U suradnji s više pružatelja usluga, &brandShortName; vam može ponuditi novi račun e-pošte. Unesite svoje ime i prezime ili bilo koji drugi pojam koji želite u polja iznad kako bi zapčeli.">
+<!ENTITY existing.header "Već imate adresu e-pošte koju želite koristiti?">
+<!ENTITY tinyheader.title "Imate li adresu e-pošte?">
+<!ENTITY tinyheader.existing "Preskočite ovo i koristite postojeću adresu e-pošte">
+<!ENTITY content.close "Podesit ću svoj račun kasnije.">
+<!ENTITY successful.title "Čestitamo!">
+<!ENTITY successful.successMessage "Uspješno ste postavili svoj račun.">
+<!ENTITY successful.write "Napišite poruku">
+<!ENTITY successful.write.desc "Obavjestite vaše prijatelje i obitelj o vašoj novoj adresi e-pošte.<br/> Zbog toga ste i napravili ovaj novi račun, zar nije?">
+<!ENTITY successful.customize "Prilagodite &brandShortName; s odličnim dodacima">
+<!ENTITY successful.customize.desc "Postoje tisuće dodataka koji vam dopuštaju prilagodbu &brandShortName;a kako bi odgovarao vašim potrebama.">
+<!ENTITY successful.attach "Dodajte osobni potpis vašim porukama">
+<!ENTITY successful.attach.desc "Možete automatski dodati citat ili neke informacije o sebi na kraj svake poslane poruke.">
+<!ENTITY successful.close "Zatvori ovaj prozor.">
+<!ENTITY input.namePlaceholder "Vaše ime ili nadimak">
+<!ENTITY input.search "Traži">
+<!ENTITY search_engine.title "Prilagodite svoj pretraživač interneta">
+<!ENTITY search_engine.message "Vaš pružatelj usluge e-pošte vam također može pružiti usluga pretraživanja interneta.">
+<!ENTITY search_engine.button "Završi">

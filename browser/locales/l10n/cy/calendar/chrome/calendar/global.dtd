@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY month.1.name "Ionawr" >
+<!ENTITY month.2.name "Chwefror" >
+<!ENTITY month.3.name "Mawrth" >
+<!ENTITY month.4.name "Ebrill" >
+<!ENTITY month.5.name "Mai" >
+<!ENTITY month.6.name "Mehefin" >
+<!ENTITY month.7.name "Gorffennaf" >
+<!ENTITY month.8.name "Awst" >
+<!ENTITY month.9.name "Medi" >
+<!ENTITY month.10.name "Hydref" >
+<!ENTITY month.11.name "Tachwedd" >
+<!ENTITY month.12.name "Rhagfyr" >
+
+<!ENTITY onemonthbackward.tooltip "Un Mis Nôl" >
+<!ENTITY onemonthforward.tooltip "Un Mis Ymlaen" >
+<!ENTITY oneyearbackward.tooltip "Nôl Un Flwyddyn" >
+<!ENTITY oneyearforward.tooltip "Ymlaen Un Flwyddyn" >
+<!ENTITY showToday.tooltip "Mynd i Heddiw">
+<!ENTITY onedayforward.tooltip "Ymlaen Un Diwrnod">
+<!ENTITY onedaybackward.tooltip "Nôl Un Diwrnod">
+<!ENTITY showselectedday.tooltip "Dangos digwyddiadau un diwrnod">

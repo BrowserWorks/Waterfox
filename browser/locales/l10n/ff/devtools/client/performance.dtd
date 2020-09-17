@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "Keftinirɗo oo ina moofta jubbitte seede jirlotooɗo, e so tawii seede oo yettiima ɗo haaɗata ngam nanngitaade, jubbitte burɗe hesɗude puɗɗoo moññude jubbitte e fuɗɗoode nanngitogol ngol.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Hurmin Firefox silsilaaji keewɗi e cuɓe ngam yaltinde nanngugol keɓe e sahaa gooɗɗo.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "Seede oo ko keewɗo. Jubbitte ɓuɗe naywude ngoni jooni ko e moññeede.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "Nanngitogol heftinirde heɓotaako e oo sahaa. Tiiɗno uddu kenorɗe banngogol keeringol kadi puɗɗitoɗaa.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "Nana loowa…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Waltunde">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Ina holla golle goɗɗe ɗe wanngorde ndee woni e gollaade saanga nanngitogol ngol. feewniraa no doggol waltunde nii.">
+<!ENTITY performanceUI.toolbar.js-calltree "Lekki Noddugol">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Ina jalbina nafooje JavaScript ɗo wanngorde ndee waɗi sahaa juut-ɗo saanga nanngitogoll ngol.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Taƴne">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Ina holla hol ɗo teskorde rokkiranoo saanga nanngitogol ngol.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "Tigilde Lewlewndu JS">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Ina holla joowre noddugol JavaScript ndee saanga nanngitogol ngol.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Tigilde Lewlewndu Taƴne">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "Kuuɓal Sahaa">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Sahaa mbaɗaaɗo e ngal gollal kam e golle ɗum noddi.">
+<!ENTITY performanceUI.table.selfDuration             "Sahaa Hoore mum">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Sahaa mbaɗaaɗo e ngal gollal tan.">
+<!ENTITY performanceUI.table.totalPercentage          "Kuuɓal Njar">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Santaas sahaa mbaɗaaɗo e ngal gollal kam e golle ɗum noddi.">
+<!ENTITY performanceUI.table.selfPercentage           "Njar Hoore mum">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Santaas sahaa mbaɗaaɗo e ngal gollal tan.">
+<!ENTITY performanceUI.table.samples                  "Jubbitte">
+<!ENTITY performanceUI.table.samples.tooltip          "Laabi ngal gollal wonnoo e joowre ndee tuma nde heftinirde ndee ƴetti jubbitere.">
+<!ENTITY performanceUI.table.function                 "Gollal">
+<!ENTITY performanceUI.table.function.tooltip         "Innde e nokku iwdi gollal jubbitaangal ngal.">
+<!ENTITY performanceUI.table.totalAlloc               "Kuuɓal Taƴne Jubbitaaɗe">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Kuuɓal taƴne geɗe jubbitaaɗe e oo nokku e nder noddirgon.">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "Suɓo hol keɓe hollirte doggol kabaruuji ngol">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "Teelto cuɓe jaawgol golle.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "Walkit Lekki noddugol">
+<!ENTITY performanceUI.invertTree.tooltiptext "Walkit-de lekki noddugol ngol ina holla boli noddogul keftinaaɗi fuɗɗoraade e kaareeji ɓurɗi famɗude etee jokka haa to kaareeji ɓurɗi naywude ɗii.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Walkit Tigilde Lewlewndu">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Walkit-de tigilde lewlewndu ina holla boli noddogul keftinaaɗi fuɗɗoraade e kaareeji ɓurɗi famɗude etee jokka haa to kaareeji ɓurɗi naywude ɗii.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Hollu Keɓe Yuɓɓo Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Hollirde keɓe yuɓɓo ina walla ciimte Heftinirde JavaScript ndee naatnude maalle yuɓɓo Gecko.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "Hollu Ittingol JIT">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Hollu keɓe ittingol JIT jubbitaaɗe nder kala tigilde JavaScript.">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "Dam gartugol Lekki">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Dam gartugol tuma ndee ƴeewndotoɗaa golle ɗee.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "Nanngito Teskorde">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Nanngito ñaamgol teskorde saanga keftinirgol.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "Nanngito Taƴne">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Nanngito taƴne Geɗe saanga keftingol.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "Nanngito santaas Tigilde">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Nanngito santaas tigilde saanga keftingol.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "Woni ko e nanngitaade rewrude">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "Dartin nanngitogol so naatde">
+<!ENTITY performanceUI.console.stopCommandEnd   "nder ginorde ndee.">

@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Veti Figure">
+
+<!ENTITY pixelsPopup.value "piksela">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Vendndodhje Figure:">
+<!ENTITY locationEditField.accessKey "V">
+<!ENTITY locationEditField.tooltip "Shkruani emër ose vendndodhje kartele">
+<!ENTITY locationEditField.shortenedDataURI "URI i shkurtuar të dhënash (kopjimi do të hedhë në të papastër URI-n e plotë)">
+<!ENTITY title.label "Ndihmëz:">
+<!ENTITY title.accessKey "N">
+<!ENTITY title.tooltip "Atributi html 'title' që shfaqet si ndihmëz">
+<!ENTITY altText.label "Tekst alternativ:">
+<!ENTITY altText.accessKey "T">
+<!ENTITY altTextEditField.tooltip "Shkruani tekst për t&apos;u shfaqur në vend të figurës">
+<!ENTITY noAltText.label "Mos përdor tekst alternativ">
+<!ENTITY noAltText.accessKey "M">
+
+<!ENTITY previewBox.label "Paraparje Figure">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Madhësia Faktike:">
+<!ENTITY actualSizeRadio.label "Madhësia Faktike">
+<!ENTITY actualSizeRadio.accessKey "M">
+<!ENTITY actualSizeRadio.tooltip "Rikthejeni tek madhësia e vërtetë e figurës">
+<!ENTITY customSizeRadio.label "Madhësi Vetjake">
+<!ENTITY customSizeRadio.accessKey "V">
+<!ENTITY customSizeRadio.tooltip "Ndryshoni përmasa figure siç shfaqet tek faqja">
+<!ENTITY heightEditField.label "Lartësi:">
+<!ENTITY heightEditField.accessKey "L">
+<!ENTITY widthEditField.label "Gjerësi:">
+<!ENTITY widthEditField.accessKey "G">
+<!ENTITY constrainCheckbox.label "Detyro">
+<!ENTITY constrainCheckbox.accessKey "D">
+<!ENTITY constrainCheckbox.tooltip "Mbajini përpjesëtimet e figurës">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Hartë Figure">
+<!ENTITY removeImageMapButton.label "Hiqe">
+<!ENTITY removeImageMapButton.accessKey "H">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Drejto Tekst kundrejt Figurës">
+<!ENTITY bottomPopup.value "Në fund">
+<!ENTITY topPopup.value "Në krye">
+<!ENTITY centerPopup.value "Në qendër">
+<!ENTITY wrapRightPopup.value "Mbështill djathtas">
+<!ENTITY wrapLeftPopup.value "Mbështill majtas">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Hapësirë">
+<!ENTITY leftRightEditField.label "Majtas dhe Djathtas:">
+<!ENTITY leftRightEditField.accessKey "M">
+<!ENTITY topBottomEditField.label "Sipër dhe Poshtë:">
+<!ENTITY topBottomEditField.accessKey "S">
+<!ENTITY borderEditField.label "Anë e Plotë:">
+<!ENTITY borderEditField.accessKey "A">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Shfaq anë përreth figurës së lidhur">
+<!ENTITY showImageLinkBorder.accessKey "S">
+<!ENTITY LinkAdvancedEditButton.label "Përpunim i Mëtejshëm Lidhjeje…">
+<!ENTITY LinkAdvancedEditButton.accessKey "L">
+<!ENTITY LinkAdvancedEditButton.tooltip "Shtoni ose ndryshoni atribute HTML, atribute stili dhe JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Formë">
+<!ENTITY imageLocationTab.label "Vendndodhje">
+<!ENTITY imageDimensionsTab.label "Përmasa">
+<!ENTITY imageAppearanceTab.label "Dukje">
+<!ENTITY imageLinkTab.label "Lidhje">

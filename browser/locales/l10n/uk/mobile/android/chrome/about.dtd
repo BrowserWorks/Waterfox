@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Про &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; є експериментальним і може бути нестабільним.">
+<!ENTITY aboutPage.checkForUpdates.link         "Перевірити оновлення »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Пошук оновлень…">
+<!ENTITY aboutPage.checkForUpdates.none         "Оновлень не знайдено">
+<!ENTITY aboutPage.checkForUpdates.available2   "Завантажити оновлення">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Завантажую оновлення…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Встановити оновлення">
+<!ENTITY aboutPage.faq.label                    "ЧаП">
+<!ENTITY aboutPage.support.label                "Підтримка">
+<!ENTITY aboutPage.privacyPolicy.label          "Політика приватності">
+<!ENTITY aboutPage.rights.label                 "Знайте свої права">
+<!ENTITY aboutPage.relNotes.label               "Інформація про випуск">
+<!ENTITY aboutPage.credits.label                "Учасники проекту">
+<!ENTITY aboutPage.license.label                "Ліцензійна інформація">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox та логотипи Firefox є торговими марками Mozilla Foundation.">

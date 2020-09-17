@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Tuo osoitekirja">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Tuotu data tietueelle: ">
+<!ENTITY fieldMapImport.next.label "Seuraava">
+<!ENTITY fieldMapImport.next.accesskey "S">
+<!ENTITY fieldMapImport.previous.label "Edellinen">
+<!ENTITY fieldMapImport.previous.accesskey "E">
+<!ENTITY fieldMapImport.text "Siirrä vasemmalla olevat osoitekirjan kentät kohdakkain niitä vastaavien oikeanpuoleisten tietojen kanssa käyttämällä Siirrä ylös- ja Siirrä alas -painikkeita. Poista valinta niistä tiedoista, joita et halua tuoda osoitekirjaan.">
+<!ENTITY fieldMapImport.up.label "Siirrä ylös">
+<!ENTITY fieldMapImport.up.accesskey "y">
+<!ENTITY fieldMapImport.down.label "Siirrä alas">
+<!ENTITY fieldMapImport.down.accesskey "a">
+<!ENTITY fieldMapImport.fieldListTitle "Osoitekirjan kentät">
+<!ENTITY fieldMapImport.dataTitle "Tietueesta tuotavat tiedot">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Kenttien nimet ovat ensimmäisellä rivillä">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "K">
+
+

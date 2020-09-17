@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "ამომხტომი ფანჯრები">
+
+<!ENTITY pref.popups.caption            "ამომხტომი ფანჯრები">
+
+<!ENTITY popupBlock.label               "ამომხტომი ფანჯრების აკრძალვა">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "უფლებების მართვა">
+<!ENTITY viewPermissions.accesskey      "M">
+
+<!ENTITY whenBlock.description          "ამომხტომი ფანჯრების შეზღუდვისას:">
+<!ENTITY playSound.label                "გახმოვანება:">
+<!ENTITY playSound.accesskey            "P">
+<!ENTITY systemSound.label              "სისტემური სიგნალი">
+<!ENTITY systemSound.accesskey          "S">
+<!ENTITY customSound.label              "საკუთარი ხმოვანი ფაილი">
+<!ENTITY customSound.accesskey          "C">
+
+<!ENTITY selectSound.label              "ნუსხა…">
+<!ENTITY selectSound.accesskey          "o">
+<!ENTITY playSoundButton.label          "გახმოვანება">
+<!ENTITY playSoundButton.accesskey      "l">
+
+<!ENTITY displayIcon.label              "ხატის ჩვენება ნავიგატორის სტატუსის პანელზე">
+<!ENTITY displayIcon.accesskey          "D">
+
+<!ENTITY displayNotification.label      "შეტყობინების პანელის ჩვენება შიგთავსის არის ზემოთ">
+<!ENTITY displayNotification.accesskey  "N">
+
+<!ENTITY popupNote.description          "შენიშვნა: ყველა ამომხტომი ფანჯრის აკრძალვამ შესაძლოა შეზღუდოს ზოგი საიტის მნიშვნელოვანი შესაძლებლობები, როგორიცაა ანგარიშის შესავსები ველები ინტერნეტბანკებსა და მაღაზიებში. გარკვეული საიტებისათვის ამომხტომი ფანჯრების ჩვენების დაშვებისა და სხვა ყველა საიტისთვის ასაკრძალად დააწკაპეთ „დახმარებაზე“. ზოგიერთი საიტი იყენებს ამომხტომი ფანჯრების ჩვენების სხვა საშუალებებს, აკრძალვისთვის გვერდის ასავლელად.">
+

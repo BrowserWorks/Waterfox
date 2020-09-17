@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire.accesskey "צ">
+
+<!ENTITY menu_securitySign.label "חתום הודעה זו חתימה דיגיטלית">
+<!ENTITY menu_securitySign.accesskey "ח">
+
+<!ENTITY menu_securityStatus.label "הצג מידע על אבטחה">
+<!ENTITY menu_securityStatus.accesskey "מ">
+
+<!ENTITY securityButton.label "אבטחה">
+<!ENTITY securityButton.tooltip "הצגה או שינוי הגדרות אבטחה">
+
+<!ENTITY menu_viewSecurityStatus.label "מידע על אבטחת הודעה">
+<!ENTITY menu_viewSecurityStatus.accesskey "מ">
+

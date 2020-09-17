@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "पृष्ठ गुण">
+<!ENTITY location.label "अवस्थिति:">
+<!ENTITY lastModified.label "अंतिम रूपांतरित:">
+<!ENTITY titleInput.label "शीर्षक:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "लेखक:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "विवरण:">
+<!ENTITY descriptionInput.accessKey "D">
+<!ENTITY locationNewPage.label "[नया पृष्ठ, अबतक नहीं सहेजा गया]">
+<!ENTITY EditHEADSource1.label "उन्नत उपयोक्ता:">
+<!ENTITY EditHEADSource2.label "&lt;head&gt के अन्य सामग्री को संपादित करने के लिये; क्षेत्र, &quot;HTML Source&quot का प्रयोग करें; दृश्य मेनू या संपादन मोड उपकरण पट्टी में.">

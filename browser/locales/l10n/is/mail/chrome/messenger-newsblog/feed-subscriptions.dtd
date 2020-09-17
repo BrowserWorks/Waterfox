@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label "Straumaáskriftir">
+<!ENTITY learnMore.label "Fræðast meira um strauma">
+
+<!ENTITY feedTitle.label "Titill:">
+<!ENTITY feedTitle.accesskey "T">
+
+<!ENTITY feedLocation.label "Straumslóð:">
+<!ENTITY feedLocation.accesskey "u">
+<!ENTITY locationValidate.label "Sannreyna">
+<!ENTITY validateText.label "Athuga sannprófun og ná í rétt veffang.">
+
+<!ENTITY feedFolder.label "Geyma greinar í:">
+<!ENTITY feedFolder.accesskey "G">
+
+<!ENTITY quickMode.label "Sýna yfirlit greinar í staðinn fyrir að hlaða inn vefsíðu">
+<!ENTITY quickMode.accesskey "h">
+
+<!ENTITY autotagEnable.label "Búa sjálkrafa til tög frá &lt;flokka&gt; nöfnum straums">
+<!ENTITY autotagEnable.accesskey "B">
+<!ENTITY autotagUsePrefix.label "Setja forskeyti á tög:">
+<!ENTITY autotagUsePrefix.accesskey "S">
+<!ENTITY autoTagPrefix.placeholder "Sláðu inn forskeyti fyrir tög">
+
+<!ENTITY button.addFeed.label "Bæta við">
+<!ENTITY button.addFeed.accesskey "æ">
+<!ENTITY button.updateFeed.label "Uppfæra">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label "Fjarlægja">
+<!ENTITY button.removeFeed.accesskey "F">
+<!ENTITY button.importOPML.label "Flytja inn">
+<!ENTITY button.importOPML.accesskey "i">
+<!ENTITY button.exportOPML.label "Flytja út">
+<!ENTITY button.exportOPML.accesskey "t">
+<!ENTITY button.exportOPML.tooltip "Flytja út strauma með möppulista; ctrl smelltu eða ctrl enter til að flytja út strauma sem lista">
+
+<!ENTITY cmd.close.commandKey "w">
+<!ENTITY button.close.label "Loka">

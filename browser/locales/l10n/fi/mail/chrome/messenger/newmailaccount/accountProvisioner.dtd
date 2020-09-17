@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Tervetuloa &brandShortName;in käyttäjäksi">
+<!ENTITY header2.label "Haluatko uuden sähköpostiosoitteen?">
+<!ENTITY other.languages "Esillä ovat sähköpostipalveluntarjoajat alueeltasi. Tarkastele koko listaa napsauttamalla tästä.">
+<!ENTITY error.line1 "Ikävä kyllä emme löytäneet ehdotettuja sähköpostiosoitteita.">
+<!ENTITY error.line2 "Voit etsiä muita sähköpostiosoitteita lempinimillä tai muilla hakutermeillä">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Voit myös kokeilla ">
+<!ENTITY error.suggest.middle "ilmaisia sähköpostipalveluja">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Hei ">
+<!ENTITY success.title.after ", seuraavat sähköpostiosoitteet ovat saatavilla:">
+<!ENTITY success.tip "(Voit myös kokeilla lempinimiä tai muita termejä löytääksesi muita sähköpostiosoitteita)">
+<!ENTITY partnership.description "Yhteistyössä palveluntarjoajien kanssa &brandShortName; pystyy tarjoamaan sinulle uuden sähköpostiosoitteen. Aloita täyttämällä etu- ja sukunimesi tai muu haluamasi tunniste yllä olevaan kenttään.">
+<!ENTITY existing.header "Onko sinulla jo sähköpostiosoite, jota haluat käyttää?">
+<!ENTITY tinyheader.title "Onko sinulla jo osoite?">
+<!ENTITY tinyheader.existing "Ohita tämä kohta ja käytä olemassa olevaa osoitetta">
+<!ENTITY content.close "Haluan määrittää tilini myöhemmin.">
+<!ENTITY successful.title "Onneksi olkoon!">
+<!ENTITY successful.successMessage "Sähköpostitilisi on onnistuneesti määritelty.">
+<!ENTITY successful.write "Lähetä sähköpostia">
+<!ENTITY successful.write.desc "Kerro kavereillesi ja perheellesi uudesta osoitteestasi.<br/> Sen takiahan tämä osoite luotiin, eikö niin?">
+<!ENTITY successful.customize "Muokkaa &brandShortName;iä siisteillä lisäosilla">
+<!ENTITY successful.customize.desc "&brandShortName;iä voi muokata vastaamaan omia tarpeita tuhansilla erilaisilla lisäosilla.">
+<!ENTITY successful.attach "Liitä sähköposteihisi henkilökohtainen allekirjoitus">
+<!ENTITY successful.attach.desc "Voit automaattisesti liittää jokaisen lähettämäsi sähköpostin päätteeksi lainauksen tai jotain muuta tietoa itsestäsi.">
+<!ENTITY successful.close "Sulje tämä ikkuna.">
+<!ENTITY input.namePlaceholder "Nimesi tai lempinimesi">
+<!ENTITY input.search "Etsi">
+<!ENTITY search_engine.title "Muokkaa hakukonetta">
+<!ENTITY search_engine.message "Sähköpostipalveluntarjoajsi saattaa tarjota myös verkkohakutoimintoja.">
+<!ENTITY search_engine.button "Valmis">

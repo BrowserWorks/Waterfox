@@ -1,0 +1,27 @@
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "सन्देशहरू डाउनलोड र समक्रमण गर्नुहोस्">
+<!ENTITY MsgSelect.label "अफलाइन प्रयोगका लागि वस्तुहरू">
+<!ENTITY MsgSyncDesc.label "यदि तपाईँले अफलाइन प्रयोगका लागि मेल फोल्डर वा समाचार समूहरू पहिल्यै चयन गर्नुभएको छ भने, तपाईँ तिनीहरूलाई अहिले डाउनलोड र/वा समक्रमण गर्न सक्नुहुन्छ । अन्यथा, अफलाइन प्रयोगका लागि मेल फोल्डर र समाचारसमूहहरू रोज्न &quot;चयन गर्नुहोस्&quot; बटन प्रयोग गर्नुहोस् ।">
+<!ENTITY MsgSyncDirections.label "निम्न डाउनलोड र/वा समक्रमण गर्नुहोस्:">
+<!ENTITY syncTypeMail.label "मेल सन्देश">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "समाचारसमूह सन्देश">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "नपठाइएका सन्देशहरू पठाउनुहोस्">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "एकपटक डाउनलोड र/वा समक्रमण गरेको अफलाइन कार्य पूरा भयो">
+<!ENTITY workOffline.accesskey "W">
+<!ENTITY selectButton.label "चयन गर्नुहोस्...">
+<!ENTITY selectButton.accesskey "E">
+<!ENTITY MsgSelectDesc.label "अफलाइन प्रयोगका लागि मेल फोल्डर र समाचारसमूह रोज्नुहोस् ।">
+<!ENTITY MsgSelectInd.label "डाउनलोड गर्नुहोस्">
+<!ENTITY MsgSelectItems.label "फोल्डर र समाचारसमूह">

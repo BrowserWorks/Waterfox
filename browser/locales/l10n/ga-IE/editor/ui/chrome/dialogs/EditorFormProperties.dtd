@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Airíonna Foirme">
+
+<!ENTITY Settings.label "Socruithe">
+
+<!ENTITY FormName.label "Ainm na Foirme:">
+<!ENTITY FormName.accesskey "n">
+<!ENTITY FormAction.label "URL Gnímh:">
+<!ENTITY FormAction.accesskey "G">
+<!ENTITY FormMethod.label "Modh:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Ionchódú:">
+<!ENTITY FormEncType.accesskey "c">
+<!ENTITY FormTarget.label "Spriocfhráma:">
+<!ENTITY FormTarget.accesskey "S">
+
+<!ENTITY RemoveForm.label "Bain Foirm">
+<!ENTITY RemoveForm.accesskey "B">

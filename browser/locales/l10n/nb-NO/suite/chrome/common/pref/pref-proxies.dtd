@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Proxy">
+<!ENTITY  pref.proxies.desc             "En proxy er en nettverkstjeneste som kan filtrere og øke hastigheten på Internett-forbindelsen.">
+<!ENTITY  proxyTitle.label              "Bruk proxy for tilgang til Internett">
+<!ENTITY  directTypeRadio.label         "Direkte tilkobling">
+<!ENTITY  directTypeRadio.accesskey     "D">
+<!ENTITY  systemTypeRadio.label         "Bruk systemets proxy">
+<!ENTITY  systemTypeRadio.accesskey     "s">
+<!ENTITY  manualTypeRadio.label         "Manuell konfigurasjon:">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  wpadTypeRadio.label           "Automatisk oppdag proxyinnstillinger">
+<!ENTITY  wpadTypeRadio.accesskey       "A">
+<!ENTITY  autoTypeRadio.label           "Automatisk konfigurasjon-URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "Oppdater">
+<!ENTITY  reload.accesskey              "O">
+<!ENTITY  http.label                    "HTTP">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  HTTPPort.accesskey            "p">
+<!ENTITY  advanced.label                "Avansert …">
+<!ENTITY  advanced.accesskey            "v">
+<!ENTITY  noproxy.label                 "Ingen proxy for:">
+<!ENTITY  noproxy.accesskey             "I">
+<!ENTITY  noproxyExplain.label          "Eksempel: .mozilla.org, .net.nz">

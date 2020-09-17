@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Rregulloni Kujtues">
+<!ENTITY reminder.add.label                                "Shtoni">
+<!ENTITY reminder.add.accesskey                            "S">
+<!ENTITY reminder.remove.label                             "Hiqe">
+<!ENTITY reminder.remove.accesskey                         "H">
+
+<!ENTITY reminder.reminderDetails.label                    "Hollësi Kujtuesi">
+<!ENTITY reminder.action.label                             "Zgjidhni Veprim Kujtuesi">
+
+<!ENTITY reminder.action.alert.label                       "Shfaq një Sinjalizim">
+<!ENTITY reminder.action.email.label                       "Dërgo një Email">
+
+<!ENTITY alarm.units.minutes                               "minuta" >
+<!ENTITY alarm.units.hours                                 "orë" >
+<!ENTITY alarm.units.days                                  "ditë" >

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "ჭდეები">
+<!ENTITY pref.tags.caption          "ჭდეების მორგება">
+<!ENTITY pref.tags.description      "ჭდეები გამოიყენება წერილების დასახარისხებლად. შეცვალეთ ჭდეების იერსახე და მნიშვნელობა ქვედა პარამეტრების მიხედვით. ზედა ნაწილის ჭდეები უფრო მნიშვნელოვანია ვიდრე ქვედა.">
+<!ENTITY tagColumn.label            "ჭდე">
+<!ENTITY colorColumn.label          "ფერი">
+<!ENTITY defaultTagName.label       "უსახელო ჭდე">
+<!ENTITY addTagButton.label         "დამატება">
+<!ENTITY addTagButton.accesskey     "A">
+<!ENTITY deleteTagButton.label      "წაშლა">
+<!ENTITY deleteTagButton.accesskey  "D">
+<!ENTITY raiseTagButton.label       "მნიშვნელობის გაზრდა">
+<!ENTITY raiseTagButton.accesskey   "R">
+<!ENTITY lowerTagButton.label       "მნიშვნელობის შემცირება">
+<!ENTITY lowerTagButton.accesskey   "L">
+<!ENTITY restoreButton.label        "ნაგულისხმების აღდგენა">
+<!ENTITY restoreButton.accesskey    "s">

@@ -1,0 +1,196 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problem në ngarkimin e faqes">
+<!ENTITY retry.label "Riprovoni">
+<!ENTITY returnToPreviousPage.label "Kthehu Mbrapsht">
+<!ENTITY returnToPreviousPage1.label "Shko Mbrapsht (E këshilluar)">
+<!ENTITY advanced2.label "Të mëtejshme…">
+<!ENTITY viewCertificate.label "Shihni Dëshmi">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "S’u Gjet Shërbyes">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Nëse adresa është e saktë, ja tre gjëra të tjera që mund të provoni:</strong>
+<ul>
+  <li>Riprovoni më vonë.</li>
+  <li>Kontrolloni lidhjen tuaj në rrjet.</li>
+  <li>Nëse jeni të lidhur, por pas një firewall-i, kontrolloni nëse &brandShortName;-i ka leje të hyjë në Web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Kontrolloni emrin e kartelës për gabime shkrimi me të mëdha ose të vogla, apo të tjera gabime në shkrim.</li>
+  <li>Shihni se mos kartela qe lëvizur, riemërtuar ose fshirë.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Kartela mund të jetë hequr, lëvizur, ose hyrjen e pengojnë lejet mbi kartelën.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName;-i, për ndonjë arsye, nuk mund ta ngarkojë këtë faqe.</p>
+">
+
+<!ENTITY captivePortal.title "Hyni në rrjet">
+<!ENTITY captivePortal.longDesc2 "
+<p>YouDuhet të bëni hyrjen në këtë rrjet, përpara se të hyni në Internet.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Hap Faqe Hyrjeje në Rrjet">
+
+<!ENTITY malformedURI.pageTitle "URL e pavlefshme">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Dokumenti i kërkuar nuk gjendet më te fshehtina e &brandShortName;-it.</p><ul><li>Si një masë parandaluese sigurie, &brandShortName;-i nuk rikërkon vetvetiu dokumente rezervat.</li><li>Që ta rikërkoni dokumentin prej sajtit, klikoni mbi Riprovoni.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Shtypni &quot;Riprovoni&quot; që të kalohet nën mënyrën në linjë dhe të ringarkohet faqja.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;u bërë të ditur këtë problem.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;u bërë të ditur këtë problem.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Mund t&apos;ju duhet të instaloni tjetër program për të hapur këtë adresë.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Kontrolloni rregullimet për ndërmjetësin, për t&apos;u siguruar që janë të sakta.</li>
+  <li>Lidhuni me përgjegjësin e rrjetit tuaj, për t&apos;u siguruar që shërbyesi ndërmjetës po punon.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul>   <li>Kontrolloni rregullimet për ndërmjetësin, për t&apos;u siguruar që janë të sakta.</li>   <li>Kontrolloni kompjuterin tuaj, për t&apos;u siguruar që ka një lidhje rrjeti që punon.</li>   <li>Nëse kompjuteri apo rrjeti juaj mbrohet nga &quot;firewall&quot; apo ndërmjetës, sigurohuni që &brandShortName;-it i lejohet hyrja në Web.</li> </ul> ">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Ndonjëherë ky problem mund të shkaktohet nga çaktivizim ose mospranim cookie-sh.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Kontrolloni për t&apos;u siguruar që sistemi juaj ka të instaluar Përgjegjësin e Sigurisë Vetjake.</li>
+  <li>Kjo mund të vijë nga një formësim jostandard te shërbyesi.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Faqja që po provoni të shihni nuk shfaqet dot, ngaqë mirëfilltësia e të dhënave të marra nuk u vërtetua dot.</li>
+  <li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;u bërë të ditur këtë problem.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName;-i pikasi një kërcënim potencial sigurie dhe nuk vazhdoi për te <span class='hostname'/>. Nëse e vizitoni këtë sajt, gjurmuesit mund të provojnë të vjedhin të dhëna tuajat të tilla si fjalëkalime, email-e, ose hollësi kartash krediti.">
+<!ENTITY certerror.sts.introPara "&brandShortName;-i pikasi një kërcënim potencial sigurie dhe nuk vazhdoi te <span class='hostname'/>, ngaqë ky sajt lyp lidhje të sigurt.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName;-i pikasi një problem dhe nuk vazhdoi te <span class='hostname'/>. Ose sajti është i formësuar gabim, ose ora e kompjuterit tuaj është gabim.">
+<!ENTITY certerror.expiredCert.secondPara2 "Gjasat janë që të ketë skaduar dëshmia e sajtit, gjë që e pengon lidhjen e sigurt të &brandShortName;-it. Nëse vizitoni këtë sajt, agresorët mund të rreken të vjedhin të dhëna të tilla si fjalëkalime, email-e, ose hollësi kartash krediti.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Gjasat janë që të ketë skaduar dëshmia e sajtit, gjë që e pengon lidhjen e sigurt të &brandShortName;-it.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Ç’mund të bëni për të?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Problemi ka shumë gjasa të jetë me sajtin, dhe s’bëni dot gjë për ta zgjidhur.</p>
+<p>Nëse gjendeni nën një rrjet korporate ose përdorni software anti-virus, mund të lidheni për ndihmë me ekipin e asistencës. Mundeni edhe të njoftoni përgjegjësin e sajtit për problemin.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Ora e kompjuterit tuaj është caktuar si <span id='wrongSystemTime_systemDate2'/>. Sigurohuni që te rregullimet e sistemit për kompjuterin tuaj data, koha dhe zona kohore të jenë caktuar saktë dhe mandej rifreskoni <span class='hostname'/>.</p>
+<p>Nëse ora juaj është caktuar saktë, ka gjasa që sajti të jetë formësuar keq, dhe s’bëni dot gjë për ta zgjidhur problemin. Mundeni të njoftoni përgjegjësin e sajtit mbi problemin.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Gjasat janë që problemi të jetë i sajtit, dhe s’bëni dot gjë për ta zgjidhur. Mundeni të njoftoni përgjegjësin e sajtit mbi problemin.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Sajti mund të jetë përkohësisht jashtë pune ose tepër i zënë. Riprovoni pas pak çastesh.</li>
+  <li>Nëse nuk arrini të ngarkoni qoftë edhe një faqe, kontrolloni lidhjen në rrjet për kompjuterin tuaj.</li>
+  <li>Nëse kompjuteri apo rrjeti juaj mbrohet nga një &quot;firewall&quot; ose ndërmjetës, sigurohuni
+    që &brandShortName;-it i është lejuar hyrja në Web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName;-i e pengoi ngarkimin e kësaj faqeje në këtë mënyrë, ngaqë faqja përmban një rregull sigurie lënde që nuk e lejon këtë.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName;-i e pengoi ngarkimin e kësaj faqeje në këtë kontekst, ngaqë faqja ka një rregull  X-Frame-Options që s’e lejon.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Faqja që po rrekeni të shihni nuk mund të shfaqet, ngaqë u pikas një gabim në transmetimin e të dhënave.</p><ul><li>Ju lutemi, lidhuni me të zotët e sajtit që t&apos;u njoftoni këtë problem.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Pranoni Rrezikun dhe Vazhdoni">
+
+<!ENTITY errorReporting.automatic2 "Raportoni gabime si ky, që të ndihmoni Mozilla-n të identifikojë dhe bllokojë sajte dashakeqë">
+<!ENTITY errorReporting.learnMore "Mësoni më tepër…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;u njoftuar këtë problem.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Të dhëna të mëtejshme: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Kujdes: Rrezik Potencial Sigurie Përpara">
+<!ENTITY certerror.sts.pagetitle  "Nuk U Lidh: Çështje Potenciale Sigurie">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> përmban një rregull sigurie të quajtur HTTP Strict Transport Security (HSTS), që do të thotë se &brandShortName;-i mund të lidhet me të vetëm nën mënyrë të sigurt. S’shtoni dot një përjashtim për vizitimin e këtij sajti.">
+<!ENTITY certerror.copyToClipboard.label "Kopjoje tekstin te e papastra">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> përdor teknologji sigurie që është e vjetruar dhe e cenueshme përballë sulmesh. Dikush që sulmon do të mund të zbulonte lehtë të dhëna të cilat i mendonit të parrezikuara. Para se të mund të vizitoni këtë sajt, lypset që përgjegjësi i sajtit të ndreqë shërbyesin.</p><p>Kod gabimi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Faqe e Bllokuar">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> sipas shumicës së gjasave është sajt i parrezik, por s’u vendos dot një lidhje e sigurt. Ky problem shkaktohet nga <span class='mitm-name'/>,që është ose software në kompjuterin tuaj, ose në rrjetin tuaj.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Nëse software-i juaj antivirus përfshin një veçori që skanon lidhjet e fshehtëzuara (shpesh i quajtur “skanim web” ose “skanim https”), mund ta çaktivizoni këtë veçori. Nëse kjo nuk bën punë, mund ta hiqni dhe ta ri-instaloni software-in antivirus.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Nëse gjendeni në një rrjet korporate, mund të lidheni me degën tuaj të TI-së.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Nëse nuk jeni i familjarizuar me <span class='mitm-name'/>, atëherë ky mund të jetë një sulm dhe nuk duhet të vazhdoni për te sajti.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Nëse nuk jeni i familjarizuar me <span class='mitm-name'/>, atëherë ky mund të jetë një sulm, dhe s&apos;bëni dot gjë për të hyrë te sajti.">
+
+<!ENTITY clockSkewError.longDesc "Kompjuteri juaj mendon se është <span id='wrongSystemTime_systemDate1'/>, gjë që pengon lidhjen e sigurt të &brandShortName;-it. Që të vizitoni <span class='hostname'></span>, përditësoni te rregullimet e sistemit tuaj orën e kompjuterin me datën, kohën dhe zonën e duhur kohore, dhe mandej rifreskoni <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Duket se kjo shkaktohet nga rregullimet tuaja për sigurinë e rrjetit. Doni të rikthehen rregullimet parazgjedhje?">
+<!ENTITY prefReset.label "Rikthe rregullimet parazgjedhje">
+
+<!ENTITY enableTls10.longDesc "Ky sajt mund të mos mbulojë protokollin TLS 1.2, i cili është versioni minimum i mbuluar nga &brandShortName;. Aktivizimi i TLS 1.0 dhe TLS 1.1 mund ta lejojë këtë lidhje të ketë sukses.">
+<!ENTITY enableTls10.note "TLS 1.0 dhe TLS 1.1 do të çaktivizohen përgjithmonë në një hedhje të ardhshme në qarkullim.">
+<!ENTITY enableTls10.label "Aktivizoni TLS 1.0 dhe 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Faqja që po rrekeni të shihni s&apos;mund të shfaqet, ngaqë u pikas një gabim protokolli rrjeti.</p><ul><li>Ju lutemi, lidhuni me të zotët e sajtit që t&apos;u njoftoni këtë problem.</li></ul>">

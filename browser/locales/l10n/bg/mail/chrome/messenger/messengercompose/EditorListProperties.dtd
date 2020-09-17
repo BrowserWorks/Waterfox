@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Свойства на списъка">
+
+<!ENTITY ListType.label "Тип на списъка">
+<!ENTITY bulletStyle.label "Вид на водача:">
+<!ENTITY startingNumber.label "Начало от:">
+<!ENTITY startingNumber.accessKey "Н">
+<!ENTITY none.value "Без">
+<!ENTITY bulletList.value "Списък с водачи (не номериран)">
+<!ENTITY numberList.value "Номериран списък">
+<!ENTITY definitionList.value "Списък с определения">
+<!ENTITY changeEntireListRadio.label "Смяна на целия списък">
+<!ENTITY changeEntireListRadio.accessKey "С">
+<!ENTITY changeSelectedRadio.label "Смяна само на избраните елементи">
+<!ENTITY changeSelectedRadio.accessKey "я">

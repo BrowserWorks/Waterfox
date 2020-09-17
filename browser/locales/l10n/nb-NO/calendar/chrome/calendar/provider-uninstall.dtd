@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Avinstaller en tilbyder">
+<!ENTITY providerUninstall.accept.label                    "Avinstaller valgt">
+<!ENTITY providerUninstall.accept.accesskey                "A">
+<!ENTITY providerUninstall.cancel.label                    "Behold utvidelse">
+<!ENTITY providerUninstall.cancel.accesskey                "B">
+<!ENTITY providerUninstall.preName.label                   "Du har bedt om å avinstallere eller slå av:">
+<!ENTITY providerUninstall.postName.label                  "Dette vil forårsake at følgende kalendre slås av:">
+<!ENTITY providerUninstall.reinstallNote.label             "Dersom du ikke planlegger å installere tilbyderen på nytt kan du velge å stoppe medlemskapet på kalendrene du har gjennom tilbyderen.">

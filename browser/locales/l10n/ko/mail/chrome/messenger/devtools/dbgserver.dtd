@@ -1,0 +1,4 @@
+<!ENTITY options.title "개발자 도구 옵션">
+<!ENTITY options.status.label "상태:">
+<!ENTITY options.port.label "포트:">
+<!ENTITY options.forcelocal.label "다른 컴퓨터로 부터 접속 허용">

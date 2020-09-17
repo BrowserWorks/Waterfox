@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Ujdisni Adresën Tuaj Email Ekzistuese">
+<!ENTITY emailWizard.caption             "Përdorni adresën tuaj email të tanishme">
+<!ENTITY name.label                      "Emri juaj:">
+<!ENTITY name.accesskey                  "e">
+<!ENTITY fullname.placeholder            "Emri juaj i plotë">
+<!ENTITY name.text                       "Emri juaj, siç do të shihet nga të tjerët">
+<!ENTITY name.error                      "Ju lutemi, jepni emrin tuaj">
+<!ENTITY email.label                     "Adresë email:">
+<!ENTITY email.accesskey                 "d">
+<!ENTITY email3.placeholder              "Adresa juaj email">
+<!ENTITY email.text                      "Adresa e email-it tuaj ekzistues">
+<!ENTITY email.error                     "Adresë email e pavlefshme">
+<!ENTITY password.label                  "Fjalëkalim:">
+<!ENTITY password.accesskey              "F">
+<!ENTITY password.placeholder            "Fjalëkalim">
+<!ENTITY password.text                   "Opsional, do të përdoret vetëm për vleftësimin e emrit të përdoruesit">
+<!ENTITY password.toggle                 "Shfaq/Fshih fjalëkalimin">
+<!ENTITY rememberPassword.label          "Mbaje mend fjalëkalimin">
+<!ENTITY rememberPassword.accesskey      "M">
+<!ENTITY usernameEx.label                "Kredencialet tuaja për hyrje:">
+<!ENTITY usernameEx.accesskey            "|">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "PËRKATËSIAJUAJ\emrijuajipërdoruesit">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Kredenciale hyrjeje Përkatësie">
+
+<!ENTITY protocol.label                  "Protokoll:">
+<!ENTITY imapLong.label                  "IMAP (dosjet diku)">
+<!ENTITY pop3Long.label                  "POP3 (mbajeni postën në kompjuterin tuaj)">
+
+<!ENTITY manualConfigTable.summary       "Rregullime shërbyesi">
+<!ENTITY incoming.label                  "Marrës:">
+<!ENTITY incomingColumn.label            "Ardhës">
+<!ENTITY outgoing.label                  "Dërgues:">
+<!ENTITY outgoingColumn.label            "Ikës">
+<!ENTITY username.label                  "Emër përdoruesi:">
+<!ENTITY serverRow.label                 "Shërbyes:">
+<!ENTITY portRow.label                   "Portë:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Mirëfilltësim">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Vetëzbuloje">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Asnjë">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Shërbyes Exchange:">
+
+<!ENTITY advancedSetup.label             "Formësim i mëtejshëm">
+<!ENTITY advancedSetup.accesskey         "F">
+<!ENTITY cancel.label                    "Anuloje">
+<!ENTITY cancel.accesskey                "A">
+<!ENTITY continue.label                  "Vazhdo">
+<!ENTITY continue.accesskey              "V">
+<!ENTITY stop.label                      "Ndale">
+<!ENTITY stop.accesskey                  "N">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Riprovoje">
+<!ENTITY half-manual-test.accesskey      "R">
+<!ENTITY manual-config.label             "Formësoje dorazi…">
+<!ENTITY manual-config.accesskey         "d">
+<!ENTITY open-provisioner.label          "Merrni një adresë email të re…">
+<!ENTITY open-provisioner.accesskey      "M">
+
+
+<!ENTITY get-help.label                  "Merrni Ndihmë">
+<!ENTITY get-help.accesskey              "N">
+
+
+<!ENTITY warning.label                   "Kujdes!">
+<!ENTITY incomingSettings.label          "Rregullime për shërbyesin marrës:">
+<!ENTITY outgoingSettings.label          "Rregullime për shërbyesin dërgues:">
+<!ENTITY technicaldetails.label          "Hollësi Teknike">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "I kuptoj rreziqet.">
+<!ENTITY confirmWarning.accesskey        "I">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "U bë">
+<!ENTITY doneAccount.accesskey           "U">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Ndryshoni Rregullimet">
+<!ENTITY changeSettings.accesskey        "N">
+
+<!ENTITY contactYourProvider.description "&brandShortName;-i ju lejon të mbërrini te posta juaj duke përdorur formësime të gatshme. Sidoqoftë, lidhur me këto lidhje të pasakta, do të duhej të lidheshit me përgjegjësin ose furnizuesin e shërbimit email. Për më tepër të dhëna, shihni FAQ për Thunderbird-in.">
+
+<!ENTITY insecureServer.tooltip.title    "Kujdes! Ky është shërbyes i pasigurt.">
+<!ENTITY insecureServer.tooltip.details  "Për më tepër hollësi klikoni te rrethi.">
+
+<!ENTITY insecureUnencrypted.description "Email-i dhe mirëfilltësimi juaj dërgohen të fshehtëzuar, kështu që fjalëkalimi juaj (dhe mesazhi juaj) do të mund të lexoheshin lehtë nga persona të tjerë. &brandShortName;-i do t’ju lejojë të merrni postën tuaj, por do të duhej të lidheshit me furnizuesin e shërbimit të postës rreth formësimit të shërbyesit me një lidhje të sigurt.">
+<!ENTITY insecureSelfSigned.description  "Shërbyesi përdor një dëshmi të cilës nuk mund t’i zëmë besë, ndaj s’mund të jemi të sigurt në po e përgjon dikush a jo trafikun mes &brandShortName;-it dhe shërbyesit tuaj. &brandShortName;-i do t’ju lejojë të hyni te posta juaj, por do të duhej më mirë t’i kërkonit furnizuesit të shërbimit të postës ta formësojë shërbyesin me një dëshmi të besuar.">
+<!ENTITY secureServer.description        "Përgëzime! Ky është shërbyes i sigurt.">

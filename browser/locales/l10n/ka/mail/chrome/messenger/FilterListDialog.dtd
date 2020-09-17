@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "წერილის ფილტრები">
+<!ENTITY nameColumn.label "ფილტრის სახელი">
+<!ENTITY activeColumn.label "ჩართვა">
+<!ENTITY newButton.label "ახალი…">
+<!ENTITY newButton.accesskey "ა">
+<!ENTITY newButton.popupCopy.label "ასლი…">
+<!ENTITY newButton.popupCopy.accesskey "ლ">
+<!ENTITY editButton.label "ჩასწორება…">
+<!ENTITY editButton.accesskey "ჩ">
+<!ENTITY deleteButton.label "წაშლა">
+<!ENTITY deleteButton.accesskey "წ">
+<!ENTITY reorderTopButton "დასაწყისში">
+<!ENTITY reorderTopButton.accessKey "ა">
+<!ENTITY reorderTopButton.toolTip "ფილტრის გადაადგილება, რომ იგი ყველა სხვა დანარჩენზე ადრე შესრულდეს">
+<!ENTITY reorderUpButton.label "აწევა">
+<!ENTITY reorderUpButton.accesskey "ე">
+<!ENTITY reorderDownButton.label "ჩამოწევა">
+<!ENTITY reorderDownButton.accesskey "ო">
+<!ENTITY reorderBottomButton "ბოლოში">
+<!ENTITY reorderBottomButton.accessKey "ბ">
+<!ENTITY reorderBottomButton.toolTip "ფილტრის გადაადგილება, რომ იგი ყველა სხვა დანარჩენზე გვიან შესრულდეს">
+<!ENTITY filterHeader.label "ჩართული ფილტრები გაეშვება შემდეგი თანმიმდევრობით.">
+<!ENTITY filtersForPrefix.label "ფილტრები:">
+<!ENTITY filtersForPrefix.accesskey "ფ">
+<!ENTITY viewLogButton.label "ფილტრის ჩანაწერები">
+<!ENTITY viewLogButton.accesskey "ჩ">
+<!ENTITY runFilters.label "გაშვება ახლავე">
+<!ENTITY runFilters.accesskey "გ">
+<!ENTITY stopFilters.label "შეჩერება">
+<!ENTITY stopFilters.accesskey "შ">
+<!ENTITY folderPickerPrefix.label "არჩეული ფილტრ(ებ)ის გაშვება:">
+<!ENTITY folderPickerPrefix.accesskey "რ">
+<!ENTITY helpButton.label "დახმარება">
+<!ENTITY helpButton.accesskey "დ">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "ფილტრის მოძიება სახელით…">

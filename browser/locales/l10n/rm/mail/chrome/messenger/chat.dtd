@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Contacts online">
+<!ENTITY offlineContactsHeader.label   "Contacts offline">
+<!ENTITY conversationsHeader.label     "Conversaziuns">
+<!ENTITY searchResultConversation.label "Resultat da tschertgar">
+<!ENTITY chat.noConv.title             "Las conversaziuns vegnan mussadas qua.">
+<!ENTITY chat.noConv.description       "Utilisescha la glista da contacts da vart sanestra per cumenzar ina conversaziun.">
+<!ENTITY chat.noPreviousConv.description       "Actualmain n'èn naginas conversaziuns precedentas cun quest contact memorisadas en &brandShortName;.">
+<!ENTITY chat.noAccount.title             "Ti n'has anc betg endrizzà in conto da chat.">
+<!ENTITY chat.noAccount.description       "Ta lascha guidar da &brandShortName; tras il process per endrizzar in conto da chat.">
+<!ENTITY chat.accountWizard.button       "Cumenzar">
+<!ENTITY chat.noConnectedAccount.title             "Tes contos da chat n'èn betg colliads.">
+<!ENTITY chat.noConnectedAccount.description       "Ti als pos colliar en il dialog 'Status da chat':">
+<!ENTITY chat.showAccountManager.button       "Mussar il status da chat">
+
+<!ENTITY chat.participants             "Participants:">
+<!ENTITY chat.previousConversations    "Conversaziuns precedentas:">
+<!ENTITY chat.ongoingConversation      "Conversaziun actuala">
+
+<!ENTITY openConversationCmd.label     "Cumenzar ina conversaziun">
+<!ENTITY openConversationCmd.accesskey "c">
+<!ENTITY closeConversationCmd.label    "Serrar la conversaziun">
+<!ENTITY closeConversationCmd.accesskey "C">
+<!ENTITY aliasCmd.label                "Renumnar">
+<!ENTITY aliasCmd.accesskey            "R">
+<!ENTITY deleteCmd.label               "Allontanar il contact">
+<!ENTITY deleteCmd.accesskey           "l">
+
+<!ENTITY openConversationButton.tooltip  "Cumenzar ina conversaziun">
+<!ENTITY closeConversationButton.tooltip "Serrar la conversaziun">
+
+<!ENTITY addBuddyButton.label          "Agiuntar in contact">
+<!ENTITY joinChatButton.label          "Participar al chat">
+<!ENTITY chatAccountsButton.label      "Mussar ils contos">
+
+<!ENTITY status.available          "Disponibel">
+<!ENTITY status.unavailable        "Occupà">
+<!ENTITY status.offline            "Offline">
+
+<!ENTITY openLinkCmd.label            "Avrir ina colliaziun…">
+<!ENTITY openLinkCmd.accesskey        "O">

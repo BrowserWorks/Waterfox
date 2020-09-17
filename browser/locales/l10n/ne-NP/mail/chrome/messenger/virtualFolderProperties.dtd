@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "नयाँ बचत गरिएको खोजी फोल्डर">
+<!ENTITY name.label "नाम:">
+<!ENTITY name.accesskey "n">
+<!ENTITY description.label "यसको उपफोल्डरको रूपमा सिर्जना गर्नुहोस्:">
+<!ENTITY description.accesskey "C">
+
+<!ENTITY searchTermCaption.label "यो बचत गरिएका खोजी फोल्डरका लागि प्रयोग गरिएका खोजी मापदण्ड कन्फिगर गर्नुहोस्: ">
+
+<!ENTITY folderSelectionCaption.label "खोजी गर्न फोल्डर चयन गर्नुहोस्:">
+<!ENTITY chooseFoldersButton.label "रोज्नुहोस्...">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "अनलाइन खोजी गर्नुहोस् (IMAP र समाचार फोल्डरका लागि पूरा नतिजा दिन्छ तर फोल्डर खोल्न समय लाग्छ)">
+<!ENTITY searchOnline.accesskey "O">

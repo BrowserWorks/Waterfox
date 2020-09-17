@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Adresiranje">
+<!ENTITY emailCollectiontitle.label            "Kolekcija email adresa">
+<!ENTITY emailCollectionPicker.label           "Dodaj email adrese na moj:">
+<!ENTITY emailCollectiontext.label             "Email adrese iz odlaznih poruka mogu biti automatski dodane u lokalni adresar.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Automatsko dovršavanje adrese">
+<!ENTITY highlightNonMatches.label             "Istakni adrese koje se ne dovršavaju automatski">
+<!ENTITY addressingEnable.label                "Lokalni adresari">
+<!ENTITY autocompleteText.label                "Kod adresiranja poruka, traži odgovarajuće adrese u:">
+<!ENTITY directories.label                     "Server direktorija:">
+<!ENTITY directoriesNone.label                 "Nijedan">
+<!ENTITY editDirectories.label                 "Uredi direktorije…">

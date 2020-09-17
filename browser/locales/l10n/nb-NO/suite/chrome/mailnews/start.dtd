@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Velkommen til &brandShortName; e-post og nyhetsgrupper">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Velkommen til <a id="vendorURL" href="">&brandShortName;</a> e-post og nyhetsgrupper!'>
+<!ENTITY description.label
+"&brandShortName; E-post og nyhetsgrupper er en kraftig åpen-kildekode e-post og nyhetsgruppeklient
+som støtter avansert søppelpostkontroll og andre nyttige funksjoner.">
+<!ENTITY features.title "Funksjoner">
+<!ENTITY feat_multiacc.label "Støtte for flere kontoer">
+<!ENTITY feat_junk.label "Oppdaging av søppelpost">
+<!ENTITY feat_feeds.label "Nyhetskilde-leser (RSS)">
+<!ENTITY feat_filters.label "Meldingsfiltre">
+<!ENTITY feat_htmlmsg.label "Støtte for HTML-meldinger">
+<!ENTITY feat_abook.label "Adressebok">
+<!ENTITY feat_tags.label "Egendefinerbare etiketter og e-postvisninger">
+<!ENTITY feat_integration.label
+"Tett integrasjon med programpakken &brandShortName;">
+<!ENTITY dict.title "Ordbøker">
+<!ENTITY dict_intro.label "Ordbøker brukes for å stavekontrollere meldingene dine.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'Mange tilleggsordbøker kan installeres fra 
+<a id="dictURL" href="">ordbok</a>-seksjonen på
+<a href="https://addons.mozilla.org/seamonkey/">Mozilla Add-ons</a>.'>
+<!ENTITY dict_info.label2
+'Mange flere språk kan installeres fra
+<a id="dictURL" href="">ordbøker</a>-delen på
+<a href="https://addons.thunderbird.net/seamonkey/">Utvidelser for SeaMonkey og Thunderbird</a>.'>
+<!ENTITY info.title "Mer informasjon">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="http://www.mozilla.org/mailnews/">Vi</a> setter pris på feilrapporter og
+ønsker om nye funksjoner, men les <a id="releaseNotesURL" href="">versjonsnotatet</a> og søk i
+<a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> først.'>

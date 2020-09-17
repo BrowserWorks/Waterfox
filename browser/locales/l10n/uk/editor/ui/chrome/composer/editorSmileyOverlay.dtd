@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Смайлик">
+<!ENTITY insertSmiley.accesskey "С">
+
+<!ENTITY smiley1Cmd.label "Усмішка">
+<!ENTITY smiley1Cmd.accesskey "У">
+<!ENTITY smiley1Cmd.tooltip "Вставити смайлик Усмішка">
+<!ENTITY smiley2Cmd.label "Насупленість">
+<!ENTITY smiley2Cmd.accesskey "Н">
+<!ENTITY smiley2Cmd.tooltip "Вставити смайлик Насупленість">
+<!ENTITY smiley3Cmd.label "Підморгування">
+<!ENTITY smiley3Cmd.accesskey "П">
+<!ENTITY smiley3Cmd.tooltip "Вставити смайлик Підморгування">
+<!ENTITY smiley4Cmd.label "Показати язик">
+<!ENTITY smiley4Cmd.accesskey "я">
+<!ENTITY smiley4Cmd.tooltip "Вставити смайлик Показати язик">
+<!ENTITY smiley5Cmd.label "Сміх">
+<!ENTITY smiley5Cmd.accesskey "м">
+<!ENTITY smiley5Cmd.tooltip "Вставити смайлик Сміх">
+<!ENTITY smiley6Cmd.label "Збентеження">
+<!ENTITY smiley6Cmd.accesskey "ж">
+<!ENTITY smiley6Cmd.tooltip "Вставити смайлик Збентеження">
+<!ENTITY smiley7Cmd.label "Невизначеність">
+<!ENTITY smiley7Cmd.accesskey "е">
+<!ENTITY smiley7Cmd.tooltip "Вставити смайлик Невизначеність">
+<!ENTITY smiley8Cmd.label "Сюрприз">
+<!ENTITY smiley8Cmd.accesskey "ю">
+<!ENTITY smiley8Cmd.tooltip "Вставити смайлик Сюрприз">
+<!ENTITY smiley9Cmd.label "Поцілунок">
+<!ENTITY smiley9Cmd.accesskey "ц">
+<!ENTITY smiley9Cmd.tooltip "Вставити смайлик Поцілунок">
+<!ENTITY smiley10Cmd.label "Крик">
+<!ENTITY smiley10Cmd.accesskey "К">
+<!ENTITY smiley10Cmd.tooltip "Вставити смайлик Крик">
+<!ENTITY smiley11Cmd.label "Кльовий">
+<!ENTITY smiley11Cmd.accesskey "о">
+<!ENTITY smiley11Cmd.tooltip "Вставити смайлик Кльовий">
+<!ENTITY smiley12Cmd.label "Багата усмішка">
+<!ENTITY smiley12Cmd.accesskey "Б">
+<!ENTITY smiley12Cmd.tooltip "Вставити смайлик Багата усмішка">
+<!ENTITY smiley13Cmd.label "Нога в роті">
+<!ENTITY smiley13Cmd.accesskey "г">
+<!ENTITY smiley13Cmd.tooltip "Вставити смайлик Нога в роті">
+<!ENTITY smiley14Cmd.label "Невинність">
+<!ENTITY smiley14Cmd.accesskey "и">
+<!ENTITY smiley14Cmd.tooltip "Вставити смайлик Невинність">
+<!ENTITY smiley15Cmd.label "Плач">
+<!ENTITY smiley15Cmd.accesskey "л">
+<!ENTITY smiley15Cmd.tooltip "Вставити смайлик Плач">
+<!ENTITY smiley16Cmd.label "Замкнені губи">
+<!ENTITY smiley16Cmd.accesskey "З">
+<!ENTITY smiley16Cmd.tooltip "Вставити смайлик Замкнені губи">
+<!ENTITY SmileButton.label "Вставити смайлик">
+<!ENTITY SmileButton.tooltip "Вставка смайлика">

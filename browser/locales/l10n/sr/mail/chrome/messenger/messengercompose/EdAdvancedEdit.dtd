@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Напредни уређивач својстава">
+<!ENTITY AttName.label                  "Особина: ">
+<!ENTITY AttValue.label                 "Вредност: ">
+<!ENTITY PropertyName.label             "Својство: ">
+<!ENTITY currentattributesfor.label     "Тренутне особине за: ">
+<!ENTITY tree.attributeHeader.label     "Особина">
+<!ENTITY tree.propertyHeader.label      "Својство">
+<!ENTITY tree.valueHeader.label         "Вредност">
+<!ENTITY tabHTML.label                  "HTML особине">
+<!ENTITY tabCSS.label                   "Угнежђени стил">
+<!ENTITY tabJSE.label                   "JavaScript догађаји">
+
+<!ENTITY editAttribute.label    "Кликните на ставку изнад да бисте променили њену вредност">
+<!ENTITY removeAttribute.label  "Уклони">

@@ -1,0 +1,99 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "पृष्ठ लोड गर्न समस्या">
+<!ENTITY retry.label "पुनःप्रयास गर्नुहोस्">
+<!ENTITY returnToPreviousPage.label "पछाडि जानुहोस्">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "सर्भर फेला परेन">
+<!ENTITY dnsNotFound.longDesc1 "<strong>यदि त्यो ठेगाना ठीक छ भने, यहाँ अन्य तीन चीजहरू छन् जुन तपाईँले प्रयास गर्न सक्नुहुन्छ:</strong>
+<ul>
+  <li>पछि पुन: प्रयास गर्नुहोस् ।</li>
+  <li>तपाईँको नेटवर्क जडान जाँच गर्नुहोस् ।</li>
+  <li>यदि तपाईँ जडान हुनुभयो तर फायरवाल भन्दा पछाडी हुनुहुन्छ भने, जाँच गर्नुहोस् कि &brandShortName; लाई वेबमा पहुँच गर्न अनुमति छ ।</li>
+</ul>">
+
+<!ENTITY fileNotFound.longDesc "<ul><li>अक्षर ठूलो पार्न वा अरु किसिमको टाइपिङ् त्रुटिको निम्ति फाइलको नाम परीक्षण गर्नुहोस्।</li> <li>फाइल सरिएको, नाम परिवर्तन गरिएको वा मेटिएको परीक्षणको निम्ति हेर्नुहोस्।</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>यो हटाइएको, सारीएको, अथवा फाइलको अनुमतीले गर्दा पहुँच नहुन सक्छ।</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>&brandShortName; कुनै कारणले यो पृष्ठ लोड गर्न सकिंदैन ।</p>">
+
+<!ENTITY captivePortal.title "सञ्जालमा लगइन गर्नुहोस्">
+<!ENTITY captivePortal.longDesc2 "<p>इन्टरनेटमा पहुँच गर्नु अघि तपाईँले यस नेटवर्कमा लग इन गर्नु पर्छ ।</p>">
+
+<!ENTITY openPortalLoginPage.label2 "नेटवर्क लगइन पृष्ठ खोल्नुहोस्">
+
+<!ENTITY malformedURI.pageTitle "अवैध URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>अनुरोध गरिएको कागजात &brandShortName; को क्यासमा उपलब्ध छैन।</p><ul><li>सुरक्षालाई ध्यानमा राख्दै, &brandShortName; ले स्वतः संवेदनशील कागजातहरूलाई पुनः अनुरोध गर्दैन।</li><li>कागजात पुनः अनुरोध गर्नलाई पुनः प्रयास क्लिक गर्नुहोस्।</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>अनलाइन मोडमा स्विच तथा पृष्ठ पुनः लोड गर्न &quot;पुनः प्रयास&quot; मा थिच्नुहोस् ।</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul>
+  <li> कृपया यो समस्याको जानकारी गराउन वेबसाइट धनीलाई सम्पर्क गर्नुहोस् ।</li></ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul>
+  <li> कृपया यो समस्याको जानकारी गराउन वेबसाइट धनीलाई सम्पर्क गर्नुहोस् ।</li></ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>यो ठेगाना खोल्नको लागि तपाईँले अर्को सफ्टवेयर स्थापना गर्नुपर्ने हुनसक्छ।</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul>
+  <li>यिनीहरू ठिक छ भन्ने सुनिश्चित गर्नको लागि प्रोक्सी सेटिङहरू जाँच गर्नुहोस्।</li>
+  <li>प्रोक्सी सर्भरले काम गरिराखेको छ भन्ने सुनिश्चत गर्न आफ्नो सञ्जाल प्रशासकसँग सम्पर्क गर्नुहोस्।</li>
+    </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>यिनीहरू ठिक छ भन्ने सुनिश्चित गर्न प्रोक्सी सेटिङहरू जाँच गर्नुहोस्।</li> <li>तपाईँको कम्प्युटरमा चलिरहेको सञ्जाल जडान छ भन्ने सुनिश्चितगर्नको लागि जाँच गर्नुहोस्।</li> <li>यदि तपाईँको क्म्प्युटर वा सञ्जाल कुनै फायरवाल अथवा प्रोक्सीबाट सुरक्षित गरिएको छ भने, &brandShortName; लाई वेब पहुँचको अनुमति छ भन्ने सुनिश्चित गर्नुहोस्।</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>यो समस्या कहिले कहिँ उत्पन्न हुनुको कारण कुकिज अक्षम गारिएको वा स्वीकार्न नसकिएकोले गर्दा हुने गर्दछ।</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul>
+  <li>तपाईँको प्रणालीमा व्यक्तिगत सुरक्षा प्रबन्धक स्थापित छ भनेर सुनिश्चित गर्न जाँच गर्नुहोस् ।</li>
+  <li> सर्भरमा भएको गैर मानक कन्फिगरेसनको कारण यस्तो हुन सक्छ ।</li></ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul>
+  <li>प्राप्त गरेको तथ्याङ्कको प्रमाणीकरण गर्न नसकेको हुँदा तपाईँले हेर्न खोजिरहनुभएको पृष्ठ देखाउन सकिएन ।</li>
+  <li>कृपया वेबसाइट मालिकलाई यो समस्याको बारेमा जानकारी गराउनुहोस् ।</li></ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>यो साइट केही समयको लागि उपलब्ध नभएको वा व्यस्त रहेको हुनसक्छ। कृपया केहि क्षणपछि पुनः प्रयास गर्नुहोस्।</li> <li>यदि कुनै पनि पृष्ठहरू लोड नभएको खन्डमा, कृपया आफ्नो क्म्प्युटरको सञ्जाल जडान जाँच गर्नुहोस्।</li> <li>यदि तपाईँको कम्प्युटर वा सञ्जाल कुनै फायरवाल अथवा प्रोक्सीबाट सुरक्षित गरिएको छ भने, &brandShortName; लाई वेब पहुँचको अनुमति छ भन्ने निश्चय गर्नुहोस्।</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ले यो पृष्ठ लोड हुनबाट यसप्रकारले रोक्यो किनभने यो पृष्ठमा सामग्री सुरक्षा नीति छ जसले यसलाई अस्विकार गर्यो।</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>डाटा ट्रान्समिसनमा खराबी भएको पत्ता लागेकोले तपाईँले हेर्न खोज्नु भएको पृष्ठ देखाउन मिलेन। </p><ul><li>कृपया वेबसाइट मालिकलाई यस खराबीको बारेमा जानकारी दिन सम्पर्क गर्नुहोस्।</li></ul>">
+
+
+<!ENTITY errorReporting.automatic2 "यो जस्तै त्रुटिहरूको सुचना दिएर Mozillaलाई खराब साइटहरू चिन्न र ब्लक गर्न मद्दत गर्नुहोस्">
+<!ENTITY errorReporting.learnMore "अझ जान्नुहोस्…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>कृपया यो समस्याको जानकारी गराउन वेबसाइट धनीलाई सम्पर्क गर्नुहोस्।</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "अग्रसर जानकारी: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.copyToClipboard.label "क्लिपबोर्डमा पाठ प्रतिलिपि गर्नुहोस्">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> ले सुरक्षा टेक्नोलोजी चलाउछ जुन मिति गुज्रेको छ र आक्रमण प्रति असुरक्षित छ। हमलाकारीले गोप्य कुरा सजिलै खोल्न सक्छ जुन तपाईँले सुरक्षित छ भनेर सोच्नु हुन्छ। वेबसाइट मुख्य प्रबन्धकले साइट हेर्नु भन्दा पहिले सर्भर निर्धारित गर्नु पर्छ।</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p> । ">
+
+
+<!ENTITY prefReset.longDesc "तपाईँको नेटवर्क सुरक्षा सेटिङ्हरूका कारण यो पैदा भएको जस्तो देखिन्छ। के तपाईँ पूर्वनिर्धारित सेटिङहरू पुनः स्थापित गर्न चाहनुहुन्छ?">
+<!ENTITY prefReset.label "पूर्वनिर्धारित सेटिङहरू पूर्वावस्थामा ल्याउनुहोस्">
+

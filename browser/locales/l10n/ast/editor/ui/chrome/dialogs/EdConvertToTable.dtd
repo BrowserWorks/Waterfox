@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Convertir a tabla">
+<!ENTITY instructions1.label "Composer crea una filera nueva na tabla por cada párrafu na seleición.">
+<!ENTITY instructions2.label "Esbilla'l caráuter usáu pa separtar la seleición en columnes:">
+<!ENTITY commaRadio.label "Coma">
+<!ENTITY spaceRadio.label "Espaciu">
+<!ENTITY otherRadio.label "Otru caráuter:">
+<!ENTITY deleteCharCheck.label "Desaniciar caráuter separtador">
+<!ENTITY collapseSpaces.label "Inorar espacios estra">
+<!ENTITY collapseSpaces.tooltip "Convertir espacios axacentes a un separtador">

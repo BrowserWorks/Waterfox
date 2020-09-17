@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Väri">
+<!ENTITY lastPickedColor.label "Viimeisin poimittu väri">
+<!ENTITY lastPickedColor.accessKey "V">
+<!ENTITY chooseColor1.label "Valitse väri:">
+<!ENTITY chooseColor2.label "Syötä HTML-värikoodi">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(esim.: &quot;#0000ff&quot; tai &quot;blue&quot;):">
+<!ENTITY default.label "Oletus">
+<!ENTITY default.accessKey "O">
+<!ENTITY palette.label "Paletti:">
+<!ENTITY standardPalette.label "Vakio">
+<!ENTITY webPalette.label "Kaikki web-värit">
+<!ENTITY background.label "Tausta kohteelle:">
+<!ENTITY background.accessKey "u">
+<!ENTITY table.label "Taulukko">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Solut">
+<!ENTITY cell.accessKey "S">

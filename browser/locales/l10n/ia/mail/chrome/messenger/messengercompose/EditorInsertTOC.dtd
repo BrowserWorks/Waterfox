@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Indice del contentos">
+<!ENTITY buildToc.label      "Construer tabella de contentos de:">
+<!ENTITY tag.label           "Tag:">
+<!ENTITY class.label         "Classe:">
+<!ENTITY header1.label       "Nivello 1">
+<!ENTITY header2.label       "Nivello 2">
+<!ENTITY header3.label       "Nivello 3">
+<!ENTITY header4.label       "Nivello 4">
+<!ENTITY header5.label       "Nivello 5">
+<!ENTITY header6.label       "Nivello 6">
+<!ENTITY makeReadOnly.label  "Render la tabella de contentos de solo lectura">
+<!ENTITY orderedList.label   "Numerar tote le entratas in le tabella de contentos">

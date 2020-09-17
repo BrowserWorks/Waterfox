@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "फिल्टर लॉग">
+<!ENTITY viewLogInfo.text "फिल्टर लाग फिल्टर दस्तावेजित करता है जो इस खाते के लिये चलाया गया है. जांचपेटी का प्रयोग करें लॉगिंग सक्रिय करने के लिये.">
+<!ENTITY clearLog.label "लॉग साफ करें">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "फिल्टर लाग सक्रिय करें">
+<!ENTITY enableLog.accesskey "E">
+<!ENTITY closeLog.label "बंद करें">
+<!ENTITY closeLog.accesskey "o">

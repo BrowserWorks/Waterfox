@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Conturi - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Stare mesagerie instant">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Cont nou">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Închide">
+<!ENTITY accountManager.close.accesskey      "l">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Niciun cont configurat încă">
+<!ENTITY accountManager.noAccount.description "Dă clic pe butonul &accountManager.newAccount.label; și lasă &brandShortName; să te ghideze în configurarea contului.">
+<!ENTITY account.autoSignOn.label     "Autentificare la pornire">
+<!ENTITY account.autoSignOn.accesskey "S">
+<!ENTITY account.connect.label        "Conectare">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "Deconectare">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "Șterge">
+<!ENTITY account.delete.accesskey     "D">
+<!ENTITY account.edit.label           "Proprietăți">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "Mută în sus">
+<!ENTITY account.movedown.label       "Mută în jos">
+<!ENTITY account.cancelReconnection.label         "Anulează reconectarea">
+<!ENTITY account.cancelReconnection.accesskey     "A">
+<!ENTITY account.copyDebugLog.label     "Copiază jurnalul de depanare">
+<!ENTITY account.copyDebugLog.accesskey "C">
+<!ENTITY account.showDebugLog.label     "Afișează jurnalul de depanare">
+<!ENTITY account.showDebugLog.accesskey "H">
+<!ENTITY account.connecting           "Se conectează…">
+<!ENTITY account.disconnecting        "Se deconectează…">
+<!ENTITY account.disconnected         "Nu este conectat">

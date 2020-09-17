@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "უსარგებლო ფოსტის შესახებ">
+<!ENTITY window.width  "480">
+<!ENTITY info1a.label  "&brandShortName; თავადვე ამოიცნობს შემოსულ ჯართს (უსარგებლო წერილებს, ე.წ. „სპამს“). წერილები, რომელთაც &brandShortName; მიიჩნევს ჯართად, აღნიშნული იქნება შესაბამისი ხატულათი">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "თავდაპირველად, &brandShortName; უნდა გაავარჯიშოთ ჯართის ამოცნობაში, ჯართის ხელსაწყოთა ზოლის დახმარებით, თქვენთვის სასურველი და არასასურველი წერილები მონიშვნით.">
+<!ENTITY info3.label   "მას შემდეგ რაც პროგრამა სწორად ამოიცნობს ჯართს, შეგიძლიათ ჯართის კონტროლის გამოყენება უსარგებლო წერილების 'ჯართი'-ს საქაღალდეში ავტომატურად გადასაგზავნად.">
+<!ENTITY info4.label   "დამატებითი ინფორმაციისთვის დააწკაპეთ „დახმარებაზე“.">

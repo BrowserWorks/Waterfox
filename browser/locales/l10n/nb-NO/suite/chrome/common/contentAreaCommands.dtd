@@ -1,0 +1,170 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label     "Avslå sprettoppvinduer fra dette nettstedet">
+<!ENTITY popupWindowRejectCmd.accesskey "o">
+<!ENTITY popupWindowAllowCmd.label      "Tillat sprettoppvinduer fra dette nettstedet">
+<!ENTITY popupWindowAllowCmd.accesskey  "o">
+<!ENTITY openLinkCmdInTab.label       "Åpne lenke i ny fane">
+<!ENTITY openLinkCmdInTab.accesskey   "p">
+<!ENTITY openLinkCmd.label            "Åpne lenke i nytt vindu">
+<!ENTITY openLinkCmd.accesskey        "Å">
+<!ENTITY openLinkCmdInPrivateWindow.label     "Åpne lenke i privat vindu">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey "n">
+<!ENTITY openLinkInWindowCmd.label    "Åpne">
+<!ENTITY openLinkInWindowCmd.accesskey "Å">
+<!ENTITY openFrameCmd.label           "Åpne ramme i nytt vindu">
+<!ENTITY openFrameCmd.accesskey       "Å">
+<!ENTITY openFrameCmdInTab.label      "Åpne ramme i ny fane">
+<!ENTITY openFrameCmdInTab.accesskey  "p">
+<!ENTITY keywordfield.label           "Legg til et nøkkelord i dette søket …">
+<!ENTITY keywordfield.accesskey       "L">
+<!ENTITY showOnlyThisFrameCmd.label     "Vis bare denne rammen">
+<!ENTITY showOnlyThisFrameCmd.accesskey "b">
+<!ENTITY goBackCmd.label              "Tilbake">
+<!ENTITY goBackCmd.accesskey          "T">
+<!ENTITY goForwardCmd.label           "Frem">
+<!ENTITY goForwardCmd.accesskey       "F">
+<!ENTITY goUpCmd.label                "Opp">
+<!ENTITY goUpCmd.accesskey            "O">
+<!ENTITY reloadCmd.label              "Oppdater">
+<!ENTITY reloadCmd.accesskey          "O">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY stopCmd.label                "Stopp">
+<!ENTITY stopCmd.accesskey            "S">
+<!ENTITY reloadFrameCmd.label         "Oppdater ramme">
+<!ENTITY reloadFrameCmd.accesskey     "O">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Vis kildekode for valgt tekst">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Vis MathML-kildekode">
+<!ENTITY viewPartialSourceCmd.accesskey "V">
+<!ENTITY viewPageSourceCmd.label      "Vis kildekode">
+<!ENTITY viewPageSourceCmd.accesskey  "k">
+<!ENTITY viewFrameSourceCmd.label     "Vis kildekode for rammen">
+<!ENTITY viewFrameSourceCmd.accesskey "V">
+<!ENTITY viewPageInfoCmd.label        "Vis sideinformasjon">
+<!ENTITY viewPageInfoCmd.accesskey    "V">
+<!ENTITY viewFrameInfoCmd.label       "Vis rammeinformasjon">
+<!ENTITY viewFrameInfoCmd.accesskey   "i">
+<!ENTITY fitImageCmd.label            "Tilpass bildet til vinduet">
+<!ENTITY fitImageCmd.accesskey        "T">
+<!ENTITY reloadImageCmd.label         "Oppdater bilde">
+<!ENTITY reloadImageCmd.accesskey     "O">
+<!ENTITY viewImageCmd.label           "Vis bilde">
+<!ENTITY viewImageCmd.accesskey       "V">
+<!ENTITY viewImageInfoCmd.label       "Vis bildeinfo">
+<!ENTITY viewImageInfoCmd.accesskey   "f">
+<!ENTITY viewVideoCmd.label           "Vis video">
+<!ENTITY viewVideoCmd.accesskey       "V">
+<!ENTITY viewBGImageCmd.label         "Vis bakgrunnsbilde">
+<!ENTITY viewBGImageCmd.accesskey     "b">
+<!ENTITY setDesktopBackgroundCmd.label     "Sett skrivebordsbakgrunn …">
+<!ENTITY setDesktopBackgroundCmd.accesskey "S">
+<!ENTITY bookmarkPageCmd.label        "Bokmerk denne siden…">
+<!ENTITY bookmarkPageCmd.accesskey    "B">
+<!ENTITY bookmarkLinkCmd.label        "Bokmerk denne lenken…">
+<!ENTITY bookmarkLinkCmd.accesskey    "B">
+<!ENTITY bookmarkFrameCmd.label       "Bokmerk denne rammen…">
+<!ENTITY bookmarkFrameCmd.accesskey   "R">
+<!ENTITY savePageAsCmd.label          "Lagre siden som …">
+<!ENTITY savePageCmd.label            "Lagre siden">
+<!ENTITY savePageCmd.accesskey        "a">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameAsCmd.label         "Lagre ramme som …">
+<!ENTITY saveFrameCmd.label           "Lagre ramme">
+<!ENTITY saveFrameCmd.accesskey       "S">
+<!ENTITY printFrameCmd.label          "Skriv ut ramme…">
+<!ENTITY printFrameCmd.accesskey      "S">
+<!ENTITY saveLinkAsCmd.label          "Lagre lenkemål som …">
+<!ENTITY saveLinkCmd.label            "Lagre lenkemål">
+<!ENTITY saveLinkCmd.accesskey        "a">
+<!ENTITY saveImageAsCmd.label         "Lagre bilde som …">
+<!ENTITY saveImageCmd.label           "Lagre bilde">
+<!ENTITY saveImageCmd.accesskey       "L">
+<!ENTITY saveVideoCmd.label           "Lagre video som …">
+<!ENTITY saveVideoCmd.accesskey       "L">
+<!ENTITY saveAudioCmd.label           "Lagre lyd som …">
+<!ENTITY saveAudioCmd.accesskey       "L">
+<!ENTITY copyLinkCmd.label            "Kopier lenkemål">
+<!ENTITY copyLinkCmd.accesskey        "K">
+<!ENTITY copyImageCmd.label           "Kopier bildeadresse">
+<!ENTITY copyImageCmd.accesskey       "b">
+<!ENTITY copyVideoURLCmd.label        "Kopier videoadresse">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Kopier lydadresse">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY metadataCmd.label            "Egenskaper">
+<!ENTITY metadataCmd.accesskey        "E">
+<!ENTITY copyEmailCmd.label           "Kopier e-postadresse">
+<!ENTITY copyEmailCmd.accesskey       "A">
+<!ENTITY thisFrameMenu.label          "Denne rammen">
+<!ENTITY thisFrameMenu.accesskey      "D">
+<!ENTITY mediaPlay.label              "Spill av">
+<!ENTITY mediaPlay.accesskey          "S">
+<!ENTITY mediaPause.label             "Pause">
+<!ENTITY mediaPause.accesskey         "P">
+<!ENTITY mediaMute.label              "Slå av lyd">
+<!ENTITY mediaMute.accesskey          "S">
+<!ENTITY mediaUnmute.label            "Slå på lyd">
+<!ENTITY mediaUnmute.accesskey        "l">
+<!ENTITY mediaPlaybackRate.label        "Avspillingshastighet">
+<!ENTITY mediaPlaybackRate.accesskey    "A">
+<!ENTITY mediaPlaybackRate050.label     "Sakte (½×)">
+<!ENTITY mediaPlaybackRate050.accesskey "S">
+<!ENTITY mediaPlaybackRate100.label     "Normal">
+<!ENTITY mediaPlaybackRate100.accesskey "N">
+<!ENTITY mediaPlaybackRate125.label     "Rask hastighet (1¼×)">
+<!ENTITY mediaPlaybackRate125.accesskey "R">
+<!ENTITY mediaPlaybackRate150.label     "Høy (1½×)">
+<!ENTITY mediaPlaybackRate150.accesskey "H">
+<!ENTITY mediaPlaybackRate200.label     "Dobbel hastighet">
+<!ENTITY mediaPlaybackRate200.accesskey "D">
+<!ENTITY mediaLoop.label              "Repeter">
+<!ENTITY mediaLoop.accesskey          "e">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label      "Vis mediakontroller">
+<!ENTITY mediaShowControls.accesskey  "V">
+<!ENTITY mediaHideControls.label      "Skjul mediakontroller">
+<!ENTITY mediaHideControls.accesskey  "k">
+<!ENTITY videoFullScreen.label        "Fullskjerm">
+<!ENTITY videoFullScreen.accesskey    "F">
+<!ENTITY videoSaveImage.label         "Lagre øyeblikksbilde som …">
+<!ENTITY videoSaveImage.accesskey     "L">
+<!ENTITY videoShowStats.label         "Vis statistikk">
+<!ENTITY videoShowStats.accesskey     "t">
+<!ENTITY videoHideStats.label         "Skjul statistikk">
+<!ENTITY videoHideStats.accesskey     "t">
+<!ENTITY search.accesskey             "N">
+<!ENTITY bidiSwitchPageDirectionItem.label        "Bytt sideretning">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "d">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Bytt tekstretning">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "t">
+<!ENTITY spellAddToDictionary.label     "Legg til i ordbok">
+<!ENTITY spellAddToDictionary.accesskey "L">
+<!ENTITY spellUndoAddToDictionary.label      "Angre legg til i ordbok">
+<!ENTITY spellUndoAddToDictionary.accesskey  "t">
+<!ENTITY spellIgnoreWord.label          "Ignorer ord">
+<!ENTITY spellIgnoreWord.accesskey      "n">
+<!ENTITY spellCheckEnable.label         "Stavekontroller">
+<!ENTITY spellCheckEnable.accesskey     "S">
+<!ENTITY spellNoSuggestions.label       "(Ingen forslag)">
+<!ENTITY spellDictionaries.label        "Språk">
+<!ENTITY spellDictionaries.accesskey    "r">
+<!ENTITY spellAddDictionaries.label     "Last ned flere ordbøker …">
+<!ENTITY spellAddDictionaries.accesskey "L">
+
+<!ENTITY fillLoginMenu.label          "Fyll ut innlogging">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "Fyll inn passord">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "Fyll inn brukernavn">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(Ingen innloggingsforslag)">
+<!ENTITY viewSavedLogins.label        "Vis lagrede innlogginger">
+
+<!-- Developer Tools -->
+<!ENTITY devtoolsInspect.label          "Inspiser element">
+<!ENTITY devtoolsInspect.accesskey      "n">

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Odinštalácia poskytovateľa">
+<!ENTITY providerUninstall.accept.label                    "Odhlásiť označené">
+<!ENTITY providerUninstall.accept.accesskey                "O">
+<!ENTITY providerUninstall.cancel.label                    "Ponechať doplnok">
+<!ENTITY providerUninstall.cancel.accesskey                "P">
+<!ENTITY providerUninstall.preName.label                   "Požiadali ste o odinštaláciu alebo zakázanie:">
+<!ENTITY providerUninstall.postName.label                  "Toto spôsobí vypnutie dole uvedených kalendárov.">
+<!ENTITY providerUninstall.reinstallNote.label             "Ak neplánujete opätovne nainštalovať tohto poskytovateľa, mali by ste sa odhlásiť z odberu jeho kalendárov.">

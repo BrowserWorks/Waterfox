@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Sćehnjenja">
+<!ENTITY aboutDownloads.header                     "Waše sćehnjenja">
+<!ENTITY aboutDownloads.empty                      "Žane sćehnjenja">
+
+<!ENTITY aboutDownloads.open                       "Wočinić">
+<!ENTITY aboutDownloads.remove                     "Zhašeć">
+<!ENTITY aboutDownloads.removeAll                  "Wšě zhašeć">
+<!ENTITY aboutDownloads.pause                      "Přestawka">
+<!ENTITY aboutDownloads.resume                     "Pokročować">
+<!ENTITY aboutDownloads.cancel                     "Přetorhnyć">
+<!ENTITY aboutDownloads.retry                      "Hišće raz spytać">

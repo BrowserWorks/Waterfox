@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Outgoing Server (SMTP) Settings">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpListAdd.label  "Add…">
+<!ENTITY smtpListAdd.accesskey  "d">
+<!ENTITY smtpListEdit.label "ویرایش…">
+<!ENTITY smtpListEdit.accesskey "و">
+<!ENTITY smtpListDelete.label "حذف">
+<!ENTITY smtpListDelete.accesskey "ح">
+<!ENTITY smtpListSetDefault.label "Set Default">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDescription.label "Description: ">
+<!ENTITY serverName.label "Server Name: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "User Name: ">
+<!ENTITY connectionSecurity.label "Connection Security: ">
+

@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Naročnine na spletne vire">
+<!ENTITY learnMore.label             "Več o virih">
+
+<!ENTITY feedTitle.label             "Naziv:">
+<!ENTITY feedTitle.accesskey         "N">
+
+<!ENTITY feedLocation.label          "Spletni naslov vira:">
+<!ENTITY feedLocation.accesskey      "v">
+<!ENTITY feedLocation2.placeholder   "Vnesite veljaven spletni naslov vira">
+<!ENTITY locationValidate.label      "Preveri">
+<!ENTITY validateText.label          "Preveri veljavnost in pridobi veljaven spletni naslov.">
+
+<!ENTITY feedFolder.label            "Shrani članke v:">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Preveri za nove članke vsakih ">
+<!ENTITY biffStart.accesskey         "e">
+<!ENTITY biffMinutes.label           "minut">
+<!ENTITY biffMinutes.accesskey       "m">
+<!ENTITY biffDays.label              "dni">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Objavitelj priporoča:">
+
+<!ENTITY quickMode.label             "Pokaži povzetek članka namesto nalaganja spletne strani">
+<!ENTITY quickMode.accesskey         "k">
+
+<!ENTITY autotagEnable.label         "Samodejno ustvari oznake iz imen &lt;kategorij&gt; vira">
+<!ENTITY autotagEnable.accesskey     "S">
+<!ENTITY autotagUsePrefix.label      "Oznakam dodaj predpono:">
+<!ENTITY autotagUsePrefix.accesskey  "O">
+<!ENTITY autoTagPrefix.placeholder   "Vnesite predpono oznak">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Dodaj">
+<!ENTITY button.addFeed.accesskey    "a">
+<!ENTITY button.verifyFeed.label     "Preveri">
+<!ENTITY button.verifyFeed.accesskey "v">
+<!ENTITY button.updateFeed.label     "Posodobi">
+<!ENTITY button.updateFeed.accesskey "P">
+<!ENTITY button.removeFeed.label     "Odstrani">
+<!ENTITY button.removeFeed.accesskey "r">
+<!ENTITY button.importOPML.label     "Uvozi">
+<!ENTITY button.importOPML.accesskey "U">
+<!ENTITY button.exportOPML.label     "Izvozi">
+<!ENTITY button.exportOPML.accesskey "z">
+<!ENTITY button.exportOPML.tooltip   "Izvozi vire s strukturo map; ctrl klik ali ctrl enter za izvoz virov kot seznam">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Zapri">

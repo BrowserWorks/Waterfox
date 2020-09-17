@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Takvim araç çubuğu">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "T">
+<!ENTITY lightning.toolbar.task.name "Görev araç çubuğu">
+<!ENTITY lightning.toolbar.task.name.accesskey "G">
+
+<!ENTITY lightning.toolbar.sync.label "Eşitle">
+<!ENTITY lightning.toolbar.sync.tooltip "Takvimleri yeniden yükle ve değişiklikleri eşitle">
+<!ENTITY lightning.toolbar.delete.label "Sil">
+<!ENTITY lightning.toolbar.delete.tooltip "Seçilen etkinlikleri veya görevleri sil">
+<!ENTITY lightning.toolbar.edit.label "Düzenle">
+<!ENTITY lightning.toolbar.edit.tooltip "Seçilen etkinliği veya görevi sil">
+<!ENTITY lightning.toolbar.gototoday.label "Bugüne git">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Bugüne git">
+<!ENTITY lightning.toolbar.print.label "Yazdır">
+<!ENTITY lightning.toolbar.print.tooltip "Etkinlikleri veya görevleri yazdır">
+<!-- Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.calendar.label     "Takvim">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Takvim sekmesine geç">
+<!ENTITY lightning.toolbar.calendar.accesskey "T">
+<!ENTITY lightning.toolbar.task.label         "Görevler">
+<!ENTITY lightning.toolbar.task.tooltip       "Görevler sekmesine geç">
+<!ENTITY lightning.toolbar.task.accesskey     "G">
+<!-- Toolbar write button -->
+
+<!ENTITY lightning.toolbar.newevent.label     "Etkinlik">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Yeni etkinlik oluştur">
+<!ENTITY lightning.toolbar.newtask.label      "Görev">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Yeni görev oluştur">
+<!-- Calendar and Task Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.day.label                 "Gün">
+<!ENTITY lightning.toolbar.day.accesskey             "G">
+<!ENTITY lightning.toolbar.week.label                "Hafta">
+<!ENTITY lightning.toolbar.week.accesskey            "H">
+<!ENTITY lightning.toolbar.multiweek.label           "Çok haftalı">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "k">
+<!ENTITY lightning.toolbar.month.label               "Ay">
+<!ENTITY lightning.toolbar.month.accesskey           "A">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Uygulama Menüsü">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "&brandShortName; menüsünü göster">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Takvim bölmesi">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "b">
+<!ENTITY lightning.toolbar.calendarpane.label        "Takvim bölmesini göster">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "b">

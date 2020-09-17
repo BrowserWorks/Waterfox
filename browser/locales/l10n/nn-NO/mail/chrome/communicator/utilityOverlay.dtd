@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Fil">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Ny">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Rediger">
+<!ENTITY editMenu.accesskey        "R">
+<!ENTITY undoCmd.label            "Angre">
+<!ENTITY undoCmd.accesskey          "A">
+<!ENTITY redoCmd.label            "Gjer om">
+<!ENTITY redoCmd.accesskey          "G">
+<!ENTITY deleteCmd.label          "Slett">
+<!ENTITY deleteCmd.accesskey        "S">
+<!ENTITY preferencesCmd2.label "Innstillingar">
+<!ENTITY preferencesCmd2.accesskey "I">
+<!ENTITY preferencesCmdUnix.label       "Innstillingar …">
+<!ENTITY preferencesCmdUnix.accesskey     "I">
+
+<!ENTITY customizeCmd.label "Tilpass">
+<!ENTITY customizeCmd.accesskey "p">
+
+<!ENTITY viewMenu.label          "Vis">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "Verktøylinjer">
+<!ENTITY viewToolbarsMenu.accesskey      "V">
+<!ENTITY showTaskbarCmd.label          "Statuslinje">
+<!ENTITY showTaskbarCmd.accesskey        "a">
+
+<!ENTITY closeCmd.label      "Lat att">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "L">
+
+<!ENTITY quitApplicationCmd.label  "Avslutt">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "v">
+
+<!ENTITY quitApplicationCmdUnix.label  "Avslutt">
+<!ENTITY quitApplicationCmdUnix.accesskey  "A">
+
+<!ENTITY quitApplicationCmdMac.label  "Avslutt &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "A">

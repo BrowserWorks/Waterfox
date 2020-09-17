@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Žurnalas">
+
+<!ENTITY  pref.history.caption              "Naršymo žurnalas">
+<!ENTITY  historyPages.label                "Žurnalas – tai anksčiau aplankytų tinklalapių sąrašas.">
+<!ENTITY  enableHistory.label               "Įsiminti aplankytus tinklalapius žurnale">
+<!ENTITY  enableHistory.accesskey           "m">
+<!ENTITY  clearHistory.label                "Išvalyti">
+<!ENTITY  clearHistory.accesskey            "v">
+
+<!ENTITY  locationBarHistory.caption        "Adreso lauko žurnalas">
+<!ENTITY  urlBarHistoryEnabled.caption      "Įgalinti adreso lauko žurnalą">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "d">
+<!ENTITY  clearLocationBar.label            "Išvalyti adreso lauko išskleidžiamajame meniu esantį adresų sąrašą.">
+<!ENTITY  clearLocationBarButton.label      "Išvalyti adreso lauko žurnalą">
+<!ENTITY  clearLocationBarButton.accesskey  "a">
+<!ENTITY  formfillHistory.caption           "Formos ir paieškos laukas">
+<!ENTITY  enableFormfill.label              "Įsiminti į formas ir paieškos lauką įvestus duomenis">
+<!ENTITY  enableFormfill.accesskey          "n">
+<!ENTITY  formfillExpire.label              "Formų ir paieškos lauko žurnalą laikyti">
+<!ENTITY  formfillExpire.accesskey          "F">
+<!ENTITY  formfillDays.label                "dienų">

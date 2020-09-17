@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Klaviatūra">
+<!ENTITY tabNavigationBehavior.label "Tabuliavimo klavišas (Tab)">
+<!ENTITY tabNavigationLinks.label "saitus">
+<!ENTITY tabNavigationLinks.accesskey "s">
+<!ENTITY tabNavigationForms.label "mygtukus, sąrašus, žymimąsias akutes ir langelius">
+<!ENTITY tabNavigationForms.accesskey "m">
+<!ENTITY tabNavigationTextboxes.label "Pastaba. Per teksto langelius visada galima judėti spaudžiant tabuliavimo klavišą.">
+<!ENTITY tabNavigationDesc.label "Spaudžiant klavišą Tab (vieną arba kartu su Lyg2), judėti per:">
+<!ENTITY accessibilityBrowseWithCaret.label "Klaviatūros žymeklis">
+<!ENTITY browseWithCaretDesc.label "Naršant su įjungtu klaviatūros žymekliu, teksto fragmentus galima žymėti klaviatūra.">
+<!ENTITY browseWithCaretUse.label "Įjungti klaviatūros žymeklį">
+<!ENTITY browseWithCaretUse.accesskey "k">
+<!ENTITY browseWithCaretShortCut.label "Leisti klaviatūros žymeklį įjungti ir išjungti F7 klavišu">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "Pranešti prieš įjungiant klaviatūros žymeklį">
+<!ENTITY browseWithCaretWarn.accesskey "P">

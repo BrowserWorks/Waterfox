@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY GeneratedName.label                   "Name">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "Email">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organization">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "Phonetic Name">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Nickname">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "Additional Email">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "Department">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "Title">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Mobile">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Pager">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Home Phone">
+<!ENTITY HomePhone.accesskey                   "H">
+<!ENTITY WorkPhone.label                       "Work Phone">
+<!ENTITY WorkPhone.accesskey                   "W">
+<!ENTITY ScreenName.label                      "Screen Name">
+<!ENTITY ScreenName.accesskey                  "S">
+<!ENTITY sortAscending.label                   "Ascending">
+<!ENTITY sortAscending.accesskey               "A">
+<!ENTITY sortDescending.label                  "Descending">
+<!ENTITY sortDescending.accesskey              "D">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "Compose Email To">
+<!ENTITY composeEmail.accesskey                "C">
+<!ENTITY copyAddress.label                     "Copy Email Address">
+<!ENTITY copyAddress.accesskey                 "A">
+<!ENTITY deleteAddrBookCard.label              "Delete">
+<!ENTITY deleteAddrBookCard.accesskey          "D">
+<!ENTITY newAddrBookCard.label                 "New Card…">
+<!ENTITY newAddrBookCard.accesskey             "N">
+<!ENTITY newAddrBookMailingList.label          "New Mailing List…">
+<!ENTITY newAddrBookMailingList.accesskey      "M">
+<!ENTITY addrBookCardProperties.label          "Properties">
+<!ENTITY addrBookCardProperties.accesskey      "P">

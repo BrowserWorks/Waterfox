@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Jadval kiritish">
+
+<!ENTITY size.label "Hajmi">
+<!ENTITY numRowsEditField.label "Qatorlar:">
+<!ENTITY numRowsEditField.accessKey "Q">
+<!ENTITY numColumnsEditField.label "Ustunlar:">
+<!ENTITY numColumnsEditField.accessKey "U">
+<!ENTITY widthEditField.label "Eni:">
+<!ENTITY widthEditField.accessKey "E">
+<!ENTITY borderEditField.label "Chegarasi:">
+<!ENTITY borderEditField.accessKey "C">
+<!ENTITY borderEditField.tooltip "Jadvalning chegarasi uchun raqam kiriting, chegara kerak bo‘lmasa nol (0) raqamini kiriting">
+<!ENTITY pixels.label "piksel">

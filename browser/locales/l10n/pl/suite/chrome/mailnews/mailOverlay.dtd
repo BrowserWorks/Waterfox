@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY newMessageCmd.key "M">
+<!ENTITY newMessageCmd.label "Wiadomość">
+<!ENTITY newMessageCmd.accesskey "W">
+<!ENTITY newContactCmd.label "Wizytówka…">
+<!ENTITY newContactCmd.accesskey "i">
+<!ENTITY printButton.label "Drukuj">
+<!ENTITY printButton.tooltip "Drukuj tę wiadomość">

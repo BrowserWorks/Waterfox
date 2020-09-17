@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Yuklab olishlar">
+<!ENTITY aboutDownloads.header                     "Yuklab olganlaringiz">
+<!ENTITY aboutDownloads.empty                      "Yuklab olinganlar yo‘q">
+
+<!ENTITY aboutDownloads.open                       "Ochish">
+<!ENTITY aboutDownloads.remove                     "O‘chirish">
+<!ENTITY aboutDownloads.removeAll                  "Barchasini o‘chirish">
+<!ENTITY aboutDownloads.pause                      "Pauza">
+<!ENTITY aboutDownloads.resume                     "Davom etish">
+<!ENTITY aboutDownloads.cancel                     "Bekor qilish">
+<!ENTITY aboutDownloads.retry                      "Qayta urinish">

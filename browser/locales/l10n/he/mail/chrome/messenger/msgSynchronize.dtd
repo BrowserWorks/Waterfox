@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Tomer Cohen <tomer.mozilla@tomercohen.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Tomer Cohen <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "הורדה וסנכרון הודעות">
+<!ENTITY MsgSelect.label "פריטים לשימוש לא־מקוון">
+<!ENTITY MsgSyncDesc.label "אם כבר בחרת תיקיות דואר או קבוצות דיון לשימוש לא־מקוון, אתה יכול להוריד ו/או לסנכרן אותם עכשיו. אחרת, השתמש בכפתור &quot;בחירה&quot; לבחירת תיקיות דואר וקבוצות דיון לשימוש לא־מקוון.">
+<!ENTITY MsgSyncDirections.label "הורד ו/או סנכרן את הבאים:">
+<!ENTITY syncTypeMail.label "הודעות דואר">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "הודעות קבוצות דיון">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "שלח הודעות שלא נשלחו">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "עבוד בצורה לא־מקוונת מרגע שההורדה ו/או הסינכרון יושלמו">
+<!ENTITY workOffline.accesskey "W">
+<!ENTITY selectButton.label "בחירה...">
+<!ENTITY selectButton.accesskey "E">
+<!ENTITY MsgSelectDesc.label "בחר את תיקיות הדואר וקבוצות הדיון לשימוש לא־מקוון.">
+<!ENTITY MsgSelectInd.label "הורדה">
+<!ENTITY MsgSelectItems.label "תיקיות וקבוצות דיון">

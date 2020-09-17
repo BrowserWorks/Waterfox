@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Vlastnosti skupiny polí">
+
+<!ENTITY Legend.label "Nadpis">
+<!ENTITY Legend.accesskey "N">
+
+<!ENTITY EditLegendText.label "Upraviť nadpis:">
+<!ENTITY EditLegendText.accesskey "U">
+<!ENTITY LegendAlign.label "Umiestnenie nadpisu:">
+<!ENTITY LegendAlign.accesskey "m">
+<!ENTITY AlignDefault.label "Štandardné">
+<!ENTITY AlignLeft.label "Vľavo">
+<!ENTITY AlignCenter.label "V strede">
+<!ENTITY AlignRight.label "Vpravo">
+
+<!ENTITY RemoveFieldSet.label "Odstrániť skupinu polí">
+<!ENTITY RemoveFieldSet.accesskey "d">

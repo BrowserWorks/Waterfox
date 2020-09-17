@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Assistent per importar">
+
+<!ENTITY importFromWin.label            "Importar configuraziuns, contos, cudeschets d'adressas, filters ed autras datas da:">
+<!ENTITY importFromNonWin.label         "Importar preferenzas, contos, cudeschets d'adressas, filters ed autras datas da:">
+<!ENTITY importSourceNotFound.label     "Chattà nagina applicaziun da la quala datas pon vegnir importadas.">
+
+<!ENTITY importFromNothing.label        "Importar nagut">
+<!ENTITY importFromNothing.accesskey    "n">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 u pli nov">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Importar configuraziuns ed ordinaturs dad e-mail">
+<!ENTITY importItems.title              "Datas che duain vegnir importadas">
+<!ENTITY importItems.label              "Tscherna per plaschair las datas che duain vegnir importadas:">
+
+<!ENTITY migrating.title                "Importar...">
+<!ENTITY migrating.label                "Las suandantas datas vegnan importadas actualmain:">
+
+<!ENTITY selectProfile.title            "Tscherner in profil d'utilisader">
+<!ENTITY selectProfile.label            "Ils suandants profils stattan a disposiziun per l'import:">
+
+<!ENTITY done.title                     "L'import è terminà">
+<!ENTITY done.label                     "Las suandantas datas èn vegnidas importadas cun success:">

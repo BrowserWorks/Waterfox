@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "Հաշիվներ՝ &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Ակընթարթային գրության վիճակը">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Նոր փոստարկղ">
+<!ENTITY accountManager.newAccount.accesskey "Ն">
+<!ENTITY accountManager.close.label          "Փակել">
+<!ENTITY accountManager.close.accesskey      "ա">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Որևէ փոստարկղ կազմաձևված չէ">
+<!ENTITY accountManager.noAccount.description "Սեղմեք &accountManager.newAccount.label; կոճակը, որպեսզի &brandShortName;-ը օգնի Ձեզ կարգավորելու հարցում։">
+<!ENTITY account.autoSignOn.label     "Մուտք գործել բացելիս">
+<!ENTITY account.autoSignOn.accesskey "Մ">
+<!ENTITY account.connect.label        "Կապակցել">
+<!ENTITY account.connect.accesskey    "ա">
+<!ENTITY account.disconnect.label     "Անջատել">
+<!ENTITY account.disconnect.accesskey "ջ">
+<!ENTITY account.delete.label         "Ջնջել">
+<!ENTITY account.delete.accesskey     "Ջ">
+<!ENTITY account.edit.label           "Հատկություններ">
+<!ENTITY account.edit.accesskey       "Հ">
+<!ENTITY account.moveup.label         "Վերև">
+<!ENTITY account.movedown.label       "Ներքև">
+<!ENTITY account.cancelReconnection.label         "Չեղարկել վերակապակցումը">
+<!ENTITY account.cancelReconnection.accesskey     "ե">
+<!ENTITY account.copyDebugLog.label     "Պատճենել Վրիպազերծման մատյանը">
+<!ENTITY account.copyDebugLog.accesskey "Պ">
+<!ENTITY account.showDebugLog.label     "Ցուցադրել վրիպազերծման մատյանը">
+<!ENTITY account.showDebugLog.accesskey "ո">
+<!ENTITY account.connecting           "Կապակցում...">
+<!ENTITY account.disconnecting        "Կապախզում...">
+<!ENTITY account.disconnected         "Կապակցված չէ">

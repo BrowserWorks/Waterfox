@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Kichinil Kotz'öl Juch'">
+
+<!ENTITY dimensionsBox.label "Taq runimilem">
+<!ENTITY heightEditField.label "Raqän:">
+<!ENTITY heightEditField.accessKey "G">
+<!ENTITY widthEditField.label "Ruwa:">
+<!ENTITY widthEditField.accessKey "R">
+<!ENTITY pixelsPopup.value "taq piksel">
+<!ENTITY alignmentBox.label "Cholajem">
+<!ENTITY leftRadio.label "Xokon">
+<!ENTITY leftRadio.accessKey "X">
+<!ENTITY centerRadio.label "Pa nik'aj">
+<!ENTITY centerRadio.accessKey "N">
+<!ENTITY rightRadio.label "Ajkiq'a'">
+<!ENTITY rightRadio.accessKey "A">
+
+<!ENTITY threeDShading.label "3-D Mujal">
+<!ENTITY threeDShading.accessKey "M">
+<!ENTITY saveSettings.label "Tokisäx achi'el ri e K'o wi">
+<!ENTITY saveSettings.accessKey "K">
+<!ENTITY saveSettings.tooltip "Tiyak re nuk'ulem re' richin nokisäx toq nich'ik k'ak'a kotz'öl taq juch'">

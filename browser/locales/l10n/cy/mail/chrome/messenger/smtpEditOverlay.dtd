@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Gosodiadau">
+<!ENTITY security.caption "Diogelwch a Dilysu">
+<!ENTITY serverName.label "Enw'r Gweinydd:">
+<!ENTITY serverName.accesskey "G">
+<!ENTITY serverDescription.label "Disgrifiad:">
+<!ENTITY serverDescription.accesskey "D">
+<!ENTITY serverPort.label "Porth:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "Enw Defnyddiwr:">
+<!ENTITY userName.accesskey "E">
+<!ENTITY connectionSecurity.label "Diogelwch y cysylltiad:">
+<!ENTITY connectionSecurity.accesskey "D">
+<!ENTITY connectionSecurityType-0.label "Dim">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, os ar gael">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Gweinydd SMTP">
+<!ENTITY serverPortDefault.label "Rhagosodedig:">
+<!ENTITY authMethod.label "Dull dilysu:">
+<!ENTITY authMethod.accesskey "u">

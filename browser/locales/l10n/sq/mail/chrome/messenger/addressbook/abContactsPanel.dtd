@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Veti">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Veti Libri Adresash">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Veti Kontakti">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Veti Liste Postimesh">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Shfaq Menu Konteksti Libri Adresash">
+<!ENTITY addressbookPicker.label            "Libër Adresash:">
+<!ENTITY addressbookPicker.accesskey        "L">
+<!ENTITY searchContacts.label               "Kërkoni te Kontaktet:">
+<!ENTITY searchContacts.accesskey           "o">
+<!ENTITY SearchNameOrEmail.label            "Emër ose Email">
+
+<!ENTITY addtoToFieldMenu.label             "Shtojeni te fusha Për">
+<!ENTITY addtoToFieldMenu.accesskey         "P">
+<!ENTITY addtoCcFieldMenu.label             "Shtojeni te fusha Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Shtojeni te fusha Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Fshije">
+<!ENTITY deleteAddrBookCard.accesskey       "F">
+<!ENTITY propertiesContext.label            "Veti">
+<!ENTITY propertiesContext.accesskey        "i">
+<!ENTITY abPropertiesContext.label          "Veti">
+<!ENTITY abPropertiesContext.accesskey      "i">
+<!ENTITY editContactContext.label           "Përpunoni Kontaktin">
+<!ENTITY editContactContext.accesskey       "P">
+<!ENTITY editMailingListContext.label       "Përpunoni Listën">
+<!ENTITY editMailingListContext.accesskey   "P">
+
+<!ENTITY newContactAbContext.label          "Kontakt i Ri">
+<!ENTITY newContactAbContext.accesskey      "K">
+<!ENTITY newListAbContext.label             "Listë e Re">
+<!ENTITY newListAbContext.accesskey         "L">
+
+<!ENTITY toButton.label                     "Shtoje te Për:">
+<!ENTITY toButton.accesskey                 "P">
+<!ENTITY ccButton.label                     "Shtoje te Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Shtoje te Bcc:">
+<!ENTITY bccButton.accesskey                "B">

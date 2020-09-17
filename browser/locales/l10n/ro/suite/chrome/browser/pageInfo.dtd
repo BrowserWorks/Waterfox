@@ -1,0 +1,131 @@
+<!--
+# Translator(s):
+#
+# Sergiu Bivol <sbivol87@gmail.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# strainu <crangasi2001@yahoo.com>
+# Laudatti <Laudatti@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 30em;">
+
+<!ENTITY  copy.key              "A">
+<!ENTITY  copy.label            "Copiați">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "a">
+<!ENTITY  selectall.label       "Selectați tot">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  openHelpMac.key       "?">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "General">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalURL            "Adresă:">
+<!ENTITY  generalType           "Tip:">
+<!ENTITY  generalMode           "Mod de afișare:">
+<!ENTITY  generalSize           "Mărime:">
+<!ENTITY  generalReferrer       "URL referent:">
+<!ENTITY  generalSource         "Sursă cache:">
+<!ENTITY  generalModified       "Modificat:">
+<!ENTITY  generalEncoding       "Codare:">
+<!ENTITY  generalMetaName       "Denumire">
+<!ENTITY  generalMetaContent    "Conținut">
+<!ENTITY  generalSecurityDetails           "Details">
+<!ENTITY  generalSecurityDetails.accesskey "D">
+
+<!ENTITY  formsTab              "Formă">
+<!ENTITY  formsTab.accesskey    "F">
+<!ENTITY  formAction            "Acțiune">
+<!ENTITY  formMethod            "Metodă">
+<!ENTITY  formName              "Denumire">
+<!ENTITY  formEncoding          "Codare:">
+<!ENTITY  formTarget            "Destinație:">
+<!ENTITY  formFields            "Câmpuri:">
+<!ENTITY  formLabel             "Etichetă (label)">
+<!ENTITY  formFName             "Nume câmp">
+<!ENTITY  formType              "Tip:">
+<!ENTITY  formCValue            "Valoare curentă">
+
+<!ENTITY  linksTab              "Legături">
+<!ENTITY  linksTab.accesskey    "L">
+<!ENTITY  linkNo                "Nr.">
+<!ENTITY  linkName              "Denumire">
+<!ENTITY  linkAddress           "Adresă proprie">
+<!ENTITY  linkType              "Tip:">
+<!ENTITY  linkTarget            "Destinație">
+<!ENTITY  linkAccessKey         "Tastă de acces">
+
+<!ENTITY  mediaTab              "Media ">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaURL              "Adresă:">
+<!ENTITY  mediaAlt              "Text alternativ:">
+<!ENTITY  mediaAltHeader        "Text alternativ">
+<!ENTITY  mediaAddress          "Adresă proprie">
+<!ENTITY  mediaType             "Tip:">
+<!ENTITY  mediaSize             "Mărimea">
+<!ENTITY  mediaCount            "Count">
+<!ENTITY  mediaDimensions       "Dimensiuni specificate:">
+<!ENTITY  mediaPhysDimensions   "Dimensiuni reale:">
+<!ENTITY  mediaTitle            "Denumire:">
+<!ENTITY  mediaLongdesc         "Descriere lungă:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Salvează ca…">
+<!ENTITY  mediaSaveAs.accesskey "a">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Previzualizare media:">
+
+<!ENTITY  feedTab               "Feed-uri">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Subscrie">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Permisiuni">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Folosește setările implicite">
+<!ENTITY  permAskAlways         "Always ask">
+<!ENTITY  permAllow             "Permite">
+<!ENTITY  permAllowSession      "Permite pentru sesiune">
+<!ENTITY  permBlock             "Blochează">
+<!ENTITY  permissionsFor        "Permisiuni pentru:">
+<!ENTITY  permImage             "Încarcă imaginile">
+<!ENTITY  permPopup             "Deschide ferestrele popup">
+<!ENTITY  permCookie            "Setează cookie-uri">
+<!ENTITY  permInstall           "Instalează extensii sau teme">
+<!ENTITY  permGeo               "Share Location">
+
+<!ENTITY  securityTab           "Securitate">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityHeader        "Informații despre securitatea acestei pagini">
+<!ENTITY  securityView.certView "Vezi certificatele">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Necunoscut">
+
+
+<!ENTITY  securityView.identity.header   "Identitate sait web">
+<!ENTITY  securityView.identity.owner    "Owner: ">
+<!ENTITY  securityView.identity.domain   "Sait web:">
+<!ENTITY  securityView.identity.verifier "Verified by: ">
+
+<!ENTITY  securityView.privacy.header                   "Intimitate și istoric">
+<!ENTITY  securityView.privacy.history                  "Am mai vizitat acest sait astăzi?">
+<!ENTITY  securityView.privacy.cookies                  "Stochează acest sait informații pe calculatorul meu?">
+<!ENTITY  securityView.privacy.viewCookies              "Vezi cookie-urile">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "s">
+<!ENTITY  securityView.privacy.passwords                "Am salvat vreo parolă pentru acest sait?">
+<!ENTITY  securityView.privacy.viewPasswords            "Vezi parolele salvate">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "c">
+
+<!ENTITY  securityView.technical.header                 "Detalii tehnice">

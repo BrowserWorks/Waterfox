@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP-asetukset">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Suoran yhteyden asetukset">
+<!ENTITY prefProxy.label                     "Välityspalvelinyhteyden asetukset">
+<!ENTITY prefEnableHTTP10.label              "Käytä HTTP 1.0:a">
+<!ENTITY prefEnableHTTP10.accesskey          "K">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "T">
+<!ENTITY prefEnableHTTP11.label              "Käytä HTTP 1.1:a">
+<!ENTITY prefEnableHTTP11.accesskey          "ä">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "P">
+<!ENTITY prefPara                            "HTTP-yhteyksien suorituskykyä tai yhteensopivuutta voi hienosäätää käyttämällä näitä asetuksia. Esim. joidenkin välityspalvelimien tiedetään vaativan HTTP 1.0:a (katso lisätiedot julkaisuhuomautuksista.)">
+<!ENTITY prefUseragent.label                 "Käyttäjäagenttimerkkijono">
+<!ENTITY prefFirefoxCompat.label             "Mainosta Firefox-yhteensopivuutta">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "Mainosta Lightning-asennusta">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "VAROITUS: Näiden asetusten käytöstä poistamisen seurauksena verkkosivustot tai palvelut eivät ehkä toimi kunnolla.">
+<!ENTITY prefFirefoxStrict.label             "Tunnista Firefoxina">
+<!ENTITY prefFirefoxStrict.accesskey         "i">
+<!ENTITY prefFirefoxNone.label               "Tunnista SeaMonkeyna">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "Tunnista SeaMonkeyna ja mainosta Firefox-yhteensopivuutta">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "VAROITUS: Näiden asetusten muuttamisen seurauksena verkkosivustot tai palvelut eivät ehkä toimi kunnolla.">

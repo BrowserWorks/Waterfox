@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox računi">
+<!ENTITY aboutAccounts.connected.description "Povezani ste kao">
+<!ENTITY aboutAccounts.syncPreferences.label "Pritisnite ovdje kako biste vidjeli postavke Sinhronizacije">
+
+<!ENTITY aboutAccounts.noConnection.title "Nema internet veze">
+<!ENTITY aboutAccounts.retry.label "Pokušaj ponovo">
+
+<!ENTITY aboutAccounts.restrictedError.title "Ograničeno">
+<!ENTITY aboutAccounts.restrictedError.description "Ne možete upravljati Firefox računima s ovog profila.">

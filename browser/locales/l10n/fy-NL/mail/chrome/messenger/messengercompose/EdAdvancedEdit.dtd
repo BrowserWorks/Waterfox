@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Avansearre eigenskippen">
+<!ENTITY AttName.label                  "Attribuut: ">
+<!ENTITY AttValue.label                 "Wearde: ">
+<!ENTITY PropertyName.label             "Eigenskip: ">
+<!ENTITY currentattributesfor.label     "Aktuele attributen foar: ">
+<!ENTITY tree.attributeHeader.label     "Attribuut">
+<!ENTITY tree.propertyHeader.label      "Eigenskip">
+<!ENTITY tree.valueHeader.label         "Wearde">
+<!ENTITY tabHTML.label                  "HTML-attributen">
+<!ENTITY tabCSS.label                   "Inline styl">
+<!ENTITY tabJSE.label                   "JavaSkript-aksjes">
+
+<!ENTITY editAttribute.label    		"Klik op in ûnderdiel hjirboppe om de wearde oan te passen">
+<!ENTITY removeAttribute.label  		"Fuortsmite">

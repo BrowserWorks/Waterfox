@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Avanserte kontoinnstillinger">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP serverkatalog:">
+<!ENTITY serverDirectory.accesskey "I">
+<!ENTITY usingSubscription.label "Vis bare påmeldte mapper">
+<!ENTITY usingSubscription.accesskey "V">
+<!ENTITY dualUseFolders.label "Serveren støtter mapper som inneholder undermapper og meldinger">
+<!ENTITY dualUseFolders.accesskey "S">
+<!ENTITY maximumConnectionsNumber.label "Maksimalt antall servertilkoblinger til hurtiglageret">
+<!ENTITY maximumConnectionsNumber.accesskey "t">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Disse innstillingene angir navnerommet på IMAP-serveren">
+<!ENTITY personalNamespace.label "Personlig navnerom:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Offentlig (delt):">
+<!ENTITY publicNamespace.accesskey "n">
+<!ENTITY otherUsersNamespace.label "Andre brukere:">
+<!ENTITY otherUsersNamespace.accesskey "b">
+<!ENTITY overrideNamespaces.label "Tillat serveren å overstyre disse navnerommene">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3DeferringDesc.label "Ved nedlasting av e-post fra denne kontoens server, bruk denne mappen for å lagre nye meldinger:" >
+<!ENTITY accountInbox.label "Innboks for denne kontoen">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Innboks i en annen konto">
+<!ENTITY deferToServer.accesskey "b">
+<!ENTITY deferGetNewMail.label "Når ny e-post hentes, hent også for denne kontoen">
+<!ENTITY deferGetNewMail.accesskey "r">

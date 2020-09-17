@@ -1,0 +1,153 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+<!ENTITY offlineGoOfflineCmd.label "Çevrim dışı çalış">
+<!ENTITY offlineGoOfflineCmd.accesskey "m">
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items --> 
+
+
+<!ENTITY fileMenu.label "Dosya">
+<!ENTITY fileMenu.accesskey "D">
+<!ENTITY newMenu.label "Yeni">
+<!ENTITY newMenu.accesskey "Y">
+<!ENTITY newBlankPageCmd.label "Düzenleyici sayfası">
+<!ENTITY newBlankPageCmd.accesskey "e">
+<!ENTITY newBlankPageCmd.key "n">
+<!ENTITY newPageFromTemplateCmd.label "Page Using Template">
+<!ENTITY newPageFromTemplateCmd.accesskey "T">
+<!ENTITY newPageFromDraftCmd.label "Page Using Draft">
+<!ENTITY newPageFromDraftCmd.accesskey "D">
+<!ENTITY newNavigatorCmd.label "Browser Window">
+<!ENTITY newNavigatorCmd.key "n">
+<!ENTITY newNavigatorCmd.accesskey "B">
+<!ENTITY printSetupCmd.label "Page Setup…">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printPreviewCmd.label "Yazdırma önizleme">
+<!ENTITY printPreviewCmd.accesskey "z">
+<!ENTITY printCmd.label "Yazdır…">
+<!ENTITY printCmd.accesskey "r">
+<!ENTITY printCmd.key "P">
+
+<!ENTITY editMenu.label "Düzenle">
+<!ENTITY editMenu.accesskey "z">
+<!ENTITY undoCmd.label "Geri al">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "r">
+<!ENTITY redoCmd.label "Yinele">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "Y">
+<!ENTITY cutCmd.label "Kes">
+<!ENTITY cutCmd.key "X">
+<!ENTITY cutCmd.accesskey "K">
+<!ENTITY copyCmd.label "Kopyala">
+<!ENTITY copyCmd.key "C">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY pasteCmd.label "Yapıştır">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteCmd.accesskey "p">
+<!ENTITY pasteGoCmd.label "Paste &amp; Go">
+<!ENTITY pasteGoCmd.accesskey "G">
+<!-- LOCALIZATION NOTE (pasteSearchCmd): "Search" is a verb, this is the
+     search bar equivalent to the url bar's "Paste & Go"  -->
+
+<!ENTITY pasteSearchCmd.label "Paste &amp; Search">
+<!ENTITY pasteSearchCmd.accesskey "e">
+<!ENTITY deleteCmd.label "Sil">
+<!ENTITY deleteCmd.accesskey "S">
+<!ENTITY selectAllCmd.label "Tümünü seç">
+<!ENTITY selectAllCmd.key "A">
+<!ENTITY selectAllCmd.accesskey "n">
+<!ENTITY clearHistoryCmd.label "Clear Search History">
+<!ENTITY clearHistoryCmd.accesskey "H">
+<!ENTITY showSuggestionsCmd.label "Show Suggestions">
+<!ENTITY showSuggestionsCmd.accesskey "S">
+<!ENTITY preferencesCmd.label "Preferences…">
+<!ENTITY preferencesCmd.key "E">
+<!ENTITY preferencesCmd.accesskey "e">
+<!ENTITY findCmd.key "F">
+<!-- LOCALIZATION NOTE (findCmd.accesskey): This accesskey should be within
+     findCmd.label found in messengercompose.dtd, messenger.dtd and
+     editorOverlay.dtd and findOnCmd.label found in navigatorOverlay.dtd -->
+<!ENTITY findCmd.accesskey "F">
+<!ENTITY findAgainCmd.label "Find Again">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Find Previous">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.accesskey "v">
+<!ENTITY findTypeTextCmd.label "Find Text As You Type">
+<!ENTITY findTypeTextCmd.accesskey "x">
+<!ENTITY findTypeLinksCmd.label "Find Links As You Type">
+<!ENTITY findTypeLinksCmd.accesskey "k">
+
+<!ENTITY viewMenu.label "Göster">
+<!ENTITY viewMenu.accesskey "G">
+<!ENTITY viewToolbarsMenu.label "Göster/gizle">
+<!ENTITY viewToolbarsMenu.accesskey "ö">
+<!ENTITY showTaskbarCmd.label "Durum çubuğu">
+<!ENTITY showTaskbarCmd.accesskey "m">
+
+<!ENTITY helpMenu.label "Yardım">
+<!ENTITY helpMenu.accesskey "Y">
+
+<!ENTITY helpTroubleshootingInfo.label "Troubleshooting Information">
+<!ENTITY helpTroubleshootingInfo.accesskey "T">
+<!ENTITY releaseCmd.label "Sürüm notları">
+<!ENTITY releaseCmd.accesskey "r">
+<!ENTITY helpSafeMode.label "Restart with Add-ons Disabled">
+<!ENTITY helpSafeMode.accesskey "R">
+<!ENTITY updateCmd.label "Check for Updates…">
+<!ENTITY updateCmd.accesskey "C">
+<!ENTITY aboutCmd.label "About &brandShortName;">
+<!ENTITY aboutCmd.accesskey "A">
+<!ENTITY aboutCommPluginsCmd.label "About Plugins">
+<!ENTITY aboutCommPluginsCmd.accesskey "P">
+
+<!ENTITY direct.label "Online (Proxy: None)">
+<!ENTITY direct.accesskey "N">
+<!ENTITY manual.label "Online (Proxy: Manual)">
+<!ENTITY manual.accesskey "M">
+<!ENTITY pac.label "Online (Proxy: Auto URL)">
+<!ENTITY pac.accesskey "A">
+<!ENTITY wpad.label "Online (Proxy: Auto Discover)">
+<!ENTITY wpad.accesskey "D">
+<!ENTITY system.label "Online (Proxy: System Proxy)">
+<!ENTITY system.accesskey "S">
+
+<!ENTITY proxy.label "Vekil sunucu ayaları…">
+<!ENTITY proxy.accesskey "c">
+
+<!ENTITY bidiSwitchTextDirectionItem.label "Metin Yönetimine Geç">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey "M">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey "X">
+
+<!ENTITY customizeToolbarContext.label "Customize…">
+<!ENTITY customizeToolbarContext.accesskey "C">
+
+<!ENTITY customizeToolbar.toolbarmode.label "Settings for this toolbar">
+<!ENTITY customizeToolbar.toolbarmode.accesskey "e">
+<!ENTITY customizeToolbar.iconsAndText.label "Icons and Text">
+<!ENTITY customizeToolbar.iconsAndText.accesskey "a">
+<!ENTITY customizeToolbar.icons.label "Icons">
+<!ENTITY customizeToolbar.icons.accesskey "o">
+<!ENTITY customizeToolbar.text.label "Text">
+<!ENTITY customizeToolbar.text.accesskey "T">
+<!ENTITY customizeToolbar.useSmallIcons.label "Use small icons">
+<!ENTITY customizeToolbar.useSmallIcons.accesskey "s">
+<!ENTITY customizeToolbar.labelAlignEnd.label "Show text beside icon">
+<!ENTITY customizeToolbar.labelAlignEnd.accesskey "b">
+<!ENTITY customizeToolbar.useDefault.label "Use default settings">
+<!ENTITY customizeToolbar.useDefault.accesskey "U">
+<!-- Popup Blocked notification menu -->
+
+<!ENTITY allowPopups.accesskey "p">
+<!ENTITY showPopupManager.label "Manage Popups">
+<!ENTITY showPopupManager.accesskey "M">
+<!ENTITY dontShowMessage.label "Don't show this message when popups are blocked">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY syncToolbarButton.label "Eşitleme">

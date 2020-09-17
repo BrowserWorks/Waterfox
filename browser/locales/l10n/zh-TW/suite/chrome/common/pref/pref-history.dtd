@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "瀏覽紀錄">
+
+<!ENTITY  pref.history.caption              "瀏覽紀錄">
+<!ENTITY  historyPages.label                "歷史記錄是您先前造訪過的網頁清單。">
+<!ENTITY  enableHistory.label               "記住瀏覽過的網頁">
+<!ENTITY  enableHistory.accesskey           "R">
+<!ENTITY  clearHistory.label                "清除瀏覽記錄">
+<!ENTITY  clearHistory.accesskey            "s">
+
+<!ENTITY  locationBarHistory.caption        "網址列記錄">
+<!ENTITY  urlBarHistoryEnabled.caption      "啟用網址列記錄">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "E">
+<!ENTITY  clearLocationBar.label            "清除網址列選單中記錄的網站清單。">
+<!ENTITY  clearLocationBarButton.label      "清除網址列記錄">
+<!ENTITY  clearLocationBarButton.accesskey  "l">
+<!ENTITY  formfillHistory.caption           "網頁表單及搜尋紀錄">
+<!ENTITY  enableFormfill.label              "啟用表單及搜尋紀錄">
+<!ENTITY  enableFormfill.accesskey          "n">
+<!ENTITY  formfillExpire.label              "記得表單及搜尋紀錄至少">
+<!ENTITY  formfillExpire.accesskey          "f">
+<!ENTITY  formfillDays.label                "天">
+

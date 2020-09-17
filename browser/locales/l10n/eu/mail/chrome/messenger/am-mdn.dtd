@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Hartu-agiriak">
+<!ENTITY useGlobalPrefs.label         "Erabili nire hartu-agirien hobespen orokorrak kontu honetan">
+<!ENTITY useGlobalPrefs.accesskey     "E">
+<!ENTITY globalReceipts.label         "Hobespen orokorrak…">
+<!ENTITY globalReceipts.accesskey     "o">
+<!ENTITY useCustomPrefs.label         "Pertsonalizatu kontu honen hartu-agiriak">
+<!ENTITY useCustomPrefs.accesskey     "P">
+<!ENTITY requestReceipt.label         "Eskatu beti hartu-agiria mezuak bidaltzean">
+<!ENTITY requestReceipt.accesskey     "h">
+<!ENTITY receiptArrive.label          "Hartu-agiri bat iristean:">
+<!ENTITY leaveIt.label                "Utzi sarrera-ontzian">
+<!ENTITY leaveIt.accesskey            "s">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Mugitu &quot;Bidalitakoak&quot; karpetara">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "Hartu-agiri baten eskaera jasotzen dudanean:">
+<!ENTITY returnSome.label             "Baimendu hartu-agiriak mezu batzuentzako">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Ez bidali inoiz hartu-agiria">
+<!ENTITY never.accesskey              "n">
+<!ENTITY notInToCc.label              "Ez banago mezuaren Nori edo Cc eremuetan:">
+<!ENTITY notInToCc.accesskey          "N">
+<!ENTITY outsideDomain.label          "Bidaltzailea nire domeinutik kanpo badago:">
+<!ENTITY outsideDomain.accesskey      "B">
+<!ENTITY otherCases.label             "Beste kasu guztietan:">
+<!ENTITY otherCases.accesskey         "s">
+<!ENTITY askMe.label                  "Galdetu niri">
+<!ENTITY alwaysSend.label             "Bidali beti">
+<!ENTITY neverSend.label              "Ez bidali inoiz">

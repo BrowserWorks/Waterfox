@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Agordoj de konto">
+<!ENTITY accountName.label "Nomo de konto:">
+<!ENTITY accountName.accesskey "k">
+<!ENTITY identityTitle.label "Implicita identigo">
+<!ENTITY identityDesc.label "Ĉiu konto havas sian identigon: informoj videblaj por aliaj homoj, kiam ili legas viajn mesaĝojn.">
+<!ENTITY name.label "Nomo:">
+<!ENTITY name.accesskey "N">
+<!ENTITY email.label "Retpoŝta adreso:">
+<!ENTITY email.accesskey "a">
+<!ENTITY replyTo.label "Adreso “respondi al”">
+<!ENTITY replyTo.accesskey "r">
+<!ENTITY replyTo.placeholder "ricevontoj sendos respondoj al tiu alia adreso">
+<!ENTITY organization.label "Firmao/organizaĵo:">
+<!ENTITY organization.accesskey "F">
+<!ENTITY signatureText.label "Subskribo:">
+<!ENTITY signatureText.accesskey "S">
+<!ENTITY signatureHtml.label "Uzi HTML (ekz. &lt;b&gt;grasa teksto&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "H">
+<!ENTITY signatureFile.label "Aldoni signaturon el dosiero (tekston, HTML aŭ bildon):">
+<!ENTITY signatureFile.accesskey "d">
+<!ENTITY edit.label "Redakti…">
+<!ENTITY choose.label "Elekti…">
+<!ENTITY choose.accesskey "E">
+<!ENTITY editVCard.label "Redakti vCard…">
+<!ENTITY editVCard.accesskey "R">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Aldoni vizitkarton vCard al sendataj mesaĝoj">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Administri identigojn…">
+<!ENTITY manageIdentities.accesskey "m">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Elira servilo (SMTP):">
+<!ENTITY smtpName.accesskey "l">
+<!ENTITY smtpDefaultServer.label "Uzi implicitan servilon">
+
+<!ENTITY smtpServerEdit.label "Redakti servilon SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

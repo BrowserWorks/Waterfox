@@ -1,0 +1,384 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label "Breyta atriði">
+<!ENTITY event.dialog.keepDurationButton.tooltip "Viðhalda tímalengd þegar endadagsetningu er breytt">
+<!ENTITY event.dialog.keepDurationButton.accesskey "V">
+<!ENTITY newevent.from.label "Frá">
+<!ENTITY newevent.to.label "Til">
+<!ENTITY newevent.status.label "Staða">
+<!ENTITY newevent.status.accesskey "S">
+<!ENTITY newevent.eventStatus.none.label "Ekki skilgreint">
+<!ENTITY newevent.eventStatus.none.accesskey "E">
+<!ENTITY newevent.todoStatus.none.label "Ekki skilgreint">
+<!ENTITY newevent.eventStatus.cancelled.label "Hætt við">
+<!ENTITY newevent.eventStatus.cancelled.accesskey "H">
+<!ENTITY newevent.todoStatus.cancelled.label "Hætt við">
+<!ENTITY newevent.status.tentative.label "Með fyrirvara">
+<!ENTITY newevent.status.tentative.accesskey "r">
+<!ENTITY newevent.status.confirmed.label "Samþykkt">
+<!ENTITY newevent.status.confirmed.accesskey "a">
+<!ENTITY newevent.status.needsaction.label "Þarfnast aðgerðar">
+<!ENTITY newevent.status.inprogress.label "Í gangi">
+<!ENTITY newevent.status.completed.label "Lokið þann">
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label "&#37; lokið">
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label "Tilkynna þátttakendum">
+<!ENTITY event.attendees.notify.accesskey "þ">
+<!ENTITY event.attendees.notifyundisclosed.label "Aðskilja fundarboð á hvern þátttakanda">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "þ">
+<!ENTITY event.attendees.notifyundisclosed.tooltip "Þessi stilling sendir eitt fundarboð á hvern þátttakanda. Hvert fundarboð inniheldur aðeins einn þátttakanda þannig að ekki er birt deili á öðrum þátttakendum.">
+<!ENTITY event.attendees.disallowcounter.label "Ekki leyfa móttilboð">
+<!ENTITY event.attendees.disallowcounter.accesskey "a">
+<!ENTITY event.attendees.disallowcounter.tooltip "Gefur til kynna að þú leyfir ekki mótttilboð">
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2 "I">
+<!ENTITY event.dialog.new.task.key2 "D">
+<!ENTITY event.dialog.new.message.key2 "N">
+<!ENTITY event.dialog.close.key "W">
+<!ENTITY event.dialog.save.key "S">
+<!ENTITY event.dialog.saveandclose.key "L">
+<!ENTITY event.dialog.print.key "P">
+<!ENTITY event.dialog.undo.key "Z">
+<!ENTITY event.dialog.redo.key "Y">
+<!ENTITY event.dialog.cut.key "X">
+<!ENTITY event.dialog.copy.key "C">
+<!ENTITY event.dialog.paste.key "V">
+<!ENTITY event.dialog.select.all.key "A">
+<!-- Menubar -->
+<!ENTITY event.menu.item.new.label "Nýr">
+<!ENTITY event.menu.item.new.accesskey "N">
+<!ENTITY event.menu.item.new.event.label "Atburður">
+<!ENTITY event.menu.item.new.event.accesskey "A">
+<!ENTITY event.menu.item.new.task.label "Verkefni">
+<!ENTITY event.menu.item.new.task.accesskey "V">
+<!ENTITY event.menu.item.new.message.label "Skilaboð">
+<!ENTITY event.menu.item.new.message.accesskey "S">
+<!ENTITY event.menu.item.new.contact.label "Tengiliður í nafnaskrá">
+<!ENTITY event.menu.item.new.contact.accesskey "T">
+<!ENTITY event.menu.item.close.label "Loka">
+<!ENTITY event.menu.item.close.accesskey "L">
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY event.menu.item.save.label "Vista">
+<!ENTITY event.menu.item.save.accesskey "V">
+<!ENTITY event.menu.item.save.tab.accesskey "a">
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY event.menu.item.saveandclose.label "Vista og loka">
+<!ENTITY event.menu.item.saveandclose.accesskey "l">
+<!ENTITY event.menu.item.saveandclose.tab.accesskey "z">
+<!ENTITY event.menu.item.delete.label "Eyða…">
+<!ENTITY event.menu.item.delete.accesskey "E">
+<!ENTITY event.menu.item.page.setup.label "Uppsetning síðu">
+<!ENTITY event.menu.item.page.setup.accesskey "U">
+<!ENTITY event.menu.item.print.label "Prenta">
+<!ENTITY event.menu.item.print.accesskey "P">
+<!ENTITY event.menu.edit.label "Breyta">
+<!ENTITY event.menu.edit.accesskey "e">
+<!ENTITY event.menu.edit.undo.label "Afturkalla">
+<!ENTITY event.menu.edit.undo.accesskey "u">
+<!ENTITY event.menu.edit.redo.label "Endurtaka">
+<!ENTITY event.menu.edit.redo.accesskey "r">
+<!ENTITY event.menu.edit.cut.label "Klippa">
+<!ENTITY event.menu.edit.cut.accesskey "K">
+<!ENTITY event.menu.edit.copy.label "Afrita">
+<!ENTITY event.menu.edit.copy.accesskey "A">
+<!ENTITY event.menu.edit.paste.label "Líma">
+<!ENTITY event.menu.edit.paste.accesskey "L">
+<!ENTITY event.menu.edit.select.all.label "Velja allt">
+<!ENTITY event.menu.edit.select.all.accesskey "a">
+<!ENTITY event.menu.view.label "Skoða">
+<!ENTITY event.menu.view.accesskey "k">
+<!ENTITY event.menu.view.toolbars.label "Verkfæraslár">
+<!ENTITY event.menu.view.toolbars.accesskey "V">
+<!ENTITY event.menu.view.toolbars.event.label "Atburða verkfærarein">
+<!ENTITY event.menu.view.toolbars.event.accesskey "e">
+<!ENTITY event.menu.view.toolbars.customize.label "Sérsníða…">
+<!ENTITY event.menu.view.toolbars.customize.accesskey "S">
+<!ENTITY event.menu.view.showlink.label "Sýna tengda hlekki">
+<!ENTITY event.menu.view.showlink.accesskey "S">
+<!ENTITY event.menu.options.label "Valkostir">
+<!ENTITY event.menu.options.accesskey "V">
+<!ENTITY event.menu.options.attendees.label "Bjóða þátttakendum…">
+<!ENTITY event.menu.options.attendees.accesskey "B">
+<!ENTITY event.menu.options.timezone2.label "Sýna Tímabbelti">
+<!ENTITY event.menu.options.timezone2.accesskey "b">
+<!ENTITY event.menu.options.priority2.label "Forgangur">
+<!ENTITY event.menu.options.priority2.accesskey "F">
+<!ENTITY event.menu.options.priority.notspecified.label "Ekki skilgreint">
+<!ENTITY event.menu.options.priority.notspecified.accesskey "E">
+<!ENTITY event.menu.options.priority.low.label "Lágur">
+<!ENTITY event.menu.options.priority.low.accesskey "L">
+<!ENTITY event.menu.options.priority.normal.label "Venjulegur">
+<!ENTITY event.menu.options.priority.normal.accesskey "n">
+<!ENTITY event.menu.options.priority.high.label "Hár">
+<!ENTITY event.menu.options.priority.high.accesskey "H">
+<!ENTITY event.menu.options.privacy.label "Friðhelgi">
+<!ENTITY event.menu.options.privacy.accesskey "r">
+<!ENTITY event.menu.options.privacy.public.label "Opinbert">
+<!ENTITY event.menu.options.privacy.public.accesskey "O">
+<!ENTITY event.menu.options.privacy.confidential.label "Sýna bara dag og tíma">
+<!ENTITY event.menu.options.privacy.confidential.accesskey "S">
+<!ENTITY event.menu.options.privacy.private.label "Einkamál">
+<!ENTITY event.menu.options.privacy.private.accesskey "E">
+<!ENTITY event.menu.options.show.time.label "Sýna tíma sem">
+<!ENTITY event.menu.options.show.time.accesskey "t">
+<!ENTITY event.menu.options.show.time.busy.label "Upptekinn">
+<!ENTITY event.menu.options.show.time.busy.accesskey "U">
+<!ENTITY event.menu.options.show.time.free.label "Laust">
+<!ENTITY event.menu.options.show.time.free.accesskey "L">
+<!ENTITY event.invite.attendees.label "Bjóða þátttakendum…">
+<!ENTITY event.invite.attendees.accesskey "B">
+<!ENTITY event.email.attendees.label "Sníða póst til allra þátttakenda…">
+<!ENTITY event.email.attendees.accesskey "a">
+<!ENTITY event.email.tentative.attendees.label "Sníða póst til allra óákveðinna þátttakenda…">
+<!ENTITY event.email.tentative.attendees.accesskey "S">
+<!ENTITY event.remove.attendees.label2 "Fjarlægja alla þátttakendur">
+<!ENTITY event.remove.attendees.accesskey "þ">
+<!ENTITY event.remove.attendee.label "Fjarlægja þátttakanda">
+<!ENTITY event.remove.attendee.accesskey "æ">
+<!-- Toolbar -->
+<!ENTITY event.toolbar.save.label2 "Vista">
+<!ENTITY event.toolbar.saveandclose.label "Vista og loka">
+<!ENTITY event.toolbar.delete.label "Eyða">
+<!ENTITY event.toolbar.attendees.label "Bjóða þátttakendum">
+<!ENTITY event.toolbar.privacy.label "Friðhelgi">
+<!ENTITY event.toolbar.save.tooltip2 "Vista">
+<!ENTITY event.toolbar.saveandclose.tooltip "Vista og loka">
+<!ENTITY event.toolbar.delete.tooltip "Eyða">
+<!ENTITY event.toolbar.attendees.tooltip "Bjóða þátttakendum">
+<!ENTITY event.toolbar.attachments.tooltip "Bæta við viðhengjum">
+<!ENTITY event.toolbar.privacy.tooltip "Breyta friðhelgi">
+<!ENTITY event.toolbar.priority.tooltip "Breyta forgangi">
+<!ENTITY event.toolbar.status.tooltip "Breyta stöðu">
+<!ENTITY event.toolbar.freebusy.tooltip "Breyta laus/upptekin tímum">
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label "Samþykkja tilboð">
+<!ENTITY counter.button.proposal.accesskey "ð">
+<!ENTITY counter.button.proposal.tooltip2 "Svæði í atburði verða útfyllt með gildum frá móttilboðinu, aðeins ef þú vistar með eða án viðbótarbreytingum verður öllum þátttakendum sent tilkynning">
+<!ENTITY counter.button.original.label "Nota upprunaleg gögn">
+<!ENTITY counter.button.original.accesskey "r">
+<!ENTITY counter.button.original.tooltip2 "Svæði verða útfyllt með þeim gildum sem voru í upphaflega atburðinum, áður en móttilboð var gert">
+<!-- Main page -->
+<!ENTITY event.title.textbox.label "Titill:">
+<!ENTITY event.title.textbox.accesskey "T">
+<!ENTITY event.location.label "Staðsetning:">
+<!ENTITY event.location.accesskey "S">
+<!ENTITY event.categories.label "Flokkur:">
+<!ENTITY event.categories.accesskey "F">
+<!ENTITY event.categories.textbox.label "Bæta við nýjum flokki">
+<!ENTITY event.calendar.label "Dagatal:">
+<!ENTITY event.calendar.accesskey "D">
+<!ENTITY event.attendees.label "Þátttakendur:">
+<!ENTITY event.attendees.accesskey "t">
+<!ENTITY event.alldayevent.label "Heilsdagsatburður">
+<!ENTITY event.alldayevent.accesskey "d">
+<!ENTITY event.from.label "Byrjar:">
+<!ENTITY event.from.accesskey "B">
+<!ENTITY task.from.label "Byrjar:">
+<!ENTITY task.from.accesskey "B">
+<!ENTITY event.to.label "Endar:">
+<!ENTITY event.to.accesskey "n">
+<!ENTITY task.to.label "Framkvæmist fyrir:">
+<!ENTITY task.to.accesskey "F">
+<!ENTITY task.status.label "Staða:">
+<!ENTITY task.status.accesskey "a">
+<!ENTITY event.repeat.label "Endurtaka:">
+<!ENTITY event.repeat.accesskey "r">
+<!ENTITY event.until.label "Þangað til:">
+<!ENTITY event.until.accesskey "i">
+<!ENTITY event.reminder.label "Áminning:">
+<!ENTITY event.reminder.accesskey "m">
+<!ENTITY event.description.label "Lýsing:">
+<!ENTITY event.description.accesskey "L">
+<!ENTITY event.attachments.label "Viðhengi:">
+<!ENTITY event.attachments.accesskey "h">
+<!ENTITY event.attachments.menubutton.label "Setja inn">
+<!ENTITY event.attachments.menubutton.accesskey "a">
+<!ENTITY event.attachments.url.label "Vefsíða…">
+<!ENTITY event.attachments.url.accesskey "V">
+<!ENTITY event.attachments.popup.remove.label "Fjarlægja">
+<!ENTITY event.attachments.popup.remove.accesskey "r">
+<!ENTITY event.attachments.popup.open.label "Opna">
+<!ENTITY event.attachments.popup.open.accesskey "O">
+<!ENTITY event.attachments.popup.removeAll.label "Fjarlægja öll">
+<!ENTITY event.attachments.popup.removeAll.accesskey "a">
+<!ENTITY event.attachments.popup.attachPage.label "Bæta við vefsíðu…">
+<!ENTITY event.attachments.popup.attachPage.accesskey "æ">
+<!ENTITY event.url.label "Tengdur hlekkur:">
+<!ENTITY event.priority2.label "Mikilvægi:">
+<!ENTITY event.reminder.none.label "Engin áminning ">
+<!ENTITY event.reminder.0minutes.before.label "0 mínútur fyrir">
+<!ENTITY event.reminder.5minutes.before.label "5 mínútum fyrir">
+<!ENTITY event.reminder.15minutes.before.label "15 mínútum fyrir">
+<!ENTITY event.reminder.30minutes.before.label "30 mínútum fyrir">
+<!ENTITY event.reminder.1hour.before.label "1 klukkustund fyrir">
+<!ENTITY event.reminder.2hours.before.label "2 klukkustundum fyrir">
+<!ENTITY event.reminder.12hours.before.label "12 klukkustundum fyrir">
+<!ENTITY event.reminder.1day.before.label "1 degi fyrir">
+<!ENTITY event.reminder.2days.before.label "2 dögum fyrir">
+<!ENTITY event.reminder.1week.before.label "1 viku fyrir">
+<!ENTITY event.reminder.custom.label "Sérsniðið…">
+<!ENTITY event.reminder.multiple.label "Margar áminningar…">
+<!ENTITY event.statusbarpanel.freebusy.label "Tími sem:">
+<!ENTITY event.statusbarpanel.privacy.label "Friðhelgi:">
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label "Breyta endurtekningu">
+<!ENTITY event.repeat.does.not.repeat.label "Engin endurtekning">
+<!ENTITY event.repeat.daily.label "Daglega">
+<!ENTITY event.repeat.weekly.label "Vikulega">
+<!ENTITY event.repeat.every.weekday.label "Alla virka daga">
+<!ENTITY event.repeat.bi.weekly.label "Aðra hverja viku">
+<!ENTITY event.repeat.monthly.label "Mánaðarlega">
+<!ENTITY event.repeat.yearly.label "Árlega">
+<!ENTITY event.repeat.custom.label "Sérsniðið…">
+<!ENTITY event.recurrence.pattern.label "Endurtekning">
+<!ENTITY event.recurrence.occurs.label "Endurtaka">
+<!ENTITY event.recurrence.day.label "daglega">
+<!ENTITY event.recurrence.week.label "vikulega">
+<!ENTITY event.recurrence.month.label "mánaðarlega">
+<!ENTITY event.recurrence.year.label "árlega">
+<!ENTITY event.recurrence.pattern.every.label "Hvern">
+<!ENTITY repeat.units.days.both "dag">
+<!ENTITY event.recurrence.pattern.every.weekday.label "Alla virka daga">
+<!ENTITY event.recurrence.pattern.weekly.every.label "Hverja">
+<!ENTITY repeat.units.weeks.both "viku">
+<!ENTITY event.recurrence.on.label "á:">
+<!ENTITY event.recurrence.pattern.monthly.every.label "Hvern">
+<!ENTITY repeat.units.months.both "mánuð">
+<!ENTITY event.recurrence.monthly.every.label "Hvern">
+<!ENTITY event.recurrence.monthly.first.label "Fyrsta">
+<!ENTITY event.recurrence.monthly.second.label "Annan">
+<!ENTITY event.recurrence.monthly.third.label "Þriðja">
+<!ENTITY event.recurrence.monthly.fourth.label "Fjórða">
+<!ENTITY event.recurrence.monthly.fifth.label "Fimmta">
+<!ENTITY event.recurrence.monthly.last.label "Seinasta">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label "sunnudag">
+<!ENTITY event.recurrence.pattern.monthly.week.2.label "mánudag">
+<!ENTITY event.recurrence.pattern.monthly.week.3.label "þriðjudag">
+<!ENTITY event.recurrence.pattern.monthly.week.4.label "miðvikudag">
+<!ENTITY event.recurrence.pattern.monthly.week.5.label "fimmtudag">
+<!ENTITY event.recurrence.pattern.monthly.week.6.label "föstudag">
+<!ENTITY event.recurrence.pattern.monthly.week.7.label "laugardag">
+<!ENTITY event.recurrence.repeat.dayofmonth.label "Dags mánaðar">
+<!ENTITY event.recurrence.repeat.recur.label "Endurtaka á dögum">
+<!ENTITY event.recurrence.every.label "Hvert:">
+<!ENTITY repeat.units.years.both "ár">
+<!ENTITY event.recurrence.pattern.yearly.every.month.label "Hvern">
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label "">
+<!ENTITY event.recurrence.pattern.yearly.month.1.label "janúar">
+<!ENTITY event.recurrence.pattern.yearly.month.2.label "febrúar">
+<!ENTITY event.recurrence.pattern.yearly.month.3.label "mars">
+<!ENTITY event.recurrence.pattern.yearly.month.4.label "apríl">
+<!ENTITY event.recurrence.pattern.yearly.month.5.label "maí">
+<!ENTITY event.recurrence.pattern.yearly.month.6.label "júní">
+<!ENTITY event.recurrence.pattern.yearly.month.7.label "júlí">
+<!ENTITY event.recurrence.pattern.yearly.month.8.label "ágúst">
+<!ENTITY event.recurrence.pattern.yearly.month.9.label "september">
+<!ENTITY event.recurrence.pattern.yearly.month.10.label "október">
+<!ENTITY event.recurrence.pattern.yearly.month.11.label "nóvember">
+<!ENTITY event.recurrence.pattern.yearly.month.12.label "desember">
+<!ENTITY event.recurrence.yearly.every.label "Hvern">
+<!ENTITY event.recurrence.yearly.first.label "Fyrsta">
+<!ENTITY event.recurrence.yearly.second.label "Annan">
+<!ENTITY event.recurrence.yearly.third.label "Þriðja">
+<!ENTITY event.recurrence.yearly.fourth.label "Fjórða">
+<!ENTITY event.recurrence.yearly.fifth.label "Fimmta">
+<!ENTITY event.recurrence.yearly.last.label "Seinasta">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label "sunnudag">
+<!ENTITY event.recurrence.pattern.yearly.week.2.label "mánudag">
+<!ENTITY event.recurrence.pattern.yearly.week.3.label "þriðjudag">
+<!ENTITY event.recurrence.pattern.yearly.week.4.label "miðvikudag">
+<!ENTITY event.recurrence.pattern.yearly.week.5.label "fimmtudag">
+<!ENTITY event.recurrence.pattern.yearly.week.6.label "föstudag">
+<!ENTITY event.recurrence.pattern.yearly.week.7.label "laugardag">
+<!ENTITY event.recurrence.pattern.yearly.day.label "dagur">
+<!ENTITY event.recurrence.of.label "í">
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label "janúar">
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label "febrúar">
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label "mars">
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label "apríl">
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label "maí">
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label "júní">
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label "júlí">
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label "ágúst">
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label "september">
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label "október">
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label "nóvember">
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label "desember">
+<!ENTITY event.recurrence.range.label "Tímabil endurtekninga">
+<!ENTITY event.recurrence.forever.label "Engin lokadagsetning">
+<!ENTITY event.recurrence.repeat.for.label "Búa til">
+<!ENTITY event.recurrence.appointments.label "Atburði">
+<!ENTITY event.repeat.until.label "Endurtaka þangað til">
+<!ENTITY event.recurrence.preview.label "Forskoða">
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label "Bjóða þátttakendum">
+<!ENTITY event.organizer.label "Stjórnandi">
+<!ENTITY event.freebusy.suggest.slot "Leggja til tíma:">
+<!ENTITY event.freebusy.button.next.slot "Næsta hólf">
+<!ENTITY event.freebusy.button.previous.slot "Fyrra hólf">
+<!ENTITY event.freebusy.zoom "Aðdráttur:">
+<!ENTITY event.freebusy.legend.free "Laus">
+<!ENTITY event.freebusy.legend.busy "Upptekinn">
+<!ENTITY event.freebusy.legend.busy_tentative "Með fyrirvara">
+<!ENTITY event.freebusy.legend.busy_unavailable "Fjarverandi">
+<!ENTITY event.freebusy.legend.unknown "Engar upplýsingar">
+<!ENTITY event.attendee.role.required "Skyldugur þátttakandi">
+<!ENTITY event.attendee.role.optional "Valfrjáls þátttakandi">
+<!ENTITY event.attendee.role.chair "Stjórnandi">
+<!ENTITY event.attendee.role.nonparticipant "Ekki þátttakandi">
+<!ENTITY event.attendee.usertype.individual "Einstaklingur">
+<!ENTITY event.attendee.usertype.group "Setja í hóp">
+<!ENTITY event.attendee.usertype.resource "Tilfang">
+<!ENTITY event.attendee.usertype.room "Herbergi">
+<!ENTITY event.attendee.usertype.unknown "Ekki vitað">
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label "Settu inn tímabelti">
+<!ENTITY event.timezone.custom.label "Fleiri tímabelti…">
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label "Almennt">
+<!ENTITY read.only.title.label "Titill:">
+<!ENTITY read.only.event.start.label "Byrjunardagsetning:">
+<!ENTITY read.only.task.start.label "Byrjunardagsetning:">
+<!ENTITY read.only.event.end.label "Lokadagsetning:">
+<!ENTITY read.only.task.due.label "Framkvæmist fyrir:">
+<!ENTITY read.only.repeat.label "Endurtaka:">
+<!ENTITY read.only.location.label "Staðsetning:">
+<!ENTITY read.only.category.label "Flokkur:">
+<!ENTITY read.only.organizer.label "Fundarstjóri:">
+<!ENTITY read.only.reply.label "Svar:">
+<!ENTITY read.only.accept.label "Ég mæti">
+<!ENTITY read.only.decline.label "Ég mæti ekki">
+<!ENTITY read.only.tentative.label "Ég mæti kannski">
+<!ENTITY read.only.needs.action.label "Ég staðfesti seinna">
+<!ENTITY read.only.reminder.label "Áminning:">
+<!ENTITY read.only.attachments.label "Viðhengi:">
+<!ENTITY read.only.attendees.label "Þátttakendur">
+<!ENTITY read.only.description.label "Lýsing">
+<!ENTITY read.only.link.label "Tengdur hlekkur">

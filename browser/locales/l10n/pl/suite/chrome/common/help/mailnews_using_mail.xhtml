@@ -1,0 +1,761 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" > %brandDTD;]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Korzystanie z poczty</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css" type="text/css"/>
+</head>
+
+<body>
+
+<h1 id="reading_messages">Czytanie wiadomości</h1>
+
+<div class="contentsBox">W tym rozdziale:
+  <ul>
+    <li><a href="#getting_new_messages">Pobieranie nowych wiadomości</a></li>
+    <li><a href="#choosing_how_you_view_the_mail_window">Zmiana wyglądu głównego okna Kuriera Poczty</a></li>
+    <li><a href="#sorting_and_threading_messages">Sortowanie oraz grupowanie wiadomości w wątki</a></li>
+    <li><a href="#saving_and_printing_messages">Zapisywanie i drukowanie wiadomości</a></li>
+    <li><a href="#controlling_images_scripts_and_plugins">Kontrola obrazków, skryptów i wtyczek</a></li>
+  </ul>
+</div>
+
+<h2 id="getting_new_messages">Pobieranie nowych wiadomości</h2>
+
+<p>Jeżeli domyślnym kontem jest konto na serwerze IMAP, podczas uruchamiania Kurier Poczty automatycznie pobierze nowe wiadomości i wyświetli je w folderze Odebrane.</p>
+
+<p>W przypadku kont pocztowych, które są obsługiwane przez serwer POP, należy nacisnąć przycisk Pobierz, aby pobrać nowe wiadomości. Domyślnie wiadomości z konta POP są usuwane z serwera po pobraniu. Zachowanie to można zmienić w <a href="mailnews_account_settings.xhtml#pop_server_settings">ustawieniach serwera POP</a>.</p>
+
+<p>Możliwe jest ustawienie Kuriera Poczty tak, aby automatycznie pobierał nowe wiadomości po uruchomieniu, a następnie po upływie określonego czasu sprawdzał, czy są nowe wiadomości.</p>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/task_mail.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td style="width: 20px;"></td>
+    <td><strong>Ikona Kuriera Poczty</strong></td>
+  </tr>
+</table>
+
+<p>Jeżeli odebrano nową pocztę, do ikony Kuriera Poczty na pasku stanu zostanie dodana powiadamiająca o tym zielona strzałka.</p>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/task_newmail.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td style="width: 20px;"></td>
+    <td><strong>Powiadomienie o nowej poczcie</strong></td>
+  </tr>
+</table>
+
+<p>Aby zmienić ustawienia Kuriera Poczty dotyczące automatycznego pobierania nowych wiadomości, należy, rozpoczynając w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfigurację kont.</li>
+  <li>W przypadku posiadania wielu kont należy wybrać konto, którego ustawienia mają zostać zmienione, a następnie wybrać kategorię Ustawienia serwera.</li>
+  <li>Zaznaczyć jedną lub obie poniższe opcje:
+    <ul>
+      <li><strong>Sprawdzaj podczas uruchamiania, czy są nowe wiadomości</strong>. Należy zaznaczyć tę opcję, aby automatycznie sprawdzać stan skrzynki pocztowej podczas uruchamiania Kuriera Poczty. Aby automatycznie pobrać nowe wiadomości z konta typu POP, należy również zaznaczyć opcję <q>Automatycznie pobieraj nowe wiadomości</q>.</li>
+      <li><strong>Sprawdzaj, czy nadeszły nowe wiadomości co [__] minut</strong>. Należy zaznaczyć tę opcję, aby Kurier Poczty, po upływie określonego czasu, automatycznie sprawdzał, czy na serwerze są nowe wiadomości. Niezależnie od ustawień tej opcji, pobranie nowych wiadomości będzie zawsze możliwe po naciśnięciu przycisku Pobierz w głównym oknie Kuriera Poczty.</li>
+    </ul>
+  </li>
+  <li>Nacisnąć klawisz OK. Wprowadzone zmiany zostaną uaktywnione po ponownym uruchomieniu Kuriera Poczty.</li>
+</ol>
+
+<p>W rozdziale <a href="#notifications">Preferencje Kuriera Poczty &mdash; Powiadamianie</a> opisano, jak ustawić Kuriera Poczty, aby odgrywał dźwięk po odebraniu nowych wiadomości.</p>
+
+<p>Aby pobrać nowe wiadomości, należy:</p>
+
+<ul>
+  <li>Nacisnąć przycisk Pobierz w głównym oknie Kuriera Poczty.</li>
+  <li>Z menu Plik wybrać opcję Pobierz nowe wiadomości.</li>
+</ul>
+
+<p>Aby pobrać nowe wiadomości dla wszystkich kont, należy:</p>
+
+<ol>
+  <li>Nacisnąć trójkąt na przycisku Pobierz na pasku narzędzi.</li>
+  <li>Wybrać pozycję Pobierz wszystkie nowe wiadomości z wyświetlonego menu.
+
+    <p>W przypadku, gdy użytkownik nie jest zalogowany do kont pocztowych, Kurier Poczty przed pobraniem poczty wyświetli okno dialogowe z pytaniem o nazwę użytkownika i hasło dla danego konta. Wszystkie hasła mogą być przechowywane przez Menedżera Haseł i wprowadzane automatycznie w razie potrzeby.</p>
+  </li>
+</ol>
+
+<p><strong>Uwaga</strong>: można także skorzystać z opcji <q>Pobierz nowe wiadomości z</q> z menu Plik.</p>
+
+<p>Aby pobrać nowe wiadomości z wybranego konta, należy, rozpoczynając w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Nacisnąć ikonkę trójkąta na przycisku Pobierz na pasku narzędzi Kuriera Poczty.</li>
+  <li>Wybrać z listy konto, z którego Kurier Poczty ma pobrać nowe wiadomości.</li>
+</ol>
+
+<p><strong>Uwaga</strong>: podczas pierwszego pobierania wiadomości z konta Kurier Poczty wyświetli pytanie o hasło, jakiego należy użyć do autoryzacji połączenia z serwerem. Można wtedy zaznaczyć opcję <q>Użyj Menedżera Haseł, aby zapamiętać to hasło</q>, aby hasło dla tego konta było wprowadzane automatycznie.</p>
+
+<p>Zapamiętane nazwy użytkowników i hasła przechowywane są przez Menedżera Haseł w pliku, którego odczytanie jest trudne, jednak nie jest niemożliwe. Hasła zapamiętane przez Menedżera Haseł można szyfrować lub usunąć, lub w inny sposób modyfikować działanie menedżera. Więcej informacji w rozdziale <a href="using_priv_help.xhtml#using_password">Używanie Menedżera haseł</a>.</p>
+
+<p>[<a href="#reading_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="choosing_how_you_view_the_mail_window">Zmiana wyglądu głównego okna Kuriera Poczty</h2>
+
+<p>Możliwa jest zmiana następujących ustawień wpływających na wygląd głównego okna Kuriera Poczty (okna, które jest otwierane po wybraniu Kuriera Poczty w menu Okno):</p>
+
+<ul>
+  <li>Z menu Widok wybrać Pokaż/Ukryj. Pozwoli to zmienić ustawienia wyświetlania paska narzędzi poczty lub paska stanu.</li>
+  <li>Z menu Widok wybrać Układ, aby wybrać typ wyświetlanego układu trzech paneli w oknie Kuriera Poczty.</li>
+  <li>Rozwinięcie lub zwinięcie dowolnego panelu za pomocą uchwytu umożliwia przełączanie pomiędzy widokiem układu dwóch lub trzech paneli.</li>
+</ul>
+
+<p>[<a href="#reading_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="sorting_and_threading_messages">Sortowanie oraz grupowanie wiadomości w wątki</h2>
+
+<p>Aby sortować wiadomości według takich kategorii jak temat, nadawca, data lub priorytet wiadomości, należy:</p>
+
+<ul>
+  <li>Nacisnąć odpowiedni nagłówek kolumny w głównym oknie Kuriera Poczty. Można również wybrać Sortuj z menu Widok i wskazać kategorię, według której wiadomości mają być sortowane.</li>
+</ul>
+
+<p>Aby zmienić kolejność nagłówków kolumn, należy:</p>
+
+<ul>
+  <li>Przeciągnąć myszą kolumnę w prawo lub lewo, w żądane miejsce.</li>
+</ul>
+
+<p>Aby zmienić listę wyświetlanych kolumn, należy:</p>
+
+<ul>
+  <li>Nacisnąć ikonę wyboru kolumn <img src="images/columns.png" alt=""/>i wybrać kolumnę, która ma być dodana do listy lub z niej usunięta.</li>
+</ul>
+
+<p>Aby sortować wiadomości według wątku (tematu), tak aby każda wiadomość została zgrupowana razem z odpowiedziami na nią, należy:</p>
+
+<ul>
+  <li>Nacisnąć przycisk Wątek (przycisk stanowi zarazem pierwszy nagłówek, poprzedzający kolumny  Temat, Nadawca i Data) lub wybrać Sortuj z menu Widok i wskazać kategorię Wątek.</li>
+</ul>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/threadbutton.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td style="width: 20px;"></td>
+    <td><strong>Przycisk Wątek</strong></td>
+  </tr>
+</table>
+
+<p><strong>Podpowiedź</strong>: należy wybrać opcję <q>Zachowuj wątki podczas sortowania</q> w <a href="#mail_and_newsgroups">preferencjach Kuriera Poczty</a> jeżeli &brandShortName; ma zachowywać grupowanie w wątki podczas sortowania wiadomości przez naciskanie nagłówków kolumn. Przycisk Wątek w tym trybie zmienia tylko wyświetlanie listy wiadomości na pogrupowane lub niepogrupowane w wątki. Jeżeli opcja <q>Zachowuj wątki podczas sortowania</q> nie jest wybrana, &brandShortName; automatycznie wyświetla wiadomości jako niepogrupowane po posortowaniu ich przez naciskanie nagłówków kolumn.</p>
+
+<p><strong>Podpowiedź</strong>: aby ułatwić odnalezienie nieprzeczytanych wiadomości w zwiniętych wątkach, Kurier Poczty podkreśla pierwszą wiadomość w wątku.</p>
+
+<p>[<a href="#reading_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="saving_and_printing_messages">Zapisywanie oraz drukowanie wiadomości</h2>
+
+<p>Aby zapisać wiadomość w formacie tekstowym lub pliku HTML, należy:</p>
+
+<ol>
+  <li>Wybrać wiadomość w oknie Kuriera Poczty.</li>
+  <li>Z menu Plik wybrać Zapisz jako i następnie Plik.</li>
+  <li>Wybrać typ pliku (Pliki HTML, Pliki tekstowe lub Pliki poczty). Typ <q>Plik poczty</q> pozwala zapisać wiadomość w formacie odczytywanym przez program Microsoft Outlook lub Outlook Express.</li>
+  <li>Zmienić rozszerzenie pliku na .html, .txt lub .eml, w zależności od typu wybranego w kroku 3.</li>
+  <li>Wybrać folder docelowy i nacisnąć przycisk Zapisz.</li>
+</ol>
+
+<p>Aby wydrukować wybraną wiadomość, należy:</p>
+
+<ul>
+  <li>Kliknąć przycisk Drukuj na pasku narzędzi lub z menu Plik wybrać Drukuj.</li>
+</ul>
+
+<p>[<a href="#reading_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="controlling_images_scripts_and_plugins">Kontrola obrazków, skryptów i wtyczek</h2>
+
+<p>Domyślnie Kurier Poczty nie wyświetla w otrzymanych wiadomościach obrazków i innej treści ze zdalnych serwerów, z wyjątkiem wiadomości od nadawców z książki adresowej użytkownika, dla których zostało to dozwolone. Aby zmienić te ustawienia, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Wiadomości. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+  <li>Odznaczyć opcję <q>Blokuj obrazki i inną treść ze zdalnych serwerów</q>.</li>
+  <li>Nacisnąć przycisk OK, aby zatwierdzić zmiany.</li>
+</ol>
+
+<p><strong>Uwaga</strong>: przejrzyj informacje o opcji <q>Zezwalaj na zdalne obrazki w wiadomościach HTML</q> w rozdziale <a href="mailnews_addressbooks.xhtml#creating_a_new_address_book_card">Tworzenie nowej wizytówki w książce adresowej</a>, aby uzyskać więcej informacji o tym jak określić, w wiadomościach od których nadawców będą wyświetlane treści ze zdalnych serwerów.</p>
+
+<p>W ustawieniach domyślnych Kuriera Poczty, wtyczki są wyłączone. Aby zmienić to, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Zaawansowane wybrać Skrypty i wtyczki. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Zaawansowane.
+    <ul>
+      <li>W polu <q>Włącz interpretację kodu JavaScript w komponentach</q> zaznaczyć opcję Kurier Poczty, aby włączyć obsługę języka JavaScript w wiadomościach.</li>
+      <li>Aby wyłączyć obsługę wtyczek w Kurierze Poczty, należy odznaczyć opcję Kurier Poczty w polu <q>Włącz obsługę wtyczek w komponencie</q>.</li>
+    </ul>
+  </li>
+  <li>Nacisnąć przycisk OK, aby zatwierdzić zmiany.</li>
+</ol>
+
+<p>[<a href="#reading_messages">Na początek rozdziału</a>]</p>
+
+<h1 id="sending_messages">Wysyłanie wiadomości</h1>
+
+<div class="contentsBox">W tym rozdziale opisano:
+  <ul>
+    <li><a href="#composing_mail_and_newsgroup_messages">Tworzenie nowych wiadomości pocztowych i grup dyskusyjnych</a></li>
+    <li><a href="#using_the_message_composition_window">Korzystanie z okna tworzenia wiadomości</a></li>
+    <li><a href="#addressing_a_message">Adresowanie wiadomości</a></li>
+    <li><a href="#selecting_message_sending_options">Opcje wysyłania wiadomości</a></li>
+    <li><a href="#replying_to_a_message">Tworzenie odpowiedzi na wiadomość</a></li>
+    <li><a href="#forwarding_a_message">Przekazywanie wiadomości</a></li>
+    <li><a href="#confirming_that_your_message_was_opened">Potwierdzenia otwarcia wiadomości</a></li>
+    <li><a href="#saving_and_editing_a_message_draft">Zapisywanie i edycja szkiców wiadomości</a></li>
+    <li><a href="#creating_and_using_templates">Tworzenie i korzystanie z szablonów</a></li>
+  </ul>
+</div>
+
+<h2 id="composing_mail_and_newsgroup_messages">Tworzenie nowych wiadomości pocztowych i grup dyskusyjnych</h2>
+
+<p>Aby napisać, zaadresować i wysłać nową wiadomość lub odpowiedzieć na
+istniejącą, używając okna tworzenia wiadomości, należy wykonać jedną z poniższych czynności: </p>
+
+<ul>
+  <li>W oknie przeglądarki lub Kompozytora Stron z menu Plik wybrać Nowy i wskazać Wiadomość.</li>
+  <li>W oknie Kuriera Poczty nacisnąć przycisk Nowa na pasku narzędzi.</li>
+  <li>Jeżeli w bieżącym oknie wyświetlona jest wiadomość, nacisnąć jeden z przycisków na pasku narzędzi: Odpowiedz, Odpowiedz wszystkim lub Przekaż.</li>
+  <li>W oknie Książki adresowej wybrać adresata z listy adresów i nacisnąć przycisk Nowa wiadomość na pasku narzędzi.</li>
+</ul>
+
+<p><strong>Podpowiedź</strong>: by użyć wbudowanego edytora HTML podczas tworzenia wiadomości wysyłanych z danego konta, należy zaznaczyć opcję <a href="mailnews_account_settings.xhtml#addressing">Podczas tworzenia wiadomości używaj edytora HTML</a> we właściwościach danego konta (można określić inny edytor dla poszczególnych kont). Więcej informacji w rodziale <a href="mailnews_getting_started.xhtml#changing_the_settings_for_an_account">Zmiana ustawień istniejącego konta</a>.</p>
+
+<p>Wiadomości w formacie HTML mogą zawierać różne kroje pisma, kolory, listy numerowane i wypunktowane. Należy jednak pamiętać, że niektórzy odbiorcy mogą nie być w stanie przeczytać takich wiadomości. Wysyłanie wiadomości grup dyskusyjnych w formacie HTML jest również niemile widziane. Aby utworzyć wiadomość w formacie tekstowym (mając ustawiony domyślny format HTML), należy nacisnąć przycisk Nowa lub Odpowiedz na pasku narzędzi, trzymając jednocześnie wciśnięty klawisz Shift. Aby utworzyć wiadomość w formacie HTML (mając ustawiony domyślny format tekstowy), należy nacisnąć przycisk Nowa lub Odpowiedz na pasku narzędzi, trzymając jednocześnie wciśnięty klawisz Shift. </p>
+
+<p>[<a href="#sending_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="using_the_message_composition_window">Korzystanie z okna tworzenia wiadomości</h2>
+
+<p>Aby napisać, zaadresować i wysłać wiadomość pocztową lub wiadomość grup dyskusyjnych, należy użyć okna tworzenia wiadomości. Dla każdego konta możliwe  jest określenie domyślnego edytora (tekstowego lub HTML), który będzie używany przy tworzeniu wiadomości. Domyślny edytor tekstowy może zostać zmieniony w kategorii <a href="mailnews_account_settings.xhtml#addressing">Komponowanie</a> okna konfiguracji konta (z menu Edycja Kuriera Poczty należy wybrać pozycję Konfiguracja kont).</p>
+
+<p>Aby otworzyć okno tworzenia wiadomości, należy nacisnąć przycisk Nowa na pasku narzędzi Kuriera Poczty.</p>
+
+<p>Okno tworzenia wiadomości zawiera następujące elementy:</p>
+
+<ul>
+  <li>Pasek narzędzi
+    
+    <p>Pasek zawiera następujące przyciski:</p>
+    <ul>
+      <li><strong>Wyślij</strong> - wysyła wiadomość.</li>
+      <li><strong>Adres</strong> - wyświetla adresy zebrane w książkach adresowych.</li>
+      <li><strong>Dołącz</strong> - załącza pliki do wiadomości. Więcej informacji w rozdziale <a href="#using_attachments">Załączniki</a>.</li>
+      <li><strong>Pisownia</strong> - sprawdza poprawność pisowni wiadomości.</li>
+      <li><strong>Zabezpieczenia</strong> - wyświetla informacje o szyfrowaniu i/lub podpisie cyfrowym dla wiadomości.</li>
+      <li><strong>Zapisz</strong> - zapisuje wiadomość do późniejszej edycji (w folderze Szkice).</li>
+    </ul>
+	</li>
+  <li>Pole adresów - pozwala wpisać adresy odbiorców wiadomości.</li>
+  <li>Pole załączników - nazwy wszystkich załączonych plików do wiadomości są wyświetlone w polu załączników, po prawej stronie pola adresów.</li>
+  <li>Pole wiadomości - pozwala wpisać treść wiadomości.</li>
+</ul>
+
+<p>Jeżeli do tworzenia wiadomości wybrano edytor HTML, wyświetlony zostanie dodatkowy pasek formatowania tekstu podobny do paska używanego w Kompozytorze Stron.</p>
+
+<p>W celu uzyskania bliższych informacji na temat tworzenia wiadomości w formacie HTML, należy kliknąć na odnośnik <a href="composer_help.xhtml#page_change">Formatowanie stron</a>.</p>
+
+<p>[<a href="#sending_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="addressing_a_message">Adresowanie wiadomości</h2>
+
+<p>Aby zaadresować wiadomość, należy:</p>
+
+<ol>
+  <li>Wprowadzić nazwę odbiorcy w polu adresu.
+
+    <p>Jeżeli funkcja <a href="#address_autocompletion">autouzupełniania adresów</a> jest włączona (domyślnie jest włączona), wystarczy wprowadzić kilka pierwszych liter nazwy adresata i poczekać, aż Kurier Poczty uzupełni adres. Można również wprowadzić cześć nazwy adresata i nacisnąć <kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd>, aby użyć pierwszego pasującego adresu.</p>
+  </li>
+  <li>Jeżeli do wprowadzonego wzoru pasuje więcej niż jeden adres, należy wybrać adres z listy i nacisnąć klawisz <kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd>.
+	
+    <p><strong>Uwaga</strong>: aby wprowadzić wiele adresów w jednej linii, należy użyć przecinka do oddzielenia adresów od siebie. Nie należy używać przecinka do  oddzielenia wyświetlanej nazwy użytkownika. Na przykład:</p>
+    <p><tt>user1@netscape.net, user2@netscape.net</tt></p>
+  </li>
+  <li>Jeśli wiadomość ma być wysłana z innego konta, niż aktualnie ustawione, należy wybrać żądane konto z menu rozwijalnego Nadawca. Więcej informacji w rozdziale <a href="#changing_the_account_from_which_a_message_is_sent">Zmiana konta, z którego zostanie wysłana wiadomość</a>.</li>
+  <li>Jeżeli zachodzi konieczność zmiany typu odbiorcy, należy kliknąć na polu Do: i wybrać jeden z poniższych typów:
+    <ul>
+      <li><strong>Do</strong>: określa podstawowych odbiorców wiadomości.</li>
+      <li><strong>Cc</strong>: określa dodatkowych odbiorców wiadomości (odbiorcy otrzymają kopię wiadomości <q><strong>Cc</strong>:</q>).</li>
+      <li><strong>Ukryta kopia</strong>: określa dodatkowych odbiorców wiadomości, których tożsamość będzie ukryta przed innymi odbiorcami, włączając w to adresatów określonych w polu Kopia: (odbiorcy otrzymają ukrytą kopię wiadomości <q><strong>Bcc</strong>:</q>).</li>
+      <li><strong>Odpowiedź do</strong>: określa adres zwrotny, inny niż adres, z którego wysyłana jest wiadomość.</li>
+      <li><strong>Grupa dyskusyjna</strong>: określa adres grupy dyskusyjnej, do której zostanie przesłana wiadomość.</li>
+      <li><strong>Inne grupy</strong>: określa adres innej grupy dyskusyjnej, do której, zamiast do grupy podstawowej, zostaną przekierowane wszystkie odpowiedzi na wysyłaną wiadomość.</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Podpowiedź</strong>: by użyć szybkiego adresowania wiadomości, należy kliknąć prawym klawiszem myszki na adresie e-mail zawartym w wyświetlanej wiadomości, a następnie wybrać z menu pozycję <q>Wyślij wiadomość do</q>.</p>
+
+<p id="changing_the_account_from_which_a_message_is_sent"><strong>Zmiana konta, z którego zostanie wysłana wiadomość</strong></p>
+
+<p>Jeżeli skonfigurowano więcej niż jedno konto pocztowe, wiadomość wysyłana jest z konta (lub serwera), które było aktywne w czasie rozpoczęcia tworzenia wiadomości. Kurier Poczty umożliwia zmianę domyślnego nadawcy wiadomości po rozpoczęciu tworzenia wiadomości. Aby zmienić nadawcę wiadomości, należy nacisnąć pole Nadawca i wybrać nowego nadawcę z listy. Kopia wiadomości zostanie zachowana w folderze Wiadomości wysłane przypisanym do konta, które zostało użyte do wysłania wiadomości</p>
+
+<p><strong>Autouzupełnianie adresów</strong></p>
+
+<p>Funkcja autouzupełniania adresów ułatwia wprowadzanie adresów podczas tworzenia wiadomości, eliminując konieczność wyszukiwania adresów lub wprowadzania adresów w kompletnej formie. Podczas wprowadzania pierwszych liter adresu Kurier Poczty wyszukuje i wyświetla listę wszystkich pasujących adresów znajdujących się w książkach adresowych oraz na serwerze usług katalogowych <a href="glossary.xhtml#LDAP_glossary">LDAP</a> (jeżeli jest dostępny). Zapobiega to pomyłkom w trakcie wprowadzania adresu. Jeżeli zostanie odnaleziony tylko jeden adres pasujący do wprowadzanej nazwy, Kurier Poczty wyświetli go w polu adresowym. Funkcja autouzupełniania adresów domyślnie jest włączona.</p>
+
+<p>W przypadku, gdy użytkownik nie chce skorzystać z podpowiedzi Kuriera Poczty, należy nacisnąć klawisz Backspace lub Delete, usunąć podpowiedź i wpisać inny adres.</p>
+
+<p>Aby całkowicie zablokować autouzupełnianie adresów, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Adresowanie. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+  <li>W polu <q>Autouzupełnianie adresów</q> należy odznaczyć opcje wyszukiwania adresów <q>W lokalnych książkach adresowych</q> oraz <q>Na serwerze usług katalogowych</q>.</li>
+  <li>Nacisnąć przycisk OK.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="selecting_message_sending_options">Opcje wysyłania wiadomości</h2>
+
+<p>Podczas tworzenia wiadomości możliwy jest dostęp do poniższych funkcji przez menu Opcje:</p>
+
+<ul>
+  <li><strong>Wybierz adresy</strong> – umożliwia wybór adresu odbiorcy wiadomości z dostępnych Książek adresowych. W wyświetlonym oknie należy wybrać adres, a następnie nacisnąć na przycisk Do:, Kopia: lub Ukryta kopia:, aby dodać adresata do listy odbiorców wiadomości.</li>
+  <li><strong>Żądaj potwierdzenia dostarczenia wiadomości</strong> – należy zaznaczyć tę opcję, aby uzyskać potwierdzenie otwarcia wiadomości. Adresat może jednak nie wysłać potwierdzenia. Opcja ta pozwala na przełączanie żądania potwierdzenia dla pojedynczych wiadomości. Aby Kurier Poczty automatycznie żądał potwierdzeń, należy ustawić preferencje potwierdzeń odbioru. Więcej informacji w rozdziale <a href="#return_receipts_preferences">Preferencje Kuriera Poczty &mdash; Potwierdzenia</a>.</li>
+  <li><strong>Format</strong> – pozwala zmienić format, w jakim zostanie wysłana wiadomość. Możliwe opcje to format tekstowy, HTML lub oba formaty. W przypadku wyboru opcji Wybierz automatycznie, Kurier Poczty dobierze automatycznie format wysyłanych wiadomości lub wyświetli pytanie o format, jeżeli nie jest wiadomo, czy odbiorca może otwierać wiadomości HTML. Wybrane ustawienia tymczasowo zmieniają domyślne ustawienia formatu, określone w kategorii Format w Preferencjach.</li>
+  <li><strong>Priorytet</strong> – pozwala zmienić priorytet wiadomości na najniższy, niski, normalny, wysoki lub najwyższy.</li>
+  <li><strong>Kodowanie znaków</strong> – umożliwia wybór kodowania znaków dla tej wiadomości.</li>
+  <li><strong>Archiwizuj kopię wysyłanej wiadomości</strong> – umożliwia wybór folderu, w którym zostanie zachowana dodatkowa kopia wiadomości, niezależnie od ustawień dotyczących domyślnego tworzenia kopii wysyłanych wiadomości.</li>
+  <!-- TODO: start localizing -->
+  <li><strong>Encrypt This Message</strong>: Choose this to have &brandShortName; encrypt this message (without changing the default).</li>
+  <li><strong>Digitally Sign This Message</strong>: Choose this to have &brandShortName; digitally sign this message (without changing the default).</li>
+  <!-- TODO: stop localizing -->
+</ul>
+
+<p>Dodatkowo dostępne są opcje formatowania wiadomości w menu Edycja:</p>
+
+<ul>
+  <li><strong>Zawiń ponownie</strong>: jeżeli tworzona podczas edycji w trybie tekstowym wiadomość zawiera długie linie, można użyć funkcji Zawiń ponownie, aby zawinąć tekst wiadomości. Polecenie to zawija wiersze dłuższe od liczby znaków ustawionej w preferencjach <a href="#composition">Komponowania</a>. Jest to szczególnie przydatne w przypadku odpowiadania na wiadomość, która zawiera długie linie, nie mieszczące się w oknie komponowania wiadomości. Możliwe jest zawijanie linii tylko w zaznaczonej części wiadomości lub w całej wiadomości, jeżeli nie wybrano zaznaczenia.
+
+    <p>Po otworzeniu okna Konfiguracja kont opcją z menu Edycja, możliwe jest określenie domyślnego edytora używanego podczas tworzenia wiadomości. Aby użyć wbudowanego edytora HTML, należy zaznaczyć opcję <q>Podczas tworzenia wiadomości używaj edytora HTML</q>. Jeżeli opcja ta nie jest zaznaczona, wiadomości będą edytowane w trybie tekstowym. Aby tymczasowo przełączyć domyślnie wybrany edytor wiadomości, należy przytrzymać Shift na klawiaturze podczas naciskania na przycisk Nowa lub Odpowiedz na pasku narzędzi Kuriera Poczty.</p>
+  </li>
+  <li><strong>Sprawdź pisownię</strong> – sprawdza pisownię wiadomości. Ta sama czynność zostanie wykonana po naciśnięciu przycisku Pisownia na pasku narzędzi.</li>
+  <li><strong>Sprawdzaj pisownię w trakcie tworzenia wiadomości</strong> – pisownia jest sprawdzana podczas wprowadzania tekstu tworzonej wiadomości.</li>
+</ul>
+  
+<p>[<a href="#sending_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="replying_to_a_message">Tworzenie odpowiedzi na wiadomość</h2>
+
+<p>Aby odpowiedzieć na wiadomość, należy:</p>
+
+<ul>
+  <li>Wybrać wiadomość.</li>
+  <li>Nacisnąć przycisk Odpowiedz, aby wysłać odpowiedź wyłącznie do nadawcy wiadomości.</li>
+  <li>Nacisnąć przycisk Odpowiedz wszystkim, aby wysłać odpowiedź do wszystkich adresatów wiadomości, na którą się odpowiada.</li>
+</ul>
+
+<p>Aby treść oryginalnej wiadomości była domyślnie dołączana do każdej tworzonej odpowiedzi, należy:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont.</li>
+  <li>W przypadku, gdy użytkownik posiada kilka kont, wybrać konto i otworzyć kategorię <a href="mailnews_account_settings.xhtml#addressing">Komponowanie</a>.</li>
+  <li>Zaznaczyć opcję <q>Automatycznie cytuj oryginalną wiadomość podczas tworzenia odpowiedzi</q>.</li>
+  <li>Określić, w którym miejscu wiadomości rozpocząć odpowiedź.</li>
+
+  <li>Gdy użytkownik <a href="mailnews_account_settings.xhtml#account_settings">korzysta z sygnaturki (podpisu)</a>, można także zdefiniować, gdzie ma być umieszczona:
+    <ul>
+      <li><q>Pod cytowanym tekstem (zalecane)</q> &mdash; na końcu wiadomości pod cytowanym tekstem.</li>
+      <li><q>Poniżej odpowiedzi (ponad cytowanym tekstem)</q> &mdash; pomiędzy odpowiedzią i cytowanym tekstem.</li>
+    </ul>
+
+    <p><strong>Uwaga</strong>: jeżeli użytkownik ma utworzoną sygnaturkę, to może <a href="mailnews_account_settings.xhtml#addressing">ją pominąć</a> w czasie odpowiadania na wiadomość.</p>
+  </li>
+  <li>Nacisnąć przycisk OK.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="forwarding_a_message">Przesyłanie wiadomości</h2>
+
+<p>Podczas przesyłania wiadomości do innych adresatów można określić w jaki sposób zostanie przesłana zawartość oryginalnej wiadomości. Dostępne opcje to: <em>bezpośrednio</em> (jako treść tworzonej wiadomości, sposób domyślny) lub jako załącznik.</p>
+
+<p>Aby przesłać wiadomość, należy:</p>
+
+<ol>
+  <li>Wybrać wiadomość, a następnie nacisnąć przycisk Prześlij.</li>
+  <li>Wprowadzić adres odbiorcy wiadomości.</li>
+  <li>Nacisnąć przycisk Wyślij na pasku narzędzi.</li>
+</ol>
+
+<p>Aby zmienić domyślne ustawienia przesyłania wiadomości, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać <a href="#composition">Tworzenie</a>. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+  <li>Wybrać żądany sposób przekazywania wiadomości: <em>bezpośrednio</em> (jako treść tworzonej wiadomości) lub jako załącznik.
+    <p><strong>Uwaga</strong>: jeżeli użytkownik ma utworzoną sygnaturkę i przesyła wiadomość w treści wiadomości, to jej umieszczenie jest zależne od odpowiedniego ustawienia odpowiadania na wiadomość. Opcjonalnie można <a href="mailnews_account_settings.xhtml#addressing">pominąć sygnaturkę</a> przy przesyłaniu wiadomości dalej.</p>
+  </li>
+
+  <li>Nacisnąć przycisk OK.</li>
+</ol>
+
+<p><strong>Podpowiedź</strong>: aby wybrać sposób przesłania konkretnej wiadomości, należy wybrać wiadomość, a następnie z menu Wiadomość wybrać Przekaż wiadomość i dalej <q>Bezpośrednio</q> lub <q>Jako załącznik</q>.</p>
+
+<p>[<a href="#sending_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="confirming_that_your_message_was_opened">Potwierdzenia otwarcia (dostarczenia) wiadomości</h2>
+
+<p>Możliwe jest uzyskanie potwierdzenia dostarczenia wiadomości przez odbiorcę. Konieczne jest, aby odbiorca używał programu pocztowego obsługującego standard Message Disposition Notification (MDN). Należy jednak pamiętać, że odbiorca może zdecydować nie odsyłać potwierdzenia. Dla wiadomości wysłanych do grup dyskusyjnych nie można uzyskać potwierdzenia, ponieważ serwery News nie obsługują tej funkcji.</p>
+
+<p>Aby zażądać potwierdzenia dostarczenia dla wszystkich wysyłanych wiadomości, należy użyć globalnych preferencji <a href="#return_receipts_preferences">Potwierdzenia</a>, które pozwalają określić zasady obsługi żądań potwierdzeń.
+Ustawienia te mogą być także zmienione dla poszczególnych kont.</p>
+
+<p>Aby zażądać potwierdzenia otwarcia dla pojedynczej wiadomości, należy:</p>
+
+<ul>
+  <li>W oknie tworzenia wiadomości z menu Opcje wybrać <q>Żądaj potwierdzenia dostarczenia wiadomości</q>.</li>
+</ul>
+
+<p>Aby automatycznie żądać potwierdzenia dostarczenia wiadomości dla każdej wiadomości wysyłanej z każdego konta, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać <a href="#return_receipts_preferences">Potwierdzenia</a>. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+  <li>Zaznaczyć <q>Podczas wysyłania wiadomości zawsze żądaj potwierdzenia dostarczenia wiadomości</q>.</li>
+  <li>Nacisnąć przycisk OK.</li>
+</ol>
+
+<p>Więcej informacji o wysyłaniu potwierdzeń otwarcia (dostarczenia) wiadomości w rozdziale <a href="#return_receipts_preferences">Preferencje Kuriera Poczty &mdash; Potwierdzenia</a>.</p>
+
+<p>[<a href="#sending_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="saving_and_editing_a_message_draft">Zapisywanie i edycja szkiców wiadomości</h2>
+
+<p>Aby zachować tworzoną wiadomość jako szkic, w celu późniejszej edycji, należy:</p>
+
+<ul>
+  <li>W oknie tworzenia wiadomości nacisnąć przycisk Zapisz lub z menu Plik wybrać Zapisz jako oraz wskazać Szkic. Domyślnie wiadomość jest zapisywana w folderze Szkice bieżącego konta.
+
+    <p><strong>Uwaga</strong>: okno tworzenia wiadomości pozostanie otwarte po zapisaniu wiadomości jako szkic.</p>
+  </li>
+</ul>
+
+<p>Aby edytować lub wysłać szkic wiadomości, należy:</p>
+
+<ol>
+  <li>Otworzyć folder Szkice konta, gdzie została stworzony szkic wiadomości.</li>
+  <li>Wybrać wiadomość, która ma być edytowana.</li>
+  <li>Nacisnąć przycisk Edytuj szkic w prawym górny rogu wiadomości.</li>
+  <li>Edytować wiadomość.</li>
+  <li>Nacisnąć przycisk Wyślij, aby wysłać wiadomość lub nacisnąć przycisk Zapisz, aby zachować wiadomość do późniejszej edycji.
+
+    <p><strong>Uwaga</strong>: po wysłaniu wiadomość jest usuwana z folderu Szkice.</p>
+  </li>
+</ol>
+
+<p><strong>Podpowiedź</strong>: aby rozpocząć edycję wiadomości, można dwukrotnie kliknąć na wybranej wiadomości. Jest to szczególnie przydatne, kiedy panel wiadomości jest zamknięty.</p>
+
+<p>Aby usunąć niepotrzebne szkice wiadomości, należy:</p>
+
+<ol>
+  <li>Otworzyć folder Szkice konta, gdzie znajdują się szkice wiadomości.</li>
+  <li>Wybrać wiadomości do usunięcia.</li>
+  <li>Nacisnąć przycisk Usuń.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="creating_and_using_templates">Tworzenie i korzystanie z szablonów</h2>
+
+<p>Szablony przydają się przy tworzeniu wiadomości, które są wysyłane regularnie, np. tygodniowych raportów. Wiadomość może zostać zapisana jako szablon z każdego okna, w którym jest wyświetlona, włączając okno tworzenia wiadomości.</p>
+
+<p>Aby zachować wiadomość jako szablon, należy:</p>
+
+<ol>
+  <li>W oknie Kuriera Poczty nacisnąć przycisk Nowa, wpisać treść szablonu oraz, w razie potrzeby, ustawić kolory, czcionki itp.
+
+    <p>Można także otworzyć istniejącą wiadomość.</p>
+  </li>
+  <li>Gdy wiadomość jest wyświetlona, z menu Plik wybrać Zapisz jako oraz wskazać Szablon. Domyślnie wiadomość jest zapisywana w folderze Szablony bieżącego konta.</li>
+</ol>
+
+<p>Aby edytować szablon lub utworzyć nową wiadomość na podstawie szablonu, należy:</p>
+
+<ol>
+  <li>Zaczynając w oknie Kuriera Poczty, wybrać folder Szablony konta, w którym został zapisany szablon wiadomości.</li>
+  <li>Dwukrotnie kliknąć, aby otworzyć wybrany szablon wiadomości.</li>
+  <li>Dokonać edycji szablonu, zapisać (do folderu Szkice) lub wysłać go.
+
+    <p><strong>Uwaga</strong>: w przeciwieństwie do szkicu, wiadomość po wysłaniu nie jest usuwana z folderu Szablony. Szablon jest zachowywany do przyszłego użycia.</p>
+  </li>
+</ol>
+
+<p>Aby usunąć niepotrzebne szablony wiadomości, należy:</p>
+
+<ol>
+  <li>Otworzyć folder Szablony odpowiedniego konta.</li>
+  <li>Wybrać wiadomości do usunięcia.</li>
+  <li>Nacisnąć przycisk Usuń na pasku narzędzi.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Na początek rozdziału</a>]</p>
+
+<h1 id="creating_html_mail_messages">Tworzenie wiadomości w formacie HTML</h1>
+
+<div class="contentsBox">W tym rozdziale:
+  <ul>
+    <li><a href="#using_html_in_your_messages">Używanie HTML w wiadomościach</a></li>
+    <li><a href="#choosing_html_mail_sending_options">Opcje wysyłania wiadomości w HTML</a></li>
+    <li><a href="#specifying_recipients_for_html_messages">Określanie adresatów wiadomości w HTML</a></li>
+    <li><a href="#viewing_the_message_source_for_html_messages">Wyświetlanie kodu źródłowego wiadomości w HTML</a></li>
+    <li><a href="#using_the_html_mail_question_dialog_box">Okno dialogowe wiadomości w formacie HTML</a></li>
+  </ul>
+</div>
+
+<h2 id="using_html_in_your_messages">Używanie HTML w wiadomościach</h2>
+
+<p>Wiadomości w formacie HTML mogą zawierać sformatowany tekst, odnośniki, obrazki, tabele oraz inne elementy języka HTML. Należy jednak pamiętać, że nie wszystkie programy pocztowe obsługują format HTML. Kurier Poczty &brandShortName; umożliwia wybór edytora HTML lub tekstowego jako domyślnego przy tworzeniu wiadomości. Wybór jest dostępny dla każdego z kont osobno w ustawieniach Konfiguracja konta. Możliwe jest także ustalenie domyślnego formatu wiadomości dla poszczególnych adresatów wiadomości (Książka adresowa), a także jakich formatów należy użyć w przypadku, gdy nie jest pewne, czy program pocztowy danego adresata może poprawnie wyświetlać  wiadomości w HTML.</p>
+
+<p>Aby określić domyślny edytor używany przy tworzeniu wiadomości, należy:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont.</li>
+  <li>Wybrać konto pocztowe lub konto grup dyskusyjnych, którego domyślny edytor ma zostać zmieniony.</li>
+  <li>W podkategorii Komponowanie zaznaczyć opcję <q>Używaj edytora HTML do tworzenia wiadomości</q>. W oknie tworzenia wiadomości zostanie wyświetlony pasek narzędzi formatowania. Aby używać zwykłego edytora dla wybranego konta, należy odznaczyć wspomnianą opcję.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Na początek rozdziału</a>]</p>
+
+<h3 id="editing_or_inserting_html_elements">Edycja lub wstawianie elementów HTML</h3>
+
+<p>Gdy użytkownik zna HTML, można dodawać do wiadomości znaczniki, atrybuty stylów i JavaScript. W przeciwnym wypadku lepiej jednak tego nie robić. Aby pracować ze źródłem HTML, należy użyć jednej z poniższych metod:</p>
+
+<ul>
+  <li>Ustawić kursor w miejscu, gdzie ma być wstawiony kod HTML, a następnie z menu Wstaw wybrać HTML. W oknie dialogowym Wstaw HTML wpisać tekst i znaczniki HTML oraz kliknąć Wstaw.</li>
+  <li>Zaznaczyć kod HTML do edycji, a następnie z menu Wstaw wybrać HTML. W oknie dialogowym Wstaw HTML wpisać tekst i znaczniki HTML oraz kliknąć Wstaw.</li>
+  <li>Zaznaczyć element (tabela, kotwica, obrazek, link lub linia); aby otworzyć okno dialogowe właściwości, należy kliknąć dwukrotnie na zaznaczonym elemencie. Kliknąć przycisk Zaawansowana edycja, aby otworzyć okno Zaawansowanego edytora właściwości, w którym można dodać do elementu atrybuty HTML lub skrypty JavaScript.</li>
+</ul>
+
+<p>Więcej informacji na temat edycji kodu HTML w rozdziale <a href="composer_help.xhtml#using_the_advanced_property_editor">Użycie Zaawansowanego edytora właściwości</a> pomocy Kompozytora Stron.</p>
+
+<p>[<a href="#creating_html_mail_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="choosing_html_mail_sending_options">Opcje wysyłania wiadomości w formacie HTML</h2>
+
+<p>Kurier Poczty umożliwia wybranie domyślnego sposobu wysyłania wiadomości, jeżeli nie jest pewne, czy program pocztowy odbiorcy może poprawnie wyświetlać wiadomości w formacie HTML.</p>
+
+<p>Aby zmienić ustawienia wysyłania wiadomości, należy:</p>
+
+<ol>
+	<li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać <a href="#send_format">Format wiadomości</a>. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.
+    <p><strong>Uwaga</strong>: ustawienia dostępne w tej kategorii dotyczą tylko wysyłanych wiadomości pocztowych, z wyłączeniem wiadomości wysyłanych do grup dyskusyjnych.</p>
+  </li>
+  <li>Wybrać żądane ustawienia i nacisnąć przycisk OK.</li>
+</ol>
+
+<p>Jeżeli w trakcie tworzenia wiadomości okaże się, że jeden lub więcej odbiorców nie może odczytywać wiadomości w formacie HTML, możliwa jest łatwa zmiana formatu wiadomości po naciśnięciu przycisku Wyślij:</p>
+
+<ol>
+  <li>W oknie tworzenia wiadomości należy z menu Opcje wybrać Wyślij wiadomość jako.</li>
+  <li>Wskazać format, w jakim tworzona wiadomość ma zostać wysłana:
+    <ul>
+      <li><strong>Wybierz automatycznie</strong>: Kurier Poczty automatycznie wybierze odpowiedni format. Gdy nie będzie to możliwe, wyświetlone zostanie okno z prośbą o wybór formatu.</li>
+      <li><strong>Tylko tekst</strong>: część formatowania, jak np. pogrubienie tekstu, zostanie utracone, lecz wiadomość zostanie wyświetlona poprawnie przez wszystkie programy pocztowe</li>
+      <li><strong>Tylko HTML</strong>: niektóre programy pocztowe mogą nie wyświetlić wiadomości poprawnie. Z opcji należy korzystać tylko, gdy ma się pewność, że odbiorca jest w stanie odczytać wiadomość w formacie HTML.</li>
+      <li><strong>Tekst oraz HTML</strong>: wysyłana wiadomość ma większy rozmiar, jednak jest to najlepszy wybór w przypadku, gdy użytkownik nie jest pewien, czy odbiorca ma możliwość odczytania wiadomości w formacie HTML.</li>
+    </ul>
+  </li>
+  <li>Po zakończeniu edytowania wiadomości należy nacisnąć przycisk Wyślij, a Kurier Poczty wyśle wiadomość w wybranym formacie.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="specifying_recipients_for_html_messages">Określanie adresatów wiadomości w formacie HTML</h2>
+
+<p>Aby ułatwić tworzenie wiadomości, można ustalić preferowany format otrzymywanych wiadomości dla każdego adresata w książkach adresowych. W celu ustalenia preferowanego formatu, należy:</p>
+
+<ol>
+  <li>Z menu Okno wybrać Książka adresowa.</li>
+  <li>Wybrać książkę adresową (po lewej), a następnie wybrać wizytówkę osoby, której preferowany format wiadomości ma zostać zmieniony (z prawej strony okna).</li>
+  <li>Nacisnąć przycisk Właściwości na pasku narzędzi, aby wyświetlić okno dialogowe z danymi wybranej wizytówki.</li>
+  <li>W karcie Kontakt z menu rozwijalnego <q>Preferowany format otrzymywanych wiadomości</q> wybrać pozycję HTML.
+
+    <p>Jeśli odbiorca może odczytywać tylko wiadomości w formacie tekstowym, z menu rozwijalnego należy wybrać Tekstowy. Gdy nie ma informacji dotyczących preferowanego formatu wiadomości dla danego odbiorcy, należy wybrać Nieznany.</p>
+
+    <p>W przypadku wybrania opcji Nieznany Kurier Poczty &brandShortName; dokona wyboru formatu wysyłanej wiadomości na podstawie ustawień w kategorii Format wiadomości okna Preferencji. Jeżeli mimo to ustalenie pożądanego formatu nie powiedzie się, Kurier Poczty wyświetli okno dialogowe, w którym będzie możliwy wybór formatu wysyłanej wiadomości.</p>
+  </li>
+  <li>Nacisnąć przycisk OK i zamknąć okno Książki Adresowej.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="viewing_the_message_source_for_html_messages">Wyświetlanie kodu źródłowego wiadomości w HTML</h2>
+
+<p>Aby wyświetlić źródło HTML otrzymanej wiadomości, należy:</p>
+
+<ol>
+  <li>Otworzyć wiadomość.</li>
+  <li>Z menu Widok wybrać Źródło wiadomości (lub nacisnąć klawisze Ctrl+U).</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="using_the_html_mail_question_dialog_box">Okno dialogowe wiadomości w formacie HTML</h2>
+
+<p>Jeżeli wysyłana wiadomość HTML zawiera  odbiorców, którzy nie mogą poprawnie wyświetlać formatowanych wiadomości lub nie jest pewne, czy dany odbiorca może wyświetlać wiadomości HTML, Kurier Poczty wyświetli okno dialogowe wiadomości HTML. Możliwy będzie wybór formatu, w którym zostanie ostatecznie wysłana wiadomość.</p>
+
+<p>[<a href="#creating_html_mail_messages">Na początek rozdziału</a>]</p>
+
+<h1 id="using_attachments">Załączniki</h1>
+
+<div class="contentsBox">W tym rozdziale:
+  <ul>
+    <li><a href="#attaching_a_file_or_web_page">Załączanie pliku lub strony WWW</a></li>
+    <li><a href="#viewing_and_opening_attachments">Przeglądanie i otwieranie załączników</a></li>
+    <li><a href="#saving_attachments">Zapisywanie załączników</a></li>
+  </ul>
+</div>
+
+<h2 id="attaching_a_file_or_web_page">Załączanie pliku lub strony WWW</h2>
+
+<p>Aby załączyć plik do wysyłanej wiadomości, należy:</p>
+
+<ol>
+  <li>W oknie tworzenia wiadomości nacisnąć Załącz lub z menu Plik wybrać Załącz plik.
+
+    <p><strong>Wskazówka</strong>: można również kliknąć w obrębie pola Załączniki, aby wyświetlić okno dialogowe wyboru pliku załącznika.</p>
+  </li>
+  <li>Wybrać lub wpisać nazwę pliku, który ma zostać załączony.</li>
+  <li>Nacisnąć przycisk Otwórz. Nazwa pliku zostanie wyświetlona w polu Załączniki.</li>
+</ol>
+
+<p><strong>Wskazówka</strong>: aby załączyć plik, można również przeciągnąć go myszką w obszar pola załączników w oknie tworzenia wiadomości.</p>
+
+<p>Aby załączyć stronę WWW do wysyłanej wiadomości, należy:</p>
+
+<ol>
+  <li>W oknie tworzenia wiadomości nacisnąć Załącz lub z menu Plik wybrać Załącz stronę WWW.</li>
+  <li>W oknie dialogowym wprowadzić adres URL strony WWW, a następnie nacisnąć OK. Adres wybranej strony WWW zostanie wyświetlony w polu Załączniki.</li>
+</ol>
+
+<p><strong>Wskazówka</strong>: aby wysłać przeglądaną stronę, należy wybrać polecenie Wyślij stronę z menu Plik.</p>
+
+<p>[<a href="#using_attachments">Na początek rozdziału</a>]</p>
+
+<h2 id="viewing_and_opening_attachments">Przeglądanie i otwieranie załączników</h2>
+
+<p>Jeżeli otrzymane wiadomości zawierają załączniki w formacie obsługiwanym przez Kuriera Poczty, zostaną one wyświetlone w treści wiadomości (np. pliki graficzne lub HTML). W przypadku otwierania załączników, których format nie jest bezpośrednio obsługiwany, Kurier Poczty uruchomi aplikację, która została uprzednio powiązana z danym typem plików lub umożliwi zapisanie załączników na dysku komputera.</p>
+
+<p>Aby otworzyć załącznik, którego format nie jest obsługiwany bezpośrednio, należy upewnić się, że została poprawnie skonfigurowana aplikacja, która potrafi otworzyć pliki takiego samego formatu, jak załącznik. Na przykład, aby otworzyć pliki zapisane w formacie .doc, należy upewnić się, że w komputerze istnieje aplikacja potrafiąca otwierać pliki .doc.</p>
+
+<p>Aby otworzyć załącznik, należy:</p>
+
+<ol>
+  <li>Kliknąć dwukrotnie na danym załączniku (jeżeli jest więcej niż jeden).</li>
+  <li>W wyświetlonym oknie dialogowym wybrać żądaną czynność dla pliku:
+    <ul>
+      <li>W przypadku, gdy &brandShortName; znajdzie w komputerze użytkownika aplikację obsługującą dany typ pliku, można otworzyć załącznik z jej pomocą. Aby otworzyć załącznik za pomocą innej aplikacji, należy nacisnąć przycisk "Wybierz".</li>
+      <li>W przypadku, gdy w komputerze użytkownika nie została znaleziona aplikacja obsługująca dany typ pliku, załącznik można zapisać na dysku.</li>
+			<li>Aby dodać nowy typ plików do listy aplikacji pomocniczych, należy nacisnąć przycisk <q>Zaawansowane</q>. &brandShortName; wykorzystuje aplikacje pomocnicze do otwierania nieobsługiwanych typów plików. Więcej informacji w rozdziale <a href="nav_help.xhtml#plugins_and_downloads">Wtyczki i pobieranie plików</a>.</li>
+    </ul>
+  </li>
+  <li>Nacisnąć przycisk OK.</li>
+</ol>
+
+<p><strong>Uwaga</strong>: w przypadku przeglądania załączników dla konta typu IMAP, wszystkie załączniki pozostają na serwerze.</p>
+
+<p>[<a href="#using_attachments">Na początek rozdziału</a>]</p>
+
+<h2 id="saving_attachments">Zapisywanie załączników</h2>
+
+<p>Aby zapisać załącznik, należy:</p>
+
+<ol>
+  <li>Wybrać załącznik w polu po prawej stronie nagłówków wiadomości.</li>
+  <li>Kliknąć na załączniku prawym przyciskiem myszy<span class="mac"> lub, jeżeli użytkownik ma jednoklawiszową mysz, nacisnąć klawisz <kbd>Ctrl</kbd> i&nbsp;kliknąć</span>. Z menu kontekstowego wybrać Zapisz jako.</li>
+  <li>W oknie dialogowym wybrać katalog oraz wprowadzić nazwę pliku, pod jaką załącznik ma zostać zachowany.</li>
+  <li>Nacisnąć przycisk OK. Załącznik zostanie zapisany w wybranym miejscu.</li>
+</ol>
+
+<p><strong>Wskazówka</strong>: aby zachować wszystkie załączniki jednocześnie, należy z menu kontekstowego wybrać Zapisz wszystkie. Następnie należy wskazać katalog, w którym zostaną zachowane załączniki.</p>
+
+<p>[ <a href="#using_attachments">Na początek rozdziału</a> ]</p>
+
+<h1 id="deleting_messages">Usuwanie wiadomości</h1>
+
+<div class="contentsBox">W tym rozdziale:
+
+  <ul>
+    <li><a href="#deleting_pop_or_imap_messages">Usuwanie wiadomości z kont POP i IMAP</a></li>
+    <li><a href="#moving_messages_to_and_from_the_trash">Przenoszenie wiadomości do i z
+foldera Kosz</a></li>
+  </ul>
+</div>
+
+<h2 id="deleting_pop_or_imap_messages">Usuwanie wiadomości z kont POP i IMAP</h2>
+
+<p>Sposób, w jaki usuwane są wiadomości, zależy od typu serwera, który obsługuje dane konto: IMAP lub POP. Wiadomości usunięte z konta POP są automatycznie przenoszone do folderu Kosz, w przypadku konta IMAP możliwe jest ustalenie, jaka czynność zostanie wykonana po usunięciu wiadomości.</p>
+
+<p>Aby usunąć wiadomość z folderu Odebrane lub innego, należy:</p>
+
+<ol>
+  <li>Wybrać wiadomość z listy wiadomości, a następnie nacisnąć przycisk Usuń na pasku narzędzi. Domyślnie usuwane wiadomości przenoszone są do folderu Kosz.</li>
+  <li>Aby ostatecznie usunąć wiadomość, należy z menu Plik wybrać Opróżnij kosz.</li>
+</ol>
+
+<p>Aby usunąć wiadomość bez jej otwierania, należy:</p>
+
+<ol>
+  <li>Z menu Widok wybrać Układ, a następnie odznaczyć Panel wiadomości.
+
+    <p>Aby zamknąć panel wiadomości, można również kliknąć na uchwycie belki oddzielającej podgląd nagłówków od podglądu wiadomości lub nacisnąć klawisz F8.</p>
+  </li>
+  <li>Wybrać wiadomość i nacisnąć przycisk Usuń na pasku narzędzi.</li>
+</ol>
+
+<p>Aby zmienić ustawienia dotyczące usuwania wiadomości z konta IMAP, należy:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont.</li>
+  <li>Wybrać kategorię Ustawienia serwera konta IMAP, którego ustawienia mają zostać zmienione.</li>
+  <li>Ustawić żądane <a href="mailnews_account_settings.xhtml#when_i_delete_a_message">opcje usuwania wiadomości</a>.</li>
+  <li>Nacisnąć przycisk OK.</li>
+</ol>
+
+<p>[<a href="#deleting_pop_or_imap_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="moving_messages_to_and_from_the_trash">Przenoszenie wiadomości do i z folderu Kosz</h2>
+
+<p>Aby usunąć wiadomości z folderu wiadomości przychodzących lub innych folderów na koncie POP lub koncie IMAP, w którym wiadomości przenoszone są do folderu Kosz, należy:</p>
+
+<ol>
+  <li>Wybrać wiadomość do usunięcia.</li>
+  <li>Nacisnąć przycisk Usuń na pasku narzędzi. Kurier Poczty przeniesie wybrane wiadomości do folderu Kosz.</li>
+</ol>
+
+<p>Aby odzyskać wiadomości z folderu Kosz, należy:</p>
+
+<ol>
+  <li>Otworzyć folder Kosz.</li>
+  <li>Wybrać wiadomości, które mają zostać przywrócone, a następnie przeciągnąć je do innego folderu.</li>
+</ol>
+
+<p>Aby ostatecznie usunąć wiadomości z bieżącego konta, należy:</p>
+
+<ul>
+  <li>Z menu Plik wybrać Opróżnij Kosz.</li>
+</ul>
+
+<p>[<a href="#deleting_pop_or_imap_messages">Na początek rozdziału</a>]</p>
+
+</body>
+</html>

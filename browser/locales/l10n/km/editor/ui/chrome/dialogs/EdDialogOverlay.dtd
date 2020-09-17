@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Advanced Edit…">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "Ավելացնել կամ փոփոխել HTML հատկությունները, ոճի հատկությունները և JavaScript-ը">
+<!ENTITY chooseFileButton.label "Choose File...">
+<!ENTITY chooseFileButton.accessKey "F">
+<!ENTITY chooseFileLinkButton.label "Choose File...">
+<!ENTITY chooseFileLinkButton.accessKey "o">
+<!ENTITY makeUrlRelative.label "URL គឺ​ទាក់ទង​នឹង​ទីតាំង​ទំព័រ">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Ընտրել հարաբերական և բացարձակ հղումների միջև։ Սա փոխելու համար նախ պետք է պահպանեք էջը։">
+<!-- Shared by Link and Image dialogs -->
+
+<!ENTITY LinkURLEditField.label "Enter a web page location, a local file, or select a Named Anchor or Heading from the popup list:">
+<!ENTITY LinkURLEditField.accessKey "l">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Irteerako SMTP zerbitzariaren ezarpenak">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Zure identitateak kudeatzean zerrenda honetako zerbitzari bat erabil dezakezu irteerako SMTP zerbitzari gisa hautatuz edo zerbitzari lehenetsia erabil dezakezu &quot;Erabili zerbitzari lehenetsia&quot; hautatuz.">
+
+<!ENTITY smtpListAdd.label  "Gehitu…">
+<!ENTITY smtpListAdd.accesskey  "G">
+<!ENTITY smtpListEdit.label "Editatu…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "Ezabatu">
+<!ENTITY smtpListDelete.accesskey "z">
+<!ENTITY smtpListSetDefault.label "Lehenetsi">
+<!ENTITY smtpListSetDefault.accesskey "L">
+
+<!ENTITY serverDetails.label "Hautatutako zerbitzariaren xehetasunak:">
+<!ENTITY serverDescription.label "Azalpena: ">
+<!ENTITY serverName.label "Zerbitzari-izena: ">
+<!ENTITY serverPort.label "Ataka: ">
+<!ENTITY userName.label   "Erabiltzaile-izena: ">
+<!ENTITY connectionSecurity.label "Konexioaren segurtasuna: ">
+<!ENTITY authMethod.label   "Autentifikazio-metodoa: ">

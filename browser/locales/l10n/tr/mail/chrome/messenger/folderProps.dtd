@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Özellikler">
+
+<!ENTITY generalInfo.label                       "Genel bilgiler">
+<!ENTITY folderCharsetFallback2.label            "Yedek Metin Kodlaması:">
+<!ENTITY folderCharsetFallback2.accesskey        "Y">
+<!ENTITY folderCharsetEnforce2.label             "Dizindeki tüm iletilere kodlamayı uygula (ayrı ileti karakter kodlama ayarları ve otomatik tespit görmezden gelinecek)">
+<!ENTITY folderCharsetEnforce2.accesskey         "u">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Özet dosyası indeksini yeniden oluştur">
+<!ENTITY folderRebuildSummaryFile2.label         "Dizini onar">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "r">
+<!ENTITY folderRebuildSummaryFile.explanation    "Bazen dizin indeks dosyası (.msf) hasar görebilir ve iletiler eksik görünebilir veya silinmiş iletiler görünmeye devam edebilir. Dizini onarmak bu sorunları çözebilir.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Bu dizindeki iletileri global arama sonuçlarına dahil et">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "g">
+
+<!ENTITY retention.label "Kayıt ilkeleri">
+<!ENTITY retentionUseAccount.label  "Hesap ayarlarımı kullan">
+<!ENTITY retentionUseAccount.accesskey "H">
+<!ENTITY daysOld.label "günden eski ise sil">
+<!ENTITY message.label "ileti dışındakileri sil">
+<!ENTITY retentionCleanup.label "Disk alanı kazanmak için eski iletileri kalıcı olarak silebilirsiniz.">
+<!ENTITY retentionCleanupImap.label "Disk alanı kazanmak için sunucudaki eski özgün iletiler ve yerel kopyaları tamamen silinebilir.">
+<!ENTITY retentionCleanupPop.label "Disk alanı kazanmak için sunucudaki eski özgün iletiler tamamen silinebilir.">
+<!ENTITY retentionDeleteMsg.label "İleti">
+<!ENTITY retentionDeleteMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "Hiçbir iletiyi silme">
+<!ENTITY retentionKeepAll.accesskey "y">
+<!ENTITY retentionKeepRecent.label "Son">
+<!ENTITY retentionKeepRecent.accesskey "S">
+<!ENTITY retentionApplyToFlagged.label "Yıldızlı iletileri hiçbir zaman silme">
+<!ENTITY retentionApplyToFlagged.accesskey "Y">
+
+<!ENTITY folderSynchronizationTab.label          "Eşitleme">
+<!ENTITY folderCheckForNewMessages2.label         "Bu hesap için yeni ileti alırken her zaman bu dizini denetle">
+<!ENTITY folderCheckForNewMessages2.accesskey     "y">
+
+<!ENTITY offlineFolder.check.label               "Bu dizini çevrimdışı kullanım için seç">
+<!ENTITY offlineFolder.check.accesskey           "v">
+<!ENTITY offlineFolder.button.label              "Şimdi indir">
+<!ENTITY offlineFolder.button.accesskey          "d">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Bu haber grubunu çevrimdışı kullanımı için seç">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "u">
+<!ENTITY offlineNewsgroup.button.label           "Şimdi indir">
+<!ENTITY offlineNewsgroup.button.accesskey       "d">
+
+<!ENTITY folderProps.name.label                  "İsim:">
+<!ENTITY folderProps.name.accesskey              "s">
+<!ENTITY folderProps.color.label                 "Simge rengi:">
+<!ENTITY folderProps.color.accesskey             "n">
+<!ENTITY folderProps.reset.tooltip               "Varsayılan rengi geri yükle">
+<!ENTITY folderProps.location.label              "Konum:">
+<!ENTITY folderProps.location.accesskey          "m">
+
+<!ENTITY folderSharingTab.label                  "Paylaşım">
+<!ENTITY privileges.button.label                 "Öncelikli haklar…">
+<!ENTITY privileges.button.accesskey             "h">
+<!ENTITY permissionsDesc.label                   "Aşağıdaki izinlere sahipsiniz:">
+<!ENTITY folderOtherUsers.label                  "Bu klasöre erişimi olan diğerleri:">
+<!ENTITY folderType.label                        "Dizin türü:">
+
+<!ENTITY folderQuotaTab.label                    "Kota">
+<!ENTITY folderQuotaUsage.label                  "Kullanım:">
+<!ENTITY folderQuotaStatus.label                 "Durum:">
+
+<!ENTITY numberOfMessages.label                  "İleti sayısı:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "bilinmiyor">
+<!ENTITY sizeOnDisk.label                        "Diskteki boyut:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "bilinmiyor">

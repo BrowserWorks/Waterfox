@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Publiser side">
+<!ENTITY windowTitleSettings.label    "Publiseringsinnstillinger">
+<!ENTITY publishTab.label             "Publiser">
+<!ENTITY settingsTab.label            "Innstillinger">
+<!ENTITY publishButton.label          "Publiser">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Områdenavn:">
+<!ENTITY siteList.accesskey           "O">
+<!ENTITY siteList.tooltip             "Velg området du vil publisere til">
+<!ENTITY newSiteButton.label          "Nytt område">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Undermappe for denne siden:">
+<!ENTITY docDirList.accesskey         "U">
+<!ENTITY docDirList.tooltip           "Velg eller skriv inn navnet på en undermappen på serveren som denne siden bruker">
+<!ENTITY publishImgCheckbox.label     "Ta med bilder og andre filer">
+<!ENTITY publishImgCheckbox.accesskey "T">
+<!ENTITY publishImgCheckbox.tooltip   "Publiser bilder og andre filer som denne siden er koblet til">
+<!ENTITY sameLocationRadio.label      "Bruk samme adresse som siden">
+<!ENTITY sameLocationRadio.accesskey  "r">
+<!ENTITY sameLocationRadio.tooltip    "Publiser filer til den same adressen som siden">
+<!ENTITY useSubdirRadio.label         "Bruk denne undermappen">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Velg eller skriv inn et navn på den eksterne undermappen hvor filene skal publiseres">
+<!ENTITY otherDirList.tooltip         "Velg eller skriv inn et navn på en undermappe på serveren hvor filene vil publiseres">
+<!ENTITY pageTitle.label              "Sidetittel:">
+<!ENTITY pageTitle.accesskey          "t">
+<!ENTITY pageTitle.tooltip            "Skriv inn en tittel for å identifisere siden i vinduet og bokmerkene">
+<!ENTITY pageTitleExample.label       "f.eks.: «Min nettside»">
+<!ENTITY filename.label               "Filnavn:">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip             "Skriv inn et navn på denne filen, og ta med «.html» for en nettside">
+<!ENTITY filenameExample.label        "f.eks.: «minside.html»">
+<!ENTITY setDefaultButton.label       "Sett som standard">
+<!ENTITY setDefaultButton.accesskey   "e">
+<!ENTITY removeButton.label           "Fjern område">
+<!ENTITY removeButton.accesskey       "r">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Publiseringssteder">
+<!ENTITY serverInfo.label             "Serverinformasjon">
+<!ENTITY loginInfo.label              "Innloggingsinformasjon">
+<!ENTITY siteName.label               "Områdenavn:">
+<!ENTITY siteName.accesskey           "O">
+<!ENTITY siteName.tooltip             "Et kallenavn som identifiserer dette publiseringsområdet (f.eks.: «Mitt område»)">
+<!ENTITY siteUrl.label                "Publiseringsadresse (f.eks.: «ftp://ftp.myisp.com/myusername»):">
+<!ENTITY siteUrl.accesskey            "P">
+<!ENTITY siteUrl.tooltip              "FTP://- eller HTTP://-adressen til din ISP eller nettvert">
+<!ENTITY browseUrl.label              "HTTP-adressen til hjemmesiden (f.eks.: «http://www.myisp.com/myusername»):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "HTTP://-adressen til din hjemmemappe (ikke ta med filnavn)">
+<!ENTITY username.label               "Brukernavn:">
+<!ENTITY username.accesskey           "B">
+<!ENTITY username.tooltip             "Brukernavnet du bruker for å logge inn til din ISP eller nettvert">
+<!ENTITY password.label               "Passord:">
+<!ENTITY password.accesskey           "P">
+<!ENTITY password.tooltip             "Passordet tilhørende ditt brukernavn">
+<!ENTITY savePassword.label           "Lagre passord">
+<!ENTITY savePassword.accesskey       "L">
+<!ENTITY savePassword.tooltip         "Velg dette for å lagre passordet sikkert med Passordbehandling">

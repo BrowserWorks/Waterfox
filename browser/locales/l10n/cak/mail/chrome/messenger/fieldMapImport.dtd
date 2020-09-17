@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Kejik' Kiwujil Ochochib'äl">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Taq tzij ejik'on pe richin Tz'ib'anïk: ">
+<!ENTITY fieldMapImport.next.label "Jun chik">
+<!ENTITY fieldMapImport.next.accesskey "J">
+<!ENTITY fieldMapImport.previous.label "Jun kan">
+<!ENTITY fieldMapImport.previous.accesskey "k">
+<!ENTITY fieldMapImport.text "Tawokisaj Tijotob'äx chuqa' Tiqasäx richin nicha' kicholajem taq k'ojlib'äl pa ri kitz'ib'awuj ochochib'äl pa xokon richin nijik' pa ri ajkiq'a'. Tawelesaj el ketal ri taq ch'akulal man nawajo' ta ye'ajïk' el.">
+<!ENTITY fieldMapImport.up.label "Tijotob'äx">
+<!ENTITY fieldMapImport.up.accesskey "j">
+<!ENTITY fieldMapImport.down.label "Tiqasäx Qa">
+<!ENTITY fieldMapImport.down.accesskey "Q">
+<!ENTITY fieldMapImport.fieldListTitle "Kik'ojlib'al Kiwujil Ochochib'äl">
+<!ENTITY fieldMapImport.dataTitle "Kitz'ib'anik taq tzij richin yejik' el">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Nab'ey tz'ib'anïk ruk'wan rub'i' ri k'ojlib'äl">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "N">

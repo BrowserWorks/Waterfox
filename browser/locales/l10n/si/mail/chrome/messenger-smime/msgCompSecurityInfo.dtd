@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "ලිපි ආරක්ෂාව">
+ <!ENTITY subject.plaintextWarning "සටහන: ලිපියේ ශීර්ෂ කිසිඳු විටෙක සංකේතනය නොකරයි.">
+<!ENTITY status.heading "ඔබගේ ලිපියේ අන්තර්ගතය පහත පරිදි යවනු ඇත:">
+<!ENTITY status.signed "අංකිතව අත්සන් කළ:">
+<!ENTITY status.encrypted "සංකේතනය කළ:">
+<!ENTITY status.certificates "සහතික:">
+<!ENTITY view.label "දසුන්">
+<!ENTITY view.accesskey "V">
+<!ENTITY tree.recipient "ලබන්නා">
+<!ENTITY tree.status "තත්ත්වය">
+<!ENTITY tree.issuedDate "නිකුත් කළේ">
+<!ENTITY tree.expiresDate "කල් ඉකුත් වන්නේ">

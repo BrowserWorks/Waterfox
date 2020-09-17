@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Kalendar">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Veprimtari…">
+<!ENTITY lightning.menupopup.new.event.accesskey "R">
+<!ENTITY lightning.menupopup.new.task.label     "Punë…">
+<!ENTITY lightning.menupopup.new.task.accesskey "P">
+<!ENTITY lightning.menupopup.new.calendar.label "Kalendar…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "K">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Hape">
+<!ENTITY lightning.menupopup.open.accesskey           "H">
+<!ENTITY lightning.menupopup.open.message.label       "Mesazh i Ruajtur…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "M">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Kartelë Kalendari…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "K">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Kalendar">
+<!ENTITY lightning.menu.view.calendar.accesskey        "K">
+<!ENTITY lightning.menu.view.tasks.label               "Punë">
+<!ENTITY lightning.menu.view.tasks.accesskey           "P">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Veprimtari dhe Punë">
+<!ENTITY lightning.menu.eventtask.accesskey            "V">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "Email:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Parapëlqe planifikim email-esh më anë të klientit">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Tani për tani, këtë mund ta aktivizoni pasi të rregulloni këtë kalendar te dialogu i vetive për të, nëse shërbyesi i kalendarit kujdeset për planifikimet.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Kjo mundësi është e përdorshme vetëm nëse shërbyesi i kalendarit e mbulon planifikimin. Aktivizimi do të lejojë përdorimin e planifikimeve standard , bazuar në email, në vend se kjo t’i lihet shërbyesit.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Pranoje">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Pranoni ftesë veprimtarie">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Pranojini krejt">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Pranoni ftesë veprimtarie për krejt përsëritjet e veprimtarisë">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Shtojeni">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Shtojni veprimtarinë te kalendari">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Hidhe poshtë">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Hidhni poshtë ftesën e veprimtarisë">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Hidhini poshtë krejt">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Hidheni poshtë ftesën e veprimtarisë për krejt përsëritjet e veprimtarisë">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Hidhe poshtë">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Hidhe poshtë kundërpropozimin">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Fshijeni">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Fshijeni nga kalendari">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Hollësi…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Shfaqni hollësi veprimtarie">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Mos m’i shfaq më këto mesazhe">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Kalendar">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Kaloni te skeda e kalendarit">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Më tepër">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Klikoni që të shfaqen më tepër mundësi">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Ripohojeni">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "I dërgon organizatorit një ripohim">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Riplanifikojeni">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Riplanifikojeni veprimtarinë">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Ruaj një kopje">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Ruan te kalendari një kopje të veprimtarisë, pavarësisht përgjigjes për organizatorët. Lista e pjesëmarrësve do të spastrohet.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Prano përkohësisht ftesë veprimtarie">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Të gjitha përkohësisht">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Prano përkohësisht ftesë veprimtarie për të gjitha përsëritjet e veprimtarisë">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Përditësojeni">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Përditësoni veprimtarinë te kalendari">
+<!ENTITY lightning.imipbar.description                                      "Ky mesazh përmban ftesë për një veprimtari.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Dërgoni një përgjigje tani">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Dërgojini një përgjigje organizuesit">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Dërgojini një përgjigje organizuesit për krejt seritë">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Mos dërgo përgjigje">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Ndryshoni gjendjen e pjesëmarrjes tuaj pa dërguar përgjigje për organizuesin">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Ndryshoni gjendjen e pjesëmarrjes tuaj për seritë pa dërguar përgjigje për organizuesin">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Krijoni kalendar të ri">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Shfaq Mini-Muaj">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Shfaq Mini-Ditë">
+<!ENTITY todaypane.showMiniday.accesskey  "D">
+<!ENTITY todaypane.showNone.label "Mos Shfaq Gjë">
+<!ENTITY todaypane.showNone.accesskey "o">
+<!ENTITY todaypane.showTodayPane.label "Shfaq Kuadratin Për të Sotmen">
+<!ENTITY todaypane.showTodayPane.accesskey "K">
+<!ENTITY todaypane.statusButton.label "Kuadrati Sot">

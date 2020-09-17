@@ -1,0 +1,108 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "ជូន​ចំពោះ">
+<!ENTITY fromField4.label "From">
+<!ENTITY senderField4.label "Sender">
+<!ENTITY organizationField4.label "ស្ថាប័ន">
+<!ENTITY replyToField4.label "ឆ្លើយតប​">
+
+<!ENTITY subjectField4.label "Վերնագիրը">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "វេទិកា​ព័ត៌មាន​">
+<!ENTITY followupToField4.label "បន្ត​ទៅកាន់​">
+<!ENTITY tagsHdr4.label "ស្លាក">
+<!ENTITY dateField4.label "កាលបរិច្ឆេទ">
+<!ENTITY userAgentField4.label "ភ្នាក់ងារ​អ្នក​ប្រើ">
+<!ENTITY referencesField4.label "សេចក្ដីយោង">
+<!ENTITY messageIdField4.label "លេខ​សម្គាល់​សារ​">
+<!ENTITY inReplyToField4.label "ជា​ការ​ឆ្លើយតប">
+<!ENTITY originalWebsite4.label "តំបន់​បណ្ដាញ">
+
+<!ENTITY hdrArchiveButton1.label "Archive">
+<!ENTITY hdrArchiveButton1.tooltip "ទុកសារ​នេះ​ក្នុង​ប័ណ្ណសារ">
+<!ENTITY hdrSmartReplyButton1.label "ការឆ្លើយតប​ឆ្លាតវៃ">
+<!ENTITY hdrReplyButton1.label "Reply">
+<!ENTITY hdrReplyButton2.tooltip "ឆ្លើយតប​ទៅអ្នក​ផ្ញើ​សារ​នេះ">
+<!ENTITY hdrReplyAllButton1.label "Reply All">
+<!ENTITY hdrReplyAllButton1.tooltip "Reply to sender and all recipients">
+<!ENTITY hdrReplyListButton1.label "ឆ្លើយតប​បញ្ជី">
+<!ENTITY hdrReplyListButton1.tooltip "Reply to mailing list">
+<!ENTITY hdrFollowupButton1.label "បន្ត​ទៅកាន់​">
+<!ENTITY hdrFollowupButton1.tooltip "ប្រកាស​កា​របន្ត​ទៅ​កាន់​វេទិកា​ព័ត៌មាន​នេះ">
+<!ENTITY hdrForwardButton1.label "Forward">
+<!ENTITY hdrForwardButton1.tooltip "បញ្ជូន​សារ​នេះ​បន្ត">
+<!ENTITY hdrJunkButton1.label "Junk">
+<!ENTITY hdrJunkButton1.tooltip "សម្គាល់​សារ​នេះ​ជា​សារ​ឥត​បាន​ការ">
+<!ENTITY hdrTrashButton1.label "​លុប​">
+<!ENTITY hdrTrashButton1.tooltip "លុប​សារ​នេះ">
+
+<!ENTITY hdrViewToolbarShowFull.label "Ցուցադրել պատկերները և տեքստը">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "Ցուցադրել միայն պատկերները">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "I">
+<!ENTITY hdrViewToolbarShowText.label "Ցուցադրել միայն տեքստը">
+<!ENTITY hdrViewToolbarShowText.accesskey "T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Միշտ ցուցադրել պատասխանը ուղարկողին">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY otherActionsButton2.label "Ավելին">
+<!ENTITY otherActionsButton.tooltip "សកម្មភាព​ច្រើន​ទៀត">
+<!ENTITY otherActionsOpenConversation1.label "បើក​ក្នុង​ការ​សន្ទនា">
+<!ENTITY otherActionsOpenConversation1.accesskey "C">
+<!ENTITY otherActionsOpenInNewWindow1.label "បើក​នៅ​ក្នុង​បង្អួច​ថ្មី">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "W">
+<!ENTITY otherActionsOpenInNewTab1.label "Բացել նոր էջում">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "T">
+<!ENTITY markAsReadMenuItem1.label "សម្គាល់​ថា​​អាន​រួច">
+<!ENTITY markAsReadMenuItem1.accesskey "R">
+<!ENTITY markAsUnreadMenuItem1.label "សម្គាល់​ថា​មិន​ទាន់​អាន">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "រក្សា​ទុកជា...">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "មើល​ប្រភព">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "Տպել…">
+<!ENTITY otherActionsPrint1.accesskey "P">
+<!-- Attachment bar context menu items -->
+
+<!ENTITY startExpandedCmd.label    "ដំបូង​បង្ហាញ​បន្ទះ​ភ្ជាប់">
+<!ENTITY startExpandedCmd.accesskey    "S">
+<!-- Attachment context menu items -->
+
+<!ENTITY openAttachmentCmd.label    "Բացել">
+<!ENTITY openAttachmentCmd.accesskey    "O">
+<!ENTITY saveAsAttachmentCmd.label    "Պահպանել որպես…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "S">
+<!ENTITY detachAttachmentCmd.label    "Բաժանել...">
+<!ENTITY detachAttachmentCmd.accesskey    "D">
+<!ENTITY deleteAttachmentCmd.label    "Ջնջել">
+<!ENTITY deleteAttachmentCmd.accesskey    "e">
+<!ENTITY openAllAttachmentsCmd.label    "Բացել բոլորը...">
+<!ENTITY openAllAttachmentsCmd.accesskey    "O">
+<!ENTITY saveAllAttachmentsCmd.label    "Պահպանել բոլորը...">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+<!ENTITY detachAllAttachmentsCmd.label    "Բաժանել բոլորը...">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "D">
+<!ENTITY deleteAllAttachmentsCmd.label    "Ջնջել բոլորը...">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "e">
+
+<!ENTITY openAttachment.tooltip "បើក​ឯកសារ​ភ្ជាប់">
+<!-- Attachment toolbar items -->
+
+<!ENTITY saveAttachmentButton1.label       "រក្សាទុក​">
+<!ENTITY saveAttachmentButton1.tooltip     "រក្សាទុក​ឯកសារ​ភ្ជាប់">
+<!ENTITY saveAllAttachmentsButton1.label   "រក្សាទុក​ទាំងអស់​">
+<!ENTITY saveAllAttachmentsButton1.tooltip "រក្សាទុក​ឯកសារ​ភ្ជាប់ទាំងអស់">
+
+<!ENTITY copyLinkCmd.label        "Պատճենել հղման հասցեն">
+<!ENTITY copyLinkCmd.accesskey    "C">
+
+<!ENTITY CopyMessageId.label "ចម្លង​លេខ​សម្គាល់​សារ">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "បើក​សារ​សម្រាប់លេខ​សម្គាល់">
+<!ENTITY OpenMessageForMsgId.accesskey "O">
+<!ENTITY OpenBrowserWithMsgId.label "បើកកម្មវិធីអ៊ីនធឺណីត​ជា​មួយលេខ​សម្គាល់សារ">
+<!ENTITY OpenBrowserWithMsgId.accesskey "B">

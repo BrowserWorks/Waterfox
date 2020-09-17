@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Güvenlik">
+<!ENTITY securityTab.label "Güvenlik">
+<!ENTITY securityHeading.label "Şifreli iletileri almak ve göndermek için hem şifreleme onay belgesi hem de  sayısal imza belirtmek zorundasınız.">
+<!ENTITY encryptionGroupTitle.label "Şifreleme">
+<!ENTITY encryptionChoiceLabel.label "Postaları gönderirken kullanılan öntanımlı şifreleme ayarları:">
+<!ENTITY neverEncrypt.label "Asla (şifreleme kullanma)">
+<!ENTITY neverEncrypt.accesskey "A">
+<!ENTITY alwaysEncryptMessage.label "Gerekli (alıcının onay belgesi yoksa ileti gönderilemez)">
+<!ENTITY alwaysEncryptMessage.accesskey "G">
+<!ENTITY encryptionCert.message "Aşağıdaki kişisel onay belgesini kullan:">
+<!ENTITY digitalSign.certificate.button "Seç…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Temizle">
+<!ENTITY digitalSign.certificate_clear.accesskey "T">
+<!ENTITY encryption.certificate.button "Seç…">
+<!ENTITY encryption.certificate.accesskey "e">
+<!ENTITY encryption.certificate_clear.button "Temizle">
+<!ENTITY encryption.certificate_clear.accesskey "z">
+<!ENTITY signingGroupTitle.label "Sayısal imza">
+<!ENTITY signMessage.label "Postaları Sayısal İmzala (Öntanımlı)">
+<!ENTITY signMessage.accesskey "S">
+<!ENTITY signingCert.message "Aşağıdaki kişisel onay belgesini kullan:">
+
+<!ENTITY certificates.label "Onay belgeleri">
+<!ENTITY manageCerts.label "Onay belgelerini yönet…">
+<!ENTITY manageCerts.accesskey "O">
+<!ENTITY manageDevices.label "Güvenlik aygıtlarını yönet…">
+<!ENTITY manageDevices.accesskey "y">

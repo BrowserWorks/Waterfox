@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Informaçioin rigoardo &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; o l'é sperimentale e o peu ese instabile.">
+<!ENTITY aboutPage.checkForUpdates.link         "Çerca agiornamenti »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Çerco i agiornamenti…">
+<!ENTITY aboutPage.checkForUpdates.none         "No gh'é di agiornamenti">
+<!ENTITY aboutPage.checkForUpdates.available2   "Scarega agiornamento">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Scarego l'agiornamento…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Installa agiornamento">
+<!ENTITY aboutPage.faq.label                    "Domande e risposte">
+<!ENTITY aboutPage.support.label                "Agiutto">
+<!ENTITY aboutPage.privacyPolicy.label          "Informativa in sciâ Privacy">
+<!ENTITY aboutPage.rights.label                 "In sci teu diriti">
+<!ENTITY aboutPage.relNotes.label               "Anotaçioin da distribuçion">
+<!ENTITY aboutPage.credits.label                "Riconoscimenti">
+<!ENTITY aboutPage.license.label                "Informaçioin de licensa">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox e-i lòghi de Firefox son marchi registræ da Fondaçion Mozilla.">

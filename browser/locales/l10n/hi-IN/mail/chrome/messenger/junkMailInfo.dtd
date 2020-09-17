@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "जंक मेल के बारे में">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; स्वतः आने वाले मेल को जांचता है जो जंक की तरह प्रतीत होता है (स्पैम के रूप में भी विदित). संदेश जो &brandShortName; सोचता है कि जंक है वह जंक प्रतीक दिखायेगा">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "पहले आपको &brandShortName; को प्रशिक्षित करना चाहिये जंक मेल को पहचानने के लिये जंक टूलबार बटन के प्रयोग से संदेश को जंक या जंक नहीं के रूप में चिह्नित करने के लिये.">
+<!ENTITY info3.label   "&brandShortName; के द्वारा जंक मेल के सही पहचान करने पर, आप जंक मेल नियंत्रण को आने वाले मेल को सीधे जंक फोल्डर में डाने के लिये प्रयोग कर सकते हैं.">
+<!ENTITY info4.label   "ज्यादा जानकारी के लिये, मदद पर क्लिक करें.">

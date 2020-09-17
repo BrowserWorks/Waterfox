@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!ENTITY replaceDialog.title "Localizar e substituír">
+<!ENTITY findField.label "Localizar:">
+<!ENTITY findField.accesskey "L">
+<!ENTITY replaceField.label "Substituír por:">
+<!ENTITY replaceField.accesskey "S">
+<!ENTITY caseSensitiveCheckbox.label "Diferenciar maiúsculas de minúsculas">
+<!ENTITY caseSensitiveCheckbox.accesskey "D">
+<!ENTITY wrapCheckbox.label "Dar a volta">
+<!ENTITY wrapCheckbox.accesskey "v">
+<!ENTITY backwardsCheckbox.label "Buscar cara a atrás">
+<!ENTITY backwardsCheckbox.accesskey "B">
+<!ENTITY findNextButton.label "Localizar seguinte">
+<!ENTITY findNextButton.accesskey "s">
+<!ENTITY replaceButton.label "Substituír">
+<!ENTITY replaceButton.accesskey "S">
+<!ENTITY replaceAndFindButton.label "Substituír e localizar">
+<!ENTITY replaceAndFindButton.accesskey "u">
+<!ENTITY replaceAllButton.label "Substituír todo">
+<!ENTITY replaceAllButton.accesskey "t">
+<!ENTITY closeButton.label "Pechar">

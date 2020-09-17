@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox тіркелгілері">
+<!ENTITY aboutAccounts.connected.description "Келесі ретінде байланыстыңыз:">
+<!ENTITY aboutAccounts.syncPreferences.label "Синхрондау баптауларын тексеру үшін осында шертіңіз">
+
+<!ENTITY aboutAccounts.noConnection.title "Интернетпен байланыс жоқ">
+<!ENTITY aboutAccounts.retry.label "Қайтадан көру">
+
+<!ENTITY aboutAccounts.restrictedError.title "Шектелген">
+<!ENTITY aboutAccounts.restrictedError.description "Сіз бұл профильден Firefox тіркелгілерін басқара алмайсыз">

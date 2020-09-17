@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Pri &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; estas prova versio kaj povas esti nestabila.">
+<!ENTITY aboutPage.checkForUpdates.link         "Kontroli ĉu estas ĝisdatigoj »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Ĝisdatigoj serĉataj…">
+<!ENTITY aboutPage.checkForUpdates.none         "Neniu ĝisdatigo havebla">
+<!ENTITY aboutPage.checkForUpdates.available2   "Elŝuti ĝisdatigon">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Ĝisdatigo elŝutata…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Instali ĝisdatigon">
+<!ENTITY aboutPage.faq.label                    "Oftaj demandoj">
+<!ENTITY aboutPage.support.label                "Helpo">
+<!ENTITY aboutPage.privacyPolicy.label          "Politiko pri privateco">
+<!ENTITY aboutPage.rights.label                 "Konu viajn rajtojn">
+<!ENTITY aboutPage.relNotes.label               "Liveraj notoj">
+<!ENTITY aboutPage.credits.label                "Atribuoj">
+<!ENTITY aboutPage.license.label                "Permesila informo">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox kaj la emblemoj de Firefox estas registritaj varmarkoj de Mozilla Foundation.">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# secarica <orice@secarica.ro>
+# toffee <daniel@toffee.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Caută mesaje în:">
+<!ENTITY searchHeading.accesskey     "C">
+<!ENTITY searchSubfolders.label      "Și în sub-dosare">
+<!ENTITY searchSubfolders.accesskey  "e">
+<!ENTITY searchLocalSystem.label     "Search local system">
+<!ENTITY searchLocalSystem.accesskey "y">
+<!ENTITY resetButton.label           "Șterge">
+<!ENTITY resetButton.accesskey       "t">
+<!ENTITY openButton.label            "Deschis">
+<!ENTITY openButton.accesskey        "D">
+<!ENTITY deleteButton.label          "Șterge elementul">
+<!ENTITY deleteButton.accesskey      "t">
+<!ENTITY searchDialogTitle.label     "Căutare mesaje">
+<!ENTITY results.label               "Rezultate">
+<!ENTITY fileHereMenu.label          "Îndosariază aici">
+<!ENTITY fileHereMenu.accesskey      "n">
+<!ENTITY fileButton.label            "Fișierul">
+<!ENTITY fileButton.accesskey        "i">
+<!ENTITY goToFolderButton.label      "Deschide dosar mesaje">
+<!ENTITY goToFolderButton.accesskey  "r">
+<!ENTITY saveAsVFButton.label      "Salvează ca Dosar de căutare">
+<!ENTITY saveAsVFButton.accesskey  "a">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Caută în:">
+<!ENTITY abSearchHeading.accesskey   "C">
+<!ENTITY propertiesButton.label      "Proprietăți">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "Compune">
+<!ENTITY composeButton.accesskey     "e">
+<!ENTITY abSearchDialogTitle.label   "Căutare avansată în agenda de contacte">

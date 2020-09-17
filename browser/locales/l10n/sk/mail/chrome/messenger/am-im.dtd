@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Nastavenia účtu">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Všeobecné">
+<!ENTITY account.advanced              "Rozšírené nastavenia">
+<!ENTITY account.name                  "Používateľské meno:">
+<!ENTITY account.password              "Heslo:">
+<!ENTITY account.alias                 "Alias:">
+<!ENTITY account.newMailNotification   "Upozorniť pri prijatí novej správy">
+<!ENTITY account.autojoin              "Automaticky sa pripájať k nasledovným kanálom:">
+<!ENTITY account.proxySettings.caption "Nastavenia proxy:">
+<!ENTITY account.proxySettings.change.label     "Zmeniť…">
+<!ENTITY account.proxySettings.change.accessKey "Z">

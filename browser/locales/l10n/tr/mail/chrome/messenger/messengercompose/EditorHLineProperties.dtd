@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Yatay Çizgi Özellikleri">
+
+<!ENTITY dimensionsBox.label "Ölçüler">
+<!ENTITY heightEditField.label "Yükseklik:">
+<!ENTITY heightEditField.accessKey "s">
+<!ENTITY widthEditField.label "Genişlik:">
+<!ENTITY widthEditField.accessKey "k">
+<!ENTITY pixelsPopup.value "piksel">
+<!ENTITY alignmentBox.label "Hizalama">
+<!ENTITY leftRadio.label "Sol">
+<!ENTITY leftRadio.accessKey "l">
+<!ENTITY centerRadio.label "Orta">
+<!ENTITY centerRadio.accessKey "O">
+<!ENTITY rightRadio.label "Sağ">
+<!ENTITY rightRadio.accessKey "S">
+
+<!ENTITY threeDShading.label "3B Gölgelendirme">
+<!ENTITY threeDShading.accessKey "G">
+<!ENTITY saveSettings.label "Varsayılan olarak kullan">
+<!ENTITY saveSettings.accessKey "n">
+<!ENTITY saveSettings.tooltip "Yeni yatay çizgi eklemede kullanılmak üzere bu ayarları kaydet">

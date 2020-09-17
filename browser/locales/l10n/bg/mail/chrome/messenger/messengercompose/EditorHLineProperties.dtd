@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Свойства на хоризонталната линия">
+
+<!ENTITY dimensionsBox.label "Размери">
+<!ENTITY heightEditField.label "Височина:">
+<!ENTITY heightEditField.accessKey "В">
+<!ENTITY widthEditField.label "Ширина:">
+<!ENTITY widthEditField.accessKey "Ш">
+<!ENTITY pixelsPopup.value "пиксели">
+<!ENTITY alignmentBox.label "Подравняване">
+<!ENTITY leftRadio.label "Ляво">
+<!ENTITY leftRadio.accessKey "Л">
+<!ENTITY centerRadio.label "Центриране">
+<!ENTITY centerRadio.accessKey "Ц">
+<!ENTITY rightRadio.label "Дясно">
+<!ENTITY rightRadio.accessKey "Д">
+
+<!ENTITY threeDShading.label "3-D сенки">
+<!ENTITY threeDShading.accessKey "3">
+<!ENTITY saveSettings.label "По подразбиране">
+<!ENTITY saveSettings.accessKey "з">
+<!ENTITY saveSettings.tooltip "Съхранение на настройките, за да се използват при вмъкване на хоризонтални линии">

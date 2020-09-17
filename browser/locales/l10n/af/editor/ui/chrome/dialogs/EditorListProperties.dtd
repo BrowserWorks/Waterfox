@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Lys-eienskappe">
+
+<!ENTITY ListType.label "Lyssoort">
+<!ENTITY bulletStyle.label "Koeëltjiestyl:">
+<!ENTITY startingNumber.label "Begin by:">
+<!ENTITY startingNumber.accessKey "B">
+<!ENTITY none.value "Geen">
+<!ENTITY bulletList.value "Koeëltjielys (nommerloos)">
+<!ENTITY numberList.value "Genommerde lys">
+<!ENTITY definitionList.value "Definisielys">
+<!ENTITY changeEntireListRadio.label "Verander hele lys">
+<!ENTITY changeEntireListRadio.accessKey "V">
+<!ENTITY changeSelectedRadio.label "Verander slegs gemerkte items">
+<!ENTITY changeSelectedRadio.accessKey "i">

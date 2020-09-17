@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Subscription Dialog -->
+
+<!ENTITY feedSubscriptions.label     "Síntiúis Fhotha">
+<!ENTITY learnMore.label             "Tuilleadh eolais faoi Fhothaí">
+
+<!ENTITY feedTitle.label             "Teideal:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL an fhotha:">
+<!ENTITY feedLocation.accesskey      "f">
+<!ENTITY locationValidate.label      "Bailíochtaigh">
+<!ENTITY validateText.label          "Bailíochtaigh agus faigh URL bailí.">
+
+<!ENTITY feedFolder.label            "Sábháil Ailt i:">
+<!ENTITY feedFolder.accesskey        "S">
+<!-- Account Settings and Subscription Dialog -->
+
+<!ENTITY biffStart.label             "Lorg altanna nua gach ">
+<!ENTITY biffStart.accesskey         "L">
+<!ENTITY biffMinutes.label           "nóiméad">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "lá">
+<!ENTITY biffDays.accesskey          "l">
+<!ENTITY recommendedUnits.label      "Molann an foilsitheoir:">
+
+<!ENTITY quickMode.label             "Taispeáin achoimre an ailt in áit an leathanach Gréasáin a íoslódáil">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "Cruthaigh clibeanna go huathoibríoch as ainmneacha &lt;category&gt; san fhotha">
+<!ENTITY autotagEnable.accesskey     "o">
+<!ENTITY autotagUsePrefix.label      "Cuir an réimír seo roimh chlibeanna:">
+<!ENTITY autotagUsePrefix.accesskey  "C">
+<!ENTITY autoTagPrefix.placeholder   "Cuir réimír isteach">
+<!-- Subscription Dialog -->
+
+<!ENTITY button.addFeed.label        "Cuir Leis">
+<!ENTITY button.addFeed.accesskey    "L">
+<!ENTITY button.updateFeed.label     "Nuashonraigh">
+<!ENTITY button.updateFeed.accesskey "u">
+<!ENTITY button.removeFeed.label     "Bain">
+<!ENTITY button.removeFeed.accesskey "B">
+<!ENTITY button.importOPML.label     "Iompórtáil">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Easpórtáil">
+<!ENTITY button.exportOPML.accesskey "s">
+<!ENTITY button.exportOPML.tooltip   "Easpórtáil fothaí le struchtúr fillteán; ctrl+clic nó ctrl+enter chun fothaí a easpórtáil mar liosta">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Dún">

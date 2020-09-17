@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+<!ENTITY window.width2                    "485">
+<!ENTITY window.height                    "300">
+
+<!ENTITY activity.title                  "ක්‍රියාකාරීත්ව සටහන">
+
+<!ENTITY cmd.pause.label                  "අත්හිටුවන්න">
+<!ENTITY cmd.pause.accesskey              "P">
+<!ENTITY cmd.resume.label                 "යළි-අරඹන්න">
+<!ENTITY cmd.resume.accesskey             "R">
+<!ENTITY cmd.cancel.label                 "එපා">
+<!ENTITY cmd.cancel.accesskey             "C">
+<!ENTITY cmd.undo.label                   "අහෝසි කරන්න">
+<!ENTITY cmd.undo.accesskey               "U">
+<!ENTITY cmd.recover.label                "Recover">
+<!ENTITY cmd.recover.accesskey            "v">
+<!ENTITY cmd.retry.label                  "නැවත උත්සාහ කරන්න">
+<!ENTITY cmd.retry.accesskey              "R">
+<!ENTITY cmd.removeFromList.label         "ලැයිස්තුවෙන් ඉවත් කරන්න">
+<!ENTITY cmd.removeFromList.accesskey     "e">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "ලැයිස්තුව හිස් කරන්න">
+<!ENTITY cmd.clearList.tooltip            "සම්පූර්ණ කළ, අවලංගු කළ, සහ අසාර්ථක අයිතමයන් ලැයිස්තුවෙන් ඉවත් කරන්න">
+<!ENTITY cmd.clearList.accesskey          "C">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "සෙවීම්…">

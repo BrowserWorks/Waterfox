@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Копії та теки">
+<!ENTITY sendingPrefix.label "Під час надсилання повідомлень автоматично:">
+<!ENTITY fccMailFolder.label "Зберегти копію в:">
+<!ENTITY fccMailFolder.accesskey "б">
+<!ENTITY fccReplyFollowsParent.label "Зберегти відповіді до теки з початковим повідомленням">
+<!ENTITY fccReplyFollowsParent.accesskey "ч">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Слати Cc на ці поштові адреси:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Розділяйте адреси комами">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Надсилати приховані копії за цими адресами:">
+<!ENTITY bccAddress.accesskey "т">
+<!ENTITY bccAddressList.placeholder "Розділяйте адреси комами">
+<!ENTITY saveMessageDlg.label "Показувати вікно підтвердження під час збереження повідомлень">
+<!ENTITY saveMessageDlg.accesskey "к">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "теці &quot;Надіслані&quot; у:">
+<!ENTITY sentFolderOn.accesskey "Н">
+<!ENTITY sentInOtherFolder.label "Інші:">
+<!ENTITY sentInOtherFolder.accesskey "І">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Архів повідомлень">
+<!ENTITY keepArchives.label "Зберігати архіви повідомлень у:">
+<!ENTITY keepArchives.accesskey "а">
+<!ENTITY archiveHierarchyButton.label "Налаштування архіву…">
+<!ENTITY archiveHierarchyButton.accesskey "л">
+<!ENTITY archivesFolderOn.label "теці &quot;Архіви&quot; у:">
+<!ENTITY archivesFolderOn.accesskey "А">
+<!ENTITY archiveInOtherFolder.label "Інші:">
+<!ENTITY archiveInOtherFolder.accesskey "і">
+<!ENTITY specialFolders.label "Чернетки та шаблони">
+<!ENTITY keepDrafts2.label "Зберігати чернетки повідомлень у:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "теці &quot;Чернетки&quot; у:">
+<!ENTITY draftsFolderOn.accesskey "Ч">
+<!ENTITY draftInOtherFolder.label "Інші:">
+<!ENTITY draftInOtherFolder.accesskey "н">
+<!ENTITY keepTemplates.label "Зберігати шаблони повідомлень у:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "теці &quot;Шаблони&quot; у:">
+<!ENTITY templatesFolderOn.accesskey "Ш">
+<!ENTITY templateInOtherFolder.label "Інші:">
+<!ENTITY templateInOtherFolder.accesskey "і">

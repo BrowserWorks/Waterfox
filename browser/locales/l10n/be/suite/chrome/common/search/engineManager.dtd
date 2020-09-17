@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY engineManager.title "Кіраванне спісам машынаў пошуку">
+<!ENTITY engineManager.style "min-width: 40em;">
+<!ENTITY engineManager.intro "Наступныя машыны пошуку ўсталяваны ў вас:">
+<!ENTITY columnLabel.name "Назва">
+<!ENTITY columnLabel.keyword "Ключавое слова">
+<!ENTITY up.label "Рухаць угору">
+<!ENTITY up.accesskey "г">
+<!ENTITY dn.label "Рухаць уніз">
+<!ENTITY dn.accesskey "н">
+<!ENTITY remove.label "Прыняць">
+<!ENTITY remove.accesskey "П">
+<!ENTITY edit.label "Правіць ключавое слова…">
+<!ENTITY edit.accesskey "р">
+<!ENTITY addEngine.label "Атрымаць іншыя машыны пошуку…">
+<!ENTITY addEngine.accesskey "А">
+<!ENTITY enableSuggest.label "Паказваць прапановы пошуку">
+<!ENTITY enableSuggest.accesskey "ш">
+<!ENTITY restoreDefaults.label "Аднавіць змоўчныя">
+<!ENTITY restoreDefaults.accesskey "з">

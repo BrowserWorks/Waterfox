@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "ပေါင်းထည့်ဆော့ဝဲများ">
+<!ENTITY aboutAddons.header2                    "သင်၏ ပေါင်းထည့်ဆော့ဝဲများ">
+
+<!ENTITY addonAction.enable                     "လုပ်ဆောင်နိုင်စေမည်။">
+<!ENTITY addonAction.disable                    "ပိတ်ထားသည်">
+<!ENTITY addonAction.uninstall                  "ဖြုတ်ပါ">
+<!ENTITY addonAction.undo                       "ပြန်ဖြည်ပါ">
+<!ENTITY addonAction.update                     "အဆင့်မြှင့်ပါ">
+
+<!ENTITY addonUnsigned.message                  "ဒီအတ်အွန်ကို &brandShortName; က အတည်မပြုနိုင်ခဲ့ပါ။">
+<!ENTITY addonUnsigned.learnMore                "ပိုမို လေ့လာရန်">

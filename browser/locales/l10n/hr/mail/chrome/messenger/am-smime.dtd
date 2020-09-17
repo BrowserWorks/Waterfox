@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "End-To-End šifriranje">
+<!ENTITY e2eLearnMore.label "Saznaj više">
+
+<!ENTITY e2eEnc.description "Bez end-to-end šifriranja, sadržaji tvojih poruka lako su dostupni tvom davatelju usluge e-pošte i drugim masovnim nadzorima.">
+<!ENTITY e2eeReqWarning.description "Ako zahtijevaš šifriranje, za slanje poruke moraš imati javni ključ ili certifikat svakog primatelja.">
+
+<!ENTITY e2eSigning.description "Digitalni potpis omogućuje primateljima provjeriti da se radi o tvojoj poruci i da sadržaj nije promijenjen.">
+<!ENTITY e2eTechPref.description "Preferirana tehnologija šifriranja:">
+
+<!ENTITY doNotEncrypt.label "Nemoj standardno aktivirati šifriranje">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "Standardno zathijevaj šifriranje">
+<!ENTITY requireEncryptMessage.accesskey "S">
+<!ENTITY encryptionCert2.message "Osobni certifikat za šifriranje:">
+<!ENTITY digitalSign.certificate.button "Odaberi…">
+<!ENTITY digitalSign.certificate.accesskey "a">
+<!ENTITY digitalSign.certificate_clear.button "Očisti">
+<!ENTITY digitalSign.certificate_clear.accesskey "O">
+<!ENTITY encryption.certificate.button "Odaberi…">
+<!ENTITY encryption.certificate.accesskey "e">
+<!ENTITY encryption.certificate_clear.button "Očisti">
+<!ENTITY encryption.certificate_clear.accesskey "i">
+<!ENTITY signingGroupTitle.label "Digitalno potpisivanje">
+<!ENTITY signMessage2.label "Standardno dodaj moj digitalni potpis">
+<!ENTITY signMessage.accesskey "D">
+
+<!ENTITY signingCert2.message "Osobni certifikat za digitalno potpisivanje:">
+
+<!ENTITY sendingDefaults.label "Standardne postavke za slanje poruka">
+
+<!ENTITY technologyAutomatic.label "Odaberi automatski na temelju dostupnih ključeva ili certifikata">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Upravljaj S/MIME certifikatima">
+<!ENTITY manageCerts3.accesskey "U">
+<!ENTITY manageDevices2.label "S/MIME sigurnosni uređaji">
+<!ENTITY manageDevices2.accesskey "s">
+
+<!ENTITY technologySMIME.label "Preferiraj S/MIME">
+<!ENTITY technologyOpenPGP.label "Preferiraj OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Odaberite certifikat">
+<!ENTITY certPicker.info  "Certifikat:">
+<!ENTITY certPicker.detailsLabel "Detalji odabranog certifikata:">
+
+<!ENTITY openpgpKey.message "Osobni ključ za šifriranje i digitalno potpisivanje:">
+<!ENTITY openpgpKey.button "Postavi osobni ključ …">
+<!ENTITY openpgpKey.accesskey "o">

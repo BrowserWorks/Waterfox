@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Dathanna agus Cúlra an Leathanaigh">
+<!ENTITY pageColors.label "Dathanna an Leathanaigh">
+<!ENTITY defaultColorsRadio.label "Dathanna réamhshocraithe an léitheora (ná socraigh dathanna sa leathanach)">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "Ná húsáid ach dathanna ó bhrabhsálaí an léitheora">
+<!ENTITY customColorsRadio.label "Úsáid dathanna saincheaptha:">
+<!ENTITY customColorsRadio.accessKey "c">
+<!ENTITY customColorsRadio.tooltip "Sáraíonn na socruithe datha seo na socruithe i mbrabhsálaí an léitheora">
+
+<!ENTITY normalText.label "Gnáththéacs">
+<!ENTITY normalText.accessKey "n">
+<!ENTITY linkText.label "Téacs naisc">
+<!ENTITY linkText.accessKey "n">
+<!ENTITY activeLinkText.label "Téacs naisc gníomhach">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Téacs naisc feicthe">
+<!ENTITY visitedLinkText.accessKey "f">
+<!ENTITY background.label "Cúlra:">
+<!ENTITY background.accessKey "C">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Íomhá Chúlra:">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "Úsáid comhad íomhá mar chúlra do leathanaigh">
+<!ENTITY backgroundImage.shortenedDataURI "URI sonraí giorraithe (cuirfear an URI iomlán sa ghearrthaisce má chóipeálann tú é)">

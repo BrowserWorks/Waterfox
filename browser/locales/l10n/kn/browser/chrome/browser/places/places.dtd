@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "ಲೈಬ್ರರಿ">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "ವ್ವವಸ್ಥಿತಗೊಳಿಸು">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "ನಿಮ್ಮ ಬುಕ್‌ಮಾರ್ಕುಗಳನ್ನು ವ್ಯವಸ್ಥಿತವಾಗಿ ಇರಿಸಿಕೊಳ್ಳಿ">
+
+<!ENTITY file.close.label               "ಮುಚ್ಚು">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "ನೋಟಗಳು">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "ನಿಮ್ಮ ನೋಟವನ್ನು ಬದಲಾಯಿಸಿಕೊಳ್ಳಿ">
+<!ENTITY view.columns.label             "ಕಾಲಂಗಳನ್ನು ತೋರಿಸು">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "ವಿಂಗಡಿಸು">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "ವಿಂಗಡಿಸದೆ ಇರುವ">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "A > Z ವಿಂಗಡಣಾ ಕ್ರಮ">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "ವಿಂಗಡಣಾ ಕ್ರಮ ಳ > ಎ">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Import ಪುಟಗುರುತುಗಳನ್ನು HTML ನಿಂದ…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Export ಪುಟಗುರುತುಗಳು HTML ಗೆ…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "ಇನ್ನೊಂದು ವೀಕ್ಷಕದಿಂದ ಮಾಹಿತಿಯನ್ನು ಆಮದು ಮಾಡಿ…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "ಬ್ಯಾಕ್ಅಪ್…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "ಮರುಸ್ಥಾಪಿಸು">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "ಕಡತವನ್ನು ಆರಿಸು…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "ಹೆಸರು">
+<!ENTITY col.tags.label          "ಟ್ಯಾಗ್‌ಗಳು">
+<!ENTITY col.url.label           "ತಾಣ">
+<!ENTITY col.mostrecentvisit.label "ಅತ್ಯಂತ ಇತ್ತೀಚಿನ ಭೇಟಿ">
+<!ENTITY col.visitcount.label    "ಭೇಟಿ ಮಾಡಿದ ಲೆಕ್ಕ">
+<!ENTITY col.dateadded.label     "ಸೇರ್ಪಡಿಸಲಾದ">
+<!ENTITY col.lastmodified.label  "ಕೊನೆಯ ಬಾರಿಗೆ ಮಾರ್ಪಡಿಸಲಾದ">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "ಆಮದು ಮಾಡಿಕೋ ಹಾಗು ಬ್ಯಾಕ್ಅಪ್ ತೆಗೆದುಕೋ">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "ನಿಮ್ಮ ಬುಕ್‌ಮಾರ್ಕುಗಳನ್ನು ಆಮದು ಮಾಡಿಕೊಳ್ಳಿ ಹಾಗು ಬ್ಯಾಕ್ಅಪ್ ಇರಿಸಿಕೊಳ್ಳಿ">
+
+<!ENTITY backButton.tooltip  "ಹಿಂದಕ್ಕೆ ತೆರಳು">
+
+<!ENTITY forwardButton.tooltip  "ಮುಂದಕ್ಕೆ ತೆರಳು">
+
+<!ENTITY detailsPane.selectAnItemText.description "ಒಂದು ಅಂಶದ ಗುಣಲಕ್ಷಣಗಳನ್ನು  ನೋಡಲು ಹಾಗು ಸಂಪಾದಿಸಲು ಒಂದು ಅಂಶವನ್ನು ಆರಿಸಿ">
+

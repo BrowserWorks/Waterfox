@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Peidio ag Amgryptio">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "P">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Gofyn am Amgryptiad">
+<!ENTITY menu_securityEncryptRequire.accesskey "A">
+
+<!ENTITY menu_securitySign.label "Llofnodi'r Neges yn Ddigidol">
+<!ENTITY menu_securitySign.accesskey "L">
+
+<!ENTITY menu_securityAttachMyKey.label "Atodi fy Allwedd Gyhoeddus">
+<!ENTITY menu_securityAttachMyKey.accesskey "A">
+
+<!ENTITY menu_securityTech.label "Technoleg Amgryptio">
+<!ENTITY menu_securityTech.accesskey "T">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Gweld Gwybodaeth Diogelwch">
+<!ENTITY menu_securityStatus.accesskey "G">
+
+<!ENTITY securityButton.label "Diogelwch">
+<!ENTITY securityButton.tooltip "Gweld neu newid gosodiadau diogelwch">
+
+<!ENTITY menu_viewSecurityStatus.label "Gwybodaeth Diogelwch Neges">
+<!ENTITY menu_viewSecurityStatus.accesskey "D">

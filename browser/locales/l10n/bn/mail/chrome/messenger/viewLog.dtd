@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "পরিশোধক লগ">
+<!ENTITY viewLogInfo.text "এই অ্যাকাউন্টের জন্য যে পরিশোধক চালানো হয়েছে, পরিশোধক লগ তার নথি তৈরি করে। লগিং সক্রিয় করতে নিচের চেক বাক্স ব্যবহার করুন।">
+<!ENTITY clearLog.label "লগ পরিষ্কার করা হবে (C)">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "ফিল্টার লগ সক্রিয় করা হবে (E)">
+<!ENTITY enableLog.accesskey "E">
+<!ENTITY closeLog.label "বন্ধ (o)">
+<!ENTITY closeLog.accesskey "o">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Налаштування">
+<!ENTITY security.caption "Безпека та автентифікація">
+<!ENTITY serverName.label "Назва сервера:">
+<!ENTITY serverName.accesskey "Н">
+<!ENTITY serverDescription.label "Опис:">
+<!ENTITY serverDescription.accesskey "О">
+<!ENTITY serverPort.label "Порт:">
+<!ENTITY serverPort.accesskey "П">
+<!ENTITY userName.label "Ім’я користувача:">
+<!ENTITY userName.accesskey "к">
+<!ENTITY connectionSecurity.label "Безпека з’єднання:">
+<!ENTITY connectionSecurity.accesskey "Б">
+<!ENTITY connectionSecurityType-0.label "Жодної">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, якщо є">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP-сервер">
+<!ENTITY serverPortDefault.label "Типово:">
+<!ENTITY authMethod.label "Метод автентифікації:">
+<!ENTITY authMethod.accesskey "ї">

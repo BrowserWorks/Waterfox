@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip    "ප්‍රධාන මෙනුව">
+<!ENTITY Toolbar.tooltip    "ප්‍රධාන මෙවලම්තීරුව">
+
+
+<!ENTITY multiline-expand.tooltip   "බහු පෙළ ඇතුළත් කිරීමට මාරු වන්න (Ctrl+Up)">
+<!ENTITY multiline-contract.tooltip "එක් පෙළ ඇතුළත් කිරීමට මාරු වන්න (Ctrl+Down)">
+<!ENTITY multiline-send.tooltip     "මෙම පෙළ යවන්න (Ctrl+Enter)">
+<!ENTITY server-nick.tooltip        "අපනාමය වෙනස් කරන්න හෝ බැහැරව යාම සටහන් කරන්න. ඇතුළත් කිරිමේ කොටුවට එල්ල කිරීමට Escape යතුර ඔබන්න.">
+
+<!ENTITY Underline.label             "යට ඉර">
+<!ENTITY Bold.label                  "තදකුරු">
+<!ENTITY Reverse.label               "ප්‍රතිවර්ත විඩීයො">
+<!ENTITY Normal.label                "සාමාන්‍ය">
+<!ENTITY Color.label                 "වර්ණ">
+<!ENTITY ForeBack.label              "xx=Fore yy=Back">

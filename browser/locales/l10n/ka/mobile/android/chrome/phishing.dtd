@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "გამიყვანეთ აქედან!">
+<!ENTITY safeb.palm.decline.label "ამ გაფრთხილების იგნორირება">
+<!ENTITY safeb.palm.reportPage.label "რატომაა ეს გვერდი შეზღუდული?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "მონაცემების მომწოდებელი: <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "გვერდი მიჩნეულია მოიერიშედ!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "ვებგვერდი <span id='malware_sitename'/> ცნობილია როგორც მოიერიშე გვერდი და შეზღუდულია თქვენი უსაფრთხოების პარამეტრების შესაბამისად.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>მოიერიშე გვერდები ცდილობენ დააყენონ პროგრამები, რომლითაც მოიპარავენ პირად მონაცემებს, გამოიყენებენ თქვენს კომპიუტერს სხვებზე შესატევად, ან დააზიანებენ თქვენს სისტემას.</p><p>ზოგიერთი მოიერიშე გვერდი, განზრახ ავრცელებს მავნე პროგრამებს, თუმცა უმეტესობა, შესაძლოა გატეხილი იყოს და ამას, მფლობელის ნებართვის გარეშე, მისი გვერდის ავლით სჩადიოდეს.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "მატყუარა საიტი!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "ვებგვერდი <span id='phishing_sitename'/> ცნობილია როგორც თაღლითური გვერდი და შეზღუდულია თქვენი უსაფრთხოების პარამეტრების შესაბამისად.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>თაღლითური საიტები შექმნილია, რომ მოტყუებით გაგაკეთებინოთ ისეთი სახიფათო ქმედებები, როგორიცაა არასასურველი პროგრამის დაყენება, ან თქვენი პირადი მონაცემების, პაროლების, ტელეფონის ნომრების და საკრედიტო ბარათების გამჟღავნება.</p><p>ამ ვებგვერდზე ნებისმიერი სახის ინფორმაციის შეყვანით, შესაძლოა ქურდობის ან თაღლითობის მსხვერპლი გახდეთ.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "შეტყობინებული არასასურველი პროგრამის საიტი!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/> შემჩნეულია, არასასურველი პროგრამის გავრცელებაში და შეზღუდულია თქვენი უსაფრთხოების პარამეტრების შესაბამისად.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "არასასურველი საიტი ცდილობს დააყენოს პროგრამა, რომელიც შეიძლება იყოს თაღლითური და საზიანო თქვენი სისტემისთვის.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "ეს საიტი შესაძლოა მავნე კოდს შეიცავდეს">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; ზღუდავს ამ გვერდს, ვინაიდან შესაძლოა სახიფათო პროგრამას აყენებდეს და იპარავდეს ან აზიანებდეს თქვენს პირად მონაცემებს (როგორიცაა ფოტოები, პაროლები, შეტყობინებები და საკრედიტო ბარათების ნომრები).">

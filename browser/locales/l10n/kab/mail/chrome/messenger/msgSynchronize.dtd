@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Sider sakin mtawi iznan">
+<!ENTITY MsgSelect.label "Iferdisen i uskar war tuqqna">
+<!ENTITY MsgSyncDesc.label "Ma yella tferned yakan ikaramen neɣ grawen n isalen i useqdec aruqqin, tzemreḍ ad ten-t-sidreḍ u/neɣ ad ten-t-mtawiḍ tura. Ma ulac, seqdec taqeffalt &quot;Fren&quot; akken ad tferneḍ ikaramen n tirawt akked igrawen n isalen i useqdec aruqqin.">
+<!ENTITY MsgSyncDirections.label "Sider u/neɣ mtawi ay-agi:">
+<!ENTITY syncTypeMail.label "Iznan n tirawt">
+<!ENTITY syncTypeMail.accesskey "I">
+<!ENTITY syncTypeNews.label "Iznan n ugraw n isalen">
+<!ENTITY syncTypeNews.accesskey "z">
+<!ENTITY sendMessage.label "Azen iznan ur nettwazen ara">
+<!ENTITY sendMessage.accesskey "e">
+<!ENTITY workOffline.label "Mahel deg uskar aruqqin ticki asider neɣ/akked d umtawi yemmed.">
+<!ENTITY workOffline.accesskey "M">
+<!ENTITY selectButton.label "Fren...">
+<!ENTITY selectButton.accesskey "r">
+<!ENTITY MsgSelectDesc.label "Fren ikaramen akked igrawen n isalen n tirawt i useqdec aruqqin.">
+<!ENTITY MsgSelectInd.label "Sider">
+<!ENTITY MsgSelectItems.label "Ikaramen d igrawen n isalen">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "Kysymys HTML-sähköpostista">
+
+<!ENTITY recipient.label "Jotkut vastaanottajat eivät yhteystietojensa mukaan pysty vastaanottamaan HTML-viestejä.">
+
+<!ENTITY question.label "Haluatko muuttaa viestin tavalliseksi tekstiksi vai lähettää sen HTML:nä joka tapauksessa?">
+
+<!ENTITY plainTextAndHtml.label "Lähetä molemmissa muodoissa">
+<!ENTITY plainTextAndHtml.accesskey "m">
+<!ENTITY plainTextOnly.label "Lähetä vain tavallisena tekstinä">
+<!ENTITY plainTextOnly.accesskey "v">
+<!ENTITY htmlOnly.label "Lähetä vain HTML:nä">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Lähetä">
+<!ENTITY send.accesskey "L">

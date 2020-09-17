@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Taq Wachib'enïk &amp; taq Yakwuj">
+<!ENTITY sendingPrefix.label "Toq yetaq taq rutzijol, pa kiyonil: ">
+<!ENTITY fccMailFolder.label "Tiya' jun wachib'enïk pa:">
+<!ENTITY fccMailFolder.accesskey "b">
+<!ENTITY fccReplyFollowsParent.label "Keya' kan ri tzolin taq tzij pa ruyakwuj rutzijol nitzolïx tzij chi re">
+<!ENTITY fccReplyFollowsParent.accesskey "R">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc chi ke re taq kochochib'al taqoya'l re':">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Ke'ajacha' taq ochochib'äl rik'in muxtuq'">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc chi ke re taq kochochib'al taqoya'l re':">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Ke'ajacha' taq ochochib'äl rik'in muxtuq'">
+<!ENTITY saveMessageDlg.label "Tik'ut pe rujikib'axik tzijonem toq yeyak ri taq rutzijol">
+<!ENTITY saveMessageDlg.accesskey "t">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;Titaq&quot; Yakwuj pa:">
+<!ENTITY sentFolderOn.accesskey "t">
+<!ENTITY sentInOtherFolder.label "Juley chik:">
+<!ENTITY sentInOtherFolder.accesskey "l">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Taq ruyakb'al Tzijol">
+<!ENTITY keepArchives.label "Keyake' ri kiyakb'al rutzijol pa:">
+<!ENTITY keepArchives.accesskey "K">
+<!ENTITY archiveHierarchyButton.label "Taq Rucha'oj Yakb'äl…">
+<!ENTITY archiveHierarchyButton.accesskey "Y">
+<!ENTITY archivesFolderOn.label "&quot;Yakon&quot; Yakwuj pa:">
+<!ENTITY archivesFolderOn.accesskey "p">
+<!ENTITY archiveInOtherFolder.label "Juley chik:">
+<!ENTITY archiveInOtherFolder.accesskey "l">
+<!ENTITY specialFolders.label "Nab'ey taq Samaj chuqa' taq Kaxawäch">
+<!ENTITY keepDrafts2.label "Keyake' ri nab'ey kisamaj taq tzijol pa:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;Nab'ey Samaj&quot; Yakwuj pa:">
+<!ENTITY draftsFolderOn.accesskey "N">
+<!ENTITY draftInOtherFolder.label "Juley chik:">
+<!ENTITY draftInOtherFolder.accesskey "l">
+<!ENTITY keepTemplates.label "Keyake' ri kikaxawäch rutzijol pa:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;Kaxawäch&quot; Yakwuj pa:">
+<!ENTITY templatesFolderOn.accesskey "w">
+<!ENTITY templateInOtherFolder.label "Juley chik:">
+<!ENTITY templateInOtherFolder.accesskey "l">

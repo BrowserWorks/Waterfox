@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Измените подешавања овог налога:">
+
+<!ENTITY settingsTab.label       "Подешавања">
+<!ENTITY copiesFoldersTab.label "Копије и фасцикле">
+<!ENTITY addressingTab.label    "Састављање и адресирање">
+
+<!ENTITY publicData.label        "Јавни подаци">
+<!ENTITY privateData.label       "Приватни подаци">
+<!ENTITY identityAlias.label     "Етикета идентитета:">
+<!ENTITY identityAlias.accesskey "к">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Lista eigindi">
+
+<!ENTITY ListType.label "Listategund">
+<!ENTITY bulletStyle.label "Áherslumerki:">
+<!ENTITY startingNumber.label "Byrjar á:">
+<!ENTITY startingNumber.accessKey "B">
+<!ENTITY none.value "Engin">
+<!ENTITY bulletList.value "Áherslumerktur (Ótölusettur) listi">
+<!ENTITY numberList.value "Tölusettur listi">
+<!ENTITY definitionList.value "Skilgreiningarlisti">
+<!ENTITY changeEntireListRadio.label "Breyta öllum listanum">
+<!ENTITY changeEntireListRadio.accessKey "B">
+<!ENTITY changeSelectedRadio.label "Breyta aðeins völdum hlutum">
+<!ENTITY changeSelectedRadio.accessKey "i">

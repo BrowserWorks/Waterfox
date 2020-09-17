@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "ChatZilla tercihleri">
+
+<!ENTITY loading.label "Lütfen bekleyin, yükleniyor…">
+
+<!ENTITY homepage.url "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "ChatZilla ana sayfası">
+
+<!ENTITY object.add.label "Ekle…">
+<!ENTITY object.add.hint "Tercihleri ayarlanacak ağ, kanal veya kullanıcı ekleyin">
+<!ENTITY object.add.accesskey "E">
+
+<!ENTITY object.del.label "Kaldır">
+<!ENTITY object.del.hint "Tercihlerini sıfırlayarak nesneyi kaldır">
+<!ENTITY object.del.accesskey "K">
+
+<!ENTITY object.reset.label "Sıfırla">
+<!ENTITY object.reset.hint "Nesnenin tercihlerini öntanımlı olanlara sıfırla">
+<!ENTITY object.reset.accesskey "S">
+
+<!ENTITY dialog.apply "Uygula">
+
+<!ENTITY network "Ağ">
+<!ENTITY channel "Kanal">
+<!ENTITY user "Kullanıcı">
+
+<!ENTITY config.add.title "Tercih nesnesi ekle">
+
+<!ENTITY config.type.label "Türü:">
+<!ENTITY config.type.hint "Tercihlere eklenecek nesne türü">
+<!ENTITY config.type.accesskey "r">
+<!ENTITY config.network.label "Ağ:">
+<!ENTITY config.network.hint "Ağ veya sunucu adı">
+<!ENTITY config.network.accesskey "A">
+<!ENTITY config.target.label "Hedef:">
+<!ENTITY config.target.hint "Hedef kanal veya kullanıcı adı">
+<!ENTITY config.target.accesskey "H">

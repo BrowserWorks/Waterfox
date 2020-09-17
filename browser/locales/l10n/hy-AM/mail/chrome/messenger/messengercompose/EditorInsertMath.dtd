@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Ներմուծել Math">
+
+<!ENTITY sourceEditField.label "Մուտքագրել LaTeX բնագիրը.">
+
+<!ENTITY options.label "Ընտրանքներ">
+<!ENTITY optionInline.label "Անցանց">
+<!ENTITY optionInline.accesskey "ն">
+<!ENTITY optionDisplay.label "Ցուցադրվող անունը">
+<!ENTITY optionDisplay.accesskey "Ց">
+<!ENTITY optionLTR.label "Ձախից աջ ուղղություն">
+<!ENTITY optionLTR.accesskey "Ձ">
+<!ENTITY optionRTL.label "Աջից ձախ ուղղություն">
+<!ENTITY optionRTL.accesskey "Ա">
+
+<!ENTITY insertButton.label "Ներմուծել">
+<!ENTITY insertButton.accesskey "I">

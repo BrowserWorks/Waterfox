@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox-accounts">
+<!ENTITY aboutAccounts.connected.description "Jo binne ferbûn as">
+<!ENTITY aboutAccounts.syncPreferences.label "Tik hjir om Sync-ynstellingen te kontrolearjen">
+
+<!ENTITY aboutAccounts.noConnection.title "Gjin ynternetferbining">
+<!ENTITY aboutAccounts.retry.label "Opnij probearje">
+
+<!ENTITY aboutAccounts.restrictedError.title "Beheint">
+<!ENTITY aboutAccounts.restrictedError.description "Jo kinne gjin Firefox-accounts beheare fan dit profyl út.">

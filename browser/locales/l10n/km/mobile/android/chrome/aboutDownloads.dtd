@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "ទាញ​យក">
+<!ENTITY aboutDownloads.header                     "ការ​ទាញ​យក​របស់​អ្នក">
+<!ENTITY aboutDownloads.empty                      "គ្មាន​ការ​ទាញ​យក​ទេ">
+
+<!ENTITY aboutDownloads.open                       "បើក">
+<!ENTITY aboutDownloads.remove                     "លុប">
+<!ENTITY aboutDownloads.removeAll                  "លុប​ទាំងអស់">
+<!ENTITY aboutDownloads.pause                      "ផ្អាក">
+<!ENTITY aboutDownloads.resume                     "បន្ត">
+<!ENTITY aboutDownloads.cancel                     "បោះបង់">
+<!ENTITY aboutDownloads.retry                      "ព្យាយាម​ម្តង​ទៀត">

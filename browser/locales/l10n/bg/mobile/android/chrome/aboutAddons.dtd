@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Добавки">
+<!ENTITY aboutAddons.header2                    "Вашите добавки">
+
+<!ENTITY addonAction.enable                     "Включване">
+<!ENTITY addonAction.disable                    "Изключване">
+<!ENTITY addonAction.uninstall                  "Премахване">
+<!ENTITY addonAction.undo                       "Отмяна">
+<!ENTITY addonAction.update                     "Обновяване">
+
+<!ENTITY addonUnsigned.message                  "Тази добавка не може да бъде проверена от &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "Научете повече">

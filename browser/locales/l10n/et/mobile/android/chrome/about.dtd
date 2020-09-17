@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName;i teave">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; on mõeldud testimiseks ja võib olla ebastabiilne.">
+<!ENTITY aboutPage.checkForUpdates.link         "Kontrolli uuendusi »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Uuenduste kontrollimine…">
+<!ENTITY aboutPage.checkForUpdates.none         "Uuendusi pole">
+<!ENTITY aboutPage.checkForUpdates.available2   "Laadi alla uuendus">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Uuenduse allalaadimine…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Paigalda uuendus">
+<!ENTITY aboutPage.faq.label                    "KKK">
+<!ENTITY aboutPage.support.label                "Tugi">
+<!ENTITY aboutPage.privacyPolicy.label          "Privaatsusreeglid">
+<!ENTITY aboutPage.rights.label                 "Tea oma õigusi">
+<!ENTITY aboutPage.relNotes.label               "Väljalaskest">
+<!ENTITY aboutPage.credits.label                "Autorid">
+<!ENTITY aboutPage.license.label                "Litsentsist">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox ja Firefoxi logod on Mozilla Foundation'i kaubamärgid.">

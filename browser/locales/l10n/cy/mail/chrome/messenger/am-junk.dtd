@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Gosodiadau Sbam">
+<!ENTITY trainingDescription.label "Os yw wedi'i alluogi, bydd rhaid i chi ddysgu &brandShortName; i adnabod sbam drwy ddefnyddio'r botwm bar offer Sbam i farcio negeseuon fel sbam neu beidio. Rhaid i chi adnabod negeseuon sbam a'r rhai nad ydynt yn sbam. Wedyn bydd &brandShortName; yn gallu nodi sbam yn awtomatig.">
+<!ENTITY level.label "Galluogi rheolaeth addasol e-bost sbam ar gyfer y cyfrif hwn">
+<!ENTITY level.accesskey "s">
+
+<!ENTITY move.label "Symud sbam newydd i:">
+<!ENTITY move.accesskey "S">
+<!ENTITY junkFolderOn.label "Ffolder &quot;Sbam&quot; yn:">
+<!ENTITY junkFolderOn.accesskey "F">
+<!ENTITY otherFolder.label "Arall:">
+<!ENTITY otherFolder.accesskey "a">
+<!ENTITY purge1.label "Dileu'n awtomatig sbam hŷn na">
+<!ENTITY purge1.accesskey "D">
+<!ENTITY purge2.label "diwrnod">
+
+<!ENTITY whitelistHeader.label "Peidio marcio e-bost fel sbam yn awtomatig os yw'r anfonwr yn: ">
+<!ENTITY whitelistHeader.accesskey "P">
+
+<!ENTITY ispHeadersWarning.label "Os wedi ei alluogi bydd &brandShortName; yn ystyried yn awtomatig fod negeseuon wedi eu marcio gan y dosbarthydd allanol yn sbam.">
+<!ENTITY ispHeaders.label "Ymddiried ym mhenynnau e-bost sbam wedi'u gosod gan: ">
+<!ENTITY ispHeaders.accesskey "Y">
+
+<!ENTITY junkClassification.label "Dewis">
+<!ENTITY junkActions.label "Cyrchfan a Chadw">
+
+<!ENTITY globalJunkPrefs.label "Dewisiadau Sbam Eang…">
+<!ENTITY globalJunkPrefs.accesskey "E">

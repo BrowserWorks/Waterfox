@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "કોષ્ટકમાં ફેરવો">
+<!ENTITY instructions1.label   "કમ્પોઝર પસંદગીમાં દરેક ફકરામાટે નવી કોષ્ટક હરોળ બનાવે છે.">
+<!ENTITY instructions2.label   "સ્તંભોમાં પસંદગી અલગ પાડવા માટે વપરાતો અક્ષર પસંદ કરો:">
+<!ENTITY commaRadio.label      "અલ્પવિરામ">
+<!ENTITY spaceRadio.label      "જગ્યા">
+<!ENTITY otherRadio.label      "અન્ય અક્ષર:">
+<!ENTITY deleteCharCheck.label "વિભાજક અક્ષર કાઢી નાંખો">
+<!ENTITY collapseSpaces.label  "વધારાની જગ્યાઓ અવગણો">
+<!ENTITY collapseSpaces.tooltip "પાસેની જગ્યાને એક વિભાજકમાં ફેરવો">

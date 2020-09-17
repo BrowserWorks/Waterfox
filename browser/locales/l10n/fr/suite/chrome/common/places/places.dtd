@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Bibliothèque">
+<!ENTITY places.library.width  "730">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organiser">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organiser les marque-pages">
+
+<!ENTITY file.close.label               "Fermer">
+<!ENTITY file.close.accesskey           "F">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Affichage">
+<!ENTITY views.accesskey                "A">
+<!ENTITY views.tooltip                  "Modifier l’affichage">
+<!ENTITY view.columns.label             "Afficher les colonnes">
+<!ENTITY view.columns.accesskey         "c">
+<!ENTITY view.sort.label                "Trier par">
+<!ENTITY view.sort.accesskey            "T">
+<!ENTITY view.unsorted.label            "(aucun tri)">
+<!ENTITY view.unsorted.accesskey        "r">
+<!ENTITY view.sortAscending.label       "Ordre croissant (A > Z)">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Ordre décroissant (Z > A)">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Importer des marque-pages au format HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Exporter des marque-pages au format HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importer des données d’un autre navigateur…">
+<!ENTITY importOtherBrowser.accesskey      "m">
+
+<!ENTITY cmd.backup.label               "Sauvegarder…">
+<!ENTITY cmd.backup.accesskey           "v">
+<!ENTITY cmd.restore2.label             "Restaurer">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Choisir un fichier…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY cmd.deleteDomainData.label     "Oublier ce site">
+<!ENTITY cmd.deleteDomainData.accesskey "b">
+
+<!ENTITY cmd.open.label                  "Ouvrir">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.open_window.label           "Ouvrir dans une nouvelle fenêtre">
+<!ENTITY cmd.open_window.accesskey       "f">
+<!ENTITY cmd.open_private_window.label     "Ouvrir dans une nouvelle fenêtre privée">
+<!ENTITY cmd.open_private_window.accesskey "v">
+<!ENTITY cmd.open_tab.label              "Ouvrir dans un nouvel onglet">
+<!ENTITY cmd.open_tab.accesskey          "g">
+<!ENTITY cmd.open_all_in_tabs.label      "Tout ouvrir dans des onglets">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "v">
+
+<!ENTITY cmd.properties.label      "Propriétés">
+<!ENTITY cmd.properties.accesskey  "i">
+
+<!ENTITY cmd.sortby_name.label              "Trier par nom">
+<!ENTITY cmd.sortby_name.accesskey          "m">
+<!ENTITY cmd.context_sortby_name.accesskey  "m">
+
+<!ENTITY cmd.new_bookmark.label            "Nouveau marque-page…">
+<!ENTITY cmd.new_bookmark.accesskey        "g">
+<!ENTITY cmd.new_folder.label              "Nouveau dossier…">
+<!ENTITY cmd.new_folder.accesskey          "d">
+<!ENTITY cmd.context_new_folder.accesskey  "d">
+<!ENTITY cmd.new_separator.label           "Nouveau séparateur">
+<!ENTITY cmd.new_separator.accesskey       "N">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Actualiser les entrées">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "l">
+
+<!ENTITY col.name.label          "Nom">
+<!ENTITY col.tags.label          "Étiquettes">
+<!ENTITY col.url.label           "Adresse">
+<!ENTITY col.mostrecentvisit.label "Dernière visite">
+<!ENTITY col.visitcount.label    "Nombre de visites">
+<!ENTITY col.description.label   "Description">
+<!ENTITY col.dateadded.label     "Date d’ajout">
+<!ENTITY col.lastmodified.label  "Date de modification">
+
+<!ENTITY search.placeholder  "Rechercher dans les marque-pages">
+
+<!ENTITY cmd.find.key  "F">
+
+<!ENTITY detailsPane.more.label "Plus">
+<!ENTITY detailsPane.more.accesskey "P">
+<!ENTITY detailsPane.less.label "Moins">
+<!ENTITY detailsPane.less.accesskey "s">
+<!ENTITY detailsPane.selectAnItemText.description "Sélectionner un élément pour afficher et modifier ses propriétés">
+
+<!ENTITY view.label               "Trier">
+<!ENTITY view.accesskey           "T">
+<!ENTITY byDate.label             "par date">
+<!ENTITY byDate.accesskey         "D">
+<!ENTITY bySite.label             "par site">
+<!ENTITY bySite.accesskey         "S">
+<!ENTITY byMostVisited.label      "par nombre de visites">
+<!ENTITY byMostVisited.accesskey  "V">
+<!ENTITY byLastVisited.label      "par date de dernière visite">
+<!ENTITY byLastVisited.accesskey  "r">
+<!ENTITY byDayAndSite.label       "par date et par site">
+<!ENTITY byDayAndSite.accesskey   "t">

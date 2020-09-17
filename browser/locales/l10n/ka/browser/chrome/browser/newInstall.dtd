@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "მნიშვნელოვანი სიახლეები">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "თუ გსურთ, Firefox-ში აქამდე შენახულ მონაცემებთან დასინქრონდეს ეს ახლად დაყენებული &brandShortName;, გამოიყენეთ თქვენი &syncBrand.fxAccount.label;.">
+<!ENTITY continue-button "განაგრძეთ">
+
+<!ENTITY mainText "ეს &brandShortName; ახალი პროფილითაა. იგი არ იზიარებს სანიშნებს, პაროლებსა და მომხმარებლის სხვა პარამეტრებს Firefox-ის დანარჩენ დაყენებულ ვერსიებთან (როგორიცაა Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition და Firefox Nightly) ამ კომპიუტერზე.">

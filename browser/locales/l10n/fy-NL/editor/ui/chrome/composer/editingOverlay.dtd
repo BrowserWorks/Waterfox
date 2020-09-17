@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Bestân iepenje…">
+<!ENTITY openFileCmd.accesskey "i">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Weblokaaasje iepenje…">
+<!ENTITY openRemoteCmd.accesskey "l">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Resinte siden">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "Bewarje">
+<!ENTITY saveCmd.accesskey "B">
+<!ENTITY saveAsCmd.label "Bewarje as…">
+<!ENTITY saveAsCmd.accesskey "s">
+<!ENTITY saveAsChangeEncodingCmd2.label "Bewarje en tekstkodearring wizigje">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "k">
+<!ENTITY publishCmd.label "Publisearje">
+<!ENTITY publishCmd.accesskey "u">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publisearje as…">
+<!ENTITY publishAsCmd.accesskey "s">
+<!ENTITY fileRevert.label "Ungedien meitsje">
+<!ENTITY fileRevert.accesskey "m">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Publikaasjewebsite-ynstellingen…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nij">
+<!ENTITY newToolbarCmd.tooltip "Meitsje in nije Composerside">
+<!ENTITY openToolbarCmd.label "Iepenje">
+<!ENTITY openToolbarCmd.tooltip "Iepenje in lokaal bestân">
+<!ENTITY saveToolbarCmd.tooltip "Bewarje bestân nei in lokale lokaasje">
+<!ENTITY publishToolbarCmd.tooltip "Laad bestân op nei in oare lokaasje">
+<!ENTITY printToolbarCmd.label "Ofdrukke">
+<!ENTITY printToolbarCmd.tooltip "Dizze side ôfdrukke">

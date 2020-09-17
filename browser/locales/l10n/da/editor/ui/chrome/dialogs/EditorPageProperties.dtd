@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Egenskaber for side">
+<!ENTITY location.label "Startside:">
+<!ENTITY lastModified.label "Sidst ændret">
+<!ENTITY titleInput.label "Titel:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Forfatter:">
+<!ENTITY authorInput.accessKey "F">
+<!ENTITY descriptionInput.label "Beskrivelse:">
+<!ENTITY descriptionInput.accessKey "B">
+<!ENTITY locationNewPage.label "[Ny side - ikke gemt endnu]">
+<!ENTITY EditHEADSource1.label "Avanceret brugere:">
+<!ENTITY EditHEADSource2.label "For at redigere indhold af &lt;hoved&gt; regionen, benyt &quot;HTML kildekode&quot; i Vis menuen eller Redigeringstilstand værktøjslinjen.">

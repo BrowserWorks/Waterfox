@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Perzhioù an daolenn">
+<!ENTITY applyButton.label                "Arloañ">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "Serriñ">
+<!ENTITY tableTab.label                   "Taolenn">
+<!ENTITY cellTab.label                    "Kelligoù">
+<!ENTITY tableRows.label                  "Renkadoù :">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Bannoù :">
+<!ENTITY tableColumns.accessKey           "B">
+<!ENTITY tableHeight.label                "Sav :">
+<!ENTITY tableHeight.accessKey            "S">
+<!ENTITY tableWidth.label                 "Led :">
+<!ENTITY tableWidth.accessKey             "d">
+<!ENTITY tableBorderSpacing.label         "Riblenn hag esaouiñ">
+<!ENTITY tableBorderWidth.label           "Riblenn :">
+<!ENTITY tableBorderWidth.accessKey       "R">
+<!ENTITY tableSpacing.label               "Esaouiñ :">
+<!ENTITY tableSpacing.accessKey           "s">
+<!ENTITY tablePadding.label               "Leuniadur :">
+<!ENTITY tablePadding.accessKey           "u">
+<!ENTITY tablePxBetwCells.label           "a bikselioù etre ar c'helligoù">
+<!ENTITY tablePxBetwBrdrCellContent.label "a bikselioù etre riblenn ar gellig hag hec'h endalc'had">
+<!ENTITY tableAlignment.label             "Desteudadur an daolenn :">
+<!ENTITY tableAlignment.accessKey         "t">
+<!ENTITY tableCaption.label               "Pakadur :">
+<!ENTITY tableCaption.accessKey           "P">
+<!ENTITY tableCaptionAbove.label          "A-us d'an daolenn">
+<!ENTITY tableCaptionBelow.label          "Dindan an daolenn">
+<!ENTITY tableCaptionLeft.label           "Tu kleiz eus an daolenn">
+<!ENTITY tableCaptionRight.label          "Tu dehou an daolenn">
+<!ENTITY tableCaptionNone.label           "tra ebet">
+<!ENTITY tableInheritColor.label           "(Leuskel liv ar bajenn treuzwelus)">
+
+<!ENTITY cellSelection.label              "Diuzad">
+<!ENTITY cellSelectCell.label             "Kellig">
+<!ENTITY cellSelectRow.label              "Renkad">
+<!ENTITY cellSelectColumn.label           "Bann">
+<!ENTITY cellSelectNext.label             "War-lerc'h">
+<!ENTITY cellSelectNext.accessKey         "W">
+<!ENTITY cellSelectPrevious.label         "Kent">
+<!ENTITY cellSelectPrevious.accessKey     "K">
+<!ENTITY applyBeforeChange.label          "Arloet e vo ar c'hemmoù bremanel kent kemmañ an diuzad.">
+<!ENTITY cellContentAlignment.label       "Desteudadur an endalc'had">
+<!ENTITY cellHorizontal.label             "A-zremm :">
+<!ENTITY cellHorizontal.accessKey         "z">
+<!ENTITY cellVertical.label               "A-serzh :">
+<!ENTITY cellVertical.accessKey           "s">
+<!ENTITY cellStyle.label                  "Rizh ar c'helligoù :">
+<!ENTITY cellStyle.accessKey              "c">
+<!ENTITY cellNormal.label                 "Reizh">
+<!ENTITY cellHeader.label                 "Talbenn">
+<!ENTITY cellTextWrap.label               "Ambakañ an destenn :">
+<!ENTITY cellTextWrap.accessKey           "t">
+<!ENTITY cellWrap.label                   "Ambakañ">
+<!ENTITY cellNoWrap.label                 "Na ambakañ">
+<!ENTITY cellAlignTop.label               "Krec'h">
+<!ENTITY cellAlignMiddle.label            "Kreiz">
+<!ENTITY cellAlignBottom.label            "Diaz">
+<!ENTITY cellAlignJustify.label           "Marzekaat">
+<!ENTITY cellInheritColor.label           "(Leuskel taolennad al livioù treuzwelus)">
+<!ENTITY cellUseCheckboxHelp.label        "Arverañ ar boestadoù kevaskañ evit despizañ peseurt perzhioù a vo arloet d'an holl gelligoù bet diuzet">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label                       "Ment">
+<!ENTITY pixels.label                     "a bikselioù">
+<!ENTITY backgroundColor.label            "Liv an drekleur :">
+<!ENTITY backgroundColor.accessKey        "L">
+<!ENTITY AlignLeft.label                  "Kleiz">
+<!ENTITY AlignCenter.label                "Kreiz">
+<!ENTITY AlignRight.label                 "Dehou">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "SSL/TLS-protokollversjoner">
+<!ENTITY SSLTLSWarnings.caption             "SSL/TLS-advarsler">
+<!ENTITY SSLMixedContent.caption            "Blandet innhold">
+<!ENTITY SSLClientAuthMethod.caption        "Valg av klientsertifikat">
+
+<!ENTITY pref.ssltls.title                  "Transport Layer Security (SSL/TLS)">
+<!ENTITY limit.description                  "Du kan begrense hvilke krypteringsprotokoller som brukes på si8kre tilkoblinger. Velg en enkelt versjon, eller et versjonsområde.">
+<!ENTITY limit.enable.label                 "Tillat:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName; kan varsle deg om sikkerhetsstatusen til nettsiden du viser. Sett &brandShortName; til å vise en advarsel og be om tillatelse før:">
+<!ENTITY warn.enteringsecure                "Innlasting av en side som støtter kryptering">
+<!ENTITY warn.enteringsecure.accesskey      "L">
+<!ENTITY warn.insecurepost                  "Sending av skjemadata fra en ukryptert side til en ukryptert side">
+<!ENTITY warn.insecurepost.accesskey        "S">
+<!ENTITY warn.leavingsecure                 "Du forlater en side som støtter kryptering">
+<!ENTITY warn.leavingsecure.accesskey       "a">
+
+<!ENTITY mixed.description                  "Krypterte sider kan inneholde ukryptert innhold som er åpen for avlytting eller svindel. &brandShortName; kan oppdage og blokkere det:">
+<!ENTITY warn.mixedactivecontent            "Advar meg når krypterte nettsider inneholder usikker informasjon">
+<!ENTITY warn.mixedactivecontent.accesskey  "d">
+<!ENTITY block.activecontent                "Ikke last inn usikkert innhold på krypterte nettsider">
+<!ENTITY block.activecontent.accesskey      "k">
+<!ENTITY warn.mixeddisplaycontent           "Advar meg når krypterte nettsider inneholder andre typer blandet innhold">
+<!ENTITY warn.mixeddisplaycontent.accesskey "v">
+<!ENTITY block.displaycontent               "Ikke last inn andre typer av blandet innhold på krypterte nettsider">
+<!ENTITY block.displaycontent.accesskey     "e">
+
+<!ENTITY certselect.description             "Avgjør hvordan &brandShortName; velger et sikkerhetssertifikat for å identifisere seg for nettsider som trenger et:">
+<!ENTITY certselect.auto                    "Velg automatisk">
+<!ENTITY certselect.auto.accesskey          "V">
+<!ENTITY certselect.ask                     "Spør hver gang">
+<!ENTITY certselect.ask.accesskey           "p">

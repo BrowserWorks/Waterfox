@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Roghchlár na Leathanach Deireanach">
+<!ENTITY  documentsInMenu.label         "Uasmhéid na leathanach liostáilte:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+<!ENTITY  savingFiles.title             "Agus leathanaigh á sábháil nó á bhfoilsiú">
+<!ENTITY  preserveExisting.label        "Coimeád formáidiú na bunfhoinse">
+<!ENTITY  preserveExisting.accesskey    "C">
+<!ENTITY  preserveExisting.tooltip      "Coimeádann seo briseadh na línte agus bun-fhormáidiú an leathanaigh.">
+<!ENTITY  saveAssociatedFiles.label     "Sábháil íomhánna agus comhaid eile chomhcheangailte agus comhaid á sábháil">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "Taispeáin an dialóg fhoilsithe i gcónaí agus leathanaigh á bhfoilsiú">
+<!ENTITY  showPublishDialog.accesskey   "a">
+<!ENTITY  composerEditing.label         "Eagarthóireacht">
+<!ENTITY  maintainStructure.label       "Coimeád leagan amach an tábla agus cealla á n-ionsá nó á scriosadh">
+<!ENTITY  maintainStructure.tooltip     "Coimeádann seo cruth dronuilleach an tábla trí cealla a chur leis go huathoibríoch tar éis ionsá nó scriosta cealla.">
+<!ENTITY  maintainStructure.accesskey   "m">
+<!ENTITY  useCSS.label                  "Úsáid stíleanna CSS in áit eilimintí agus aitreabúidí HTML">
+<!ENTITY  useCSS.accesskey              "s">
+<!ENTITY  crInPCreatesNewP.label        "Cruthaíonn aisfhilleadh in alt nua i gcónaí">
+<!ENTITY  crInPCreatesNewP.accesskey    "r">

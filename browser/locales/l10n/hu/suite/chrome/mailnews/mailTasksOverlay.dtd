@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (messengerCmd.label): DONT_TRANSLATE -->
+
+
+<!ENTITY messengerCmd.label     "Mail &amp; Newsgroups">
+<!ENTITY messengerCmd.accesskey    "z">
+<!ENTITY messengerCmd.commandkey   "2">
+<!ENTITY addressBookCmd.label    "Címjegyzék">  
+<!ENTITY addressBookCmd.accesskey   "C">
+<!ENTITY addressBookCmd.commandkey   "5">
+
+<!ENTITY taskMessenger.tooltip  "Levelező és hírolvasó">
+<!ENTITY taskAddressBook.tooltip  "Címjegyzék">
+<!-- searchAddressesCmd is also used by addressbook -->
+
+<!ENTITY searchAddressesCmd.label                       "Címek keresése…">
+<!ENTITY searchAddressesCmd.accesskey                   "C">
+
+<!ENTITY searchMailCmd.label "Üzenetek keresése…">
+<!ENTITY searchMailCmd.accesskey "e">
+<!ENTITY searchMailCmd.key "f">

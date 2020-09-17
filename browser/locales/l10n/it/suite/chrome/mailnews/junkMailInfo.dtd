@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Informazioni sulla posta spam">
+<!ENTITY window.width "450">
+<!ENTITY info1a.label "Posta riconosce automaticamente la posta in arrivo che sembra spam. I messaggi ritenuti spam mostreranno una icona spam.">
+<!ENTITY info1b.label ".">
+<!ENTITY info2.label "All'inizio, dovrai addestrare Posta a riconoscere la posta spam utilizzando il pulsante Spam per marcare i messaggi come spam o meno.">
+<!ENTITY info3.label "Una volta che Posta inizia a riconoscere correttamente lo spam, puoi utilizzare i Controlli posta spam per spostare automaticamente la posta spam in arrivo nella cartella Spam.">
+<!ENTITY info4.label "Per maggiori informazioni fare clic su Guida.">

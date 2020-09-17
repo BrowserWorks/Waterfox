@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Jurnal pentru filtre">
+<!ENTITY viewLogInfo.text "Jurnalul pentru filtre este un fișier care dă detalii despre ce filtre au fost aplicate pentru acest cont. Activează jurnalul folosind căsuța de mai jos.">
+<!ENTITY clearLog.label "Golește jurnalul">
+<!ENTITY clearLog.accesskey "G">
+<!ENTITY enableLog.label "Activează jurnalul pentru filtre">
+<!ENTITY enableLog.accesskey "A">
+<!ENTITY closeLog.label "Închide">
+<!ENTITY closeLog.accesskey "c">

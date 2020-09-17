@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "יצירת לוח שנה חדש" >
+<!ENTITY wizard.label             "צור לוח שנה חדש" >
+<!ENTITY wizard.description       "אתר את לוח השנה שלך" >
+
+<!ENTITY initialpage.description    "לוח השנה שלך יכול להישמר על המחשב שלך או על שרת כדי לאפשר גישה מרחוק ושיתופו עם חברים או עמיתים לעבודה." >
+<!ENTITY initialpage.computer.label  "במחשב שלי">
+<!ENTITY initialpage.network.label  "ברשת">
+
+<!ENTITY locationpage.description         "הכנסת מידע על הדרישות לגישה ללוח שנה מרוחק" >
+<!ENTITY locationpage.login.description   "רשות: הכנס שם משתמש וססמה" >
+<!ENTITY locationpage.username.label      "שם משתמש:" >
+<!ENTITY locationpage.password.label      "ססמה:" >
+
+<!ENTITY custompage.shortdescription  "התאמה אישית של לוח השנה" >
+<!ENTITY custompage.longdescription   "באפשרותך לתת ללוח השנה שלך כינוי ולצבוע את האירועים בלוח שנה זה." >
+
+<!ENTITY finishpage.shortdescription  "לוח שנה נוצר" >
+<!ENTITY finishpage.longdescription   "לוח השנה שלך נוצר." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "אחר">
+
+<!ENTITY buttons.create.label "יצירת לוח שנה חדש">
+<!ENTITY buttons.create.accesskey "צ">
+
+<!ENTITY buttons.find.label "איתור לוחות שנה">
+<!ENTITY buttons.find.accesskey "א">
+
+<!ENTITY buttons.back.label "חזרה">
+<!ENTITY buttons.back.accesskey "ח">
+
+<!ENTITY buttons.subscribe.label "הרשמה">
+<!ENTITY buttons.subscribe.accesskey "ש">
+
+<!ENTITY calendartype.label "סוג לוח שנה:">
+<!ENTITY location.label "מיקום:">
+
+

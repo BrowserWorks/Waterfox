@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "მიღების დასტური">
+<!ENTITY useGlobalPrefs.label         "ამ ანგარიშისათვის ძირითადი პარამეტრების გამოყენება">
+<!ENTITY useGlobalPrefs.accesskey     "ა">
+<!ENTITY globalReceipts.label         "საერთო პარამეტრები…">
+<!ENTITY globalReceipts.accesskey     "ს">
+<!ENTITY useCustomPrefs.label         "მიღების დასტურის მორგება ამ ანგარიშისათვის">
+<!ENTITY useCustomPrefs.accesskey     "მ">
+<!ENTITY requestReceipt.label         "წერილის გაგზავნისას მიღების დასტურის ყოველთვის მოთხოვნა">
+<!ENTITY requestReceipt.accesskey     "წ">
+<!ENTITY receiptArrive.label          "დასტურის მოსვლისას:">
+<!ENTITY leaveIt.label                "მიღებულ წერილებში დატოვება">
+<!ENTITY leaveIt.accesskey            "დ">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "გადატანა „გაგზავნილი“ წერილების საქაღლდეში">
+<!ENTITY moveToSent.accesskey         "მ">
+<!ENTITY requestMDN.label             "მიღების დასტურის მოთხოვნის მიღებისას:">
+<!ENTITY returnSome.label             "დასტურის დაბრუნება ზოგიერთ წერილზე">
+<!ENTITY returnSome.accesskey         "ზ">
+<!ENTITY never.label                  "დასტურის დაბრუნების გარეშე">
+<!ENTITY never.accesskey              "გ">
+<!ENTITY notInToCc.label              "თუ არ ვარ მითითებული წერილის ან მისი ასლის მიმღების ველებში:">
+<!ENTITY notInToCc.accesskey          "თ">
+<!ENTITY outsideDomain.label          "თუ გამომგზავნი ჩემი დომენიდან არაა:">
+<!ENTITY outsideDomain.accesskey      "ო">
+<!ENTITY otherCases.label             "ყველა სხვა შემთხვევაში:">
+<!ENTITY otherCases.accesskey         "ე">
+<!ENTITY askMe.label                  "შეკითხვა ყოველ ჯერზე">
+<!ENTITY alwaysSend.label             "გაგზავნა ყოველთვის">
+<!ENTITY neverSend.label              "გაგზავნის გარეშე">

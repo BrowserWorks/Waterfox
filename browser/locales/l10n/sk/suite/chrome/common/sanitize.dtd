@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Odstránenie súkromných údajov">
+<!ENTITY sanitizeItems.label             "Vymazať nasledujúce položky:">
+
+<!ENTITY itemHistory.label               "História">
+<!ENTITY itemHistory.accesskey           "H">
+<!ENTITY itemUrlBar.label                "História navštívených stránok">
+<!ENTITY itemUrlBar.accesskey            "n">
+<!ENTITY itemDownloads.label             "História preberania súborov">
+<!ENTITY itemDownloads.accesskey         "s">
+<!ENTITY itemFormSearchHistory.label     "Uložené formuláre a história hľadania">
+<!ENTITY itemFormSearchHistory.accesskey "U">
+<!ENTITY itemCache.label                 "Vyrovnávacia pamäť (cache)">
+<!ENTITY itemCache.accesskey             "m">
+<!ENTITY itemCookies.label               "Cookies">
+<!ENTITY itemCookies.accesskey           "C">
+<!ENTITY itemOfflineApps.label           "Údaje stránok v režime offline">
+<!ENTITY itemOfflineApps.accesskey       "o">
+<!ENTITY itemPasswords.label             "Uložené heslá">
+<!ENTITY itemPasswords.accesskey         "e">
+<!ENTITY itemSessions.label              "Autorizované relácie">
+<!ENTITY itemSessions.accesskey          "A">
+
+<!ENTITY sanitizeButton.label            "Odstrániť súkromné údaje">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  engineManager.title       "Xestionar a lista de buscadores">
+<!ENTITY  engineManager.style       "min-width: 35em;">
+<!ENTITY  engineManager.intro       "Están instalados os seguintes buscadores:">
+
+<!ENTITY  columnLabel.name          "Nome">
+<!ENTITY  columnLabel.keyword       "Palabra chave">
+
+<!-- Buttons -->
+<!ENTITY  up.label                  "Subir">
+<!ENTITY  up.accesskey              "u">
+<!ENTITY  dn.label                  "Baixar">
+<!ENTITY  dn.accesskey              "B">
+<!ENTITY  remove.label              "Eliminar">
+<!ENTITY  remove.accesskey          "r">
+<!ENTITY  edit.label                "Editar a palabra chave…">
+<!ENTITY  edit.accesskey            "t">
+
+<!ENTITY  addEngine.label           "Obter máis buscadores…">
+<!ENTITY  addEngine.accesskey       "a">
+
+<!ENTITY  enableSuggest.label       "Mostrar suxestións de busca">
+<!ENTITY  enableSuggest.accesskey   "s">
+
+<!ENTITY  restoreDefaults.label     "Restaurar a configuración predeterminada">
+<!ENTITY  restoreDefaults.accesskey "e">

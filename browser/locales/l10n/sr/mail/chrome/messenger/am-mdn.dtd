@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Повратнице">
+<!ENTITY useGlobalPrefs.label         "Користи моје опште поставке повратница за овај налог">
+<!ENTITY useGlobalPrefs.accesskey     "у">
+<!ENTITY globalReceipts.label         "Опште поставке…">
+<!ENTITY globalReceipts.accesskey     "О">
+<!ENTITY useCustomPrefs.label         "Прилагоди повратнице за овај налог">
+<!ENTITY useCustomPrefs.accesskey     "г">
+<!ENTITY requestReceipt.label         "Приликом слања порука увек затражи повратницу">
+<!ENTITY requestReceipt.accesskey     "з">
+<!ENTITY receiptArrive.label          "Када потврда стигне:">
+<!ENTITY leaveIt.label                "Остави је у мом долазном сандучету">
+<!ENTITY leaveIt.accesskey            "и">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Помери је у фасциклу &quot;Послато&quot;">
+<!ENTITY moveToSent.accesskey         "м">
+<!ENTITY requestMDN.label             "Када добијем захтев за слање повратнице:">
+<!ENTITY returnSome.label             "Дозволи слање повратнице за неке поруке">
+<!ENTITY returnSome.accesskey         "е">
+<!ENTITY never.label                  "Никада не шаљи повратницу">
+<!ENTITY never.accesskey              "Н">
+<!ENTITY notInToCc.label              "Ако нисам ни у Прима а ни у Коп делу поруке:">
+<!ENTITY notInToCc.accesskey          "А">
+<!ENTITY outsideDomain.label          "Ако је пошиљалац ван мог домена:">
+<!ENTITY outsideDomain.accesskey      "п">
+<!ENTITY otherCases.label             "У осталим случајевима:">
+<!ENTITY otherCases.accesskey         "о">
+<!ENTITY askMe.label                  "Питај ме">
+<!ENTITY alwaysSend.label             "Увек пошаљи">
+<!ENTITY neverSend.label              "Никада не шаљи">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label              "Väljuva e-posti (SMTP) serveri sätted">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label         "Identiteetide haldamise juures võid sa kasutada serverit siit nimekirjast, määrates selle väljuva e-posti serveriks (SMTP). Samas võid sa kasutada ka selle nimekirja vaikeväärtust, valides &quot;kasuta vaikimisi serverit&quot;.">
+
+<!ENTITY smtpListAdd.label             "Lisa...">
+<!ENTITY smtpListAdd.accesskey         "i">
+<!ENTITY smtpListEdit.label            "Redigeeri...">
+<!ENTITY smtpListEdit.accesskey        "e">
+<!ENTITY smtpListDelete.label          "Eemalda">
+<!ENTITY smtpListDelete.accesskey      "m">
+<!ENTITY smtpListSetDefault.label      "Määra vaikeväärtuseks">
+<!ENTITY smtpListSetDefault.accesskey  "t">
+
+<!ENTITY serverDetails.label           "Valitud serveri üksikasjad:">
+<!ENTITY serverDescription.label       "Kirjeldus: ">
+<!ENTITY serverName.label              "Server: ">
+<!ENTITY serverPort.label              "Port: ">
+<!ENTITY userName.label                "Kasutajanimi: ">
+<!ENTITY connectionSecurity.label      "Ühenduse turvalisus: ">
+<!ENTITY authMethod.label              "Autentimise viis: ">

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "弹出窗口">
+
+<!ENTITY pref.popups.caption            "弹出窗口">
+
+<!ENTITY popupBlock.label               "阻挡未经允许的弹出窗口">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "管理权限">
+<!ENTITY viewPermissions.accesskey      "M">
+
+<!ENTITY whenBlock.description          "当弹出窗口被阻挡时:">
+<!ENTITY playSound.label                "播放声音:">
+<!ENTITY playSound.accesskey            "P">
+<!ENTITY systemSound.label              "系统响铃">
+<!ENTITY systemSound.accesskey          "S">
+<!ENTITY customSound.label              "自定义声音">
+<!ENTITY customSound.accesskey          "C">
+
+<!ENTITY selectSound.label              "浏览…">
+<!ENTITY selectSound.accesskey          "o">
+<!ENTITY playSoundButton.label          "播放">
+<!ENTITY playSoundButton.accesskey      "l">
+
+<!ENTITY displayIcon.label              "在状态栏显示图标">
+<!ENTITY displayIcon.accesskey          "D">
+
+<!ENTITY displayNotification.label      "在正文区域顶部显示通知栏">
+<!ENTITY displayNotification.accesskey  "n">
+
+<!ENTITY popupNote.description          "提示: 阻挡所有弹出窗口可能会让您错过一些重要信息,例如银行或购物站点的重要信息.点击帮住查看如何添加例外,当阻挡所有弹出窗口时，不会错过重要网站的通知.">
+

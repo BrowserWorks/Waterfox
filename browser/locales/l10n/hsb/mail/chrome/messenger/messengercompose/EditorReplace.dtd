@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Pytać a narunać">
+<!ENTITY findField.label "Pytać:">
+<!ENTITY findField.accesskey "P">
+<!ENTITY replaceField.label "Narunać z:">
+<!ENTITY replaceField.accesskey "u">
+<!ENTITY caseSensitiveCheckbox.label "Na wulkopisanje dźiwać">
+<!ENTITY caseSensitiveCheckbox.accesskey "d">
+<!ENTITY wrapCheckbox.label "Linki łamać">
+<!ENTITY wrapCheckbox.accesskey "L">
+<!ENTITY backwardsCheckbox.label "Dozady pytać">
+<!ENTITY backwardsCheckbox.accesskey "z">
+<!ENTITY findNextButton.label "Dale pytać">
+<!ENTITY findNextButton.accesskey "D">
+<!ENTITY replaceButton.label "Narunać">
+<!ENTITY replaceButton.accesskey "N">
+<!ENTITY replaceAndFindButton.label "Narunać a pytać">
+<!ENTITY replaceAndFindButton.accesskey "r">
+<!ENTITY replaceAllButton.label "Wšě narunać">
+<!ENTITY replaceAllButton.accesskey "W">
+<!ENTITY closeButton.label "Začinić">
+<!ENTITY closeButton.accesskey "Z">

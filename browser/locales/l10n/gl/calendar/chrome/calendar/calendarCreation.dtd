@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Crear novo calendario" >
+<!ENTITY wizard.label             "Crear un novo calendario" >
+<!ENTITY wizard.description       "Localice o seu calendario" >
+
+<!ENTITY initialpage.description    "Pode almacenarse o calendario no seu computador ou nun servidor para acceder a el remotamente ou compartilo cos seus amigos ou compañeiros de traballo." >
+<!ENTITY initialpage.computer.label  "No meu computador">
+<!ENTITY initialpage.network.label  "Na rede">
+
+<!ENTITY locationpage.description         "Forneza a información necesaria para acceder ao seu calendario remoto" >
+<!ENTITY locationpage.login.description   "Opcional: escriba un nome de usuario e contrasinal" >
+<!ENTITY locationpage.username.label      "Nome de usuario:" >
+<!ENTITY locationpage.password.label      "Contrasinal:" >
+
+<!ENTITY custompage.shortdescription  "Personalizar o seu calendario" >
+<!ENTITY custompage.longdescription   "Pode pórlle un alcume ao calendario e colorear os seus eventos." >
+
+<!ENTITY finishpage.shortdescription  "Creouse o calendario" >
+<!ENTITY finishpage.longdescription   "Creouse o seu calendario." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Outro">
+
+<!ENTITY buttons.create.label "Crear calendario">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Atopar calendarios">
+<!ENTITY buttons.find.accesskey "l">
+
+<!ENTITY buttons.back.label "Atrás">
+<!ENTITY buttons.back.accesskey "A">
+
+<!ENTITY buttons.subscribe.label "Subscribir">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "Tipo de calendario:">
+<!ENTITY location.label "Localización:">
+<!ENTITY location.placeholder "URL ou nome para o servidor do calendario">
+
+<!ENTITY network.nocredentials.label "Esta localización non require credenciais">
+<!ENTITY network.loading.description "Agarde mentres se buscan os seus calendarios.">
+<!ENTITY network.notfound.description "Non foi posíbel atopar calendarios nesta localización. Comprobe os axustes.">
+<!ENTITY network.authfail.description "As credenciais que introduciu non foron aceptadas. Comprobe os axustes.">
+
+<!ENTITY network.subscribe.single.description "Seleccione os calendarios aos que desexa subscribirse.">
+<!ENTITY network.subscribe.multiple.description "Están dispoñíbeis varios tipos de calendarios nesta localización. Seleccione o tipo de calendario e despois marque os que desexa subscribir.">

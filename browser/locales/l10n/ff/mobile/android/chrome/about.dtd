@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Baɗte &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; ko ƴeewditorde tee ena waawi waasde yamɗude.">
+<!ENTITY aboutPage.checkForUpdates.link         "Yuurno Kesɗitine »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Nana yiyloo kesɗitine…">
+<!ENTITY aboutPage.checkForUpdates.none         "Alaa kesɗitine ngoodi">
+<!ENTITY aboutPage.checkForUpdates.available2   "Aawto kesɗitinal">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Nana aawtoo kesɗitinal…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Aaf kesɗitinal">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "Wallitorde">
+<!ENTITY aboutPage.privacyPolicy.label          "Dawirgol Suturo">
+<!ENTITY aboutPage.rights.label                 "Anndu hakkeeji maa">
+<!ENTITY aboutPage.relNotes.label               "Konngol Bayyinal">
+<!ENTITY aboutPage.credits.label                "Wuneeji">
+<!ENTITY aboutPage.license.label                "Humpito Jamirol">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox e logooji Firefox ko marke curaaɗe ɗe Mozilla Foundation.">

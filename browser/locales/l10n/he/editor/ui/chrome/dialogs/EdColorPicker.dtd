@@ -1,0 +1,29 @@
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "צבע">
+<!ENTITY lastPickedColor.label "צבע שנבחר אחרון">
+<!ENTITY lastPickedColor.accessKey "צ">
+<!ENTITY setColor1.label "לחץ על צבע או">
+<!ENTITY setColor2.label "הכנס מחרוזת צבע של HTML">
+<!ENTITY setColor2.accessKey "ה">
+<!ENTITY setColorExample.label "(דוגמה: &quot;#0000ff&quot; או &quot;blue&quot;):">
+<!ENTITY default.label "ברירת מחדל">
+<!ENTITY default.accessKey "ב">
+<!ENTITY palette.label "טבלת צבעים:">
+<!ENTITY standardPalette.label "תקני">
+<!ENTITY webPalette.label "כל צבעי הרשת">
+<!ENTITY background.label "רקע עבור:">
+<!ENTITY background.accessKey "ר">
+<!ENTITY table.label "טבלה">
+<!ENTITY table.accessKey "ט">
+<!ENTITY cell.label "תא(ים)">
+<!ENTITY cell.accessKey "ת">
+

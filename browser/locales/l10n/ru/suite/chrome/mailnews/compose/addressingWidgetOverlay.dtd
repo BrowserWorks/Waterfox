@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- address labels -->
+<!--LOCALIZATION NOTE addressingWidgetOverlay.dtd The basic mail/news composition headers as they are seen in UI -->
+<!ENTITY toAddr.label   "Кому:"> 
+<!ENTITY ccAddr.label   "Копия:"> 
+<!ENTITY bccAddr.label  "Скрытая копия:"> 
+<!ENTITY replyAddr.label   "Обратный адрес:"> 
+<!ENTITY newsgroupsAddr.label   "Группа новостей:"> 
+<!ENTITY followupAddr.label   "Ответ в группу новостей:"> 
+

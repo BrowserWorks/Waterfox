@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountSetupTitle.label    "&syncBrand.fullName.label; のセットアップ">
+
+<!-- First page of the wizard -->
+
+<!ENTITY setup.pickSetupType.description "ようこそ - これまでに &syncBrand.fullName.label; を使用したことがなければ、アカウントを作成してください。">
+<!ENTITY button.createNewAccount.label "新しいアカウントを作成">
+<!ENTITY setup.haveAccount.label "すでに &syncBrand.fullName.label; アカウントを持っています">
+<!ENTITY button.connect.label    "接続">
+
+<!ENTITY setup.choicePage.title.label     "これまでに &syncBrand.fullName.label; を使用したことはありますか？">
+<!ENTITY setup.choicePage.new.label       "これまでに &syncBrand.shortName.label; を使用したことは一度もありません">
+<!ENTITY setup.choicePage.existing.label  "すでに他のパソコンで &syncBrand.shortName.label; を使用しています">
+
+<!-- New Account AND Existing Account -->
+<!ENTITY server.label               "サーバー">
+<!ENTITY server.accesskey           "S">
+<!ENTITY serverType.main.label      "&syncBrand.fullName.label; サーバー">
+<!ENTITY serverType.custom2.label   "独自サーバーを使用する...">
+<!ENTITY signIn.account2.label      "アカウント">
+<!ENTITY signIn.account2.accesskey  "A">
+<!ENTITY signIn.password.label      "パスワード">
+<!ENTITY signIn.password.accesskey  "P">
+<!ENTITY signIn.recoveryKey.label     "リカバリーキー">
+<!ENTITY signIn.recoveryKey.accesskey "K">
+
+<!-- New Account Page 1: Basic Account Info -->
+<!ENTITY setup.newAccountDetailsPage.title.label "アカウントの詳細">
+<!ENTITY setup.confirmPassword.label             "パスワードを再度入力">
+<!ENTITY setup.confirmPassword.accesskey         "C">
+<!ENTITY setup.emailAddress.label                "メールアドレス">
+<!ENTITY setup.emailAddress.accesskey            "E">
+<!-- LOCALIZATION NOTE: tosAgree1, tosLink, tosAgree2, ppLink, tosAgree3 are
+     joined with implicit white space, so spaces in the strings aren't necessary -->
+<!ENTITY setup.tosAgree1.label      "私は">
+<!ENTITY setup.tosAgree1.accesskey  "a">
+<!ENTITY setup.tosLink.label        "利用規約">
+<!ENTITY setup.tosAgree2.label      "と">
+<!ENTITY setup.ppLink.label         "プライバシーポリシー">
+<!ENTITY setup.tosAgree3.label      "に同意します">
+<!ENTITY setup.tosAgree2.accesskey  "">
+
+<!-- New Account Page 2: Recovery Key -->
+<!ENTITY setup.newRecoveryKeyPage.title.label "&brandShortName; はあなたのプライバシーを大切にします">
+<!ENTITY setup.newRecoveryKeyPage.description.label "あなたのプライバシーを守るため、すべてのデータはアップロード前に暗号化されます。データを復号する際に必要となるリカバリーキーはアップロードされません。">
+<!ENTITY recoveryKeyEntry.label        "リカバリーキー">
+<!ENTITY recoveryKeyEntry.accesskey    "K">
+<!ENTITY recoveryGenerateNewKey.label  "新しいキーを生成する">
+<!ENTITY recoveryKeyBackup.description "リカバリーキーは、他のパソコンから &syncBrand.fullName.label; へアクセスする際に必要となります。メモとして残しておくことをお勧めします。リカバリーキーを失くすと取り戻すことはできません。">
+
+<!ENTITY button.syncKeyBackup.print.label     "印刷...">
+<!ENTITY button.syncKeyBackup.print.accesskey "P">
+<!ENTITY button.syncKeyBackup.save.label      "保存...">
+<!ENTITY button.syncKeyBackup.save.accesskey  "S">
+
+<!-- New Account Page 3: Captcha -->
+<!ENTITY setup.captchaPage2.title.label     "あなたがロボットではないことを確認してください">
+
+<!-- Existing Account Page 1: Add Device (incl. Add a Device dialog strings) -->
+<!ENTITY addDevice.title.label              "端末を追加する">
+<!ENTITY addDevice.showMeHow.label          "設定方法を確認する。">
+<!ENTITY addDevice.dontHaveDevice.label     "他の Sync 端末を持っていない">
+<!ENTITY addDevice.setup.description.label  "有効にするには、他の Sync 端末で &syncBrand.shortName.label; 設定の &#x0022;端末を追加する&#x0022; を選択してください。">
+<!ENTITY addDevice.setup.enterCode.label    "表示された画面に、以下のコードを入力してください:">
+<!ENTITY addDevice.dialog.description.label "新たな端末を有効にするには、追加する端末の &syncBrand.shortName.label; 設定の &#x0022;接続&#x0022; を選択してください。">
+<!ENTITY addDevice.dialog.enterCode.label   "端末に表示されたコードを入力してください:">
+<!ENTITY addDevice.dialog.tryAgain.label    "もう一度入力してください。">
+<!ENTITY addDevice.dialog.successful.label  "端末の接続に成功しました。最初の同期はバックグラウンドで、数分のうちに完了します。">
+<!ENTITY addDevice.dialog.recoveryKey.label "お使いの端末で &syncBrand.shortName.label; を有効にするには、リカバリーキーを入力する必要があります。以下のリカバリーキーを印刷または保存して、端末に入力してください。">
+<!ENTITY addDevice.dialog.connected.label   "端末が接続されました">
+
+<!-- Existing Account Page 2: Manual Login -->
+<!ENTITY setup.signInPage.title.label "サインイン">
+<!ENTITY existingRecoveryKey.description "リカバリーキーは他の Sync 端末の &syncBrand.shortName.label; 設定の &#x0022;アカウントを管理&#x0022; の &#x0022;自分のリカバリーキー&#x0022; で確認できます。">
+
+<!ENTITY verifying.label              "確認中...">
+<!ENTITY resetPassword.label          "パスワードをリセット">
+<!ENTITY resetSyncKey.label           "他の Sync 端末をなくした場合。">
+
+<!-- Sync Options -->
+<!ENTITY setup.optionsPage.title      "同期オプション">
+<!ENTITY syncComputerName.label       "端末名:">
+<!ENTITY syncComputerName.accesskey   "C">
+
+<!ENTITY syncMy.label               "同期するデータ">
+<!ENTITY engine.addons.label        "アドオン">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.bookmarks.label     "ブックマーク">
+<!ENTITY engine.bookmarks.accesskey "B">
+<!ENTITY engine.tabs.label          "タブ">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "履歴">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.passwords.label     "パスワード">
+<!ENTITY engine.passwords.accesskey "P">
+<!ENTITY engine.prefs.label         "個人設定">
+<!ENTITY engine.prefs.accesskey     "e">
+
+<!ENTITY choice2.merge.main.label      "このパソコンのブラウザーデータを、サーバーに保存されている &syncBrand.shortName.label; データと統合する">
+<!ENTITY choice2.merge.recommended.label "推奨:">
+<!ENTITY choice2.client.main.label     "このパソコンのブラウザーデータを、サーバーに保存されている &syncBrand.shortName.label; データと置き換える">
+<!ENTITY choice2.server.main.label     "他のすべての端末のブラウザーデータを、このパソコンのデータと置き換える">
+
+<!-- Confirm Merge Options -->
+<!ENTITY setup.optionsConfirmPage.title        "確認">
+<!ENTITY confirm.merge.label          "このパソコンのすべてのブラウザーデータは、サーバーに保存されているあなたの Sync アカウントのデータと統合されます。">
+<!ENTITY confirm.client2.label         "警告: このパソコンのブラウザーデータは、以下の情報を含め、すべて削除されます:">
+<!ENTITY confirm.client.moreinfo.label "その後、サーバーに保存されているあなたの &syncBrand.fullName.label; データがこのパソコンへコピーされます。">
+<!ENTITY confirm.server2.label         "警告: 以下の端末のブラウザーデータが、このパソコンのデータで上書きされます:">
+
+<!-- New & Existing Account: Setup Complete -->
+<!ENTITY setup.successPage.title "セットアップが完了しました">
+<!ENTITY changeOptions.label "この設定は、下の Sync オプションを選択することで変更できます。">
+<!ENTITY continueUsing.label "今から &brandShortName; を使い続けることができます。">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+<!ENTITY pref.security.title              "Privacidad y seguridad">
+
+<!ENTITY tracking.label                   "Rastreo de usuarios">
+<!ENTITY trackingIntro.label              "Los sitios web pueden rastrear la forma de uso, afectando su privacidad.">
+
+<!ENTITY doNotTrack.label                 "Decirle a los sitios que no quiero ser rastreado">
+<!ENTITY doNotTrack.accesskey             "t">
+<!ENTITY trackProtect.label               "Evitar actividades de rastreo de sitios conocidos">
+<!ENTITY trackProtect.accesskey           "n">
+<!ENTITY warnTrackContent.label           "Avisarme cuando se detecten actividades de rastreo conocidas">
+<!ENTITY warnTrackContent.accesskey       "v">
+
+<!ENTITY geoLocation.label                "Navegación dependiente de la ubicación">
+<!ENTITY geoIntro.label                   "Los sitios web pueden solicitar información sobre su ubicación actual.">
+
+<!ENTITY geoEnabled.label                 "Solicitar permiso si se realiza un pedido">
+<!ENTITY geoEnabled.accesskey             "m">
+<!ENTITY geoDisabled.label                "Deshabilitar esa funcionalidad y denegar todos los pedidos">
+<!ENTITY geoDisabled.accesskey            "D">
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label               "Navegación segura">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; puede bloquear sitios informados por mantener contenido malicioso.">
+
+<!ENTITY blockAttackSites.label           "Bloquear sitios informados por ataques (malware, virus)">
+<!ENTITY blockAttackSites.accesskey       "B">
+
+<!ENTITY blockWebForgeries.label          "Bloquear sitios informados por falsificación (Phishing)">
+<!ENTITY blockWebForgeries.accesskey      "P">
+

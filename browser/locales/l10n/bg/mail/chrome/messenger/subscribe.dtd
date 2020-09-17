@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Абониране">
+<!ENTITY subscribeButton.label        "Абониране">
+<!ENTITY subscribeButton.accesskey    "б">
+<!ENTITY unsubscribeButton.label      "Отписване">
+<!ENTITY unsubscribeButton.accesskey  "в">
+<!ENTITY newGroupsTab.label           "Нови групи">
+<!ENTITY newGroupsTab.accesskey       "Н">
+<!ENTITY refreshButton.label          "Опресняване">
+<!ENTITY refreshButton.accesskey      "О">
+<!ENTITY stopButton.label             "Стоп">
+<!ENTITY stopButton.accesskey         "С">
+<!ENTITY server.label                 "Регистрация:">
+<!ENTITY server.accesskey             "Р">
+<!ENTITY subscribedHeader.label       "Абониране">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Показване на елементи, съдържащи:">
+<!ENTITY namefield.accesskey          "П">

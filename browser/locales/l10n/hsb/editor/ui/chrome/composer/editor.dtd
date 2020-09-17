@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+<!-- Toolbar-only items -->
+
+
+<!ENTITY compositionToolbar.tooltip "Wobdźěłowanska lajsta">
+<!ENTITY previewToolbarCmd.label "Přepytać">
+<!ENTITY previewToolbarCmd.tooltip "Tutu stronu do wobhladowaka začitać">
+<!-- File menu items -->
+
+<!ENTITY exportToTextCmd.label "Jako tekst eksportować…">
+<!ENTITY exportToTextCmd.accesskey "J">
+<!ENTITY previewCmd.label "Stronu přepytać">
+<!ENTITY previewCmd.accesskey "t">
+<!ENTITY sendPageCmd.label "Stronu pósłać…">
+<!ENTITY sendPageCmd.accesskey "s">
+<!-- View menu items -->
+
+<!ENTITY compositionToolbarCmd.label "Wobdźěłowanska lajsta">
+<!ENTITY compositionToolbarCmd.accesskey "W">
+<!ENTITY formattingToolbarCmd.label "Formatowanska lajsta">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Wobdźěłowanska lajsta">
+<!ENTITY editmodeToolbarCmd.accesskey "b">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "F">
+<!ENTITY grid.label "Pozicioněrowanska lěsyca">
+<!ENTITY grid.accesskey "c">
+<!ENTITY pageProperties.label "Titul a kajkosće strony…">
+<!ENTITY pageProperties.accesskey "T">
+<!-- Tools menu items -->
+
+<!ENTITY validateCmd.label "HTML přepruwować">
+<!ENTITY validateCmd.accesskey "u">
+<!-- Display Mode toolbar and View menu items -->
+
+<!ENTITY NormalModeTab.label "Normalny">
+<!ENTITY NormalMode.label "Normalny wobdźěłowanski modus">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Tabelowe ramiki a pomjenowane kótwički pokazać">
+<!ENTITY AllTagsModeTab.label "HTML-elementy">
+<!ENTITY AllTagsMode.label "HTML-elementy">
+<!ENTITY AllTagsMode.accesskey "e">
+<!ENTITY AllTagsMode.tooltip "Symbole za wšě HTML-elementy zwobraznić">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Žórłowy kod">
+<!ENTITY HTMLSourceMode.label "Žórłowy kod HTML">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Žórłowy kod HTML wobdźěłać">
+<!ENTITY PreviewModeTab.label "Přehlad">
+<!ENTITY PreviewMode.label "Přehlad">
+<!ENTITY PreviewMode.accesskey "P">
+<!ENTITY PreviewMode.tooltip "Jako WYSIWYG (kaž we wobhladowaku) zwobraznić">

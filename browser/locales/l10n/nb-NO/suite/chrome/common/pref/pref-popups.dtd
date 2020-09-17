@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Sprettoppvinduer">
+
+<!ENTITY pref.popups.caption            "Sprettoppvinduer">
+
+<!ENTITY popupBlock.label               "Blokker ikke-forespurte sprettoppvinduer">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "Behandle tillatelser">
+<!ENTITY viewPermissions.accesskey      "t">
+
+<!ENTITY whenBlock.description          "Når et sprettoppvindu blokkeres:">
+<!ENTITY playSound.label                "Spill av en lyd:">
+<!ENTITY playSound.accesskey            "s">
+<!ENTITY systemSound.label              "Systemlyd">
+<!ENTITY systemSound.accesskey          "S">
+<!ENTITY customSound.label              "Annen lydfil">
+<!ENTITY customSound.accesskey          "A">
+
+<!ENTITY selectSound.label              "Bla gjennom …">
+<!ENTITY selectSound.accesskey          "B">
+<!ENTITY playSoundButton.label          "Spill av">
+<!ENTITY playSoundButton.accesskey      "S">
+
+<!ENTITY displayIcon.label              "Vis et ikon i statuslinjen til nettleseren">
+<!ENTITY displayIcon.accesskey          "V">
+
+<!ENTITY displayNotification.label      "Vis en varslingslinje øverst i innholdsområdet">
+<!ENTITY displayNotification.accesskey  "e">
+
+<!ENTITY popupNote.description          "Merk: Å blokkere alle sprettoppvinduer kan medføre at viktige funksjoner på noen nettsted slutter å virke, som f.eks. innloggingsvinduer for banker og nettbutikker. For informasjon om hvordan du kan blokkere sprettoppvinduer på spesielle nettsted, trykk på «Hjelp». Selv om sprettoppvinduer blokkeres kan nettsted bruke andre måter å åpne sprettoppvinduer på.">
+

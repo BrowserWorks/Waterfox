@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "შიგთავსი">
+<!ENTITY pref.content.description               "ეს პარამეტრები განსაზღვრავენ თუ როგორ აისახება ვებსაიტი პროგრამაში &brandShortName;.">
+
+<!ENTITY siteIcons.label                        "ვებსაიტის ხატულები">
+<!ENTITY useSiteIcons.label                     "ვებსაიტის ხატულების ჩვენება">
+<!ENTITY useSiteIcons.accesskey                 "ხ">
+<!ENTITY useFavIcons2.label                     "სერვერის favicon ხატულის გამოყენების მცდელობა, როცა გვერდს არ გააჩნია განსაზღვრული ხატულა">
+<!ENTITY useFavIcons2.accesskey                 "ც">
+
+<!ENTITY scrolling.label                        "გვერდის გადაადგილება">
+<!ENTITY useAutoScroll.label                    "თვითგადაადგილების გამოყენება">
+<!ENTITY useAutoScroll.accesskey                "თ">
+<!ENTITY useSmoothScroll.label                  "გლუვი გადაადგილების გამოყენება">
+<!ENTITY useSmoothScroll.accesskey              "გ">
+
+<!ENTITY zoomPrefs.label                        "ზომები">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "შუალედი">
+<!ENTITY minZoom.accesskey                      "ც">
+<!ENTITY maxZoom.label                          "—">
+<!ENTITY maxZoom.accesskey                      "ზ">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY siteSpecific.label                     "მასშტაბების დამახსოვრება ცალკეული საიტებისათვის">
+<!ENTITY siteSpecific.accesskey                 "მ">
+<!ENTITY textZoomOnly.label                     "მხოლოდ ტექსტის მასშტაბირება ნაცვლად გვერდისა">
+<!ENTITY textZoomOnly.accesskey                 "ხ">
+<!ENTITY enableAutomaticImageResizing.label     "დიდი ზომის გამოსახულებათა ბრაუზერის ფანჯრის ზომაზე მორგება">
+<!ENTITY enableAutomaticImageResizing.accesskey "ო">
+
+<!ENTITY allowHWAccel.label                     "ხელმისაწვდომობის შემთხვევაში აპარატული აჩქარების გამოყენება">
+<!ENTITY allowHWAccel.accesskey                 "ლ">
+<!ENTITY blockAutoRefresh.label                 "გაფრთხილება საიტის მიერ გადამისამართების ან გვერდის განახლების მცდელობისას">
+<!ENTITY blockAutoRefresh.accesskey             "ფ">
+
+<!ENTITY showZoomStatusPanel.label              "ზომის სამართავის ჩვენება მდგომარეობის ზოლში">

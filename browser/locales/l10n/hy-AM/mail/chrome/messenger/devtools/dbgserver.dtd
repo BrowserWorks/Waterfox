@@ -1,0 +1,4 @@
+<!ENTITY options.title "Մշակո,ղի գործիքների ընտրանքներ">
+<!ENTITY options.status.label "Վիճակ.">
+<!ENTITY options.port.label "Պորտը.">
+<!ENTITY options.forcelocal.label "Թույլատրել կապակցումը այլ համակարգիչներից">

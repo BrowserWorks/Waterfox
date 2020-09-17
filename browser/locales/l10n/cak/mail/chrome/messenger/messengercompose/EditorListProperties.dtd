@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Kicholb'al taq Ichinil">
+
+<!ENTITY ListType.label "Rucholajem Ruwäch">
+<!ENTITY bulletStyle.label "Rub'anikil Wachin:">
+<!ENTITY startingNumber.label "Titikirisäx pa:">
+<!ENTITY startingNumber.accessKey "T">
+<!ENTITY none.value "Majun">
+<!ENTITY bulletList.value "Rucholajem (Man ajilan ta) taq Wachin">
+<!ENTITY numberList.value "Ajilan Cholb'äl">
+<!ENTITY definitionList.value "Rucholajem Q'ajarib'äl">
+<!ENTITY changeEntireListRadio.label "Tijal chijun ri cholb'äl">
+<!ENTITY changeEntireListRadio.accessKey "T">
+<!ENTITY changeSelectedRadio.label "Kejal xa xe ri taq ch'akulal echa'on">
+<!ENTITY changeSelectedRadio.accessKey "I">

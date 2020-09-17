@@ -1,0 +1,220 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Leabhar nan seòladh">
+<!ENTITY blankResultsPaneMessage.label                  "Cha seall an leabhar-sheòlaidhean seo luchd-aithne ach an dèidh thu lorg a dhèanamh">
+<!ENTITY localResultsOnlyMessage.label                  "Cha dèid luchd-aithne o leabhraichean-sheòlaidhean cèin a shealltainn gus an dèan thu lorg">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Faidhle">
+<!ENTITY fileMenu.accesskey                             "F">
+<!ENTITY newMenu.label                                  "Ùr">
+<!ENTITY newMenu.accesskey                              "r">
+<!ENTITY newContact.label                               "Neach-aithne ann an leabhar nan seòladh…">
+<!ENTITY newContact.accesskey                           "c">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Liosta puist…">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "Leabhar nan seòladh…">
+<!ENTITY newAddressBookCmd.accesskey                    "b">
+<!ENTITY newLDAPDirectoryCmd.label                      "Pasgan LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "Teachdaireachd">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "T">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Cleachd leabhar nan seòladh Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Dùin">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "D">
+<!ENTITY printSetupCmd.label                            "Suidheachadh na duilleige…">
+<!ENTITY printSetupCmd.accesskey                        "u">
+<!ENTITY printPreviewContactCmd.label                   "Ro-shealladh clò-bhualaidh de charaid">
+<!ENTITY printPreviewContactCmd.accesskey               "R">
+<!ENTITY printPreviewAddressBook.label                  "Ro-shealladh clò-bhualaidh de leabhar nan seòladh">
+<!ENTITY printPreviewAddressBook.accesskey              "b">
+<!ENTITY printContactCmd.label                          "Clò-bhuail neach-aithne…">
+<!ENTITY printContactCmd.accesskey                      "C">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Clò-bhuail leabhar nan seòladh…">
+<!ENTITY printAddressBook.accesskey                     "a">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Deasaich">
+<!ENTITY editMenu.accesskey                             "e">
+<!ENTITY deleteCmd.label                                "Sguab às">
+<!ENTITY deleteAbCmd.label                              "Sguab às leabhar nan seòladh">
+<!ENTITY deleteContactCmd.label                         "Sguab às a' charaid">
+<!ENTITY deleteContactsCmd.label                        "Sguab às luchd-aithne">
+<!ENTITY deleteListCmd.label                            "Sguab às liosta">
+<!ENTITY deleteListsCmd.label                           "Sguab às liostaichean">
+<!ENTITY deleteItemsCmd.label                           "Sguab às rudan">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesMenu.label                           "Roghainnean">
+<!ENTITY propertiesMenu.accesskey                       "i">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Roghainnean leabhar nan seòladh">
+<!ENTITY abPropertiesMenu.accesskey                     "i">
+<!ENTITY contactPropertiesMenu.label                    "Roghainnean an neach-aithne">
+<!ENTITY contactPropertiesMenu.accesskey                "i">
+<!ENTITY mailingListPropertiesMenu.label                "Roghainnean na liosta puist">
+<!ENTITY mailingListPropertiesMenu.accesskey            "i">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Sealladh">
+<!ENTITY viewMenu.accesskey                             "S">
+<!ENTITY viewToolbarsMenu.label                         "Na bàraichean-inneal">
+<!ENTITY viewToolbarsMenu.accesskey                     "N">
+<!ENTITY menubarCmd.label                               "Bàr a' chlàir-thaice">
+<!ENTITY menubarCmd.accesskey                           "r">
+<!ENTITY showAbToolbarCmd.label                         "Bàr-inneal leabhar nan seòladh">
+<!ENTITY showAbToolbarCmd.accesskey                     "B">
+<!ENTITY showTaskbarCmd.label                           "Bàr na staide">
+<!ENTITY showTaskbarCmd.accesskey                       "s">
+<!ENTITY customizeToolbar.label                         "Gnàthaich…">
+<!ENTITY customizeToolbar.accesskey                     "c">
+<!ENTITY layoutMenu.label                               "Co-dhealbhachd">
+<!ENTITY layoutMenu.accesskey                           "d">
+<!ENTITY showDirectoryPane.label                        "Leòsan nam pasgan">
+<!ENTITY showDirectoryPane.accesskey                    "L">
+<!ENTITY showContactPane2.label                         "Leòsan an neach-aithne">
+<!ENTITY showContactPane2.accesskey                     "e">
+<!ENTITY menu_ShowNameAs.label                          "Seall an t-ainm mar seo">
+<!ENTITY menu_ShowNameAs.accesskey                      "n">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Ainm Sloinneadh">
+<!ENTITY firstLastCmd2.accesskey                        "A">
+<!ENTITY lastFirstCmd.label                             "Sloinneadh, Ainm">
+<!ENTITY lastFirstCmd.accesskey                         "l">
+<!ENTITY displayNameCmd.label                           "Ainm-taisbeanaidh">
+<!ENTITY displayNameCmd.accesskey                       "d">
+<!ENTITY sortMenu.label                                 "Seòrsaich a-rèir">
+<!ENTITY sortMenu.accesskey                             "S">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Innealan">
+<!ENTITY tasksMenu.accesskey                            "I">
+<!ENTITY messengerCmd.label                             "Post ⁊ buidhnean-naidheachd">
+<!ENTITY messengerCmd.accesskey                         "P">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY addressBookCmd.label                           "Leabhar nan seòladh">
+<!ENTITY addressBookCmd.accesskey                       "a">
+<!ENTITY addressBookCmd.key                             "B">
+<!ENTITY searchAddressesCmd.label                       "Lorg sna seòlaidhean…">
+<!ENTITY searchAddressesCmd.accesskey                   "s">
+<!ENTITY importCmd.label                                "Ion-phortaich…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Às-phortaich…">
+<!ENTITY exportCmd.accesskey                            "s">
+<!ENTITY preferencesCmd2.label                          "Roghainnean">
+<!ENTITY preferencesCmd2.accesskey                      "o">
+<!ENTITY preferencesCmdUnix.label                       "Roghainnean">
+<!ENTITY preferencesCmdUnix.accesskey                   "n">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Neach-aithne ùr">
+<!ENTITY newContactButton.accesskey                     "N">
+<!ENTITY newlistButton.label                            "Liosta ùr">
+<!ENTITY newlistButton.accesskey                        "L">
+<!ENTITY showAsDefault.label                            "Pasgan tòiseachaidh bunaiteach">
+<!ENTITY showAsDefault.accesskey                        "s">
+<!ENTITY editPropertiesButton.label                     "Deasaich">
+<!ENTITY propertiesContext.label                        "Roghainnean">
+<!ENTITY propertiesContext.accesskey                    "i">
+<!ENTITY abPropertiesContext.label                      "Roghainnean">
+<!ENTITY abPropertiesContext.accesskey                  "i">
+<!ENTITY editContactContext.label                       "Deasaich an neach-aithne">
+<!ENTITY editContactContext.accesskey                   "e">
+<!ENTITY editMailingListContext.label                   "Deasaich an liosta">
+<!ENTITY editMailingListContext.accesskey               "e">
+<!ENTITY newmsgButton.label                             "Sgrìobh">
+<!ENTITY newmsgButton.accesskey                         "S">
+<!ENTITY newIM.label                                    "Grad-theachdaireachd">
+<!ENTITY newIM.accesskey                                "i">
+<!ENTITY printButton.label                              "Clò-bhuail…">
+<!ENTITY printButton.accesskey                          "l">
+<!ENTITY deleteButton2.label                            "Sguab às">
+<!ENTITY deleteButton2.accesskey                        "S">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY newContactButton.tooltip                       "Cruthaich neach-aithne ùr ann an leabhar nan seòladh">
+<!ENTITY newlistButton.tooltip                          "Cruthaich liosta ùr">
+<!ENTITY editPropertiesButton.tooltip                   "Deasaich an rud a thagh thu">
+<!ENTITY editAbPropertiesButton.tooltip                 "Deasaich roghainnean an leabhair-sheòlaidhean a thagh thu">
+<!ENTITY editContactPropertiesButton.tooltip            "Deasaich an neach-aithne a thagh thu">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Deasaich an liosta puist a thagh thu">
+<!ENTITY newmsgButton.tooltip                           "Cuir teachdaireachd puist">
+<!ENTITY newIM.tooltip                                  "Cuir grad-theachdaireachd no dèan cabadaich">
+<!ENTITY deleteButton2.tooltip                          "Sguab às an rud a thagh thu">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Ainm no post-dealain">
+<!ENTITY SearchNameOrEmail.accesskey                    "n">
+<!ENTITY advancedButton.tooltip                         "Lorg adhartach nan seòlaidhean">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Lorg luath">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Leabhar nan seòladh">
+<!ENTITY Addrbook.accesskey                             "b">
+<!ENTITY GeneratedName.label                            "Ainm">
+<!ENTITY GeneratedName.accesskey                        "n">
+<!ENTITY PrimaryEmail.label                             "Post-dealain">
+<!ENTITY PrimaryEmail.accesskey                         "e">
+<!ENTITY ChatName.label                                 "Ainm cabadaich">
+<!ENTITY ChatName.accesskey                             "A">
+<!ENTITY Company.label                                  "Am buidheann">
+<!ENTITY Company.accesskey                              "A">
+<!ENTITY NickName.label                                 "Far-ainm">
+<!ENTITY NickName.accesskey                             "i">
+<!ENTITY SecondEmail.label                              "Post-dealain eile">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "An roinn">
+<!ENTITY Department.accesskey                           "r">
+<!ENTITY JobTitle.label                                 "Tiotal">
+<!ENTITY JobTitle.accesskey                             "T">
+<!ENTITY CellularNumber.label                           "Fòn-làimhe">
+<!ENTITY CellularNumber.accesskey                       "m">
+<!ENTITY PagerNumber.label                              "Pèidsear">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "Facs">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Fòn na dachaighe">
+<!ENTITY HomePhone.accesskey                            "h">
+<!ENTITY WorkPhone.label                                "Fòn na h-obrach">
+<!ENTITY WorkPhone.accesskey                            "F">
+<!ENTITY sortAscending.label                            "A' dìreadh">
+<!ENTITY sortAscending.accesskey                        "A">
+<!ENTITY sortDescending.label                           "A' teàrnadh">
+<!ENTITY sortDescending.accesskey                       "d">
+<!ENTITY _PhoneticName.label                            "Ainm fòn-eòlach">
+<!ENTITY _PhoneticName.accesskey                        "A">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Neach-aithne">
+<!ENTITY home.heading                                   "Dachaigh">
+<!ENTITY other.heading                                  "Eile">
+<!ENTITY chat.heading                                   "Cabadaich">
+<!ENTITY phone.heading                                  "Fòn">
+<!ENTITY work.heading                                   "Obair">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Tuairisgeul">
+<!ENTITY addresses.heading                              "Seòlaidhean">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Faigh mapa">
+<!ENTITY mapIt.tooltip                                  "Seall mapa dhen t-seòladh seo on lìon">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Uinneag">
+<!ENTITY minimizeWindow.label                           "Lughdaich">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Gluais a h-uile gun a' bheulaibh">
+<!ENTITY zoomWindow.label                               "Sùm">

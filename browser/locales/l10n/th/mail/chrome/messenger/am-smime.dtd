@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "การเข้ารหัสแบบครอบคลุม">
+<!ENTITY e2eLearnMore.label "เรียนรู้เพิ่มเติม">
+
+<!ENTITY e2eEnc.description "หากไม่มีการเข้ารหัสแบบครอบคลุม เนื้อหาของข้อความต่าง ๆ จะถูกเปิดเผยต่อผู้ให้บริการอีเมลของคุณและผู้สอดแนมสาธารณะจำนวนมากอย่างง่ายดาย">
+<!ENTITY e2eeReqWarning.description "หากคุณจำเป็นต้องใช้การเข้ารหัส เมื่อต้องการส่งข้อความ คุณต้องมีคีย์สาธารณะหรือใบรับรองของผู้รับทุกคน">
+
+<!ENTITY e2eSigning.description "ลายเซ็นดิจิทัลช่วยให้ผู้รับสามารถตรวจสอบความถูกต้องของข้อความที่ส่งจากคุณ และเนื้อหาดังกล่าวไม่มีการเปลี่ยนแปลงใด">
+<!ENTITY e2eTechPref.description "เทคโนโลยีการเข้ารหัสที่ต้องการ:">
+
+<!ENTITY doNotEncrypt.label "ไม่ต้องเปิดใช้งานการเข้ารหัสตามค่าเริ่มต้น">
+<!ENTITY doNotEncrypt.accesskey "ม">
+<!ENTITY requireEncryptMessage.label "จำเป็นต้องมีการเข้ารหัสตามค่าเริ่มต้น">
+<!ENTITY requireEncryptMessage.accesskey "จ">
+<!ENTITY encryptionCert2.message "ใบรับรองส่วนตัวสำหรับการเข้ารหัส:">
+<!ENTITY digitalSign.certificate.button "เลือก…">
+<!ENTITY digitalSign.certificate.accesskey "ล">
+<!ENTITY digitalSign.certificate_clear.button "ล้าง">
+<!ENTITY digitalSign.certificate_clear.accesskey "ง">
+<!ENTITY encryption.certificate.button "เลือก…">
+<!ENTITY encryption.certificate.accesskey "เ">
+<!ENTITY encryption.certificate_clear.button "ล้าง">
+<!ENTITY encryption.certificate_clear.accesskey "า">
+<!ENTITY signingGroupTitle.label "ลายเซ็นดิจิทัล">
+<!ENTITY signMessage2.label "เพิ่มลายเซ็นดิจิทัลของฉันตามค่าเริ่มต้น">
+<!ENTITY signMessage.accesskey "ซ">
+
+<!ENTITY signingCert2.message "ใบรับรองส่วนตัวสำหรับการลงลายเซ็นแบบดิจิทัล:">
+
+<!ENTITY sendingDefaults.label "การตั้งค่าเริ่มต้นสำหรับการส่งข้อความ">
+
+<!ENTITY technologyAutomatic.label "เลือกตามคีย์หรือใบรับรองที่ใช้ได้โดยอัตโนมัติ">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "จัดการใบรับรอง S/MIME">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "อุปกรณ์ความปลอดภัย S/MIME">
+<!ENTITY manageDevices2.accesskey "ภ">
+
+<!ENTITY technologySMIME.label "ต้องการ S/MIME">
+<!ENTITY technologyOpenPGP.label "ต้องการ OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "เลือกใบรับรอง">
+<!ENTITY certPicker.info  "ใบรับรอง:">
+<!ENTITY certPicker.detailsLabel "รายละเอียดของใบรับรองที่เลือก:">
+
+<!ENTITY openpgpKey.message "คีย์ส่วนตัวสำหรับการเข้ารหัสและการลงลายเซ็นดิจิทัล:">
+<!ENTITY openpgpKey.button "ตั้งค่าคีย์ส่วนตัว…">
+<!ENTITY openpgpKey.accesskey "ว">

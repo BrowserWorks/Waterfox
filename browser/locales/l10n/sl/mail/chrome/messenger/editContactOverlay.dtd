@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Izbriši">
+<!ENTITY editContactPanelDeleteContact.accesskey "b">
+
+<!ENTITY editContactName.label "Ime:">
+<!ENTITY editContactName.accesskey "m">
+
+<!ENTITY editContactEmail.label "E-pošta:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Imenik:">
+<!ENTITY editContactAddressBook.accesskey "e">
+
+<!ENTITY editContactPanelDone.label "Končano">
+<!ENTITY editContactPanelDone.accesskey "K">
+
+<!ENTITY contactMoveDisabledWarning.description "Imenika ne morete zamenjati, ker je stik na dopisnem seznamu.">

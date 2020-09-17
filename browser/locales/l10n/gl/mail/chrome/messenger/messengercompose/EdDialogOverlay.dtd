@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Edición avanzada…">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "Engadir ou modificar atributos HTML, de estilo e JavaScript">
+<!ENTITY chooseFileButton.label "Escoller ficheiro...">
+<!ENTITY chooseFileButton.accessKey "f">
+<!ENTITY chooseFileLinkButton.label "Escoller ficheiro...">
+<!ENTITY chooseFileLinkButton.accessKey "o">
+<!ENTITY makeUrlRelative.label "O URL é relativo a respecto dunha páxina">
+<!ENTITY makeUrlRelative.accessKey "U">
+<!ENTITY makeUrlRelative.tooltip "Alternar entre URL relativos e absolutos. Para modificalo, primeiro debe gardar a páxina.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label "Escriba a localización da páxina web, un ficheiro local ou seleccione unha áncora con nome ou cabeceira dende o menú contextual do campo:">
+<!ENTITY LinkURLEditField2.accessKey "w">

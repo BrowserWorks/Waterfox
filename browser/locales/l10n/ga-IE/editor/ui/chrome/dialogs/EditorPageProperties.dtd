@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Airíonna an Leathanaigh">
+<!ENTITY location.label "Suíomh:">
+<!ENTITY lastModified.label "Athraithe:">
+<!ENTITY titleInput.label "Teideal:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Údar:">
+<!ENTITY authorInput.accessKey "a">
+<!ENTITY descriptionInput.label "Cur Síos:">
+<!ENTITY descriptionInput.accessKey "C">
+<!ENTITY locationNewPage.label "[Leathanach nua, gan sábháil faoi láthair]">
+<!ENTITY EditHEADSource1.label "Ardúsáideoirí:">
+<!ENTITY EditHEADSource2.label "Chun inneachair eile an réigiúin &lt;head&gt; a chur in eagar, úsáid &quot;Foinse HTML&amp;&quot; sa roghchlár &quot;Amharc&quot; nó sa Bharra Eagarthóireachta.">

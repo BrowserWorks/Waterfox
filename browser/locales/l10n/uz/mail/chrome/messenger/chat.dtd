@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Onlayn kontakrlar">
+<!ENTITY offlineContactsHeader.label   "Oflayn kontaktlar">
+<!ENTITY conversationsHeader.label     "Suhbatlar">
+<!ENTITY searchResultConversation.label "Qidiruv ">
+<!ENTITY chat.noConv.title             "Subahtlar bu yerda ko‘rinadi.">
+<!ENTITY chat.noConv.description       "Suhbatni boshlash uchun chap tomondagi paneldan kontakt ro‘yxatidan foydalaning.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName;da hozirda ushbu kontakt uchun oldingi suhbatlar joylashmagan.">
+<!ENTITY chat.noAccount.title             "Siz haligacha chat hisobini yaratmagansiz.">
+<!ENTITY chat.noAccount.description       "Chat hisobini sozlashingizda &brandShortName; yordam berishiga rusxat bering.">
+<!ENTITY chat.accountWizard.button       "Boshlash">
+<!ENTITY chat.noConnectedAccount.title             "Chat hisoblari ulanmagan.">
+<!ENTITY chat.noConnectedAccount.description       "Ularga &quot;Chat holati&quot; oynasidan ulanishingiz mumkin:">
+<!ENTITY chat.showAccountManager.button       "Chat holatini ko‘rsatish">
+
+<!ENTITY chat.participants             "Ishtirokchilar:">
+<!ENTITY chat.previousConversations    "Oldingi suhbatlar:">
+<!ENTITY chat.ongoingConversation      "Hozirda amalga oshirilayotgan suhbatlar">
+
+<!ENTITY openConversationCmd.label     "Suhbatni boshlash">
+<!ENTITY openConversationCmd.accesskey "S">
+<!ENTITY closeConversationCmd.label    "Suhbatni yopish">
+<!ENTITY closeConversationCmd.accesskey "y">
+<!ENTITY aliasCmd.label                "Nomini o‘zgartirish">
+<!ENTITY aliasCmd.accesskey            "N">
+<!ENTITY deleteCmd.label               "Kontaktni olib tashlash">
+<!ENTITY deleteCmd.accesskey           "o">
+
+<!ENTITY openConversationButton.tooltip  "Suhbatni boshlash">
+<!ENTITY closeConversationButton.tooltip "Suhbatni yopish">
+
+<!ENTITY addBuddyButton.label          "Kontaktni qo‘shish">
+<!ENTITY joinChatButton.label          "Chatga qo‘shilish">
+<!ENTITY chatAccountsButton.label      "Hisoblarni ko‘rsatish">
+
+<!ENTITY status.available          "Mavjud">
+<!ENTITY status.unavailable        "Mavjud emas">
+<!ENTITY status.offline            "Oflayn">
+
+<!ENTITY openLinkCmd.label            "Havolani ochish…">
+<!ENTITY openLinkCmd.accesskey        "o">

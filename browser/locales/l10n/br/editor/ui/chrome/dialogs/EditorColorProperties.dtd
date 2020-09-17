@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Livioù ha drekleur ar bajennad">
+<!ENTITY pageColors.label "Livioù ar bajennad">
+<!ENTITY defaultColorsRadio.label "Livioù dre ziouer al lenner (Na arventennañ al livioù war ar bajennad)">
+<!ENTITY defaultColorsRadio.accessKey "d">
+<!ENTITY defaultColorsRadio.tooltip "Arverañ arventennoù al livioù diouzh gweler (lenner) ar merdeer">
+<!ENTITY customColorsRadio.label "Arverañ al livioù personelaet :">
+<!ENTITY customColorsRadio.accessKey "v">
+<!ENTITY customColorsRadio.tooltip "An arventennoù liv-mañ a flastr arventennoù gweler ar merdeer">
+
+<!ENTITY normalText.label "Testenn reizh">
+<!ENTITY normalText.accessKey "n">
+<!ENTITY linkText.label " Testenn an ere">
+<!ENTITY linkText.accessKey "T">
+<!ENTITY activeLinkText.label "Testenn an ere oberiant">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Testenn an ere gweladennet">
+<!ENTITY visitedLinkText.accessKey "l">
+<!ENTITY background.label "Drekleur :">
+<!ENTITY background.accessKey "D">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Skeudenn an drekleur :">
+<!ENTITY backgroundImage.accessKey "d">
+<!ENTITY backgroundImage.tooltip "Arverañ ur restr skeudenn evel un drekleur evit ho pajennad">
+<!ENTITY backgroundImage.shortenedDataURI "URI roadennoù berraet (eilañ a lako an URI a-bezh er golver)">

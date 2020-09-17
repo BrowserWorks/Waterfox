@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Kemennadenn a-fet diogelroez">
+<!ENTITY subject.plaintextWarning "Notennit, mar plij : testennoù danvez ar posteloù ne vezont ket enrineget.">
+<!ENTITY status.heading "Endalc'hadoù ho kemennadennoù a vo kaset evel-se :">
+<!ENTITY status.signed "Sinet gant un doare niverel :">
+<!ENTITY status.encrypted "Enrineget :">
+<!ENTITY status.certificates "Testenioù :">
+<!ENTITY view.label "Gwelout">
+<!ENTITY view.accesskey "w">
+<!ENTITY tree.recipient "Degemerer">
+<!ENTITY tree.status "Stad">
+<!ENTITY tree.issuedDate "Skignet :">
+<!ENTITY tree.expiresDate "Soetañ a ra :">

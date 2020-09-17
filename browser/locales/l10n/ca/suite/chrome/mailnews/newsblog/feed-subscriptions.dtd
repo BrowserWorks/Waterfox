@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Subscription Dialog -->
+
+<!ENTITY feedSubscriptions.label     "Subscripcions RSS">
+<!ENTITY subscriptionDesc.label      "Nota: Si se suprimeix o canvia la carpeta d'un canal, els articles que s'hagin baixat abans no se'n veuran afectats.">
+
+<!ENTITY feedTitle.label             "Títol:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL del canal:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation.placeholder    "Introduïu un URL de canal vàlid per afegir">
+
+<!ENTITY feedFolder.label            "Emmagatzema els articles en:">
+<!ENTITY feedFolder.accesskey        "g">
+
+<!ENTITY quickMode.label             "Mostra el resum de l'article en comptes de carregar la pàgina web">
+<!ENTITY quickMode.accesskey         "t">
+
+<!ENTITY autotagEnable.label         "Crea automàticament etiquetes a partir dels noms de les categories dels canals">
+<!ENTITY autotagEnable.accesskey     "C">
+<!ENTITY autotagUsePrefix.label      "Afegeix aquest prefix a les etiquetes:">
+<!ENTITY autotagUsePrefix.accesskey  "p">
+<!ENTITY autoTagPrefix.placeholder   "Introduïu un prefix per a l'etiqueta">
+
+<!ENTITY locationValidate.label      "Valida">
+<!ENTITY validateText.label          "Comprova la validació i recupera un URL vàlid.">
+
+<!ENTITY button.addFeed.label        "Afegeix">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.editFeed.label       "Edita">
+<!ENTITY button.editFeed.accesskey   "E">
+<!ENTITY button.removeFeed.label     "Suprimeix">
+<!ENTITY button.removeFeed.accesskey "r">
+<!ENTITY button.importOPML.label     "Importa">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exporta">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "Exporta el canal de notícies amb l'estructura; Ctrl+clic o Ctrl+Retorn per exportar el canal de notícies com a llista">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Tanca">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Fondu y colores de la páxina">
+<!ENTITY pageColors.label "Colores de la páxina">
+<!ENTITY defaultColorsRadio.label "Colores predeterminaos del llector (nun fixar los colores na páxina)">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "Usar namái la configuración de color del restolador del llector">
+<!ENTITY customColorsRadio.label "Usar colores personalizaos:">
+<!ENTITY customColorsRadio.accessKey "C">
+<!ENTITY customColorsRadio.tooltip "Esta configuración de colores tendrá preferencia sobre la del restolador del llector">
+<!ENTITY normalText.label "Testu normal">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Testu d'enllaz">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "Testu d'enllaz activu">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "Testu d'enllaz andáu">
+<!ENTITY visitedLinkText.accessKey "n">
+<!ENTITY background.label "Fondu:">
+<!ENTITY background.accessKey "F">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Imaxe de fondu:">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "Usar un ficheru d'imaxe como fondu de la páxina">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Pelayaran Peribadi">
+
+<!ENTITY editPageCmd.label "Edit Halaman">
+<!ENTITY editPageCmd.accesskey "E">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Bar Alatan Navigasi">
+<!ENTITY navbarCmd.accesskey "N">
+<!ENTITY bookmarksToolbarCmd.label     "Bar alatan Tandabuku">
+<!ENTITY bookmarksToolbarCmd.accesskey "d">
+
+<!ENTITY closeWindow.label "Tutup Tetingkap">
+<!ENTITY closeWindow.accesskey "T">
+
+<!ENTITY minimizeButton.tooltip       "Minimum">
+<!ENTITY restoreButton.tooltip        "Pulih">
+
+<!ENTITY feedsMenu.label "Langgan Halaman Ini">
+<!ENTITY feedsMenu.accesskey "L">
+
+<!ENTITY menuBar.tooltip                  "Bar Menu">
+<!ENTITY bookmarksToolbar.tooltip         "Bar alatan Tandabuku">
+<!ENTITY navigationToolbar.tooltip        "Bar Alatan Navigasi">
+
+<!ENTITY editBookmark.done.label "Siap">
+<!ENTITY editBookmark.cancel.label "Batal">
+<!ENTITY editBookmark.removeBookmark.accessKey "B">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Undur">
+<!ENTITY backButton.tooltip           "Undur satu halaman">
+<!ENTITY forwardButton.label          "Seterusnya">
+<!ENTITY forwardButton.tooltip        "Maju satu halaman">
+<!ENTITY reloadButton.label           "Muat semula">
+<!ENTITY reloadButton.tooltip         "Muat semula halaman semasa">
+<!ENTITY stopButton.label             "Berhenti">
+<!ENTITY stopButton.tooltip           "Berhenti memuatkan halaman ini">
+<!ENTITY searchButton.label           "Cari">
+<!ENTITY searchButton.tooltip         "Taip perkataan dalam medan di sebelah kiri, kemudian klik Cari">
+<!ENTITY goButton.label               "Teruskan">
+<!ENTITY goButton.tooltip             "Taip lokasi dalam medan di sebelah kiri, kemudian klik Cari">
+<!ENTITY printButton.label            "Cetak">
+<!ENTITY printButton.tooltip          "Cetak halaman ini">
+
+<!ENTITY throbber.tooltip             "Pergi ke laman &vendorShortName;">
+
+<!ENTITY locationBar.tooltip          "Masukkan terma carian, kata kunci atau alamat web">
+<!ENTITY locationBar.accesskey        "i">
+<!ENTITY locationBar.title            "Lokasi">
+<!ENTITY proxyIcon.tooltip            "Seret dan letakkan ikon ini untuk mencipta pautan ke halaman ini">
+
+<!ENTITY searchItem.title             "Cari">
+
+<!ENTITY bookmarksButton.label        "Tandabuku">
+<!ENTITY bookmarksButton.tooltip      "Senarai tandabuku">
+<!ENTITY homeButton.label             "Laman">
+<!ENTITY bookmarksToolbarItem.label   "Item Bar alatan Tandabuku">
+<!ENTITY bookmarksToolbarChevron.tooltip "Papar tandabuku selanjutnya">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Siap">
+
+<!ENTITY popupIcon.tooltiptext      "Buang sekatan popup laman web ini">
+
+<!ENTITY viewSecurityInfo.label      "Papar Info Keselamatan">
+<!ENTITY viewSecurityInfo.accesskey  "P">
+<!ENTITY viewCertificate.label       "Papar Sijil">
+<!ENTITY viewCertificate.accesskey   "S">
+<!ENTITY viewCertManager.label       "Buka Pengurus Sijil">
+<!ENTITY viewCertManager.accesskey   "B">
+
+<!ENTITY zoomIn.tooltiptext          "Lebih besar">
+<!ENTITY zoomOut.tooltiptext         "Lebih kecil">

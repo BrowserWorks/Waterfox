@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Азіранне з устаўкамі">
+<!ENTITY tabDisplay.label "Адлюстраванне уставак">
+<!ENTITY autoHide.label "Хаваць паліцу ўставак, калі адчынена толькі адна ўстаўка">
+<!ENTITY autoHide.accesskey "х">
+<!ENTITY background.label "Пераключацца ў новыя ўстаўкі, адчыненыя са спасылак">
+<!ENTITY background.accesskey "П">
+<!ENTITY warnOnClose.label "Папярэджваць пра закрыццё вакна з шматлікімі устаўкамі">
+<!ENTITY warnOnClose.accesskey "я">
+<!ENTITY relatedAfterCurrent.label "Адкрыць датычныя ўстаўкі пасля гэтачасовай">
+<!ENTITY relatedAfterCurrent.accesskey "А">
+<!ENTITY loadGroup.label "Калі адчыняецца група закладак">
+<!ENTITY loadGroupAppend.label "Дадаць устаўкі">
+<!ENTITY loadGroupAppend.accesskey "Д">
+<!ENTITY loadGroupReplace.label "Замяніць існыя ўстаўкі">
+<!ENTITY loadGroupReplace.accesskey "м">
+<!ENTITY openTabs.label "Адчыняць устаўкі замест вакон">

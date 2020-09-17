@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "नया सहेजा गया खोज फोल्डर">
+<!ENTITY name.label                 "नाम:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "इसके उपफोल्डर के रूप में निर्मित करें:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "इस खोज मापदंड के लिये खोज मापदंड विन्यस्त करें: ">
+
+<!ENTITY folderSelectionCaption.label "फोल्डर खोजने के लिये चुनें: ">
+<!ENTITY chooseFoldersButton.label "चुनें...">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "ऑनलाइन ढूंढें (IMAP और नये फोल्डर के लिये अद्यतन परिणाम देता है लेकिन फोल्डर खोलने का समय बढ़ाता है)">
+<!ENTITY searchOnline.accesskey "O">

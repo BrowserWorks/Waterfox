@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Comptes de Firefox">
+<!ENTITY aboutAccounts.connected.description "Sètz connectat en tant que">
+<!ENTITY aboutAccounts.syncPreferences.label "Tocatz aquí per verificar los paramètres de sincronizacion">
+
+<!ENTITY aboutAccounts.noConnection.title "I a pas de connexion internet">
+<!ENTITY aboutAccounts.retry.label "Ensajatz tornamai">
+
+<!ENTITY aboutAccounts.restrictedError.title "Restrent">
+<!ENTITY aboutAccounts.restrictedError.description "Podètz pas gerir los comptes Firefox d’aqueste perfil.">

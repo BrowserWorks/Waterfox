@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Лухта і падазроная пошта">
+<!ENTITY junkSettings.caption "Агульныя наладжванні пошты-лухты">
+<!ENTITY junkMail.intro "Перайдзіце ў наладжванні рахунку, каб зрабіць асаблівыя наладжванні паштовай лухты.">
+<!ENTITY manualMark.label "Калі я пазначаю лісты як лухту:">
+<!ENTITY manualMark.accesskey "К">
+<!ENTITY manualMarkModeMove.label "Перамясціць іх у папку &quot;Лухта&quot; рахунку">
+<!ENTITY manualMarkModeMove.accesskey "П">
+<!ENTITY manualMarkModeDelete.label "Выдаліць іх">
+<!ENTITY manualMarkModeDelete.accesskey "д">
+<!ENTITY markAsRead.intro "Пазначыць лісты прачытанымі:">
+<!ENTITY autoMarkAsRead.label "Калі &brandShortName; выяўляе, што яны лухта">
+<!ENTITY autoMarkAsRead.accesskey "а">
+<!ENTITY manualMarkAsRead.label "Калі я ўручную пазначаю іх лухтою">
+<!ENTITY manualMarkAsRead.accesskey "р">
+<!ENTITY enableJunkLogging.label "Дазволіць метрыку сіта лухты">
+<!ENTITY enableJunkLogging.accesskey "м">
+<!ENTITY openJunkLog.label "Паказаць метрыку">
+<!ENTITY openJunkLog.accesskey "е">
+<!ENTITY resetTrainingData.label "Скінуць вывучаныя даныя">
+<!ENTITY resetTrainingData.accesskey "С">
+<!ENTITY pref.suspectMail.caption "Падазроная пошта">
+<!ENTITY pref.phishing.caption "Э-паштовыя ашукі">
+<!ENTITY enablePhishingDetector.label "Папярэджваць мяне, калі ліст, які я чытаю, падазраецца як э-паштовая ашука">
+<!ENTITY enablePhishingDetector.accesskey "я">
+<!ENTITY pref.antivirus.caption "Антывірус">
+<!ENTITY antiVirus.label "Дазволіць антывірусам правяраць уваходныя лісты больш проста">
+<!ENTITY antiVirus.accesskey "Д">

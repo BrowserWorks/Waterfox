@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Caracteristicas da la pagina">
+<!ENTITY location.label "Adressa:">
+<!ENTITY lastModified.label "Midà la davosa giada:">
+<!ENTITY titleInput.label "Titel:">
+<!ENTITY titleInput.accessKey "t">
+<!ENTITY authorInput.label "Autur:">
+<!ENTITY authorInput.accessKey "Ü">
+<!ENTITY descriptionInput.label "Descripziun:">
+<!ENTITY descriptionInput.accessKey "i">
+<!ENTITY locationNewPage.label "[Nova pagina, anc betg memorisà]">
+<!ENTITY EditHEADSource1.label "Utilisaders avanzads:">
+<!ENTITY EditHEADSource2.label "Per editar auters cuntegns da la regiun &lt;head&gt;, utilisar &quot;Funtauna HTML&quot; en il menu Vista u en la trav da simbols Modus da modificaziun.">

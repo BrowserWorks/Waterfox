@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Pelayaran Peribadi">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ Perlindungan Penjejakan">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Anda tidak berada dalam Pelayaran Peribadi">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; menyekat sebahagian halaman yang mungkin menjejaki aktiviti pelayaran anda.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Kami tidak akan menyimpan sejarah, tetapi fail yang dimuat turun dan tandabuku baru akan masih disimpan pada peranti anda.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "Dalam Pelayaran Peribadi, kami tidak akan menyimpan sejarah atau kuki pelayaran anda. Tandabuku yang anda tambah atau fail yang dimuat turun masih disimpan pada peranti anda.">
+
+<!ENTITY privatebrowsingpage.link.private "Mahu ketahui selanjutnya?">
+<!ENTITY privatebrowsingpage.link.normal "Buka tab peribadi baru">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName;-ի մասին">
+<!ENTITY aboutPage.warningVersion               "&brandShortName;-ն փորձնական է և կայուն չի աշխատի:">
+<!ENTITY aboutPage.checkForUpdates.link         "Ստուգել թարմացումները  »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Թարմացումների ստուգում…">
+<!ENTITY aboutPage.checkForUpdates.none         "Թարմացումներ չկան">
+<!ENTITY aboutPage.checkForUpdates.available2   "Բեռնել թարմացումը">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Թարմացումը բեռնվում է...">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Տեղակայել թարմացումը">
+<!ENTITY aboutPage.faq.label                    "ՀՏՀ">
+<!ENTITY aboutPage.support.label                "Աջակցություն">
+<!ENTITY aboutPage.privacyPolicy.label          "Գաղտնիության դրույթներ">
+<!ENTITY aboutPage.rights.label                 "Իմացե՛ք Ձեր իրավունքները">
+<!ENTITY aboutPage.relNotes.label               "Թողարկման նշումները">
+<!ENTITY aboutPage.credits.label                "Հեղինակներ">
+<!ENTITY aboutPage.license.label                "Արտոնագրի մասին">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox-ը և Firefox-ի լոգոները Mozilla Foundation-ի ապրանքանիշներն են:">

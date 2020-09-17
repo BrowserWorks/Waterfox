@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cache.title "Запаснік">
+<!ENTITY pref.cache.caption "Наладзіць запаснік">
+<!ENTITY cachePara "Запаснік трымае копіі старонак сеціва, якія вы часта наведваеце, на вашым дыску. (Вы заўсёды можаце атрымаць апошнюю версію старонкі, калі пстрыкніце Абнавіць).">
+<!ENTITY cacheCheck.label "Дазволіць &brandShortName; кіраваць памерам майго запасніка">
+<!ENTITY cacheCheck.accesskey "к">
+<!ENTITY diskCacheUpTo.label "Ужываць да">
+<!ENTITY diskCacheUpTo.accesskey "У">
+<!ENTITY spaceMbytes "МБ дыскавай прасторы для запасніка">
+<!ENTITY diskCacheFolder.label "Месцазнаходжанне папкі запасніку:">
+<!ENTITY clearDiskCache.label "Ачысціць запаснік">
+<!ENTITY clearDiskCache.accesskey "ч">
+<!ENTITY chooseDiskCacheFolder.label "Выбраць папку…">
+<!ENTITY chooseDiskCacheFolder.accesskey "п">
+<!ENTITY diskCacheFolderExplanation "Файлы ў запасніку будуць захоўвацца ў папцы з назвай &quot;Cache&quot; у вызначаным вамі каталогу. Перазапусціце &brandShortName;, каб змены набылі моц.">
+<!ENTITY docCache.label "Параўноваць старонку ў запасніку з старонкай сеткі:">
+<!ENTITY docCache.accesskey "р">
+<!ENTITY checkOncePerSession.label "Аднойчы за сэсію">
+<!ENTITY checkEveryTime.label "Кожны раз падчас прагляду старонкі">
+<!ENTITY checkNever.label "Ніколі">
+<!ENTITY checkAutomatically.label "Калі старонка састарэла">
+<!ENTITY prefetchTitle.label "Папярэдняе выбіранне спасылак">
+<!ENTITY enablePrefetch.label "Выбіраць старонкі сеціва ў час бяздзейнасці, такім чынам, калі спасылкі ў старонках распрацаваны для выбірання, загрузка адбываецца хутчэй.">
+<!ENTITY enablePrefetch.accesskey "б">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Внасяне">
+<!ENTITY importAll.label          "Внасяне на всичко">
+<!ENTITY importAll.accesskey      "в">
+<!ENTITY importMail.label         "Поща">
+<!ENTITY importMail.accesskey     "П">
+<!ENTITY importFeeds.label        "Абонаменти за емисии">
+<!ENTITY importFeeds.accesskey    "А">
+<!ENTITY importAddressbook.label  "Адресници">
+<!ENTITY importAddressbook.accesskey "А">
+<!ENTITY importSettings.label     "Настройки">
+<!ENTITY importSettings.accesskey "Н">
+<!ENTITY importFilters.label      "Филтри">
+<!ENTITY importFilters.accesskey  "Ф">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Помощник на &brandShortName; за внасяне">
+<!ENTITY importShortDesc.label    "Внасяне на поща, адресници, настройки и филтри от други програми">
+
+<!ENTITY importDescription1.label "Чрез този помощник ще внесете в &brandShortName; писма, визитки от адресници, настройки и/или филтри от други пощенски приложения и адресници в различни формати.">
+<!ENTITY importDescription2.label "Веднъж внесени, вие ще имате възможност да ги използвате от &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Моля, изберете вида на файла, който искате да внесете:">
+<!ENTITY selectDescriptionB.label "Моля, изберете съществуваща регистрация или създайте нова:">
+<!ENTITY selectDescription.accesskey "М">
+<!ENTITY acctName.label           "Име:">
+<!ENTITY acctName.accesskey       "И">
+<!ENTITY noModulesFound.label     "Не е намерено приложение или файл, от които да бъдат внесени данни.">
+
+<!ENTITY back.label               "&lt; Назад">
+<!ENTITY forward.label            "Напред &gt;">
+<!ENTITY finish.label             "Завършване">
+<!ENTITY cancel.label             "Отказ">
+
+<!ENTITY select.label             "или изберете какъв материал искате да внесете:">
+
+<!ENTITY title.label              "Заглавие">
+<!ENTITY processing.label         "Внасяне…">

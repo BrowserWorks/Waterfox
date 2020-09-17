@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Setări pentru pagini noi">
+
+<!ENTITY  authorName.label          "Autor:">
+<!ENTITY  authorName.accesskey      "A">
+<!ENTITY  pageColorHeader           "Aspect implicit pagină">
+
+<!ENTITY defaultColors.label        "Culorile implicite ale cititorului (Nu seta nicio culoare în pagină)">
+<!ENTITY defaultColors.accesskey    "C">
+<!ENTITY customColors.label         "Folosește culori personalizate:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "Text normal">
+<!ENTITY normalText.accesskey       "n">
+<!ENTITY linkText.label             "Text link">
+<!ENTITY linkText.accesskey         "l">
+<!ENTITY activeLinkText.label       "Text link activ">
+<!ENTITY activeLinkText.accesskey   "a">
+<!ENTITY visitedLinkText.label      "Text link vizitat">
+<!ENTITY visitedLinkText.accesskey  "v">
+<!ENTITY background.label           "Fundal:">
+<!ENTITY background.accesskey       "F">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Imagine de fundal:">
+<!ENTITY backgroundImage.accesskey  "g">
+<!ENTITY chooseFile.label           "Alege un fișier…">
+<!ENTITY chooseFile.accesskey       "A">

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Mel &amp; Kumpulan berita">
+<!ENTITY generalSettings.caption          "Tetapan Umum">
+<!ENTITY confirmMove.label                "Sahkan apabila mengalih folder ke Sampah">
+<!ENTITY confirmMove.accesskey            "S">
+<!ENTITY preserveThreading.label          "Kekalkan thread apabila menyusun mesej">
+<!ENTITY preserveThreading.accesskey      "k">
+<!ENTITY mailBiffOnNewWindow.label        "Hanya semak mel baru selepas membuka Mel &amp; Kumpulan berita">
+<!ENTITY mailBiffOnNewWindow.accesskey    "H">
+
+<!ENTITY defaultMailSettings.description  "Jadikan &brandShortName; aplikasi piawai untuk:">
+<!ENTITY setDefaultMail.label             "Mel">
+<!ENTITY setDefaultMail.accesskey         "M">
+<!ENTITY setDefaultNews.label             "Berita">
+<!ENTITY setDefaultNews.accesskey         "B">
+<!ENTITY setDefaultFeed.label             "Suapan">
+<!ENTITY setDefaultFeed.accesskey         "p">
+
+<!ENTITY useInternalSettings.description  "Gunakan Mel &amp; Berita &brandShortName; apabila membuka pautan pelayar untuk:">
+<!ENTITY useInternalMail.label            "Mel (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "Berita (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "t">
+
+<!ENTITY messengerStartPage.caption       "Halaman Permulaan Mel">
+<!ENTITY enableStartPage.label            "Apabila Mel dilancarkan, papar Halaman Permulaan dalam ruang mesej">
+<!ENTITY enableStartPage.accesskey        "A">
+<!ENTITY location.label                   "Lokasi:">
+<!ENTITY location.accesskey               "L">
+<!ENTITY useDefault.label                 "Pulih Piawai">
+<!ENTITY useDefault.accesskey             "P">
+<!ENTITY rememberLastMsg.label            "Ingat mesej terbaru yang dipilih">
+<!ENTITY rememberLastMsg.accesskey        "I">

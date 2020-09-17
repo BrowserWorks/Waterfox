@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+<!--
+Entities below were automatically added by compare-locales,
+ based on en-US entities.
+-->
+
+<!ENTITY col.timeelapsed.label "Time Elapsed">
+<!ENTITY col.source.accesskey "o">
+<!ENTITY cmd.clearList.accesskey "C">
+<!ENTITY downloadManager.title "Download Manager">
+<!ENTITY col.progresstext.label "&#37;">
+<!ENTITY cmd.resume.accesskey "R">
+<!ENTITY view.sortDescending.label "Z > A Sort Order">
+<!ENTITY col.name.accesskey "N">
+<!ENTITY cmd.properties.label "Properties…">
+<!ENTITY col.starttime.label "Start Time">
+<!ENTITY col.actionPlay.tooltip "Pause/Resume/Retry">
+<!ENTITY cmd.pause.accesskey "P">
+<!ENTITY cmd.show.label "Open Containing Folder">
+<!ENTITY col.endtime.tooltip "End Time">
+<!ENTITY col.progresstext.tooltip "Progress (&#37;)">
+<!ENTITY col.actionPlay.label "Pause/Resume/Retry">
+<!ENTITY col.actionStop.label "Cancel/Remove">
+<!ENTITY col.endtime.label "End Time">
+<!ENTITY col.timeremaining.tooltip "Time Left">
+<!ENTITY cmd.show.accesskey "F">
+<!ENTITY col.progress.accesskey "P">
+<!ENTITY col.status.accesskey "S">
+<!ENTITY searchBar.tooltip "Search Bar">
+<!ENTITY col.status.label "Status">
+<!ENTITY col.status.tooltip "Status">
+<!ENTITY col.transferrate.label "Speed">
+<!ENTITY col.timeremaining.accesskey "L">
+<!ENTITY search.label "Search Downloads">
+<!ENTITY cmd.retry.accesskey "t">
+<!ENTITY col.source.label "Source">
+<!ENTITY cmd.pause.label "Pause">
+<!ENTITY cmd.goToDownloadPage.label "Go to Download Page">
+<!ENTITY search.placeholder "Search Downloads">
+<!ENTITY search.accesskey "S">
+<!ENTITY col.transferred.tooltip "Transferred">
+<!ENTITY cmd.retry.label "Retry">
+<!ENTITY view.sortAscending.label "A > Z Sort Order">
+<!ENTITY menuBar.tooltip "Menu Bar">
+<!ENTITY col.timeelapsed.accesskey "E">
+<!ENTITY col.name.tooltip "File Name">
+<!ENTITY cmd.goToDownloadPage.accesskey "G">
+<!ENTITY view.unsorted.accesskey "U">
+<!ENTITY cmd.resume.label "Resume">
+<!ENTITY col.endtime.accesskey "i">
+<!ENTITY view.unsorted.label "Unsorted">
+<!ENTITY cmd.clearList.tooltip "Removes completed, canceled, and failed downloads from the list">
+<!ENTITY col.transferrate.accesskey "d">
+<!ENTITY view.sortBy.label "Sort by">
+<!ENTITY col.progress.tooltip "Progress">
+<!ENTITY view.columns.accesskey "C">
+<!ENTITY col.transferred.accesskey "T">
+<!ENTITY view.columns.label "Show Columns">
+<!ENTITY cmd.open.label "Open">
+<!ENTITY col.actionPlay.accesskey "u">
+<!ENTITY col.progress.label "Progress">
+<!ENTITY view.sortBy.accesskey "S">
+<!ENTITY search.key "f">
+<!ENTITY col.transferred.label "Transferred">
+<!ENTITY cmd.copyDownloadLink.label "Copy Download Link">
+<!ENTITY col.timeremaining.label "Time Left">
+<!ENTITY cmd.copyDownloadLink.accesskey "L">
+<!ENTITY view.sortDescending.accesskey "Z">
+<!ENTITY col.starttime.accesskey "a">
+<!ENTITY cmd.remove.label "Remove From List">
+<!ENTITY col.actionStop.accesskey "C">
+<!ENTITY col.starttime.tooltip "Start Time">
+<!ENTITY cmd.remove.accesskey "e">
+<!ENTITY cmd.cancel.accesskey "C">
+<!ENTITY cmd.cancel.label "Cancel">
+<!ENTITY cmd.properties.accesskey "s">
+<!ENTITY col.source.tooltip "Source">
+<!ENTITY col.progresstext.accesskey "&#37;">
+<!ENTITY col.timeelapsed.tooltip "Time Elapsed">
+<!ENTITY cmd.clearList.label "Clear List">
+<!ENTITY col.actionStop.tooltip "Cancel/Remove">
+<!ENTITY col.transferrate.tooltip "Speed">
+<!ENTITY cmd.open.accesskey "O">
+<!ENTITY view.sortAscending.accesskey "A">
+<!ENTITY col.name.label "Name">

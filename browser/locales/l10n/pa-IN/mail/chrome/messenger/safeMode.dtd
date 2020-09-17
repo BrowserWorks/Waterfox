@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; ਸੁਰੱਖਿਅਤ ਮੋਡ">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; is now running in Safe Mode, which temporarily disables your custom settings, themes, and extensions.">
+<!ENTITY safeModeDescription2.label       "You can make some or all of these changes permanent:">
+
+<!ENTITY disableAddons.label              "ਸਭ ਐਡ-ਆਨ ਬੰਦ ਕਰੋ">
+<!ENTITY disableAddons.accesskey          "D">
+
+<!ENTITY resetToolbars.label              "ਟੂਲਬਾਰ ਅਤੇ ਕੰਟਰੋਲ ਮੁੜ-ਸੈੱਟ ਕਰੋ">
+<!ENTITY resetToolbars.accesskey          "R">
+
+<!ENTITY changeAndRestartButton.label     "ਬਦਲਾਅ ਲਾਗੂ ਕਰੋ ਅਤੇ ਮੁੜ-ਚਾਲੂ ਕਰੋ">
+<!ENTITY changeAndRestartButton.accesskey "M">
+
+<!ENTITY continueButton.label             "ਸੁਰੱਖਿਅਤ ਮੋਡ ਨਾਲ ਜਾਰੀ ਰੱਖੋ">
+<!ENTITY continueButton.accesskey         "C">

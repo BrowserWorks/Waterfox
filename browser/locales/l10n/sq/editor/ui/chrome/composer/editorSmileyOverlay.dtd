@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Emotikone">
+<!ENTITY insertSmiley.accesskey "E">
+
+<!ENTITY smiley1Cmd.label "I buzëqeshur">
+<!ENTITY smiley1Cmd.accesskey "b">
+<!ENTITY smiley1Cmd.tooltip "Futni një emotikon">
+<!ENTITY smiley2Cmd.label "I vrenjtur">
+<!ENTITY smiley2Cmd.accesskey "V">
+<!ENTITY smiley2Cmd.tooltip "Futni një fytyrë të vrenjtur">
+<!ENTITY smiley3Cmd.label "Syshkelur">
+<!ENTITY smiley3Cmd.accesskey "Y">
+<!ENTITY smiley3Cmd.tooltip "Futni një fytyrë që shkel syrin">
+<!ENTITY smiley4Cmd.label "Gjuhëpërjashta">
+<!ENTITY smiley4Cmd.accesskey "G">
+<!ENTITY smiley4Cmd.tooltip "Futni një fytyrë gjuhëpërjashta">
+<!ENTITY smiley5Cmd.label "I zgërdhirë">
+<!ENTITY smiley5Cmd.accesskey "Z">
+<!ENTITY smiley5Cmd.tooltip "Futni një fytyrë që zgërdhihet">
+<!ENTITY smiley6Cmd.label "I turpëruar">
+<!ENTITY smiley6Cmd.accesskey "T">
+<!ENTITY smiley6Cmd.tooltip "Futni një fytyrë të turpëruar">
+<!ENTITY smiley7Cmd.label "I pavendosur">
+<!ENTITY smiley7Cmd.accesskey "P">
+<!ENTITY smiley7Cmd.tooltip "Futni një fytyrë të pavendosur">
+<!ENTITY smiley8Cmd.label "I befasuar">
+<!ENTITY smiley8Cmd.accesskey "f">
+<!ENTITY smiley8Cmd.tooltip "Futni një fytyrë të befasuar">
+<!ENTITY smiley9Cmd.label "Puthje">
+<!ENTITY smiley9Cmd.accesskey "U">
+<!ENTITY smiley9Cmd.tooltip "Futni një fytyrë që puth">
+<!ENTITY smiley10Cmd.label "Gërthitje">
+<!ENTITY smiley10Cmd.accesskey "r">
+<!ENTITY smiley10Cmd.tooltip "Futni një fytyrë që bërtet">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "Futni një fytyrë cool">
+<!ENTITY smiley12Cmd.label "Money-Mouth">
+<!ENTITY smiley12Cmd.accesskey "H">
+<!ENTITY smiley12Cmd.tooltip "Futni një fytyrë money-mouth">
+<!ENTITY smiley13Cmd.label "Foot-in-Mouth">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "Futni një fytyrë foot-in-mouth">
+<!ENTITY smiley14Cmd.label "I pafajshëm">
+<!ENTITY smiley14Cmd.accesskey "a">
+<!ENTITY smiley14Cmd.tooltip "Futni një fytyrë të pafajshme">
+<!ENTITY smiley15Cmd.label "Qaraman">
+<!ENTITY smiley15Cmd.accesskey "Q">
+<!ENTITY smiley15Cmd.tooltip "Futni një fytyrë qaramani">
+<!ENTITY smiley16Cmd.label "Gojëkyçur">
+<!ENTITY smiley16Cmd.accesskey "Ç">
+<!ENTITY smiley16Cmd.tooltip "Futni një fytyrë buzëqepur">
+<!ENTITY SmileButton.label "Futni Emotikon">
+<!ENTITY SmileButton.tooltip "Futni një emotikon">

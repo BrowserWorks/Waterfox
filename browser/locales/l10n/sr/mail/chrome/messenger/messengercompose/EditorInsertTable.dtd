@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Убаци табелу">
+
+<!ENTITY size.label "Величина">
+<!ENTITY numRowsEditField.label "Редова:">
+<!ENTITY numRowsEditField.accessKey "Р">
+<!ENTITY numColumnsEditField.label "Колона:">
+<!ENTITY numColumnsEditField.accessKey "К">
+<!ENTITY widthEditField.label "Ширина:">
+<!ENTITY widthEditField.accessKey "и">
+<!ENTITY borderEditField.label "Оквир:">
+<!ENTITY borderEditField.accessKey "О">
+<!ENTITY borderEditField.tooltip "Унесите број за оквир табеле или унесите нулу (0) да уклоните оквир">
+<!ENTITY pixels.label "пиксела">

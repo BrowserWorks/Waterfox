@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Opțiuni de arhivare">
+<!ENTITY archiveGranularityPrefix.label "Când se arhivează mesaje, plasează-le în:">
+<!ENTITY archiveFlat.label "Un singur dosar">
+<!ENTITY archiveFlat.accesskey "s">
+<!ENTITY archiveYearly.label "Dosare cu arhive pe ani">
+<!ENTITY archiveYearly.accesskey "D">
+<!ENTITY archiveMonthly.label "Dosare cu arhive pe luni">
+<!ENTITY archiveMonthly.accesskey "D">
+<!ENTITY keepFolderStructure.label "Păstrează structura actuală a dosarelor cu mesaje arhivate">
+<!ENTITY keepFolderStructure.accesskey "P">
+<!ENTITY archiveExample.label "Exemplu">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Arhive">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Mesaje primite">

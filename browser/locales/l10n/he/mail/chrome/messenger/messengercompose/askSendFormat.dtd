@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "שאלת דואר HTML">
+
+<!ENTITY recipient.label "חלק מהנמענים לא נרשמו ככאלה היכולים לקבל דואר HTML.">
+
+<!ENTITY question.label "האם ברצונך להסב את ההודעה לטקסט פשוט או לשלוח אותה בעיצוב HTML בכל מקרה?">
+
+<!ENTITY plainTextAndHtml.label "שלח בטקסט פשוט וגם HTML">
+<!ENTITY plainTextAndHtml.accesskey "ט">
+<!ENTITY plainTextOnly.label "שלח בטקסט פשוט בלבד">
+<!ENTITY plainTextOnly.accesskey "פ">
+<!ENTITY htmlOnly.label "שלח ב־HTML בלבד">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "שלח">
+<!ENTITY send.accesskey "ש">
+
+

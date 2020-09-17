@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Paràmetres avançats del compte">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP server directory:">
+<!ENTITY serverDirectory.accesskey "D">
+<!ENTITY usingSubscription.label "Mostra només les carpetes subscrites">
+<!ENTITY usingSubscription.accesskey "o">
+<!ENTITY dualUseFolders.label "El servidor permet l'ús de carpetes que contenen subcarpetes i missatges">
+<!ENTITY dualUseFolders.accesskey "v">
+<!ENTITY useIdle.label "Utilitza l'ordre IDLE si ho permet el servidor">
+<!ENTITY useIdle.accesskey "I">
+<!ENTITY maximumConnectionsNumber.label "Nombre màxim de connexions del servidor per posar a la memòria cau">
+<!ENTITY maximumConnectionsNumber.accesskey "m">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "These preferences specify the namespaces on your IMAP server">
+<!ENTITY personalNamespace.label "Espai de noms personals:">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Públic (compartit):">
+<!ENTITY publicNamespace.accesskey "b">
+<!ENTITY otherUsersNamespace.label "Altres usuaris:">
+<!ENTITY otherUsersNamespace.accesskey "u">
+<!ENTITY overrideNamespaces.label "Permet que el servidor substitueixi aquests espais de noms">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3Desc.label "En baixar el correu POP d'aquest servidor, utilitza la carpeta següent per al correu nou:" >
+<!ENTITY accountDirectory.label "Safata d'entrada del compte d'aquest servidor">
+<!ENTITY accountDirectory.accesskey "S">
+<!ENTITY deferToServer.label "Safata d'entrada d'un altre compte">
+<!ENTITY deferToServer.accesskey "f">
+<!ENTITY deferGetNewMail.label "Inclou aquest servidor en comprovar si hi ha correu nou">
+<!ENTITY deferGetNewMail.accesskey "I">

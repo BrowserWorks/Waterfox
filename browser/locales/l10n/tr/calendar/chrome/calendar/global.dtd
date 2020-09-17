@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Gece yarısı" >
+<!ENTITY time.noon "Öğlen" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Paz" >
+<!ENTITY day.1.Ddd.accesskey "P">
+<!ENTITY day.2.Ddd "Pzt" >
+<!ENTITY day.2.Ddd.accesskey "Z">
+<!ENTITY day.3.Ddd "Sal" >
+<!ENTITY day.3.Ddd.accesskey "S">
+<!ENTITY day.4.Ddd "Çar" >
+<!ENTITY day.4.Ddd.accesskey "a">
+<!ENTITY day.5.Ddd "Per" >
+<!ENTITY day.5.Ddd.accesskey "e">
+<!ENTITY day.6.Ddd "Cum" >
+<!ENTITY day.6.Ddd.accesskey "C">
+<!ENTITY day.7.Ddd "Cmt" >
+<!ENTITY day.7.Ddd.accesskey "m">
+
+<!ENTITY day.1.name "Pazar" >
+<!ENTITY day.2.name "Pazartesi" >
+<!ENTITY day.3.name "Salı" >
+<!ENTITY day.4.name "Çarşamba" >
+<!ENTITY day.5.name "Perşembe" >
+<!ENTITY day.6.name "Cuma" >
+<!ENTITY day.7.name "Cumartesi" >
+
+<!ENTITY month.1.name "Ocak" >
+<!ENTITY month.2.name "Şubat" >
+<!ENTITY month.3.name "Mart" >
+<!ENTITY month.4.name "Nisan" >
+<!ENTITY month.5.name "Mayıs" >
+<!ENTITY month.6.name "Haziran" >
+<!ENTITY month.7.name "Temmuz" >
+<!ENTITY month.8.name "Ağustos" >
+<!ENTITY month.9.name "Eylül" >
+<!ENTITY month.10.name "Ekim" >
+<!ENTITY month.11.name "Kasım" >
+<!ENTITY month.12.name "Aralık" >
+
+<!ENTITY onemonthbackward.tooltip "Bir ay geri" >
+<!ENTITY onemonthforward.tooltip "Bir ay ileri" >
+<!ENTITY oneyearbackward.tooltip "Bir yıl geri" >
+<!ENTITY oneyearforward.tooltip "Bir yıl ileri" >
+<!ENTITY showToday.tooltip "Bugüne git">
+<!ENTITY onedayforward.tooltip "Bir gün ileri">
+<!ENTITY onedaybackward.tooltip "Bir gün geri">
+<!ENTITY showselectedday.tooltip "Seçilmiş gün için etkinlikleri göster">

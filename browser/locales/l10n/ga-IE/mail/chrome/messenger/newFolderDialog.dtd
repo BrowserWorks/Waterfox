@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Fillteán Nua">
+<!ENTITY name.label                 "Ainm:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "Cruthaigh mar fofhillteán de:">
+<!ENTITY description.accesskey      "C">
+<!ENTITY folderRestriction1.label   "Ní cheadaíonn an freastalaí seo ach dhá shaghas fillteáin ar leith.">
+<!ENTITY folderRestriction2.label   "Ceadaigh iad seo a leanas a bheith san fhillteán nua:">
+<!ENTITY foldersOnly.label          "Fillteáin Amháin">
+<!ENTITY messagesOnly.label         "Teachtaireachtaí Amháin">
+<!ENTITY accept.label               "Cruthaigh Fillteán">
+<!ENTITY accept.accesskey           "r">

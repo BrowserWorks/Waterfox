@@ -1,0 +1,216 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Проблем при учитавању странице">
+<!ENTITY retry.label "Покушај поново">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Повезивање није успело">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Ова адреса је забрањена">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Сервер није пронађен">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "
+<ul>
+  <li>Проверите да ли у адреси има грешака у куцању као што су
+    <strong>ww</strong>.example.com уместо
+    <strong>www</strong>.example.com</li>
+	<div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Search</button>
+    </div>
+  <li>Ако не можете да учитате странице, проверите мобилну или Wi-Fi везу уређаја.
+    <button id='wifi'>Омогући Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Датотека није пронађена">
+<!ENTITY fileNotFound.longDesc "
+<ul> 
+  <li>Проверите подударање малих и великих слова и друге могуће грешке у куцању.</li> 
+  <li>Проверите да ли је датотека премештена, преименована или избрисана.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Приступ датотеци је одбијен">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Можда је уклоњена, премештена или немате приступ датотеци.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Упс.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; из неког разлога не може да учита ову страницу.</p>
+">
+
+<!ENTITY malformedURI.title "Адреса је неважећа">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul> 
+  <li>Веб адресе обично изгледају нешто налик на 
+    <strong>http://www.example.com/</strong></li>
+	<div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Search</button>
+    </div>
+  <li>Проверите да ли користите исправне знакове (нпр. 
+    <strong>/</strong>).</li> 
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Веза је прекинута">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Документ је истекао">
+<!ENTITY notCached.longDesc "<p>Тражени документ није доступан у кешу програма &brandShortName;.</p><ul><li>Из предострожности, &brandShortName; не добавља документе аутоматски.</li><li>Притисните „Покушај поново“ да бисте поново покушали да добавите документ са веб сајта.</li></ul>">
+
+<!ENTITY netOffline.title "Рад ван мреже">
+
+<!ENTITY contentEncodingError.title "Грешка у кодирању садржаја">
+<!ENTITY contentEncodingError.longDesc "
+<ul> 
+  <li>Пријавите овај проблем администраторима овог веб сајта.</li> 
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Несигуран тип датотеке">
+<!ENTITY unsafeContentType.longDesc "
+<ul> 
+  <li>Пријавите овај проблем администраторима овог веб сајта.</li> 
+</ul>
+">
+
+<!ENTITY netReset.title "Веза је ресетована">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Веза је истекла">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Нејасна адреса">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Можда ћете морати да инсталирате додатни софтвер да бисте отворили ову страницу.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Прокси сервер одбија везе">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul> 
+  <li>Проверите подешавања проксија.</li> 
+  <li>Обратите се администратору мреже како бисте били сигурни да прокси
+    ради.</li> 
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Не могу да пронађем прокси сервер">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "
+<ul>
+  <li>Проверите да ли су исправне прокси поставке.</li>
+  <li>Проверите да ли уређај има оставарену везу података или Wi-Fi везу.
+    <button id='wifi'>Омогући Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Страница се не преусмерава исправно">
+<!ENTITY redirectLoop.longDesc "
+<ul> 
+  <li>Овај проблем понекад настаје ако искључите или одбијете прихватање
+    колачића.</li> 
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Неочекиван одговор од сервера">
+<!ENTITY unknownSocketType.longDesc "
+<ul> 
+  <li>Проверите да ли рачунар има инсталиран
+    менаџер безбедности.</li>
+  <li>Узрок овој грешци може да буде нестандардно подешавање сервера.</li> 
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Безбедна веза није успостављена">
+<!ENTITY nssFailure2.longDesc2 "
+<ul> 
+  <li>Страница коју желите да прикажете не може бити приказана јер није могуће проверити аутентичност примљених података.</li> 
+  <li>Обратите се власницима веб сајта и обавестите их о овом проблему.</li> 
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Безбедна веза није успостављена">
+<!ENTITY nssBadCert.longDesc2 "
+<ul> 
+  <li>Ово може да буде проблем са подешавањима сервера, или може бити неко ко 
+покушава да се лажно представи као сервер.</li> 
+  <li>Ако сте се раније успешно повезивали на овај сервер, грешка је онда можда
+привремена и можете покушати касније.</li> 
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>Сајт је тренутно недоуступан или је преоптерећен. Покушајте поново за неколико тренутака.</li>
+  <li>Ако не можете да учитате било коју страницу, проверите мобилну или Wi-Fi везу уређаја.
+    <button id='wifi'>Омогући Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Блокирано због полисе о безбедности садржаја">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; је спречио учитавање ове странице на овај начин јер садржи полису о безбедности садржаја која то онемогућава.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Грешка оштећеног садржаја">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Страница коју желите да погледате не може бити приказана због грешке у преносу података.</p><ul><li>Обратите се власницима веб странице и обавестите их о проблему.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Или можете додати изузетак…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Води ме одавде!">
+<!ENTITY securityOverride.exceptionButtonLabel "Додај изузетак…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Не бисте требали да додајете изузетак ако користите интернет конекцију којој не верујете потпуно или ако нисте навикли да виђате упозорења за овај сервер.</p> 
+ 
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> 
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Удаљени XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Обавестите власнике веб сајта о овом проблему.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Не могу се повезати безбедно">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Додатне информације: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Ваша конекција није безбедна">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Додатне информације: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Веза није сугурна">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> користи технологију за безбедност која је застарела и рањива је на нападе. Нападач лако може да открије информације за које сте мислили да су сигурне. Администратор веб сајта ће морати да поправи сервер пре него што посетите овај сајт.</p><p>Код грешке: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Грешка мрежног протокола">
+<!ENTITY networkProtocolError.longDesc "<p>Страница коју покушавате да учитате не може бити приказана јер је откривена грешка у мрежном протоколу.</p><ul><li>Молимо вас да се обратите власницима веб сајта како би их обавестили о овом проблему.</li></ul>">

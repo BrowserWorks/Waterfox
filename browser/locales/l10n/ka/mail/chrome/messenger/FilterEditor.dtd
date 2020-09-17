@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "ფილტრის წესები">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "ფილტრის სახელი:">
+<!ENTITY filterName.accesskey "ი">
+
+<!ENTITY junk.label "უსარგებლო">
+<!ENTITY notJunk.label "სასარგებლო">
+
+<!ENTITY lowestPriorityCmd.label "უდაბლესი">
+<!ENTITY lowPriorityCmd.label "დაბალი">
+<!ENTITY normalPriorityCmd.label "ჩვეულებრივი">
+<!ENTITY highPriorityCmd.label "მაღალი">
+<!ENTITY highestPriorityCmd.label "უმაღლესი">
+
+<!ENTITY contextDesc.label "ფილტრებით სარგებლობა:">
+<!ENTITY contextIncomingMail.label "ახალი ფოსტის მიღებისას">
+<!ENTITY contextIncomingMail.accesskey "ღ">
+<!ENTITY contextManual.label "ხელით შესრულებისას">
+<!ENTITY contextManual.accesskey "ხ">
+<!ENTITY contextBeforeCls.label "გაფილტვრა ჯართად მიჩნევამდე">
+<!ENTITY contextAfterCls.label "გაფილტვრა ჯართად მიჩნევის შემდგომ">
+<!ENTITY contextOutgoing.label "გაგზავნის შემდეგ">
+<!ENTITY contextOutgoing.accesskey "გ">
+<!ENTITY contextArchive.label "დაარქივება">
+<!ENTITY contextArchive.accesskey "დ">
+<!ENTITY contextPeriodic.accesskey "ე">
+
+<!ENTITY filterActionDesc.label "ამ მოქმედებების შესრულება:">
+<!ENTITY filterActionDesc.accesskey "ქ">
+
+<!ENTITY filterActionOrderWarning.label "შენიშვნა: გამოხშირვის ქმედებები სხვა რიგით შესრულდება.">
+<!ENTITY filterActionOrder.label "შესრულების რიგის ჩვენება">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "წერილის გადატანა -">
+<!ENTITY copyMessage.label "წერილის ასლი –">
+<!ENTITY forwardTo.label "წერილის გადაგზავნა -">
+<!ENTITY replyWithTemplate.label "პასუხი თარგით">
+<!ENTITY markMessageRead.label "მონიშვნა წაკითხულად">
+<!ENTITY markMessageUnread.label "მონიშვნა წასაკითხად">
+<!ENTITY markMessageStarred.label "მონიშვნა ალმით">
+<!ENTITY setPriority.label "უპირატესობის მინიჭება –">
+<!ENTITY addTag.label "წერილის დაჭდევება">
+<!ENTITY setJunkScore.label "ჯართის სტატუსის მითითება -">
+<!ENTITY deleteMessage.label "წერილის წაშლა">
+<!ENTITY deleteFromPOP.label "წაშლა POP სერვერიდან">
+<!ENTITY fetchFromPOP.label "მიღება POP სერვერიდან">
+<!ENTITY ignoreThread.label "მიმოწერის უგულებელყოფა">
+<!ENTITY ignoreSubthread.label "მიმოწერის განშტოების უგულებელყოფა">
+<!ENTITY watchThread.label "მიმოწერისთვის თვალის მიდევნება">
+<!ENTITY stopExecution.label "ფილტრის გამოყენების შეწყვეტა">
+
+<!ENTITY addAction.tooltip "ახალი მოქმედების დამატება">
+<!ENTITY removeAction.tooltip "ამ მოქმედების მოცილება">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

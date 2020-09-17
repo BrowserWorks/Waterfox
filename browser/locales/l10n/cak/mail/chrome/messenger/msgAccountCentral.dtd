@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Taqoya'l">
+<!ENTITY readMsgsLink.label           "Sik'in taq rutzijol">
+<!ENTITY composeMsgLink.label         "Titz'ib'äx jun k'ak'a' tzijol">
+
+<!ENTITY newsSectionHdr.label         "Rumolaj tzijol">
+<!ENTITY subscribeNewsLink.label      "Kenuk'samajïx kimoloj rutzijol taq tz'ib'anïk b'i'aj">
+
+<!ENTITY feedsSectionHdr.label        "Taq b'ey">
+<!ENTITY subscribeFeeds.label         "Kenuk'samajïx taq tz'ib'anïk b'i'aj">
+
+<!ENTITY chat.label                   "Chat">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Rub'i' taqoya'l">
+<!ENTITY subscribeImapFolders.label   "Kenuk'samajïx kiyakwuj taq tz'ib'anïk b'i'aj">
+<!ENTITY settingsLink.label           "Ketz'et taq runuk'ulem re rub'i' taqoya'l re'">
+<!ENTITY setupNewAcct.label           "Tib'an runuk'ulem jun rub'i' taqoya'l:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Q'axinäq taq Samaj">
+<!ENTITY searchMsgsLink.label         "Kekanöx Tzijol">
+<!ENTITY filtersLink.label            "Tinuk'samajïx kichayub'al tzijol">
+<!ENTITY junkSettings.label           "Kinuk'ulem seq' taqotz'ib'">
+<!ENTITY offlineLink.label            "Chupül Kinuk'ulem">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title        "Avanzadas">
+
+<!ENTITY systemPref.caption         "Preferencias del sistema">
+<!ENTITY systemPrefCheck.label      "Usar las preferencias del sistema">
+<!ENTITY systemPrefCheck.accesskey  "U">
+<!ENTITY systemPref.desc            "Con esta opción, &brandShortName; hereda las preferencias del sistema. Las preferencias del sistema se usarán en lugar de las preferencias de &brandShortName;.">
+
+<!ENTITY prefCheckDefault.caption   "Integración con el sistema">
+<!ENTITY prefCheckDefaultClient.label "Verificar las opciones predeterminadas de la aplicación al iniciar">
+<!ENTITY prefCheckDefaultClient.accesskey "c">
+
+<!ENTITY crashReports.caption       "Informe de fallos">
+<!ENTITY submitCrashes.label        "Enviar informe de fallos">
+<!ENTITY submitCrashes.accesskey    "s">
+
+<!ENTITY devTools.caption                 "Herramientas para desarrollador">
+<!ENTITY allowDebugger.label              "Permitir que un depurador se conecte a &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "a">
+<!ENTITY allowRemoteConnections.label     "Permitir conexiones desde otras computadoras">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "Preguntar si hay conexiones entrantes">
+<!ENTITY connectionPrompt.accesskey       "P">
+<!ENTITY remoteDebuggerPort.label         "Número de puerto para la conexión:">
+<!ENTITY remoteDebuggerPort.accesskey     "N">
+

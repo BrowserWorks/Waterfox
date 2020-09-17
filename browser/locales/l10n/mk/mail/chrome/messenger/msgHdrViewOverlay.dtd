@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY openAttachmentCmd.label "Отвори">
+<!ENTITY openAttachmentCmd.accesskey "О">
+<!ENTITY saveAsAttachmentCmd.label "Сними како…">
+<!ENTITY saveAsAttachmentCmd.accesskey "а">
+<!ENTITY detachAttachmentCmd.label "Откачи …">
+<!ENTITY deleteAttachmentCmd.label "Избриши">
+<!ENTITY saveAllAttachmentsCmd.label "Сними сè…">
+<!ENTITY saveAllAttachmentsCmd.accesskey "С">
+<!ENTITY detachAllAttachmentsCmd.label "Откачи сè…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "к">
+<!ENTITY deleteAllAttachmentsCmd.label "Избриши сè…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "з">
+
+<!ENTITY copyLinkCmd.label "Копирај ја локацијата на врската">
+<!ENTITY copyLinkCmd.accesskey "К">
+

@@ -1,0 +1,303 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Alglui neformatitan tekston">
+<!ENTITY pasteNoFormatting.accesskey "n">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Alglui kiel citaĵon">
+<!ENTITY pasteAsQuotationCmd.accesskey "c">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Enmeti">
+<!ENTITY insertMenu.accesskey "E">
+<!ENTITY insertLinkCmd2.label "Ligilon…">
+<!ENTITY insertLinkCmd2.accesskey "L">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "Nomitan ankron…">
+<!ENTITY insertAnchorCmd.accesskey "N">
+<!ENTITY insertImageCmd.label "Bildon…">
+<!ENTITY insertImageCmd.accesskey "B">
+<!ENTITY insertHLineCmd.label "Horizontalan linion">
+<!ENTITY insertHLineCmd.accesskey "H">
+<!ENTITY insertTableCmd.label "Tabelon…">
+<!ENTITY insertTableCmd.accesskey "T">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Matematikan esprimon…">
+<!ENTITY insertMathCmd.accesskey "M">
+<!ENTITY insertCharsCmd.label "Signon aŭ simbolon…">
+<!ENTITY insertCharsCmd.accesskey "S">
+<!ENTITY insertBreakAllCmd.label "Disigan linion sub bildo(j)">
+<!ENTITY insertBreakAllCmd.accesskey "D">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Krei ligilon…">
+<!ENTITY createLinkCmd.accesskey "K">
+<!ENTITY editLinkCmd.label "Modifi ligilon en nova redaktilo">
+<!ENTITY editLinkCmd.accesskey "M">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "Elekti tiparon">
+<!ENTITY fontfaceMenu.label "Tiparo">
+<!ENTITY fontfaceMenu.accesskey "T">
+<!ENTITY fontVarWidth.label "Varia larĝo">
+<!ENTITY fontVarWidth.accesskey "V">
+<!ENTITY fontFixedWidth.label "Egala larĝo">
+<!ENTITY fontFixedWidth.accesskey "E">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "Elekti grandon de tiparo">
+<!ENTITY decreaseFontSize.label "Malpli granda">
+<!ENTITY decreaseFontSize.accesskey "M">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Pli granda">
+<!ENTITY increaseFontSize.accesskey "P">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Grando de tiparo">
+<!ENTITY fontSizeMenu.accesskey "G">
+<!ENTITY size-tinyCmd.label "Eteta">
+<!ENTITY size-tinyCmd.accesskey "t">
+<!ENTITY size-smallCmd.label "Eta">
+<!ENTITY size-smallCmd.accesskey "E">
+<!ENTITY size-mediumCmd.label "Mezgranda">
+<!ENTITY size-mediumCmd.accesskey "z">
+<!ENTITY size-largeCmd.label "Granda">
+<!ENTITY size-largeCmd.accesskey "G">
+<!ENTITY size-extraLargeCmd.label "Grandega">
+<!ENTITY size-extraLargeCmd.accesskey "r">
+<!ENTITY size-hugeCmd.label "Tre grandega">
+<!ENTITY size-hugeCmd.accesskey "T">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Stilo de teksto">
+<!ENTITY fontStyleMenu.accesskey "S">
+<!ENTITY styleBoldCmd.label "Grasa">
+<!ENTITY styleBoldCmd.accesskey "G">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Kursiva">
+<!ENTITY styleItalicCmd.accesskey "K">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Substrekita">
+<!ENTITY styleUnderlineCmd.accesskey "S">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Trastrekita">
+<!ENTITY styleStrikeThruCmd.accesskey "T">
+<!ENTITY styleSuperscriptCmd.label "Indico supra">
+<!ENTITY styleSuperscriptCmd.accesskey "p">
+<!ENTITY styleSubscriptCmd.label "Indico suba">
+<!ENTITY styleSubscriptCmd.accesskey "b">
+<!ENTITY styleNonbreakingCmd.label "Sen rompi linion">
+<!ENTITY styleNonbreakingCmd.accesskey "r">
+<!ENTITY styleEm.label "Emfazo">
+<!ENTITY styleEm.accesskey "E">
+<!ENTITY styleStrong.label "Pli forta emfazo">
+<!ENTITY styleStrong.accesskey "f">
+<!ENTITY styleCite.label "Citaĵo">
+<!ENTITY styleCite.accesskey "C">
+<!ENTITY styleAbbr.label "Mallongigo">
+<!ENTITY styleAbbr.accesskey "M">
+<!ENTITY styleAcronym.label "Akronimo">
+<!ENTITY styleAcronym.accesskey "A">
+<!ENTITY styleCode.label "Kodo">
+<!ENTITY styleCode.accesskey "d">
+<!ENTITY styleSamp.label "Ekzemplo">
+<!ENTITY styleSamp.accesskey "E">
+<!ENTITY styleVar.label "Variablo">
+<!ENTITY styleVar.accesskey "V">
+
+<!ENTITY formatFontColor.label "Koloro de teksto…">
+<!ENTITY formatFontColor.accesskey "K">
+<!ENTITY tableOrCellColor.label "Fona koloro de tabelo aŭ ĉelo…">
+<!ENTITY tableOrCellColor.accesskey "F">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Forigi nomitan ankron">
+<!ENTITY formatRemoveNamedAnchors.accesskey "r">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Alineo">
+<!ENTITY paragraphMenu.accesskey "A">
+<!ENTITY paragraphParagraphCmd.label "Alineo">
+<!ENTITY paragraphParagraphCmd.accesskey "A">
+<!ENTITY heading1Cmd.label "Titolo 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Titolo 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Titolo 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Titolo 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Titolo 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Titolo 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Adreso">
+<!ENTITY paragraphAddressCmd.accesskey "d">
+<!ENTITY paragraphPreformatCmd.label "Antaŭformati">
+<!ENTITY paragraphPreformatCmd.accesskey "f">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Listo">
+<!ENTITY formatlistMenu.accesskey "L">
+<!ENTITY noneCmd.label "Neniu">
+<!ENTITY noneCmd.accesskey "u">
+<!ENTITY listBulletCmd.label "Bula">
+<!ENTITY listBulletCmd.accesskey "B">
+<!ENTITY listNumberedCmd.label "Numerata">
+<!ENTITY listNumberedCmd.accesskey "N">
+<!ENTITY listTermCmd.label "De kategorioj">
+<!ENTITY listTermCmd.accesskey "k">
+<!ENTITY listDefinitionCmd.label "De difinoj">
+<!ENTITY listDefinitionCmd.accesskey "d">
+<!ENTITY listPropsCmd.label "Atributoj de listo…">
+<!ENTITY listPropsCmd.accesskey "A">
+
+<!ENTITY ParagraphSelect.tooltip "Elekti formon de alineo">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Enhavo">
+<!ENTITY bodyTextCmd.accesskey "E">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Ĝisrandigi">
+<!ENTITY alignMenu.accesskey "d">
+<!ENTITY alignLeft.label "maldekstren">
+<!ENTITY alignLeft.accesskey "m">
+<!ENTITY alignLeft.tooltip "Rektigi al maldekstro">
+<!ENTITY alignCenter.label "centren">
+<!ENTITY alignCenter.accesskey "c">
+<!ENTITY alignCenter.tooltip "Centrigi la elementon">
+<!ENTITY alignRight.label "dekstren">
+<!ENTITY alignRight.accesskey "d">
+<!ENTITY alignRight.tooltip "Rektigi al dekstro">
+<!ENTITY alignJustify.label "ambaŭflanken">
+<!ENTITY alignJustify.accesskey "a">
+<!ENTITY alignJustify.tooltip "Alkadrigi la elementon ambaŭflanken">
+
+<!ENTITY increaseIndent.label "Pliigi marĝenon">
+<!ENTITY increaseIndent.accesskey "P">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Malpliigi marĝenon">
+<!ENTITY decreaseIndent.accesskey "M">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Koloroj de paĝo kaj fono…">
+<!ENTITY colorsAndBackground.accesskey "o">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Tabelo">
+<!ENTITY tableMenu.accesskey "b">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Marki">
+<!ENTITY tableSelectMenu.accesskey "M">
+
+<!ENTITY tableSelectMenu2.label "Marki tabelon">
+<!ENTITY tableSelectMenu2.accesskey "M">
+<!ENTITY tableInsertMenu2.label "Enmeti tabelon">
+<!ENTITY tableInsertMenu2.accesskey "E">
+<!ENTITY tableDeleteMenu2.label "Forigi tabelon">
+<!ENTITY tableDeleteMenu2.accesskey "F">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Enmeti">
+<!ENTITY tableInsertMenu.accesskey "E">
+<!ENTITY tableTable.label "tabelon">
+<!ENTITY tableTable.accesskey "t">
+<!ENTITY tableRow.label "vicon">
+<!ENTITY tableRows.label "vico(j)n">
+<!ENTITY tableRow.accesskey "v">
+<!ENTITY tableRowAbove.label "vicon supre">
+<!ENTITY tableRowAbove.accesskey "p">
+<!ENTITY tableRowBelow.label "vicon sube">
+<!ENTITY tableRowBelow.accesskey "b">
+<!ENTITY tableColumn.label "kolumnon">
+<!ENTITY tableColumns.label "kolumno(j)n">
+<!ENTITY tableColumn.accesskey "k">
+<!ENTITY tableColumnBefore.label "kolumnon maldekstre">
+<!ENTITY tableColumnBefore.accesskey "m">
+<!ENTITY tableColumnAfter.label "kolumnon dekstre">
+<!ENTITY tableColumnAfter.accesskey "d">
+<!ENTITY tableCell.label "ĉelon">
+<!ENTITY tableCells.label "ĉelo(j)n">
+<!ENTITY tableCell.accesskey "l">
+<!ENTITY tableCellContents.label "enhavon de ĉelo">
+<!ENTITY tableCellContents.accesskey "e">
+<!ENTITY tableAllCells.label "ĉiujn ĉelojn">
+<!ENTITY tableAllCells.accesskey "j">
+<!ENTITY tableCellBefore.label "ĉelon maldekstre">
+<!ENTITY tableCellBefore.accesskey "e">
+<!ENTITY tableCellAfter.label "ĉelon dekstre">
+<!ENTITY tableCellAfter.accesskey "l">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Forigi">
+<!ENTITY tableDeleteMenu.accesskey "F">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "Kunfandi ĉelojn">
+<!ENTITY tableJoinCells.accesskey "K">
+<!ENTITY tableSplitCell.label "Dividi ĉelon">
+<!ENTITY tableSplitCell.accesskey "D">
+<!ENTITY convertToTable.label "Krei tabelon el la elektaĵo">
+<!ENTITY convertToTable.accesskey "t">
+<!ENTITY tableProperties.label "Atributoj de tabelo…">
+<!ENTITY tableProperties.accesskey "A">
+
+<!ENTITY imageToolbarCmd.label "Bildo">
+<!ENTITY imageToolbarCmd.tooltip "Enmeti novan bildon aŭ redakti atributojn de elektita bildo">
+<!ENTITY hruleToolbarCmd.label "Horizontala linio">
+<!ENTITY hruleToolbarCmd.tooltip "Enmeti horizontalan linion aŭ redakti atributojn de elektita linio">
+<!ENTITY tableToolbarCmd.label "Tabelo">
+<!ENTITY tableToolbarCmd.tooltip "Enmeti novan tabelon aŭ redakti atributojn de elektita tabelo">
+<!ENTITY linkToolbarCmd.label "Ligilo">
+<!ENTITY linkToolbarCmd.tooltip "Enmeti novan ligilon aŭ redakti atributojn de elektita ligilo">
+<!ENTITY anchorToolbarCmd.label "Ankro">
+<!ENTITY anchorToolbarCmd.tooltip "Enmeti novan nomitan ankron aŭ redakti atributojn de elektita ankro">
+<!ENTITY TextColorButton.tooltip "Elekti koloron de teksto">
+<!ENTITY BackgroundColorButton.tooltip "Elekti koloron de fono">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Elekti grandon de tiparo">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Pli malgranda tiparo">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Pli granda tiparo">
+<!ENTITY boldToolbarCmd.tooltip "Grasa">
+<!ENTITY italicToolbarCmd.tooltip "Kursiva">
+<!ENTITY underlineToolbarCmd.tooltip "Substrekita">
+<!ENTITY bulletListToolbarCmd.tooltip "Krei aŭ forigi bulan liston">
+<!ENTITY numberListToolbarCmd.tooltip "Krei aŭ forigi numeratan liston">
+<!ENTITY outdentToolbarCmd.tooltip "Malpliigi marĝenon (movi maldekstren)">
+<!ENTITY indentToolbarCmd.tooltip "Pliigi marĝenon (movi dekstren)">
+<!ENTITY AlignPopupButton.tooltip "Elekti ĝisrandigon de teksto">
+<!ENTITY InsertPopupButton.tooltip "Enmeti ligilon, ankron, bildon, horizontalan linion aŭ tabelon">
+<!ENTITY alignLeftButton.tooltip "Ĝisrandigi tekston al maldekstra marĝeno">
+<!ENTITY alignCenterButton.tooltip "Ĝisrandigi tekston al la centro">
+<!ENTITY alignRightButton.tooltip "Ĝisrandigi tekston al dekstra marĝeno">
+<!ENTITY alignJustifyButton.tooltip "Ĝisrandigi tekston egale al maldekstra kaj dekstra marĝenoj">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Enmeti">
+<!ENTITY insertTOC.accesskey      "m">
+<!ENTITY updateTOC.label          "Ĝisdatigi">
+<!ENTITY updateTOC.accesskey      "d">
+<!ENTITY removeTOC.label          "Forigi">
+<!ENTITY removeTOC.accesskey      "F">
+<!ENTITY tocMenu.label            "Enhavtabelo…">
+<!ENTITY tocMenu.accesskey        "t">

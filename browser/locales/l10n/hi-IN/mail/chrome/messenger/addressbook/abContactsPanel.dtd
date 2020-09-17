@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY addressbookPicker.label            "पता पुस्तिका:">
+<!ENTITY SearchNameOrEmail.label            "नाम या ईमेल">
+
+<!ENTITY addtoToFieldMenu.label             "प्रति क्षेत्र में जोड़ें">
+<!ENTITY addtoCcFieldMenu.label             "सीसी क्षेत्र में जोड़ें">
+<!ENTITY addtoBccFieldMenu.label            "बीसीसी क्षेत्र में जोड़ें">
+
+<!ENTITY toButton.label                     "प्रति में जोड़ें:">
+<!ENTITY ccButton.label                     "सीसी में जोड़ें:">
+
+
+
+
+

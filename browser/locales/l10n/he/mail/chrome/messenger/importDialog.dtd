@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "יבוא">
+<!ENTITY importAll.label          "יבא הכול">
+<!ENTITY importAll.accesskey      "כ">
+<!ENTITY importMail.label         "דואר">
+<!ENTITY importMail.accesskey     "ד">
+<!ENTITY importFeeds.label        "מינויים להזנות">
+<!ENTITY importFeeds.accesskey    "נ">
+<!ENTITY importAddressbook.label  "ספרי כתובות">
+<!ENTITY importAddressbook.accesskey "כ">
+<!ENTITY importSettings.label     "הגדרות">
+<!ENTITY importSettings.accesskey "ה">
+<!ENTITY importFilters.label      "מסננים">
+<!ENTITY importFilters.accesskey  "מ">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "אשף יבוא הדואר של &brandShortName;">
+<!ENTITY importShortDesc.label    "יבא דואר, פנקסי כתובות, הגדרות ומסננים מתוכנות אחרות">
+
+<!ENTITY importDescription1.label "אשף זה יבא את כל הודעות הדואר, פריטים מפנקס הכתובות, העדפות ו/או מסננים מתוכנות דואר אחרות ומבני פנקסי כתובות מקובלים לתוך &brandShortName;.">
+<!ENTITY importDescription2.label "לאחר שהם ייובאו, תוכל לגשת אליהם מתוך הדואר ו/או פנקס הכתובות של &brandShortName;.">
+
+<!ENTITY selectDescription.label  "אנא בחר את התוכנה שמתוכה ברצונך לייבא:">
+<!ENTITY selectDescriptionB.label "נא לבחור בחשבון קיים או ליצור אחד חדש:">
+<!ENTITY selectDescription.accesskey "ב">
+<!ENTITY acctName.label           "שם:">
+<!ENTITY acctName.accesskey       "ש">
+<!ENTITY noModulesFound.label     "לא נמצאו יישום או קובץ לייבא מהם נתונים.">
+
+<!ENTITY back.label               "&lt; הקודם">
+<!ENTITY forward.label            "הבא &gt;">
+<!ENTITY finish.label             "סיום">
+<!ENTITY cancel.label             "ביטול">
+
+<!ENTITY select.label             "בחר סוג חומר ליבוא:">
+
+<!ENTITY title.label              "תפקיד">
+<!ENTITY processing.label         "מתבצע ייבוא…">

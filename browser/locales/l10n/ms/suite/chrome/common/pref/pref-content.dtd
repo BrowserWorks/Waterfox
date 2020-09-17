@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Kandungan">
+<!ENTITY pref.content.description               "Tetapan ini mempengaruhi penampilan kandungan laman web dan mesej yang dipaparkan dalam &brandShortName;.">
+
+<!ENTITY siteIcons.label                        "Ikon laman web">
+<!ENTITY useSiteIcons.label                     "Papar ikon laman web">
+<!ENTITY useSiteIcons.accesskey                 "P">
+<!ENTITY useFavIcons2.label                     "Cuba gunakan favicon pelayan apabila halaman tidak menentukan ikon">
+<!ENTITY useFavIcons2.accesskey                 "i">
+
+<!ENTITY scrolling.label                        "Skrol">
+<!ENTITY useAutoScroll.label                    "Guna auto-skrol">
+<!ENTITY useAutoScroll.accesskey                "t">
+<!ENTITY useSmoothScroll.label                  "Guna skrol lancar">
+<!ENTITY useSmoothScroll.accesskey              "G">
+
+<!ENTITY zoomPrefs.label                        "Pilihan zum">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "Julat daripada">
+<!ENTITY minZoom.accesskey                      "i">
+<!ENTITY maxZoom.label                          "hingga">
+<!ENTITY maxZoom.accesskey                      "a">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY siteSpecific.label                     "Ingat tahap zum berdasarkan setiap laman">
+<!ENTITY siteSpecific.accesskey                 "t">
+<!ENTITY textZoomOnly.label                     "Hanya zum teks, bukan keseluruhan halaman">
+<!ENTITY textZoomOnly.accesskey                 "H">
+<!ENTITY enableAutomaticImageResizing.label     "Saiz semula imej supaya muat mengikut tetingkap pelayar">
+<!ENTITY enableAutomaticImageResizing.accesskey "S">
+
+<!ENTITY allowHWAccel.label                     "Guna pecutan perkakasan, jika tersedia">
+<!ENTITY allowHWAccel.accesskey                 "e">
+<!ENTITY blockAutoRefresh.label                 "Beri amaran apabila laman web cuba untuk mengalih semula atau memuat semula halaman">
+<!ENTITY blockAutoRefresh.accesskey             "B">
+
+<!ENTITY showZoomStatusPanel.label              "Papar kawalan zum dalam bar status">

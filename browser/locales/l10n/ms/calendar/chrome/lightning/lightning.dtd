@@ -1,0 +1,111 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Kalendar">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Acara…">
+<!ENTITY lightning.menupopup.new.event.accesskey "A">
+<!ENTITY lightning.menupopup.new.task.label     "Tugasan…">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "Kalendar…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "n">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Buka">
+<!ENTITY lightning.menupopup.open.accesskey           "B">
+<!ENTITY lightning.menupopup.open.message.label       "Mesej Disimpan…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "M">
+<!ENTITY lightning.menupopup.open.calendar.label      "Fail Kalendar…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "K">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Kalendar">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "Tugasan">
+<!ENTITY lightning.menu.view.tasks.accesskey           "g">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Acara dan Tugasan">
+<!ENTITY lightning.menu.eventtask.accesskey            "n">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-mel:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Utamakan penjadualan e-mel pihak-klien">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Buat masa sekarang, anda hanya boleh mengaktifkan tetapan kalendar ini dalam dialog sifat jika pelayan kalendar menguruskan penjadualan.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Pilihan ini hanya disediakan jika pelayan kalendar mengendalikan penjadualan. Penjadualan e-mel piawai boleh didapatkan semula, bukan ditentukan oleh pelayan jika pilihan ini didayakan.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Terima">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Terima jemputan acara">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Terima semua">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Terima jemputan semua pengulangan acara">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Tambah">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Tambah acara dalam kalendar">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Tolak">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Tolak jemputan acara">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Tolak semua">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Tolak jemputan semua pengulangan acara">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Tolak">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Tolak cadangan balas">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Buang">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Buang daripada kalendar">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Butiran…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Papar butiran acara">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Selanjutnya">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Klik untuk papar pilihan selanjutnya">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Sahkan semula">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Hantar pengesahan semula kepada pihak penganjur">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Penjadualan semula">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Penjadualan semula acara">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Simpan salinan">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Simpan salinan acara kalendar yang tiada balasan kepada penganjur. Senarai peserta akan dibuang.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Tentatif">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Terima jemputan acara secara tentatif">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Tentatif semua">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Terima jemputan semua pengulangan acara secara tentatif">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Kemaskini">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Kemaskini acara dalam kalendar">
+<!ENTITY lightning.imipbar.description                                      "Mesej ini mengandungi jemputan untuk menghadiri acara.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Hantar respons sekarang">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Hantar respons kepada penganjur">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Hantar respons untuk semua siri kepada penganjur">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Jangan hantar respons">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Tukar status penyertaan tanpa menghantar respons kepada penganjur">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Tukar status penyertaan untuk siri tanpa menghantar respons kepada penganjur">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "P">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Cipta kalendar baru">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Papar Mini-Bulan">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Papar Mini-Hari">
+<!ENTITY todaypane.showMiniday.accesskey  "r">
+<!ENTITY todaypane.showNone.label "Papar Tiada">
+<!ENTITY todaypane.showNone.accesskey "T">
+<!ENTITY todaypane.showTodayPane.label "Papar Anak Tetingkap Hari ini">
+<!ENTITY todaypane.showTodayPane.accesskey "p">
+<!ENTITY todaypane.statusButton.label "Anak Tetingkap Hari ini">

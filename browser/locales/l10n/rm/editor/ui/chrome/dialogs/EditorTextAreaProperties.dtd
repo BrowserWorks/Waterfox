@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Caracteristicas dal champ da text">
+
+<!ENTITY Settings.label "Parameters">
+
+<!ENTITY TextAreaName.label "Num dal champ:">
+<!ENTITY TextAreaName.accessKey "D">
+<!ENTITY TextAreaRows.label "Lingias:">
+<!ENTITY TextAreaRows.accessKey "a">
+<!ENTITY TextAreaCols.label "Colonnas:">
+<!ENTITY TextAreaCols.accessKey "M">
+<!ENTITY TextAreaReadOnly.label "Mo per lectura">
+<!ENTITY TextAreaReadOnly.accessKey "O">
+<!ENTITY TextAreaDisabled.label "Deactivà">
+<!ENTITY TextAreaDisabled.accessKey "i">
+<!ENTITY TextAreaTabIndex.label "Index da tabulatur:">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "Tasta d'access:">
+<!ENTITY TextAreaAccessKey.accessKey "c">
+<!ENTITY InitialText.label "Text inizial:">
+<!ENTITY InitialText.accessKey "t">
+
+<!ENTITY TextAreaWrap.label "Moda da sigl da lingia:">
+<!ENTITY TextAreaWrap.accessKey "W">
+<!ENTITY WrapDefault.value "Standard">
+<!ENTITY WrapOff.value "Deactivà">
+<!ENTITY WrapHard.value "Dir">
+<!ENTITY WrapSoft.value "Lom">
+<!ENTITY WrapPhysical.value "Fisical">
+<!ENTITY WrapVirtual.value "Virtual">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Scriver &amp; adressar">
+<!ENTITY addressingGroupTitle.label "Adressar">
+<!ENTITY addressingText.label      "Cun tschertgar adressas:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Utilisar las preferenzas globalas da server LDAP per quest conto">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "Modifitgar…">
+<!ENTITY editDirectories.accesskey "M">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Utilisar in auter server LDAP:">
+<!ENTITY directories.accesskey     "d">
+<!ENTITY directoriesNone.label     "Nagina">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Scriver">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Scriver ils messadis en il format HTML">
+<!ENTITY useHtml.accesskey                    "C">
+<!ENTITY autoQuote.label                      "Citar automaticamain il messadi original cun respunder">
+<!ENTITY autoQuote.accesskey                  "m">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Cun citar,">
+<!ENTITY quoting.accesskey                    "c">
+<!ENTITY aboveQuote.label                     "cumenzar mia resposta sur il text cità">
+<!ENTITY belowQuote.label                     "cumenzar mia resposta sut il text cità">
+<!ENTITY selectAndQuote.label                 "marcar il text cità">
+<!ENTITY place.label                          "e plazzar mia suttascripziun">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "sut il text cità (recumandà)">
+<!ENTITY aboveText.label                      "sut mia resposta (sur il text cità)">
+<!ENTITY includeSigOnReply.label              "Includer la suttascripziun cun respunder">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "Includer la suttascripziun cun renviar">
+<!ENTITY includeSigOnForward.accesskey        "v">
+
+<!ENTITY globalComposingPrefs.label           "Preferenzas globalas per scriver…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Preferenzas globalas per adressar…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

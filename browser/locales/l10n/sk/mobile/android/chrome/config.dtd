@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Hľadať">
+
+<!ENTITY newPref.namePlaceholder       "Názov">
+
+<!ENTITY newPref.valueBoolean          "Logická">
+<!ENTITY newPref.valueString           "Reťazec">
+<!ENTITY newPref.valueInteger          "Číselná">
+
+<!ENTITY newPref.stringPlaceholder     "Zadajte reťazec">
+<!ENTITY newPref.numberPlaceholder     "Zadajte číslo">
+
+<!ENTITY newPref.toggleButton          "Prepnúť">
+<!ENTITY newPref.cancelButton          "Zrušiť">
+
+<!ENTITY contextMenu.copyPrefName      "Kopírovať názov">
+<!ENTITY contextMenu.copyPrefValue     "Kopírovať hodnotu">

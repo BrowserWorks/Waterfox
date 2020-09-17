@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Bienvenido a &brandShortName;">
+<!ENTITY header2.label "¿Deseas una nueva dirección de correo electrónico?">
+<!ENTITY other.languages "Solamente mostraremos los proveedores que ofrecen direcciones en tu zona.  Haz clic aquí para mostrar todos los proveedores.">
+<!ENTITY error.line1 "Lo siento, no pudimos encontrar ninguna dirección de correo sugerida.">
+<!ENTITY error.line2 "Puedes intentar buscar apodos o algún otro término para encontrar más correos electrónicos.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "También puedes intentar una de las ">
+<!ENTITY error.suggest.middle "cuentas de correo electrónico gratuitas como alternativa">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Hola ">
+<!ENTITY success.title.after ", la siguiente dirección de correo electrónico está disponible para ti:">
+<!ENTITY success.tip "(También puedes buscar apodos o algún otro término para encontrar más correos electrónicos)">
+<!ENTITY partnership.description "En sociedad con varios proveedores, &brandShortName; puede ofrecerte una nueva cuenta de correo electrónico. Ingress tu nombre y apellido o algunas otras palabras que quieras para comenzar.">
+<!ENTITY existing.header "¿Ya tienes una dirección que quieras usar?">
+<!ENTITY tinyheader.title "¿Tienes una dirección?">
+<!ENTITY tinyheader.existing "Saltar esto y usar mi correo existente">
+<!ENTITY content.close "Creo que configuraré mi cuenta después.">
+<!ENTITY successful.title "¡Felicidades!">
+<!ENTITY successful.successMessage "Haz configurado tu cuenta exitosamente.">
+<!ENTITY successful.write "Escribir algún mensaje de correo">
+<!ENTITY successful.write.desc "Permitir que tus amigos y familia conozcan tu nueva dirección.<br/> Por eso es que tienes tu nueva cuenta, ¿no?">
+<!ENTITY successful.customize "Personalizar &brandShortName; con algunos geniales complementos ">
+<!ENTITY successful.customize.desc "Hay miles de complementos que te dejan personalizar &brandShortName; para ajustarlo a tus necesidades específicas.">
+<!ENTITY successful.attach "Adjuntar una firma personal a mi correo electrónico">
+<!ENTITY successful.attach.desc "Puede adjuntar automáticamente una frase o alguna información sobre ti mismo al final de cada mensaje que envíes.">
+<!ENTITY successful.close "Cerrar esta ventana.">
+<!ENTITY input.namePlaceholder "Tu nombre o apodo">
+<!ENTITY input.search "Buscar">
+<!ENTITY search_engine.title "Personalizar tu motor de búsqueda">
+<!ENTITY search_engine.message "Tu proveedor de correo electrónico también puede proporcionarte capacidades de búsqueda web.">
+<!ENTITY search_engine.button "Finalizar">

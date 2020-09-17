@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!ENTITY addressing.label          "Composizione ed indirizzi">
+<!ENTITY addressingGroupTitle.label "Indirizzi">
+<!ENTITY autocompleteToMyDomain.label     "Aggiungere in automatico il proprio dominio agli indirizzi">
+<!ENTITY autocompleteToMyDomain.accesskey "r">
+<!ENTITY addressingText.label      "Per la ricerca di indirizzi:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Utilizza le preferenze globali per il server LDAP">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "Modifica rubrica…">
+<!ENTITY editDirectories.accesskey "M">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Utilizza un server LDAP differente:">
+<!ENTITY directories.accesskey     "L">
+<!ENTITY directoriesNone.label     "Nessuno">
+
+<!-- am-addressing.xul -->
+
+<!ENTITY compositionGroupTitle.label          "Composizione">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Componi i messaggi in formato HTML">
+<!ENTITY useHtml.accesskey                    "h">
+<!ENTITY autoQuote.label                      "Alla risposta, cita automaticamente il messaggio originale">
+<!ENTITY autoQuote.accesskey                  "c">
+<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY then.label                           "Quindi,">
+<!ENTITY then.accesskey                       "Q">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Quando si cita,">
+<!ENTITY quoting.accesskey                    "Q">
+<!ENTITY aboveQuote.label                     "inizia la risposta sopra il testo citato">
+<!ENTITY belowQuote.label                     "inizia la risposta sotto il testo citato">
+<!ENTITY selectAndQuote.label                 "seleziona il testo citato">
+<!ENTITY place.label                          "ed inserisci la mia firma">
+<!ENTITY place.accesskey                      "f">
+<!ENTITY belowText.label                      "sotto il testo citato (raccomandato)">
+<!ENTITY aboveText.label                      "sotto la risposta (sopra il testo citato)">
+<!ENTITY includeSigOnReply.label              "Includi la firma nelle risposte">
+<!ENTITY includeSigOnReply.accesskey          "n">
+<!ENTITY includeSigOnForward.label            "Includi la firma nei messaggi inoltrati">
+<!ENTITY includeSigOnForward.accesskey        "d">
+
+<!ENTITY globalComposingPrefs.label           "Opzioni di composizione globali…">
+<!ENTITY globalComposingPrefs.accesskey       "z">
+
+<!ENTITY globalAddressingPrefs.label          "Opzioni di indirizzamento globali…">
+<!ENTITY globalAddressingPrefs.accesskey      "n">

@@ -1,0 +1,411 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- General -->
+<!ENTITY calendar.calendar.label     "Күнтізбе">
+<!ENTITY calendar.calendar.accesskey "К">
+
+<!ENTITY calendar.newevent.button.tooltip         "Жаңа оқиғаны жасау" >
+<!ENTITY calendar.newtask.button.tooltip          "Жаңа тапсырманы жасау" >
+
+<!ENTITY calendar.unifinder.todoitems.label       "Тапсырмалар" >
+
+<!ENTITY calendar.unifinder.showcompletedtodos.label "Аяқталған тапсырмаларды көрсету">
+
+<!ENTITY calendar.today.button.label          "Бүгін">
+<!ENTITY calendar.tomorrow.button.label       "Ертең">
+<!ENTITY calendar.upcoming.button.label       "Болашақ">
+
+<!ENTITY calendar.events.filter.all.label "Барлық оқиғалар">
+<!ENTITY calendar.events.filter.today.label "Бүгінгі оқиғалар">
+<!ENTITY calendar.events.filter.future.label "Барлық болашақ оқиғалар">
+<!ENTITY calendar.events.filter.current.label "Ағымдағы таңдалған күн">
+<!ENTITY calendar.events.filter.currentview.label "Ағымдағы көріністегі оқиғалар">
+<!ENTITY calendar.events.filter.next7Days.label "Келесі 7 күндегі оқиғалар">
+<!ENTITY calendar.events.filter.next14Days.label "Келесі 14 күндегі оқиғалар">
+<!ENTITY calendar.events.filter.next31Days.label "Келесі 31 күндегі оқиғалар">
+<!ENTITY calendar.events.filter.thisCalendarMonth.label "Бұл күнтізбелік айдағы оқиғалар">
+
+<!-- LOCALIZATION NOTE(calendar.unifinder.tree.done.tooltip)
+   - This label and tooltip is used for the column with the checkbox in the
+   - task tree view. -->
+<!ENTITY calendar.unifinder.tree.done.label                "Дайын">
+<!ENTITY calendar.unifinder.tree.done.tooltip2             "Аяқталуы бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.priority.label            "Приоритет">
+<!ENTITY calendar.unifinder.tree.priority.tooltip2         "Приоритеті бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.title.label               "Атауы">
+<!ENTITY calendar.unifinder.tree.title.tooltip2            "Атауы бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.percentcomplete.label     "&#037; дайын">
+<!ENTITY calendar.unifinder.tree.percentcomplete.tooltip2  "Аяқталған &#037; бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.startdate.label           "Бастау">
+<!ENTITY calendar.unifinder.tree.startdate.tooltip2        "Бастапқы күні бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.enddate.label             "Аяқтау">
+<!ENTITY calendar.unifinder.tree.enddate.tooltip2          "Соңғы күні бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.duedate.label             "Бітуі">
+<!ENTITY calendar.unifinder.tree.duedate.tooltip2          "Бітіру күні бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.completeddate.label       "Аяқталған">
+<!ENTITY calendar.unifinder.tree.completeddate.tooltip2    "Аяқталған күні бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.categories.label          "Санат">
+<!ENTITY calendar.unifinder.tree.categories.tooltip2       "Санаты бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.location.label            "Орналасқан жері">
+<!ENTITY calendar.unifinder.tree.location.tooltip2         "Орналасуы бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.status.label              "Қалып-күйі">
+<!ENTITY calendar.unifinder.tree.status.tooltip2           "Қалып-күйі бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.calendarname.label        "Күнтізбе аты">
+<!ENTITY calendar.unifinder.tree.calendarname.tooltip2     "Күнтізбе аты бойынша сұрыптау">
+<!ENTITY calendar.unifinder.tree.duration.label            "Бітіру күні">
+<!ENTITY calendar.unifinder.tree.duration.tooltip2         "Бітіруге дейінгі уақыты бойынша сұрыптау">
+<!ENTITY calendar.unifinder.close.tooltip                  "Оқиғаны іздеу және оқиғалар тізімін жабу">
+
+<!ENTITY calendar.today.button.tooltip          "Бүгінге өту" >
+<!ENTITY calendar.todaypane.button.tooltip      "Бүгіннің панелін көрсету" >
+
+<!ENTITY calendar.day.button.tooltip            "Күн көрінісіне ауысу" >
+<!ENTITY calendar.week.button.tooltip           "Апта көрінісіне ауысу" >
+<!ENTITY calendar.month.button.tooltip          "Ай көрінісіне ауысу" >
+<!ENTITY calendar.multiweek.button.tooltip      "Бірнеше апта көрінісіне ауысу" >
+
+<!ENTITY calendar.nextday.label                 "Келесі күн" >
+<!ENTITY calendar.prevday.label                 "Алдыңғы күн" >
+<!ENTITY calendar.nextday.accesskey             "К" >
+<!ENTITY calendar.prevday.accesskey             "А" >
+<!ENTITY calendar.nextweek.label                "Келесі апта" >
+<!ENTITY calendar.prevweek.label                "Алдыңғы апта" >
+<!ENTITY calendar.nextweek.accesskey            "К" >
+<!ENTITY calendar.prevweek.accesskey            "А" >
+<!ENTITY calendar.nextmonth.label               "Келесі ай" >
+<!ENTITY calendar.prevmonth.label               "Алдыңғы ай" >
+<!ENTITY calendar.nextmonth.accesskey           "К" >
+<!ENTITY calendar.prevmonth.accesskey           "А" >
+
+<!ENTITY calendar.navigation.nextday.tooltip    "Бір күн алға" >
+<!ENTITY calendar.navigation.prevday.tooltip    "Бір күн артқа" >
+<!ENTITY calendar.navigation.nextweek.tooltip   "Бір апта алға" >
+<!ENTITY calendar.navigation.prevweek.tooltip   "Бір апта артқа" >
+<!ENTITY calendar.navigation.nextmonth.tooltip  "Бір ай алға" >
+<!ENTITY calendar.navigation.prevmonth.tooltip  "Бір ай артқа" >
+
+<!ENTITY calendar.newevent.button.label         "Жаңа оқиға" >
+<!ENTITY calendar.newtask.button.label          "Жаңа тапсырма" >
+<!ENTITY calendar.print.button.label            "Баспаға шығару" >
+<!ENTITY calendar.print.button.accesskey        "п">
+
+<!ENTITY calendar.day.button.label              "Күн" >
+<!ENTITY calendar.week.button.label             "Апта" >
+<!ENTITY calendar.month.button.label            "Ай" >
+<!ENTITY calendar.multiweek.button.label        "Бірнеше апта" >
+<!ENTITY calendar.onlyworkday.checkbox.label    "Аптаның тек жұмыс күндері" >
+<!ENTITY calendar.onlyworkday.checkbox.accesskey  "к" >
+<!ENTITY calendar.displaytodos.checkbox.label   "Көріністегі тапсырмалар" >
+<!ENTITY calendar.displaytodos.checkbox.accesskey "с" >
+<!ENTITY calendar.completedtasks.checkbox.label     "Аяқталған тапсырмаларды көрсету" >
+<!ENTITY calendar.completedtasks.checkbox.accesskey "А" >
+
+<!ENTITY calendar.orientation.label "Көріністі бұру" >
+<!ENTITY calendar.orientation.accesskey "р" >
+
+<!ENTITY calendar.search.options.searchfor " құрамында бар">
+
+<!ENTITY calendar.list.header.label                 "Күнтізбе">
+
+<!ENTITY calendar.task.filter.title.label           "Көрсету">
+<!ENTITY calendar.task.filter.all.label             "Барлығы">
+<!ENTITY calendar.task.filter.all.accesskey         "Б">
+<!ENTITY calendar.task.filter.today.label           "Бүгін">
+<!ENTITY calendar.task.filter.today.accesskey       "Б">
+<!ENTITY calendar.task.filter.next7days.label       "Келесі жеті күн">
+<!ENTITY calendar.task.filter.next7days.accesskey   "К">
+<!ENTITY calendar.task.filter.notstarted.label      "Басталмаған тапсырмалар">
+<!ENTITY calendar.task.filter.notstarted.accesskey  "а">
+<!ENTITY calendar.task.filter.overdue.label         "Мерзімінен асқан тапсырмалар">
+<!ENTITY calendar.task.filter.overdue.accesskey     "М">
+<!ENTITY calendar.task.filter.completed.label       "Аяқталған тапсырмалар">
+<!ENTITY calendar.task.filter.completed.accesskey   "а">
+<!ENTITY calendar.task.filter.open.label            "Аяқталмаған тапсырмалар">
+<!ENTITY calendar.task.filter.open.accesskey        "я">
+
+<!-- LOCALIZATION NOTE(calendar.task.filter.current.label)
+     "Current Tasks" will show all tasks, except those with a start date set
+     that is after today and after the selected date. If a task repeats, a
+     separate entry will be shown for each of the occurrences that happen on or
+     before today (or the selected date, whichever is later). -->
+<!ENTITY calendar.task.filter.current.label         "Ағымдағы тапсырмалар">
+<!ENTITY calendar.task.filter.current.accesskey     "ы">
+
+<!ENTITY calendar.task-details.title.label           "атауы">
+<!ENTITY calendar.task-details.organizer.label       "бастап">
+<!ENTITY calendar.task-details.priority.label        "приоритет">
+<!ENTITY calendar.task-details.priority.low.label    "төмен">
+<!ENTITY calendar.task-details.priority.normal.label "Қалыпты">
+<!ENTITY calendar.task-details.priority.high.label   "Жоғары">
+<!ENTITY calendar.task-details.status.label          "қалып-күйі">
+<!ENTITY calendar.task-details.category.label        "санат">
+<!ENTITY calendar.task-details.repeat.label          "қайталау">
+<!ENTITY calendar.task-details.attachments.label     "салынымдар">
+<!ENTITY calendar.task-details.start.label           "бастапқы күні">
+<!ENTITY calendar.task-details.due.label             "бітіру күні">
+
+<!ENTITY calendar.task.category.button.tooltip  "Тапсырмаларды санаттарға бөлу">
+<!ENTITY calendar.task.complete.button.tooltip  "Таңдалған тапсырмаларды аяқталған ретінде белгілеу">
+<!ENTITY calendar.task.priority.button.tooltip  "Приоритетін өзгерту">
+
+<!ENTITY calendar.task.text-filter.textbox.emptytext.base1           "Тапсырмаларды сүзгілеу #1">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.nonmac "&lt;Ctrl+Shift+K&gt;">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.mac    "&lt;&#x21E7;&#x2318;K&gt;">
+
+<!-- Context Menu -->
+<!ENTITY calendar.context.modifyorviewitem.label      "Ашу">
+<!ENTITY calendar.context.modifyorviewitem.accesskey  "А">
+<!ENTITY calendar.context.modifyorviewtask.label      "Тапсырманы ашу…">
+<!ENTITY calendar.context.modifyorviewtask.accesskey  "ш">
+<!ENTITY calendar.context.newevent.label              "Жаңа оқиға…">
+<!ENTITY calendar.context.newevent.accesskey          "Ж">
+<!ENTITY calendar.context.newtodo.label               "Жаңа тапсырма…">
+<!ENTITY calendar.context.newtodo.accesskey           "с">
+<!ENTITY calendar.context.deletetask.label            "Тапсырманы өшіру">
+<!ENTITY calendar.context.deletetask.accesskey        "с">
+<!ENTITY calendar.context.deleteevent.label           "Оқиғаны өшіру">
+<!ENTITY calendar.context.deleteevent.accesskey       "ш">
+<!ENTITY calendar.context.cutevent.label              "Қиып алу">
+<!ENTITY calendar.context.cutevent.accesskey          "ы">
+<!ENTITY calendar.context.copyevent.label             "Көшіріп алу">
+<!ENTITY calendar.context.copyevent.accesskey         "К">
+<!ENTITY calendar.context.pasteevent.label            "Кірістіру">
+<!ENTITY calendar.context.pasteevent.accesskey        "р">
+<!ENTITY calendar.context.button.label                "Бүгінгі панелі">
+<!ENTITY calendar.context.button.accesskey            "Б">
+
+<!ENTITY calendar.context.attendance.menu.label                 "Қатысу">
+<!ENTITY calendar.context.attendance.menu.accesskey             "т">
+<!ENTITY calendar.context.attendance.occurrence.label           "Бұл қайталануы">
+<!ENTITY calendar.context.attendance.all2.label                 "Оқиғалардың барлық қайталанулары">
+<!ENTITY calendar.context.attendance.send.label                 "Ескертуді қазір жіберу">
+<!ENTITY calendar.context.attendance.send.accesskey             "ж">
+<!ENTITY calendar.context.attendance.dontsend.label             "Ескертуді жібермеу">
+<!ENTITY calendar.context.attendance.dontsend.accesskey         "б">
+
+<!ENTITY calendar.context.attendance.occ.accepted.accesskey     "а">
+<!ENTITY calendar.context.attendance.occ.accepted.label         "Қабылданды">
+<!ENTITY calendar.context.attendance.occ.tentative.accesskey    "ы">
+<!ENTITY calendar.context.attendance.occ.tentative.label        "Мүмкін деп қабылданды">
+<!ENTITY calendar.context.attendance.occ.declined.accesskey     "м">
+<!ENTITY calendar.context.attendance.occ.declined.label         "Тайдырылды">
+<!ENTITY calendar.context.attendance.occ.delegated.accesskey    "д">
+<!ENTITY calendar.context.attendance.occ.delegated.label        "Тағайындалған">
+<!ENTITY calendar.context.attendance.occ.needsaction.accesskey  "Т">
+<!ENTITY calendar.context.attendance.occ.needsaction.label      "Әлі де әрекетті талап етеді">
+<!ENTITY calendar.context.attendance.occ.inprogress.accesskey   "О">
+<!ENTITY calendar.context.attendance.occ.inprogress.label       "Орындалуда">
+<!ENTITY calendar.context.attendance.occ.completed.accesskey    "А">
+<!ENTITY calendar.context.attendance.occ.completed.label        "Аяқталған">
+
+<!ENTITY calendar.context.attendance.all.accepted.accesskey     "ы">
+<!ENTITY calendar.context.attendance.all.accepted.label         "Қабылданған">
+<!ENTITY calendar.context.attendance.all.tentative.accesskey    "к">
+<!ENTITY calendar.context.attendance.all.tentative.label        "Мүмкін деп қабылданған">
+<!ENTITY calendar.context.attendance.all.declined.accesskey     "д">
+<!ENTITY calendar.context.attendance.all.declined.label         "Тайдырылған">
+<!ENTITY calendar.context.attendance.all.delegated.accesskey    "й">
+<!ENTITY calendar.context.attendance.all.delegated.label        "Тағайындалған">
+<!ENTITY calendar.context.attendance.all.needsaction.accesskey  "л">
+<!ENTITY calendar.context.attendance.all.needsaction.label      "Әлі де әрекетті талап етеді">
+<!ENTITY calendar.context.attendance.all.inprogress.accesskey   "р">
+<!ENTITY calendar.context.attendance.all.inprogress.label       "Орындалуда">
+<!ENTITY calendar.context.attendance.all.completed.accesskey    "т">
+<!ENTITY calendar.context.attendance.all.completed.label        "Аяқталды">
+
+<!-- Task Context Menu -->
+<!ENTITY calendar.context.progress.label              "Прогресс">
+<!ENTITY calendar.context.progress.accesskey          "П">
+<!ENTITY calendar.context.priority.label              "Приоритет">
+<!ENTITY calendar.context.priority.accesskey          "и">
+<!ENTITY calendar.context.postpone.label              "Тапсырманы кейінге қалдыру">
+<!ENTITY calendar.context.postpone.accesskey          "й">
+
+<!ENTITY percnt "&#38;#37;" ><!--=percent sign-->
+
+<!ENTITY calendar.context.markcompleted.label     "Аяқталған етіп белгілеу">
+<!ENTITY calendar.context.markcompleted.accesskey "я">
+
+<!ENTITY progress.level.0             "0&percnt; аяқталған">
+<!ENTITY progress.level.0.accesskey   "0">
+<!ENTITY progress.level.25            "25&percnt; аяқталған">
+<!ENTITY progress.level.25.accesskey  "2">
+<!ENTITY progress.level.50            "50&percnt; аяқталған">
+<!ENTITY progress.level.50.accesskey  "5">
+<!ENTITY progress.level.75            "75&percnt; аяқталған">
+<!ENTITY progress.level.75.accesskey  "7">
+<!ENTITY progress.level.100            "100&percnt; аяқталған">
+<!ENTITY progress.level.100.accesskey  "1">
+
+<!ENTITY priority.level.none                "Көрсетілмеген">
+<!ENTITY priority.level.none.accesskey      "с">
+<!ENTITY priority.level.low                 "төмен">
+<!ENTITY priority.level.low.accesskey       "т">
+<!ENTITY priority.level.normal              "Қалыпты">
+<!ENTITY priority.level.normal.accesskey    "л">
+<!ENTITY priority.level.high                "Жоғары">
+<!ENTITY priority.level.high.accesskey      "ж">
+
+<!ENTITY calendar.context.postpone.1hour.label      "1 сағат">
+<!ENTITY calendar.context.postpone.1hour.accesskey  "с">
+<!ENTITY calendar.context.postpone.1day.label       "1 күн">
+<!ENTITY calendar.context.postpone.1day.accesskey   "к">
+<!ENTITY calendar.context.postpone.1week.label      "1 апта">
+<!ENTITY calendar.context.postpone.1week.accesskey  "а">
+
+<!ENTITY calendar.copylink.label       "Сілтемені көшіріп алу">
+<!ENTITY calendar.copylink.accesskey   "С">
+
+<!-- Task View -->
+<!-- Note that the above *.context.* strings are currently used for the other
+     task action buttons -->
+<!ENTITY calendar.taskview.delete.label     "Өшіру">
+
+<!-- Server Context Menu -->
+<!ENTITY calendar.context.newserver.label              "Жаңа күнтізбе…">
+<!ENTITY calendar.context.newserver.accesskey          "Ж">
+<!ENTITY calendar.context.findcalendar.label           "Күнтізбені табу…" >
+<!ENTITY calendar.context.findcalendar.accesskey       "т" >
+<!ENTITY calendar.context.deleteserver2.label          "Күнтізбені жою…">
+<!ENTITY calendar.context.deleteserver2.accesskey      "о">
+
+<!-- LOCALIZATION NOTE (calendar.context.removeserver.label): Removing the
+      calendar is the general action of removing it, while deleting means to
+      clear the data and unsubscribing means just taking it out of the calendar
+      list. -->
+<!ENTITY calendar.context.removeserver.label           "Күнтізбені өшіру…">
+<!ENTITY calendar.context.removeserver.accesskey       "ш">
+<!ENTITY calendar.context.unsubscribeserver.label      "Күнтізбеге жазылуын өшіру…">
+<!ENTITY calendar.context.unsubscribeserver.accesskey  "ы">
+<!ENTITY calendar.context.synccalendars.label          "Күнтізбелерді синхрондау">
+<!ENTITY calendar.context.synccalendars.accesskey      "с">
+<!ENTITY calendar.context.publish.label                "Күнтізбені жариялау…">
+<!ENTITY calendar.context.publish.accesskey            "я">
+<!ENTITY calendar.context.export.label                 "Күнтізбені экспорттау…">
+<!ENTITY calendar.context.export.accesskey             "э">
+<!ENTITY calendar.context.properties.label             "Қасиеттері">
+<!ENTITY calendar.context.properties.accesskey         "а">
+
+<!-- LOCALIZATION NOTE (calendar.context.showcalendar.accesskey)
+     This is the access key used for the showCalendar string -->
+<!ENTITY calendar.context.showcalendar.accesskey      "с">
+
+<!-- LOCALIZATION NOTE (calendar.context.hidecalendar.accesskey)
+     This is the access key used for the hideCalendar string -->
+<!ENTITY calendar.context.hidecalendar.accesskey      "С">
+
+<!-- LOCALIZATION NOTE (calendar.context.showonly.accesskey)
+     This is the access key used for the showOnlyCalendar string -->
+<!ENTITY calendar.context.showonly.accesskey           "е">
+<!ENTITY calendar.context.showall.label                "Барлық күнтізбелерді көрсету">
+<!ENTITY calendar.context.showall.accesskey            "а">
+
+<!ENTITY calendar.context.convertmenu.label              "Келесіге түрлендіру">
+<!ENTITY calendar.context.convertmenu.accesskey.mail     "т">
+<!ENTITY calendar.context.convertmenu.accesskey.calendar "н">
+<!ENTITY calendar.context.convertmenu.event.label        "Оқиға…">
+<!ENTITY calendar.context.convertmenu.event.accesskey    "О">
+<!ENTITY calendar.context.convertmenu.message.label      "Хабарлама…">
+<!ENTITY calendar.context.convertmenu.message.accesskey  "Х">
+<!ENTITY calendar.context.convertmenu.task.label         "Тапсырма…">
+<!ENTITY calendar.context.convertmenu.task.accesskey     "Т">
+
+<!ENTITY calendar.tasks.view.minimonth.label           "Кіші ай көрінісі">
+<!ENTITY calendar.tasks.view.minimonth.accesskey       "К">
+
+<!ENTITY calendar.tasks.view.calendarlist.label        "Күнтізбе тізімі">
+<!ENTITY calendar.tasks.view.calendarlist.accesskey    "т">
+
+<!ENTITY calendar.tasks.view.filtertasks.label           "Тапсырмаларды сүзгілеу">
+<!ENTITY calendar.tasks.view.filtertasks.accesskey       "з">
+
+<!-- Calendar Alarm Dialog -->
+
+<!ENTITY calendar.alarm.location.label              "Орналасуы:" >
+<!ENTITY calendar.alarm.details.label               "Көбірек білу…" >
+
+<!ENTITY calendar.alarm.snoozefor.label             "Келесі уақытқа кейінге қалдыру" >
+<!ENTITY calendar.alarm.snoozeallfor.label          "Барлығын келесі уақытқа кейінге қалдыру" >
+<!ENTITY calendar.alarm.title.label                 "Күнтізбе еске салулары" >
+<!ENTITY calendar.alarm.dismiss.label               "Елемеу" >
+<!ENTITY calendar.alarm.dismissall.label            "Барлығын тайдыру" >
+
+<!ENTITY calendar.alarm.snooze.5minutes.label       "5 минут" >
+<!ENTITY calendar.alarm.snooze.10minutes.label      "10 минут" >
+<!ENTITY calendar.alarm.snooze.15minutes.label      "15 минут" >
+<!ENTITY calendar.alarm.snooze.30minutes.label      "30 минут" >
+<!ENTITY calendar.alarm.snooze.45minutes.label      "45 минут" >
+<!ENTITY calendar.alarm.snooze.1hour.label          "1 сағат" >
+<!ENTITY calendar.alarm.snooze.2hours.label         "2 сағат" >
+<!ENTITY calendar.alarm.snooze.1day.label           "1 күн" >
+
+<!-- LOCALIZATION NOTE (calendar.alarm.snooze.cancel)
+     This string is not seen in the UI, it is read by screen readers when the
+     user focuses the "Cancel" button in the "Snooze for..." popup of the alarm
+     dialog. -->
+<!ENTITY calendar.alarm.snooze.cancel               "Кейінге қалдыруды болдырмау">
+
+<!-- Calendar Server Dialog -->
+<!ENTITY calendar.server.dialog.title.edit          "Күнтізбені түзету">
+<!ENTITY calendar.server.dialog.name.label          "Күнтізбе аты:">
+
+<!-- Calendar Properties -->
+<!ENTITY calendarproperties.color.label                    "Түсі:">
+<!ENTITY calendarproperties.webdav.label                   "iCalendar (ICS)">
+<!ENTITY calendarproperties.caldav.label                   "CalDAV">
+<!ENTITY calendarproperties.wcap.label                     "Sun Java жүйесінің күнтізбе сервері (WCAP)">
+<!ENTITY calendarproperties.format.label                   "Формат:">
+<!ENTITY calendarproperties.location.label                 "Орналасуы:">
+<!ENTITY calendarproperties.refreshInterval.label          "Күнтізбені жаңарту:">
+<!ENTITY calendarproperties.refreshInterval.manual.label   "Қолмен">
+<!ENTITY calendarproperties.name.label                     "Аты:">
+<!ENTITY calendarproperties.readonly.label                 "Тек оқу үшін">
+<!ENTITY calendarproperties.firealarms.label               "Еске салуларды көрсету">
+<!ENTITY calendarproperties.cache3.label                   "Желіден тыс қолдау">
+<!ENTITY calendarproperties.enabled.label                  "Бұл күнтізбені іске қосу">
+<!ENTITY calendarproperties.enabled2.label                 "Бұл күнтізбені іске қосу">
+<!ENTITY calendarproperties.forceDisabled.label            "Бұл күнтізбенің ұсынушысын табу мүмкін емес. Бұл кейбір қосымшалар сөндірілген немесе өшірілген кезде болуы мүмкін.">
+<!ENTITY calendarproperties.unsubscribe.label              "Жазылудан бас тарту">
+<!ENTITY calendarproperties.unsubscribe.accesskey          "б">
+
+<!-- Calendar Publish Dialog -->
+<!ENTITY calendar.publish.dialog.title              "Күнтізбені жариялау">
+<!ENTITY calendar.publish.url.label                 "Жариялау сілтемесі">
+<!ENTITY calendar.publish.publish.button      "Жариялау">
+<!ENTITY calendar.publish.close.button      "Жабу">
+
+<!ENTITY calendar.publish.example.url.description   "Мысалы, http://www.myserver.com/webdav/test.ics">
+
+<!-- Select Calendar Dialog -->
+<!ENTITY calendar.select.dialog.title    "Күнтізбені таңдау">
+
+<!-- Calendar Printing -->
+<!ENTITY calendar.print.window.title "Күнтізбені баспаға шығару">
+<!ENTITY calendar.print.title.label "Тақырыбы:">
+<!ENTITY calendar.print.layout.label "Жайма:">
+<!ENTITY calendar.print.range.label "Нені баспаға шығару">
+<!ENTITY calendar.print.currentView2.label "Ағымдағы көрініс">
+<!ENTITY calendar.print.selectedEventsAndTasks.label "Таңдалған оқиғалар/тапсырмалар">
+<!ENTITY calendar.print.tasks.label "Тапсырмалар">
+<!ENTITY calendar.print.events.label "Оқиғалар">
+<!ENTITY calendar.print.custom.label "Таңдауыңызша күндер ауқымы:">
+<!ENTITY calendar.print.from.label "Бастап:">
+<!ENTITY calendar.print.to.label "дейін:">
+<!ENTITY calendar.print.settingsGroup.label "Баспаға шығару параметрлері">
+<!ENTITY calendar.print.optionsGroup.label "Баптаулар">
+<!ENTITY calendar.print.taskswithnoduedate.label "Бітіру уақыты жоқ тапсырмалар">
+<!ENTITY calendar.print.completedtasks.label "Аяқталған тапсырмалар">
+
+<!-- Error reporting -->
+<!ENTITY calendar.error.detail "Көбірек білу…">
+<!ENTITY calendar.error.code "Қате коды:">
+<!ENTITY calendar.error.description "Сипаттамасы:">
+<!ENTITY calendar.error.title "Қате орын алды">
+
+<!-- Extract buttons in message header -->
+<!ENTITY calendar.extract.event.button         "Оқиға ретінде қосу">
+<!ENTITY calendar.extract.task.button          "Тапсырма ретінде қосу">
+<!ENTITY calendar.extract.event.button.tooltip "Хабарламадан күнтізбелік ақпаратты шығарып, оны күнтізбеңізге оқиға ретінде қосу">
+<!ENTITY calendar.extract.task.button.tooltip  "Хабарламадан күнтізбелік ақпаратты шығарып, оны күнтізбеңізге тапсырма ретінде қосу">

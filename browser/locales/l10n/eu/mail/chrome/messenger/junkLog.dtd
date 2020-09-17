@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Zabor-posta moldakorraren loga">
+<!ENTITY adaptiveJunkLogInfo.label "Zabor-posta moldakorraren kontrol-jardueraren loga.">
+<!ENTITY clearLog.label "Garbitu loga">
+<!ENTITY clearLog.accesskey "G">
+<!ENTITY closeLog.label "Itxi">
+<!ENTITY closeLog.accesskey "t">

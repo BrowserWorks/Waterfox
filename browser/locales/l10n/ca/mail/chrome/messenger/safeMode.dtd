@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "Mode segur del &brandShortName;">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "El &brandShortName; s'està executant en mode segur, que inhabilita temporalment els vostres paràmetres personalitzats, temes i extensions.">
+<!ENTITY safeModeDescription2.label       "Si ho voleu podeu fer que siguin permanents els canvis següents:">
+
+<!ENTITY disableAddons.label              "Inhabilita tots els complements">
+<!ENTITY disableAddons.accesskey          "c">
+
+<!ENTITY resetToolbars.label              "Inicialitza les barres d'eines i els controls">
+<!ENTITY resetToolbars.accesskey          "e">
+
+<!ENTITY changeAndRestartButton.label     "Aplica els canvis i reinicia">
+<!ENTITY changeAndRestartButton.accesskey "A">
+
+<!ENTITY continueButton.label             "Continua en mode segur">
+<!ENTITY continueButton.accesskey         "m">

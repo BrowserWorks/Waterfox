@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Informaçioin in sce &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "I">
+
+<!ENTITY preferencesCmdMac.label        "Preferense…">
+
+<!ENTITY servicesMenuMac.label          "Serviççi">
+
+<!ENTITY hideThisAppCmdMac2.label       "Ascondi &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Ascondi i atri">
+
+<!ENTITY showAllAppsCmdMac.label        "Fanni vedde tutto">
+

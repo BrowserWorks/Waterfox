@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Frakoblede webapplikasjoner">
+<!ENTITY pref.offlineCache.caption          "Frakoblet webinnhold og brukerdata">
+
+<!ENTITY clearOfflineAppCache.label         "Tøm">
+<!ENTITY clearOfflineAppCache.accesskey     "T">
+
+<!ENTITY offlineAlwaysAllow.label           "Tillat alle nettsted å lagre data for frakoblet bruk">
+<!ENTITY offlineAlwaysAllow.accesskey       "T">
+<!ENTITY offlineExplicit.label              "Bare tillat nettsted med eksplisitt tillatelse">
+<!ENTITY offlineExplicit.accesskey          "B">
+<!ENTITY offlineNotifyAsk.label             "Varsle meg når nettsted ønsker å lagre data for frakoblet bruk.">
+<!ENTITY offlineNotifyAsk.accesskey         "V">
+<!ENTITY offlineNotifyPermissions.label     "Behandle tillatelser">
+<!ENTITY offlineNotifyPermissions.accesskey "B">
+
+<!ENTITY offlineAppsUsage.label             "Følgende nettsted har tillatelse til å lagre data for frakoblet bruk:">
+<!ENTITY offlineAppsListRemove.label        "Tøm data …">
+<!ENTITY offlineAppsListRemove.accesskey    "d">

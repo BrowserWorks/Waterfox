@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Aozañ ha chomlec'hiañ">
+<!ENTITY addressingGroupTitle.label "Chomlec'hiañ">
+<!ENTITY addressingText.label      "Pa vez klasket chomlec'hioù :">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Ober gant gwellvezioù ma dafariad LDAP hollek evit ar gont-mañ">
+<!ENTITY useGlobal.accesskey       "D">
+<!ENTITY editDirectories.label     "Aozañ kavlec'hiadoù…">
+<!ENTITY editDirectories.accesskey "e">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Ober gant un dafariad LDAP disheñvel :">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "Tra ebet">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Aozadur">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Aozañ ar c'hemennadennoù e mentrezh HTML">
+<!ENTITY useHtml.accesskey                    "z">
+<!ENTITY autoQuote.label                      "Menegiñ ent emgefreek ar gemennadenn orin pa vez aozet ur respont">
+<!ENTITY autoQuote.accesskey                  "M">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "En ur venegiñ,">
+<!ENTITY quoting.accesskey                    "q">
+<!ENTITY aboveQuote.label                     "lec'hiañ ma respont war-lein an destenn meneget">
+<!ENTITY belowQuote.label                     "lec'hiañ ma respont dindan an destenn meneget">
+<!ENTITY selectAndQuote.label                 "diuzañ an destenn meneget">
+<!ENTITY place.label                          "ha lec'hiañ ma sinadur">
+<!ENTITY place.accesskey                      "l">
+<!ENTITY belowText.label                      "dindan an destenn meneget (kuzuliet)">
+<!ENTITY aboveText.label                      "dindan ma respont (war-lein an destenn meneget)">
+<!ENTITY includeSigOnReply.label              "Ouzhpennañ ar sinadur evit ar respontoù">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "Ouzhpennañ ar sinadur evit ar c'hemennadennoù treuzkaset">
+<!ENTITY includeSigOnForward.accesskey        "a">
+
+<!ENTITY globalComposingPrefs.label           "Gwellvezioù skridaozañ hollek…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Gwellvezioù chomlec'hiañ hollek…">
+<!ENTITY globalAddressingPrefs.accesskey      "c">

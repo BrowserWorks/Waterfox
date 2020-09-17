@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Egenskaper för sida">
+<!ENTITY location.label "Adress:">
+<!ENTITY lastModified.label "Senast ändrad:">
+<!ENTITY titleInput.label "Titel:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Författare:">
+<!ENTITY authorInput.accessKey "F">
+<!ENTITY descriptionInput.label "Beskrivning:">
+<!ENTITY descriptionInput.accessKey "B">
+<!ENTITY locationNewPage.label "[Ny sida, ännu ej sparad]">
+<!ENTITY EditHEADSource1.label "Avancerade användare:">
+<!ENTITY EditHEADSource2.label "För att redigera annat innehåll i &lt;head&gt;-regionen, använd &quot;HTML-kod&quot; i Visa-menyn eller bland redigeringsverktygen.">

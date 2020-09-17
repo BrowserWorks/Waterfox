@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Іздеу">
+
+<!ENTITY newPref.namePlaceholder       "Аты">
+
+<!ENTITY newPref.valueBoolean          "Логикалық">
+<!ENTITY newPref.valueString           "Жол">
+<!ENTITY newPref.valueInteger          "Бүтін">
+
+<!ENTITY newPref.stringPlaceholder     "Жолды енгізіңіз">
+<!ENTITY newPref.numberPlaceholder     "Санды енгізіңіз">
+
+<!ENTITY newPref.toggleButton          "Ауыстыру">
+<!ENTITY newPref.cancelButton          "Бас тарту">
+
+<!ENTITY contextMenu.copyPrefName      "Атын көшіріп алу">
+<!ENTITY contextMenu.copyPrefValue     "Мәнін көшіріп алу">

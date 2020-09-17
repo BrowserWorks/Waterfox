@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "Pokaži:">
+<!ENTITY viewPicker.accesskey "k">
+<!ENTITY viewAll.label "Vse">
+<!ENTITY viewAll.accesskey "V">
+<!ENTITY viewUnread.label "Neprebrano">
+<!ENTITY viewUnread.accesskey "p">
+<!ENTITY viewNotDeleted.label "Ne izbrisano">
+<!ENTITY viewNotDeleted.accesskey "N">
+<!ENTITY viewTags.label "Oznake">
+<!ENTITY viewTags.accesskey "O">
+<!ENTITY viewCustomViews.label "Pogledi po meri">
+<!ENTITY viewCustomViews.accesskey "P">
+<!ENTITY viewVirtualFolder.label "Shrani pogled kot mapo…">
+<!ENTITY viewVirtualFolder.accesskey "m">
+<!ENTITY viewCustomizeView.label "Prilagodi…">
+<!ENTITY viewCustomizeView.accesskey "P">

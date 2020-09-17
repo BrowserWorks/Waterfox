@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Sahifa ranglari va orqa fon">
+<!ENTITY pageColors.label "Sahifa ranglari">
+<!ENTITY defaultColorsRadio.label "O‘qigichning asosiy ranglari (Sahifaga rang o‘rnatmang)">
+<!ENTITY defaultColorsRadio.accessKey "o">
+<!ENTITY defaultColorsRadio.tooltip "Rang sozlamalarini faqat ko‘rsatkich (o‘qigich)ning brauzeridan foydalaning">
+<!ENTITY customColorsRadio.label "Boshqa ranglardan foydalanish:">
+<!ENTITY customColorsRadio.accessKey "B">
+<!ENTITY customColorsRadio.tooltip "Ushbu rang sozlamalari ko‘rsatkichning brauzeri sozlamalarinini almashtiriadi">
+
+<!ENTITY normalText.label "O‘rtacha matn">
+<!ENTITY normalText.accessKey "O">
+<!ENTITY linkText.label "Havola matni">
+<!ENTITY linkText.accessKey "H">
+<!ENTITY activeLinkText.label "Faol havola matni">
+<!ENTITY activeLinkText.accessKey "F">
+<!ENTITY visitedLinkText.label "Kiritilgan havola matni">
+<!ENTITY visitedLinkText.accessKey "K">
+<!ENTITY background.label "Orqa fon:">
+<!ENTITY background.accessKey "O">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Orqa fon rangi:">
+<!ENTITY backgroundImage.accessKey "r">
+<!ENTITY backgroundImage.tooltip "Rasm faylidan sahifangiz orqa foni sifatida foydalaning">
+<!ENTITY backgroundImage.shortenedDataURI "Qisqartirilgan URL ma’lumotlari (nusxa olish to‘liq URL ma’lumotlarini vaqtinchalik xotiraga joylaydi)">

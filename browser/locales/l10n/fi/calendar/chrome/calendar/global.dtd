@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "keskiyöllä" >
+<!ENTITY time.noon "keskipäivällä" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "su" >
+<!ENTITY day.1.Ddd.accesskey "s">
+<!ENTITY day.2.Ddd "ma" >
+<!ENTITY day.2.Ddd.accesskey "m">
+<!ENTITY day.3.Ddd "ti" >
+<!ENTITY day.3.Ddd.accesskey "t">
+<!ENTITY day.4.Ddd "ke" >
+<!ENTITY day.4.Ddd.accesskey "k">
+<!ENTITY day.5.Ddd "to" >
+<!ENTITY day.5.Ddd.accesskey "o">
+<!ENTITY day.6.Ddd "pe" >
+<!ENTITY day.6.Ddd.accesskey "e">
+<!ENTITY day.7.Ddd "la" >
+<!ENTITY day.7.Ddd.accesskey "a">
+
+<!ENTITY day.1.name "sunnuntai" >
+<!ENTITY day.2.name "maanantai" >
+<!ENTITY day.3.name "tiistai" >
+<!ENTITY day.4.name "keskiviikko" >
+<!ENTITY day.5.name "torstai" >
+<!ENTITY day.6.name "perjantai" >
+<!ENTITY day.7.name "lauantai" >
+
+<!ENTITY month.1.name "tammikuu" >
+<!ENTITY month.2.name "helmikuu" >
+<!ENTITY month.3.name "maaliskuu" >
+<!ENTITY month.4.name "huhtikuu" >
+<!ENTITY month.5.name "toukokuu" >
+<!ENTITY month.6.name "kesäkuu" >
+<!ENTITY month.7.name "heinäkuu" >
+<!ENTITY month.8.name "elokuu" >
+<!ENTITY month.9.name "syyskuu" >
+<!ENTITY month.10.name "lokakuu" >
+<!ENTITY month.11.name "marraskuu" >
+<!ENTITY month.12.name "joulukuu" >
+
+<!ENTITY onemonthbackward.tooltip "Siirry edelliseen kuukauteen" >
+<!ENTITY onemonthforward.tooltip "Siirry seuraavaan kuukauteen" >
+<!ENTITY oneyearbackward.tooltip "Siirry vuosi taaksepäin" >
+<!ENTITY oneyearforward.tooltip "Siirry vuosi eteenpäin" >
+<!ENTITY showToday.tooltip "Siirry tähän päivään">
+<!ENTITY onedayforward.tooltip "Siirry seuraavaan päivään">
+<!ENTITY onedaybackward.tooltip "Siirry edelliseen päivään">
+<!ENTITY showselectedday.tooltip "Näytä valitun päivän tapahtumat">

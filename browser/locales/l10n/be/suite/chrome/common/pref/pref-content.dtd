@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.content.title "Змесціва">
+<!ENTITY pref.content.description "Гэтыя наладжванні ўплываюць на тое, як пляцоўкі сеціва і змесціва лістоў адлюстроўваюцца ў &brandShortName;.">
+<!ENTITY siteIcons.label "Значкі пляцовак Сеціва">
+<!ENTITY useSiteIcons.label "Паказваць значкі пляцовак Сеціва">
+<!ENTITY useSiteIcons.accesskey "з">
+<!ENTITY useFavIcons.label "Нападліва шукаць значкі пляцовак Сеціва, калі пляцоўка не вызначае іх">
+<!ENTITY useFavIcons.accesskey "Н">
+<!ENTITY enableAutomaticImageResizing.label "Сціскаць вялікія выявы да памераў акна азіральніка">
+<!ENTITY enableAutomaticImageResizing.accesskey "ц">
+<!ENTITY useSmoothScroll.label "Ужываць плаўнае пракручванне">
+<!ENTITY useSmoothScroll.accesskey "ж">
+<!ENTITY allowHWAccel.label "Ужываць, калі можна, паскарэнне начыння">
+<!ENTITY allowHWAccel.accesskey "с">
+<!ENTITY textZoomOnly.label "Павялічваць тэкст, а не старонкі цалкам">
+<!ENTITY textZoomOnly.accesskey "в">
+<!ENTITY blockAutoRefresh.label "Папярэджваць мяне, калі пляцоўкі сеціва спрабуюць перанакіраваць ці абнавіць старонку">
+<!ENTITY blockAutoRefresh.accesskey "П">
+<!ENTITY siteSpecific.label "Памятаць узроўні павялічэння для пляцовак">
+<!ENTITY siteSpecific.accesskey "у">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Deskargak">
+<!ENTITY aboutDownloads.header                     "Zure deskargak">
+<!ENTITY aboutDownloads.empty                      "Deskargarik ez">
+
+<!ENTITY aboutDownloads.open                       "Ireki">
+<!ENTITY aboutDownloads.remove                     "Ezabatu">
+<!ENTITY aboutDownloads.removeAll                  "Ezabatu denak">
+<!ENTITY aboutDownloads.pause                      "Pausarazi">
+<!ENTITY aboutDownloads.resume                     "Berrekin">
+<!ENTITY aboutDownloads.cancel                     "Utzi">
+<!ENTITY aboutDownloads.retry                      "Saiatu berriro">

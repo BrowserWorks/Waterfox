@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName;ஐ பற்றி">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; பரிசோதனை முயற்சியாகும், அது நிலைத்தன்மையற்றதாக இருக்கக்கூடும்.">
+<!ENTITY aboutPage.checkForUpdates.link         "புதுப்பித்தல்களை சரிபார் »">
+<!ENTITY aboutPage.checkForUpdates.checking     "புதுப்பித்தல்களுக்கு சரிபார்க்கிறது…">
+<!ENTITY aboutPage.checkForUpdates.none         "புதுப்பித்தல்கள் எதுவும் கிடைக்கவில்லை">
+<!ENTITY aboutPage.checkForUpdates.available2   "புதுப்பித்தல்களை பதிவிறக்கு">
+<!ENTITY aboutPage.checkForUpdates.downloading  "மேம்படுத்தலை பதிவிறக்குகிறது…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "புதுப்பித்தல்களை நிறுவு">
+<!ENTITY aboutPage.faq.label                    "அகேகே">
+<!ENTITY aboutPage.support.label                "ஆதரவு">
+<!ENTITY aboutPage.privacyPolicy.label          "தனியுரிமை கொள்கை">
+<!ENTITY aboutPage.rights.label                 "உங்கள் உரிமையை அறியவும்">
+<!ENTITY aboutPage.relNotes.label               "வெளியீட்டு குறிப்புகள்">
+<!ENTITY aboutPage.credits.label                "புகழ்கள்">
+<!ENTITY aboutPage.license.label                "உரிமம் பற்றிய தகவல்">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox மற்றும் அதன் சின்னங்கள் Mozilla அறக்கட்டளையின் வர்த்தக முத்திரைகளாகும்.">

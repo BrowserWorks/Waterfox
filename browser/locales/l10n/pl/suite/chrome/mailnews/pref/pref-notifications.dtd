@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title "Powiadomienia">
+<!ENTITY notifications.caption "Powiadomienia">
+<!ENTITY newMessagesArrive.label "Po odebraniu nowej wiadomości:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label "Wyświetlaj powiadomienie przez">
+<!ENTITY showAlertFor.accesskey "W">
+<!ENTITY showAlertTimeEnd.label "sekund">
+
+<!ENTITY showAlertPreviewText.label "Wyświetlaj podgląd treści wiadomości">
+<!ENTITY showAlertPreviewText.accesskey "d">
+<!ENTITY showAlertSubject.label "Wyświetlaj temat">
+<!ENTITY showAlertSubject.accesskey "t">
+<!ENTITY showAlertSender.label "Wyświetlaj nadawcę">
+<!ENTITY showAlertSender.accesskey "e">
+<!ENTITY useSystemAlert.label "Używaj okna powiadomień systemu operacyjnego">
+<!ENTITY useSystemAlert.accesskey "s">
+<!ENTITY useBuiltInAlert.label "Używaj okna powiadomień programu &brandShortName;">
+<!ENTITY useBuiltInAlert.accesskey "U">
+
+<!ENTITY showTrayIcon.label "Wyświetlaj ikonę w pasku systemowym">
+<!ENTITY showTrayIcon.accesskey "l">
+<!ENTITY showBalloon.label "Wyświetlaj okienko powiadomienia">
+<!ENTITY showBalloon.accesskey "j">
+<!ENTITY bounceSystemDockIcon.label "Animuj ikonę dokowania">
+<!ENTITY bounceSystemDockIcon.accesskey "A">
+
+<!ENTITY playSound.label "Odtwórz dźwięk">
+<!ENTITY playSound.accesskey "O">
+<!ENTITY playButton.label "Odtwórz">
+<!ENTITY playButton.accesskey "z">
+<!ENTITY systemsound.label "Systemowy dźwięk powiadomienia o nowej wiadomości">
+<!ENTITY systemsound.accesskey "m">
+<!ENTITY customsound.label "Plik dźwiękowy użytkownika">
+<!ENTITY customsound.accesskey "k">
+<!ENTITY browse.label "Przeglądaj…">
+<!ENTITY browse.accesskey "r">
+<!ENTITY browse.title "Wybierz plik">

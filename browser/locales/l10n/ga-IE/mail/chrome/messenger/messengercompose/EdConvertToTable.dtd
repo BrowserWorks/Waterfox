@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Tiontaigh Go Tábla">
+<!ENTITY instructions1.label   "Cruthaíonn an Cumadóir ró nua tábla do gach aon alt sa rogha.">
+<!ENTITY instructions2.label   "Roghnaigh an carachtar a úsáidfear chun an rogha a roinnt i gcolúin:">
+<!ENTITY commaRadio.label      "Camóg">
+<!ENTITY spaceRadio.label      "Spás">
+<!ENTITY otherRadio.label      "Carachtar Eile:">
+<!ENTITY deleteCharCheck.label "Scrios an carachtar deighilte">
+<!ENTITY collapseSpaces.label  "Tabhair neamhaird ar spásanna breise">
+<!ENTITY collapseSpaces.tooltip "Athraíonn seo spásanna in aice a chéile go deighilteoir amháin">

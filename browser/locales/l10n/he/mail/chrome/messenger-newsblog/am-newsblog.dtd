@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "הפעלת עדכונים לכל ההזנות">
+<!ENTITY biffAll.accesskey             "פ">
+
+<!ENTITY newFeedSettings.label         "הגדרות בררת מחדל להזנות של חדשות">
+
+<!ENTITY manageSubscriptions.label     "נהל מינויים…">
+<!ENTITY manageSubscriptions.accesskey "נ">
+
+<!ENTITY feedWindowTitle.label         "אשף חשבון הזנה">
+<!ENTITY feeds.accountName             "בלוגים והזנות">

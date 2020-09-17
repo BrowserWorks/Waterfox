@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title "Повратна пошта">
+<!ENTITY useGlobalPrefs.label "Користи ги моите глобални преференции за повратна пошта">
+<!ENTITY useGlobalPrefs.accesskey "К">
+<!ENTITY useCustomPrefs.label "Уреди ја повратната пошта за оваа сметка">
+<!ENTITY useCustomPrefs.accesskey "р">
+<!ENTITY requestReceipt.label "При праќање на секоја порака, барај повратна пошта">
+<!ENTITY requestReceipt.accesskey "р">
+<!ENTITY receiptArrive.label "Кога ќе пристигне повратна пошта:">
+<!ENTITY leaveIt.label "Остави ја во моето сандаче">
+<!ENTITY leaveIt.accesskey "и">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label "Премести ја во мојата &quot;Испратени&quot; папка">
+<!ENTITY moveToSent.accesskey "м">
+<!ENTITY requestMDN.label "Кога ќе добијам барање за повратна пошта:">
+<!ENTITY returnSome.label "Дозволи повратна пошта за некои пораки ако">
+<!ENTITY returnSome.accesskey "е">
+<!ENTITY never.label "Никогаш не испраќај повратна пошта">
+<!ENTITY never.accesskey "Н">
+<!ENTITY notInToCc.label "не сум во До или Cc на пораката:">
+<!ENTITY notInToCc.accesskey "Д">
+<!ENTITY outsideDomain.label "испраќачот не е од мојот домен:">
+<!ENTITY outsideDomain.accesskey "с">
+<!ENTITY otherCases.label "а во сите други случаи:">
+<!ENTITY otherCases.accesskey "о">
+<!ENTITY askMe.label "Прашај ме">
+<!ENTITY alwaysSend.label "Секогаш испраќај">
+<!ENTITY neverSend.label "Никогаш не испраќај">

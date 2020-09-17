@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "অনুভূমিক রেখার বৈশিষ্ট্য">
+
+<!ENTITY dimensionsBox.label "মাত্রা">
+<!ENTITY heightEditField.label "উচ্চতা (g):">
+<!ENTITY heightEditField.accessKey "g">
+<!ENTITY widthEditField.label "প্রস্থ (W):">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY pixelsPopup.value "পিক্সেল">
+<!ENTITY alignmentBox.label "প্রান্তিককরণ">
+<!ENTITY leftRadio.label "বাম (L)">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.label "কেন্দ্র (C)">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.label "ডান (R)">
+<!ENTITY rightRadio.accessKey "R">
+
+<!ENTITY threeDShading.label "ত্রিমাত্রিক ছায়াকরণ (S)">
+<!ENTITY threeDShading.accessKey "S">
+<!ENTITY saveSettings.label "ডিফল্ট হিসেবে ব্যবহার করা হবে (D)">
+<!ENTITY saveSettings.accessKey "D">
+<!ENTITY saveSettings.tooltip "নতুন অনুভূমিক রেখা প্রবেশ করানোর সময় ব্যবহারের জন্য এই সেটিং সংরক্ষণ করা হবে">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "პოვნა ტექსტის შეტანისას">
+<!ENTITY findAsYouTypeBehavior.label "პოვნა ტექსტის შეტანისას">
+<!ENTITY findAsYouTypeTip.label "რჩევა: ავტომატური პოვნის ჩასართავად დაიწყეთ სიმბოლოთი / (ტექსტისთვის) ან ' (ბმებისთვის) და შემდეგ შეიტანეთ სასურველი საძიებო კონტექსტი.">
+<!ENTITY findAsYouTypeTimeout.label "მიმდინარე ძიების გასუფთავება რამდენიმე წამის უმოქმედობის შემდეგ">
+<!ENTITY findAsYouTypeTimeout.accesskey "ფ">
+<!ENTITY findAsYouTypeSound.label "ხმოვანი სიგნალი თუ საძიებო ტექსტი ვერ მოიძებნა">
+<!ENTITY findAsYouTypeSound.accesskey "P">
+<!ENTITY findAsYouTypeEnableAuto.label "ვებგვერდზე ტექსტის შეტანისას ავტომატური ძიება:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "F">
+<!ENTITY findAsYouTypeAutoText.label "ამ გვერდის ტექსტში">
+<!ENTITY findAsYouTypeAutoText.accesskey "A">
+<!ENTITY findAsYouTypeAutoLinks.label "მხოლოდ ბმებში">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "L">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "ძიების პანელის ჩვენება ტექსტის შეტანისას">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "S">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "შენიშვნა: ძიება ტექსტის შეტანისას საძიებო პანელის ასახვის გარეშე არ იძლევა არალათინური სიმბოლოების შეტანის შესაძლებლობას.">

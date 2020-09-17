@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Umetni tabelu">
+
+<!ENTITY size.label "Veličina">
+<!ENTITY numRowsEditField.label "Redovi:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "Kolone:">
+<!ENTITY numColumnsEditField.accessKey "K">
+<!ENTITY widthEditField.label "Širina:">
+<!ENTITY widthEditField.accessKey "Š">
+<!ENTITY borderEditField.label "Okvir:">
+<!ENTITY borderEditField.accessKey "O">
+<!ENTITY borderEditField.tooltip "Upišite broj za okvir tabele ili upišite nula (0) za prikaz bez okvira">
+<!ENTITY pixels.label "piksela">

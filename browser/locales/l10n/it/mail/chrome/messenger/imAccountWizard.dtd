@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Configurazione automatica account chat">
+
+<!ENTITY accountProtocolTitle.label "Rete di chat">
+<!ENTITY accountProtocolInfo.label "Scegliere la rete del proprio profilo di chat.">
+<!ENTITY accountProtocolField.label "Rete:">
+<!ENTITY accountProtocolGetMore.label "Altri…">
+
+<!ENTITY accountUsernameTitle.label "Nome utente">
+<!ENTITY accountUsernameDuplicate.label "Questo account è già configurato!">
+
+<!ENTITY accountPasswordTitle.label "Password">
+<!ENTITY accountPasswordInfo.label "Digitare la password nel campo sottostante.">
+<!ENTITY accountPasswordField.label "Password:">
+<!ENTITY accountPasswordManager.label "La password digitata sarà memorizzata nel Gestore Password. Lasciare questo campo vuoto se si desidera che questa password sia richiesta tutte le volte che ci si collega con questo account.">
+
+<!ENTITY accountAdvancedTitle.label "Opzioni avanzate">
+<!ENTITY accountAdvancedInfo.label "È possibile saltare questo passaggio se lo si desidera.">
+<!ENTITY accountAdvanced.newMailNotification.label "Notifica arrivo nuovi messaggi">
+<!ENTITY accountAliasGroupbox.caption "Alias locale">
+<!ENTITY accountAliasField.label "Alias:">
+<!ENTITY accountAliasInfo.label "Questo sarà mostrato solo durante le conversazioni, i contatti remoti non lo vedranno.">
+<!ENTITY accountProxySettings.caption "Impostazioni proxy">
+<!ENTITY accountProxySettings.change.label "Modifica…">
+<!ENTITY accountProxySettings.change.accessKey "M">
+
+<!ENTITY accountSummaryTitle.label "Riepilogo">
+<!ENTITY accountSummaryInfo.label "Ecco un riepilogo delle informazioni inserite. Controllare prima della creazione dell’account.">
+<!ENTITY accountSummary.connectNow.label "Collegare questo account.">

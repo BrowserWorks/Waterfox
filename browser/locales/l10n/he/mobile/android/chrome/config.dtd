@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "חיפוש">
+
+<!ENTITY newPref.namePlaceholder       "שם">
+
+<!ENTITY newPref.valueBoolean          "בוליאני">
+<!ENTITY newPref.valueString           "מחרוזת">
+<!ENTITY newPref.valueInteger          "מספר שלם">
+
+<!ENTITY newPref.stringPlaceholder     "הכנסת מחרוזת">
+<!ENTITY newPref.numberPlaceholder     "הכנסת מספר">
+
+<!ENTITY newPref.toggleButton          "החלפה">
+<!ENTITY newPref.cancelButton          "ביטול">
+
+<!ENTITY contextMenu.copyPrefName      "העתקת שם">
+<!ENTITY contextMenu.copyPrefValue     "העתקת ערך">

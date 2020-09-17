@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "शोधा">
+
+<!ENTITY newPref.namePlaceholder       "नाव">
+
+<!ENTITY newPref.valueBoolean          "बूलियन">
+<!ENTITY newPref.valueString           "स्ट्रिंग">
+<!ENTITY newPref.valueInteger          "पूर्णांक">
+
+<!ENTITY newPref.stringPlaceholder     "स्ट्रिंग प्रविष्ट करा">
+<!ENTITY newPref.numberPlaceholder     "अंक प्रविष्ट करा">
+
+<!ENTITY newPref.toggleButton          "टॉगल करा">
+<!ENTITY newPref.cancelButton          "रद्द करा">
+
+<!ENTITY contextMenu.copyPrefName      "नावाची प्रत बनवा">
+<!ENTITY contextMenu.copyPrefValue     "मूल्याची प्रत बनवा">

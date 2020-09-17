@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Захаваныя файлы">
+<!ENTITY aboutDownloads.empty                      "Няма захаваных файлаў">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Адкрыць папку з файлам">
+<!ENTITY cmd.show.accesskey                        "А">
+<!ENTITY cmd.showMac.label                         "Паказаць у Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Адкрыць">
+<!ENTITY cmd.open.accesskey                        "А">
+<!ENTITY cmd.removeFromHistory.label               "Выдаліць з гісторыі">
+<!ENTITY cmd.removeFromHistory.accesskey           "ы">
+<!ENTITY cmd.clearList.label                       "Ачысціць спіс">
+<!ENTITY cmd.clearList.accesskey                   "А">
+<!ENTITY cmd.clearList.tooltip                     "Выдаліць усе запісы са спісу захаваных файлаў, за выключэннем бягучых сцягванняў.">
+<!ENTITY cmd.searchDownloads.label                 "Пошук…">
+<!ENTITY cmd.searchDownloads.key                   "П">

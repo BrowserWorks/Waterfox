@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Nova poruka: (bez naslova)">
+
+<!ENTITY fromAddr.label "Od:">
+<!ENTITY subject.label  "Predmet:">
+<!ENTITY attachments.label "Prilozi:">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Spasi">
+<!ENTITY saveAsCmd.label "Spasi kao">
+<!ENTITY saveAsFileCmd.label "Datoteku…">
+<!ENTITY saveAsDraftCmd.label "Nacrt">
+<!ENTITY saveAsTemplateCmd.label "Šablon">
+<!ENTITY attachMenu.label "Priloži">
+<!ENTITY attachFileCmd.label "Datoteke…">
+<!ENTITY attachPageCmd.label "Web stranicu…">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Kontakt karticu (vCard)">
+<!ENTITY sendNowCmd.label "Pošalji sad">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.label "Pošalji kasnije">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Prepakuj">
+<!ENTITY accountManagerCmd.label "Postavke računa pošte i interesnih grupa…">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "Alatna traka pošte">
+<!ENTITY showFormatToolbarCmd.label "Alatna traka formatiranja">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Opcije">
+
+<!ENTITY quoteCmd.label "Citiraj poruku">
+<!ENTITY selectAddressCmd.label "Izaberi adrese…">
+
+<!ENTITY priorityMenu.label "Prioritet">
+<!ENTITY lowestPriorityCmd.label "Najniži">
+<!ENTITY lowPriorityCmd.label "Nizak">
+<!ENTITY normalPriorityCmd.label "Normalan">
+<!ENTITY highPriorityCmd.label "Visok">
+<!ENTITY highestPriorityCmd.label "Najviši">
+
+<!ENTITY returnReceiptMenu.label "Potvrda o prijemu">
+<!ENTITY dsnMenu.label "Potvrda isporuke">
+
+<!ENTITY outputFormatMenu.label "Format">
+<!ENTITY autoFormatCmd.label "Automatski prepoznaj">
+<!ENTITY plainTextFormatCmd.label "Samo običan tekst">
+<!ENTITY htmlFormatCmd.label "Samo obogaćeni tekst (HTML)">
+<!ENTITY bothFormatCmd.label "Obični i obogaćeni (HTML) tekst">
+
+<!ENTITY fileCarbonCopyCmd.label "Pošalji kopiju na">
+<!ENTITY fileHereMenu.label "Arhiviraj ovdje">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Pošalji">
+<!ENTITY addressButton.label "Adresa">
+<!ENTITY attachButton.label "Priloži">
+<!ENTITY spellingButton.label "Pravopis">
+<!ENTITY saveButton.label "Spasi">
+<!ENTITY stopButton.label "Zaustavi">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Adresna traka">
+<!ENTITY formatToolbar.tooltip "Alatna traka formatiranja">
+<!ENTITY sendButton.tooltip "Pošalji poruku sada"> 
+<!ENTITY sendlaterButton.tooltip "Pošalji poruku kasnije"> 
+<!ENTITY addressButton.tooltip "Odaberi primaoca iz imenika"> 
+<!ENTITY attachButton.tooltip "Uključi prilog"> 
+<!ENTITY saveButton.tooltip "Sačuvaj ovu poruku"> 
+<!ENTITY stopButton.tooltip "Zaustavi trenutni prijenos"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Otvori">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY renameAttachment.label "Preimenuj…">
+<!ENTITY attachFile.label "Priloži datoteke…">
+<!ENTITY attachPage.label "Priloži web stranicu…">

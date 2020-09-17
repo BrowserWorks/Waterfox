@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Kopyen &amp; mappen">
+<!ENTITY sendingPrefix.label "By it ferstjoeren fan berjochten, automatysk:">
+<!ENTITY fccMailFolder.label "In kopy sette yn:">
+<!ENTITY fccMailFolder.accesskey "k">
+<!ENTITY fccReplyFollowsParent.label "Antwurden pleatse yn de map fan it berjocht dêr't op antwurde wurdt">
+<!ENTITY fccReplyFollowsParent.accesskey "w">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc nei dizze e-mailadressen:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Adressen skiede troch komma's">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc nei dizze e-mailadressen:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Adressen skiede troch komma's">
+<!ENTITY saveMessageDlg.label "Befêstiging werjaan as berjochten bewarre binne">
+<!ENTITY saveMessageDlg.accesskey "f">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Map &quot;Ferstjoerd&quot; yn:">
+<!ENTITY sentFolderOn.accesskey "M">
+<!ENTITY sentInOtherFolder.label "Oars:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Berjochtargiven">
+<!ENTITY keepArchives.label "Berjochtargiven bewarje yn:">
+<!ENTITY keepArchives.accesskey "g">
+<!ENTITY archiveHierarchyButton.label "Argivearopsjes…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label "Map &quot;Argiven&quot; yn:">
+<!ENTITY archivesFolderOn.accesskey "p">
+<!ENTITY archiveInOtherFolder.label "Oars:">
+<!ENTITY archiveInOtherFolder.accesskey "a">
+<!ENTITY specialFolders.label "Konsepten en sjabloanen">
+<!ENTITY keepDrafts2.label "Berjochtkonsepten bewarje yn:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Map &quot;Konsepten&quot; yn:">
+<!ENTITY draftsFolderOn.accesskey "t">
+<!ENTITY draftInOtherFolder.label "Oars:">
+<!ENTITY draftInOtherFolder.accesskey "r">
+<!ENTITY keepTemplates.label "Berjochtsjabloanen bewarje yn:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Map &quot;Sjabloanen&quot; yn:">
+<!ENTITY templatesFolderOn.accesskey "n">
+<!ENTITY templateInOtherFolder.label "Oars:">
+<!ENTITY templateInOtherFolder.accesskey "s">

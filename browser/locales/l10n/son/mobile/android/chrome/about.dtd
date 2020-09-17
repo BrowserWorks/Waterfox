@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName; ga">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; ti šiyyan dumi kaŋ ši hima tabatante.">
+<!ENTITY aboutPage.checkForUpdates.link         "Taagandirey koroši »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Goo ma taagandirey guna...">
+<!ENTITY aboutPage.checkForUpdates.none         "Taagandiri kul ši bara">
+<!ENTITY aboutPage.checkForUpdates.available2   "Taagandiri zumandi">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Goo ma taagandiri zumandi…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Taagandiri sinji">
+<!ENTITY aboutPage.faq.label                    "Hãayan nda zaabi">
+<!ENTITY aboutPage.support.label                "Faaba">
+<!ENTITY aboutPage.privacyPolicy.label          "Sutura laada">
+<!ENTITY aboutPage.rights.label                 "War alhakey bay">
+<!ENTITY aboutPage.relNotes.label               "Dumi hantumey">
+<!ENTITY aboutPage.credits.label                "Kanbuzaakey">
+<!ENTITY aboutPage.license.label                "Duɲeyan alhabar">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox nda Firefox maabiyey ti teekaw tammaasayaŋ Mozilla Foundation se.">

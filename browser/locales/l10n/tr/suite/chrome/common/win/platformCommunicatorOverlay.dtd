@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- win -->
+<!-- LOCALIZATION NOTE : FILE Do not translate "accel" or "shift",
+                         You may want to translate the Cmd.key and accesskey --> 
+
+<!ENTITY closeCmd.label "Kapat">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "K">
+
+<!ENTITY quitApplicationCmd.label "Çık">
+<!ENTITY quitApplicationCmd.key "Q">
+<!ENTITY quitApplicationCmd.accesskey "k">
+
+<!ENTITY redoCmd.key "Y">
+
+<!ENTITY findTypeTextCmd.key "VK_HELP">
+<!ENTITY findTypeLinksCmd.key "'">
+
+<!ENTITY accel.emacs_conflict "accel">
+<!-- Help viewer -->
+
+<!ENTITY openHelpCmd.label "Yardım içeriği">
+<!ENTITY openHelpCmd.accesskey "d">
+<!ENTITY openHelpCmd.key "VK_F1">
+<!ENTITY helpForIEUsers.label "Internet Explorer kullanıcılarına…">
+<!ENTITY helpForIEUsers.accesskey "I">
+<!-- LOCALIZATION NOTE some localizations need to change the
+                       "Help" menu label on Windows -->
+<!ENTITY helpMenu.label "Yardım">
+<!ENTITY helpMenu.accesskey "Y">
+<!-- Key labels, for mousewheel prefs -->
+
+<!ENTITY ctrlKey.label "Ctrl">
+<!ENTITY altKey.label "Alt">
+<!ENTITY shiftKey.label "Shift">
+

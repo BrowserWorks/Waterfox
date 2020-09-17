@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from am-main.xul -->
+
+
+<!ENTITY accountTitle.label "Configuración d'a cuenta">
+<!ENTITY accountName.label "Nombre d'a cuenta:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Identidat predeterminada">
+<!ENTITY identityDesc.label "Cada cuenta tiene una identidat, que ye a información que atras personas veyerán en leyer os suyos mensaches.">
+<!ENTITY name.label "O suyo nombre:">
+<!ENTITY name.accesskey "O">
+<!ENTITY email.label "Adreza de correu electronico:">
+<!ENTITY email.accesskey "A">
+<!ENTITY replyTo.label "Dirección de respuesta:">
+<!ENTITY replyTo.accesskey "c">
+<!ENTITY replyTo.placeholder "Os destinatarios responderán a ista atra adreza">
+<!ENTITY organization.label "Organización:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Texto d'a sinyatura:">
+<!ENTITY signatureText.accesskey "T">
+<!ENTITY signatureHtml.label "Usar HTML">
+<!ENTITY signatureHtml.accesskey "H">
+<!ENTITY signatureFile.label "Adchuntar a sinyatura dende un fichero:">
+<!ENTITY signatureFile.accesskey "s">
+<!ENTITY choose.label "Esleir…">
+<!ENTITY choose.accesskey "E">
+<!ENTITY editVCard.label "Editar tarcheta…">
+<!ENTITY editVCard.accesskey "i">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Adchuntar a mía tarcheta vCard en os mensaches.">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Administrar identidatz…">
+<!ENTITY manageIdentities.accesskey "A">
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+
+<!ENTITY smtpName.label "Servidor de salida (SMTP):">
+<!ENTITY smtpName.accesskey "M">
+<!ENTITY smtpDefaultServer.label "Usar servidor predet.">
+

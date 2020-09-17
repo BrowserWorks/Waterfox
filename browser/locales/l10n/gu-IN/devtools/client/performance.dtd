@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "પ્રોફાઇલ એક પરિપત્ર બફરમાં નમૂનાઓનું સંગ્રહ કરે છે, અને એકવાર બફર રેકોર્ડીંગની મર્યાદા સુધી પહોંચે છે, નવા નમૂનાઓ રેકોર્ડીંગની શરૂઆતમાં નમૂનાઓને ફરીથી લખે છે.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "વાસ્તવિકમાં રેકોર્ડિંગ ડેટાને રેન્ડર કરવા માટે પસંદગીઓમાં બહુવિધ પ્રોસેસિંગ Firefox સક્ષમ કરો.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "બફર સંપૂર્ણ છે. જૂનાં નમૂનાઓને ફરીથી લખવામાં આવી રહ્યો છે.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "એક પ્રોફાઇલ રેકોર્ડિંગ હાલમાં અનુપલબ્ધ છે. કૃપા કરીને બધી ખાનગી બ્રાઉઝિંગ વિંડોઝ બંધ કરો અને ફરી પ્રયાસ કરો.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "લાવી રહ્યા છે…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "વોટરફોલ">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "રેકોર્ડિંગ દરમિયાન બ્રાઉઝર કામગીરી કરી રહેલ વિવિધ કામગીરી દર્શાવે છે, એક વોટરફોલ તરીકે ક્રમશઃ બહાર કર્યો છે.">
+<!ENTITY performanceUI.toolbar.js-calltree "કૉલ શાખા">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "JavaScript કાર્યોને પ્રકાશિત કરે છે જ્યાં બ્રાઉઝર રેકોર્ડિંગ દરમિયાન વધુ સમય પસાર કરે છે.">
+<!ENTITY performanceUI.toolbar.memory-calltree "ફાળવણી">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "રેકોર્ડીંગ દરમિયાન મેમરીની ફાળવણી કરવામાં આવી હતી તે દર્શાવે છે.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS ફ્લેમ ચાર્ટ">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "રેકોર્ડિંગ દરમિયાન JavaScript કૉલ સ્ટેક બતાવે છે.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "ફાળવણી ફ્લેમ ચાર્ટ">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "કુલ સમય">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "આ કાર્યમાં વિતાવેલ સમયની સંખ્યા અને તે કાર્ય કરે છે.">
+<!ENTITY performanceUI.table.selfDuration             "સ્વયં સમય">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "ફક્ત આ વિધેયમાં વિતાવતો સમયનો જથ્થો.">
+<!ENTITY performanceUI.table.totalPercentage          "કુલ ખર્ચ">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "આ કાર્યમાં વિતાવેલ સમયની ટકાવારી અને તે કાર્ય કરે છે.">
+<!ENTITY performanceUI.table.selfPercentage           "સ્વયં ખર્ચ">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "ફક્ત આ વિધેયમાં ગાળવામાં આવેલા સમયની ટકાવારી.">
+<!ENTITY performanceUI.table.samples                  "નમૂનાઓ">
+<!ENTITY performanceUI.table.samples.tooltip          "આ કાર્ય સ્ટેક પર કેટલી વખત સ્ટેક પર હતું ત્યારે પ્રોફાઇલે નમૂના લીધો હતો.">
+<!ENTITY performanceUI.table.function                 "કાર્ય">
+<!ENTITY performanceUI.table.function.tooltip         "નમૂનાપૂર્ણ કાર્યનું નામ અને સ્રોત સ્થાન.">
+<!ENTITY performanceUI.table.totalAlloc               "કુલ નમૂનારૂપ ફાળવણી">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "ઑબ્જેક્ટની ફાળવણીની કુલ સંખ્યા આ સ્થાન અને કેલેલ્સમાં મળેલી છે.">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "સમયરેખામાં કયા ડેટા પ્રદર્શિત કરવો તે પસંદ કરો">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "કામગીરી પસંદગીઓને ગોઠવો.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "કૉલ શાખા ઉલટાવો">
+<!ENTITY performanceUI.invertTree.tooltiptext "કોલ શાખા ઉતારીને સૌથી નાની ફ્રેમથી શરૂ થયેલી પ્રોફાઈલ કોલ પાથ અને જૂની ચોકઠાં સુધી વિસ્તરણ કરે છે.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "ફ્લૅટ ચાર્ટ ઉલટાવો">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "ફ્લેમ ચાર્ટને ઉતારીને સૌથી નાની ફ્રેમથી શરૂ થયેલી પ્રોફાઈલ કોલ પાથ દર્શાવે છે અને જૂની ચોકઠાં સુધી વિસ્તરણ કરે છે.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Gecko પ્લેટફોર્મ માહિતીને બતાવો">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "પ્લેટફોર્મ ડેટા બતાવતા JavaScript પ્રોફાઇલર અહેવાલને સક્ષમ કરે છે જેમાં Gecko પ્લેટફોર્મ પ્રતીકોનો સમાવેશ થાય છે.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "JIT ઑપ્ટિમાઇઝેશન્સ બતાવો">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "દરેક JavaScript ફ્રેમમાં લગાડવામાં આવેલ JIT ઓપ્ટિમાઇઝેશન ડેટાને નમૂનો બતાવો.">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "શાખા પુનરાવર્તન સપાટ કરવું">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "કાર્યો નિરીક્ષણ કરો ત્યારે રિકર્ઝન સમતલ કરો.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "મેમરી રેકોર્ડ કરો">
+<!ENTITY performanceUI.enableMemory.tooltiptext "પ્રોગ્રામિંગ વખતે મેમરી વપરાશ રેકોર્ડ કરો.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "રેકોર્ડ ફાળવણી">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "રૂપરેખાકરણ કરતી વખતે ઓબ્જેક્ટની ફાળવણી રેકોર્ડ કરો.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "ફ્રેમરેટ રેકોર્ડ કરો">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "રૂપરેખાકરણ કરતી વખતે ફ્રેમરેરેટનો રેકોર્ડ કરો.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "હાલ દ્વારા રેકોર્ડિંગ">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "દાખલ કરીને રેકોર્ડિંગ રોકો">
+<!ENTITY performanceUI.console.stopCommandEnd   "કન્સોલમાં.">

@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Հրապարակել էջը">
+<!ENTITY windowTitleSettings.label    "Հրապարակման կարգավորումներ">
+<!ENTITY publishTab.label             "Հրապարակել">
+<!ENTITY settingsTab.label            "Կարգավորումներ">
+<!ENTITY publishButton.label          "Հրապարակել">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Կայքի անունը.">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Ընտրեք այն կայքը, որը ցանկանում եք հրապարակել">
+<!ENTITY newSiteButton.label          "Նոր կայք">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Կայքի ենթաթղթապանակը այս էջի համար.">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "Ընտրեք կամ նշեք հեռադիր ենթաթղթապանակի անունը այս էջի համար">
+<!ENTITY publishImgCheckbox.label     "Ներառել նկարներ և այլ ֆայլեր">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip   "Հրապարակեք նկարներ և այլ ֆայլեր՝ հղված այս էջին">
+<!ENTITY sameLocationRadio.label      "Օգտագործել նույն տեղը որպես էջ">
+<!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip    "Հրապարակել ֆայլեր նույն տեղում, ինչում որ այս էջն է">
+<!ENTITY useSubdirRadio.label         "Օգտագործել այս կայքի ենթաթղթապանակը.">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Հրապարակել ֆայլերը ընտրված հեռադիր ենթաթղթապանակներում">
+<!ENTITY otherDirList.tooltip         "Ընտրեք կամ նշեք հեռադիր ենթաթղթապանակի անունը, որտեղ ֆայլերը կհրապարակ">
+<!ENTITY pageTitle.label              "Էջի անունը.">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Նշեք վերնագիրը՝ պատուհանում և էջանիշերում էջը ճանաչելու համար">
+<!ENTITY pageTitleExample.label       "օր.՝ &quot;ՀայՍոֆթ&quot;">
+<!ENTITY filename.label               "Ֆայլի անունը.">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip             "Նշեք այս ֆայլի անունը, ներառյալ '.html' վեբ էջի համար">
+<!ENTITY filenameExample.label        "օր.՝ &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label       "Նշել որպես հիմնական">
+<!ENTITY setDefaultButton.accesskey   "D">
+<!ENTITY removeButton.label           "Ջնջել կայքը">
+<!ENTITY removeButton.accesskey       "R">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Կայքերի հրապարակում">
+<!ENTITY serverInfo.label             "Սպասարկիչը">
+<!ENTITY loginInfo.label              "Մուտքի տեղեկությունը">
+<!ENTITY siteName.label               "Կայքի անունը.">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "Հրապարակված այս կայքի անունը (օր.՝ 'MySite')">
+<!ENTITY siteUrl.label                "Հրապարակման հասցեն (օր.՝ 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "FTP:// կամ HTTP:// հասցեներ՝ տրամադրված Ձեր Ինտերնետ կամ հոսթինգ մատակարարի կողմից">
+<!ENTITY browseUrl.label              "Ձեր կայքի HTTP հասցեները (օր.՝ 'http://www.myisp.com/myusername')">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "Ձեր համակարգչի ճանապարհի HTTP:// հասցեն (առանց ֆայլի անվան)">
+<!ENTITY username.label               "Օգտվողի անունը.">
+<!ENTITY username.accesskey           "U">
+<!ENTITY username.tooltip             "Ձեր Ինտերնետ կամ հոսթինգ մատակարարի տրամադրած օգտվողի անունը">
+<!ENTITY password.label               "Գաղտնաբառը.">
+<!ENTITY password.accesskey           "w">
+<!ENTITY password.tooltip             "Օգտվողի Ձեր անվան հետ ասոցիացվող գաղտնաբառը">
+<!ENTITY savePassword.label           "Պահպանել գաղտնաբառը">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Ընտրեք սա՝ պահպանելու համար գաղտնաբառը Գաղտնաբառերի կառավարիչում">

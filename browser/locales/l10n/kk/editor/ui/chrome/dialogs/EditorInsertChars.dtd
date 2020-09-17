@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Таңбаны кірістіру">
+<!ENTITY category.label "Санат">
+<!ENTITY letter.label "Әріп:">
+<!ENTITY letter.accessKey "р">
+<!ENTITY character.label "Таңба:">
+<!ENTITY character.accessKey "Т">
+<!ENTITY accentUpper.label "Диакритикалық таңбалары бар бас әріптер">
+<!ENTITY accentLower.label "Диакритикалық таңбалары бар кіші әріптер">
+<!ENTITY otherUpper.label "Басқа бас әріптер">
+<!ENTITY otherLower.label "Басқа кіші әріптер">
+<!ENTITY commonSymbols.label "Кеңінен қолданылатын таңбалар">
+<!ENTITY insertButton.label "Кірістіру">
+<!ENTITY closeButton.label "Жабу">

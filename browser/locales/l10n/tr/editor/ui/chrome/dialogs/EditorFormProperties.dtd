@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Form Özellikleri">
+
+<!ENTITY Settings.label "Ayarlar">
+
+<!ENTITY FormName.label "Form Adı:">
+<!ENTITY FormName.accesskey "F">
+<!ENTITY FormAction.label "Eylem URL'si:">
+<!ENTITY FormAction.accesskey "U">
+<!ENTITY FormMethod.label "Yöntem:">
+<!ENTITY FormMethod.accesskey "Y">
+<!ENTITY FormEncType.label "Karakter Kümesi:">
+<!ENTITY FormEncType.accesskey "K">
+<!ENTITY FormTarget.label "Hedef Çerçeve:">
+<!ENTITY FormTarget.accesskey "H">
+
+<!ENTITY RemoveForm.label "Formu kaldır">
+<!ENTITY RemoveForm.accesskey "m">

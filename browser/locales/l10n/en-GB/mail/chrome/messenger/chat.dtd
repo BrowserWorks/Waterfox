@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Online Contacts">
+<!ENTITY offlineContactsHeader.label   "Offline Contacts">
+<!ENTITY conversationsHeader.label     "Conversations">
+<!ENTITY searchResultConversation.label "Search result">
+<!ENTITY chat.noConv.title             "Conversations will be displayed here.">
+<!ENTITY chat.noConv.description       "Use the contact list in the left panel to start a conversation.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; currently doesn't have any previous conversations stored for this contact.">
+<!ENTITY chat.noAccount.title             "You haven't set up a chat account yet.">
+<!ENTITY chat.noAccount.description       "Let &brandShortName; guide you through the process of setting up your chat account.">
+<!ENTITY chat.accountWizard.button       "Get started">
+<!ENTITY chat.noConnectedAccount.title             "Your chat accounts are not connected.">
+<!ENTITY chat.noConnectedAccount.description       "You can connect them from the 'Chat status' dialog:">
+<!ENTITY chat.showAccountManager.button       "Show chat status">
+
+<!ENTITY chat.participants             "Participants:">
+<!ENTITY chat.previousConversations    "Previous Conversations:">
+<!ENTITY chat.ongoingConversation      "Ongoing conversation">
+
+<!ENTITY openConversationCmd.label     "Start a Conversation">
+<!ENTITY openConversationCmd.accesskey "c">
+<!ENTITY closeConversationCmd.label    "Close Conversation">
+<!ENTITY closeConversationCmd.accesskey "C">
+<!ENTITY aliasCmd.label                "Rename">
+<!ENTITY aliasCmd.accesskey            "R">
+<!ENTITY deleteCmd.label               "Remove Contact">
+<!ENTITY deleteCmd.accesskey           "v">
+
+<!ENTITY openConversationButton.tooltip  "Start a conversation">
+<!ENTITY closeConversationButton.tooltip "Close conversation">
+
+<!ENTITY addBuddyButton.label          "Add Contact">
+<!ENTITY joinChatButton.label          "Join Chat">
+<!ENTITY chatAccountsButton.label      "Show Accounts">
+
+<!ENTITY status.available          "Available">
+<!ENTITY status.unavailable        "Unavailable">
+<!ENTITY status.offline            "Offline">
+
+<!ENTITY openLinkCmd.label            "Open Link…">
+<!ENTITY openLinkCmd.accesskey        "O">

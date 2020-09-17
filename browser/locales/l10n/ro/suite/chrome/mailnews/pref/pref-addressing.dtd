@@ -1,0 +1,36 @@
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# toffee <daniel@toffee.ro>
+# evinteler <emil_vinteler2000@yahoo.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Adrese">
+<!ENTITY emailCollectiontitle.label            "Email Address Collection">
+<!ENTITY emailCollectionPicker.label           "Add email addresses to my:">
+<!ENTITY emailCollectionPicker.accesskey       "m">
+<!ENTITY emailCollectiontext.label             "Email addresses from outgoing messages can be automatically added to a local address book.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Completarea automată a adresei">
+<!ENTITY highlightNonMatches.label             "Highlight addresses that do not autocomplete">
+<!ENTITY highlightNonMatches.accesskey         "a">
+<!ENTITY addressingEnable.label                "Agende locale de contacte">
+<!ENTITY addressingEnable.accesskey            "l">
+<!ENTITY autocompleteText.label                "Când se scrie destinatarul, caută potriviri în:">
+<!ENTITY directories.label                     "Server de directoare:">
+<!ENTITY directories.accesskey                 "d">
+<!ENTITY directoriesNone.label                 "Nespecificat">
+<!ENTITY editDirectories.label                 "Editează repertoare…">
+<!ENTITY editDirectories.accesskey             "E">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Kajkósće horicontalneje linije">
+
+<!ENTITY dimensionsBox.label "Wotměry">
+<!ENTITY heightEditField.label "Wysokosć:">
+<!ENTITY heightEditField.accessKey "W">
+<!ENTITY widthEditField.label "Šěrokosć:">
+<!ENTITY widthEditField.accessKey "r">
+<!ENTITY pixelsPopup.value "Pikselow">
+<!ENTITY alignmentBox.label "Wusměrjenje">
+<!ENTITY leftRadio.label "Nalěwo">
+<!ENTITY leftRadio.accessKey "l">
+<!ENTITY centerRadio.label "Centrowano">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.label "Naprawo">
+<!ENTITY rightRadio.accessKey "N">
+
+<!ENTITY threeDShading.label "Sćin 3D">
+<!ENTITY threeDShading.accessKey "3">
+<!ENTITY saveSettings.label "Jako standard wužiwać">
+<!ENTITY saveSettings.accessKey "d">
+<!ENTITY saveSettings.tooltip "Tute nastajenja składować, zo bychu so při zasuwanju nowych horicontalnych linijow wužiwali">

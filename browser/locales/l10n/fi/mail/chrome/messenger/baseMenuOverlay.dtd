@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Ohje">
+<!ENTITY helpMenu.accesskey "O">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Ohje">
+<!ENTITY helpMenuWin.accesskey "O">
+<!ENTITY aboutProduct2.label "Tietoja - &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "T">
+<!ENTITY helpTroubleshootingInfo.label     "Tietoja ongelmatilanteisiin">
+<!ENTITY helpTroubleshootingInfo.accesskey "T">
+<!ENTITY helpSafeMode.label     "Käynnistä uudelleen ilman lisäosia…">
+<!ENTITY helpSafeMode.accesskey "K">
+<!ENTITY helpSafeMode.stop.label     "Käynnistä uudelleen lisäosat käytössä">
+<!ENTITY helpSafeMode.stop.accesskey "K">
+<!ENTITY productHelp.label "&brandShortName;-ohje">
+<!ENTITY productHelp.accesskey "O">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "Kiihdytä">
+
+<!ENTITY helpKeyboardShortcuts.label "Pikanäppäimet">
+<!ENTITY helpKeyboardShortcuts.accesskey "P">
+
+<!ENTITY helpFeedbackPage.label "Lähetä palautetta…">
+<!ENTITY helpFeedbackPage.accesskey "L">
+
+<!ENTITY helpShowTour2.label "&brandShorterName;-esittely">
+<!ENTITY helpShowTour2.accesskey "e">
+
+<!ENTITY helpGetInvolvedPage.label "Tule mukaan">
+<!ENTITY helpGetInvolvedPage.accesskey "T">
+
+<!ENTITY helpDonationsPage.label "Lahjoita">
+<!ENTITY helpDonationsPage.accesskey "J">

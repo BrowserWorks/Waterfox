@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label         "Gunearen URLa:">
+<!ENTITY docSubdir.label       "Orriaren azpidirektorioa:">
+<!ENTITY otherSubdir.label     "Irudi azpidirektorioa:">
+
+<!ENTITY status.label          "Argitaratzen...">
+<!ENTITY fileList.label        "Argitaratze egoera">
+<!ENTITY succeeded.label       "Lortua">
+<!ENTITY failed.label          "Huts">
+
+<!ENTITY keepOpen              "Mantendu leiho hau irekita argitaratzea amaitu arte.">
+<!ENTITY closeButton.label     "Itxi">

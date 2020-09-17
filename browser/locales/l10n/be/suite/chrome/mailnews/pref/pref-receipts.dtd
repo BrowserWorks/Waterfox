@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.receipts.title "Квіткі атрымання">
+<!ENTITY prefReceipts.caption "Квіткі атрымання">
+<!ENTITY requestReceipt.label "Заўсёды патрабаваць квіток атрымання, калі дасылаецца ліст">
+<!ENTITY requestReceipt.accesskey "З">
+<!ENTITY receiptArrive.label "Калі прыбывае квіток:">
+<!ENTITY leaveIt.label "Пакінуць яго ў маёй папцы Атрыманыя">
+<!ENTITY leaveIt.accesskey "п">
+<!ENTITY moveToSent.label "Перамясціць яго ў маю папку &quot;Дасланыя&quot;">
+<!ENTITY moveToSent.accesskey "м">
+<!ENTITY requestMDN.label "Калі я атрымліваю патрабаванне квітка атрымання:">
+<!ENTITY returnSome.label "Дазволіць квіток атрымання для асобных лістоў">
+<!ENTITY returnSome.accesskey "Д">
+<!ENTITY never.label "Ніколі не дасылаць квіток атрымання">
+<!ENTITY never.accesskey "Н">
+<!ENTITY notInToCc.label "Калі я не ў Да ці Са ліста:">
+<!ENTITY notInToCc.accesskey "н">
+<!ENTITY outsideDomain.label "Калі адпраўнік па-за маім даменам:">
+<!ENTITY outsideDomain.accesskey "д">
+<!ENTITY otherCases.label "Ва ўсіх іншых выпадках:">
+<!ENTITY otherCases.accesskey "і">
+<!ENTITY askMe.label "Спытаць мяне">
+<!ENTITY alwaysSend.label "Заўсёды дасылаць">
+<!ENTITY neverSend.label "Ніколі не дасылаць">

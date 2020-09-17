@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY siteUrl.label "URL пляцоўкі:">
+<!ENTITY docSubdir.label "Паддырэкторыя старонкі:">
+<!ENTITY otherSubdir.label "Паддырэкторыя выявы:">
+<!ENTITY status.label "Публікаванне…">
+<!ENTITY fileList.label "Статус публікавання">
+<!ENTITY succeeded.label "Поспех">
+<!ENTITY failed.label "Няўдача">
+<!ENTITY keepOpen "Трымаць акно адчыненым пасля заканчэння публікавання.">
+<!ENTITY closeButton.label "Зачыніць">

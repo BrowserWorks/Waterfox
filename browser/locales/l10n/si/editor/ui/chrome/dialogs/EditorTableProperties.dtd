@@ -1,0 +1,76 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "වගු ලක්ෂණ">
+<!ENTITY applyButton.label                "යොදන්න">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "වහන්න">
+<!ENTITY tableTab.label                   "වගුව">
+<!ENTITY cellTab.label                    "කොටු">
+<!ENTITY tableRows.label                  "පේළි:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "තීරු:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "උස:">
+<!ENTITY tableHeight.accessKey            "G">
+<!ENTITY tableWidth.label                 "පළල:">
+<!ENTITY tableWidth.accessKey             "W">
+<!ENTITY tableBorderSpacing.label         "දාරයන් සහ හිඩැස්">
+<!ENTITY tableBorderWidth.label           "දාරය:">
+<!ENTITY tableBorderWidth.accessKey       "B">
+<!ENTITY tableSpacing.label               "හිඩැස:">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "පිරවුම (Padding):">
+<!ENTITY tablePadding.accessKey           "P">
+<!ENTITY tablePxBetwCells.label           "කොටු අතර පික්සෙල් ගණන">
+<!ENTITY tablePxBetwBrdrCellContent.label "කොටු දාරය හා අන්තර්ගතය අතර පික්සෙල් ගණනp">
+<!ENTITY tableAlignment.label             "වගු පෙළගැසුම:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "Caption:">
+<!ENTITY tableCaption.accessKey           "n">
+<!ENTITY tableCaptionAbove.label          "වගුවට ඉහළින්">
+<!ENTITY tableCaptionBelow.label          "වගුවට පහළින්">
+<!ENTITY tableCaptionLeft.label           "වගුවට වම් පසින්">
+<!ENTITY tableCaptionRight.label          "වගුවට දකුණු පසින්">
+<!ENTITY tableCaptionNone.label           "කිසිවක් නැත">
+<!ENTITY tableInheritColor.label           "(Let page colour show through)">
+
+<!ENTITY cellSelection.label              "තේරීම">
+<!ENTITY cellSelectCell.label             "නොටුව">
+<!ENTITY cellSelectRow.label              "පේළිය">
+<!ENTITY cellSelectColumn.label           "තීරුව">
+<!ENTITY cellSelectNext.label             "ඊළඟ">
+<!ENTITY cellSelectNext.accessKey         "N">
+<!ENTITY cellSelectPrevious.label         "පෙර">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!-- LOCALIZATION NOTE Next 2 form 1 sentence (we don't want to use HTML tag to wrap) -->
+<!ENTITY applyBeforeChange.label          "දැන් සිදුකළ වෙනස්කමි යොදනු ඇත්තේ තේරීම වෙනස් කිරීමට පෙරයි..">
+<!ENTITY cellContentAlignment.label       "අන්තර්ගතය පෙළගැසුම">
+<!ENTITY cellHorizontal.label             "තිරස්:">
+<!ENTITY cellHorizontal.accessKey         "z">
+<!ENTITY cellVertical.label               "සිරස්:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "කොටු මෝස්තරය:">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "සාමාන්‍ය">
+<!ENTITY cellHeader.label                 "ශීර්ෂය">
+<!ENTITY cellTextWrap.label               "පාඨ පේළි කඩනය:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "පේළි කඩන්න">
+<!ENTITY cellNoWrap.label                 "පේළි කඩන්න එපා">
+<!ENTITY cellAlignTop.label               "ඉහළ">
+<!ENTITY cellAlignMiddle.label            "මැද">
+<!ENTITY cellAlignBottom.label            "පහළ">
+<!ENTITY cellAlignJustify.label           "සමව">
+<!ENTITY cellInheritColor.label           "(Let table colour show through)">
+<!ENTITY cellUseCheckboxHelp.label        "Use tickboxes to determine which properties are applied to all selected cells">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "විශාලත්වය">
+<!ENTITY pixels.label                     "පික්සෙල්">
+<!ENTITY backgroundColor.label            "පසුතල රූපය:">
+<!ENTITY backgroundColor.accessKey        "B">
+<!ENTITY AlignLeft.label                  "වය">
+<!ENTITY AlignCenter.label                "මැද">
+<!ENTITY AlignRight.label                 "දකුණ">

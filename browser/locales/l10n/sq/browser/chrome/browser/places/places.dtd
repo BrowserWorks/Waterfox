@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Arkiv">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Sistemim">
+<!ENTITY organize.accesskey    "S">
+<!ENTITY organize.tooltip      "Sistemoni faqerojtësit tuaj">
+
+<!ENTITY file.close.label               "Mbylleni">
+<!ENTITY file.close.accesskey           "M">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Parje">
+<!ENTITY views.accesskey                "P">
+<!ENTITY views.tooltip                  "Ndërroni shfaqjen">
+<!ENTITY view.columns.label             "Shfaq Shtylla">
+<!ENTITY view.columns.accesskey         "S">
+<!ENTITY view.sort.label                "Renditi">
+<!ENTITY view.sort.accesskey            "R">
+<!ENTITY view.unsorted.label            "Të parenditura">
+<!ENTITY view.unsorted.accesskey        "T">
+<!ENTITY view.sortAscending.label       "Rend radhitje A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Rend radhitje Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Importoni Faqerojtës prej HTML-je…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Eksportoni Faqerojtës si HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importoni Të dhëna nga Tjetër Shfletues…">
+<!ENTITY importOtherBrowser.accesskey      "T">
+
+<!ENTITY cmd.backup.label               "Kopjeruani…">
+<!ENTITY cmd.backup.accesskey           "K">
+<!ENTITY cmd.restore2.label             "Riktheji">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Zgjidhni Kartelë…">
+<!ENTITY cmd.restoreFromFile.accesskey  "K">
+
+<!ENTITY col.name.label          "Emër">
+<!ENTITY col.tags.label          "Etiketa">
+<!ENTITY col.url.label           "Vendndodhje">
+<!ENTITY col.mostrecentvisit.label "Vizita Më e Freskët">
+<!ENTITY col.visitcount.label    "Numër Vizitash">
+<!ENTITY col.dateadded.label     "Shtuar më">
+<!ENTITY col.lastmodified.label  "Ndryshuar Së Fundi">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importim dhe Kopjeruajtje">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Importoni dhe kopjeruani faqerojtësit tuaj">
+
+<!ENTITY backButton.tooltip  "Kthehu mbrapsht">
+
+<!ENTITY forwardButton.tooltip  "Vazhdoni përpara">
+
+<!ENTITY detailsPane.selectAnItemText.description "Përzgjidhni një objekt për ta parë dhe për t&amp;i përpunuar vetitë">
+

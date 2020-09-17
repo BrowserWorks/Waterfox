@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Aseta käyttäjätiedot:">
+
+<!ENTITY settingsTab.label       "Asetukset">
+<!ENTITY copiesFoldersTab.label "Kopiot ja kansiot">
+<!ENTITY addressingTab.label    "Kirjoittaminen ja osoitteet">
+
+<!ENTITY publicData.label        "Julkiset tiedot">
+<!ENTITY privateData.label       "Yksityiset tiedot">
+<!ENTITY identityAlias.label     "Käyttäjätiedon otsikko:">
+<!ENTITY identityAlias.accesskey "o">

@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Уласцівасці">
+
+<!ENTITY generalInfo.label                       "Агульныя звесткі">
+<!ENTITY folderCharsetFallback2.label            "Запасное кадаванне тэксту:">
+<!ENTITY folderCharsetFallback2.accesskey        "З">
+<!ENTITY folderCharsetEnforce2.label             "Ужываць кадаванне ўсіх паведамленняў у папцы (індывідуальныя налады кадавання тэксту і аўтавызначэнне будуць ігнаравацца)">
+<!ENTITY folderCharsetEnforce2.accesskey         "У">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Перабудова паказальніка зводкавага файла">
+<!ENTITY folderRebuildSummaryFile2.label         "Выправіць папку">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "В">
+<!ENTITY folderRebuildSummaryFile.explanation    "Часам паказальнік папкі (.msf) псуецца і адсутныя або выдаленыя лісты працягваюцца паказвацца; выпраўленне папкі можа пазбавіцца такіх заганаў.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Уключыць лісты з гэтай папкі ў вынікі ўсеагульнага пошуку">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "ў">
+
+<!ENTITY retention.label "Палітыка ўтрымання">
+<!ENTITY retentionUseAccount.label  "Ужываць наладжванні майго рахунку">
+<!ENTITY retentionUseAccount.accesskey "У">
+<!ENTITY daysOld.label "дзён">
+<!ENTITY message.label "апошніх лістоў">
+<!ENTITY retentionCleanup.label "Каб вызваліць месца на дыску, старыя лісты можна выдаліць назаўсёды.">
+<!ENTITY retentionCleanupImap.label "Каб вызваліць месца на дыску, старыя лісты можна выдаліць назаўсёды, разам мясцовыя копіі і іх першакрыніцы на адлеглым паслугачы.">
+<!ENTITY retentionCleanupPop.label "Каб вызваліць месца на дыску, старыя лісты можна выдаліць назаўсёды, разам з іх першакрыніцамі на адлеглым паслугачы.">
+<!ENTITY retentionDeleteMsg.label "Выдаліць лісты, якім больш за">
+<!ENTITY retentionDeleteMsg.accesskey "В">
+<!ENTITY retentionKeepAll.label "Не выдаляць ніякіх лістоў">
+<!ENTITY retentionKeepAll.accesskey "н">
+<!ENTITY retentionKeepRecent.label "Выдаліць усе, акрамя самых апошніх">
+<!ENTITY retentionKeepRecent.accesskey "у">
+<!ENTITY retentionApplyToFlagged.label "Заўсёды захоўваць лісты з зоркамі">
+<!ENTITY retentionApplyToFlagged.accesskey "ў">
+
+<!ENTITY folderSynchronizationTab.label          "Сінхранізацыя">
+<!ENTITY folderCheckForNewMessages2.label         "Калі атрымліваюцца лісты для гэтага рахунку, заўсёды правяраць гэтую папку">
+<!ENTITY folderCheckForNewMessages2.accesskey     "п">
+
+<!ENTITY offlineFolder.check.label               "Вылучыць гэтую папку для карыстання па-за сеткай">
+<!ENTITY offlineFolder.check.accesskey           "в">
+<!ENTITY offlineFolder.button.label              "Загрузіць зараз">
+<!ENTITY offlineFolder.button.accesskey          "з">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Вылучыць гэтую навінакупу для карыстання па-за сеткай">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "е">
+<!ENTITY offlineNewsgroup.button.label           "Загрузіць зараз">
+<!ENTITY offlineNewsgroup.button.accesskey       "з">
+
+<!ENTITY folderProps.name.label                  "Назва:">
+<!ENTITY folderProps.name.accesskey              "Н">
+<!ENTITY folderProps.location.label              "Месцазнаходжанне:">
+<!ENTITY folderProps.location.accesskey          "М">
+
+<!ENTITY folderSharingTab.label                  "Падзел">
+<!ENTITY privileges.button.label                 "Прывілеі…">
+<!ENTITY privileges.button.accesskey             "П">
+<!ENTITY permissionsDesc.label                   "Вы маеце наступныя дазволы:">
+<!ENTITY folderType.label                        "Тып папкі:">
+
+<!ENTITY folderQuotaTab.label                    "Доля">
+<!ENTITY folderQuotaUsage.label                  "Выкарыстоўванне:">
+<!ENTITY folderQuotaStatus.label                 "Статус:">
+
+<!ENTITY numberOfMessages.label                  "Колькасць лістоў:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "невядомы">
+<!ENTITY sizeOnDisk.label                        "Памер на дыску:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "невядомы">

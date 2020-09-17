@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ফরম বৈশিষ্ট্য">
+
+<!ENTITY Settings.label "সেটিং">
+
+<!ENTITY FormName.label "ফরমের নাম (N):">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "সক্রিয় URL (A):">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "মেথড (M):">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "এনকোডিং (c):">
+<!ENTITY FormEncType.accesskey "c">
+<!ENTITY FormTarget.label "লক্ষ্য ফ্রেম (T):">
+<!ENTITY FormTarget.accesskey "T">
+
+<!ENTITY RemoveForm.label "ফরম মুছে দেয়া (R)">
+<!ENTITY RemoveForm.accesskey "R">

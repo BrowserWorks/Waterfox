@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "სარჩევი">
+<!ENTITY buildToc.label      "სარჩევის შექმნა:">
+<!ENTITY tag.label           "ჭდე:">
+<!ENTITY class.label         "კლასი:">
+<!ENTITY header1.label       "საფეხური 1">
+<!ENTITY header2.label       "საფეხური 2">
+<!ENTITY header3.label       "საფეხური 3">
+<!ENTITY header4.label       "საფეხური 4">
+<!ENTITY header5.label       "საფეხური 5">
+<!ENTITY header6.label       "საფეხური 6">
+<!ENTITY makeReadOnly.label  "სარჩევის, მხოლოდ კითხვით რეჟიმში გადაყვანა">
+<!ENTITY orderedList.label   "სარჩევის ელემენტების გადანომვრა">

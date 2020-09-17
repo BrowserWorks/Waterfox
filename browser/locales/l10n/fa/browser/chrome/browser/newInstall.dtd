@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "خبرهای مهم">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "برای همگام‌سازی اطلاعاتی که تا کنون در این نصب از &brandShortName; ذخیره کردید، با &syncBrand.fxAccount.label; خود وارد شوید.">
+<!ENTITY continue-button "ادامه">
+
+<!ENTITY mainText "این نصب از &brandShortName; یک نمایه جدید دارد. این نمایه نشانک‌ها، گذرواژه‌ها و ترجیحات کاربر را با دیگر نسخه‌های نصب شده فایرفاکس روی این رایانه (از جملهFirefox, Firefox ESR, Firefox Beta, Firefox Developer Edition, and Firefox Nightly) به اشتراک نمی‌گذارد.">

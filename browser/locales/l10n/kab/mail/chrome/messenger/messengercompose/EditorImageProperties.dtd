@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Timezliyin n tugna">
+
+<!ENTITY pixelsPopup.value "ipiksilen">
+<!-- These are in the Location tab panel -->
+
+<!ENTITY locationEditField.label "Tansa n tugna:">
+<!ENTITY locationEditField.accessKey "s">
+<!ENTITY locationEditField.tooltip "Sekcem isem n ufaylu n tugna neɣ tansa yines">
+<!ENTITY locationEditField.shortenedDataURI "URI n isefka wezzilen (anɣal ad isemselsi URI ummid ɣef afus)">
+<!ENTITY title.label "Talɣut takuffiṭ">
+<!ENTITY title.accessKey "T">
+<!ENTITY title.tooltip "Imyerr html 'title' a d-iţuseknen ţalɣut takuffiṭ">
+<!ENTITY altText.label "Aḍris nniḍen.">
+<!ENTITY altText.accessKey "ḍ">
+<!ENTITY altTextEditField.tooltip "Sekcem aḍris ara d-sekneḍ deg umḍiq n tugna">
+<!ENTITY noAltText.label "Ur seqdac ara aḍris nniḍen">
+<!ENTITY noAltText.accessKey "d">
+
+<!ENTITY previewBox.label "Taskant n tugna">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+
+<!ENTITY actualSize.label "Teɣzi tamirant:">
+<!ENTITY actualSizeRadio.label "Teɣzi tamirant:">
+<!ENTITY actualSizeRadio.accessKey "ɣ">
+<!ENTITY actualSizeRadio.tooltip "Uɣal ɣer teɣzi tamirant n tugna">
+<!ENTITY customSizeRadio.label "Teɣzi tudmawant">
+<!ENTITY customSizeRadio.accessKey "w">
+<!ENTITY customSizeRadio.tooltip "Snifel teɣzi n tugna akken d-ttwasken deg usebter">
+<!ENTITY heightEditField.label "Teɣzi:">
+<!ENTITY heightEditField.accessKey "e">
+<!ENTITY widthEditField.label "Tehri:">
+<!ENTITY widthEditField.accessKey "h">
+<!ENTITY constrainCheckbox.label "Tamara">
+<!ENTITY constrainCheckbox.accessKey "m">
+<!ENTITY constrainCheckbox.tooltip "Eǧǧ akken yella ufmidi n tugna">
+<!-- These controls are in the Image Map box of the expanded area -->
+
+<!ENTITY imagemapBox.label "Tkarḍa n tugna">
+<!ENTITY removeImageMapButton.label "Kkes">
+<!ENTITY removeImageMapButton.accessKey "K">
+<!-- These are the options for image alignment -->
+
+<!ENTITY alignment.label "Reyyec aḍris ɣeṛ tugna">
+<!ENTITY bottomPopup.value "S adda">
+<!ENTITY topPopup.value "S afella">
+<!ENTITY centerPopup.value "Di tlemmast">
+<!ENTITY wrapRightPopup.value "Zzi s ayeffus">
+<!ENTITY wrapLeftPopup.value "Zzi s aẓelmaḍ">
+<!-- These controls are in the Spacing Box -->
+
+<!ENTITY spacingBox.label "Tallunt">
+<!ENTITY leftRightEditField.label "Aẓelmaḍ d uyeffus:">
+<!ENTITY leftRightEditField.accessKey "A">
+<!ENTITY topBottomEditField.label "Afella d adda:">
+<!ENTITY topBottomEditField.accessKey "A">
+<!ENTITY borderEditField.label "Lerryuf iččuranen:">
+<!ENTITY borderEditField.accessKey "č">
+<!-- These controls are in the Link Box -->
+
+<!ENTITY showImageLinkBorder.label "Sken lerryuf n tugna yeddan">
+<!ENTITY showImageLinkBorder.accessKey "r">
+<!ENTITY LinkAdvancedEditButton.label "Taẓrigt leqqayen n useɣwen…">
+<!ENTITY LinkAdvancedEditButton.accessKey "q">
+<!ENTITY LinkAdvancedEditButton.tooltip "Rnu neɣ snifel imyerren HTML, imyerren n uɣanib, d JavaScript">
+<!-- These tabs are currently used in the image input dialog -->
+
+<!ENTITY imageInputTab.label "Tiferkit">
+<!ENTITY imageLocationTab.label "Tansa">
+<!ENTITY imageDimensionsTab.label "Tisektiwin">
+<!ENTITY imageAppearanceTab.label "Arwes">
+<!ENTITY imageLinkTab.label "Assaɣ">

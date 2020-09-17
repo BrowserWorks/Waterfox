@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Subscription Dialog -->
+
+<!ENTITY feedSubscriptions.label     "Obuna bo‘lingan tasma">
+<!ENTITY learnMore.label             "Tasmalar haqida batafsil ma’lumot">
+
+<!ENTITY feedTitle.label             "Sarlavha:">
+<!ENTITY feedTitle.accesskey         "r">
+
+
+<!ENTITY locationValidate.label      "Tekshirish">
+<!ENTITY validateText.label          "Tasdiqlang va yaroqli URL manzilini oling.">
+
+<!ENTITY feedFolder.label            "Maqolalar joylashgan:">
+<!ENTITY feedFolder.accesskey        "j">
+<!-- Account Settings and Subscription Dialog -->
+
+
+
+
+
+
+
+<!ENTITY quickMode.label             "Veb sahifa yuklanishi o‘rniga maqolalar haqida umumiy ma’lumot ko‘rsatilsin">
+<!ENTITY quickMode.accesskey         "k">
+
+
+<!ENTITY autotagUsePrefix.label      "Ushbu turdagi old qo‘shimchali teglar:">
+<!ENTITY autotagUsePrefix.accesskey  "o">
+<!ENTITY autoTagPrefix.placeholder   "Teg old qo‘shimchasini kiriting">
+<!-- Subscription Dialog -->
+
+<!ENTITY button.addFeed.label        "Qo‘shish">
+<!ENTITY button.addFeed.accesskey    "Q">
+<!ENTITY button.updateFeed.label     "Yangilash">
+<!ENTITY button.updateFeed.accesskey "Y">
+<!ENTITY button.removeFeed.label     "Olib tashlash">
+<!ENTITY button.removeFeed.accesskey "O">
+<!ENTITY button.importOPML.label     "Import qilish">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Eksport qilish">
+<!ENTITY button.exportOPML.accesskey "E">
+<!ENTITY button.exportOPML.tooltip   "Jildlar tuzilishi bilan tasmalarni eksport qilish; tasmalarni ro‘yxati kabi eksport qilish uchun CTRL va sichqoncha chap tugmasini yoki CTRL va Enter tugmalarini bosing">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Yopish">

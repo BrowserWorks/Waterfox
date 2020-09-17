@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "სამუშაო ფონის შერჩევა">
+
+<!ENTITY position.label             "განთავსება:">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "მოზაიკურად">
+<!ENTITY position.stretch.label     "გაჭიმვა">
+<!ENTITY position.center.label      "ცენტრში">
+<!ENTITY position.fill.label        "შევსება">
+<!ENTITY position.fit.label         "მორგება">
+<!ENTITY picker.label               "ფერი:">
+<!ENTITY picker.accesskey           "C">
+<!ENTITY preview.caption            "ესკიზი">
+<!ENTITY apply.label                "შესრულება">
+<!ENTITY apply.accesskey            "A">
+<!ENTITY close.label                "დახურვა">

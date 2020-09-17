@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Correu electrònic"> 
+<!ENTITY readMsgsLink.label           "Llegeix els missatges"> 
+<!ENTITY composeMsgLink.label         "Redacta un missatge nou"> 
+
+<!ENTITY newsSectionHdr.label         "Grups de discussió"> 
+<!ENTITY subscribeNewsLink.label      "Subscriu-me als grups de discussió"> 
+
+<!ENTITY accountsSectionHdr.label     "Comptes"> 
+<!ENTITY subscribeImapFolders.label   "Gestiona les subscripcions de carpeta"> 
+<!ENTITY settingsLink.label           "Paràmetres d'aquest compte"> 
+<!ENTITY newAcctLink.label            "Crea un compte nou"> 
+
+<!ENTITY advFeaturesSectionHdr.label  "Característiques avançades"> 
+<!ENTITY searchMsgsLink.label         "Cerca missatges"> 
+<!ENTITY filtersLink.label            "Crea filtres de missatge">
+<!ENTITY junkSettings.label           "Paràmetres del correu brossa…">
+<!ENTITY offlineLink.label            "Paràmetres de fora de línia">
+
+<!ENTITY feedsSectionHdr.label        "Canals">
+<!ENTITY subscribeFeeds.label         "Gestiona les subscripcions">
+

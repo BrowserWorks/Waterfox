@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label         "URL stranice:">
+<!ENTITY docSubdir.label       "Poddirektorij stranice:">
+<!ENTITY otherSubdir.label     "Poddirektorij slika:">
+
+<!ENTITY status.label          "Objavljivanje…">
+<!ENTITY fileList.label        "Status objavljivanja">
+<!ENTITY succeeded.label       "Uspješno">
+<!ENTITY failed.label          "Neuspješno">
+
+<!ENTITY keepOpen              "Drži ovaj prozor otvorenim nakon što objavljivanje završi.">
+<!ENTITY closeButton.label     "Zatvori">

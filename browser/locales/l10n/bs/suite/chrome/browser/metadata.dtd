@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "Nema postavljenih osobina.">
+
+<!ENTITY caption.label         "Osobine elementa">
+<!ENTITY image-sec.label       "Osobine slike">
+<!ENTITY image-url.label       "Lokacija:">
+<!ENTITY image-desc.label      "Opis:">
+<!ENTITY image-alt.label       "Alternativni tekst:">
+<!ENTITY image-width.label     "Širina:">
+<!ENTITY image-height.label    "Visina:">
+<!ENTITY image-filesize.label  "Veličina datoteke:">
+<!ENTITY image-filesize.value  "Nepoznato">
+<!ENTITY insdel-sec.label      "Ubacite/izbrišite osobine">
+<!ENTITY insdel-cite.label     "Informacije:">
+<!ENTITY insdel-date.label     "Datum:">
+<!ENTITY link-sec.label        "Osobine veze">
+<!ENTITY link-url.label        "Adresa:">
+<!ENTITY link-target.label     "Otvorit će se u:">
+<!ENTITY link-type.label       "Vrsta odredišta:">
+<!ENTITY link-lang.label       "Jezik odredišta:">
+<!ENTITY link-rel.label        "Relacija:">
+<!ENTITY link-rev.label        "Rezervisana relacija:">
+<!ENTITY misc-sec.label        "Razne osobine">
+<!ENTITY misc-lang.label       "Jezik teksta:">
+<!ENTITY misc-title.label      "Naslov:">
+<!ENTITY misc-tblsummary.label "Sažetak tabele:">
+<!ENTITY quote-sec.label       "Svojstva citata">
+<!ENTITY quote-cite.label      "Informacije:">

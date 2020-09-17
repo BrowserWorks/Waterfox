@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Ներմուծել Հասցեագիրքը">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Գրառման համար ներմուծված տվյալ.">
+<!ENTITY fieldMapImport.next.label "Հաջորդը">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "Նախորդը">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "Օգտագործել Վեր և Վարը՝ հասցեագրքի դաշտերի համար՝ տվյալ տվյալը դեպի ձախից աջ տանելու համար դեպի։ Հանել նշումը այն կետերից, որոնք չեք ցանկանում ներմուծել։">
+<!ENTITY fieldMapImport.up.label "Վեր">
+<!ENTITY fieldMapImport.up.accesskey "U">
+<!ENTITY fieldMapImport.down.label "Վար">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "Հասցեագրքի դաշտերը">
+<!ENTITY fieldMapImport.dataTitle "Ներմուծվող գրառման տվյալը">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Առաջին գրառումը պարունակում է դատարկ անուններ">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "Ա">

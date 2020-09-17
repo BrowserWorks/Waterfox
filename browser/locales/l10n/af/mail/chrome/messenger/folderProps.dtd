@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Eienskappe">
+
+<!ENTITY generalInfo.label                       "Algemene inligting">
+
+
+
+
+<!ENTITY folderRebuildSummaryFileTip2.label      "Herbou opsomminglêerindeks">
+<!ENTITY folderRebuildSummaryFile2.label         "Herstel vouer">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "r">
+<!ENTITY folderRebuildSummaryFile.explanation    "Soms raak die vouerindekslêer (.msf) beskadig en boodskappe lyk of dit weg is, of geskrapte boodskappe wys steeds; herstel van die vouer kan dalk sulke probleme oplos.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Sluit boodskappe in dié gids in by die globale soekresultate">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "g">
+
+<!ENTITY retention.label "Behoubeleid">
+<!ENTITY retentionUseAccount.label  "Gebruik my rekeningopstelling">
+<!ENTITY retentionUseAccount.accesskey "G">
+<!ENTITY daysOld.label "dae oud">
+<!ENTITY message.label "boodskappe">
+<!ENTITY retentionCleanup.label "Om skyfspasie te herwin, kan ou boodskappe permanent geskrap word.">
+<!ENTITY retentionCleanupImap.label "Om skyfspasie te herwin, kan ou boodskappe permanent geskrap word (beide die plaaslike kopie en die oorspronklike op die afgeleë bediener).">
+<!ENTITY retentionCleanupPop.label "Om skyfspasie te herwin, kan ou boodskappe permanent geskrap word, insluitend die oorspronklike op die afgeleë bediener.">
+<!ENTITY retentionDeleteMsg.label "Skrap boodskappe van meer as">
+<!ENTITY retentionDeleteMsg.accesskey "b">
+<!ENTITY retentionKeepAll.label "Moenie enige boodskappe skrap nie">
+<!ENTITY retentionKeepAll.accesskey "e">
+<!ENTITY retentionKeepRecent.label "Skrap alles behalwe die mees onlangse">
+<!ENTITY retentionKeepRecent.accesskey "S">
+<!ENTITY retentionApplyToFlagged.label "Hou altyd gevlagde boodskappe">
+<!ENTITY retentionApplyToFlagged.accesskey "H">
+
+<!ENTITY folderSynchronizationTab.label          "Sinchronisasie">
+<!ENTITY folderCheckForNewMessages2.label         "Wanneer nuwe boodskappe verkry word vir dié rekening, kontroleer altyd dié gids">
+<!ENTITY folderCheckForNewMessages2.accesskey     "W">
+
+<!ENTITY offlineFolder.check.label               "Kies hierdie vouer vir aflyngebruik">
+<!ENTITY offlineFolder.check.accesskey           "K">
+<!ENTITY offlineFolder.button.label              "Laai nou af">
+<!ENTITY offlineFolder.button.accesskey          "L">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Kies hierdie nuusgroep vir aflyngebruik">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "g">
+<!ENTITY offlineNewsgroup.button.label           "Laai nou af">
+<!ENTITY offlineNewsgroup.button.accesskey       "L">
+
+<!ENTITY folderProps.name.label                  "Naam:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Ligging:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Deel">
+<!ENTITY privileges.button.label                 "Voorregte…">
+<!ENTITY privileges.button.accesskey             "V">
+<!ENTITY permissionsDesc.label                   "U het die volgende toestemming:">
+<!ENTITY folderType.label                        "Vouersoort:">
+
+<!ENTITY folderQuotaTab.label                    "Kwota">
+<!ENTITY folderQuotaUsage.label                  "Verbruik:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+

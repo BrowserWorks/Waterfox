@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Få meg bort herifrå!">
+<!ENTITY safeb.palm.reportPage.label "Kvifor vart denne nettstaden blokkert?">
+
+<!ENTITY safeb.blocked.malwarePage.title "Rapportert som åtaksnettstad!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Villeiande nettstad!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+
+<!-- Localization note (reportDeceptiveSite, notADeceptiveSite) - The two button strings will never be shown at the same time, so it's okay for them to have the same access key. -->
+<!ENTITY reportDeceptiveSite.label "Rapporter villeiande nettstad…">
+<!ENTITY reportDeceptiveSite.accesskey "d">
+<!ENTITY notADeceptiveSite.label "Dette er ikkje ein villeiande nettstad…">
+<!ENTITY notADeceptiveSite.accesskey "d">
+

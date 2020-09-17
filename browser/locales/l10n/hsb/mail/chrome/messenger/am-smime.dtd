@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Zaklučowanje wot kónca do kónca">
+<!ENTITY e2eLearnMore.label "Dalše informacije">
+
+<!ENTITY e2eEnc.description "Bjez zaklučowanja wot kónca do kónca so wobsah powěsćow lochko wašemu e-mejlowemu poskićowarjej pokazuje a masowemu dohladowanju wustaja.">
+<!ENTITY e2eeReqWarning.description "Jeli zaklučowanje trjebaće, zo byšće powěsć pósłał, dyrbiće zjawny kluč abo certifikat kóždeho přijimarja měć.">
+
+<!ENTITY e2eSigning.description "Digitalna signatura přijimarjam zmóžnja, powěsć přepruwować, kotruž sće pósłał, a hač jeje wobsah njeje so změnił.">
+<!ENTITY e2eTechPref.description "Preferowana zaklučowanska technologija:">
+
+<!ENTITY doNotEncrypt.label "Zaklučowanje po standardźe njezmóžnić">
+<!ENTITY doNotEncrypt.accesskey "Z">
+<!ENTITY requireEncryptMessage.label "Zaklučowanje po standardźe požadać">
+<!ENTITY requireEncryptMessage.accesskey "k">
+<!ENTITY encryptionCert2.message "Wosobinski certifikat za zaklučowanje:">
+<!ENTITY digitalSign.certificate.button "Wubrać…">
+<!ENTITY digitalSign.certificate.accesskey "b">
+<!ENTITY digitalSign.certificate_clear.button "Zhašeć">
+<!ENTITY digitalSign.certificate_clear.accesskey "h">
+<!ENTITY encryption.certificate.button "Wubrać…">
+<!ENTITY encryption.certificate.accesskey "u">
+<!ENTITY encryption.certificate_clear.button "Zhašeć">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "Digitalne podpisowanje">
+<!ENTITY signMessage2.label "Moju digitalnu signaturu po standardźe přidać">
+<!ENTITY signMessage.accesskey "d">
+<!ENTITY signingCert2.message "Wosobinski certifikat za digitalne zaklučowanje:">
+
+<!ENTITY sendingDefaults.label "Standardne nastajenja za słanje powěsćow">
+
+<!ENTITY technologyAutomatic.label "Na zakładźe k dispoziciji stejacych klučow abo certifikatow awtomatisce wubrać">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Certifikaty S/MIME rjadować">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "Wěstotne graty S/MIME">
+<!ENTITY manageDevices2.accesskey "g">
+
+<!ENTITY technologySMIME.label "S/MIME preferować">
+<!ENTITY technologyOpenPGP.label "OpenPGP preferować">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Certifikat wubrać">
+<!ENTITY certPicker.info  "Certifikat:">
+<!ENTITY certPicker.detailsLabel "Podrobnosće wubraneho certifikata:">
+
+<!ENTITY openpgpKey.message "Wosobinski kluč za zaklučowanje a digitalne signowanje:">
+<!ENTITY openpgpKey.button "Wosobinski kluč nastajić…">
+<!ENTITY openpgpKey.accesskey "b">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Ongewenste berichten">
+<!ENTITY junkSettings.caption "Algemene ongewensteberichteninstellingen">
+<!ENTITY junkMail.intro "Ga naar Accountinstellingen om accountspecifieke ongewensteberichteninstellingen te configureren.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Wanneer ik berichten markeer als ongewenst:">
+<!ENTITY manualMark.accesskey           "W">
+<!ENTITY manualMarkModeMove.label       "ze verplaatsen naar de map ‘Ongewenst’ van de account">
+<!ENTITY manualMarkModeMove.accesskey   "z">
+<!ENTITY manualMarkModeDelete.label     "ze verwijderen">
+<!ENTITY manualMarkModeDelete.accesskey "v">
+
+<!ENTITY markAsRead.intro               "Berichten markeren als gelezen:">
+<!ENTITY autoMarkAsRead.label           "Wanneer &brandShortName; berichten detecteert als ongewenst">
+<!ENTITY autoMarkAsRead.accesskey       "d">
+<!ENTITY manualMarkAsRead.label         "Wanneer ik ze markeer als ongewenst">
+<!ENTITY manualMarkAsRead.accesskey     "k">
+
+<!ENTITY enableJunkLogging.label        "Ongewensteberichtenlogboek activeren">
+<!ENTITY enableJunkLogging.accesskey    "O">
+<!ENTITY openJunkLog.label              "Logboek tonen">
+<!ENTITY openJunkLog.accesskey          "L">
+<!ENTITY resetTrainingData.label        "Trainingsgegevens herinitialiseren">
+<!ENTITY resetTrainingData.accesskey    "T">
+
+<!ENTITY pref.suspectMail.caption         "Verdachte e-mail">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "E-mailscams">
+<!ENTITY enablePhishingDetector.label     "Mij vertellen of het gelezen bericht een vermoedelijke e-mailscam is">
+<!ENTITY enablePhishingDetector.accesskey "M">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Antivirus">
+<!ENTITY antiVirus.label                  "Antivirusprogramma’s toestaan om inkomende berichten gemakkelijker te scannen">
+<!ENTITY antiVirus.accesskey              "A">

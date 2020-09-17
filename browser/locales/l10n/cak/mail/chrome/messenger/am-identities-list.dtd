@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Kenuk'samajïx ri taq b'anikil chuwäch re rub'i' taqoya'l re'. Ri nab'ey b'anikil xtokisäx achi'el ri ruk'amon wi pe.">
+<!ENTITY identitiesListAdd.label  "Titz'aqatisäx…">
+<!ENTITY identitiesListAdd.accesskey  "t">
+<!ENTITY identitiesListEdit.label "Tinuk'…">
+<!ENTITY identitiesListEdit.accesskey "n">
+<!ENTITY identitiesListDefault.label "Tichap chi K'o wi">
+<!ENTITY identitiesListDefault.accesskey "c">
+<!ENTITY identitiesListDelete.label "Tiyuj">
+<!ENTITY identitiesListDelete.accesskey "y">
+<!ENTITY identitiesListClose.label "Titz'apïx">
+<!ENTITY identitiesListClose.accesskey "t">

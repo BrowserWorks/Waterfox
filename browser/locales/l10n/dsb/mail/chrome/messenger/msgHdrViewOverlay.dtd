@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Komu">
+<!ENTITY fromField4.label "Wót">
+<!ENTITY senderField4.label "Wótpósłaŕ">
+<!ENTITY author.label "Awtor">
+<!ENTITY organizationField4.label "Organizacija">
+<!ENTITY replyToField4.label "Wótegroniś na">
+
+<!ENTITY subjectField4.label "Tema">
+<!ENTITY ccField4.label "Kopija">
+<!ENTITY bccField4.label "Schowna kopija">
+<!ENTITY newsgroupsField4.label "Diskusijne kupki">
+<!ENTITY followupToField4.label "Dalej pósrědniś do">
+<!ENTITY tagsHdr4.label "Wobznamjenja">
+<!ENTITY dateField4.label "Datum">
+<!ENTITY userAgentField4.label "User agent">
+<!ENTITY referencesField4.label "Reference">
+<!ENTITY messageIdField4.label "ID powěsći">
+<!ENTITY inReplyToField4.label "Ako wótegrono na">
+<!ENTITY originalWebsite4.label "Websedło">
+
+<!ENTITY hdrArchiveButton1.label "Archiwěrowaś">
+<!ENTITY hdrArchiveButton1.tooltip "Toś tu powěsć archiwěrowaś">
+<!ENTITY hdrSmartReplyButton1.label "Inteligentne wótegrono">
+<!ENTITY hdrReplyButton1.label "Wótegroniś">
+<!ENTITY hdrReplyButton2.tooltip "Wótpósłarjeju toś teje powěsći wótegroniś">
+<!ENTITY hdrReplyAllButton1.label "Wšym wótegroniś">
+<!ENTITY hdrReplyAllButton1.tooltip "Wótpósłarjeju a wšym dostawarjam wótegroniś">
+<!ENTITY hdrReplyListButton1.label "Lisćinje wótegroniś">
+<!ENTITY hdrReplyListButton1.tooltip "Rozpósłańskej lisćinje wótegroniś">
+<!ENTITY hdrFollowupButton1.label "Powěsć slědowaś">
+<!ENTITY hdrFollowupButton1.tooltip "Dalejpósrědnenje na toś tu diskusijnu kupku pósłaś">
+<!ENTITY hdrForwardButton1.label "Dalej pósrědniś">
+<!ENTITY hdrForwardButton1.tooltip "Toś tu powěsć dalej pósrědniś">
+<!ENTITY hdrJunkButton1.label "Cajk">
+<!ENTITY hdrJunkButton1.tooltip "Toś tu powěsć ako cajk markěrowaś">
+<!ENTITY hdrTrashButton1.label "Lašowaś">
+<!ENTITY hdrTrashButton1.tooltip "Toś tu powěsć lašowaś">
+
+<!ENTITY hdrViewToolbarShowFull.label "Symbole a tekst pokazaś">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "Jano symbole pokazaś">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "s">
+<!ENTITY hdrViewToolbarShowText.label "Jano tekst pokazaś">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Wótpósłarjeju pśecej wótegrono pokazaś">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "W">
+
+<!ENTITY otherActionsButton2.label "Wěcej">
+<!ENTITY otherActionsButton.tooltip "Dalšne akcije">
+<!ENTITY otherActionsOpenConversation1.label "W konwersaciji wócyniś">
+<!ENTITY otherActionsOpenConversation1.accesskey "k">
+<!ENTITY otherActionsOpenInNewWindow1.label "W nowem woknje wócyniś">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "w">
+<!ENTITY otherActionsOpenInNewTab1.label "W nowem rejtariku wócyniś">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "r">
+<!ENTITY markAsReadMenuItem1.label "Ako pśecytany markěrowaś">
+<!ENTITY markAsReadMenuItem1.accesskey "c">
+<!ENTITY markAsUnreadMenuItem1.label "Ako njepśecytany markěrowaś">
+<!ENTITY markAsUnreadMenuItem1.accesskey "n">
+<!ENTITY saveAsMenuItem1.label "Składowaś ako…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "Žrědłowy kod pokazaś">
+<!ENTITY viewSourceMenuItem1.accesskey "d">
+<!ENTITY otherActionsPrint1.label "Śišćaś…">
+<!ENTITY otherActionsPrint1.accesskey "i">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Wokno pśidankow zachopnje pokazaś">
+<!ENTITY startExpandedCmd.accesskey    "W">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Wócyniś">
+<!ENTITY openAttachmentCmd.accesskey    "c">
+<!ENTITY saveAsAttachmentCmd.label    "Składowaś ako…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "S">
+<!ENTITY detachAttachmentCmd.label    "Wótpowjesyś…">
+<!ENTITY detachAttachmentCmd.accesskey    "t">
+<!ENTITY deleteAttachmentCmd.label    "Lašowaś">
+<!ENTITY deleteAttachmentCmd.accesskey    "L">
+<!ENTITY openAllAttachmentsCmd.label    "Wšykne wócyniś…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "c">
+<!ENTITY saveAllAttachmentsCmd.label    "Wšykne składowaś…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "s">
+<!ENTITY detachAllAttachmentsCmd.label    "Wšykne wótpowjesyś…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "o">
+<!ENTITY deleteAllAttachmentsCmd.label    "Wšykne lašowaś…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "l">
+
+<!ENTITY openAttachment.tooltip "Pśipowjesonu dataju wócyniś">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Wopśimujucy zarědnik wócyniś">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "m">
+<!ENTITY detachedAttachmentFolder.showMac.label     "W Finder pokazaś">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Składowaś">
+<!ENTITY saveAttachmentButton1.tooltip     "Pśipowjesonu dataju składowaś">
+<!ENTITY saveAllAttachmentsButton1.label   "Wšykne składowaś">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Wšykne pśipowjesone dataje składowaś">
+
+<!ENTITY copyLinkCmd.label        "Wótkazowu adresu kopěrowaś">
+<!ENTITY copyLinkCmd.accesskey    "W">
+
+<!ENTITY CopyMessageId.label "ID powěsći kopěrowaś">
+<!ENTITY CopyMessageId.accesskey "I">
+<!ENTITY OpenMessageForMsgId.label "Powěsć kopěrowaś za ID">
+<!ENTITY OpenMessageForMsgId.accesskey "k">
+<!ENTITY OpenBrowserWithMsgId.label "Wobglědowak z ID powěsći wócyniś">
+<!ENTITY OpenBrowserWithMsgId.accesskey "b">

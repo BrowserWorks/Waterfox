@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Ainm: ">
+<!ENTITY directoryName.accesskey           "n">
+<!ENTITY directoryHostname.label           "Óstainm: ">
+<!ENTITY directoryHostname.accesskey       "a">
+<!ENTITY directoryBaseDN.label             "DN bunaidh:">
+<!ENTITY directoryBaseDN.accesskey         "b">
+<!ENTITY findButton.label                  "Aimsigh">
+<!ENTITY findButton.accesskey              "A">
+<!ENTITY directorySecure.label             "Úsáid nasc daingean (SSL)">
+<!ENTITY directorySecure.accesskey         "s">
+<!ENTITY directoryLogin.label              "DN ceangail: ">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "Ginearálta">
+<!ENTITY Offline.tab                       "As Líne">
+<!ENTITY Advanced.tab                      "Ardroghanna">
+<!ENTITY portNumber.label                  "Uimhir phoirt: ">
+<!ENTITY portNumber.accesskey              "p">
+<!ENTITY searchFilter.label                "Scagaire cuardaigh:">
+<!ENTITY searchFilter.accesskey            "S">
+<!ENTITY scope.label                       "Scóip: ">
+<!ENTITY scope.accesskey                   "c">
+<!ENTITY scopeOneLevel.label               "Leibhéal Amháin">
+<!ENTITY scopeOneLevel.accesskey           "L">
+<!ENTITY scopeSubtree.label                "Fo-chrann">
+<!ENTITY scopeSubtree.accesskey            "F">
+<!ENTITY return.label                      "Ná haisfhill níos mó ná">
+<!ENTITY return.accesskey                  "a">
+<!ENTITY results.label                     "toradh">
+<!ENTITY offlineText.label                 "Is féidir leat cóip logánta den chomhadlann seo a íoslódáil ionas go mbeidh sé ar fáil duit agus tú ag obair as líne.">
+<!ENTITY saslMechanism.label               "Modh logála isteach: ">
+<!ENTITY saslMechanism.accesskey           "M">
+<!ENTITY saslOff.label                     "Simplí">
+<!ENTITY saslOff.accesskey                 "l">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+
+<!ENTITY newDirectoryWidth                 "36em">

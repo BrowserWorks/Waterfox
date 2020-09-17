@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Event Menu -->
+
+<!ENTITY event.new.event                        "Yangi tadbir…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "Yangi vazifa…">
+<!ENTITY event.new.task.accesskey               "k">
+
+<!ENTITY calendar.import.label                  "Import…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Eksport…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "E‘lon qilish…">
+<!ENTITY calendar.publish.accesskey             "l">
+
+<!ENTITY calendar.deletecalendar.label          "Tanlangan taqvimni o‘chirish…">
+<!ENTITY calendar.deletecalendar.accesskey      "o">
+<!ENTITY calendar.unsubscribecalendar.label     "Tanlangan taqvimga obunani bekor qilish…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "b">
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+
+<!ENTITY calendar.removecalendar.label          "Tanlangan taqvimni o‘chirish…">
+<!ENTITY calendar.removecalendar.accesskey      "o">
+
+
+<!ENTITY calendar.menu.customize.label          "Moslash…">
+<!ENTITY calendar.menu.customize.accesskey      "M">
+
+<!ENTITY showUnifinderCmd.label                 "Tadbirlarni topish">
+<!ENTITY showUnifinderCmd.accesskey             "t">
+<!ENTITY showUnifinderCmd.tooltip               "Tadbirlarni topish oynasiga o‘tish">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Taqvimda vazifalarni ko‘rsatish">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "v">
+
+<!ENTITY goTodayCmd.label                       "Bugun">
+<!ENTITY goTodayCmd.accesskey                   "B">
+
+<!ENTITY showCurrentView.label                  "Joriy ko‘rinish">
+<!ENTITY showCurrentView.accesskey              "k">
+
+

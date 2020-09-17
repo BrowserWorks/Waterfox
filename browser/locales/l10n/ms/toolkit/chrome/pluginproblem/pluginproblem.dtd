@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Sentuh sini untuk aktifkan plugin.">
+<!ENTITY clickToActivatePlugin                               "Aktifkan plugin.">
+<!ENTITY checkForUpdates                                     "Semak kemaskini…">
+<!ENTITY blockedPlugin.label                                 "Plugin ini telah disekat demi keselamatan anda.">
+<!ENTITY hidePluginBtn.label                                 "Sorok plugin">
+<!ENTITY managePlugins                                       "Urus plugin…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Muat semula halaman">
+<!ENTITY reloadPlugin.post                                   " untuk mencuba lagi.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Hantar laporan ranap">
+<!ENTITY report.submitting                                   "Menghantar laporan…">
+<!ENTITY report.submitted                                    "Laporan ranap dihantar.">
+<!ENTITY report.disabled                                     "Pelaporan ranap dinyahdayakan.">
+<!ENTITY report.failed                                       "Penghantaran gagal.">
+<!ENTITY report.unavailable                                  "Tiada laporan tersedia.">
+<!ENTITY report.comment                                      "Tambah komen (komen disiarkan kepada umum)">
+<!ENTITY report.pageURL                                      "Termasuk URL laman">
+
+<!ENTITY plugin.file                                         "Fail">
+<!ENTITY plugin.mimeTypes                                    "Jenis MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Dayakan mod selamat Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Sekat isi kandung Flash berbahaya dan mengganggu">

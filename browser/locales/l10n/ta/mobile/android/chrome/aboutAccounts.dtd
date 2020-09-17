@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "எனவாக இணைக்கபட்டுள்ளீர்கள்">
+<!ENTITY aboutAccounts.connected.description "எனவாக இணைக்கபட்டுள்ளீர்கள்">
+<!ENTITY aboutAccounts.syncPreferences.label "ஒத்திசை அமைவுகளை சோதிக்க இங்கே தட்டு">
+
+<!ENTITY aboutAccounts.noConnection.title "இணைய இணைப்பு இல்லை">
+<!ENTITY aboutAccounts.retry.label "மீண்டும் முயற்சி">
+
+<!ENTITY aboutAccounts.restrictedError.title "கட்டுப்படுத்தப்பட்ட">
+<!ENTITY aboutAccounts.restrictedError.description "நீங்கள் இந்த சுயவிவரத்திலிருந்து பயர்பாக்ஸ் கணக்குகளை நிர்வகிக்க இயலாது.">

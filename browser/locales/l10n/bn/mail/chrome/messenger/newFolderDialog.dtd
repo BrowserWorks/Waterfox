@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title "নতুন ফোল্ডার">
+<!ENTITY name.label "নাম (N):">
+<!ENTITY name.accesskey "N">
+<!ENTITY description.label "যার সাবফোল্ডার হিসেবে তৈরি করা হবে (C):">
+<!ENTITY description.accesskey "C">
+<!ENTITY folderRestriction1.label "এই সার্ভারটি ফোল্ডারসমূহকে দুইটি বিশেষ ধরনের ফোল্ডারে সীমাবদ্ধ রাখে।">
+<!ENTITY folderRestriction2.label "আপনার নতুন ফোল্ডারকে যা রাখার অনুমোদন দেয়া হবে:">
+<!ENTITY foldersOnly.label "শুধুমাত্র ফোল্ডার">
+<!ENTITY messagesOnly.label "শুধুমাত্র বার্তা">
+<!ENTITY accept.label "ফোল্ডার তৈরি করা হবে (r)">
+<!ENTITY accept.accesskey "r">

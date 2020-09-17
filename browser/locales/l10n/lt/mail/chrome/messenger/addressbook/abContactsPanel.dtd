@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Savybės">
+<!ENTITY propertiesMenu.accesskey           "S">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Adresų knygos savybės">
+<!ENTITY abPropertiesMenu.accesskey         "s">
+<!ENTITY contactPropertiesMenu.label        "Adresato savybės">
+<!ENTITY contactPropertiesMenu.accesskey    "s">
+<!ENTITY mailingListPropertiesMenu.label    "Adresatų sąrašo savybės">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Rodyti adresų knygos kontekstinį meniu">
+<!ENTITY addressbookPicker.label            "Adresų knyga:">
+<!ENTITY addressbookPicker.accesskey        "A">
+<!ENTITY searchContacts.label               "Ieškoti adresatų:">
+<!ENTITY searchContacts.accesskey           "d">
+<!ENTITY SearchNameOrEmail.label            "Asmenvardis ar el. p. adresas">
+
+<!ENTITY addtoToFieldMenu.label             "Pridėti į lauką „Kam“">
+<!ENTITY addtoToFieldMenu.accesskey         "P">
+<!ENTITY addtoCcFieldMenu.label             "Pridėti į lauką „Kopija“">
+<!ENTITY addtoCcFieldMenu.accesskey         "K">
+<!ENTITY addtoBccFieldMenu.label            "Pridėti į lauką „Nematomoji kopija“">
+<!ENTITY addtoBccFieldMenu.accesskey        "N">
+<!ENTITY deleteAddrBookCard.label           "Pašalinti">
+<!ENTITY deleteAddrBookCard.accesskey       "š">
+<!ENTITY propertiesContext.label            "Savybės">
+<!ENTITY propertiesContext.accesskey        "S">
+<!ENTITY abPropertiesContext.label          "Savybės">
+<!ENTITY abPropertiesContext.accesskey      "S">
+<!ENTITY editContactContext.label           "Keisti adresatą">
+<!ENTITY editContactContext.accesskey       "K">
+<!ENTITY editMailingListContext.label       "Keisti sąrašą">
+<!ENTITY editMailingListContext.accesskey   "K">
+
+<!ENTITY newContactAbContext.label          "Naujas adresatas">
+<!ENTITY newContactAbContext.accesskey      "N">
+<!ENTITY newListAbContext.label             "Naujas sąrašas">
+<!ENTITY newListAbContext.accesskey         "s">
+
+<!ENTITY toButton.label                     "Pridėti į „Kam“">
+<!ENTITY toButton.accesskey                 "P">
+<!ENTITY ccButton.label                     "Pridėti į „Kopija“">
+<!ENTITY ccButton.accesskey                 "K">
+<!ENTITY bccButton.label                    "Pridėti į „Nematomoji kopija“">
+<!ENTITY bccButton.accesskey                "N">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Күнтізбе панелі">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "з">
+<!ENTITY lightning.toolbar.task.name "Тапсырма панелі">
+<!ENTITY lightning.toolbar.task.name.accesskey "т">
+
+<!ENTITY lightning.toolbar.sync.label "Синхрондау">
+<!ENTITY lightning.toolbar.sync.tooltip "Күнтізбелерді қайта жүктеу және өзгерістерді синхрондау">
+<!ENTITY lightning.toolbar.delete.label "Өшіру">
+<!ENTITY lightning.toolbar.delete.tooltip "Таңдалған оқиғалар немесе тапсырмаларды өшіру">
+<!ENTITY lightning.toolbar.edit.label "Түзету">
+<!ENTITY lightning.toolbar.edit.tooltip "Таңдалған оқиғаны немесе тапсырманы түзету">
+<!ENTITY lightning.toolbar.gototoday.label "Бүгінге өту">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Бүгінге өту">
+<!ENTITY lightning.toolbar.print.label "Баспаға шығару">
+<!ENTITY lightning.toolbar.print.tooltip "Оқиғалар немесе тапсырмаларды баспаға шығару">
+<!-- Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.calendar.label     "Күнтізбе">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Күнтізбе бетіне ауысу">
+<!ENTITY lightning.toolbar.calendar.accesskey "К">
+<!ENTITY lightning.toolbar.task.label         "Тапсырмалар">
+<!ENTITY lightning.toolbar.task.tooltip       "Тапсырмалар бетіне ауысу">
+<!ENTITY lightning.toolbar.task.accesskey     "Т">
+<!-- Toolbar write button -->
+
+<!ENTITY lightning.toolbar.newevent.label     "Оқиға">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Жаңа оқиғаны жасау">
+<!ENTITY lightning.toolbar.newtask.label      "Тапсырма">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Жаңа тапсырманы жасау">
+<!-- Calendar and Task Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.day.label                 "Күн">
+<!ENTITY lightning.toolbar.day.accesskey             "К">
+<!ENTITY lightning.toolbar.week.label                "Апта">
+<!ENTITY lightning.toolbar.week.accesskey            "А">
+<!ENTITY lightning.toolbar.multiweek.label           "Бірнеше апта">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "р">
+<!ENTITY lightning.toolbar.month.label               "Ай">
+<!ENTITY lightning.toolbar.month.accesskey           "й">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Қолданба мәзірі">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "&brandShortName; мәзірін көрсету">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Күнтізбе панелі">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "п">
+<!ENTITY lightning.toolbar.calendarpane.label        "Күнтізбе панелін көрсету">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "п">

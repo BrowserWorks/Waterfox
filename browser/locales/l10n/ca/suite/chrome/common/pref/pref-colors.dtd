@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-colors.xul -->
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+
+
+<!ENTITY pref.colors.title                 "Colors">
+<!ENTITY color                             "Text i fons">
+<!ENTITY textColor.label                   "Text:">
+<!ENTITY textColor.accesskey               "e">
+<!ENTITY backgroundColor.label             "Fons:">
+<!ENTITY backgroundColor.accesskey         "F">
+<!ENTITY useSystemColors.label             "Utilitza els colors del sistema">
+<!ENTITY useSystemColors.accesskey         "s">
+
+<!ENTITY underlineLinks.label              "Subratlla els enllaços">
+<!ENTITY underlineLinks.accesskey          "u">
+<!ENTITY links                             "Colors de l'enllaç">
+<!ENTITY linkColor.label                   "Enllaços no visitats:">
+<!ENTITY linkColor.accesskey               "l">
+<!ENTITY activeLinkColor.label             "Enllaços actius:">
+<!ENTITY activeLinkColor.accesskey         "a">
+<!ENTITY visitedLinkColor.label            "Enllaços visitats:">
+<!ENTITY visitedLinkColor.accesskey        "v">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Quan una pàgina web porti els seus propis colors i fons:">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Utilitza sempre els colors i fons indicats per la pàgina web">
+<!ENTITY alwaysUseDocumentColors.accesskey "a">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Utilitza els colors triats per mi, ignorant els colors indicats">
+<!ENTITY useMyColors.accesskey             "i">

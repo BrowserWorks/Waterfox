@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindow.title           "Rolda de correo">
+<!-- Labels -->
+<!ENTITY addToAddressBook.label         "Engadir a: ">
+
+<!ENTITY ListName.label                 "Nome da rolda: ">
+<!ENTITY ListNickName.label             "Alcume da rolda: ">
+<!ENTITY ListDescription.label          "Descrición: ">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Escriba os enderezos de correo electrónico para engadilos na rolda de correo:">
+
+<!-- Access Keys -->
+<!ENTITY addToAddressBook.accesskey     "a">
+<!ENTITY ListName.accesskey             "l">
+<!ENTITY ListNickName.accesskey         "m">
+<!ENTITY ListDescription.accesskey      "e">
+

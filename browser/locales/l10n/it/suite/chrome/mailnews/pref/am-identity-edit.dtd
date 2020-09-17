@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityDialog.style "min-width: 67ch;">
+<!ENTITY identityListDesc.label "Configura le impostazioni per questa identità:">
+<!ENTITY settingsTab.label "Impostazioni">
+<!ENTITY copiesFoldersTab.label "Cartelle e copie">
+<!ENTITY addressingTab.label "Composizione ed indirizzi">
+<!ENTITY publicData.label "Dati pubblici">
+<!ENTITY privateData.label "Dati privati">
+<!ENTITY identityAlias.label "Etichetta identità:">
+<!ENTITY identityAlias.accesskey "E">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Nawigacja za pomocą klawiatury">
+<!ENTITY tabNavigationBehavior.label "Nawigacja za pomocą przycisku Tab">
+<!ENTITY tabNavigationLinks.label "Odnośników">
+<!ENTITY tabNavigationLinks.accesskey "n">
+<!ENTITY tabNavigationForms.label "Przyciski, pola wyboru i listy wyboru">
+<!ENTITY tabNavigationForms.accesskey "P">
+<!ENTITY tabNavigationTextboxes.label "Uwaga: pola tekstowe zawsze brane są pod uwagę.">
+<!ENTITY tabNavigationDesc.label "Naciskając przycisk Tab lub Shift+Tab zmieniaj aktywny element w obrębie:">
+<!ENTITY accessibilityBrowseWithCaret.label "Przeglądaj z użyciem kursora">
+<!ENTITY browseWithCaretDesc.label "Przeglądanie z użyciem kursora umożliwia poruszanie się i zaznaczanie elementów wewnątrz witryn za pomocą przycisków strzałek które poruszają widoczny kursor.">
+<!ENTITY browseWithCaretUse.label "Używaj przeglądania z użyciem kursora">
+<!ENTITY browseWithCaretUse.accesskey "U">
+<!ENTITY browseWithCaretShortCut.label "Naciśnięcie klawisza F7 włącza lub wyłącza tryb przeglądania z użyciem kursora">
+<!ENTITY browseWithCaretShortCut.accesskey "N">
+<!ENTITY browseWithCaretWarn.label "Ostrzegaj przed włączeniem przeglądania z użyciem kursora">
+<!ENTITY browseWithCaretWarn.accesskey "O">

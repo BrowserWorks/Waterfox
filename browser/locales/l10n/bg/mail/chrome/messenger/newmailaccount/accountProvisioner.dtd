@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Добре дошли в &brandShortName;">
+<!ENTITY header2.label "Желаете ли нов електронен адрес?">
+<!ENTITY other.languages "Изобразени са само доставчиците, които предлагат адреси във вашия район.  Натиснете тук, за да се покажат всички доставчици.">
+<!ENTITY error.line1 "За съжаление не са открити никакви предложени адреси.">
+<!ENTITY error.line2 "Можете да опитате търсене по прякори или някакъв друг термин, за да откриете повече е-пощенски адреси.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Също така можете да пробвате някои ">
+<!ENTITY error.suggest.middle "безплатни алтернативи за пощенска регистрация">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Здравейте ">
+<!ENTITY success.title.after ", следните пощенски адреси са достъпни за вас:">
+<!ENTITY success.tip "(Можете също да опитате търсене по прякори или някакъв друг термин, за да откриете повече е-пощенски адреси.)">
+<!ENTITY partnership.description "В партньорство с някои доставчици, &brandShortName; може да ви предложи нова пощенска регистрация. За начало трябва само да попълните полетата с вашите имена или каквито искате други думи.">
+<!ENTITY existing.header "Вече имате адрес, който искате да използвате?">
+<!ENTITY tinyheader.title "Имате адрес?">
+<!ENTITY tinyheader.existing "Прескачане и използване на съществуваща поща">
+<!ENTITY content.close "Мисля да настроя моята регистрация после.">
+<!ENTITY successful.title "Поздравления!">
+<!ENTITY successful.successMessage "Вие успешно нагласихте вашата регистрация.">
+<!ENTITY successful.write "Напишете писмо">
+<!ENTITY successful.write.desc "Нека вашите приятели и семейството научат за новият ви адрес.<br/> Нали все пак затова си го направихте?">
+<!ENTITY successful.customize "Направете &brandShortName; удобен с няколко готини добавки">
+<!ENTITY successful.customize.desc "Има хиляди добавки, които могат да направят &brandShortName; да отговори на вашите специфични нужди.">
+<!ENTITY successful.attach "Добавяне личен подпис към писмата">
+<!ENTITY successful.attach.desc "Можете автоматично да добавяте цитат или някаква информация за себе си в края на всяко писмо, което изпращате.">
+<!ENTITY successful.close "Затваряне на прозореца.">
+<!ENTITY input.namePlaceholder "Вашето име или прякор">
+<!ENTITY input.search "Търсене">
+<!ENTITY search_engine.title "Персонализиране на търсачката">
+<!ENTITY search_engine.message "Вашият пощенски доставчик може също да ви предложи възможност за уеб търсене.">
+<!ENTITY search_engine.button "Завършване">

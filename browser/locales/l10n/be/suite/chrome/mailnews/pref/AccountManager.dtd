@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountManagerTitle.label "Наладжванні рахунку Пошты і Навінакупаў">
+<!ENTITY addAccountButton.label "Дадаць рахунак…">
+<!ENTITY addAccountButton.accesskey "Р">
+<!ENTITY setDefaultButton.label "Змоўчны рахунак">
+<!ENTITY setDefaultButton.accesskey "З">
+<!ENTITY removeButton.label "Выдаліць рахунак">
+<!ENTITY removeButton.accesskey "д">
+<!ENTITY accountManager.size "width: 130ch; height: 55em;">
+<!ENTITY accountTree.width "width: 35ch;">

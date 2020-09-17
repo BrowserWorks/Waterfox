@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+<!ENTITY pref.security.title              "Datenschutz &amp; Sicherheit">
+
+<!ENTITY tracking.label                   "Benutzerdaten-Aufzeichnung">
+<!ENTITY trackingIntro.label              "Websites könnten verfolgen, wie Sie sie verwenden, und damit Ihre Privatsphäre beeinflussen.">
+
+<!ENTITY doNotTrack.label                 "Websites mitteilen, dass ich nicht verfolgt werden will">
+<!ENTITY doNotTrack.accesskey             "s">
+<!ENTITY trackProtect.label               "Verfolgungsaktivitäten von bekannten Websites verhinden">
+<!ENTITY trackProtect.accesskey           "V">
+<!ENTITY warnTrackContent.label           "Warnen, wenn bekannte Verfolgungsaktivitäten erkannt wurden">
+<!ENTITY warnTrackContent.accesskey       "W">
+
+<!ENTITY geoLocation.label                "Standortbezogenes Browsen">
+<!ENTITY geoIntro.label                   "Websites können Anfragen für weitere Informationen zu Ihrem Standort senden">
+
+<!ENTITY geoEnabled.label                 "Um Erlaubnis anfragen, wenn eine Anfrage gemacht wird">
+<!ENTITY geoEnabled.accesskey             "U">
+<!ENTITY geoDisabled.label                "Diese Funktion deaktivieren und alle Anfragen ablehnen">
+<!ENTITY geoDisabled.accesskey            "D">
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label               "Sicheres Browsen">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; kann Websites blockieren, von denen gemeldet wurde, dass ihre Inhalte bösartig sind.">
+
+<!ENTITY blockAttackSites.label           "Als attackierend gemeldete Websites blockieren (Malware, Viren)">
+<!ENTITY blockAttackSites.accesskey       "A">
+
+<!ENTITY blockWebForgeries.label          "Als Betrugsversuch gemeldete Websites blockieren (Phishing)">
+<!ENTITY blockWebForgeries.accesskey      "B">

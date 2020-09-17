@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Conversa">
+<!ENTITY fromColumn.label "Remitent">
+<!ENTITY recipientColumn.label "Destinatari">
+<!ENTITY attachmentColumn.label "Adjuncions">
+<!ENTITY subjectColumn.label "Assumpte">
+<!ENTITY dateColumn.label "Data">
+<!ENTITY priorityColumn.label "Prioritat">
+<!ENTITY tagsColumn.label "Etiquetes">
+<!ENTITY accountColumn.label "Compte">
+<!ENTITY statusColumn.label "Estat">
+<!ENTITY sizeColumn.label "Mida">
+<!ENTITY junkStatusColumn.label "Estat de correu brossa">
+<!ENTITY unreadColumn.label "Per llegir en la conversa">
+<!ENTITY totalColumn.label "Total en la conversa">
+<!ENTITY readColumn.label "Llegit">
+<!ENTITY receivedColumn.label "Recepció">
+<!ENTITY flagColumn.label "Destacat">
+<!ENTITY locationColumn.label "Ubicació">
+<!ENTITY idColumn.label "Ordre de recepció">
+<!--Tooltips-->
+
+<!ENTITY columnChooser2.tooltip "Tria les columnes que es mostraran">
+<!ENTITY threadColumn2.tooltip "Mostra les converses de missatges">
+<!ENTITY fromColumn2.tooltip "Ordena per remitent">
+<!ENTITY recipientColumn2.tooltip "Ordena per destinatari">
+<!ENTITY attachmentColumn2.tooltip "Ordena per adjuncions">
+<!ENTITY subjectColumn2.tooltip "Ordena per assumpte">
+<!ENTITY dateColumn2.tooltip "Ordena per data">
+<!ENTITY priorityColumn2.tooltip "Ordena per prioritat">
+<!ENTITY tagsColumn2.tooltip "Ordena per etiquetes">
+<!ENTITY accountColumn2.tooltip "Ordena per compte">
+<!ENTITY statusColumn2.tooltip "Ordena per estat">
+<!ENTITY sizeColumn2.tooltip "Ordena per mida">
+<!ENTITY junkStatusColumn2.tooltip "Ordena per estat de correu brossa">
+<!ENTITY unreadColumn2.tooltip "Nombre de missatges per llegir en la conversa">
+<!ENTITY totalColumn2.tooltip "Nombre total de missatges en la conversa">
+<!ENTITY readColumn2.tooltip "Ordena per llegit">
+<!ENTITY receivedColumn2.tooltip "Ordena per data de recepció">
+<!ENTITY flagColumn2.tooltip "Ordena per destacat">
+<!ENTITY locationColumn2.tooltip "Ordena per ubicació">
+<!ENTITY idColumn2.tooltip "Ordena per ordre de recepció">

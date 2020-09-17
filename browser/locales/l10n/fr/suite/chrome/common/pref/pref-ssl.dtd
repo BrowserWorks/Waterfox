@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "Versions du protocole SSL/TLS">
+<!ENTITY SSLTLSWarnings.caption             "Avertissements SSL/TLS">
+<!ENTITY SSLMixedContent.caption            "Contenu mixte">
+<!ENTITY SSLClientAuthMethod.caption        "Sélection du certificat client">
+
+<!ENTITY pref.ssltls.title                  "Protocole SSL/TLS">
+<!ENTITY limit.description                  "Vous pouvez restreindre les protocoles de chiffrement à utiliser pour les connexions sécurisées. Choisissez une version unique ou une plage contiguë de versions.">
+<!ENTITY limit.enable.label                 "Autoriser :">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName; peut vous avertir du statut de sécurité de la page web courante. Régler &brandShortName; pour afficher un avertissement lors de :">
+<!ENTITY warn.enteringsecure                "l’ouverture d’un site qui prend en charge le chiffrement des données">
+<!ENTITY warn.enteringsecure.accesskey      "e">
+<!ENTITY warn.insecurepost                  "l’envoi de données d’une page non sécurisée à une page non sécurisée">
+<!ENTITY warn.insecurepost.accesskey        "v">
+<!ENTITY warn.leavingsecure                 "la fermeture d’une page qui prend en charge le chiffrement des données">
+<!ENTITY warn.leavingsecure.accesskey       "u">
+
+<!ENTITY mixed.description                  "Les pages chiffrées peuvent contenir du contenu non chiffré vulnérable à l’espionnage et aux contrefaçons. &brandShortName; peut le détecter et le bloquer :">
+<!ENTITY warn.mixedactivecontent            "M’avertir lorsque des pages chiffrées possèdent du contenu non sécurisé">
+<!ENTITY warn.mixedactivecontent.accesskey  "M">
+<!ENTITY block.activecontent                "Ne pas charger du contenu non sécurisé sur des pages chiffrées">
+<!ENTITY block.activecontent.accesskey      "p">
+<!ENTITY warn.mixeddisplaycontent           "M’avertir lorsque des pages possèdent d’autres types de contenu mixte">
+<!ENTITY warn.mixeddisplaycontent.accesskey "a">
+<!ENTITY block.displaycontent               "Ne pas charger les autres types de contenu mixte sur des pages chiffrées">
+<!ENTITY block.displaycontent.accesskey     "c">
+
+<!ENTITY certselect.description             "Veuillez décider comment &brandShortName; sélectionne un certificat de sécurité à présenter aux sites web qui en requièrent un :">
+<!ENTITY certselect.auto                    "sélectionner automatiquement">
+<!ENTITY certselect.auto.accesskey          "s">
+<!ENTITY certselect.ask                     "demander à chaque fois">
+<!ENTITY certselect.ask.accesskey           "d">

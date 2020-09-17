@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Tz'ib'anïk B'i'aj pa taq Q'asab'äl">
+<!ENTITY learnMore.label             "Tetamäx ch'aqa' chik chi kij ri taq Q'asab'äl">
+
+<!ENTITY feedTitle.label             "B'i'aj:">
+<!ENTITY feedTitle.accesskey         "B">
+
+<!ENTITY feedLocation.label          "Q'asab'äl URL:">
+<!ENTITY feedLocation.accesskey      "Q">
+<!ENTITY feedLocation2.placeholder   "Tatz'ib'aj jun okel url richin rub'ey tzuquj">
+<!ENTITY locationValidate.label      "Jikib'anem">
+<!ENTITY validateText.label          "Tinik'öx ri junamana'oj chuqa' tikol jun okel ochochib'äl.">
+
+<!ENTITY feedFolder.label            "Keyak ri taq Cholna'oj pa:">
+<!ENTITY feedFolder.accesskey        "K">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Tinik'öx k'ak'a' taq cholna'oj pa taq ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "taq ch'utiramaj">
+<!ENTITY biffMinutes.accesskey       "c">
+<!ENTITY biffDays.label              "taq q'ij">
+<!ENTITY biffDays.accesskey          "i">
+<!ENTITY recommendedUnits.label      "Ri nuk'unel nuchilab'ej:">
+
+<!ENTITY quickMode.label             "Nik'ut ri ruch'utitzijol cholna'oj chuwäch nisamajib'ëx ri ajk'amaya'l ruxaq">
+<!ENTITY quickMode.accesskey         "k">
+
+<!ENTITY autotagEnable.label         "Pa ruyonil kerunuk'u' taq retal chi rij ri q'asab'äl &lt;ruwäch&gt; taq b'i'aj">
+<!ENTITY autotagEnable.accesskey     "o">
+<!ENTITY autotagUsePrefix.label      "Taq retal ruwäch tzij rik'in:">
+<!ENTITY autotagUsePrefix.accesskey  "w">
+<!ENTITY autoTagPrefix.placeholder   "Titz'ib'äx jun retal ruwäch tzij">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Titz'aqatisäx">
+<!ENTITY button.addFeed.accesskey    "t">
+<!ENTITY button.verifyFeed.label     "Tinik'öx">
+<!ENTITY button.verifyFeed.accesskey "T">
+<!ENTITY button.updateFeed.label     "Tik'ex">
+<!ENTITY button.updateFeed.accesskey "T">
+<!ENTITY button.removeFeed.label     "Tiyuj">
+<!ENTITY button.removeFeed.accesskey "y">
+<!ENTITY button.importOPML.label     "Tijik'">
+<!ENTITY button.importOPML.accesskey "i">
+<!ENTITY button.exportOPML.label     "Tik'wäx el">
+<!ENTITY button.exportOPML.accesskey "K">
+<!ENTITY button.exportOPML.tooltip   "Kek'wäx taq Q'asab'äl rik'in ruch'akulal yakwuj; ctrl pitz'oj o ctrl enter richin yek'wäx el taq q'asab'äl achi'el jun cholb'äl">
+
+<!ENTITY cmd.close.commandKey        "r">
+<!ENTITY button.close.label          "Titz'apïx">

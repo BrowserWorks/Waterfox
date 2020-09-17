@@ -1,0 +1,140 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Ny melding: (uten emne)">
+
+<!ENTITY fromAddr.label "Fra:">
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY toAddr.label "Til:">
+<!ENTITY ccAddr.label "Kopi til:">
+<!ENTITY bccAddr.label "Blind kopi til:">
+<!ENTITY replyAddr.label "Svar til:">
+<!ENTITY newsgroupsAddr.label "Nyhetsgruppe:">
+<!ENTITY followupAddr.label "Oppfølging til:">
+<!ENTITY subject.label "Emne:">
+<!ENTITY subject.accesskey "E">
+<!ENTITY attachments.label "Vedlegg:">
+<!ENTITY attachments.accesskey "d">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Lagre">
+<!ENTITY saveCmd.accesskey "L">
+<!ENTITY saveAsCmd.label "Lagre som">
+<!ENTITY saveAsCmd.accesskey "o">
+<!ENTITY saveAsFileCmd.label "Fil …">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Utkast">
+<!ENTITY saveAsDraftCmd.accesskey "U">
+<!ENTITY saveAsTemplateCmd.label "Mal">
+<!ENTITY saveAsTemplateCmd.accesskey "M">
+<!ENTITY attachMenu.label "Legg ved">
+<!ENTITY attachMenu.accesskey "L">
+<!ENTITY attachFileCmd.label "Fil(er) …">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "Nettside …">
+<!ENTITY attachPageCmd.accesskey "N">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Personlig adressekort (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY sendNowCmd.label "Send nå">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "S">
+<!ENTITY sendLaterCmd.label "Send senere">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "e">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Tekstbrytning">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "B">
+<!ENTITY accountManagerCmd.label "Kontoinnstillinger …">
+<!ENTITY accountManagerCmd.accesskey "K">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "E-postverktøylinje">
+<!ENTITY showComposeToolbarCmd.accesskey "E">
+<!ENTITY showFormatToolbarCmd.label "Formateringsverktøylinje">
+<!ENTITY showFormatToolbarCmd.accesskey "F">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Innstillinger">
+<!ENTITY optionsMenu.accesskey "I">
+
+<!ENTITY quoteCmd.label "Siter melding">
+<!ENTITY quoteCmd.accesskey "S">
+<!ENTITY selectAddressCmd.label "Velg adresser …">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "V">
+
+<!ENTITY priorityMenu.label "Prioritet">
+<!ENTITY priorityMenu.accesskey "p">
+<!ENTITY lowestPriorityCmd.label "Lavest">
+<!ENTITY lowestPriorityCmd.accesskey "L">
+<!ENTITY lowPriorityCmd.label "Lav">
+<!ENTITY lowPriorityCmd.accesskey "a">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY normalPriorityCmd.accesskey "n">
+<!ENTITY highPriorityCmd.label "Høy">
+<!ENTITY highPriorityCmd.accesskey "ø">
+<!ENTITY highestPriorityCmd.label "Høyest">
+<!ENTITY highestPriorityCmd.accesskey "H">
+
+<!ENTITY returnReceiptMenu.label "Mottakskvitteringer">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Leveringsstatusvarsler">
+<!ENTITY dsnMenu.accesskey "L">
+
+<!ENTITY outputFormatMenu.label "Format">
+<!ENTITY outputFormatMenu.accesskey  "F">
+<!ENTITY autoFormatCmd.label "Automatisk gjenkjenning">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Bare ren tekst">
+<!ENTITY plainTextFormatCmd.accesskey "B">
+<!ENTITY htmlFormatCmd.label "Bare rik tekst (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "r">
+<!ENTITY bothFormatCmd.label "Ren og rik (HTML) tekst">
+<!ENTITY bothFormatCmd.accesskey "R">
+
+<!ENTITY fileCarbonCopyCmd.label "Send en kopi til">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "Arkiver her">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Send">
+<!ENTITY addressButton.label "Adresser">
+<!ENTITY attachButton.label "Legg ved">
+<!ENTITY spellingButton.label "Stavekontroll">
+<!ENTITY saveButton.label "Lagre">
+<!ENTITY stopButton.label "Stopp">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Adresselinje">
+<!ENTITY formatToolbar.tooltip "Formateringsverktøylinje">
+<!ENTITY sendButton.tooltip "Send denne meldingen nå"> 
+<!ENTITY sendlaterButton.tooltip "Send denne meldingen senere"> 
+<!ENTITY addressButton.tooltip "Velg en mottaker fra adresseboken"> 
+<!ENTITY attachButton.tooltip "Inkluder et vedlegg"> 
+<!ENTITY saveButton.tooltip "Lagre denne meldingen"> 
+<!ENTITY stopButton.tooltip "Stopp denne overføringen"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Åpne">
+<!ENTITY openAttachment.accesskey "Å">
+<!ENTITY renameAttachment.label "Endre navn …">
+<!ENTITY renameAttachment.accesskey "E">
+<!ENTITY deleteAttachment.accesskey "S">
+<!ENTITY selectAllAttachments.accesskey "a">
+<!ENTITY attachFile.label "Legg ved filer …">
+<!ENTITY attachFile.accesskey "L">
+<!ENTITY attachPage.label "Legg ved nettside …">
+<!ENTITY attachPage.accesskey "v">

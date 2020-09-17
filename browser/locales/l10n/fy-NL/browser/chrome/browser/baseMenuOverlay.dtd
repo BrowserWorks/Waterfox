@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Oer &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "O">
+
+<!ENTITY preferencesCmdMac.label        "Foarkarren…">
+
+<!ENTITY servicesMenuMac.label          "Tsjinsten">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; ferstopje">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Oare ferstopje">
+
+<!ENTITY showAllAppsCmdMac.label        "Alles toane">
+
+<!ENTITY touchBarCmdMac.label           "Oanraakbalke oanpasse…">

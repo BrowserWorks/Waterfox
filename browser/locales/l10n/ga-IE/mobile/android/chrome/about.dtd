@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Maidir le &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "Is táirge turgnamhach é &brandShortName; agus seans nach mbeidh sé cobhsaí.">
+<!ENTITY aboutPage.checkForUpdates.link         "Lorg Nuashonruithe »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Nuashonruithe á lorg…">
+<!ENTITY aboutPage.checkForUpdates.none         "Níl aon nuashonruithe ar fáil">
+<!ENTITY aboutPage.checkForUpdates.available2   "Íoslódáil nuashonrú">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Nuashonrú á íoslódáil…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Suiteáil an nuashonrú">
+<!ENTITY aboutPage.faq.label                    "Ceisteanna Coitianta">
+<!ENTITY aboutPage.support.label                "Tacaíocht">
+<!ENTITY aboutPage.privacyPolicy.label          "Polasaí Príobháideachta">
+<!ENTITY aboutPage.rights.label                 "Do Chearta">
+<!ENTITY aboutPage.relNotes.label               "Nótaí Eisiúna">
+<!ENTITY aboutPage.credits.label                "Admhálacha">
+<!ENTITY aboutPage.license.label                "Maidir leis an gCeadúnas">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Is trádmharcanna de chuid Fondúireacht Mozilla iad Firefox agus suaitheantais Firefox.">

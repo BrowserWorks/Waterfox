@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Да:">
+<!ENTITY fromField.label "Ад:">
+<!ENTITY senderField.label "Адпраўнік:">
+<!ENTITY organizationField.label "Установа:">
+<!ENTITY replyToField.label "Зваротны адрас:">
+<!ENTITY subjectField.label "Тэма:">
+<!ENTITY ccField.label "Са:">
+<!ENTITY bccField.label "Сса:">
+<!ENTITY newsgroupsField.label "Навінакупы:">
+<!ENTITY followupToField.label "Водгук-Да: ">
+<!ENTITY tagsHdr.label "Меткі:">
+<!ENTITY dateField.label "Дата:">
+<!ENTITY userAgentField.label "Дзеяч-Карыстальніка:">
+<!ENTITY referencesField.label "Спасылкі:">
+<!ENTITY messageIdField.label "Вызначальнік-Ліста:">
+<!ENTITY inReplyToField.label "У-Адказ-На:">
+<!ENTITY originalWebsite.label "Пляцоўка сеціва:">
+<!ENTITY editMessage.label "Правіць чарнавік…">
+<!ENTITY editMessage.accesskey "ч">
+<!ENTITY attachmentsTree.label "Далучэнні:">
+<!ENTITY attachmentsTree.accesskey "Д">
+<!ENTITY openAttachmentCmd.label "Адчыніць">
+<!ENTITY openAttachmentCmd.accesskey "А">
+<!ENTITY viewAttachmentCmd.label "Праглядзець зыходнік">
+<!ENTITY viewAttachmentCmd.accesskey "з">
+<!ENTITY saveAsAttachmentCmd.label "Захаваць як…">
+<!ENTITY saveAsAttachmentCmd.accesskey "Я">
+<!ENTITY detachAttachmentCmd.label "Адлучыць…">
+<!ENTITY detachAttachmentCmd.accesskey "у">
+<!ENTITY deleteAttachmentCmd.label "Выдаліць">
+<!ENTITY deleteAttachmentCmd.accesskey "ы">
+<!ENTITY saveAllAttachmentsCmd.label "Захаваць усе…">
+<!ENTITY saveAllAttachmentsCmd.accesskey "З">
+<!ENTITY detachAllAttachmentsCmd.label "Адлучыць усе…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "А">
+<!ENTITY deleteAllAttachmentsCmd.label "Выдаліць усе…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "В">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Povoliť aktualizácie pre všetky kanály">
+<!ENTITY biffAll.accesskey             "e">
+
+<!ENTITY newFeedSettings.label         "Predvolené nastavenia pre nové kanály">
+
+<!ENTITY manageSubscriptions.label     "Správa odoberania…">
+<!ENTITY manageSubscriptions.accesskey "S">
+
+<!ENTITY feedWindowTitle.label         "Sprievodca účtom pre informačné kanály">
+<!ENTITY feeds.accountName             "Blogy a informačné kanály">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "צבעים ורקע של הדף">
+<!ENTITY pageColors.label "צבעי הדף">
+<!ENTITY defaultColorsRadio.label "צבעי ברירת המחדל של הקורא (אל תגדיר צבעים בדף)">
+<!ENTITY defaultColorsRadio.accessKey "ב">
+<!ENTITY defaultColorsRadio.tooltip "השתמש בקביעות הצבע של הדפדפן המציג (של הקורא) בלבד">
+<!ENTITY customColorsRadio.label "השתמש בצבעים מותאמים אישית:">
+<!ENTITY customColorsRadio.accessKey "מ">
+<!ENTITY customColorsRadio.tooltip "הגדרות צבעים אלו גוברות על הגדרות הדפדפן של הצופה">
+
+<!ENTITY normalText.label "טקסט רגיל">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "טקסט קישור">
+<!ENTITY linkText.accessKey "l">
+<!ENTITY activeLinkText.label "טקסט של קישור פעיל">
+<!ENTITY activeLinkText.accessKey "פ">
+<!ENTITY visitedLinkText.label "טקסט של קישור שביקרת בו">
+<!ENTITY visitedLinkText.accessKey "V">
+<!ENTITY background.label "רקע:">
+<!ENTITY background.accessKey "ר">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "תמונת רקע:">
+<!ENTITY backgroundImage.accessKey "ת">
+<!ENTITY backgroundImage.tooltip "השתמש בקובץ תמונה כרקע לדף שלך">
+<!ENTITY backgroundImage.shortenedDataURI "כתובת נתונים מקוצרת (העתקה תציב כתובת מלאה בלוח הגזירים)">

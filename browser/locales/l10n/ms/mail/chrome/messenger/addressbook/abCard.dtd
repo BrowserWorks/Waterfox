@@ -1,0 +1,153 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kenalan">
+<!ENTITY Contact.accesskey               "K">
+<!ENTITY Name.box                        "Nama">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Nama Pertama:">
+<!ENTITY NameField1.accesskey           "P">
+<!ENTITY NameField2.label               "Nama Keluarga:">
+<!ENTITY NameField2.accesskey           "K">
+<!ENTITY PhoneticField1.label           "Fonetik:">
+<!ENTITY PhoneticField2.label           "Fonetik:">
+<!ENTITY DisplayName.label              "Paparan:">
+<!ENTITY DisplayName.accesskey          "P">
+<!ENTITY preferDisplayName.label        "Sentiasa papar nama dalam pengepala mesej">
+<!ENTITY preferDisplayName.accesskey    "r">
+<!ENTITY NickName.label                 "Nama gelaran:">
+<!ENTITY NickName.accesskey             "N">
+
+<!ENTITY PrimaryEmail.label             "E-mel:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "E-mel Tambahan:">
+<!ENTITY SecondEmail.accesskey          "l">
+<!ENTITY PreferMailFormat.label         "Utamakan menerima mesej yang diformatkan sebagai:">
+<!ENTITY PreferMailFormat.accesskey     "i">
+<!ENTITY PlainText.label                "Teks Biasa">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Tidak diketahui">
+<!ENTITY chatName.label                 "Nama Sembang:">
+
+<!ENTITY WorkPhone.label                "Kerja:">
+<!ENTITY WorkPhone.accesskey            "j">
+<!ENTITY HomePhone.label                "Rumah:">
+<!ENTITY HomePhone.accesskey            "m">
+<!ENTITY FaxNumber.label                "Faks:">
+<!ENTITY FaxNumber.accesskey            "k">
+<!ENTITY PagerNumber.label              "Kelui:">
+<!ENTITY PagerNumber.accesskey          "u">
+<!ENTITY CellularNumber.label           "Mudah alih:">
+<!ENTITY CellularNumber.accesskey       "d">
+
+<!ENTITY Home.tab                       "Peribadi">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Alamat:">
+<!ENTITY HomeAddress.accesskey          "t">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Bandar:">
+<!ENTITY HomeCity.accesskey             "r">
+<!ENTITY HomeState.label                "Negeri/Wilayah:">
+<!ENTITY HomeState.accesskey            "N">
+<!ENTITY HomeZipCode.label              "Poskod:">
+<!ENTITY HomeZipCode.accesskey          "P">
+<!ENTITY HomeCountry.label              "Negara:">
+<!ENTITY HomeCountry.accesskey          "g">
+<!ENTITY HomeWebPage.label              "Halaman Web:">
+<!ENTITY HomeWebPage.accesskey          "e">
+<!ENTITY Birthday.label                 "Tarikh lahir:">
+<!ENTITY Birthday.accesskey             "T">
+<!ENTITY Year.placeholder               "Tahun">
+<!ENTITY Age.placeholder                "Umur">
+
+<!ENTITY Work.tab                       "Kerja">
+<!ENTITY Work.accesskey                 "K">
+<!ENTITY JobTitle.label                 "Jawatan:">
+<!ENTITY JobTitle.accesskey             "w">
+<!ENTITY Department.label               "Jabatan:">
+<!ENTITY Department.accesskey           "n">
+<!ENTITY Company.label                  "Organisasi:">
+<!ENTITY Company.accesskey              "n">
+<!ENTITY WorkAddress.label              "Alamat:">
+<!ENTITY WorkAddress.accesskey          "l">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Bandar:">
+<!ENTITY WorkCity.accesskey             "r">
+<!ENTITY WorkState.label                "Negeri/Wilayah:">
+<!ENTITY WorkState.accesskey            "N">
+<!ENTITY WorkZipCode.label              "Poskod:">
+<!ENTITY WorkZipCode.accesskey          "P">
+<!ENTITY WorkCountry.label              "Negara:">
+<!ENTITY WorkCountry.accesskey          "g">
+<!ENTITY WorkWebPage.label              "Halaman Web:">
+<!ENTITY WorkWebPage.accesskey          "e">
+
+<!ENTITY Other.tab                      "Lain-lain">
+<!ENTITY Other.accesskey                "l">
+<!ENTITY Custom1.label                  "Penyesuaian 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Penyesuaian 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Penyesuaian 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Penyesuaian 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Nota:">
+<!ENTITY Notes.accesskey                "N">
+
+<!ENTITY Chat.tab                       "Sembang">
+<!ENTITY Chat.accesskey                 "a">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "ID Jabber:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "Gelaran IRC:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Foto">
+<!ENTITY Photo.accesskey                "o">
+<!ENTITY GenericPhoto.label             "Foto Generik">
+<!ENTITY GenericPhoto.accesskey         "G">
+<!ENTITY DefaultPhoto.label             "Piawai">
+<!ENTITY PhotoFile.label                "Dalam Komputer ini">
+<!ENTITY PhotoFile.accesskey            "n">
+<!ENTITY BrowsePhoto.label              "Cari">
+<!ENTITY BrowsePhoto.accesskey          "r">
+<!ENTITY PhotoURL.label                 "Dalam Web">
+<!ENTITY PhotoURL.accesskey             "b">
+<!ENTITY PhotoURL.placeholder           "Tampal atau taip alamat web foto">
+<!ENTITY UpdatePhoto.label              "Kemaskini">
+<!ENTITY UpdatePhoto.accesskey          "m">
+<!ENTITY PhotoDropTarget.label          "Seret gambar baru di sini">

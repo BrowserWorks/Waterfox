@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "ვის: ">
+<!ENTITY fromField.label "ვისგან: ">
+<!ENTITY senderField.label "გამგზავნი: ">
+<!ENTITY organizationField.label "დაწესებულება: ">
+<!ENTITY replyToField.label "პასუხი: ">
+
+<!ENTITY subjectField.label "თემა: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "ასლი ">
+<!ENTITY bccField.label "ფარული ასლი ">
+<!ENTITY newsgroupsField.label "ჯგუფები ">
+<!ENTITY followupToField.label "კონფერენცია ">
+
+<!ENTITY tagsHdr.label "ჭდეები ">
+<!ENTITY dateField.label "თარიღი ">
+<!ENTITY userAgentField.label "პროგრამა ">
+<!ENTITY referencesField.label "დამოწმებები ">
+<!ENTITY messageIdField.label "გზავნილის კოდი ">
+<!ENTITY inReplyToField.label "პასუხად ">
+<!ENTITY originalWebsite.label "ვებსაიტი ">
+
+<!ENTITY editMessage.label                 "წინასწარი ნამუშევრის ჩასწორება…">
+<!ENTITY editMessage.accesskey             "D">
+
+<!ENTITY attachmentsTree.label             "დანართები:">
+<!ENTITY attachmentsTree.accesskey         "c">
+<!ENTITY openAttachmentCmd.label           "გახსნა">
+<!ENTITY openAttachmentCmd.accesskey       "O">
+<!ENTITY viewAttachmentCmd.label           "წყაროს ჩვენება">
+<!ENTITY viewAttachmentCmd.accesskey       "V">
+<!ENTITY saveAsAttachmentCmd.label         "შენახვა…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "A">
+<!ENTITY detachAttachmentCmd.label         "განცალკევება…">
+<!ENTITY detachAttachmentCmd.accesskey     "h">
+<!ENTITY deleteAttachmentCmd.label         "წაშლა">
+<!ENTITY deleteAttachmentCmd.accesskey     "t">
+<!ENTITY saveAllAttachmentsCmd.label       "ყველას შენახვა…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "S">
+<!ENTITY detachAllAttachmentsCmd.label     "ყველას განცალკევება…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "D">
+<!ENTITY deleteAllAttachmentsCmd.label     "ყველას წაშლა…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "e">

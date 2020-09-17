@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "গুরুত্বপূর্ণ খবর">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "&brandShortName; ইনস্টলেশনটি দিয়ে Firefox এ সংরক্ষিত তথ্যে সিঙ্ক করতে আপনার &syncBrand.fxAccount.label; দিয়ে সাইন ইন করুন।">
+<!ENTITY continue-button "চালিয়ে যান">
+
+<!ENTITY mainText "&brandShortName; এর এই ইনস্টলেশনে একটি নতুন প্রোফাইল আছে। এটি এই কম্পিউটারে ফায়ারফক্সের অন্যান্য ইনস্টলেশন (Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition, এবং Firefox Nightly)-এর সাথে বুকমার্ক, পাসওয়ার্ড এবং ব্যবহারকারীর পছন্দগুলো শেয়ার করে না।">

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Informácie o stránke</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="viewing_page_info">Informácie o stránke</h1>
+
+<p>Dialógové okno Informácie o stránke pozostáva z niekoľkých kariet, ktoré poskytujú rozličné druhy informácií o stránke,
+  ktorú si práve prezeráte. V tejto kapitole nájdete stručný prehľad, ktorý je dostupný v jednotlivých kartách.</p>
+
+<p>Ak chcete zobraziť okno Informácie o stránke, ktorú si práve prezeráte, otvorte ponuku Zobraziť a vyberte položku
+  Informácie o stránke. Ak máte záujem o určité druhy informácií, kliknite na kartu s vami požadovanou ponukou.</p>
+
+<p>Väčšina z informácií zobrazených v jednotlivých kartách (Všeobecné, Formuláre, Odkazy a Médiá), je prevzatá zo
+  zdrojového kódu stránky. Tieto veci zvyčajne zaujímajú len webových vývojárov a ostatných odborníkov.</p>
+
+<p>Viac detailov o kóde HTML, vrátane značiek nachádzajúcich sa v dialógovom okne Informácie o stránke, nájdete na
+  stránke <a href="http://www.w3.org/TR/REC-html40/">Špecifikácia HTML 4.01</a> [EN].</p>
+
+<div class="contentsBox">V tejto kapitole:
+  <ul>
+    <li><a href="#general_tab">Karta Všeobecné</a></li>
+    <li><a href="#forms_tab">Karta Formuláre</a></li>
+    <li><a href="#links_tab">Karta Odkazy</a></li>
+    <li><a href="#media_tab">Karta Médiá</a></li>
+    <li><a href="#privacy_tab">Karta Súkromie</a></li>
+    <li><a href="#security_tab">Karta Bezpečnosť</a></li>
+  </ul>
+</div>
+
+<h2 id="general_tab">Všeobecné (Karta v dialógovom okne Informácie o stránke)</h2>
+
+<p>Ak vyberiete Informácie o stránke z ponuky Zobraziť, karta Všeobecné zobrazí základné informácie o práve prehliadanej
+  stránke vo vašom prehliadači.</p>
+
+<p>V hornej časti nájdete názov stránky (ak nejaký má) a nasledujúce informácie:</p>
+
+<ul>
+  <li><strong>Adresa URL</strong>: Štandardizovaná adresa stránky <a href="glossary.xhtml#url">Uniform Resource Locator</a>,
+    ktorá sa zobrazí v paneli s adresou v okne prehliadača.</li>
+  <li><strong>Spôsob vykreslenia</strong>: Zobrazuje, či prehliadač používa na načítanie stránky režim <strong>ako staršie
+    prehliadače</strong> (quirks mode) alebo režim <strong>kompatibilný so štandardami</strong> (standards compliance).
+    Režim ako staršie prehliadače je použitý vždy, keď stránka obsahuje neštandardný kód, ktorý využívajú staré typy stránok,
+    ktoré boli vytvorené pre zastarané typy prehliadačov a nezodpovedajú dnešným štandardom. Režim kompatibilný so štandardami
+    striktne dodržiava normy. Prehliadač si sám vyberie spôsob vykreslenia vzhľadom na informácie, ktoré daná stránka
+    obsahuje.</li>
+  <li><strong>Zdroj</strong>: Ukazuje, či bol zdrojový kód danej stránky uložený do vyrovnávacej pamäte.</li>
+  <li><strong>Kódovanie</strong>: Kódovanie použité pre tento dokument HTML.</li>
+  <li><strong>Veľkosť</strong>: Veľkosť súboru, ak je dostupná.</li>
+  <li><strong>Posledná úprava</strong>: Dátum, kedy bola stránka naposledy upravovaná, ak bola.</li>
+  <li><strong>Platnosť do</strong>: Dátum, do ktorého sú informácie na stránke platné.</li>
+</ul>
+
+<p>Dolná časť zobrazuje meta informácie špecifikované stránkou. Meta informácie obsahujú údaje napríklad o všeobecnom
+  popise stránky, kľúčových slovách vyhľadávania, autorských právach atď.</p>
+
+<h2 id="forms_tab">Formuláre (Karta v dialógovom okne Informácie o stránke)</h2>
+
+<p>Ak vyberiete položku Informácie o stránke z ponuky Zobraziť a kliknete na kartu Formuláre, môžete vidieť všetky formuláre,
+ktoré zobrazená stránka obsahuje.</p>
+
+<p>V hornej časti nájdete základné informácie o spôsobe špecifikácie každého formulára v zdrojovom kóde stránky:</p>
+
+<ul>
+  <li><strong>Názov</strong>: Názov formulára, ak nejaký má.</li>
+  <li><strong>Metóda</strong>: HTML metóda použitá na zasielanie informácií, ktoré boli zachytené formulárom, späť na server.
+    <tt>GET</tt> pridá vyplnené hodnoty k webovej adrese, ktorej je formulár odoslaný. <tt>POST</tt> zašle webovej stránke
+    hodnoty ako parametre, aby ich mohol program danej stránky prečítať.</li>
+  <li><strong>Akcia formulára</strong>: Adresa URL programu, ktorý sa spustí, keď je formulár odoslaný.</li>
+</ul>
+
+<p> Keď v hornej časti karty Formuláre vyberiete nejaký formulár, v dolnej časti sa zobrazia detailné informácie o spôsobe,
+  akým je každý z formulárov definovaný v HTML zdroji:</p>
+
+<ul>
+  <li><strong>Menovka</strong>: Označenie prvku (pokiaľ je v HTML nejako označený).</li>
+  <li><strong>Názov poľa</strong>: Názov prvku.</li>
+  <li><strong>Typ</strong>: Typ vstupného prvku, napríklad
+    <tt>TEXT</tt> (na odoslanie textu), <tt>RADIO</tt> (prepínač) alebo <tt>HIDDEN</tt> (na uchovanie informácií, ktoré sú
+    odosielané, ale nezobrazia sa na obrazovke).</li>
+  <li><strong>Aktuálna hodnota</strong>: Aktuálna hodnota prvku. Napríklad, aktuálna hodnota textového prvku je text, ktorý
+  obsahuje.</li>
+</ul>
+
+<h2 id="links_tab">Odkazy (Karta v dialógovom okne Informácie o stránke)</h2>
+
+<p>Ak vyberiete položku Informácie o stránke z ponuky Zobraziť a kliknete na Odkazy, uvidíte všetky odkazy dostupné na danej
+  stránke. Nasledujúce informácie sa zobrazia pri každom odkaze:</p>
+
+<ul>
+  <li><strong>Názov</strong>: Text zobrazený v prehliadači ako odkaz.</li>
+  <li><strong>Adresa</strong>: Adresa <a href="glossary.xhtml#url">URL</a> stránky, na ktorú odkaz odkazuje.</li>
+  <li><strong>Typ</strong>: Typ odkazu, ako napríklad Kotva (odkazuje na špecifické miesto v HTML dokumente) alebo Odoslanie formulára.</li>
+</ul>
+
+<h2 id="media_tab">Médiá (Karta v dialógovom okne Informácie o stránke)</h2>
+
+<p>Ak vyberiete Informácie o stránke z ponuky Zobraziť a kliknete na kartu Médiá, zjaví sa zoznam všetkých obrázkov a iných
+  prvkov médií, zobrazených stránkou.</p>
+
+<p>V hornej časti zoznamu nájdete základné informácie o každom prvku, vrátene adresy (<a href="glossary.xhtml#url">URL</a>) a
+typu.</p>
+
+<p>Keď si vyberiete niektorý z mediálnych prvkov zobrazených v hornej časti karty Médiá, v dolnej časti sa zobrazia dostupné
+  informácie o danom prvku ako popis, veľkosť alebo rozmery.</p>
+
+<p>Vybraný prvok môžete taktiež vidieť v dolnej časti dialógového okna. Na prezeranie väčších obrázkov je potrebné kliknúť v
+  dolnom pravom rohu dialógového okna Informácie o stránke a roztiahnuť ho.</p>
+
+<p>Uloženie mediálnych prvkov ako samostatných súborov:</p>
+
+<ul>
+  <li><strong>Uložiť ako</strong>: Vyberte prvok, ktorý chcete uložiť, kliknite na položku Uložiť ako a vyberte miesto, kam
+  ho chcete uložiť.</li>
+</ul>
+
+<h2 id="privacy_tab">Súkromie (Karta v dialógovom okne Informácie o stránke)</h2>
+
+<p>Ak vyberiete položku Informácie o stránke z ponuky Zobraziť a kliknete na kartu Súkromie, uvidíte zoznam špeciálnych
+  prvkov, ktoré sú súčasťou danej stránky.</p>
+
+<ul>
+  <li><strong>Súčasti stránky</strong>: Pod adresou URL stránky je veľa kategórií. Na zobrazenie predmetov v každej kategórii,
+  dvakrát kliknite na jej názov:
+
+    <ul>
+      <li><strong>Odkazy</strong>: Zobrazí všetky odkazy.</li>
+      <li><strong>Java Applety</strong>: Zoznam Java appletov (ak sú prítomné).</li>
+      <li><strong>Mapy obrázku</strong>: Zobrazí všetky obrázkové mapy.</li>
+      <li><strong>Odoslanie formulára</strong>: Zoznam skriptov používaných na zozbieraniu údajov.</li>
+      <li><strong>Rámce</strong>: Zobrazí rámce, ktoré tvoria stránku.</li>
+      <li><strong>Obrázky</strong>: Zobrazí všetky obrázky na stránke.</li>
+      <li><strong>Externe načítané dokumenty</strong>: Obsahuje zoznam externých dokumentov, ktoré sú používané pri
+        načítaní stránky (ako napríklad súbory css alebo obrázky).</li>
+      <li><strong>Všeobecné objekty</strong>: Zobrazí zoznam všeobecných objektov.</li>
+      <li><strong>Skripty</strong>: Zoznam všetkých skriptov na stránke.</li>
+    </ul>
+  </li>
+  <li><strong>Zásady</strong>: Tlačidlo zobrazí Zásady súkromia stránky, ktorú si práve prezeráte.</li>
+  <li><strong>Zhrnutie</strong>: Vyberte v prípade, že chcete vidieť Ochranu osobných údajov. Zobrazia sa stručné informácie
+    o Ochrane osobných údajov stránky, ktorú si prezeráte.</li>
+  <li><strong>Možnosti</strong>: Pokúsi sa otvoriť stránku zo vzdialeného servera, čo umožní používateľovi zmeniť
+    osobné údaje uložené na tomto serveri.</li>
+</ul>
+
+<h2 id="security_tab">Bezpečnosť (Karta v dialógovom okne Informácie o stránke)</h2>
+
+<p>Ak vyberiete položku Informácie o stránke z ponuky Zobraziť a kliknete na kartu Bezpečnosť, zobrazia sa informácie o
+  <a href="glossary.xhtml#authentication">autentifikácii</a> a
+  <a href="glossary.xhtml#encryption">šifrovaní</a> webovej stránky, ktorú si pozeráte. V hornej časti vidíte, či bola
+  identita webovej stránky overená a v dolnej časti sú informácie o stupni šifrovania spojenia.</p>
+
+<p>Kartu Bezpečnosť môžete taktiež otvoriť kliknutím priamo na ikonu Zamknúť v dolnom pravom rohu v každom okne prehliadača.</p>
+
+<p>V hornej časti karty Bezpečnosť môžete nájsť niektorý z týchto odkazov:</p>
+
+<ul>
+  <li><strong>Identita webovej stránky nebola overená</strong>: Identita webovej stránky, ktorú si prezeráte, nebola overená.
+    Je možné, hoci veľmi nepravdepodobné, že webová stránka nie je tým, za čo sa vydáva.</li>
+  <li><strong>Identita webovej stránky bola overená</strong>: Certifikát webovej stránky bol overený certifikačnou
+    autoritou (CA) a označený ako dôveryhodný. Môžete si byť istý, že webová stránka je tou, za ktorú sa vydáva. </li>
+</ul>
+
+<p>V dolnej časti Bezpečnostnej karty môžete nájsť niektorý z týchto odkazov:</p>
+
+<ul>
+  <li><strong>Spojenie nie je zabezpečené</strong>: Je možné, že ostatní ľudia uvidia informácie, ktoré odosiela váš
+    počítač webovej stránke a naopak informácie, ktoré sú webovou stránkou zasielané do vášho počítača. Je však veľmi
+    nepravdepodobné, že by to niekto robil.</li>
+  <li><strong>Spojenie je zabezpečené</strong>: Vo všeobecnosti, stupeň šifrovania závisí od použitej dĺžky kľúčov v
+    bitoch. Čím dlhší kľúč, tým vyšší stupeň kódovania a tým zložitejšie je pre neautorizovanú osobu odtajniť dané
+    informácie.</li>
+</ul>
+
+<p>Pri nedostatočnom alebo nedostatočne silnom šifrovanií nemusíte byť znepokojený, pokiaľ si neprezeráte alebo
+  neposielate dôverné informácie ako napríklad číslo vašej kreditnej karty.</p>
+
+<p>Stav šifrovania webovej stránky môžete rýchlo skontrolovať zistením stavu pomocu ikony uzamknutia v pravom dolnom rohu
+prehliadača. Ďalšie informácie nájdete v sekcii
+<a href="using_certs_help.xhtml#checking_security_for_a_web_page">Kontrola bezpečnosti webovej stránky</a>.</p>
+
+</body>
+</html>

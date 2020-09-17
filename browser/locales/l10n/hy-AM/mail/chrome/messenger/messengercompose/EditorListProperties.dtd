@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Հատկության ցանկը">
+
+<!ENTITY ListType.label "Ցանկի տեսակ">
+<!ENTITY bulletStyle.label "Կետային ոճով.">
+<!ENTITY startingNumber.label "Սկսած՝">
+<!ENTITY startingNumber.accessKey "Ս">
+<!ENTITY none.value "Չկա">
+<!ENTITY bulletList.value "Կետիկների (չհամարակալված) ցանկը">
+<!ENTITY numberList.value "Համարակալված ցանկ">
+<!ENTITY definitionList.value "Որոշակի ցանկը">
+<!ENTITY changeEntireListRadio.label "Փոխել գր. ցանկը">
+<!ENTITY changeEntireListRadio.accessKey "Փ">
+<!ENTITY changeSelectedRadio.label "Փոխել միայն ընտրվածները">
+<!ENTITY changeSelectedRadio.accessKey "Փ">

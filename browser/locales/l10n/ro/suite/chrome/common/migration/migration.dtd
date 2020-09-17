@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# toffee <daniel@toffee.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY migrationWizard.title           "Asistent de import">
+
+<!ENTITY importAllFrom.label             "Import All Items from:">
+<!ENTITY importBookmarksFrom.label       "Importă semne de carte din:">
+
+<!ENTITY importFromSeamonkey.label       "SeaMonkey 1.x, Netscape 6/7 or Mozilla 1.x">
+<!ENTITY importFromSeamonkey.accesskey   "S">
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "Fișierul">
+<!ENTITY importFromFile.accesskey        "F">
+<!ENTITY importFromNothing.label         "Nu importa nimic">
+<!ENTITY importFromNothing.accesskey     "N">
+
+<!ENTITY importSource.title              "Importă configurații și date din">
+<!ENTITY importItems.title               "Elemente de importat">
+<!ENTITY importItems.label               "Alegeți care elemente vor fi importate:">
+
+<!ENTITY selectProfile.title             "Alegere profil">
+<!ENTITY selectProfile.label             "Puteți importa din următoarele profiluri:">
+
+<!ENTITY migrating.title                 "Se importă…">
+<!ENTITY migrating.label                 "Se importă următoarele elemente…">
+
+<!ENTITY done.title                      "Import încheiat">
+<!ENTITY done.label                      "Următoarele elemente au fost importate cu succes:">

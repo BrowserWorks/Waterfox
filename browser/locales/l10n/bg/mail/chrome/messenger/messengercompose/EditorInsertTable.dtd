@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Вмъкване на таблица">
+
+<!ENTITY size.label "Размер">
+<!ENTITY numRowsEditField.label "Редове:">
+<!ENTITY numRowsEditField.accessKey "Р">
+<!ENTITY numColumnsEditField.label "Колони:">
+<!ENTITY numColumnsEditField.accessKey "К">
+<!ENTITY widthEditField.label "Ширина:">
+<!ENTITY widthEditField.accessKey "Ш">
+<!ENTITY borderEditField.label "Контур:">
+<!ENTITY borderEditField.accessKey "у">
+<!ENTITY borderEditField.tooltip "Напишете число за контура на таблицата или нула (0), ако не искате контур">
+<!ENTITY pixels.label "пиксели">

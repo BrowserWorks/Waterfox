@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Prehliadanie na kartách">
+
+<!ENTITY tabDisplay.label "Zobrazovanie kariet">
+<!ENTITY autoHide.label "Skryť panel kariet, ak je otvorená len jedna karta">
+<!ENTITY autoHide.accesskey2 "l">
+<!ENTITY background.label "Prepnúť na nové karty otvorené z odkazov">
+<!ENTITY background.accesskey "e">
+<!ENTITY warnOnClose.label "Upozorniť pri zatváraní viacerých kariet">
+<!ENTITY warnOnClose.accesskey "U">
+<!ENTITY relatedAfterCurrent.label "Príbuzné karty otvárať za aktuálnou kartou">
+<!ENTITY relatedAfterCurrent.accesskey "b">
+
+<!ENTITY loadGroup.label "Pri otváraní skupiny záložiek">
+<!ENTITY loadGroupAppend.label "Pridať karty">
+<!ENTITY loadGroupAppend.accesskey "d">
+<!ENTITY loadGroupReplace.label "Nahradiť existujúce karty">
+<!ENTITY loadGroupReplace.accesskey "h">
+
+<!ENTITY openTabs.label "Otvoriť karty namiesto okien po">
+
+<!ENTITY middleClick.label "Prostredné tlačidlo, Ctrl+kliknutie alebo Ctrl+Enter na odkaze webovej stránke">
+<!ENTITY middleClick.accesskey "P">
+<!ENTITY middleClickMac.label "Prostredné tlačidlo, &#8984;+kliknutie alebo &#8984;+Return na odkaze webovej stránke">
+<!ENTITY middleClickMac.accesskey "P">
+<!ENTITY urlbar.label "Ctrl+Enter v paneli s adresou">
+<!ENTITY urlbar.accesskey "l">
+<!ENTITY urlbarMac.label "&#8984;+Return v paneli s adresou">
+<!ENTITY urlbarMac.accesskey "l">
+
+<!ENTITY openManagers.label "Otvoriť na novej karte namiesto nového okna">
+<!ENTITY openDataManager.label "Správca údajov">
+<!ENTITY openDataManager.accesskey "S">
+<!ENTITY openAddOnsManager.label "Správca doplnkov">
+<!ENTITY openAddOnsManager.accesskey "p">

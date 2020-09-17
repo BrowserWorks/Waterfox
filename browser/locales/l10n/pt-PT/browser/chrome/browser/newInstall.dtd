@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Notícias importantes">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Para sincronizar a informação que já guardou no Firefox com esta instalação do &brandShortName;, inicie sessão com a sua &syncBrand.fxAccount.label;.">
+<!ENTITY continue-button "Continuar">
+
+<!ENTITY mainText "Esta instalação do &brandShortName; tem um novo perfil. Este não partilha marcadores, palavras-passe, e preferências do utilizador com as outras instalações do Firefox (incluindo Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition e Firefox Nightly) neste computador.">

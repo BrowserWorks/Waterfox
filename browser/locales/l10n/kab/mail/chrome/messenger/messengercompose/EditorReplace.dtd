@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Nadi u semselsi">
+<!ENTITY findField.label "Nadi aḍris:">
+<!ENTITY findField.accesskey "r">
+<!ENTITY replaceField.label "Semselsi s:">
+<!ENTITY replaceField.accesskey "m">
+<!ENTITY caseSensitiveCheckbox.label "Qadeṛ taṛuzi n usekkil">
+<!ENTITY caseSensitiveCheckbox.accesskey "Q">
+<!ENTITY wrapCheckbox.label "Zzi-yas-d">
+<!ENTITY wrapCheckbox.accesskey "Z">
+<!ENTITY backwardsCheckbox.label "Nadi ɣer deffir">
+<!ENTITY backwardsCheckbox.accesskey "d">
+<!ENTITY findNextButton.label "Nadi ɣer zdat">
+<!ENTITY findNextButton.accesskey "N">
+<!ENTITY replaceButton.label "Semselsi">
+<!ENTITY replaceButton.accesskey "S">
+<!ENTITY replaceAndFindButton.label "Semselsi u nadi">
+<!ENTITY replaceAndFindButton.accesskey "n">
+<!ENTITY replaceAllButton.label "Semselsi imaṛṛa">
+<!ENTITY replaceAllButton.accesskey "m">
+<!ENTITY closeButton.label "Mdel">
+<!ENTITY closeButton.accesskey "C">

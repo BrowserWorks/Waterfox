@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Txertatu matematika">
+
+<!ENTITY sourceEditField.label "Sartu LaTeX iturburu-kodea:">
+
+<!ENTITY options.label "Aukerak">
+<!ENTITY optionInline.label "Barneko modua">
+<!ENTITY optionInline.accesskey "n">
+<!ENTITY optionDisplay.label "Bistaratzeko modua">
+<!ENTITY optionDisplay.accesskey "B">
+<!ENTITY optionLTR.label "Ezkerretik eskuinerako norantzan">
+<!ENTITY optionLTR.accesskey "z">
+<!ENTITY optionRTL.label "Eskuinetik ezkerrerako norantzan">
+<!ENTITY optionRTL.accesskey "s">
+
+<!ENTITY insertButton.label "Txertatu">
+<!ENTITY insertButton.accesskey "x">

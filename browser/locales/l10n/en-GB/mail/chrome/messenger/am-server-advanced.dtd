@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Advanced Account Settings">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP server directory:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Show only subscribed folders">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "Server supports folders that contain sub-folders and messages">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "Maximum number of server connections to cache">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "These preferences specify the namespaces on your IMAP server">
+<!ENTITY personalNamespace.label "Personal namespace:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Public (shared):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Other Users:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "Allow server to override these namespaces">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY pop3DeferringDesc.label "When downloading mail from this account's server, use the following folder to store new messages:" >
+<!ENTITY accountInbox.label "Inbox for this account">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Inbox for different account">
+<!ENTITY deferToServer.accesskey "D">
+<!ENTITY deferGetNewMail.label "Include this server when getting new mail">
+<!ENTITY deferGetNewMail.accesskey "I">

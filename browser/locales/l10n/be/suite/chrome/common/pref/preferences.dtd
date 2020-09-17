@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY prefWindow.title "Перавагі">
+<!ENTITY categoryHeader "Катэгорыя">
+<!ENTITY appear.label "Выгляд">
+<!ENTITY content.label "Змесціва">
+<!ENTITY fonts.label "Шрыфты">
+<!ENTITY colors.label "Колеры">
+<!ENTITY navigator.label "Азіральнік">
+<!ENTITY history.label "Гісторыя">
+<!ENTITY languages.label "Мовы">
+<!ENTITY applications.label "Дапаможныя прыстасаванні">
+<!ENTITY locationBar.label "Паліца месцазнаходжання">
+<!ENTITY tabWindows.label "Азіранне з устаўкамі">
+<!ENTITY links.label "Паводзіны спасылак">
+<!ENTITY offline.label "Па-за сеткай">
+<!ENTITY security.label "Адасабленне і бяспека">
+<!ENTITY privatedata.label "Асабістыя здаткі">
+<!ENTITY cookies.label "Біркі">
+<!ENTITY images.label "Выявы">
+<!ENTITY popups.label "Вокны-Вынырцы">
+<!ENTITY passwords.label "Паролі">
+<!ENTITY masterpass.label "Галоўныя паролі">
+<!ENTITY ssl.label "SSL">
+<!ENTITY certs.label "Пасведчанні">
+<!ENTITY sync.label "Sync">
+<!ENTITY advance.label "Пашыраны">
+<!ENTITY down.label "Загрузка">
+<!ENTITY cache.label "Запаснік">
+<!ENTITY offlineApps.label "Пазасеткавыя прыстасаванні">
+<!ENTITY proxies.label "Пасярэднікі">
+<!ENTITY httpnetworking.label "Сетка HTTP">
+<!ENTITY smart.label "Усталяванне праграмнага забеспячэння">
+<!ENTITY download.label "Загрузкі">
+<!ENTITY keynav.label "Клавіятурная навігацыя">
+<!ENTITY findAsYouType.label "Знаходзіць тое, што вы набіраеце">
+<!ENTITY search.label "Пошук у Інтэрнэце">
+<!ENTITY policies.label "Палітыкі бяспекі">
+<!ENTITY mousewheel.label "Кола мышы">
+<!ENTITY scriptsAndWindows.label "Сцэнары і ўбудовы">
+<!ENTITY spellingPane.label "Праверка правапісу">
+<!ENTITY focusSearch.key "f">

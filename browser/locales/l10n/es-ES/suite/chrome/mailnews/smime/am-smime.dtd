@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Seguridad">
+<!ENTITY securityTab.label "Seguridad">
+<!ENTITY securityHeading.label "Para enviar y recibir mensajes firmados o cifrados, debe especificar tanto un certificado para firma digital como uno para cifrado.">
+<!ENTITY encryptionGroupTitle.label "Cifrado">
+<!ENTITY encryptionChoiceLabel.label "Cifrado elegido para enviar mensajes:">
+<!ENTITY neverEncrypt.label "Nunca (no usar cifrado)">
+<!ENTITY neverEncrypt.accesskey "N">
+<!ENTITY alwaysEncryptMessage.label "Siempre (no podrá enviar si algún receptor carece de certificado)">
+<!ENTITY alwaysEncryptMessage.accesskey "v">
+<!ENTITY encryptionCert.message "Usar este certificado para cifrar/descifrar mensajes enviados a Vd.:">
+<!ENTITY digitalSign.certificate.button "Seleccionar…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Limpiar">
+<!ENTITY digitalSign.certificate_clear.accesskey "L">
+<!ENTITY encryption.certificate.button "Seleccionar…">
+<!ENTITY encryption.certificate.accesskey "c">
+<!ENTITY encryption.certificate_clear.button "Limpiar">
+<!ENTITY encryption.certificate_clear.accesskey "m">
+<!ENTITY signingGroupTitle.label "Firmado digital">
+<!ENTITY signMessage.label "Firmar mensajes digitalmente">
+<!ENTITY signMessage.accesskey "D">
+<!ENTITY signingCert.message "Usar este certificado para firmar los mensajes que envíe:">
+<!ENTITY certificates.label "Certificados">
+<!ENTITY manageCerts2.label "Administrar certificados…">
+<!ENTITY manageCerts2.accesskey "A">
+<!ENTITY manageDevices.label "Administrar dispositivos de seguridad…">
+<!ENTITY manageDevices.accesskey "i">
+<!ENTITY certPicker.title "Seleccione certificado">
+<!ENTITY certPicker.info "Certificado:">
+<!ENTITY certPicker.detailsLabel "Detalles del certificado seleccionado:">

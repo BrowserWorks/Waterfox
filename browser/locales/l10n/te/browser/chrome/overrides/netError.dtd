@@ -1,0 +1,154 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "పేజీని లోడుచేయడంలో సమస్య">
+<!ENTITY retry.label "మళ్ళీ ప్రయత్నించు">
+<!ENTITY returnToPreviousPage.label "వెనక్కి వెళ్ళు">
+<!ENTITY returnToPreviousPage1.label "వెనక్కి వెళ్ళు (సిఫారసుచేయబడింది)">
+<!ENTITY advanced2.label "ఉన్నతం…">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "సర్వర్ కనుగొనబడలేదు">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>కేపిటలైజేషన్ లేదా ఇతర టైపింగు పొరపాట్లు ఫైలు పేరులో ఉన్నాయేమో చూడండి.</li>
+  <li>ఫైలు తరలించబడిందో, పేరు మార్చబడిందో, లేదా తొలగించబడిందో కూడా సరిచూసుకోండి.</li>
+</ul>">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>దీన్ని తొలగించి లేదా తరలించి ఉండవచ్చు లేదా ఫైలు అనుమతులు ప్రాప్యతను నిరోధిస్తూండవచ్చు.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; ఏదో ఒక కారణం వలన ఈ పేజీని లోడు చేయలేకపోతోంది.</p>">
+
+<!ENTITY captivePortal.title "నెట్వర్కులోనికి ప్రవేశించండి">
+
+<!ENTITY openPortalLoginPage.label2 "నెట్వర్క్ లాగిన్ పేజీని తెరవండి">
+
+<!ENTITY malformedURI.pageTitle "చెల్లని URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>అభ్యర్ధించిన పత్రం &brandShortName; క్యాషె లో లేదు.</p><ul><li> భద్రతాపరమైన ముందు జాగ్రత్తగా, &brandShortName; సున్నితమైన పత్రాలను స్వయంచాలకంగా తిరిగి-అభ్యర్ధించదు.</li><li>వెబ్‌సైటు నుండి పత్రాన్ని తిరిగి-అభ్యర్ధించడానికి మళ్ళీ ప్రయత్నించు నొక్కండి.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>ఆన్‌లైన్ రీతికి మారి పేజీని తిరిగి లోడు చేయడానికి &quot;మళ్ళీ ప్రయత్నించు&quot; నొక్కండి.</li>
+</ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul>
+  <li>దయచేసి వెబ్‌సైటు యజమానులను సంప్రదించి వారికి ఈ సమస్య గురించి తెలియజేయండి.</li>
+</ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul>
+  <li>దయచేసి వెబ్‌సైటు యజమానులను సంప్రదించి వారికి ఈ సమస్య గురించి తెలియజేయండి.</li>
+</ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>ఈ చిరునామాను తెరవడానికి మీరు వేరే సాఫ్టువేరును స్థాపించుకోవాల్సిరావచ్చు.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>ప్రాక్సీ అమరికలు సరిగానే ఉన్నాయేమో పరిశీలించండి.</li>
+  <li>ప్రాక్సీ సేవిక పనిచేస్తోందని నిర్ధారించుకోడానికి మీ నెట్‌వర్క్ నిర్వహణాధికారిని సంప్రదించండి.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>ప్రాక్సీ అమరికలు సరిగానే ఉన్నాయేమో పరిశీలించండి.</li>
+  <li>మీ కంప్యూటరుకి పనిచేస్తూన్న నెట్‌వర్క్ అనుసంధానం ఉందని నిర్ధారించుకోండి.</li>
+  <li>మీ కంప్యూటరు లేదా నెట్‌వర్కు ఫైర్‌వాల్ లేక ప్రాక్సీ ద్వారా సంరక్షించబడితే, &brandShortName;కి జాలాన్ని వాడుకునే అనుమతి ఉండేలా చూడండి.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>కూకీలను అచేనతనం చేయడం వల్లగానీ లేదా వాటిని అంగీకరించకపోవడం వల్ల గానీ కొన్నిసార్లు ఈ సమస్య రావచ్చు.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>మీ కంప్యూటర్లో పర్సనల్ సెక్యూరిటీ మేనేజర్ స్థాపితమై ఉండేట్లు చూడండి.</li>
+  <li>ఇది ప్రామాణికం గాని సేవిక స్వరూపణం వల్ల కావచ్చు.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>మీరు చూడటానికి ప్రయత్నిస్తున్న పేజీని చూపించలేము ఎందుకంటే అందుకున్న డేటా యథార్థతను తనిఖీ చేయలేకపోయాం.</li>
+  <li>ఈ సమస్యను నివేదించడానికి దయచేసి వెబ్‌సైటు యజమానులను సంప్రదించండి.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "దీని గురించి మీరు ఏం చేయవచ్చు?">
+
+
+
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>ఈ సైటు తాత్కాలికంగా అందుబాటులో లేదు లేదా చాలా ఒత్తిడిలో ఉంది. కాసేపాగి మళ్ళీ ప్రయత్నించండి.</li>
+  <li>మీరు వేరే పేజీలేమీ తెరవలేకపోతూంటే, మీ కంప్యూటర్ నెట్‌వర్క్ అనుసంధానాన్ని సరిచూసుకోండి.</li>
+  <li>మీ కంప్యూటరు లేదా నెట్‌వర్కు ఫైర్‌వాల్ లేక ప్రాక్సీ సంరక్షణలో ఉంటే, &brandShortName;కి జాలాన్ని వాడుకునే అనుమతి ఉండేలా చూడండి.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>ఈ పేజీ ఈ విధంగా లోడవడాన్ని &brandShortName; నియంత్రించింది ఎందుకంటే ఈ పేజీ కాంటెంట్ రక్షణ విధానం దీన్ని అనుమతించదు.</p>">
+
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>మీరు చూడడానికి ప్రయత్నిస్తూన్న పేజీ చూపించబడదు ఎందుకంటే డేటా బదలాయింపులో తప్పిదం గుర్తించబడింది.</p><ul><li>దయచేసి వెబ్‌సైటు యజమాలనుల సంప్రదించి ఈ సమస్యను వారికి తెలియజేయండి.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "నష్టభయాన్ని అంగీకరించి ముందుకు కొనసాగండి">
+
+<!ENTITY errorReporting.automatic2 "హానికరమైన సైట్లను గుర్తించి నిరోధించడంలో సహాయపడేందుకు ఇలాంటి తప్పిదాలను Mozillaకు నివేదించండి">
+<!ENTITY errorReporting.learnMore "ఇంకా తెలుసుకోండి…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>దయజేసి వెబ్‌సైటు యజమాలను సంప్రదించి ఈ సమస్యను వారికి తెలియజేయండి.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "ఉన్నత సమాచారం: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "హెచ్చరిక: సంభావ్య భద్రతా అపాయం ముందుంది">
+<!ENTITY certerror.copyToClipboard.label "పాఠ్యాన్ని క్లిప్‌బోర్డుకి కాపీచేయి">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> కాలం చెల్లిన దాడికి దుర్భలంగా ఉన్న భద్రతా సాంకేతికత వాడుతోంది. మీరు భద్రం అనుకున్న సమాచారాన్ని దాడి చేసినవారు సులభంగా బయల్పరచవచ్చు. మీరు సైటును చూడగలిగే ముందు సైటు నిర్వాహకులు సైటు సేవికను బాగుచేయాలి.</p><p>దోష సంకేతం: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "నిరోధించిన పేజీ">
+
+
+
+<!ENTITY prefReset.longDesc "ఇది మీ నెట్‌వర్కు భద్రతా అమరికల వల్ల అయివుండవచ్చనిపిస్తోంది. అప్రమేత అమరికలను పునరుద్ధరించమంటారా?">
+<!ENTITY prefReset.label "అప్రమేయ అమరికలను పునరుద్ధరించు">
+
+
+

@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Galetes emmagatzemades">
+<!ENTITY     tab.bannedservers.label        "Llocs de galetes">
+<!ENTITY     div.bannedservers.label        "Gestiona els llocs que poden o no poden emmagatzemar galetes en el vostre ordinador.">
+<!ENTITY     div.cookiesonsystem.label      "Visualitza i suprimeix les galetes que s'emmagatzemen al vostre ordinador.">
+<!ENTITY     treehead.cookiename.label      "Nom de la galeta">
+<!ENTITY     treehead.cookiedomain.label    "Lloc">
+<!ENTITY     treehead.cookieexpires.label   "Expira">
+<!ENTITY     treehead.infoselected.label    "Informació de la galeta seleccionada">
+<!ENTITY     button.removecookie.label      "Suprimeix la galeta">
+<!ENTITY     button.removecookie.accesskey  "r">
+<!ENTITY     button.removeallcookies.label  "Suprimeix totes les galetes">
+<!ENTITY     button.removeallcookies.accesskey "e">
+
+<!ENTITY     search.placeholder             "Cerca galetes">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Nom:">
+<!ENTITY     props.value.label              "Contingut:">
+<!ENTITY     props.domain.label             "Servidor central:">
+<!ENTITY     props.path.label               "Camí:">
+<!ENTITY     props.secure.label             "Enviat per a:">
+<!ENTITY     props.expires.label            "Venciment:">
+
+<!ENTITY     treehead.sitename.label        "Lloc">
+<!ENTITY     treehead.status.label          "Estat">
+<!ENTITY     windowtitle.label              "Gestor de galetes">
+<!ENTITY     buttonaccept.label             "Tanca">
+<!ENTITY     buttonaccept.accesskey         "c">
+
+<!ENTITY     blockSite.label                "Bloca">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "Permet">
+<!ENTITY     allowSite.accesskey            "P">
+<!ENTITY     allowSiteSession.label         "Sessió">
+<!ENTITY     allowSiteSession.accesskey     "S">
+<!ENTITY     removepermission.label         "Suprimeix el lloc">
+<!ENTITY     removepermission.accesskey     "r">
+<!ENTITY     removeallpermissions.label     "Suprimeix tots els llocs">
+<!ENTITY     removeallpermissions.accesskey "e">
+
+<!ENTITY     futureCookies.label            "No permetis desar als llocs web que deixen galetes suprimides que facin en un futur">
+<!ENTITY     futureCookies.accesskey        "N">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Import ustasi">
+
+<!ENTITY importFromWin.label            "Tanlamalar, hisob sozlamalari, manzil kitobi, filterlar va boshqa ma’lumotlarni import qilish:">
+<!ENTITY importFromNonWin.label         "Parametrlar, hisob sozlamalari, manzil kitobi va boshqa ma’lumotlarni import qilish:">
+
+
+<!ENTITY importFromNothing.label        "Hech narsa imort qilinmasin">
+<!ENTITY importFromNothing.accesskey    "q">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 yoki yangisi">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Sozlamalar va xat jildlarini import qilish">
+<!ENTITY importItems.title              "Import qiliadigan narsalar">
+<!ENTITY importItems.label              "Import qilinadiganlarni tanlang:">
+
+<!ENTITY migrating.title                "Import qilinmoqda…">
+<!ENTITY migrating.label                "Quyidagilar hozir import qilinadi…">
+
+<!ENTITY selectProfile.title            "Profilni tanlash">
+<!ENTITY selectProfile.label            "Quyidagi profillar import qilish uchun mavjud:">
+
+<!ENTITY done.title                     "Import qilish jarayoni tugadi">
+<!ENTITY done.label                     "Quyidagilar muvaffaqiyatli import qilindi:">

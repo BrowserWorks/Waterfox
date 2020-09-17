@@ -1,0 +1,17 @@
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Выбар профілю карыстальніка">
+<!ENTITY profileManager.title "Кіраўнік профіляў &brandShortName;">
+<!ENTITY manage.label "Уладкаваць профілі…">
+<!ENTITY manage.accesskey "л">
+<!ENTITY select.label "Скарыстаць профіль">
+<!ENTITY availableProfiles.label "Даступныя профілі">
+<!ENTITY introStart.label "Каб атрымаць доступ да асабістага профілю, які змяшчае захаваныя лісты, наладжванні і іншыя асабістыя звесткі, выберыце, калі ласка, гэты профіль са спіса, і пстрыкніце &start.label;, каб пачаць вашу сэсію.">
+<!ENTITY introSwitch.label "Каб пачаць карыстацца іншым профілям, які змяшчае захаваныя лісты, наладжванні і іншыя асабістыя звесткі, выберыце, калі ласка, гэты профіль са спіса, і пстрыкніце &select.label;.">
+<!ENTITY profileManagerText.label "&brandShortName; захоўвае звесткі аб вашых наладжваннях, перавагах, закладках, захаваных лістах і іншых адзінках карыстальніка ў вашым профілі.">
+<!ENTITY autoSelect.label "Змоўчны профіль">
+<!ENTITY autoSelect.accesskey "З">

@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Socruithe Cuntais">
+<!ENTITY accountName.label "Ainm an Chuntais:">
+<!ENTITY accountName.accesskey "n">
+<!ENTITY identityTitle.label "Aitheantas Réamhshocruithe">
+<!ENTITY identityDesc.label "Tá aitheantas ag gach cuntas. Seo an t-eolas a fheiceann daoine agus iad ag léamh teachtaireachtaí uaitse.">
+<!ENTITY name.label "D'ainm:">
+<!ENTITY name.accesskey "D">
+<!ENTITY email.label "Seoladh Ríomhphoist:">
+<!ENTITY email.accesskey "e">
+<!ENTITY replyTo.label "Seoladh Freagartha (Reply-to):">
+<!ENTITY replyTo.accesskey "S">
+<!ENTITY replyTo.placeholder "Seolfaidh faighteoirí freagraí chuig an seoladh seo">
+<!ENTITY organization.label "Eagras:">
+<!ENTITY organization.accesskey "E">
+<!ENTITY signatureText.label "Téacs an tsínithe:">
+<!ENTITY signatureText.accesskey "c">
+<!ENTITY signatureHtml.label "Úsáid HTML (m.sh., &lt;b&gt;trom&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Tóg an síniú ó chomhad (téacs, HTML, nó íomhá):">
+<!ENTITY signatureFile.accesskey "T">
+<!ENTITY edit.label "Eagar…">
+<!ENTITY choose.label "Roghnaigh…">
+<!ENTITY choose.accesskey "R">
+<!ENTITY editVCard.label "Cuir Cárta in Eagar…">
+<!ENTITY editVCard.accesskey "g">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Cuir mo v-Chárta mar iatán ar theachtaireachtaí">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Bainistigh Aitheantais…">
+<!ENTITY manageIdentities.accesskey "B">
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+
+<!ENTITY smtpName.label "Freastalaí Amach (SMTP):">
+<!ENTITY smtpName.accesskey "F">
+<!ENTITY smtpDefaultServer.label "Úsáid an Freastalaí Réamhshocraithe">
+
+<!ENTITY smtpServerEdit.label "Cuir an freastalaí SMTP in eagar…">
+<!ENTITY smtpServerEdit.accesskey "P">

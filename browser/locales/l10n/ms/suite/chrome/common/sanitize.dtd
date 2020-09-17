@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Buang Data Peribadi">
+<!ENTITY sanitizeItems.label             "Buang item berikut sekarang:">
+
+<!ENTITY itemHistory.label               "Sejarah Pelayaran">
+<!ENTITY itemHistory.accesskey           "P">
+<!ENTITY itemUrlBar.label                "Sejarah Bar Lokasi">
+<!ENTITY itemUrlBar.accesskey            "L">
+<!ENTITY itemDownloads.label             "Sejarah Muat turun">
+<!ENTITY itemDownloads.accesskey         "M">
+<!ENTITY itemFormSearchHistory.label     "Borang Disimpan dan Sejarah Carian">
+<!ENTITY itemFormSearchHistory.accesskey "B">
+<!ENTITY itemCache.label                 "Cache">
+<!ENTITY itemCache.accesskey             "a">
+<!ENTITY itemCookies.label               "Kuki">
+<!ENTITY itemCookies.accesskey           "K">
+<!ENTITY itemOfflineApps.label           "Data Laman web Luar talian">
+<!ENTITY itemOfflineApps.accesskey       "D">
+<!ENTITY itemPasswords.label             "Kata laluan Disimpan">
+<!ENTITY itemPasswords.accesskey         "K">
+<!ENTITY itemSessions.label              "Sesi Pengesahan">
+<!ENTITY itemSessions.accesskey          "S">
+
+<!ENTITY sanitizeButton.label            "Buang Data Peribadi Sekarang">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Tallennetut tiedostot">
+<!ENTITY aboutDownloads.empty                      "Ei tallennettuja tiedostoja">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Avaa tallennuskansio">
+<!ENTITY cmd.show.accesskey                        "A">
+<!ENTITY cmd.showMac.label                         "Avaa Finderissa">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Avaa">
+<!ENTITY cmd.open.accesskey                        "v">
+<!ENTITY cmd.removeFromHistory.label               "Poista historiasta">
+<!ENTITY cmd.removeFromHistory.accesskey           "o">
+<!ENTITY cmd.clearList.label                       "Tyhjennä lista">
+<!ENTITY cmd.clearList.accesskey                   "T">
+<!ENTITY cmd.clearList.tooltip                     "Poista kaikki merkinnät tallentuista tiedostoista, paitsi käynnissä olevat lataukset.">
+<!ENTITY cmd.searchDownloads.label                 "Etsi…">
+<!ENTITY cmd.searchDownloads.key                   "F">

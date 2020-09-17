@@ -1,0 +1,6 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  settingsChangePreferences.label  "Setările pot fi schimbate din fila Atașamente din dialogul de preferințe al &brandShortName;.">
+<!ENTITY  settingsChangeOptions.label      "Setările pot fi schimbate folosind fila Atașamente din dialogul de opțiuni al &brandShortName;.">

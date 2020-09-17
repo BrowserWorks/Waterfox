@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Eiginleikar flettilista">
+<!ENTITY Select.label "Vallisti">
+<!ENTITY SelectName.label "Nafn lista:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Hæð:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "Fjölval">
+<!ENTITY SelectMultiple.accesskey "F">
+<!ENTITY SelectDisabled.label "Óvirkt">
+<!ENTITY SelectDisabled.accesskey "v">
+<!ENTITY SelectTabIndex.label "Dálk tilvísun:">
+<!ENTITY SelectTabIndex.accesskey "i">
+<!ENTITY OptGroup.label "Val hópur">
+<!ENTITY OptGroupLabel.label "Merki:">
+<!ENTITY OptGroupLabel.accesskey "M">
+<!ENTITY OptGroupDisabled.label "Óvirkt">
+<!ENTITY OptGroupDisabled.accesskey "v">
+<!ENTITY Option.label "Valkostur">
+<!ENTITY OptionText.label "Texti:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Gildi:">
+<!ENTITY OptionValue.accesskey "G">
+<!ENTITY OptionSelected.label "Upphaflega valið">
+<!ENTITY OptionSelected.accesskey "v">
+<!ENTITY OptionDisabled.label "Óvirkt">
+<!ENTITY OptionDisabled.accesskey "v">
+<!ENTITY TextHeader.label "Texti">
+<!ENTITY ValueHeader.label "Gildi">
+<!ENTITY SelectedHeader.label "Valið">
+<!ENTITY AddOption.label "Bæta við valkosti">
+<!ENTITY AddOption.accesskey "o">
+<!ENTITY AddOptGroup.label "Bæta hóp við">
+<!ENTITY AddOptGroup.accesskey "h">
+<!ENTITY RemoveElement.label "Fjarlægja">
+<!ENTITY RemoveElement.accesskey "r">
+<!ENTITY MoveElementUp.label "Færa upp">
+<!ENTITY MoveElementUp.accesskey "u">
+<!ENTITY MoveElementDown.label "Færa niður">
+<!ENTITY MoveElementDown.accesskey "n">

@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label		"ページのアップロード">
+<!ENTITY windowTitleSettings.label	"アップロードの設定">
+
+<!ENTITY publishTab.label		"アップロード">
+<!ENTITY settingsTab.label		"設定">
+
+<!ENTITY publishButton.label		"アップロード">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label			"サイト名:">
+<!ENTITY siteList.accesskey		"e">
+<!ENTITY siteList.tooltip		"アップロードするサイトを選択します">
+<!ENTITY newSiteButton.label		"新規サイト">
+<!ENTITY newSiteButton.accesskey	"N">
+<!ENTITY docDirList.accesskey		"S">
+<!ENTITY docDirList.tooltip		"このページのリモートサブディレクトリーの名前を選択または入力します">
+<!ENTITY docDirList.label		"このページのサイトのサブディレクトリー:">
+<!ENTITY publishImgCheckbox.label	"画像と他のファイルを含める">
+<!ENTITY publishImgCheckbox.accesskey	"o">
+<!ENTITY publishImgCheckbox.tooltip	"このページから参照される画像や他のファイルをアップロードします">
+<!ENTITY sameLocationRadio.label	"ページと同じ場所を使う">
+<!ENTITY sameLocationRadio.accesskey	"U">
+<!ENTITY sameLocationRadio.tooltip	"このページと同じ場所にファイルをアップロードします">
+<!ENTITY useSubdirRadio.label		"このサイトのサブディレクトリーを使う:">
+<!ENTITY useSubdirRadio.accesskey	"d">
+<!ENTITY useSubdirRadio.tooltip		"選択されているリモートサブディレクトリーにファイルをアップロードします">
+<!ENTITY otherDirList.tooltip		"アップロードするファイルのあるリモートサブディレクトリーの名前を選択または入力します">
+<!ENTITY pageTitle.label		"ページタイトル:">
+<!ENTITY pageTitle.accesskey		"T">
+<!ENTITY pageTitle.tooltip		"ウィンドウやブックマークでページを識別するためのタイトルを入力します">
+<!ENTITY pageTitleExample.label		"例: &quot;My Web Page&quot;">
+<!ENTITY filename.label			"ファイル名:">
+<!ENTITY filename.accesskey		"F">
+<!ENTITY filename.tooltip		"ウェブページの '.html' も含めて、このファイルのファイル名を入力します">
+<!ENTITY filenameExample.label		"例: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label		"既定値に設定">
+<!ENTITY setDefaultButton.accesskey	"D">
+<!ENTITY removeButton.label		"サイトを削除">
+<!ENTITY removeButton.accesskey		"R">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label		"アップロードサイト">
+<!ENTITY serverInfo.label		"サーバー情報">
+<!ENTITY loginInfo.label		"ログイン情報">
+<!ENTITY siteName.label			"サイト名:">
+<!ENTITY siteName.accesskey		"e">
+<!ENTITY siteName.tooltip		"アップロードサイトを識別するためのニックネーム (例: 'MySite')">
+<!ENTITY siteUrl.label			"アップロードするアドレス (例: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey		"a">
+<!ENTITY siteUrl.tooltip		"ISP またはウェブホスティングサービス提供の FTP:// や HTTP:// アドレス">
+<!ENTITY browseUrl.label		"ホームページの HTTP アドレス (例: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey		"T">
+<!ENTITY browseUrl.tooltip		"ホームディレクトリーの HTTP:// アドレス (ファイル名は含まない)">
+<!ENTITY username.label			"ユーザー名:">
+<!ENTITY username.accesskey		"U">
+<!ENTITY username.tooltip		"ISP またはウェブホスティングサービスにログインするためのユーザー名">
+<!ENTITY password.label			"パスワード:">
+<!ENTITY password.accesskey		"w">
+<!ENTITY password.tooltip		"ユーザー名に関連したパスワード">
+<!ENTITY savePassword.label		"パスワードを保存する">
+<!ENTITY savePassword.accesskey		"S">
+<!ENTITY savePassword.tooltip		"このパスワードをパスワードマネージャーを使って安全に保存します">

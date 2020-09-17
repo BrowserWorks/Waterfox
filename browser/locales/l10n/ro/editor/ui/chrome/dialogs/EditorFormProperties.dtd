@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietăți formular">
+
+<!ENTITY Settings.label "Setări">
+
+<!ENTITY FormName.label "Denumire formular:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "URL acțiune:">
+<!ENTITY FormAction.accesskey "a">
+<!ENTITY FormMethod.label "Metodă:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Codare:">
+<!ENTITY FormEncType.accesskey "C">
+<!ENTITY FormTarget.label "Cadru-țintă:">
+<!ENTITY FormTarget.accesskey "F">
+
+<!ENTITY RemoveForm.label "Elimină formular">
+<!ENTITY RemoveForm.accesskey "E">

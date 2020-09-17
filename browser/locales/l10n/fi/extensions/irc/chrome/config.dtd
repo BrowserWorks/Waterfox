@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZillan asetukset">
+
+<!ENTITY loading.label  "Ladataan…">
+
+<!ENTITY homepage.url   "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "ChatZillan kotisivu">
+
+<!ENTITY object.add.label       "Lisää…">
+<!ENTITY object.add.hint        "Lisää uusi verkko, kanava tai käyttäjä">
+<!ENTITY object.add.accesskey   "L">
+
+<!ENTITY object.del.label       "Poista">
+<!ENTITY object.del.hint        "Poistaa tämän kohteen ja kaikki sen asetukset">
+<!ENTITY object.del.accesskey   "o">
+
+<!ENTITY object.reset.label     "Palauta oletusarvot">
+<!ENTITY object.reset.hint      "Palauttaa tämän kohteen asetukset oletusarvoihinsa">
+<!ENTITY object.reset.accesskey "a">
+
+<!ENTITY dialog.apply   "Käytä">
+
+<!ENTITY network "Verkko">
+<!ENTITY channel "Kanava">
+<!ENTITY user    "Käyttäjä">
+
+<!ENTITY config.add.title "Lisää asetusmerkintä">
+
+<!ENTITY config.type.label        "Tyyppi:">
+<!ENTITY config.type.hint         "Lisättävän asetusmerkinnän tyyppi">
+<!ENTITY config.type.accesskey    "T">
+<!ENTITY config.network.label     "Verkko:">
+<!ENTITY config.network.hint      "Verkon tunnettu nimi tai palvelimen nimi">
+<!ENTITY config.network.accesskey "V">
+<!ENTITY config.target.label      "Kohde:">
+<!ENTITY config.target.hint       "Kohdekanava tai käyttäjätunnus">
+<!ENTITY config.target.accesskey  "K">

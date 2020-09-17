@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Настройване на напомняния">
+<!ENTITY reminder.add.label                                "Добавяне">
+<!ENTITY reminder.add.accesskey                            "Д">
+<!ENTITY reminder.remove.label                             "Премахване">
+<!ENTITY reminder.remove.accesskey                         "П">
+
+<!ENTITY reminder.reminderDetails.label                    "Подробности за напомнянето">
+<!ENTITY reminder.action.label                             "Избор на действие за напомняне">
+
+<!ENTITY reminder.action.alert.label                       "Показване на аларма">
+<!ENTITY reminder.action.email.label                       "Изпращане на писмо">
+
+<!ENTITY alarm.units.minutes                               "минути" >
+<!ENTITY alarm.units.hours                                 "часове" >
+<!ENTITY alarm.units.days                                  "дни" >

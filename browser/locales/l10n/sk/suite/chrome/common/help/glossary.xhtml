@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Slovník</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<div class="boilerPlate">Obsah tohto slovníka je len pre vašu informáciu a nekladie si za cieľ byť kompletným alebo smerodajným popisom termínov uvedených nižšie.</div>
+
+<h1 id="glossary">Slovník</h1>
+
+<dl>
+
+<dt id="location_bar">Adresný riadok</dt>
+  <dd>Pole (a priľahlé tlačidlá) v hornej časti okna prehliadača, kde je možné vpísať <a href="#url">adresu URL</a> alebo vyhľadávať.</dd>
+
+<dt id="authentication">Autorizácia</dt>
+  <dd>Použitie hesla, certifikátu, osobného identifikačného čísla (PIN) alebo iných informácií na overenie identity cez počítačovú sieť. Príbuzné témy: <a href="#password-based_authentication">Autorizácia heslom</a>, <a href="#certificate-based_authentication">Autorizácia certifikátu</a>, <a href="#client_authentication">Klientska autorizácia</a>, <a href="#server_authentication">Autorizácia servera</a>.</dd>
+
+<dt id="certificate-based_authentication">Autorizácia pomocou certifikátu</dt>
+  <dd>Overenie identity založené na certifikátoch a šifrovaní verejným kľúčom. Pozrite taktiež <a href="#password-based_authentication">Autorizácia heslom</a>.</dd>
+
+<dt id="password-based_authentication">Autorizácia heslom</dt>
+  <dd>Dôveryhodná identifikácia pomocou mena a hesla. Pozrite taktiež <a href="#authentication">Autorizácia</a>.</dd>
+
+<dt id="client_authentication">Autorizácia klienta</dt>
+  <dd>Proces identifikácie <a href="#client">klienta</a> <a href="#server">serverom</a>. Napríklad menom a heslom alebo použitím <a href="#client_ssl_certificate">SSL certifikátu klienta</a> a niektorých digitálne podpísaných dát. Pozrite taktiež <a href="#ssl">SSL (Secure Sockets Layer)</a>, <a href="#server_authentication">Autorizácia servera</a>.</dd>
+
+<dt id="server_authentication">Autorizácia servera</dt>
+  <dd>Proces identifikácie <a href="#server">servera</a> <a href="#client">klientom</a> použitím <a href="#server_ssl_certificate">SSL certifikátu klienta</a>. Ďalšie informácie nájdete pri termínoch <a href="#client_authentication">Autorizácia klienta</a>, <a href="#ssl">SSL (Secure Sockets Layer)</a>.</dd>
+
+<dt id="secure_authentication">Bezpečné overenie</dt>
+  <dd>Typ <a href="#authentication">autorizácie</a>, ktorý používa <a href="#secure_connection">zabezpečené pripojenie</a>, takže komunikácia medzi klientom a serverom je šifrovaná.</dd>
+
+<dt id="security_device">Bezpečnostné zariadenie</dt>
+  <dd>Hardvér alebo softvér, ktorý zabezpečuje šifrovacie služby ako zašifrovanie a dešifrovanie a môže uchovávať certifikáty a kľúče. <a href="#smart_card">Smart karta</a> je príkladom bezpečnostného zariadenia implementovaného v hardvéri. <a href="#certificate_manager">Správca certifikátov</a> obsahuje vlastné zabudované bezpečnostné zariadenie, ktoré sa volá <a href="#software_security_device">Softvérové bezpečnostné zariadenie</a> a funguje, keď je spustený prehliadač. Každé bezpečnostné zariadenie je chránené vlastným <a href="#master_password">Hlavným heslom</a>.</dd>
+
+<dt id="security_certificate">Bezpečnostný certifikát</dt>
+  <dd>Viď <a href="#certificate">Certifikát</a>.</dd>
+
+<dt id="security_module">Bezpečnostný modul</dt>
+  <dd>Viď <a href="#pkcs_11_module">Modul PKCS #11</a>.</dd>
+
+<dt id="security_token">Bezpečnostný token</dt>
+  <dd>Viď <a href="#security_device">Bezpečnostné zariadenie</a>.</dd>
+
+<dt id="ca">CA</dt>
+  <dd>Viď <a href="#certificate_authority">Certifikačná autorita (CA)</a></dd>
+
+<dt id="certificate_authority">Certifikačná autorita (CA)</dt>
+  <dd>Služba, ktorá vydáva certifikát potom, ako bola overená identita osoby alebo entity, ktorú mal certifikát identifikovať. CA taktiež obnovuje/ruší certifikáty a pravidelne vytvára zoznam zrušených certifikátov. CA môže byť dodávateľ alebo osoba, či organizácia používajúca server so softvérom, ktorý vydáva certifikáty (ako napríklad &brandShortName; Certificate Management System). Pozrite tiež <a href="#certificate">Certifikát</a>, <a href="#crl">CRL (Zoznam zrušených certifikátov/Certificate revocation list)</a>.</dd>
+
+<dt id="certificate">Certifikát</dt>
+  <dd>Digitálny ekvivalent identifikačnej karty. Certifikát obsahuje meno jednotlivca, podniku alebo inej spoločnosti a overuje, či verejný kľúč obsiahnutý v certifikáte prislúcha tejto spoločnosti. Keď digitálne podpisujete správu alebo iné údaje, digitálny podpis pre túto správu je vytvorený pomocou súkromného kľúča, ktorý zodpovedá verejnému kľúču vo vašom certifikáte. Certifikát je vydávaný a digitálne podpísaný <a href="#certificate_authority">Certifikačnou autoritou (CA)</a>. Pravosť certifikátu môže byť overená skontrolovaním <a href="#digital_signature">digitálneho podpisu</a> tiež nazývaného digitálne ID, digitálny pas, certifikát verejného kľúča, X.509 certifikát, bezpečnostný certifikát. Pozrite tiež <a href="#public-key_cryptography">Šifrovanie verejným kľúčom</a>.</dd>
+
+<dt id="ca_certificate">Certifikát CA</dt>
+  <dd>Certifikát, ktorý identifikuje certifikačnú autoritu. Taktiež pozrite <a href="#certificate_authority">Certifikačná autorita (CA)</a>, <a href="#subordinate_ca">Podriadená CA</a>, <a href="#root_ca">Kmeňová CA</a>.</dd>
+
+<dt id="object-signing_certificate">Certifikát podpisovaného objektu</dt>
+  <dd>Certifikát, ktorého korešpondujúci súkromný kľúč sa používa na podpisovanie objektov ako napríklad kódových súborov. Taktiež pozrite <a href="#object_signing">Podpisovanie objektu</a>.</dd>
+
+<dt id="cookie">Cookie</dt>
+  <dd>Malá informácia ukladaná na vašom počítači niektorými webovými stránkami. Keď takú stránku navštívite, stránka požiada &brandShortName; o umiestnenie jedného alebo viacerých cookie súborov na váš pevný disk. Pri ďalšej návšteve stránky jej &brandShortName; odošle príslušný cookie súbor. Cookies pomáhajú webovým stránkam sledovať informácie o vašej aktivite. Môžete nastaviť možnosti pre cookies tak, aby ste mohli kontrolovať ich použitie a určovať množstvo informácií prístupných webovým stránkam. Pozrite aj <a href="#foreign_cookie">Cudzie cookies</a>.</dd>
+
+<dt id="third-party_cookie">Cookies tretej strany</dt>
+  <dd>Viď <a href="#foreign_cookie">Cudzie cookies</a>.</dd>
+
+<dt id="crl">CRL (Zoznam zrušených certifikátov/certificate revocation list)</dt>
+  <dd>Zoznam zrušených certifikátov, ktorý je generovaný a podpísaný <a href="#certificate_authority">Certifikačnou autoritou(CA)</a>. Môžete prevziať najnovšiu verziu CRL do svojho prehliadača alebo servera a skontrolovať, či sú používané certifikáty stále platné, predtým ako budú zautorizované. </dd>
+
+<dt id="foreign_cookie">Cudzie cookies</dt>
+  <dd><a href="#cookie">Cookie</a> z jednej stránky, ktorá sa uloží do počítača, keď navštívite inú stránku. Niekedy <a href="#website">webový server</a> zobrazí obsah, ktorý je uložený na inom webovom serveri. Tento obsah môže byť hocičo od obrázku cez text po reklamu. Druhý webový server, ktorý obsahuje tieto prvky, má možnosť ukladať cookies vo vašom prehliadači, i keď ho nenavštívite priamo. Je to tiež známe ako <q>cookies tretej strany</q>.</dd>
+
+<dt id="decryption">Dešifrovanie</dt>
+  <dd>Proces dešifrovania údajov, ktoré sú zašifrované. Ďalšie informácie nájdete pri termíne <a href="#encryption">Šifrovanie</a>.</dd>
+
+<dt id="tamper_detection">Detekcia falšovania</dt>
+  <dd>Mechanizmus, ktorý zaisťuje, že dáta, ktoré boli prijaté v elektronickej forme, nie sú falošné. To znamená, že prijaté dáta úplne zodpovedajú originálnej verzii.</dd>
+
+<dt id="digital_id">Digitálne ID</dt>
+  <dd>Viď <a href="#certificate">Certifikát</a>.</dd>
+
+<dt id="digital_signature">Digitálny podpis</dt>
+  <dd>Kód vytvorený z podpisových dát a súkromného kľúča podpisovateľa. Je jedinečný pre každý nový kus dát. I obyčajná čiarka vložená do správy zmení jej digitálny podpis. Úspešné overenie vášho digitálneho podpisu patričným softvérom nielenže potvrdí, že transakcia alebo správa súhlasia, ale tiež, že ich dáta sa nezmenili odvtedy, čo boli digitálne podpísané. Digitálny podpis nemá nič s rukou urobeným podpisom, i keď môžu byť niekedy použité na podobné právne účely. Pozrite taktiež <a href="#nonrepudiation">Nepopierateľnosť</a>, <a href="#tamper_detection">Detekcia falšovania</a>.</dd>
+
+<dt id="home_page">Domovská stránka</dt>
+  <dd>Stránka, ktorú &brandShortName; zobrazí pri spustení alebo po kliknutí na tlačidlo Domov. Môže tiež odkazovať na hlavnú stránku webového servera, z ktorého prehliadate ostatné stránky, ktoré obsahuje.</dd>
+
+<dt id="add-on">Doplnok</dt>
+  <dd>Softvér pre program &brandShortName;, ktorý mení jeho vzhľad, správanie alebo pridáva nové funkcie. Doplnok môže takisto meniť jazyk používateľského rozhrania programu. Viď <a href="#extension">rozšírenie</a>, <a href="#language_pack">jazykový balík</a>, <a href="#plugin">zásuvný modul</a> a <a href="#theme">téma</a>.</dd>
+
+<dt id="trust">Dôvera</dt>
+  <dd>Dôvera v osobu alebo inú entitu. V kontexte <a href="#pki">PKI (infraštruktúra verejného kľúča)</a> dôvera znamená vzťah medzi používateľom certifikátu a <a href="#certificate_authority">certifikačnou autoritou (CA)</a>, ktorá vydáva certifikát. Ak používate Správcu certifikátov na špecifikáciu dôvery k CA, Správca certifikátov dôveruje platným certifikátom vydaným CA, pokiaľ nedefinujete iné nastavenia pre jednotlivé certifikáty. Ak chcete spresniť, ktorým certifikátom vydaným CA dôverujete alebo nie, kliknite na položku Autority v Správcovi certifikátov. </dd>
+
+<dt id="dual_key_pairs">Dvojité páry kľúčov</dt>
+  <dd>Dva páry verejno-súkromných kľúčov, t.j. 4 kľúče dokopy, korešpondujúce s dvomi rozdielnymi certifikátmi. Súkromný kľúč z jedného páru sa používa pri podpisových operáciách a verejný a súkromný kľúč z druhého páru sa používajú na zašifrovanie a dešifrovanie. Každý pár korešponduje s iným <a href="#certificate">certifikátom</a>. Pozrite tiež <a href="#public-key_cryptography">Šifrovanie verejným kľúčom</a>.</dd>
+
+<dt id="fips_pubs_140-1">FIPS PUBS 140-1</dt>
+  <dd>Federal Information Processing Standards Publications (FIPS PUBS) 140-1 je norma vlády USA na implementáciu šifrovacích modulov — hardvéru alebo softvéru, ktoré zašifrujú a dešifrujú údaje alebo vykonajú iné šifrovacie operácie (napríklad vytváranie alebo overovanie digitálnych podpisov). Veľmi veľa produktov dodávaných vláde USA musí spĺňať jednu či viac FIPS noriem.</dd>
+
+<dt id="ftp">FTP (File Transfer Protocol)</dt>
+  <dd>Norma, ktorá umožňuje používateľom prenos súborov z jedného počítača do iného prostredníctvom siete. Na prenos súborov pomocou protokolu FTP je možné použiť aj &brandShortName;.</dd>
+
+<dt id="certificate_backup_password">Heslo zálohovaného certifikátu</dt>
+  <dd>Heslo, ktoré chráni certifikát, ktorý zálohujete alebo ste zálohovali. Správca certifikátov vás požiada, aby ste toto heslo nastavili, keď zálohujete certifikát a vypýta si ho, ak sa pokúsite obnoviť dané dáta.</dd>
+
+<dt id="master_password">Hlavné heslo</dt>
+  <dd>Heslo používané Správcom certifikátov na ochranu hlavného kľúča a/alebo súkromných kľúčov uložených na <a href="#security_device">bezpečnostnom zariadení</a>. Správca certifikátov potrebuje prístup k vašim súkromným kľúčom vtedy, keď napríklad podpisujete správu alebo používate jeden zo svojich vlastných certifikátov. Prístup k hlavnému heslu je potrebný, keď Správca hesiel alebo Správca formulárov čítajú či pridávajú vaše osobné údaje. Môžete nastaviť alebo zmeniť hlavné heslo v paneli nastavení Hlavného hesla. Každé bezpečnostné zariadenie požaduje odlišné hlavné heslo. Ďalšie informácie nájdete v sekciách <a href="#private_key"> Súkromný kľúč</a>, <a href="#master_key">Hlavný kľúč</a>.</dd>
+
+<dt id="master_key">Hlavný kľúč</dt>
+  <dd>Symetrický kľúč používaný <a href="#certificate_manager">Správcom certifikátov</a> na zašifrovanie informácií. Napríklad, <a href="#password_manager">Správca hesiel</a> použije Správcu certifikátov a hlavný kľúč na zašifrovanie hesiel e-mailových účtov, hesiel webových stránok a iných citlivých informácií. Ďalšie informácie nájdete pod pojmom <a href="#symmetric_encryption">symetrické šifrovanie</a>.</dd>
+
+<dt id="html">HTML (HyperText Markup Language)</dt>
+  <dd>Formát dokumentu používaný pri webových stránkach. Norma HTML definuje značky a kódy použité na určenie usporiadania textu, písmen, štýlov, obrázkov a ďalších prvkov, ktoré tvoria vzhľad webovej stránky.</dd>
+
+<dt id="http">HTTP (HyperText Transfer Protocol)</dt>
+  <dd>Protokol používaný na prenos <a href="#web_page">webových stránok</a> (hypertextové dokumenty) medzi prehliadačmi a <a href="#server">serverom</a> cez <a href="#world_wide_web">World Wide Web</a>.</dd>
+
+<dt id="https">HTTPS (HyperText Transfer Protocol Secure)</dt>
+  <dd>Bezpečná verzia HTTP protokolu, ktorá používa <a href="#ssl">SSL</a> na utajenie používateľových dát (napríklad informácií o kreditnej karte) počas pripojenia na <a href="#internet">Internete</a>.</dd>
+
+<dt id="misrepresentation">Chybný výklad</dt>
+  <dd>Prezentácia entity ako osoby alebo organizácie, ktorou nie je. Napríklad sa webová stránka tvári ako predajňa nábytku, ale v skutočnosti len prijíma platby a nikdy nepošle žiaden tovar. Pozrite aj <a href="#spoofing">Spoofing</a>.</dd>
+
+<dt id="imap">IMAP (Internet Message Access Protocol)</dt>
+  <dd>Štandardný protokol servera elektronickej pošty, ktorý povoľuje ukladanie všetkých správ a ich zmien nie v počítači na pevnom disku, ale na serveri. Používaním IMAPu radšej ako <a href="#pop">POP</a> ušetríte miesto na disku a zároveň sa dostanete do celého obsahu svojej poštovej schránky, vrátane odoslaných e-mailov, konceptov a vlastných priečinkov z akéhokoľvek miesta na internete. Používanie modemu a IMAP servera je rýchlejšie, pretože prevezmete len hlavičky správ. Nie všetci <a href="#isp">poskytovatelia</a> podporujú IMAP.</dd>
+
+<dt id="implicit_consent">Implicitný súhlas</dt>
+  <dd>Tiež známy ako <q>opt-out</q> súhlas. Slúži na definovanie súkromných nastavení, ktorými je možné povoliť webovým stránkam zbierať informácie o používateľovi (takými sú napríklad <a href="#cookie">cookies</a> a online formuláre). Môžete zvoliť výhradné odmietnutie poskytnutia súhlasu zvolením tejto možnosti na stránke, ktorú webová stránka na tento účel vytvorila. Váš súhlas nemusí byť vyžiadaný, keď bola informácia už poskytnutá.</dd>
+
+<dt id="internet">Internet</dt>
+  <dd>Celosvetová sieť miliónov počítačov, ktoré medzi sebou komunikujú prostredníctvom štandardných protokolov ako je <a href="#tcp_ip">TCP/IP</a>. Pôvodne (v roku 1969) bola táto sieť vyvíjaná pre armádu USA. Internet sa neskôr rozvinul do vzdelávacej a výskumnej sféry a potom v 90. rokoch sa k nemu pripojilo množstvo obchodníkov, organizácií a jednotlivcov. Dnes Internet slúži na posielanie e-mailov, prehliadanie <a href="#world_wide_web">webu</a>, posielanie krátkych správ, prehliadanie diskusných skupín a množstvo ďalších vecí.</dd>
+
+<dt id="ip_address">IP adresa (Internet protocol address)</dt>
+  <dd>Adresa počítača v sieti <a href="#tcp_ip">TCP/IP</a>. Každý počítač na <a href="#internet">Internete</a> má adresu IP. <a href="#client">Klienti</a> majú buď stálu adresu IP alebo im je prideľovaná vždy, keď sa pripoja do siete. Adresy IP sú napísané ako súbor štyroch setov čísiel, napríklad ako 204.171.64.2.</dd>
+
+<dt id="irc">IRC (Internet Relay Chat)</dt>
+  <dd>Protokol používaný na chat s ostatnými ľuďmi v reálnom čase použitím <a href="#client">klienta</a> IRC.</dd>
+
+<dt id="isp">ISP (Internet Service Provider)</dt>
+  <dd>Spoločnosť/inštitúcia, ktorá zabezpečuje <a href="#internet">internetové</a> pripojenie.</dd>
+
+<dt id="java">Java</dt>
+  <dd>Programovací jazyk vyvíjaný firmou Sun Microsystems. Samostatný program Java môže byť spustený na množstve počítačov s odlišným operačným systémom. Nie je teda potrebné vytvárať pre každý z nich špeciálnu verziu. Po inštalácii Javy môže &brandShortName; automaticky preberať a spúšťať Java programy (tiež nazývané aplety).</dd>
+
+<dt id="javascript">JavaScript</dt>
+  <dd>Skriptovací jazyk, ktorý je používaný pri vytváraní <a href="#web_page">webových stránok</a>. Programátori používajú JavaScript na vytváranie webových stránok, ktoré sú tak viac interaktívne. JavaScript môže byť použitý napríklad na zobrazenie tlačidiel a formulárov <a href="#java">Javy</a>, ale jedná sa o technicky samostatný jazyk. Java nie je na správnu funkčnosť JavaScriptu nutná.</dd>
+
+<dt id="language_pack">Jazykový balík</dt>
+  <dd>Typ <a href="#add-on">doplnku</a>, ktorý pridáva nový jazyk do používateľského rozhrania programu &brandShortName;.</dd>
+
+<dt id="feed">Kanál</dt>
+  <dd>Pravidelne aktualizovaný zdroj odkazov na webové stránky, zvyčajne príspevky blogu alebo správy. Technicky je to dokument typu XML dostupný cez verejne známu adresu URL obsahujúci niekoľko položiek, pričom každá z nich obsahuje rôzne meta-údaje (prípadne krátky súhrn správy) a adresu k plnej verzii článku alebo správy. Dokument XML je generovaný v určených intervaloch alebo pri pridaní nového článku na danej webovej stránke. Webové aplikácie sa môžu prihlásiť k odberu kanála a prezentovať nové články po ich sprístupnení v dokumente XML. Existuje niekoľko formátov XML pre kanály, najčastejšie používané sú <a href="#rss">RSS</a> a Atom.</dd>
+
+<dt id="client">Klient</dt>
+  <dd>Softvér (napríklad webový prehliadač) zasielajúci požiadavky na získanie informácií zo <a href="#server">servera</a>, ktorý je spustený na inom počítači. Počítač, na ktorom je klientsky softvér spustený, je často popisovaný ako klient.</dd>
+
+<dt id="key">Kľúč</dt>
+  <dd>Veľké číslo používané <a href="#cryptographic_algorithm">šifrovacím algoritmom </a> na zašifrovanie alebo dešifrovanie dát.  Napríklad osobný verejný kľúč povoľuje ostatným používateľom zašifrovať správy osoby, ktorá ho vlastní. Zašifrovaná správa musí byť dešifrovaná príslušným súkromným kľúčom. Pozrite aj <a href="#public-key_cryptography">šifrovanie verejným kľúčom</a>.</dd>
+
+<dt id="root_ca">Koreňová CA</dt>
+  <dd><a href="#certificate_authority">Certifikačný autorita (CA)</a> so samopodpisovacím certifikátom na vrchole <a href="#certificate_chain">Reťazca certifikátov</a>. Pozrite aj <a href="#subordinate_ca">Podriadená CA</a>.</dd>
+
+<dt id="ldap">LDAP (Lightweight Directory Access Protocol)</dt>
+  <dd>Štandardný protokol, ktorý umožňuje prístup do služieb priečinkov ako napríklad korporátnych adresárov skrz rôzne platformy. Je možné nastaviť prehliadač tak, aby pristupoval do adresárov LDAP priamo cez adresár. Podobne je možné nastaviť Poštu a diskusné skupiny.</dd>
+
+<dt id="pkcs_11_module">Modul PKCS #11</dt>
+  <dd>Počítačový program, ktorý spravuje šifrovacie operácie ako zašifrovanie a dešifrovanie použitím normy PKCS #11. Tiež nazývaný <em>šifrovací modul</em>, <em>správca šifrovacích operácií</em> alebo <em>bezpečnostný modul</em>. Modul PKCS #11 kontroluje ako hardvérové tak i softvérové zariadenia. Modul PKCS #11 vždy kontroluje jeden alebo viacero slotov, ktoré sa môžu implementovať ako určité formy fyzickej čítačky (napríklad na čítanie smart kariet) alebo v softvéri. Každý slot modulu PKCS #11 môže taktiež obsahovať <a href="#security_device">bezpečnostné zariadenie</a> (nazývané aj <em>token</em>), ktoré je buď hardvérovým alebo softvérovým zariadením zabezpečujúcim šifrovacie operácie a ukladajúcim certifikáty a kľúče. <a href="#certificate_manager">Správca certifikátov</a> poskytuje dva zabudované moduly PKCS #11. Do svojho počítača si môžete inštalovať prídavné moduly, ktoré budú kontrolovať čítačky smart kariet alebo iných hardvérových zariadení.</dd>
+
+<dt id="navigation_toolbar">Navigačný panel nástrojov</dt>
+  <dd>Panel, ktorý je umiestnený v hornej časti okna prehliadača. Obsahuje tlačidlá ako Naspäť či Dopredu.</dd>
+
+<dt id="subject_name">Názov subjektu</dt>
+  <dd><a href="#distinguished_name">Príznačný názov (PN)</a>, ktorý jedinečne popisuje <a href="#subject">subjekt</a> <a href="#certificate">certifikátu</a>.</dd>
+
+<dt id="nonrepudiation">Nepopierateľnosť</dt>
+  <dd>Nemožnosť odosielateľa správy poprieť jej odosielanie. Regulárny rukou urobený podpis je jeden zo spôsobov, ako dosiahnuť nepopierateľnosť. <a href="#digital_signature">Digitálny podpis</a> symbolizuje druhý.</dd>
+
+<dt id="notification_bar">Notifikačný panel</dt>
+  <dd>Panel, ktorý sa objavuje v hornej časti prehliadača nad obsahom stránky. Jeho úlohou je informovať vás o veciach, ktoré by ste nemali prehliadnuť. Zobrazuje napr. informácie o zablokovaní vyskakovacieho okna, možnosti uloženia hesla alebo požiadavke na inštaláciu dodatočného zásuvného modulu.</dd>
+
+<dt id="certificate_renewal">Obnovenie certifikátu</dt>
+  <dd>Proces obnovenia <a href="#certificate">certifikátu</a>, ktorému končí platnosť.</dd>
+
+<dt id="ocsp">OCSP (Online Certificate Status Protocol)</dt>
+<dd>Súbor pravidiel, ktoré dovoľujú <a href="#certificate_manager">Správcovi certifikátov</a> skontrolovať platnosť certifikátu v každom momente použitia. Tento proces využíva zoznam platných certifikátov pre daný webový server a konfrontuje ho s práve použitým certifikátom. Váš počítač musí byť on-line, aby OCPS mohol fungovať.</dd>
+
+<dt id="eavesdropping">Odpočúvanie</dt>
+  <dd>Tajné odpočúvanie informácií posielaných sieťou, osobou, ktorej neboli určené.</dd>
+
+<dt id="fingerprint">Odtlačok</dt>
+  <dd>Viď <a href="#certificate_fingerprint">Odtlačok certifikátu</a>.</dd>
+
+<dt id="certificate_fingerprint">Odtlačok certifikátu</dt>
+  <dd>Unikátne číslo, ktoré je spájané s certifikátom. Nie je jeho časťou, ale je vytvorené aplikovaním matematickej funkcie na obsah certifikátu. Ak sa tento obsah zmení, čo i len o jediný znak, bude vytvorené nové číslo. Odtlačok certifikátu sa preto používa na overenie, či certifikát nebol sfalšovaný.</dd>
+
+<dt id="opml">OPML (Outline Processor Markup Language)</dt>
+  <dd>Formát XML používaný na zobrazenie kolekcie <a href="#feed">kanálov</a>. Aj keď je podľa špecifikácie určený širšie použitie, v súčasnosti sa používa hlavne na importovanie a exportovanie kolekcií medzi rôznymi čítačkami kanálov, ako napr. &brandShortName;.</dd>
+
+<dt id="certificate_verification">Overenie certifikátu</dt>
+  <dd>Keď <a href="#certificate_manager">Správca certifikátov</a> overí certifikát, potvrdí tým, že digitálny podpis bol vytvorený certifikačnou autoritou, ktorej vlastný certifikát je v zozname Správcu certifikátov a zároveň je označený ako dôveryhodný. Taktiež to potvrdzuje, že certifikát, ktorý bol overený, nemôže byť označený ako nedôveryhodný. Nakoniec, ak <a href="#ocsp">OCSP (Online Certificate Status Protocol)</a> bol aktivovaný, Správca certifikátov urobí online kontrolu a to tak, že ho vyhľadá v zozname platných certifikátov, ktoré sú uchované na <a href="#url">adrese URL</a>, ktorá je špecifikovaná buď v certifikáte  samotnom alebo v prehliadači v Možnostiach - Overenie platnosti. Ak akákoľvek z týchto kontrol zlyhá, Správca certifikátov označí daný certifikát ako neoverený a nepotvrdí identitu daného predmetu.</dd>
+
+<dt id="component_bar">Panel komponentov</dt>
+  <dd>Panel nástrojov umiestnený v ľavom dolnom rohu okna &brandShortName;. Umožňuje prepínať medzi jednotlivými nástrojmi &brandShortName; jednoduchým kliknutím na ikony Prehliadač, Pošta a diskusné skupiny, Composer a podobne.</dd>
+
+<dt id="pkcs_11">PKCS #11</dt>
+  <dd>Šifrovacia norma verejného kľúča, ktorý riadi bezpečnostné zariadenia ako smart karty. Taktiež pozri <a href="#security_device">Bezpečnostné zariadenie</a>, <a href="#smart_card">Smart karta</a>.</dd>
+
+<dt id="pki">PKI (Infraštruktúra verejného kľúča)</dt>
+  <dd>Normy a služby, ktoré napomáhajú využitiu šifrovania verejným kľúčom a certifikátov v prostredí sieti.</dd>
+
+<dt id="object_signing">Podpisovanie objektu</dt>
+  <dd>Technológia, ktorá dovoľuje softvérovým vývojárom podpísať kód Java, JavaScript alebo iný druh súboru. Taktiež dovoľuje používateľovi identifikovať podpisovateľa a kontrolovať prístup k miestnym systémovým zdrojom pomocou podpisového kódu.</dd>
+
+<dt id="signing_certificate">Podpisový certifikát</dt>
+  <dd>Certifikát, ktorý sa zhoduje so <a href="#private_key">súkromným kľúčom</a> a používa sa na podpisovanie prenesených dát, takže si príjemca môže overiť identitu odosielateľa. Certifikačné autority (CA) často vydávajú podpisový certifikát, ktorý bude použitý na podpísanie e-mailových správ v rovnakom čase ako <a href="#encryption_certificate">šifrovací certifikát</a>, ktorý zašifruje e-mailovú správu. Pozrite taktiež <a href="#dual_key_pairs">Dvojité páry kľúčov </a> a <a href="#digital_signature">Digitálny podpis</a>.</dd>
+
+<dt id="signing_key">Podpisový kľúč</dt>
+  <dd>Súkromný kľúč, ktorý slúži len na podpisovanie. Podpisový kľúč a jeho ekvivalent verejný kľúč spolu tvoria <a href="#encryption_key">šifrovací kľúč</a> a jeho ekvivalent súkromný kľúč, čo sú spolu <a href="#dual_key_pairs">Dvojité páry kľúčov</a>.</dd>
+
+<dt id="subordinate_ca">Podriadená CA</dt>
+  <dd><a href="#certificate_authority">Certifikačná autorita (CA)</a>, ktorej certifikát je podpísaný od inej podriadenej alebo koreňovej CA. Pozrite tiež <a href="#certificate_chain">Reťazový certifikát</a>, <a href="#root_ca">Koreňová CA</a>.</dd>
+
+<dt id="phishing">Podvodná stránka</dt>
+  <dd>Podvodná stránka je podvodná obchodná metóda, ktorej úlohou je vytvoriť falošnú webovú stránku, napríklad bánk, internetových obchodov a kreditných spoločností, za účelom získania osobných informácií používateľov.</dd>
+
+<dt id="helper_application">Pomocná aplikácia</dt>
+  <dd>Akákoľvek aplikácia, ktorá slúži na otváranie alebo prezeranie si prevzatých súborov prehliadačom. <a href="#plug-in">Zásuvný modul</a> je špeciálny typ pomocnej aplikácie, ktorý sa nainštaluje do priečinka Plugins v hlavnom inštalačnom priečinka prehliadača a obvykle môže byť otvorený v rámci samotnej aplikácie. Microsoft Word, Adobe Photoshop a iné externé aplikácie sa považujú za pomocné aplikácie, ale nie zásuvné moduly, pretože sa nedokážu nainštalovať do priečinka prehliadača, ale dajú sa otvoriť z dialógového okna Preberanie súborov.</dd>
+
+<dt id="tooltip">Pomôcka</dt>
+  <dd>Malé okienko s textom, ktoré sa zobrazí keď ponecháte kurzor myši nad určitými položkami. Obvykle obsahuje informácie vzťahujúce sa k položke, nad ktorou držíte kurzor myši.</dd>
+
+<dt id="pop">POP (Post Office Protocol)</dt>
+  <dd>Štandardný protokol poštového servera, ktorý vyžaduje, aby ste prevzali nové správy do svojho lokálneho počítača, aj keď môžete ukladať kópie na server. So službou POP je možné uchovať všetky správy vrátane odoslaných e-mailov, konceptov, vlastných priečinkov. Na porovnanie protokol <a href="#imap">IMAP</a> umožňuje dlhodobé uchovávanie všetkých správ a zmien na serveri, kam sa dostanete z akéhokoľvek počítača. Väčšina <a href="#isp">ISP</a> podporuje práve POP.</dd>
+
+<dt id="caret_browsing">Prehliadanie s kurzorom</dt><dd>Funkcia &brandShortName;, ktorá umožňuje prechádzať textom na webových stránkach a v e-mailových správach (alebo v okne tohto pomocníka) pomocou kurzora. Pomocou klávesnice tak môžete prechádzať a označovať text presne tak, ako to robíte v textovom editore. Funkciu prehliadania s kurzorom je možné zapnúť resp. vypnúť pomocou klávesu <kbd>F7</kbd>. Režim Prehliadanie s kurzorom je možné zapnúť/vypnúť aj v okne nastavení, panel Rozšírené - Navigácia klávesnicou.</dd>
+
+<dt id="distinguished_name">Príznačný názov (PN)</dt>
+  <dd>Špecificky formátovaný názov, ktorý unikátne identifikuje predmet <a href="#certificate">certifikátu</a>.</dd>
+
+<dt id="proxy">Proxy</dt>
+  <dd>Prostredník či <q>sprostredkovateľský</q> program, ktorý sprostredkováva komunikáciu medzi <a href="#server">serverom</a> a <a href="#client">klientom</a> pre požiadavky iných klientov.</dd>
+
+<dt id="frame">Rámec</dt>
+  <dd>Rámce sú <a href="#web_page">webové stránky</a> obsiahnuté v rámci jednej stránky.</dd>
+
+<dt id="certificate_chain">Reťazový certifikát</dt>
+  <dd>Hierarchické série certifikátov podpísané za sebou idúcimi certifikačnými autoritami. CA certifikátu idetifikuje <a href="#certificate_authority">certifikačnú autoritu (CA)</a> a používa sa na podpísanie certifikátov vydaných danou autoritou. CA certifikátu môže naopak byť podpísaná certifikátom CA z nadriadenej CA a tak ďalej až po <a href="#root_ca">Koreňovú CA</a>.</dd>
+
+<dt id="rss">RSS (Really Simple Syndication)</dt>
+  <dd>Údajový formát <a href="#xml">XML</a> pre webové <a href="#feed">kanály</a>.</dd>
+
+<dt id="extension">Rozšírenie</dt>
+  <dd>Typ <a href="#add-on">doplnku</a>, ktorý mení správanie &brandShortName; alebo pridáva do programu nové funkcie.</dd>
+
+<dt id="server">Server</dt>
+  <dd>Softvér (ako napr. softvér, ktorý poskytuje webové stránky), ktorý prijíma požiadavky a posiela informácie <a href="#client">klientovi</a>, ktorý je obyčajne spustený na inom počítači. Počítač, na ktorom softvér serveru funguje, býva označovaný ako server.</dd>
+
+<dt id="slot">Slot</dt>
+  <dd>Časť hardvéru alebo jeho ekvivalent v softvéri, ktorý je kontrolovaný <a href="#pkcs_11_module">Modulom PKCS #11</a> a navrhnutý na ovládanie <a href="#security_device">bezpečnostného zariadenia</a>.</dd>
+
+<dt id="smart_card">Smart karta</dt>
+  <dd>Malé zariadenie väčšinou veľkosti kreditnej karty obsahujúce mikroprocesor, ktoré je schopné uchovávať šifrovacie informácie (ako kľúče a certifikáty) a zabezpečiť šifrovacie operácie. Smart karty používajú normu <a href="#pkcs_11">PKCS #11</a> a sú typom <a href="#security_device">bezpečnostného zariadenia</a>.</dd>
+
+<dt id="smtp">SMTP (Simple Mail Transfer Protocol)</dt>
+  <dd>Protokol, ktorý posiela e-maily cez sieť <a href="#internet">Internet</a>.</dd>
+
+<dt id="socks">SOCKS</dt>
+  <dd>Protokol, ktorý používa server <a href="#proxy">proxy</a> na akceptovanie požiadaviek od klienta v sieti, aby ich mohol poslať ďalej v sieti <a href="#internet">Internet</a>.</dd>
+
+<dt id="software_security_device">Softvérové bezpečnostné zariadenie</dt>
+  <dd>Predvolené <a href="#security_device">bezpečnostné nastavenie</a> používané <a href="#certificate_manager">správcom certifikátov</a> na uchovanie súkromných kľúčov spájaných s certifikátmi. Okrem súkromných kľúčov je v softvérovom bezpečnostnom zariadení uložený hlavný kľúč používaný <a href="#password_manager">správcom hesiel</a> na šifrovanie e-mailových hesiel, hesiel webových stránok a iných citlivých informácií. Pozrite aj termíny <a href="#private_key">Súkromný kľúč</a> a <a href="#master_password">Hlavné heslo</a>.</dd>
+
+<dt id="spoofing">Spoofing</dt>
+  <dd>Vydávanie sa za niekoho iného. Napríklad osoba môže tvrdiť, že má e-mailovú adresu <tt>jdoe@mozilla.com</tt> alebo počítač sa bude identifikovať ako stránka <tt>www.mozilla.com</tt> aj keď ňou v skutočnosti nie je. Spoofing je jednou z foriem <a href="#misrepresentation">dezinformovanosti</a>.</dd>
+
+<dt id="certificate_manager">Správca certifikátov</dt>
+  <dd>Časť prehliadača, ktorá vám umožňuje zobrazovať a spravovať certifikáty. Na zobrazeniu hlavného okna Správca certifikátov otvorte ponuku <span class="mac">&brandShortName;</span> <span class="noMac">Upraviť</span>, vyberte položku Možnosti, kliknite na Súkromie a Bezpečnosť a položku Certifikáty.</dd>
+
+<dt id="cookie_manager">Správca cookie</dt>
+  <dd>Časť prehliadača, ktorá slúži na ovládanie súborov <a href="#cookie">cookies</a>.</dd>
+
+<dt id="password_manager">Správca hesiel</dt>
+  <dd>Časť prehliadača, ktorá vám pomáha pamätať si niektoré alebo všetky prihlasovacie mená a heslá, ich uložením  na pevný disk a vložením do príslušného formulára ako náhle navštívite stránku, ktorá vyžaduje takéto prihlásenie.</dd>
+
+<dt id="ssl">SSL (Secure Sockets Layer)</dt>
+  <dd>Protokol, ktorý umožňuje obojstrannú autorizáciu medzi <a href="#client">klientom</a> a <a href="#server">serverom</a> za účelom vytvorenia overeného a šifrovaného spojenia. SSL beží nad protokolom <a href="#tcp_ip">TCP/IP</a> a pod protokolmi <a href="#http">HTTP</a>, <a href="#ldap">LDAP</a>, <a href="#imap">IMAP</a>, NNTP a ďalšími vyššími sieťovými protokolmi. Nový štandard Internet Engineering Task Force (IETF) zvaný Transport Layer Security (TLS) je založený na SSL. Ďalšie informácie nájdete aj pri termínoch: <a href="#authentication">Autorizácia</a>, <a href="#encryption">Zašifrovanie</a>.</dd>
+
+<dt id="client_ssl_certificate">SSL certifikát klienta</dt>
+  <dd>Certifikát, ktorý predkladá <a href="#client">klient</a> (ako napríklad prehliadač) <a href="#server">serveru</a>, aby mohla byť overená jeho identita (alebo identita osoby používajúcej daného klienta) pomocou protokolu <a href="#ssl">SSL (Secure Sockets Layer)</a>. Pozrite aj <a href="#client_authentication">Autorizácia klienta</a>.</dd>
+
+<dt id="server_ssl_certificate">SSL certifikát servera</dt>
+  <dd>Certifikát, ktorý predkladá <a href="#server">server</a> danému <a href="#client">klientovi</a>, aby mohla byť overená jeho identita použitím protokolu <a href="#ssl">SSL (Secure Sockets Layer)</a>.</dd>
+
+<dt id="status_bar">Stavový riadok</dt>
+  <dd>Stavový riadok, ktorý je umiestnený v dolnej časti okna &brandShortName;. Zahŕňa <a href="#component_bar">Panel komponentov</a> na ľavej strane a ikony stavu na pravej.</dd>
+
+<dt id="subject">Subjekt</dt>
+  <dd>Entita (ako osoba, organizácia alebo router) identifikovaná <a href="#certificate">certifikátom</a>. Pole subjektu v certifikáte môže obsahovať overené položky ako <a href="#subject_name">Názov subjektu</a> a iné znaky.</dd>
+
+<dt id="private_key">Súkromný kľúč</dt>
+  <dd>Jeden z páru <a href="#key">kľúčov</a> používaný v asymetrickom šifrovaní. Súkromný kľúč je tajný a je používaný na dešifrovanie správ, ktoré boli zašifrované verejným kľúčom.</dd>
+
+<dt id="symmetric_encryption">Symetrické šifrovanie</dt>
+  <dd>Šifrovacia metóda, ktorá používa jednoduchý šifrovací kľúč na zašifrovanie a dešifrovanie danej správy.</dd>
+
+<dt id="cipher">Šifra</dt>
+  <dd>Viď <a href="#cryptographic_algorithm">Šifrovací algoritmus</a>.</dd>
+
+<dt id="cryptographic_algorithm">Šifrovací algoritmus</dt>
+  <dd>Súbor pravidiel alebo príkazov používaných na vykonanie šifrovacích operácií ako <a href="#encryption">zašifrovanie</a> a <a href="#decryption">dešifrovanie</a> údajov. Niekedy zvykne byť označovaný ako <em>šifra</em>.</dd>
+
+<dt id="encryption_certificate">Šifrovací certifikát</dt>
+  <dd><a href="#certificate">Certifikát</a>, ktorého verejný kľúč sa používa len na zašifrovanie. Šifrovacie certifikáty sa nepoužívajú na operácie, ktoré vyžadujú podpis. Pozrite <a href="#dual_key_pairs">Dvojité páry kľúčov</a>, <a href="#signing_certificate">Podpisový certifikát</a>.</dd>
+
+<dt id="encryption_key">Šifrovací kľúč</dt>
+  <dd>Súkromný kľúč, ktorý sa používa len na zašifrovanie. Šifrovací kľuč a jeho ekvivalent súkromný kľúč plus <a href="#signing_key">podpisový kľúč</a> a jeho ekvivalent verejný kľúč tvoria <a href="#dual_key_pairs">Dvojité páry kľúčov</a>.</dd>
+
+<dt id="cryptography">Šifrovanie</dt>
+  <dd>Umenie a postupy zašifrovania a dešifrovania informácií. Tieto šifrovacie techniky sú napríklad použité pri zašifrovaní a dešifrovaní informácií vymieňaných medzi komerčnými webovými stránkami a prehliadačom. Pozri <a href="#public-key_cryptography">Šifrovanie verejným kľúčom</a>.</dd>
+
+<dt id="public-key_cryptography">Šifrovanie verejným kľúčom</dt>
+<dd>Súbor známych techník a noriem, ktoré dovoľujú entite (napríklad osobe, organizácii alebo hardvéru, ktorým môže byť router) overiť identitu elektronickou formou alebo podpísať elektronické dáta. Sú potrebné dva kľúče: <a href="#public_key">verejný kľúč</a> a <a href="#private_key">súkromný kľúč</a>. Verejný kľúč je vydaný ako súčasť <a href="#certificate">certifikátu</a>, ktorý spája tento kľúč s určitou identitou. Korešpondujúci súkromný kľúč je držaný v tajnosti. Dáta, ktorá boli zašifrované verejným kľúčom, môžu byť dešifrované jedine súkromný kľúčom.</dd>
+
+<dt id="tcp">TCP</dt>
+  <dd>Viď <a href="#tcp_ip">TCP/IP</a>.</dd>
+
+<dt id="tcp_ip">TCP/IP (Transmission Control Protocol/Internet Protocol)</dt>
+  <dd>Unixový protokol používaný na spojenie počítačov s rôznymi operačnými systémami. TCP/IP je nevyhnutný protokol siete internet a stal sa všeobecne uznávanou normou.</dd>
+
+<dt id="theme">Téma</dt>
+  <dd>Typ <a href="#add-on">doplnku</a>, ktorý mení vzhľad programu &brandShortName;.</dd>
+
+<dt id="tls">TLS</dt>
+  <dd>Viď <a href="#ssl">SSL (Secure Sockets Layer).</a>.</dd>
+
+<dt id="token">Token</dt>
+  <dd>Viď <a href="#security_device">Bezpečnostné zariadenie</a>.</dd>
+
+<dt id="url">URL (Uniform Resource Locator)</dt>
+  <dd>Štandardizovaná adresa, ktorá povie prehliadaču &brandShortName;, ako sa dostať k súboru alebo k inému zdroju na webe. Napríklad: <tt>http://www.mozilla.org</tt>. Môžete napísať adresu URL do <a href="#location_bar">Adresného riadka</a> prehliadača, aby ste sa dostali na požadovanú <a href="#web_page">webovú stránku</a>. Adresa URL sa taktiež používa ako odkaz na webovej stránke, na ktorý môžete kliknúť, ak sa chcete dostať na inú stránku. Poznáme ho pod názvom internetová adresa alebo webová adresa.</dd>
+
+<dt id="public_key">Verejný kľúč</dt>
+  <dd>Jeden z páru <a href="#key">kľúčov</a>, ktoré sa používajú v šifrovaní verejným kľúčom. Tento kľúč je voľne distribuovaný a vydaný ako súčasť <a href="#certificate">certifikátu</a>. Obvykle sa používa na zašifrovanie dát vlastníka tohto kľúča, ktorý ich môže dešifrovať príslušným súkromným kľúčom.</dd>
+
+<dt id="personal_toolbar">Osobný panel nástrojov</dt>
+  <dd>Upraviteľný panel nástrojov, ktorý sa automaticky objaví pod adresným riadkom. Obsahuje štandardné tlačidlá ako Domov, Záložky a podobne, ktoré môžete pridať alebo odstrániť. Taktiež môžete pridať tlačidlá pre svoje obľúbené záložky alebo priečinky, ktoré budú obsahovať tieto záložky. </dd>
+
+<dt id="search_engine">Vyhľadávač</dt>
+  <dd>Program, ktorý umožňuje používateľom vyhľadávať a získavať konkrétne informácie z <a href="#world_wide_web">World Wide Web (WWW)</a>. Vyhľadávač môže prehľadávať text webových dokumentov alebo zoznam kľúčových slov, môže tiež využívať knižničné služby, ktoré prehľadávajú dokumenty a ručne ich indexujú. Obvykle používateľ uvádza slovo alebo frázu do okna vyhľadávania a vyhľadávač zobrazí odkazy na zodpovedajúce webové stránky.</dd>
+
+<dt id="cache">Vyrovnávacia pamäť (cache)</dt>
+  <dd>Skupina kópií webových stránok uložená na vašom pevnom disku alebo v operačnej pamäti (RAM). &brandShortName; zhromažďuje tieto webové stránky počas vášho prehliadania webu. Ak kliknete na odkaz alebo zadáte <a href="#url">adresu URL</a> na zobrazenie príslušnej webovej stránky a táto je už vo vyrovnávacej pamäti uložená, vykoná sa porovnanie s originálom. Ak sa na stránke nevyskytujú zmeny, &brandShortName; použije uloženú webovú stránku. Urýchli sa tým zobrazenie webovej stránky a ušetrí sa prenosová kapacita linky.</dd>
+
+<dt id="web_page">Webová stránka</dt>
+  <dd>Jeden dokument na World Wide Web, ktorý je reprezentovaný unikátnou webovou adresou <a href="#url">URL</a>. Môže obsahovať text, odkazy a grafiku.</dd>
+
+<dt id="website">Webový server</dt>
+  <dd>Skupina príbuzných webových stránok prepojená webovými odkazmi a spravovaná spoločnosťou, organizáciou či konkrétnym jednotlivcom. Webové stránky môžu obsahovať text, grafiku, audio či video súbory a odkazy na iné webové stránky.</dd>
+
+<dt id="world_wide_web">World Wide Web (WWW)</dt>
+  <dd>Tiež známy ako web. Časť <a href="#internet">Internetu</a>, ktorá sa skladá z webových stránok uložených na webových <a href="#server">serveroch</a> zobrazovaných pomocou <a href="#client">klientov</a> nazývaných webové prehliadače (ako napríklad &brandShortName;).</dd>
+
+<dt id="wpad">WPAD (Web Proxy AutoDiscovery)</dt>
+  <dd>Webový protokol, ktorý umožňuje prehliadaču automaticky vyhľadať a pripojiť sa k <a href="#proxy">proxy</a> serverom dostupným na sieti.</dd>
+
+<dt id="xml">XML (Extensible Markup Language)</dt>
+  <dd>Voľne dostupná norma pre popis údajov. Na rozdiel od <a href="#html">HTML</a>, XML dovoľuje tvorcovi webovej stránky definovať špeciálne značky. Ďalšie informácie nájdete v online dokumente W3C na stránke <a href="http://www.w3.org/XML/">Extensible Markup Language (XML)</a>.</dd>
+
+<dt id="xslt">XSLT (Extensible Stylesheet Language Transformation)</dt>
+  <dd>Jazyk používaný na konvertovanie dokumentov XML do iných dokumentov XML alebo do iného formátu.</dd>
+
+<dt id="xul">XUL (XML User Interface Language)</dt>
+  <dd> XML je štandardný jazyk, ktorý slúži na vytváranie používateľského rozhrania v aplikáciách.</dd>
+
+<dt id="secure_connection">Zabezpečené pripojenie</dt>
+  <dd>Spojenie medzi klientom a serverom, ktoré používa nejaký typ šifrovania (zvyčajne <a href="#ssl">SSL</a>) na zabezpečenie pred prečítaním údajov treťou stranou. Server väčšinou poskytuje na svoju identifikáciu certifikát.</dd>
+
+<dt id="encryption">Zašifrovanie</dt>
+  <dd>Proces zmeny informácie spôsobom, ktorý skryje jej význam. Napríklad, zašifrované spojenia medzi počítačmi zásadne znižujú možnosť úspešného odpočúvania alebo <em>dešifrovania</em> vymieňaných informácií treťou osobou. Zašifrované informácie môžu byť dešifrované len vlastníkom príslušného kľúča. Pozrite aj <a href="#public-key_cryptography">Šifrovanie verejným kľúčom</a>.</dd>
+
+<dt id="bookmark">Záložka</dt>
+  <dd>Uložená <a href="#url">adresa URL</a> ľubovoľnej <a href="#web_page">webovej stránky</a>, ktorú môžete zobraziť jednoduchým kliknutím na jej záložku na <a href="#personal_toolbar">osobnom paneli nástrojov</a> alebo ju vyberiete z ponuky Záložky.</dd>
+
+<dt id="plug-in">Zásuvný modul</dt>
+  <dd>Druh <a href="#helper_application">pomocnej aplikácie</a>, ktorá pridáva nové možnosti prehliadaču &brandShortName;, napríklad možnosť prehrávať zvuky alebo videoklipy. Na rozdiel od iných druhov pomocných aplikácií sa zásuvné moduly inštalujú do priečinka Plugins v hlavnom inštalačnom adresári &brandShortName; a sú otvárané priamo vo vnútri prehliadača &brandShortName;. Napríklad, zásuvný modul na prehrávanie zvuku vám umožní prehrávať zvukové súbory priamo na <a href="#web_page">webových stránkach</a> alebo v e-mailových správach. Macromedia Flash Player a Java sú príklady takýchto zásuvných modulov. </dd>
+
+</dl>
+
+</body>
+</html>

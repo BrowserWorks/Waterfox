@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Sifat akaun">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Umum">
+<!ENTITY account.advanced              "Pilihan Lanjutan">
+<!ENTITY account.name                  "Nama pengguna:">
+<!ENTITY account.password              "Kata laluan:">
+<!ENTITY account.alias                 "Alias:">
+<!ENTITY account.newMailNotification   "Maklumkan Mel baru">
+<!ENTITY account.autojoin              "Auto-Sertai Saluran:">
+<!ENTITY account.proxySettings.caption "Tetapan Proksi:">
+<!ENTITY account.proxySettings.change.label     "Tukar…">
+<!ENTITY account.proxySettings.change.accessKey "T">

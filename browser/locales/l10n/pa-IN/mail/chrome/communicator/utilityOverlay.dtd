@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "ਫਾਇਲ">
+<!ENTITY fileMenu.accesskey        "f">
+<!ENTITY newMenu.label            "ਨਵਾਂ">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "ਸੋਧ">
+<!ENTITY editMenu.accesskey        "e">
+<!ENTITY undoCmd.label            "ਵਾਪਸ">
+<!ENTITY undoCmd.accesskey          "u">
+<!ENTITY redoCmd.label            "ਪਰਤਾਓ">
+<!ENTITY redoCmd.accesskey          "r">
+<!ENTITY deleteCmd.label          "ਹਟਾਓ">
+<!ENTITY deleteCmd.accesskey        "d">
+<!ENTITY preferencesCmdUnix.label       "ਮੇਰੀ ਪਸੰਦ">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY viewMenu.label          "ਵੇਖੋ">
+<!ENTITY viewMenu.accesskey        "v">
+<!ENTITY viewToolbarsMenu.label        "ਟੂਲਬਾਰ">
+<!ENTITY viewToolbarsMenu.accesskey      "T">
+<!ENTITY showTaskbarCmd.label          "ਹਾਲਤ ਪੱਟੀ">
+<!ENTITY showTaskbarCmd.accesskey        "S">
+
+<!ENTITY closeCmd.label      "ਬੰਦ">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "c">
+
+<!ENTITY quitApplicationCmd.label  "ਬੰਦ ਕਰੋ">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "x">
+
+<!ENTITY quitApplicationCmdUnix.label  "ਬੰਦ ਕਰੋ">
+<!ENTITY quitApplicationCmdUnix.accesskey  "q">
+
+<!ENTITY quitApplicationCmdMac.label  "&brandShortName; ਬੰਦ ਕਰੋ">
+<!ENTITY quitApplicationCmdMac.accesskey  "q">

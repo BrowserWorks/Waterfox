@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Datotecas memorisadas">
+<!ENTITY aboutDownloads.empty                      "Naginas datotecas memorisadas">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Mussar l'ordinatur che cuntegna la datoteca">
+<!ENTITY cmd.show.accesskey                        "o">
+<!ENTITY cmd.showMac.label                         "Mussar en il finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Avrir">
+<!ENTITY cmd.open.accesskey                        "A">
+<!ENTITY cmd.removeFromHistory.label               "Allontanar da la cronologia">
+<!ENTITY cmd.removeFromHistory.accesskey           "l">
+<!ENTITY cmd.clearList.label                       "Svidar la glista">
+<!ENTITY cmd.clearList.accesskey                   "g">
+<!ENTITY cmd.clearList.tooltip                     "Allontanar tut las endataziuns da la glista da las datotecas memorisadas, danor las telechargiadas en lavur.">
+<!ENTITY cmd.searchDownloads.label                 "Tschertgar…">
+<!ENTITY cmd.searchDownloads.key                   "F">

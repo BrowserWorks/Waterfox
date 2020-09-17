@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Wobźěłowańske změny wubraś">
+<!ENTITY conflictWarning.label "Toś ten bok jo se pśez drugi program změnił, ale maśo teke njeskładowane změny w editorje.">
+<!ENTITY conflictResolve.label "Wubjeŕśo, kótara wersija ma se wobchowaś:">
+<!ENTITY keepCurrentPageButton.label "Změny aktualnego boka wobchowaś">
+<!ENTITY useOtherPageButton.label "Aktualny bok pśez druge změny wuměniś">

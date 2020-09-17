@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox mba'ete">
+<!ENTITY aboutAccounts.connected.description "Reikehína ...ramo">
+<!ENTITY aboutAccounts.syncPreferences.label "Epoko ápe ehechajey hag̃ua Sync ñemoĩporã">
+
+<!ENTITY aboutAccounts.noConnection.title "Ndaikatúi eike ñandutípe">
+<!ENTITY aboutAccounts.retry.label "Eha'ãjey ag̃ave">
+
+<!ENTITY aboutAccounts.restrictedError.title "Chi'ĩmbyre">
+<!ENTITY aboutAccounts.restrictedError.description "Ndaikatúi eñangarekóvo Firefox mba'etére ko mba'etee guive.">

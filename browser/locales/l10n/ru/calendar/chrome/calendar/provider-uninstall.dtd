@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Удалить провайдер">
+<!ENTITY providerUninstall.accept.label                    "Отменить подписку на выбранное">
+<!ENTITY providerUninstall.accept.accesskey                "О">
+<!ENTITY providerUninstall.cancel.label                    "Сохранить дополнение">
+<!ENTITY providerUninstall.cancel.accesskey                "С">
+<!ENTITY providerUninstall.preName.label                   "Вы запросили удаление или отключение:">
+<!ENTITY providerUninstall.postName.label                  "Это приведет к тому, что календари представленные ниже будут отключены.">
+<!ENTITY providerUninstall.reinstallNote.label             "Если вы не планируете переустанавливать этот провайдер, вы можете отказаться от подписки на календари этого провайдера.">

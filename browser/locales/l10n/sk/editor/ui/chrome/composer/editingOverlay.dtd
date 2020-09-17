@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Otvoriť súbor…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Otvoriť miesto na webe…">
+<!ENTITY openRemoteCmd.accesskey "m">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Naposledy použité stránky">
+<!ENTITY fileRecentMenu.accesskey "r">
+<!ENTITY saveCmd.label "Uložiť">
+<!ENTITY saveCmd.accesskey "U">
+<!ENTITY saveAsCmd.label "Uložiť ako…">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsChangeEncodingCmd2.label "Uložiť a zmeniť kódovanie textu">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "k">
+<!ENTITY publishCmd.label "Publikovať">
+<!ENTITY publishCmd.accesskey "P">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publikovať ako…">
+<!ENTITY publishAsCmd.accesskey "b">
+<!ENTITY fileRevert.label "Vrátiť sa k poslednému uloženiu">
+<!ENTITY fileRevert.accesskey "i">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Nastavenie servera na publikovanie…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nový">
+<!ENTITY newToolbarCmd.tooltip "Nová prázdna stránka">
+<!ENTITY openToolbarCmd.label "Otvoriť">
+<!ENTITY openToolbarCmd.tooltip "Otvoriť lokálnu stránku">
+<!ENTITY saveToolbarCmd.tooltip "Uložiť stránku lokálne">
+<!ENTITY publishToolbarCmd.tooltip "Odoslať súbor na vzdialený server">
+<!ENTITY printToolbarCmd.label "Tlačiť">
+<!ENTITY printToolbarCmd.tooltip "Tlačiť stránku">

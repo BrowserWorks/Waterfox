@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.editing.title         "새 페이지 설정">
+<!ENTITY authorName.label           "저자:">
+<!ENTITY authorName.accesskey       "u">
+<!ENTITY pageColorHeader            "기본 페이지 형식">
+<!ENTITY defaultColors.label   "기본 색상 읽기 (페이지 색지정 안 함)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label    "사용자 지정색:">
+<!ENTITY customColors.accesskey     "c">
+<!ENTITY normalText.label           "일반 단어">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "링크된 단어">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "방문 중인 링크 단어">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "방문한 링크 단어">
+<!ENTITY visitedLinkText.accesskey  "V">
+<!ENTITY background.label           "배경:">
+<!ENTITY background.accesskey       "B">
+<!ENTITY colon.character            ":">
+<!ENTITY backgroundImage.label      "배경 이미지:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "파일 선택…">
+<!ENTITY chooseFile.accesskey       "o">

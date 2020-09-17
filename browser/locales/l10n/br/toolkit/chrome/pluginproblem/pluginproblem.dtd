@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Stokit ouzh amañ evit gweredekaat an enlugellad.">
+<!ENTITY clickToActivatePlugin                               "Gweredekaat an enlugellad.">
+<!ENTITY checkForUpdates                                     "Gwiriañ an hizivadennoù...">
+<!ENTITY blockedPlugin.label                                 "Harzet eo bet an enlugellad-mañ evit ho gwarez.">
+<!ENTITY hidePluginBtn.label                                 "Kuzhat an enlugellad">
+<!ENTITY managePlugins                                       "Ardeiñ an enlugelladoù...">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Adkargañ ar bajenn">
+<!ENTITY reloadPlugin.post                                   " evit klask en-dro.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Kas an danevell sac'hadenn">
+<!ENTITY report.submitting                                   "O kas an danevell...">
+<!ENTITY report.submitted                                    "Kaset eo bet an danevell sac'hadenn.">
+<!ENTITY report.disabled                                     "Danevelloù sac'hadenn diweredekaet.">
+<!ENTITY report.failed                                       "C'hwitadenn war ar c'has.">
+<!ENTITY report.unavailable                                  "Danevell ebet hegerz.">
+<!ENTITY report.comment                                      "Ouzhpennañ un askelenn (gwelus eo an askelennoù d'an holl)">
+<!ENTITY report.pageURL                                      "Enderc'hel chomlec'h ar bajenn">
+
+<!ENTITY plugin.file                                         "Restr">
+<!ENTITY plugin.mimeTypes                                    "Rizhoù MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Gweredekaat mod gwarezet Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Stankañ endalc'hadoù Flash arvarus pe touellus">

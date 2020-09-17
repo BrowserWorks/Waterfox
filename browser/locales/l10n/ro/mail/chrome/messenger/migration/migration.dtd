@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Asistent de import">
+
+<!ENTITY importFromWin.label            "Opțiuni de import, setări de cont, agende de contacte, filtre și alte date din:">
+<!ENTITY importFromNonWin.label         "Importă preferințele, setările contului, agenda de contacte, filtrele și alte date din:">
+<!ENTITY importSourceNotFound.label     "Nu a fost găsită nici o aplicație din care să se importe date.">
+
+<!ENTITY importFromNothing.label        "Nu importa nimic">
+<!ENTITY importFromNothing.accesskey    "u">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 sau mai recent">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Importă setări și dosare de mesaje din">
+<!ENTITY importItems.title              "Elemente de importat">
+<!ENTITY importItems.label              "Selectează care elemente vor fi importate:">
+
+<!ENTITY migrating.title                "Se importă…">
+<!ENTITY migrating.label                "Se importă următoarele elemente…">
+
+<!ENTITY selectProfile.title            "Selectează profilul">
+<!ENTITY selectProfile.label            "Poți importa din următoarele profiluri:">
+
+<!ENTITY done.title                     "Import finalizat">
+<!ENTITY done.label                     "Următoarele elemente au fost importate cu succes:">

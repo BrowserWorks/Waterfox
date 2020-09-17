@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Ɣef &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; d armitan yerna ur yerkid ara.">
+<!ENTITY aboutPage.checkForUpdates.link         "Senqed ileqman»">
+<!ENTITY aboutPage.checkForUpdates.checking     "Anadi n ileqman…">
+<!ENTITY aboutPage.checkForUpdates.none         "Ulac ileqman">
+<!ENTITY aboutPage.checkForUpdates.available2   "Sider lqem">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Asider n lqem…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Sebded lqem">
+<!ENTITY aboutPage.faq.label                    "Isteqsiyen FAQ">
+<!ENTITY aboutPage.support.label                "Tallalt">
+<!ENTITY aboutPage.privacyPolicy.label          "Tasertit n tbaḍnit">
+<!ENTITY aboutPage.rights.label                 "Issin izerfan-inek">
+<!ENTITY aboutPage.relNotes.label               "Iwenniten n lqem">
+<!ENTITY aboutPage.credits.label                "Imttekkiyen">
+<!ENTITY aboutPage.license.label                "Talɣut n turagt">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox d iluguten n Firefox d ticraḍ yettwasersen i tesbeddit Mozilla.">

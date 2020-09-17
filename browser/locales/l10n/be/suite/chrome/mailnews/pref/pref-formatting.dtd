@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title "Фармат дасылання">
+<!ENTITY sendMaildesc.label "Калі дасылаюцца фарматаваныя лісты (HTML) і адзін ці болей атрымальнікаў не пералічаны як здольныя атрымліваць HTML:">
+<!ENTITY askMe.label "Спытаць мяне, што зрабіць (Пошта прапануе вам выбраць фармат)">
+<!ENTITY askMe.accesskey "п">
+<!ENTITY convertPlain.label "Ператварыць ліст у просты тэкст (нейкія фарматаванні могуць згубіцца)">
+<!ENTITY convertPlain.accesskey "т">
+<!ENTITY sendHTML.label "Усё роўна дасылаць ліст як фарматаваны тэкст (HTML). (Асобныя паштовыя праграмы магчыма не змогуць адлюстраваць яго).">
+<!ENTITY sendHTML.accesskey "д">
+<!ENTITY sendBoth.label "Дасылаць ліст як просты тэкст і як HTML (павялічвае памер ліста)">
+<!ENTITY sendBoth.accesskey "а">
+<!ENTITY override.label "Вы можаце адмяніць гэтыя наладжванні для асобных лістоў, калі скарыстаеце меню Наладжванні ў час укладання ліста.">
+<!ENTITY domain.title "Дамены HTML і простага тэксту">
+<!ENTITY domaindesc.label "Калі вы дасылаеце ліст на адрас з аднаго з даменаў, пералічаных ніжэй, Пошта самастойна дасылае ліст у пажаданым фармаце (фарматаваны або просты тэкст).">
+<!ENTITY HTMLdomaintitle.label "HTML дамены">
+<!ENTITY HTMLdomaintitle.accesskey "M">
+<!ENTITY PlainTexttitle.label "Дамены простага тэксту">
+<!ENTITY PlainTexttitle.accesskey "п">
+<!ENTITY AddButton.label "Дадаць…">
+<!ENTITY AddHtmlDomain.accesskey "Д">
+<!ENTITY AddPlainText.accesskey "а">
+<!ENTITY DeleteButton.label "Выдаліць">
+<!ENTITY DeleteHtmlDomain.accesskey "ы">
+<!ENTITY DeletePlainText.accesskey "л">
+<!ENTITY add.htmltitle "Дадаць назву HTML дамену">
+<!ENTITY add.htmldomain "Назва HTML дамену:">
+<!ENTITY add.plaintexttitle "Дадаць назву дамену простага тэксту">
+<!ENTITY add.plaintextdomain "Назва дамену простага тэксту:">
+<!ENTITY domainnameError.title "Памылка назвы дамену">
+<!ENTITY invalidEntryError.label "Назва дамену @string@ няспраўная і будзе ігнаравацца. Спраўныя назвы даменаў павінны ўключаць прынамсі адну '.' і знакі з таго ці іншага яе боку.">

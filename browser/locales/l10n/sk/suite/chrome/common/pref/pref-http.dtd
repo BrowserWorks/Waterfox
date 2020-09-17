@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "Spojenie HTTP">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Nastavenia pre priame spojenie">
+<!ENTITY prefProxy.label                     "Nastavenia pre spojenie cez server proxy">
+<!ENTITY prefEnableHTTP10.label              "Použiť HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "o">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "u">
+<!ENTITY prefEnableHTTP11.label              "Použiť HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "H">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "Nastavenia spojení HTTP môžu byť zmenené pomocou týchto volieb a tým môže byť zvýšená rýchlosť alebo kompatibilita. Napríklad niektoré servery proxy vyžadujú HTTP/1.0 (ďalšie informácie nájdete v poznámkach k vydaniu).">
+<!ENTITY prefUseragent.label                 "Reťazec User Agent">
+<!ENTITY prefFirefoxCompat.label             "Indikovať kompatibilitu s prehliadačom Firefox">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "Odporúčať inštaláciu doplnku Lightning">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "UPOZORNENIE: vypnutie týchto nastavení môže spôsobiť, že webové stránky alebo služby nebudú pracovať správne.">
+<!ENTITY prefFirefoxStrict.label             "Identifikovať ako Firefox">
+<!ENTITY prefFirefoxStrict.accesskey         "I">
+<!ENTITY prefFirefoxNone.label               "Identifikovať ako SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "Identifikovať ako SeaMonkey a indikovať kompatibilitu s Firefoxom">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "UPOZORNENIE: zmena tohto nastavenia môže spôsobiť, že webové stránky alebo služby nebudú pracovať správne.">

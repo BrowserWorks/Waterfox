@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Postafiók varázsló">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Mielőtt üzeneteket kaphatna, először be kell állítania egy postafiókot.">
+<!ENTITY accountTypeTitle.label "Új postafiók beállítása">
+<!ENTITY accountTypeDesc2.label "Ez a varázsló a postafiókok beállításához szükséges információkat gyűjti össze. Ha nem tud válaszolni a feltett kérdésekre, lépjen kapcsolatba a rendszergazdával vagy az internetszolgáltatójával.">
+<!ENTITY accountTypeDirections.label "Válassza ki a beállítandó postafiók típusát:">
+<!ENTITY accountTypeMail.label "Levelező postafiók">
+<!ENTITY accountTypeMail.accesskey "L">
+<!ENTITY accountTypeNews.label "Hírcsoportfiók">
+<!ENTITY accountTypeNews.accesskey "H">
+
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix levélgyűjtő (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Felhasználó">
+<!ENTITY identityDesc.label "Minden postafiókhoz tartozik egy személyazonosság. Az itt megadott név megjelenik a másoknak küldött levelek fejlécében.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Adja meg azt a nevet, amelyet a kézbesítendő levelek „Feladó” sorában akar megjelentetni.">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(például: „Kovács János”)">
+<!ENTITY fullnameLabel.label "Név:">
+<!ENTITY fullnameLabel.accesskey "N">
+
+<!ENTITY emailLabel.label "E-mail cím:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "A bejövő levelek kiszolgáló adatai">
+<!ENTITY incomingServerTypeDesc.label "Válassza ki a bejövő leveleket kezelő kiszolgáló típusát">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Alapértelmezett:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Írja be a bejövő leveleket kezelő kiszolgáló nevét (pl.: „mail.example.net”).">
+<!ENTITY incomingServer.label "Bejövő kiszolgáló:">
+<!ENTITY incomingServer.accesskey "B">
+<!ENTITY leaveMsgsOnSrvr.label "Üzenetek megtartása a kiszolgálón">
+<!ENTITY leaveMsgsOnSrvr.accesskey "m">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Írja be a felhasználói nevét, amelyet az e-mail szolgáltatója adott meg (például &quot;jkovacs&quot;)">
+<!ENTITY incomingUsername.label "Felhasználói név:">
+<!ENTITY incomingUsername.accesskey "F">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Írja be a hírcsoport-kiszolgáló (NNTP) nevét (pl.: „news.example.net”).">
+<!ENTITY newsServerLabel.label "Hírcsoport-kiszolgáló:">
+<!ENTITY newsServerLabel.accesskey "H">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "A kimenő levelek kiszolgáló adatai">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Írja be a levélküldő kiszolgáló (SMTP) nevét (például: „smtp.example.net”).">
+<!ENTITY outgoingServer.label "Kimenő kiszolgáló:">
+<!ENTITY outgoingServer.accesskey "K">
+<!ENTITY outgoingUsername.description "Írja be az e-mail szolgáltatója által megadott kimenő felhasználói nevét (ez általában ugyanaz, mint a bejövő felhasználói név).">
+<!ENTITY outgoingUsername.label "Kimenő felhasználó név:">
+<!ENTITY outgoingUsername.accesskey "f">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "You can modify outgoing server settings from within Mail &amp; Newsgroups Account Settings.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Már be van állítva a kimenő leveleket kezelő (SMTP) kiszolgáló: „">
+<!ENTITY haveSmtp1.suffix3 "” lesz használva.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "A meglévő kimenő (SMTP) felhasználói neve, „">
+<!ENTITY haveSmtp2.suffix3 "” lesz használva.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "A kimenő (SMTP) kiszolgálója, „">
+<!ENTITY haveSmtp3.suffix3 "” ugyanaz, mint a bejövő kiszolgálója, és a bejövő felhasználó neve lesz használva az eléréséhez.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Postafiók neve">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Írja be milyen néven szeretne hivatkozni erre a postafiókra (például: „Munka”, „Otthon” vagy „Hírek”).">
+<!ENTITY accnameLabel.label "Postafiók neve:">
+<!ENTITY accnameLabel.accesskey "P">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Gratulálunk!">
+<!ENTITY completionText.label "Ellenőrizze, hogy az alábbi adatok helyesek-e.">
+<!ENTITY serverTypePrefix.label "Bejövő leveleket kezelő kiszolgáló típusa:">
+<!ENTITY serverNamePrefix.label "Bejövő leveleket kezelő kiszolgáló neve:">
+<!ENTITY smtpServerNamePrefix.label "Levélküldő kiszolgáló (SMTP) neve:">
+<!ENTITY newsServerNamePrefix.label "Hírcsoport-kiszolgáló (NTTP) neve:">
+<!ENTITY downloadOnLogin.label "Üzenetek letöltése azonnal">
+<!ENTITY downloadOnLogin.accesskey "l">
+<!ENTITY deferStorageDesc.label "Ha leveszi a jelölést erről a négyzetről, akkor a postafiók levelei a saját könyvtárukban lesznek tárolva. A postafiók legfelső szintű postafiókként jelenik majd meg. Egyébként része lesz a Helyi mappák Globális gyűjtő nevű postafiókjának.">
+<!ENTITY deferStorage.label "A Globális gyűjtő használata (levelek tárolása a Helyi mappákban)">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "Az adatok mentéséhez és a Postafiók varázslóból kilépéshez kattintson a Befejezés gombra.">
+<!ENTITY clickFinish.labelMac "Az adatok mentéséhez és a Postafiók varázslóból kilépéshez kattintson a Befejezés gombra.">

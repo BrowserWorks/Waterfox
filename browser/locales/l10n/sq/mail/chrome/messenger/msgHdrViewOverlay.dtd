@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Për ">
+<!ENTITY fromField4.label "Nga ">
+<!ENTITY senderField4.label "Dërgues ">
+<!ENTITY author.label "Autor">
+<!ENTITY organizationField4.label "Ent">
+<!ENTITY replyToField4.label "Përgjigjuni te ">
+
+<!ENTITY subjectField4.label "Subjekt ">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc ">
+<!ENTITY newsgroupsField4.label "Grupe lajmesh ">
+<!ENTITY followupToField4.label "Vazhdojeni te ">
+<!ENTITY tagsHdr4.label "Etiketa ">
+<!ENTITY dateField4.label "Datë ">
+<!ENTITY userAgentField4.label "Agjent përdoruesi ">
+<!ENTITY referencesField4.label "Referenca ">
+<!ENTITY messageIdField4.label "ID mesazhi ">
+<!ENTITY inReplyToField4.label "Në përgjigje të ">
+<!ENTITY originalWebsite4.label "Sajt ">
+
+<!ENTITY hdrArchiveButton1.label "Arkivoje">
+<!ENTITY hdrArchiveButton1.tooltip "Arkivojeni këtë mesazh">
+<!ENTITY hdrSmartReplyButton1.label "Përgjigje e Mençur">
+<!ENTITY hdrReplyButton1.label "Përgjigjuni">
+<!ENTITY hdrReplyButton2.tooltip "Përgjigjiuni dërguesit të këtij mesazhi">
+<!ENTITY hdrReplyAllButton1.label "Përgjigjiuni të Tërëve">
+<!ENTITY hdrReplyAllButton1.tooltip "Përgjigjiuni dërguesit dhe tërë marrësve">
+<!ENTITY hdrReplyListButton1.label "Përgjigjuni te Lista">
+<!ENTITY hdrReplyListButton1.tooltip "Përgjigjuni te lista e postimeve">
+<!ENTITY hdrFollowupButton1.label "Vazhdim">
+<!ENTITY hdrFollowupButton1.tooltip "Postoni një vazhdim te ky grup lajmesh">
+<!ENTITY hdrForwardButton1.label "Përcille">
+<!ENTITY hdrForwardButton1.tooltip "Përcilleni këtë mesazh">
+<!ENTITY hdrJunkButton1.label "I pavlerë">
+<!ENTITY hdrJunkButton1.tooltip "I vini shenjë këtij mesazhi si i pavlerë">
+<!ENTITY hdrTrashButton1.label "Fshije">
+<!ENTITY hdrTrashButton1.tooltip "Fshijeni këtë mesazh">
+
+<!ENTITY hdrViewToolbarShowFull.label "Shfaq Ikona dhe Tekst">
+<!ENTITY hdrViewToolbarShowFull.accesskey "d">
+<!ENTITY hdrViewToolbarShowIcons.label "Shfaq Vetëm Ikona">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "I">
+<!ENTITY hdrViewToolbarShowText.label "Shfaq Vetëm Tekst">
+<!ENTITY hdrViewToolbarShowText.accesskey "T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Shfaqe Përherë pjesën Përgjigjiuni Dërguesit">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "P">
+
+<!ENTITY otherActionsButton2.label "Më tepër">
+<!ENTITY otherActionsButton.tooltip "Veprime të tjera">
+<!ENTITY otherActionsOpenConversation1.label "Hape si Bisedë">
+<!ENTITY otherActionsOpenConversation1.accesskey "B">
+<!ENTITY otherActionsOpenInNewWindow1.label "Hape Në Dritare të Re">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "D">
+<!ENTITY otherActionsOpenInNewTab1.label "Hape Në Skedë të Re">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "K">
+<!ENTITY markAsReadMenuItem1.label "Shënoje si të Lexuar">
+<!ENTITY markAsReadMenuItem1.accesskey "l">
+<!ENTITY markAsUnreadMenuItem1.label "Shënoje si të Palexuar">
+<!ENTITY markAsUnreadMenuItem1.accesskey "P">
+<!ENTITY saveAsMenuItem1.label "Ruajeni si…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "Shihni Burimin">
+<!ENTITY viewSourceMenuItem1.accesskey "u">
+<!ENTITY otherActionsPrint1.label "Shtypni…">
+<!ENTITY otherActionsPrint1.accesskey "y">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Shfaqe Fillimisht Kuadratin e Bashkëngjitjeve">
+<!ENTITY startExpandedCmd.accesskey    "S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Hape">
+<!ENTITY openAttachmentCmd.accesskey    "H">
+<!ENTITY saveAsAttachmentCmd.label    "Ruajeni Si…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "S">
+<!ENTITY detachAttachmentCmd.label    "Shqitni…">
+<!ENTITY detachAttachmentCmd.accesskey    "i">
+<!ENTITY deleteAttachmentCmd.label    "Fshije">
+<!ENTITY deleteAttachmentCmd.accesskey    "F">
+<!ENTITY openAllAttachmentsCmd.label    "Hapini Krejt…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "H">
+<!ENTITY saveAllAttachmentsCmd.label    "Ruajini Krejt…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "R">
+<!ENTITY detachAllAttachmentsCmd.label    "Shqitini Krejt…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "S">
+<!ENTITY deleteAllAttachmentsCmd.label    "Fshijini Krejt…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "F">
+
+<!ENTITY openAttachment.tooltip "Hapni kartelën e bashkëngjitur">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Hap Dosjen Përkatëse">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "H">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Shfaqe Në Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Ruaje">
+<!ENTITY saveAttachmentButton1.tooltip     "Ruajeni kartelën e bashkëngjitur">
+<!ENTITY saveAllAttachmentsButton1.label   "Ruaji Krejt">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Ruajini krejt kartelat e bashkëngjitura">
+
+<!ENTITY copyLinkCmd.label        "Kopjo Vendndodhje Lidhjeje">
+<!ENTITY copyLinkCmd.accesskey    "K">
+
+<!ENTITY CopyMessageId.label "Kopjo ID Mesazhi">
+<!ENTITY CopyMessageId.accesskey "K">
+<!ENTITY OpenMessageForMsgId.label "Hap Mesazhin Për ID-në">
+<!ENTITY OpenMessageForMsgId.accesskey "H">
+<!ENTITY OpenBrowserWithMsgId.label "Hape Shfletuesin Me Mesazhin Me ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey "M">

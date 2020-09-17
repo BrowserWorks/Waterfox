@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Dukuâ ñanj">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Gi'iaj yugui'">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Gi'iaj yugui' nej markador">
+
+<!ENTITY file.close.label               "Narán">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Gini'iaj">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Naduna sa ni'iajt">
+<!ENTITY view.columns.label             "Digun' nej dukuáan">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "Ma hue'ê ma">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Nitaj ma hue'ê ma">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "Gayi'i' 'ngà A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Gayi'i' 'ngà Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Ganukuo' markador àsij riña HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Ga'ni' gan'anj markador àsij riña HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Ganukuo' dato asij riña a'ngo navegador…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "Gachra so'...">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "Dunaj daj rû' gaj">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Nahui' archivu...">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "Si yuguit">
+<!ENTITY col.tags.label          "Da'nga' achrûn'">
+<!ENTITY col.url.label           "Dane' huin">
+<!ENTITY col.mostrecentvisit.label "Riña aché nu yitin'">
+<!ENTITY col.visitcount.label    "Antaj dugui' gatuj">
+<!ENTITY col.dateadded.label     "'Ngà nuta' ma">
+<!ENTITY col.lastmodified.label  "Sa nagi'iât ne' rukù ni'inj">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Ganukuo' ni dugumin'">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Ganukuaj ni dugumî si markadot">
+
+<!ENTITY backButton.tooltip  "Nanikàj rukù">
+
+<!ENTITY forwardButton.tooltip  "Gan’ānjt ne’ ñaan">
+
+<!ENTITY detailsPane.selectAnItemText.description "Ganahui 'ngò elemento ni'iaj ni nagi'iât">
+

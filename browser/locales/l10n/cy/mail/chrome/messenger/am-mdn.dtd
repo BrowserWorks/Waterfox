@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Derbynebau Dychwelyd">
+<!ENTITY useGlobalPrefs.label         "Defnyddio fy newisiadau derbynneb dychwelyd ar gyfer y cyfrif hwn">
+<!ENTITY useGlobalPrefs.accesskey     "D">
+<!ENTITY globalReceipts.label         "Dewisiadau Eang…">
+<!ENTITY globalReceipts.accesskey     "E">
+<!ENTITY useCustomPrefs.label         "Cyfaddasu derbynebau dychwelyd ar gyfer y cyfrif hwn">
+<!ENTITY useCustomPrefs.accesskey     "C">
+<!ENTITY requestReceipt.label         "Wrth anfon negeseuon, gofyn bob tro am dderbynneb dychwelyd">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "Pan fydd derbynneb yn cyrraedd:">
+<!ENTITY leaveIt.label                "Gadael yn fy Mlwch Derbyn">
+<!ENTITY leaveIt.accesskey            "D">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Symud i fy ffolder &quot;Anfonwyd&quot;">
+<!ENTITY moveToSent.accesskey         "A">
+<!ENTITY requestMDN.label             "Pan fyddaf yn derbyn cais am dderbynneb dychwelyd:">
+<!ENTITY returnSome.label             "Caniatáu derbynebau dychwelyd ar gyfer rhai negeseuon">
+<!ENTITY returnSome.accesskey         "a">
+<!ENTITY never.label                  "Peidio byth anfon derbynneb dychwelyd">
+<!ENTITY never.accesskey              "P">
+<!ENTITY notInToCc.label              "Os nad wyf yn At neu Cc y neges:">
+<!ENTITY notInToCc.accesskey          "O">
+<!ENTITY outsideDomain.label          "Os yw'r anfonwr o'r tu allan i'm parth:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "Mewn unrhyw achos arall:">
+<!ENTITY otherCases.accesskey         "M">
+<!ENTITY askMe.label                  "Gofyn i mi">
+<!ENTITY alwaysSend.label             "Anfon pob tro">
+<!ENTITY neverSend.label              "Byth anfon">

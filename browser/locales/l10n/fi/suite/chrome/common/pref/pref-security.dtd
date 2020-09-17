@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+<!ENTITY pref.security.title              "Tietoturva">
+
+<!ENTITY tracking.label                   "Käyttäjän seuranta">
+<!ENTITY trackingIntro.label              "Verkkosivut voivat seurata, miten käytät niitä. Tämä voi vaikuttaa tietosuojaasi.">
+
+<!ENTITY doNotTrack.label                 "Ilmoita sivustoille, etten halua niiden seuraavan minua">
+<!ENTITY doNotTrack.accesskey             "I">
+<!ENTITY trackProtect.label               "Estä tunnettujen sivustojen seurantatoiminta">
+<!ENTITY trackProtect.accesskey           "E">
+<!ENTITY warnTrackContent.label           "Varoita, kun tunnettuja seurantatoimia havaitaan">
+<!ENTITY warnTrackContent.accesskey       "V">
+
+<!ENTITY geoLocation.label                "Sijaintitietoinen selaus">
+<!ENTITY geoIntro.label                   "Jotkin verkkosivut saattavat pyytää tarkempaa tietoa nykyisestä sijainnistasi.">
+
+<!ENTITY geoEnabled.label                 "Kysy minulta lupaa, jos tällainen pyyntö tulee vastaan">
+<!ENTITY geoEnabled.accesskey             "K">
+<!ENTITY geoDisabled.label                "Poista tämä ominaisuus käytöstä ja vastaa kaikkiin pyyntöihin ei">
+<!ENTITY geoDisabled.accesskey            "P">
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label               "Suojattu selaus">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; pystyy estämään verkkosivustot, joilla on ilmoitettu olevan haitallista sisältöä.">
+
+<!ENTITY blockAttackSites.label           "Estä ilmiannetut hyökkäyssivustot (malware, viruksia)">
+<!ENTITY blockAttackSites.accesskey       "i">
+
+<!ENTITY blockWebForgeries.label          "Estä ilmiannetut huijaussivustot (tietojen kalastelu)">
+<!ENTITY blockWebForgeries.accesskey      "l">

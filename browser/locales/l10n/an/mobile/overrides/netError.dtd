@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "S'ha produciu un problema en cargar a pachina">
+<!ENTITY retry.label "Torna-lo a probar">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "No s'ha puesto connectar">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "L'adreza ye restrinchida">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "No s'ha trobau o servidor">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>Comprebe que l'adreza no tien errors como <strong>ww</strong>.example.com instead of <strong>www</strong>.example.com</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Buscar</button> </div> <li>Si no puet cargar garra pachina, comprebe a connexión de datos u Wi-Fi d'o suyo dispositivo. <button id='wifi'>Activar Wi-Fi</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "No s'ha trobau o fichero">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Comprebe a sintaxi d'o nombre d'o fichero, incluindo-ie l'uso de mayusclas y minusclas.</li> <li>Comprebe que o fichero no siga estau moviu, renombrau u eliminau.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "S'ha denegau l'acceso a lo fichero">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Talment s'haiga borrau, moviu u l'acceso ye vedau por los permisos d'o fichero.</li> </ul>">
+
+<!ENTITY generic.title "Ups.">
+<!ENTITY generic.longDesc "<p>&brandShortName; no puet cargar la pachina por bella razón.</p>">
+
+<!ENTITY malformedURI.title "L'adreza no ye valida">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>As adrezas web gosan escribir-se asinas: <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Buscar</button> </div> <li>Compreba que no has usau barras enta debant (i.e. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "S'ha interrumpiu a connexión">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "O documento ha caducau">
+<!ENTITY notCached.longDesc "<p>O documento solicitau ya no ye disponible en a caché de &brandShortName;.</p><ul><li>Por precaución, &brandShortName; no tornará a solicitar automaticament os documentos sensibles.</li><li>Faiga clic en Prebar-lo de nuevas ta tornar a solicitar o documento a o puesto web.</li></ul>">
+
+<!ENTITY netOffline.title "Modo sin connexión">
+
+<!ENTITY contentEncodingError.title "Error de codificación d'o conteniu">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Meta-se en contacto con os propietarios d'o puesto web ta informar-les d'iste problema.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Tipo de fichero inseguro">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Meta-se en contacto con os propietarios d'o puesto web ta informar-les d'iste problema.</li> </ul>">
+
+<!ENTITY netReset.title "S'ha reiniciau a connexión">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "S'ha acotolau o tiempo d'aspera d'a connexión">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "No s'ha entendiu l'adreza">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Podría estar que calese instalar unatro software ta ubrir l'adreza.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "O servidor proxy ye refusando as connexions">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Comprebe a configuración d'o servidor proxy ta asegurar-se de que ye correcta.</li> <li>Meta-se en contacto con l'administrador d'o ret ta asegurar-se de que o servidor proxy ye funcionando.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "No s'ha puesto trobar o servidor proxy">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Comprebe os achustes d'o proxy ta asegurar-se que son correctos.</li> <li>Comprebe que o suyo dispositivo tien una connexión de datos u Wi-Fi que funciona. <button id='wifi'>Activar a Wi-Fi</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "A pachina no ye reendrezando adequadament">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ixo podría pasar en haber desactivau u refusau l'acceptación de cookies.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Respuesta inasperada d'o servidor">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Asegure-se de que o suyo sistema tiene un chestor de seguranza personal instalau.</li> <li>Puestar se tracte de una configuración no estandar en o servidor.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Ha fallau a connexión segura">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>A pachina que ye mirando de veyer no puet amostrar-se porque no ye posible verificar l’autenticidat d'os datos recibius.</li> <li>Meta-se en contacto con o responsable d'o puesto web ta informar-le-ne.</li> </ul>">
+
+<!ENTITY nssBadCert.title "A connexión segura ha fallau">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Isto podría estar un problema con a configuración d'o servidor, u bien podría estar belún que ye mirando de fer-se pasar por o servidor.</li> <li>Si se i ha connectau sin garra problema bella atra vegada, a error podría estar temporal, y puede tornar-lo a prebar mas entabant.</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>Talment o puesto siga temporalment no disponible u masiau ocupau. Torne a intentar-lo en bells momentos.</li> <li>Si no puet cargar garra pachina, comprebe a connexión de datos u Wi-Fi d'o suyo dispoisitivo mobil. <button id='wifi'>Activar a Wi-Fi</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "S'ha bloquiau por a politica de seguranza de conteniu">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ha privau que a pachina se cargue d'ista traza porque tiene una politica de seguranza de conteniu que no lo permite.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Error en o conteniu d'a pachina">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>A pachina que ye mirando de veyer no se puede amostrar porque s'ha produciu una error en a transmisión d'os datos.</p><ul><li>Meta-se en contacto con os propietarios d'o puesto web ta informar-les d'iste problema</li></ul>">
+
+<!ENTITY securityOverride.linkText "U puede adhibir-ie una excepción…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Quita-me d'aquí!">
+<!ENTITY securityOverride.exceptionButtonLabel "Adhibir una excepción…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>No habría d'adhibir una excepción si ye emplegando una connexión d'Internet que no i confía plenament u si no gosaba veyer una alvertencia en iste servidor.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL remoto">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Meta-se en contacto con os propietarios d'o puesto web ta informar-les d'iste problema.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "No s'ha puesto connectar de traza segura">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Información abanzada: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "La suya connexión no ye segura">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Información Abanzada: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "La suya connexión no ye segura">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> fa servir technolochía de seguranza que ye obsoleta y vulnerable debant d'un ataque. Un atacant podría revelar información que vusté creyeba segura. L'administrador d'o puesto web habrá de fixar lo servidor antes que vusté pueda vesitar lo puesto.</p><p>Codigo d'error:  NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Error de protocolo de ret">
+<!ENTITY networkProtocolError.longDesc "<p>La pachina que ye mirando de veyer no se puede amostrar porque s'ha detectau una error en o protocolo de ret.</p><ul><li>Per favor, contacte con os propietarios d'o puesto web pa informar-les d'este problema.</li></ul>">

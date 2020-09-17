@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items --> 
+
+
+<!ENTITY fileMenu.label "Датотека">
+<!ENTITY fileMenu.accesskey "Д">
+<!ENTITY newMenu.label "Нова">
+<!ENTITY newMenu.accesskey "Н">
+
+<!ENTITY editMenu.label "Уредување">
+<!ENTITY editMenu.accesskey "е">
+<!ENTITY undoCmd.label "Врати">
+<!ENTITY undoCmd.accesskey "р">
+<!ENTITY redoCmd.label "Повтори">
+<!ENTITY redoCmd.accesskey "р">
+<!ENTITY deleteCmd.label "Избриши">
+<!ENTITY deleteCmd.accesskey "з">
+<!ENTITY preferencesCmdUnix.label "Преференции">
+<!ENTITY preferencesCmdUnix.accesskey "П">
+
+<!ENTITY viewMenu.label "Поглед">
+<!ENTITY viewMenu.accesskey "г">
+<!ENTITY viewToolbarsMenu.label "Алатници">
+<!ENTITY viewToolbarsMenu.accesskey "т">
+<!ENTITY showTaskbarCmd.label "Статусна лента">
+<!ENTITY showTaskbarCmd.accesskey "С">
+
+<!ENTITY closeCmd.label "Затвори">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "З">
+
+<!ENTITY quitApplicationCmd.label "Излези">
+<!ENTITY quitApplicationCmd.key "Q">
+<!ENTITY quitApplicationCmd.accesskey "з">
+
+<!ENTITY quitApplicationCmdUnix.label "Излези">
+<!ENTITY quitApplicationCmdUnix.accesskey "з">
+

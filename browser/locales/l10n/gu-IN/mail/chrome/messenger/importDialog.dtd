@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "આયાત">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; મેલ આયાત વિઝાર્ડ">
+
+<!ENTITY importDescription2.label "એકવાર જ્યારે તે આયાત થઈ જાય, ત્યારે તમે તેમને &brandShortName; મેલ અને/અથવા સરનામા પુસ્તિકામાંથી આયાત કરવા સમર્થ હશો.">
+
+<!ENTITY selectDescription.label  "કાર્યક્રમ પસંદ કરો કે જેમાંથી તમે આયાત કરવા માંગો છો:">
+
+<!ENTITY back.label               "&lt; પાછળ">
+<!ENTITY forward.label            "આગળ &gt;">
+<!ENTITY finish.label             "સમાપ્ત">
+<!ENTITY cancel.label             "રદ કરો">
+
+<!ENTITY select.label             "આયાત કરવા માટે સામગ્રીનો પ્રકાર પસંદ કરો:">
+
+<!ENTITY title.label              "શીર્ષક">
+<!ENTITY processing.label         "આયાત કરી રહ્યા છીએ...">
+

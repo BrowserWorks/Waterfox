@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Tietoja: &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; on kokeellinen versio ja voi olla epävakaa.">
+<!ENTITY aboutPage.checkForUpdates.link         "Hae päivityksiä »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Haetaan päivityksiä…">
+<!ENTITY aboutPage.checkForUpdates.none         "Ei päivityksiä">
+<!ENTITY aboutPage.checkForUpdates.available2   "Lataa päivitys">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Ladataan päivitystä…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Asenna päivitys">
+<!ENTITY aboutPage.faq.label                    "UKK">
+<!ENTITY aboutPage.support.label                "Tuki">
+<!ENTITY aboutPage.privacyPolicy.label          "Tietosuojakäytäntö">
+<!ENTITY aboutPage.rights.label                 "Tietoa oikeuksistasi">
+<!ENTITY aboutPage.relNotes.label               "Julkaisutiedot">
+<!ENTITY aboutPage.credits.label                "Tekijät">
+<!ENTITY aboutPage.license.label                "Lisenssitiedot">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox ja Firefox logo ovat Mozilla-säätiön tuotemerkkejä.">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "Asteqsi n tirawt HTML">
+
+<!ENTITY recipient.label "Kra n iɣewaḍen ulac-iten di tebdart n wermas n yimayl HTML.">
+
+<!ENTITY question.label "Tebɣiḍ aselket n yozen ɣer uḍris aččuran neɣ ad tazneḍ kan s HTML?">
+
+<!ENTITY plainTextAndHtml.label "Azen s uḍris ačuran d HTML">
+<!ENTITY plainTextAndHtml.accesskey "z">
+<!ENTITY plainTextOnly.label "Azen s uḍris ačuran kan">
+<!ENTITY plainTextOnly.accesskey "z">
+<!ENTITY htmlOnly.label "Azen s HTML kan">
+<!ENTITY htmlOnly.accesskey "z">
+
+<!ENTITY send.label "Azen">
+<!ENTITY send.accesskey "z">

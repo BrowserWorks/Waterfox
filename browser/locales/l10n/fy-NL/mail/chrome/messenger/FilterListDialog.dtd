@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Berjochtefilters">
+<!ENTITY nameColumn.label "Filternamme">
+<!ENTITY activeColumn.label "Aktyf">
+<!ENTITY newButton.label "Nij…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Kopiearje…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Bewurkje…">
+<!ENTITY editButton.accesskey "B">
+<!ENTITY deleteButton.label "Fuortsmite">
+<!ENTITY deleteButton.accesskey "F">
+<!ENTITY reorderTopButton "Boppe-oan pleatse">
+<!ENTITY reorderTopButton.accessKey "B">
+<!ENTITY reorderTopButton.toolTip "Ferpleats filter sadat it as earste útfierd wurdt">
+<!ENTITY reorderUpButton.label "Omheech ferpleatse">
+<!ENTITY reorderUpButton.accesskey "h">
+<!ENTITY reorderDownButton.label "Omleech ferpleatse">
+<!ENTITY reorderDownButton.accesskey "l">
+<!ENTITY reorderBottomButton "Underoan pleatse">
+<!ENTITY reorderBottomButton.accessKey "U">
+<!ENTITY reorderBottomButton.toolTip "Ferpleats filter sadat it as lêste útfierd wurdt">
+<!ENTITY filterHeader.label "Aktivearre filters wurkje automatysk yn ûndersteande folchoarder.">
+<!ENTITY filtersForPrefix.label "Filters foar:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Filterlochboek">
+<!ENTITY viewLogButton.accesskey "i">
+<!ENTITY runFilters.label "No tapasse">
+<!ENTITY runFilters.accesskey "t">
+<!ENTITY stopFilters.label "Ophâlde">
+<!ENTITY stopFilters.accesskey "O">
+<!ENTITY folderPickerPrefix.label "Selektearre filter(s) tapasse op:">
+<!ENTITY folderPickerPrefix.accesskey "S">
+<!ENTITY helpButton.label "Help">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Filters op namme sykje…">
+
+
+

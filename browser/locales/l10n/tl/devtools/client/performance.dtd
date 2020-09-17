@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "Ang profiler ay nag-iimbak ng mga sample sa circular buffer, at kapag napuno na ang buffer sa isang recording, mao-overwrite na ng mga bagong sample ang nasa simula ng recording.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "I-enable ang multiprocess Firefox sa mga kagustuhan para sa realtime na pag-render ng recording data.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "Puno na ang buffer. Nao-overwrite na ang mga lumang sample.">
+
+<!-- LOCALIZATION NOTE (performanceUI.unavailableNoticePB): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "Hindi pwedeng mag-record ng profile sa ngayon. Pakisara lahat ng mga private browsing window at subukan uli.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "Naglo-load…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Waterfall">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Ipinapakita ang mga iba't-ibang operasyon na ginagawa ng browser habang nagre-record, nakalatag nang sunud-sunod bilang isang waterfall.">
+<!ENTITY performanceUI.toolbar.js-calltree "Call Tree">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Nagha-highlight ng mga JavaScript function kung saan pinakanagtagal ang browser habang nagre-record.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Allocations">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Ipinapakita kung saan nailaan ang memory noong recording.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS Flame Chart">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Ipinapakita ang JavaScript call stack sa kabuuan ng recording.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Allocations Flame Chart">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "Kabuuang Oras">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Ang halaga ng oras na ginugol sa function na ito at mga function na ito tawag.">
+<!ENTITY performanceUI.table.selfDuration             "Self Time">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Ang panahong ginamit lang sa loob ng function na ito.">
+<!ENTITY performanceUI.table.totalPercentage          "Pangkabuuang Halaga">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Ang porsyento ng panahong ginamit sa function na ito at ang mga function na tinawag nito.">
+<!ENTITY performanceUI.table.selfPercentage           "Self Cost">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Ang porsyento ng panahong ginamit lang sa loob ng function na ito.">
+<!ENTITY performanceUI.table.samples                  "Mga halimbawa">
+<!ENTITY performanceUI.table.samples.tooltip          "Kung gaano kadalas ang function na ito ay nasa stack noong kumuha ng sample ang profiler.">
+<!ENTITY performanceUI.table.function                 "Function">
+<!ENTITY performanceUI.table.function.tooltip         "Ang pangalan at source location ng na-sample na function.">
+<!ENTITY performanceUI.table.totalAlloc               "Total Sampled Allocations">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Ang kabuuang bilang ng mga Object allocation na na-sample sa lokasyon na ito at sa mga callee.">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "Piliin aling data ang ipapakita sa timeline">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "I-configure ang mga kagustuhan sa performance.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "Invert Call Tree">
+<!ENTITY performanceUI.invertTree.tooltiptext "Ang pagbaliktad sa call tree ay nagpapakita ng na-profile na mga call path simula sa mga pinakabagong frame papunta sa mga pinakalumang frame.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Invert Flame Chart">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Ang pagbaliktad sa flame chart ay nagpapakita ng na-profile na mga call path simula sa mga pinakabagong frame papunta sa mga pinakalumang frame.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Ipakita ang Gecko Platform Data">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Ang pagpapakita sa platform data ay nag-e-enable sa mga JavaScript Profiler report na magsama ng mga Gecko platform symbol.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "Ipakita ang mga JIT Optimization">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Ipakita ang na-sample na JIT optimization data sa bawat JavaScript frame.">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "Flatten Tree Recursion">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "I-flatten ang recursion kapag nag-iinspect ng mga function.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "Record Memory">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Mag-record ng memory consumption habang nagpo-profile.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "Record Allocations">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Mag-record ng mga Object allocation habang nagpo-profile.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "Record Framerate">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Mag-record ng framerate habang nagpo-profile.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "Kasalukuyang nagre-record sa pamamagitan ng">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "Itigil ang pag-record sa pamamagitan ng pagpasok ng">
+<!ENTITY performanceUI.console.stopCommandEnd   "sa loob ng console.">

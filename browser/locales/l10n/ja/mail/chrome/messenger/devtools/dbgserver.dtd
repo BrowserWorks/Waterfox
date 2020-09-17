@@ -1,0 +1,4 @@
+<!ENTITY options.title "開発ツールオプション">
+<!ENTITY options.status.label "状態:">
+<!ENTITY options.port.label "ポート:">
+<!ENTITY options.forcelocal.label "他のコンピューターからの接続を許可する">

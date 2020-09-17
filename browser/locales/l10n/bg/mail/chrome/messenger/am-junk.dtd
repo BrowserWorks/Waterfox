@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Настройки за нежелана поща">
+<!ENTITY trainingDescription.label "Ако се активира, първо трябва да обучите &brandShortName; да идентифицира нежелана поща чрез маркиране или демаркиране с бутона Нежелана поща. Трябва да идентифицирате и нежеланата поща, и желаната поща. След това &brandShortName; ще може да маркира нежеланата поща автоматично.">
+<!ENTITY level.label "Включване на адаптивния контрол върху нежеланата поща за тази регистрация">
+<!ENTITY level.accesskey "В">
+
+<!ENTITY move.label "Преместване на новите нежелани писма в:">
+<!ENTITY move.accesskey "П">
+<!ENTITY junkFolderOn.label "Папка &quot;Нежелана поща&quot; на:">
+<!ENTITY junkFolderOn.accesskey "Н">
+<!ENTITY otherFolder.label "Друга:">
+<!ENTITY otherFolder.accesskey "Д">
+<!ENTITY purge1.label "Автоматично изтриване на нежеланата поща след">
+<!ENTITY purge1.accesskey "в">
+<!ENTITY purge2.label "дена">
+
+<!ENTITY whitelistHeader.label "Да не се отбелязва като нежелана поща, ако подателя е в: ">
+<!ENTITY whitelistHeader.accesskey "Д">
+
+<!ENTITY ispHeadersWarning.label "Ако се активира, &brandShortName; автоматично ще счита отбелязаните съобщения от външния класификатор като нежеланата поща.">
+<!ENTITY ispHeaders.label "Доверяване на заглавки от нежелана поща установени от: ">
+<!ENTITY ispHeaders.accesskey "р">
+
+<!ENTITY junkClassification.label "Избор">
+<!ENTITY junkActions.label "Местоназначение и съхраняване">
+
+<!ENTITY globalJunkPrefs.label "Общи настройки за нежелана поща…">
+<!ENTITY globalJunkPrefs.accesskey "ж">

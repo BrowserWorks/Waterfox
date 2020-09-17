@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Navegación con pestañas">
+
+<!ENTITY tabDisplay.label "Mostrar pestaña">
+<!ENTITY autoHide.label "Ocultar la barra de pestañas cuando haya una sola abierta">
+<!ENTITY autoHide.accesskey2 "e">
+<!ENTITY background.label "Cambiar a las nuevas pestañas abiertas desde enlaces">
+<!ENTITY background.accesskey "s">
+<!ENTITY warnOnClose.label "Avisarme cuando cierre una ventana con múltiples pestañas">
+<!ENTITY warnOnClose.accesskey "n">
+<!ENTITY relatedAfterCurrent.label "Abrir pestañas relacionadas después de la pestaña actual">
+<!ENTITY relatedAfterCurrent.accesskey "o">
+
+<!ENTITY loadGroup.label "Al abrir un grupo de marcadores">
+<!ENTITY loadGroupAppend.label "Agregar pestañas">
+<!ENTITY loadGroupAppend.accesskey "A">
+<!ENTITY loadGroupReplace.label "Reemplazar pestañas existentes">
+<!ENTITY loadGroupReplace.accesskey "R">
+
+<!ENTITY openTabs.label "Abrir pestañas en vez de ventanas para">
+
+<!ENTITY middleClick.label "Botón del medio, Ctrl+clic o Ctrl+Enter en enlaces en una página web">
+<!ENTITY middleClick.accesskey "M">
+<!ENTITY middleClickMac.label "Clic con botón central, &#8984;+clic o &#8984;+Atrás a enlaces en una página web">
+<!ENTITY middleClickMac.accesskey "M">
+<!ENTITY urlbar.label "Ctrl+Enter en la barra de navegación">
+<!ENTITY urlbar.accesskey "L">
+<!ENTITY urlbarMac.label "&#8984;+Atrás en la barra de direcciones">
+<!ENTITY urlbarMac.accesskey "L">
+
+<!ENTITY openManagers.label "Abrir en nueva pestaña en lugar de una ventana independiente">
+<!ENTITY openDataManager.label "Administrador de datos">
+<!ENTITY openDataManager.accesskey "d">
+<!ENTITY openAddOnsManager.label "Administrador de complementos">
+<!ENTITY openAddOnsManager.accesskey "n">

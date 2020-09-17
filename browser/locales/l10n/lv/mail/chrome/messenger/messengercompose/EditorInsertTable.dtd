@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Ievietot tabulu">
+
+<!ENTITY size.label "Izmērs">
+<!ENTITY numRowsEditField.label "Rindas:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "Kolonnas:">
+<!ENTITY numColumnsEditField.accessKey "K">
+<!ENTITY widthEditField.label "Platums:">
+<!ENTITY widthEditField.accessKey "P">
+<!ENTITY borderEditField.label "Mala:">
+<!ENTITY borderEditField.accessKey "M">
+
+<!ENTITY pixels.label "pikseļi">

@@ -1,0 +1,180 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problema a cargar le pagina">
+<!ENTITY retry.label "Retentar">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Incapace de connecter se">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Iste adresse es restricte">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Servitor non trovate">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Verifica si le adresse non ha errores ortographic tales como <strong>ww</strong>.example.com in vice de <strong>www</strong>.example.com</li> <li>Si tu es incapace de cargar qualcunque paginas, verifica le connexion de tu computator al rete.</li> <li>Si tu computator o rete es protegite per un firewall o proxy, assecura te que &brandShortName; ha permission pro acceder al web.</li> </ul>">
+
+<!ENTITY fileNotFound.title "File non trovate">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Verifica si le nomine del file ha errores de majusculas e minusculas o altere errores orthographic.</li>
+  <li>Verifica si le file ha essite movite, renominate o delite.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Le accesso al file esseva negate">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Illo pote haber essite removite, movite, o le permissiones del file pote impedir le accesso.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Oops.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; non pote cargar iste pagina pro alcun ration.</p>
+">
+
+<!ENTITY malformedURI.title "Le adresse non es valide">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Adresses web se scribe generalmente como
+    <strong>http://www.example.com/</strong></li>
+  <li>Assecura te de usar barras oblique non inverse (i.e.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Le connexion ha essite interrumpite">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Documento expirate">
+<!ENTITY notCached.longDesc "<p>Le documento requestate non es disponibile in le cache.</p><ul><li>Como precaution de securitate, &brandShortName; non re-requestara automaticamente documentos sensibile.</li><li>Clicca sur Retentar pro re-requestar le documento ab le sito web.</li></ul>">
+
+<!ENTITY netOffline.title "Modo disconnectite">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Pulsa &quot;Retentar&quot; pro commutar al modo in linea e recargar le pagina.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Error de codification del contento">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Typo de file non secur">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Le connexion ha essite restabilite">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Le connexion ha expirate">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Le adresse non ha essite comprendite">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Es possibile que tu debe installar altere software pro aperir iste adresse.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Le servitor proxy recusa connexiones">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Controla que le parametros del proxy es correcte.</li>
+  <li>Contacta tu administrator de rete pro saper si le servitor del proxy functiona.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Incapace de trovar le servitor proxy">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Controla que sia correcte le parametros del proxy.</li>
+  <li>Controla que tu computator ha un connexion de rete functionante.</li>
+  <li>Assecurate, si tu computator o rete es protegite per un firewall o proxy, 
+   que  &brandShortName; pote acceder le Web.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Le pagina non redirige correctemente">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Iste problema pote esser causate per le disactivation o refusa
+    de cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Responsa inexpectate del servitor">
+<!ENTITY unknownSocketType.longDesc "<ul>
+  <li>Verifica que tu systema ha le gestor de securitate personal installate.</li>
+  <li>Isto pote esser a causa de un configuration non standard del servitor.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Connexion secur fallite">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Le pagina que tu tenta vider non pote esser monstrate perque le authenticitate del datos recipite non poteva esser verificate.</li>
+  <li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Connexion secur fallite">
+<!ENTITY nssBadCert.longDesc2 "<ul>
+  <li>Iste pote ser un problema con la configuration del servitor, o il pote ser alcuno que tenta de simular le servitor.</li>
+  <li>Si tu te habeva connectite antea a iste servitor con successo, le error pote ser temporari, e tu pote lo reprobara depois.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Le sito pote esser temporarimente indisponibile o troppo occupate. Retenta in un momento.</li>
+  <li>Si tu non pote cargar alcun pagina, verifica le connexion de tu computator al rete.</li>
+  <li>Si tu computator o rete es protegite per un firewall o proxy, assecura te
+    que &brandShortName; es permittite a acceder al Web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Blocate per le politica de securitate del contento">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; impediva a iste pagina de cargar in iste maniera proque le pagina ha un regula de securitate de contento que non lo permitte.</p>">
+
+<!ENTITY xfoBlocked.title "Blocate per politica X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; ha blocate le cargamento de iste pagina in iste contexto perque le pagina ha un politica X-Frame-Options que non lo permitte.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Error de contento corrumpite">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Le pagina que tu tenta de vider non pote ser monstrate, proque un error in le transmission de datos era detegite.</p><ul><li>Per favor, contacta le proprietarios del sito pro les avisar re iste problema.</li></ul>">
+
+<!ENTITY securityOverride.linkText "O tu pote adder un exception…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Porta me foras de hic!">
+<!ENTITY securityOverride.exceptionButtonLabel "Adder un exception…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Tu non deberea adder un exception si tu usa un connexion a Internet que tu non fide completemente o si tu nonsole vider un advertimento pro iste servitor.</p> <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL remote">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Tu connexion non es secur">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> usa technologia de securitate que es obsolete e vulnerabile a attaccos. Un attaccante pote facilemente revelar informationes que tu pensa esser secur. Le administrator del sito web debera reparar le servitor ante que tu pote visitar le sito.</p><p>Codice de error: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Pagina blocate">
+
+<!ENTITY networkProtocolError.title "Error de protocollo de rete">
+<!ENTITY networkProtocolError.longDesc "<p>Le pagina que tu tenta vider non pote esser monstrate perque un error ha essite detegite in le protocollo de rete.</p><ul><li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li></ul>">

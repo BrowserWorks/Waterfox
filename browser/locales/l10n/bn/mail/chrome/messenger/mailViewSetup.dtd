@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY mailViewSetupTitle.label "বার্তা প্রদর্শনের সেটআপ">
+<!ENTITY mailViewHeading.label "বার্তা প্রদর্শনের নাম (e):">
+<!ENTITY mailViewHeading.accesskey "e">
+<!ENTITY searchTermCaption.label "এই প্রদর্শনীটি নির্বাচিত হলে, শুধুমাত্র এখানকার বার্তাগুলো দেখানো হবে:">
+

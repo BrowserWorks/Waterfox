@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Баптаулар">
+<!ENTITY security.caption "Қауіпсіздік және аутентификация">
+<!ENTITY serverName.label "Сервер аты:">
+<!ENTITY serverName.accesskey "С">
+<!ENTITY serverDescription.label "Сипаттамасы:">
+<!ENTITY serverDescription.accesskey "и">
+<!ENTITY serverPort.label "Порт:">
+<!ENTITY serverPort.accesskey "П">
+<!ENTITY userName.label "Пайдаланушы аты:">
+<!ENTITY userName.accesskey "й">
+<!ENTITY connectionSecurity.label "Байланыс қауіпсіздігі:">
+<!ENTITY connectionSecurity.accesskey "й">
+<!ENTITY connectionSecurityType-0.label "Ешнәрсе">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, қолжетерлік болса">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP сервері">
+<!ENTITY serverPortDefault.label "Бастапқы:">
+<!ENTITY authMethod.label "Аутентификация тәсілі:">
+<!ENTITY authMethod.accesskey "и">

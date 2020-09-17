@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Màu">
+<!ENTITY lastPickedColor.label "Màu mới chọn">
+<!ENTITY lastPickedColor.accessKey "M">
+<!ENTITY chooseColor1.label "Chọn một màu:">
+<!ENTITY chooseColor2.label "Nhập chuỗi màu HTML">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(vd.: &quot;#0000ff&quot; hoặc &quot;blue&quot;):">
+<!ENTITY default.label "Mặc định">
+<!ENTITY default.accessKey "M">
+<!ENTITY palette.label "Bảng màu:">
+<!ENTITY standardPalette.label "Chuẩn">
+<!ENTITY webPalette.label "Tất cả màu của web">
+<!ENTITY background.label "Nền cho:">
+<!ENTITY background.accessKey "N">
+<!ENTITY table.label "Bảng">
+<!ENTITY table.accessKey "B">
+<!ENTITY cell.label "Các Ô">
+<!ENTITY cell.accessKey "C">

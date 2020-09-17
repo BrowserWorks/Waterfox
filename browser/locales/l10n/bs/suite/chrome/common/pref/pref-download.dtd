@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Preuzimanja">
+
+<!ENTITY downloadBehavior.label         "Kada preuzimanje započne">
+<!ENTITY doNothing.label                "Ne otvaraj ništa">
+<!ENTITY openProgressDialog.label       "Otvori dijalog napretka">
+<!ENTITY openDM.label                   "Otvori menaždera preuzimanja">
+<!ENTITY flashWhenOpen.label            "Samo flešajte menadžera preuzimanja ako je već otvoren">
+
+<!ENTITY downloadLocation.label         "Pri spremanju datoteke">
+<!ENTITY saveTo.label                   "Sačuvaj datoteke u">
+<!ENTITY chooseDownloadFolder.label     "Izaberite direktorij…">
+<!ENTITY alwaysAsk.label                "Uvijek me pitaj gdje sačuvati datoteke">
+
+<!ENTITY downloadHistory.label          "Historija preuzimanja">
+<!ENTITY removeEntries.label            "Ukloni unose preuzimanja">
+<!ENTITY whenCompleted.label            "Kada su završeni">
+<!ENTITY whenQuittingApp.label          "Pri zatvaranju &brandShortName;">
+<!ENTITY neverRemove.label              "Nikad">
+
+<!ENTITY finishedBehavior.label         "Kada preuzimanje završi">
+<!ENTITY playSound.label                "Pusti zvuk">
+<!ENTITY showAlert.label                "Prikaži upozorenje">
+<!ENTITY browse.label                   "Pretražite…">
+<!ENTITY playButton.label               "Pusti">

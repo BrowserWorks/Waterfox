@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Өрістер жиынының қасиеттері">
+
+<!ENTITY Legend.label "Аңыз">
+<!ENTITY Legend.accesskey "А">
+
+<!ENTITY EditLegendText.label "Аңызды түзету:">
+<!ENTITY EditLegendText.accesskey "т">
+<!ENTITY LegendAlign.label "Аңызды туралау:">
+<!ENTITY LegendAlign.accesskey "а">
+<!ENTITY AlignDefault.label "Бастапқы">
+<!ENTITY AlignLeft.label "Сол жақ">
+<!ENTITY AlignCenter.label "Ортасынан">
+<!ENTITY AlignRight.label "Оң жақ">
+
+<!ENTITY RemoveFieldSet.label "Өрістер жиынын өшіру">
+<!ENTITY RemoveFieldSet.accesskey "ш">

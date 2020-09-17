@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Par &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; ir eksperimentāls produkts un var būt nestabils.">
+<!ENTITY aboutPage.checkForUpdates.link         "Pārbaudīt atjauninājumus »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Meklē atjauninājumus…">
+<!ENTITY aboutPage.checkForUpdates.none         "Nav jaunu atjauninājumu">
+<!ENTITY aboutPage.checkForUpdates.available2   "Lejupielādēt atjauninājumu">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Lejupielādē atjauninājumu…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Instalēt atjauninājumu">
+<!ENTITY aboutPage.faq.label                    "BUJ">
+<!ENTITY aboutPage.support.label                "Atbalsts">
+<!ENTITY aboutPage.privacyPolicy.label          "Privātuma politika">
+<!ENTITY aboutPage.rights.label                 "Ziniet savas tiesības">
+<!ENTITY aboutPage.relNotes.label               "Laidiena piezīmes">
+<!ENTITY aboutPage.credits.label                "Autori">
+<!ENTITY aboutPage.license.label                "Licencēšanas informācija">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox un Firefox logo ir Mozilla Foundation preču zīmes.">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "ស្វែងរក">
+
+<!ENTITY newPref.namePlaceholder       "ឈ្មោះ">
+
+<!ENTITY newPref.valueBoolean          "ប៊ូលីន">
+<!ENTITY newPref.valueString           "ខ្សែ​អក្សរ">
+<!ENTITY newPref.valueInteger          "ចំនួន​គត់">
+
+<!ENTITY newPref.stringPlaceholder     "បញ្ចូល​អក្សរ">
+<!ENTITY newPref.numberPlaceholder     "បញ្ចូល​លេខ">
+
+<!ENTITY newPref.toggleButton          "បិទ/បើក">
+<!ENTITY newPref.cancelButton          "បោះបង់">
+
+<!ENTITY contextMenu.copyPrefName      "ចម្លង​ឈ្មោះ">
+<!ENTITY contextMenu.copyPrefValue     "ចម្លង​តម្លៃ">

@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY printCmd.commandkey            "p">
+
+<!ENTITY findOnCmd.commandkey           "F">
+<!ENTITY findAgainCmd.commandkey        "G">
+<!ENTITY findAgainCmd.commandkey2       "VK_F3">
+
+<!ENTITY backButton.label               "Enrere">
+<!ENTITY backButton.accesskey           "E">
+<!ENTITY backButton.tooltip             "Vés una pàgina enrere">
+<!ENTITY forwardButton.label            "Endavant">
+<!ENTITY forwardButton.accesskey        "v">
+<!ENTITY forwardButton.tooltip          "Vés una pàgina endavant">
+<!ENTITY copyCmd.label                  "Copia">
+<!ENTITY copyCmd.accesskey              "C">
+<!ENTITY selectAllCmd.label             "Selecciona-ho tot">
+<!ENTITY selectAllCmd.accesskey         "a">
+<!ENTITY goBackCmd.commandkey           "[">
+<!ENTITY goForwardCmd.commandkey        "]">
+<!ENTITY homeButton.label               "Inici">
+<!ENTITY homeButton.tooltip             "Vés a la pàgina d'inici de l'ajuda">
+<!ENTITY printButton.label              "Imprimeix">
+<!ENTITY printButton.tooltip            "Imprimeix aquesta pàgina">
+<!ENTITY closeWindow.commandkey         "W">
+
+<!ENTITY search.emptytext               "Cerca">
+<!ENTITY searchHeader.label             "Cerca resultats">
+<!ENTITY toctab.label                   "Continguts">
+<!ENTITY toctab.accesskey               "C">
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY helpSearch.commandkey          "k">
+
+<!ENTITY zLevel.label                   "Sempre a dalt">
+<!ENTITY zLevel.accesskey               "t">
+
+<!ENTITY fullZoomReduceBtn.label        "Redueix">
+<!ENTITY fullZoomReduceBtn.accesskey    "d">
+<!ENTITY fullZoomEnlargeBtn.label       "Augmenta">
+<!ENTITY fullZoomEnlargeBtn.accesskey   "g">

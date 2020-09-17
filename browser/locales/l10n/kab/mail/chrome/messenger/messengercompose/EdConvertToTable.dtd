@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Selket ɣeṛ tfelwit">
+<!ENTITY instructions1.label   "Amsuddes ad yernu izirig ntfelwit amaynut i yal tesaddaṛt deg ufran.">
+<!ENTITY instructions2.label   "Fren asekkil n uswexxeṛ n tefrant gar gar sin igejda">
+<!ENTITY commaRadio.label      "Ticcert">
+<!ENTITY spaceRadio.label      "Tallunt">
+<!ENTITY otherRadio.label      "Asekkil nniḍen:">
+<!ENTITY deleteCharCheck.label "Kkes asekkil anabraz">
+<!ENTITY collapseSpaces.label  "Anef-asent i tallulin nniḍen">
+<!ENTITY collapseSpaces.tooltip "Selket imukan d-iquṛben ɣer yiwen n unabraz">

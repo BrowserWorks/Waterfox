@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Својства слике">
+
+<!ENTITY pixelsPopup.value "пиксела">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Путања слике:">
+<!ENTITY locationEditField.accessKey "л">
+<!ENTITY locationEditField.tooltip "Унесите име датотеке са сликом или путању">
+<!ENTITY locationEditField.shortenedDataURI "Скраћени URI података (копија ће убацити пуни URI у оставу)">
+<!ENTITY title.label "Савет програма:">
+<!ENTITY title.accessKey "т">
+<!ENTITY title.tooltip "HTML особина „title“ која се приказује као савет програма">
+<!ENTITY altText.label "Алтернативни текст:">
+<!ENTITY altText.accessKey "А">
+<!ENTITY altTextEditField.tooltip "Унесите текст који ће се приказивати уместо слике">
+<!ENTITY noAltText.label "Не користи алтернативни текст">
+<!ENTITY noAltText.accessKey "Н">
+
+<!ENTITY previewBox.label "Преглед слике">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Стварна величина:">
+<!ENTITY actualSizeRadio.label "Стварна величина">
+<!ENTITY actualSizeRadio.accessKey "а">
+<!ENTITY actualSizeRadio.tooltip "Врати на стварну величину слике">
+<!ENTITY customSizeRadio.label "Прилагођена величина">
+<!ENTITY customSizeRadio.accessKey "г">
+<!ENTITY customSizeRadio.tooltip "Промени величину слике на ону приказану на страници">
+<!ENTITY heightEditField.label "Висина:">
+<!ENTITY heightEditField.accessKey "В">
+<!ENTITY widthEditField.label "Ширина:">
+<!ENTITY widthEditField.accessKey "и">
+<!ENTITY constrainCheckbox.label "Ограничење">
+<!ENTITY constrainCheckbox.accessKey "О">
+<!ENTITY constrainCheckbox.tooltip "Задржи однос висине и ширине слике">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Мапа слике">
+<!ENTITY removeImageMapButton.label "Уклони">
+<!ENTITY removeImageMapButton.accessKey "У">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Поравнај текст ка слици">
+<!ENTITY bottomPopup.value "На дну">
+<!ENTITY topPopup.value "На врху">
+<!ENTITY centerPopup.value "У средини">
+<!ENTITY wrapRightPopup.value "Улево">
+<!ENTITY wrapLeftPopup.value "Удесно">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Размакнутост">
+<!ENTITY leftRightEditField.label "Лево и десно:">
+<!ENTITY leftRightEditField.accessKey "Л">
+<!ENTITY topBottomEditField.label "На врху и дну:">
+<!ENTITY topBottomEditField.accessKey "д">
+<!ENTITY borderEditField.label "Пун оквир:">
+<!ENTITY borderEditField.accessKey "о">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Прикжи оквир около повезане слике">
+<!ENTITY showImageLinkBorder.accessKey "о">
+<!ENTITY LinkAdvancedEditButton.label "Напредно уређивање везе…">
+<!ENTITY LinkAdvancedEditButton.accessKey "в">
+<!ENTITY LinkAdvancedEditButton.tooltip "Додајте или мењајте HTML особине, стилове особина и JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Формулар">
+<!ENTITY imageLocationTab.label "Место">
+<!ENTITY imageDimensionsTab.label "Димензије">
+<!ENTITY imageAppearanceTab.label "Изглед">
+<!ENTITY imageLinkTab.label "Веза">

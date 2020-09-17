@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "การเขียนและการกำหนดที่อยู่">
+<!ENTITY addressingGroupTitle.label "การกำหนดที่อยู่">
+<!ENTITY addressingText.label      "เมื่อมองหาที่อยู่:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "ใช้ค่ากำหนดเซิร์ฟเวอร์ LDAP ทั่วโลกของฉันสำหรับบัญชีนี้">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "แก้ไขไดเรกทอรี…">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "ใช้เซิร์ฟเวอร์ LDAP อื่น:">
+<!ENTITY directories.accesskey     "d">
+<!ENTITY directoriesNone.label     "ไม่มี">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "การเขียน">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "เขียนข้อความในรูปแบบ HTML">
+<!ENTITY useHtml.accesskey                    "C">
+<!ENTITY autoQuote.label                      "อ้างอิงข้อความต้นฉบับโดยอัตโนมัติเมื่อตอบกลับ">
+<!ENTITY autoQuote.accesskey                  "m">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "เมื่ออ้างอิง">
+<!ENTITY quoting.accesskey                    "q">
+<!ENTITY aboveQuote.label                     "เริ่มการตอบกลับของฉันด้านบนข้อความที่อ้างอิง">
+<!ENTITY belowQuote.label                     "เริ่มการตอบกลับของฉันด้านล่างข้อความที่อ้างอิง">
+<!ENTITY selectAndQuote.label                 "เลือกข้อความที่อ้างอิง">
+<!ENTITY place.label                          "และวางลายเซ็นของฉัน">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "ด้านล่างข้อความที่อ้างอิง (แนะนำ)">
+<!ENTITY aboveText.label                      "ด้านล่างการตอบกลับของฉัน (ด้านบนข้อความที่อ้างอิง)">
+<!ENTITY includeSigOnReply.label              "รวมลายเซ็นสำหรับการตอบกลับ">
+<!ENTITY includeSigOnReply.accesskey          "l">
+<!ENTITY includeSigOnForward.label            "รวมลายเซ็นสำหรับการส่งต่อ">
+<!ENTITY includeSigOnForward.accesskey        "w">
+
+<!ENTITY globalComposingPrefs.label           "การตั้งค่าการเขียนส่วนกลาง…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "การตั้งค่าการกำหนดที่อยู่ส่วนกลาง…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

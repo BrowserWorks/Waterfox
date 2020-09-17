@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Jurnalni filterlash">
+<!ENTITY viewLogInfo.text "Hujjatlar jurnalini filterlash ushbu hisob uchun ishga tushirilganlarni filterlaydi. Jurnalga yozib borishni yoqib qo‘yish uchun quyidagi katachalarni belgilab chiqing.">
+<!ENTITY clearLog.label "Jurnalni tozalash">
+<!ENTITY clearLog.accesskey "t">
+<!ENTITY enableLog.label "Jurnalni filterlashni yoqib qo‘yish">
+<!ENTITY enableLog.accesskey "y">
+<!ENTITY closeLog.label "Yopish">
+<!ENTITY closeLog.accesskey "o">

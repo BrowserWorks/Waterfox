@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Властивості поля форми">
+<!ENTITY windowTitleImage.label "Властивості зображення форми">
+
+<!ENTITY InputType.label "Тип поля">
+<!ENTITY InputType.accesskey "Т">
+<!ENTITY text.value "Текст">
+<!ENTITY password.value "Пароль">
+<!ENTITY checkbox.value "Прапорець">
+<!ENTITY radio.value "Перемикач">
+<!ENTITY submit.value "Кнопка «Надіслати»">
+<!ENTITY reset.value "Кнопка «Скинути»">
+<!ENTITY file.value "Файл">
+<!ENTITY hidden.value "Приховане">
+<!ENTITY image.value "Зображення">
+<!ENTITY button.value "Кнопка">
+
+<!ENTITY InputSettings.label "Параметри поля">
+<!ENTITY InputName.label "Назва поля:">
+<!ENTITY InputName.accesskey "п">
+<!ENTITY GroupName.label "Назва групи:">
+<!ENTITY GroupName.accesskey "г">
+<!ENTITY InputValue.label "Значення поля:">
+<!ENTITY InputValue.accesskey "н">
+<!ENTITY InitialValue.label "Початкове значення:">
+<!ENTITY InitialValue.accesskey "з">
+<!ENTITY InputChecked.label "Спочатку встановлений">
+<!ENTITY InputChecked.accesskey "с">
+<!ENTITY InputSelected.label "Спочатку вибраний">
+<!ENTITY InputSelected.accesskey "в">
+<!ENTITY InputReadOnly.label "Тільки читання">
+<!ENTITY InputReadOnly.accesskey "ч">
+<!ENTITY InputDisabled.label "Вимкнене">
+<!ENTITY InputDisabled.accesskey "м">
+<!ENTITY tabIndex.label "Послідовність переходу:">
+<!ENTITY tabIndex.accesskey "о">
+<!ENTITY TextSize.label "Розмір поля:">
+<!ENTITY TextSize.accesskey "Р">
+<!ENTITY TextLength.label "Максимальна довжина:">
+<!ENTITY TextLength.accesskey "д">
+<!ENTITY AccessKey.label "Клавіша доступу:">
+<!ENTITY AccessKey.accesskey "К">
+<!ENTITY Accept.label "Приймати типи:">
+<!ENTITY Accept.accesskey "т">
+
+<!ENTITY ImageProperties.label "Властивості зображення…">
+<!ENTITY ImageProperties.accesskey "б">

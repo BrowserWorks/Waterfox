@@ -1,0 +1,102 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Sahifani yuklashda muammo">
+<!ENTITY retry.label "Yana urinib ko‘rish">
+<!ENTITY returnToPreviousPage.label "Orqaga">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!-- Localization note (dnsNotFound.title1) - "Hmm" is a sound made when considering or puzzling over something. You don't have to include it in your translation if your language does not have a written word like this. -->
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Fayl nomlarining katta-kichik harfdaligi yoki matndagi boshqa xatolarini tekshiring.</li> <li>Fayl o‘chirilgan, nomi o‘zgargan yoki ko‘chirilgan bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>O‘chirib tashlangan, ko‘chirilgan yoki foydalanishga ruxsat berilmagan bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>&brandShortName; ushbu sahifani ba’zi sabablarga ko‘ra yuklay olmadi.</p>">
+
+<!ENTITY captivePortal.title "Tarmoqda ro‘yxatdan o‘ting">
+<!ENTITY captivePortal.longDesc2 "<p>Internetdan foydalanish uchun tarmoqda ro‘yxatdan o‘tishingiz lozim.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Tarmoqda ro‘yxatdan o‘tish sahifasini oching">
+
+<!-- Localization note (malformedURI.title1) - "Hmm" is a sound made when considering or puzzling over something. You don't have to include it in your translation if your language does not have a written word like this. -->
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>So‘ralgan hujjat &brandShortName;’ning keshida mavjud emas.</p><ul><li>Xavfsizlik sabablariga ko‘ra, &brandShortName; maxfiy hujjatlarni avtomatik qayta so‘ramaydi.</li><li>Hujjatni saytdan qayta so‘rash uchun &quot;Yana urinib ko‘ring&quot;ni bosing.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Onlayn usuliga o‘tish va sahifani qayta yuklash uchun &quot;Yana urinib ko‘rish&quot;ni bosing.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Ushbu muammo haqida xabar berish uchun vebsahifa egasi bilan bog‘laning.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Ushbu muammo haqida xabar berish uchun vebsahifa egasi bilan bog‘laning.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Ushbu manzilni ochish uchun boshqa dasturni o‘rnatishingiz kerak.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Proksi moslamalari to‘g‘ri ekanligini tekshirib ko‘ring.</li> <li>Proksi server ishlayotganligiga ishonch hosil qilish uchun tarmoq administratori bilan bog‘laning.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Proksining to‘g‘ri moslanganligini tekshirib ko‘ring.</li> <li>Kompyuteringizning tarmoqqa ulanganligini tekshirib ko‘ring.</li> <li>Agar kompyuteringiz yoki tarmog‘ingiz fayervol yoki proksi bilan himoyalanganbo‘lsa, &brandShortName;ning internetga kirishi cheklanmaganligini tekshirib ko‘ring.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ushbu muammo ba’zida kukilarni o‘chirilishiga yoki rozilikni rad qilinishiga sabab bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Shaxsiy xavfsizlik boshqaruvchisi (PSM) tizimingizda o‘rnatilganligini tekshirib ko‘ring.</li> <li>Bu serveringizning nostandart moslanganligidan ham bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Siz ko‘rmoqchi bo‘lgan sahifani ko‘rsatib bo‘lmaydi, chunki olingan fayllar tasdiqdan o‘tmagan.</li> <li>Ushbu muammo haqida xabar berish uchun vebsahifa egasi bilan bog‘laning.</li> </ul>">
+
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+
+
+
+
+
+
+<!ENTITY sharedLongDesc "<ul> <li>Bu sayt vaqtinchalik ishlamayotgan yoki juda band boʻlishi mumkin. Birozdan soʻng urinib ko‘ring.</li> <li>Agar birorta ham sahifa yuklanmasa, kompyuteringizni tarmoqqa ulanishini tekshirib ko‘ring.</li> <li>Agar kompyuter yoki tarmogʻingiz fayervol yoki proksi bilan himoyalangan boʻlsa, &brandShortName;ning internetga kirishi cheklanmaganligini tekshirib koʻring.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ushbu sahifani bu yo‘lda yuklashga to‘sqinlik qildi, chunki sahifadagi xavfsizlik siyosati bunga ruxsat bermadi.</p>">
+
+
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Siz ko‘rmoqchi bo‘lgan sahifani ko‘rsatib bo‘lmaydi, chunki ma’lumotlarni uzatishda xato aniqlandi.</p><ul><li>Ushbu muammo haqida xabar berish uchun veb sayt egasi bilan bog‘laning.</li></ul>">
+
+
+<!ENTITY errorReporting.automatic2 "Shu kabi xatolik hisobotlari Mozillaga zararli saytlarni aniqlash va bloklashda yordam beradi">
+<!ENTITY errorReporting.learnMore "Ko‘proq o‘rganish…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Muammo haqida xabar berish uchun veb sayt egasi bilan bog‘laning.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Qo‘shimcha ma’lumot: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.copyToClipboard.label "Matndan vaqtinchalik xotiraga nusxa olish">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> hujumlarga chidamsiz va eskirgan xavfsizlik texnonolgiyasidan foydalanadi. Xakker siz xavfsiz deb o‘ylaydigan ma’lumotlarni osongina ochib ko‘rishi mumkin. Siz saytga kira olishingiz uchun avvalo sayt administratori serverni to‘g‘rilashi kerak.</p><p>Xatolik kodi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+
+
+
+
+
+<!ENTITY prefReset.longDesc "Tarmoq xavfsizligi bo‘yicha sozlamalar bunga sabab bo‘lishi mumkin. Standart sozlamalarni tiklashni xohlaysizmi?">
+<!ENTITY prefReset.label "Standart sozlamalarni tiklash">
+
+
+

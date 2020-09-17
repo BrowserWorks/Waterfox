@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Նամակի ֆիլտրերը">
+<!ENTITY nameColumn.label "Ֆիլտրի անունը">
+<!ENTITY activeColumn.label "Միացված">
+<!ENTITY newButton.label "Նոր...">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "Խմբագրել...">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "Ջնջել">
+<!ENTITY deleteButton.accesskey "t">
+<!ENTITY reorderTopButton "ផ្លាស់ទី​ទៅ​​លើ">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "រៀបចំ​តម្រង​ឡើងវិញ ដូច្នេះ​វា​ប្រតិបត្តិ​មុន​អ្នក​ផ្សេង​ទាំងអស់">
+<!ENTITY reorderUpButton.label "Վեր">
+<!ENTITY reorderUpButton.accesskey "U">
+<!ENTITY reorderDownButton.label "Վար">
+<!ENTITY reorderDownButton.accesskey "D">
+<!ENTITY reorderBottomButton "ផ្លាស់ទី​ទៅ​ក្រោម">
+<!ENTITY reorderBottomButton.accessKey "B">
+<!ENTITY reorderBottomButton.toolTip "រៀបចំ​តម្រង​ឡើងវិញ ដូច្នេះ​វា​ប្រតិបត្តិ​បន្ទាប់​​តម្រង​ផ្សេង​ទាំងអស់">
+<!ENTITY filterHeader.label "Միացված ֆիլտրերը կկատարվեն միանգամից։">
+<!ENTITY filtersForPrefix.label "Ֆիլտրեր՝">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Ֆիլտրի մատյանը">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "Բացել">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "Կանգնեցնել">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Կատարել ընտրված ֆիլտրերը.">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "Օգնություն">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "ស្វែងរក​តម្រង​តាម​ឈ្មោះ...">
+

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "বহির্গামী সার্ভার (SMTP) সেটিংসমূহ">
+<!-- LOCALIZATION NOTE (smtpDesc.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpListAdd.label "যোগ… (d)">
+<!ENTITY smtpListAdd.accesskey "d">
+<!ENTITY smtpListEdit.label "সম্পাদনা… (E)">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "অপসারণ (m)">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "ডিফল্ট নির্ধারণ (t)">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDescription.label "বিবরণ:">
+<!ENTITY serverName.label "সার্ভারের নাম:">
+<!ENTITY serverPort.label "পোর্ট:">
+<!ENTITY userName.label "ব্যবহারকারীর নাম:">
+<!ENTITY connectionSecurity.label "সংযোগ নিরাপত্তা:">
+<!ENTITY authMethod.label "প্রমাণীকরণ প্রক্রিয়া: ">

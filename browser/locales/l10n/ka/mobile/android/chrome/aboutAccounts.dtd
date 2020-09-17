@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox-ანგარიშები">
+<!ENTITY aboutAccounts.connected.description "თქვენ დაკავშირებული ხართ როგორც">
+<!ENTITY aboutAccounts.syncPreferences.label "შეეხეთ სინქრონიზაციის პარამეტრების შესამოწმებლად">
+
+<!ENTITY aboutAccounts.noConnection.title "ინტერნეტთან კავშირი არ არის">
+<!ENTITY aboutAccounts.retry.label "ხელახლა ცდა">
+
+<!ENTITY aboutAccounts.restrictedError.title "შეზღუდული">
+<!ENTITY aboutAccounts.restrictedError.description "ამ პროფილიდან Firefox-ანგარიშების მართვა არ შეიძლება.">

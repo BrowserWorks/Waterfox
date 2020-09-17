@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Iompórtáil Leabhair Sheoltaí">
+<!ENTITY fieldMapImport.size "width: 44em; height: 33em;">
+<!ENTITY fieldMapImport.recordNumber "Sonraí iompórtáilte don taifead: ">
+<!ENTITY fieldMapImport.next.label "Ar Aghaidh">
+<!ENTITY fieldMapImport.next.accesskey "A">
+<!ENTITY fieldMapImport.previous.label "Siar">
+<!ENTITY fieldMapImport.previous.accesskey "S">
+<!ENTITY fieldMapImport.text "Úsáid &quot;Bog Suas&quot; agus &quot;Bog Síos&quot; chun réimsí an leabhair sheoltaí ar chlé a mheaitseáil leis na sonraí cuí ar dheis atá le hiompórtáil. Dísheiceáil na míreanna nach dteastaíonn uait iad a iompórtáil.">
+<!ENTITY fieldMapImport.up.label "Bog Suas">
+<!ENTITY fieldMapImport.up.accesskey "u">
+<!ENTITY fieldMapImport.down.label "Bog Síos">
+<!ENTITY fieldMapImport.down.accesskey "o">
+<!ENTITY fieldMapImport.fieldListTitle "Réimsí an Leabhair Sheoltaí">
+<!ENTITY fieldMapImport.dataTitle "Sonraí taifid le hiompórtáil">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Tá ainmneacha na réimsí sa chéad taifead">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "f">

@@ -1,0 +1,118 @@
+<!--
+# Translator(s):
+#
+# purica <haliciu@gmail.com>
+# turcan <nicturcan@gmail.com>
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Contacte">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Contact…">
+<!-- LOCALIZATION NOTE (newContact.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newListCmd.label                               "O listă nouă de expediție…">
+<!-- LOCALIZATION NOTE (newListCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY newListCmd.accesskey                           "l">  
+<!ENTITY newAddressBookCmd.label                        "o nouă listă de contacte…"> 
+<!ENTITY newAddressBookCmd.accesskey                    "o">  
+<!ENTITY newLDAPDirectoryCmd.label                      "un nou director LDAP…">
+<!-- LOCALIZATION NOTE (newLDAPDirectoryCmd.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "d">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "Tipărește contactul…">
+<!ENTITY printContactViewCmd.accesskey                  "p">
+<!ENTITY printPreviewContactViewCmd.label               "Previzualizare tipărire contact">
+<!ENTITY printPreviewContactViewCmd.accesskey           "v">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printAddressBook.label                         "Tipărește agenda de contacte…"> 
+<!ENTITY printAddressBook.accesskey                     "a"> 
+<!ENTITY printPreviewAddressBook.label                  "Previz. imprimare carte adrese"> 
+<!ENTITY printPreviewAddressBook.accesskey              "P">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Șterge agenda de contacte">  
+<!ENTITY deleteContactCmd.label                         "Șterge contactul">
+<!ENTITY deleteContactsCmd.label                        "Delete Selected Contacts">
+<!ENTITY deleteListCmd.label                            "Șterge lista">
+<!ENTITY deleteListsCmd.label                           "Delete Selected Lists">
+<!ENTITY deleteItemsCmd.label                           "Delete Selected Items">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Interschimbă numele cu prenumele">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "I">  
+<!ENTITY propertiesCmd.label                            "Proprietăți…">
+<!-- LOCALIZATION NOTE (propertiesCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY propertiesCmd.accesskey                        "i">  
+<!ENTITY propertiesCmd.key                              "C">  
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Bara Agendă"> 
+<!ENTITY showAbToolbarCmd.accesskey                     "B">  
+
+<!ENTITY showCardPane.label                             "Panou fișă">
+<!ENTITY showCardPane.accesskey                         "P">
+  
+<!ENTITY menu_ShowNameAs.label                          "Afișează numele în forma"> 
+<!ENTITY menu_ShowNameAs.accesskey                      "A"> 
+<!ENTITY firstLastCmd.label                             "First Last">  
+<!ENTITY firstLastCmd.accesskey                         "F"> 
+<!ENTITY lastFirstCmd.label                             "Nume, Prenume">  
+<!ENTITY lastFirstCmd.accesskey                         "N"> 
+<!ENTITY displayNameCmd.label                           "Nume de afișat">  
+<!ENTITY displayNameCmd.accesskey                       "d"> 
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Importă…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Exportă...">
+<!ENTITY exportCmd.accesskey                            "E">
+
+<!-- Toolbar and Popup items -->  
+<!ENTITY newContactButton.label                         "Contact nou">
+<!ENTITY newContactButton.accesskey                     "C">
+<!ENTITY newlistButton.label                            "Listă nouă">  
+<!ENTITY newlistButton.accesskey                        "L">  
+<!ENTITY editItemButton.label                           "Proprietăți">
+<!ENTITY editItemButton.accesskey                       "P">
+<!ENTITY newmsgButton.label                             "Compune">  
+<!ENTITY newmsgButton.accesskey                         "C">  
+<!ENTITY deleteItemButton.label                         "Șterge elementul">
+<!ENTITY deleteItemButton.accesskey                     "t">
+<!ENTITY newimButton.label                              "Mesaj instantaneu">  
+<!ENTITY newimButton.accesskey                          "i">  
+<!ENTITY searchNameAndEmail.placeholder                 "Search Name and Email">
+<!ENTITY searchBox.title                                "Search">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Bara Agendă">
+<!ENTITY newContactButton.tooltip                       "Creează un nou contact în agendă">
+<!ENTITY newlistButton.tooltip                          "Creează o nouă listă"> 
+<!ENTITY editItemButton.tooltip                         "Editează elementul selectat">
+<!ENTITY newmsgButton.tooltip                           "Trimite un mesaj e-mail"> 
+<!ENTITY newIM.tooltip                                  "Trimite un mesaj instantaneu sau conversează prin chat"> 
+<!ENTITY deleteItemButton.tooltip                       "Șterge elementul selectat">
+<!ENTITY throbber.tooltip                               "Pagina principală &vendorShortName;">
+<!ENTITY advancedButton.tooltip                         "Căutare avansată în agendă">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Address Books">
+
+<!-- Status Bar -->  
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

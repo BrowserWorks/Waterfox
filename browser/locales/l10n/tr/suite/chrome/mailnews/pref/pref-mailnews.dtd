@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title "Posta ve haber grupları">
+<!ENTITY generalSettings.caption "Genel ayarlar">
+<!ENTITY confirmMove.label "Dizinleri Çöpe taşırken onayla">
+<!ENTITY confirmMove.accesskey "z">
+<!ENTITY preserveThreading.label "İletileri sıralarken dizilimleri koru">
+<!ENTITY preserveThreading.accesskey "l">
+<!ENTITY mailBiffOnNewWindow.label "Yeni iletileri Posta ve haber gruplarını açtıktan sonra denetle">
+<!ENTITY mailBiffOnNewWindow.accesskey "n">
+
+<!ENTITY defaultMailSettings.description "&brandShortName; varsayılan uygulama olarak kullan:">
+<!ENTITY setDefaultMail.label "E-posta">
+<!ENTITY setDefaultMail.accesskey "E">
+<!ENTITY setDefaultNews.label "Haberler">
+<!ENTITY setDefaultNews.accesskey "H">
+<!ENTITY setDefaultFeed.label "Canlı yer imleri">
+<!ENTITY setDefaultFeed.accesskey "C">
+
+<!ENTITY messengerStartPage.caption "Posta başlangıç sayfası">
+<!ENTITY enableStartPage.label "Posta açıldığında ileti alanında başlangıç sayfasını göster">
+<!ENTITY enableStartPage.accesskey "g">
+<!ENTITY location.label "Konum:">
+<!ENTITY location.accesskey "K">
+<!ENTITY useDefault.label "Öntanımlı Ayarlara Dön">
+<!ENTITY useDefault.accesskey "r">
+<!ENTITY rememberLastMsg.label "Son seçilmiş iletiyi hatırla">
+<!ENTITY rememberLastMsg.accesskey "S">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Kendu kontua eta datuak">
+<!ENTITY removeButton.label           "Kendu">
+<!ENTITY removeButton.accesskey       "K">
+<!ENTITY removeAccount.label          "Kendu kontuaren informazioa">
+<!ENTITY removeAccount.accesskey      "i">
+<!ENTITY removeAccount.desc           "Kendu bakarrik &brandShortName;n kontu honen ezagutza. Honek ez dio eragiten kontuari zerbitzarian.">
+<!ENTITY removeData.label             "Kendu mezuen datuak">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Kendu elkarrizketa datuak">
+<!ENTITY removeDataChat.accesskey     "e">
+<!ENTITY removeDataLocalAccount.desc  "Kendu disko lokaletik kontu honen mezu denak, karpetak eta bere iragazkiak. Honek ez dio eragiten oraindik zerbitzarian egon daitezkeen hainbat mezuri.  Ez aukeratu hau datu lokalak artxibatu nahi badituzu edo &brandShortName; berrerabili nahi baduzu geroago.">
+<!ENTITY removeDataServerAccount.desc "Kendu disko lokaletik kontu honen mezu denak, karpetak eta bere iragazkiak. Zure mezu eta karpetak oraindik zerbitzarian daude.">
+<!ENTITY removeDataChatAccount.desc   "Kendu kontu honetarako elkarrizketen erregistroa zure disko lokaletik.">
+<!ENTITY showData.label               "Erakutsi datuen kokapena">
+<!ENTITY showData.accesskey           "E">
+<!ENTITY progressPending              "Kentzen aukeratutako datuak…">
+<!ENTITY progressSuccess              "Arrakastaz kendu da.">
+<!ENTITY progressFailure              "Kentzeak huts egin du.">

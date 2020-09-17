@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Tunigin tusligt">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ Ammesten mgal asfuɣel">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Aqli-k deg tunigin tusligt">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; yessewḥel kra n yeḥricen n isebtar izemren ad sfuɣlen armud n tunigin-inek.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Ur nceffu ara ɣef umazray, acukan ifuyla yettwasidren akked ticraḍ timaynutin ad ttwakelsen ɣef yibenk-inek.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "Deg tunigin tusligt, ur nceffu ara ɣef umazray n tunigin neɣ inagan n tuqqna. Ticraḍ terniḍ akked d ifuyla i d-tessidreḍ ad qqimen ttwakelsen ɣef yibenk-inek.">
+
+<!ENTITY privatebrowsingpage.link.private "Tebɣiḍ ad tissineḍ ugar?">
+<!ENTITY privatebrowsingpage.link.normal "Ldi iccer uslig amaynut">

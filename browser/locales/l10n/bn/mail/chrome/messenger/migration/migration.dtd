@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title "ইমপোর্ট উইজার্ড">
+
+<!ENTITY importFromWin.label "যে স্থান থেকে অপশন, অ্যাকাউন্ট সেটিং, ঠিকানা বই, পরিশোধক এবং অন্যান্য তথ্য ইমপোর্ট করা হবে:">
+<!ENTITY importFromNonWin.label "যে স্থান থেকে পছন্দসমূহ, অ্যাকাউন্ট সেটিং, ঠিকানা বই, পরিশোধক, এবং অন্যান্য তথ্য ইমপোর্ট করা হবে:">
+
+<!ENTITY importFromNothing.label "কোনো কিছু ইমপোর্ট করা হবে না (D)">
+<!ENTITY importFromNothing.accesskey "D">
+<!ENTITY importFromOutlook.label "আউটলুক (O)">
+<!ENTITY importFromOutlook.accesskey "O">
+
+<!ENTITY importSource.title "সেটিং এবং মেইল ফোল্ডার ইমপোর্ট করা হবে">
+<!ENTITY importItems.title "ইমপোর্ট আইটেম">
+<!ENTITY importItems.label "কোন আইটেম ইমপোর্ট করতে হবে নির্বাচন করুন:">
+
+<!ENTITY migrating.title "ইমপোর্ট করা হচ্ছে...">
+<!ENTITY migrating.label "নিম্নলিখিত আইটেম বর্তমানে ইমপোর্ট করা হচ্ছে...">
+
+<!ENTITY selectProfile.title "প্রোফাইল নির্বাচন করুন">
+<!ENTITY selectProfile.label "নিম্নলিখিত প্রোফাইল যে স্থান থেকে ইমপোর্ট করা যাবে:">
+
+<!ENTITY done.title "ইমপোর্ট শেষ হয়েছে">
+<!ENTITY done.label "নিম্নলিখিত আইটেম সফলভাবে ইমপোর্ট করা হয়েছে:">

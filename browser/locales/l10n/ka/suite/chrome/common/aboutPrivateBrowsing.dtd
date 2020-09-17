@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "თქვენ იყენებთ პირად ფანჯარას">
+<!ENTITY privatebrowsingpage.title.normal        "გსურთ პირადი დათვალიერების დაწყება?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; არ დაიმახსოვრებს ამ ფანჯრის ისტორიას.">
+<!ENTITY privatebrowsingpage.status.normal       "ამჟმად პირად ფანჯარაში არ იმყოფებით.">
+
+<!ENTITY privatebrowsingpage.common.description  "პირადი ფანჯრის გამოყენებისას, &brandShortName; არ დაიმახსოვრებს დათვალიერებული გვერდების ისტორიას, ჩამოტვირთვების ისტორიას, შევსებული ველების მონაცემებს და დროებით ფაილებს.  თუმცა, ჩანიშნული გვერდები და ჩამოტვირთული ფაილები შენარჩუნდება.">
+<!ENTITY privatebrowsingpage.track.warn          "მიუხედავად იმისა, რომ ბრაუზერი არ დაიმახსოვრებს ისტორიას, თქვენს დამსაქმებელს, ან ინტერნეტის მომწოდებელს, მაინც შეეძლებათ თვალი ადევნონ თქვენ მიერ მონახულებულ გვერდებს.">
+<!ENTITY privatebrowsingpage.learnmore.label     "ვრცლად">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "L">
+
+<!ENTITY privatebrowsingpage.close.info          "როცა დაასრულებთ, დახურეთ ფანჯარა, პირადი დათვალიერების შესაწყვეტად.">
+<!ENTITY privatebrowsingpage.close.label         "ფანჯრის ახლავე დახურვა">
+<!ENTITY privatebrowsingpage.close.accesskey     "დ">
+
+<!ENTITY privatebrowsingpage.start.info          "პირადი დათვალიერების დასაწყებად, დააჭირეთ ქვემოთ არსებულ ღილაკს, ან აირჩიეთ ფაილი ▶ ახალი ▶ პირადი ფანჯარა, მენიუდან.">
+<!ENTITY privatebrowsingpage.private.label       "ახალი პირადი სარკმლის გახსნა">
+<!ENTITY privatebrowsingpage.private.accesskey   "O">

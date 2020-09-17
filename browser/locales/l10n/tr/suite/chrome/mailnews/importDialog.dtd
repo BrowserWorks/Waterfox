@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "İçe aktarım">
+<!ENTITY importAll.label "Her şeyi içe aktar">
+<!ENTITY importAll.accesskey "H">
+<!ENTITY importMail.label "E-posta">
+<!ENTITY importMail.accesskey "E">
+<!ENTITY importAddressbook.label "Adres defterleri">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label "Ayarlar">
+<!ENTITY importSettings.accesskey "y">
+<!ENTITY importFilters.label "Süzgeçler">
+<!ENTITY importFilters.accesskey "S">
+
+<!ENTITY window.width "40em">
+<!ENTITY window.macWidth "45em">
+
+<!ENTITY importTitle.label "&brandShortName; Posta İçeri Aktarma Sihirbazı">
+<!ENTITY importShortDesc.label "Diğer uygulamalardan iletileri, adres defterlerini, ayarları ve süzgeçleri içe aktar">
+
+<!ENTITY importDescription1.label "This wizard will import mail messages, address book entries, preferences, and/or filters from other mail programs and common address book formats into &brandShortName;.">
+<!ENTITY importDescription2.label "Once they have been imported, you will be able to access them from within &brandShortName;.">
+
+<!ENTITY selectDescription.label "İçeri aktarmak istediğiniz yazılımı seçin:">
+<!ENTITY selectDescription.accesskey "a">
+
+<!ENTITY back.label "&lt; Geri">
+<!ENTITY forward.label "Sonraki &gt;">
+<!ENTITY finish.label "Bitir">
+<!ENTITY cancel.label "Vazgeç">
+
+<!ENTITY select.label "İçeri aktarmak istediklerim:">
+
+<!ENTITY title.label "Başlık">
+<!ENTITY processing.label "İçeri aktarılıyor…">

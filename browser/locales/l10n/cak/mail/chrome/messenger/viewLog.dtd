@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Tichayüx Tz'ib'anïk">
+<!ENTITY viewLogInfo.text "Ri Kitz'ib'axik Chayub'äl jun yakb'äl yerumöl na'oj pa kiwi' ri taq chayub'al e'okisan. Tawokisaj ri ch'uti rukajtz'ik peraj k'o ikim richin nitzij ri tz'ib'anïk.">
+<!ENTITY clearLog.label "Tijosq'ïx Tz'ib'anïk">
+<!ENTITY clearLog.accesskey "T">
+<!ENTITY enableLog.label "Titzij ri Rutz'ib'axik Chayuj">
+<!ENTITY enableLog.accesskey "T">
+<!ENTITY closeLog.label "Titz'apïx">
+<!ENTITY closeLog.accesskey "t">

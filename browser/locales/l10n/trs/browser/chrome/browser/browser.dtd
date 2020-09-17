@@ -1,0 +1,292 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Na'nïn' menû">
+<!ENTITY navbarOverflow.label                "Doj sa ga'ue garasun'">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Gachrun rakïj ñanj">
+<!ENTITY  unpinTab.label                     "Ga'ne rakïj ñanj">
+
+<!ENTITY  listAllTabs.label      "Ni'io' nej rakïj ñanj hua ni'ninj">
+
+<!ENTITY tabCmd.label "Rakïj ñanj nakàa">
+<!ENTITY openFileCmd.label "Na'nïn' chrûn ñanj...">
+<!ENTITY printCmd.label "Nari' ña du'ua">
+
+<!ENTITY taskManagerCmd.label "Sa nikaj ñu'unj nej suun">
+
+<!ENTITY menubarCmd.label "Riña ma sa raj sun'">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Sun aché nuu">
+<!ENTITY personalbarCmd.label "Riñan man sa gara sun'">
+<!ENTITY personalbarCmd.accesskey "B">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Sa raj sun nichrò' doj">
+<!ENTITY bookmarksToolbarItem.label "Dukuán màn sa garasun' ngà nej markador">
+
+<!ENTITY fullScreenCmd.label "Nagi'iaj gachrò' riña aga' sikà' ràa">
+
+
+<!-- } is above this key on many keyboards -->
+
+
+<!ENTITY pictureInPictureHideToggle.label "Ga'nïnj huì sa ni'io' riña sa ni'io' Naduna">
+<!ENTITY pictureInPictureHideToggle.accesskey "H">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; Nagi'iaj">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Duguatûj a'ngô aga'a…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Nutà' si yuguît riña &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Nachrūn &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "Nej serbisiû &brandProductName;">
+
+<!ENTITY fxa.menu.account.label "Kuênta">
+<!ENTITY fxa.menu.settings.label "Nagi'iô'">
+<!ENTITY fxa.menu.accountSettings.label "Sa nagi’iô’ riña Kuênda">
+<!ENTITY fxa.menu.signOut.label "Gahuī…">
+<!ENTITY fxa.menu.setupSync.label "Nagi’iaj &syncBrand.shortName.label;">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Nda nanè chre ga'ue ga'nïnjt rakïj ñanj gan'an riña amin 'ngō man'an aga' gayi'ìt sesiûn.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "'nga nahuin yachij riña aga' sikà ràa">
+<!ENTITY fullscreenWarning.generic.label "Ñaj na ni 'ngà nahuin yachij ma da'ua gè riña aga' na">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Nagi'iaj lij riña aga' sikà' ràa (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Nagi'iaj lij riña aga' sikà' ràa (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "hua a'ngo sa nikaj ñu'unj si punterôt. Ga'ui' Esc da' narit.">
+<!ENTITY pointerlockWarning.generic.label "Ñaj na nikaj ñu'unj si punterôt. Ga'ui' Esc da' narit.">
+
+<!ENTITY showAllBookmarks2.label "Ni'io' sa raj sun nichro' doj">
+<!ENTITY recentBookmarks.label "Markador nakà doj">
+<!ENTITY bookmarksToolbarChevron.tooltip "Ni'io' a'ngò da'j markador">
+
+<!ENTITY printButton.label            "Nari' ña du'ua">
+<!ENTITY printButton.tooltip          "Giri' ña du'ua pagina na">
+
+
+<!ENTITY searchItem.title             "Nana'ui'">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Riñan gayi'ij">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; Riña gayi'ìj ">
+
+<!ENTITY bookmarksButton.label          "Sa raj sun nichrò' doj">
+
+<!ENTITY bookmarksSubview.label             "Sa raj sun nichrò' doj">
+<!ENTITY bookmarksMenuButton2.label         "Menu raj sun nichrò doj">
+<!ENTITY bookmarksMenuButton.other.label    "A'ngo sa raj sun nichrò' doj">
+<!ENTITY bookmarksMenuButton.mobile.label   "Nej marcador aché">
+<!ENTITY viewBookmarksSidebar2.label        "Ni'io riña panel markador">
+<!ENTITY hideBookmarksSidebar.label         "Gachi hui' dukuán markador">
+<!ENTITY viewBookmarksToolbar.label         "Ni'io riña sa gara sun'">
+<!ENTITY hideBookmarksToolbar.label         "Gachrī hui' dukuâ sa raj sun'">
+<!ENTITY searchBookmarks.label              "Nana'ui' sa raj sun nichrò' doj">
+<!ENTITY bookmarkingTools.label             "Si rasun markadores">
+<!ENTITY addBookmarksMenu.label             "Nuto' dukuân sa raj sun'">
+<!ENTITY removeBookmarksMenu.label          "Gahī hui' dukuân sa raj sun'">
+
+<!ENTITY historyButton.label            "Sa gini’iājt">
+
+<!ENTITY downloads.label              "Nadunïnj">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Nadunïnj">
+<!ENTITY addons.label                 "Sa ga'ue nùtat doj">
+
+<!ENTITY webDeveloperMenu.label       "Desarroyador web">
+
+<!ENTITY newNavigatorCmd.label        "Ventana nakàa">
+<!ENTITY newPrivateWindow.label     "Nànin' 'ngo ventana huìi">
+
+<!ENTITY editMenu.label         "Nagi'iô'">
+<!ENTITY preferencesCmd2.label       "Sa huā gi'iát">
+<!ENTITY preferencesCmdUnix.label       "Sa arajsunt doj">
+<!ENTITY logins.label                           "Nej riña gayi'ìt sesiûn nī nej da'nga' huìi">
+
+<!ENTITY overflowCustomizeToolbar.label       "Nagi'io' dukuán ma sa rajeunit'...">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY historyMenu.label "Sa gini’iājt">
+<!ENTITY historyUndoMenu.label "Rakïj ñanj hiaj narrán nakà">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Sa hiaj narrán nakà">
+
+<!ENTITY appMenuHistory.showAll.label "Digû' riña gaché nu'">
+<!ENTITY appMenuHistory.clearRecent.label "Dure' riña gaché nu'...">
+<!ENTITY appMenuHistory.restoreSession.label "Nagi'iaj ñunj sesión gà gachin">
+<!ENTITY appMenuHistory.viewSidebar.label "Ni'io' dukuán gaché nu'">
+<!ENTITY appMenuHistory.hideSidebar.label "Gachrī huì' dukuán 'na' sa nata' danè' gaché nu'">
+<!ENTITY appMenuHistory.recentHistory.label "Riña gaché nu nakò'">
+<!ENTITY appMenuHelp.label "Sa ruguñu'unj un">
+
+<!ENTITY appMenuRemoteTabs.label "Nej rakïj ñaj guña huaa">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Si na'nï' rakij ñanj">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Nadigân Doj">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Nadigun' nej rakïj ñaj asij riña aga'a na">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Nadigân daran'anj">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Nadigun' daran' rakïj ñaj asij riña aga'a na">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Nachrūn si sinkronisasion rakïj ñaj da' ni'iaj nej rakïj ñaj asij riña a'ngo si agat.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Ni'iaj rakïj ñaj nū riña a'ngo si aga' asij ñuna ànj">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Na'nït sa nagi'iaj Sync">
+<!ENTITY appMenuRemoteTabs.welcome.label "Ni’iāj nej rakïj ñaj āsìj riña a'ngô nej si agâ’t.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Da'ui' ma ganatsij ma si kuentat">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Gayi’ì sesiûn riña &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Nachrūn &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Nagi'iaj chre' nej aga'a...">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Ni'io' nej rakïnj ñaj nūn dukuán nahuìi">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Gachrī huì' dukuán 'na' nej rakïj ñanj huā nuguan'àan">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Ganachun' 'ngà a'ngo aga'a...">
+
+<!ENTITY appMenuRecentHighlights.label "Sa yitïnj doj">
+
+<!ENTITY customizeMenu.addToToolbar.label "Nuto' dukuán rasùun">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Nuto' riña menu">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Si nuto' riña menu">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "Dùsiki' ga'an riña dukuán rasùun">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "Nuto' doj rasùun...">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Doj">
+
+<!ENTITY contentSearchSubmit.tooltip  "Ga'nin' ga'anj sa nana'ui'">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Nanà'uì'">
+<!ENTITY searchIcon.tooltip           "Nanà'uì'">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "nako' chrej e">
+
+<!ENTITY saveToPocketCmd.label        "Nannj sà' pâjina riña Pocket">
+<!ENTITY pocketMenuitem.label         "Ni'iaj si listâ Pocket">
+
+<!ENTITY emailPageCmd.label           "Ga'ni' Link…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Soom">
+
+<!ENTITY sidebarCloseButton.tooltip     "Narrun' dukuán nahuìi">
+
+<!ENTITY quitApplicationCmdWin2.label       "Ña gahuit">
+<!ENTITY quitApplicationCmdWin2.accesskey   "x">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Gahuit &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Gahui'">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "Gahui' &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Nagi'io' daj gà nej ventana râ'ñanj doj...">
+<!ENTITY editPopupSettings.label "Nagi'io' daj gà nej sa garrán riña ventana râ'ñanj doj...">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Narì' Riña Pajinà nan…">
+
+<!ENTITY spellAddDictionaries.label "Nuto' nej diksionario…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Nej rakïj ñanj riña aché nu'">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Gachi hui ma'an ma">
+
+
+<!ENTITY uiTour.infoPanel.close "Narán">
+
+<!ENTITY panicButton.thankyou.msg1                "'Ngà ganare' riña gaché nut.">
+<!ENTITY panicButton.thankyou.msg2                "¡Gadadù gache nut!">
+<!ENTITY panicButton.thankyou.buttonlabel         "¡Guruat!">
+
+<!ENTITY updateAvailable.panelUI.label "Naduni' sa nakàa guenda &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "Naduni' a'ngo sa hua dàdanj &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Si ga'ue nagi'iaj nakàt doj sa huāa ngà'">
+<!ENTITY updateRestart.panelUI.label2 "Duna'àj ni nachrun ñûnt da' nahuin nàkaj &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "'Iaj sun nugua'ān darn' Aga'a...">
+
+<!ENTITY pageAction.shareUrl.label "Duyingo'">
+<!ENTITY pageAction.shareMore.label "Doj…">
+
+<!ENTITY libraryButton.tooltip "Ni'io' riña gaché nu', nej markador na'ní so' nī doj">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Hua ni'nïnj da' gatu'">

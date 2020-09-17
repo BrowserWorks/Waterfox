@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Thatha Ngaphandle Umncedi">
+
+<!ENTITY importFromWin.label            "Import Options, Account Settings, Address Book, Filters and other data from:">
+<!ENTITY importFromNonWin.label         "Import Preferences, Account Settings, Address Book, Filters, and other data from:">
+
+<!ENTITY importFromNothing.label        "Musa ukuthatha nantoni ngaphandle">
+<!ENTITY importFromNothing.accesskey    "M">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 or later">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "i-Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Thatha Ngaphandle Imimiselo Neziqulathi Zeefayili Ezivela">
+<!ENTITY importItems.title              "Amanqaku afanele Ukuthathwa Ngaphandle">
+<!ENTITY importItems.label              "Khetha ukuba ngawaphi amanqaku anokuthathwa ngaphandle:">
+
+<!ENTITY migrating.title                "Kuthathwa ngaphandle...">
+<!ENTITY migrating.label                "Amanqaku alandelayo athathwa ngaphandle okwangoku...">
+
+<!ENTITY selectProfile.title            "Khetha Inkangeleko Yesimo">
+<!ENTITY selectProfile.label            "Iinkangeleko zesimo ezilandelayo ziyafumaneka kwaye zinokuthathwa ngaphandle zivela:">
+
+<!ENTITY done.title                     "Ukuthatha Ngaphandle Kugqityiwe">
+<!ENTITY done.label                     "Amanqaku alandelayo athathwe ngaphandle ngempumelelo:">

@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Neizdevās ielādēt lapu">
+<!ENTITY retry.label "Mēģināt vēlreiz">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Nevar pieslēgties">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Šī adrese ir liegta">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Serveris nav atrasts">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>Pārbaudiet, vai adresē nav drukas kļūdu, piemēram, <strong>ww</strong>.example.com, kur būtu jābūt <strong>www</strong>.example.com</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Meklēt</button> </div> <li>Ja nevarat ielādēt nevienu lapu, pārbaudiet ierīces datu vai Wi-Fi savienojumu. <button id='wifi'>Ieslēgt Wi-Fi</button></li> </ul>">
+
+<!ENTITY fileNotFound.title "Fails nav atrasts">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Pārbaudiet, vai faila nosaukumā nav drukas kļūdu. Lielie un mazie burti ir atšķirīgi simboli.</li> <li>Pārbaudiet, vai fails nav pārvietots, pārsaukts vai izdzēsts.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Pieeja failam tika liegta">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Tas varētu būt aizvākts, pārvietots vai arī faila piekļuves tiesības liedz piekļuvi tam.</li> </ul>">
+
+<!ENTITY generic.title "Ak vai!">
+<!ENTITY generic.longDesc "<p>Kāda nezināma iemesla dēļ &brandShortName; nevar atvērt šo lapu.</p>">
+
+<!ENTITY malformedURI.title "Adrese nav korekta">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>Adreses internetā parasti raksta šādi: <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Meklēt</button> </div> <li>Pārliecinieties, ka izmantojat pareizas slīpsvītras (tas ir, <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Savienojums tika pārtraukts">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Dokumentam ir beidzies derīguma termiņš">
+<!ENTITY notCached.longDesc "<p>Pieprasītais dokuments vairs nav pieejams &brandShortName; kešatmiņā.</p><ul><li>Drošības apsvērumu dēļ &brandShortName; automātiski neveic sensitīvu dokumentu atkārtotu ielādi.</li><li>Spiediet pogu Mēģināt vēlreiz, lai atkārtoti ielādētu šo dokumentu no attiecīgās vietnes.</li></ul>">
+
+<!ENTITY netOffline.title "Nesaistes režīms">
+
+<!ENTITY contentEncodingError.title "Satura kodējuma kļūda">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Lūdzu, informējiet mājas lapas īpašniekus par šo problēmu.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Nedrošs faila tips">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Lūdzu, paziņojiet par šo problēmu vietnes īpašniekiem.</li> </ul>">
+
+<!ENTITY netReset.title "Savienojums tika pārtraukts">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Savienojumam iestājās noilgums">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Nepazīstama adrese">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Iespējams jāuzinstalē kāda programma, lai atvērtu šo adresi.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Starpniekserveris nepieņem savienojumus">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Lūdzu, pārbaudiet starpniekservera iestatījumus un pārliecinieties, ka tie ir korekti.</li> <li>Sazinieties ar savu tīkla administratoru, lai pārliecinātos, ka starpniekserveris darbojas korekti.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Nevar atrast starpniekserveri">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Lūdzu, pārbaudiet starpniekservera iestatījumus un pārliecinieties, ka tie ir korekti.</li> <li>Pārliecinieties, ka ierīces datu vai Wi-Fi savienojums darbojas. <button id='wifi'>Ieslēgt Wi-Fi</button></li> </ul>">
+
+<!ENTITY redirectLoop.title "Lapa veic nekorektu pāradresāciju">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Šo problēmu reizēm var atrisināt, deaktivējot sīkdatnes vai nepieņemot tās no šīs lapas.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Negaidīta atbilde no servera">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Lūdzu, pārliecinieties, ka jums ir uzinstalēts Personiskās drošības pārvaldnieks.</li> <li>Šo problēmu var izraisīt servera nestandarta konfigurācija.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Drošais savienojums neizdevās">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Lapu, kuru jūs šobrīd mēģināt aplūkot, nevar parādīt, jo nevar pārbaudīt tās nosūtīto datu autentiskumu.</li> <li>Lūdzu, sazinieties ar lapas īpašniekiem un informējiet viņus par šo problēmu.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Drošais savienojums neizdevās">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Šī var būt problēma ar servera konfigurāciju vai pazīme, ka par šo serveri uzdodas cits dators.</li> <li>Ja pagātnē esat pieslēdzies šim serverim, problēma var būt īslaicīga. Tad mēģiniet vēlreiz nedaudz vēlāk.</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>Lapa var būt īslaicīgi nepieejama vai pārāk noslogota, mēģiniet vēlreiz nedaudz vēlāk.</li> <li>Ja nevarat ielādēt nevienu lapu, pārbaudiet ierīces datu vai Wi-Fi savienojumu. <button id='wifi'>Ieslēgt Wi-Fi</button></li> </ul>">
+
+<!ENTITY cspBlocked.title "Satura drošības politikas ierobežojums">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; liedza šīs lapas ielādi, jo tā neatbilst satura drošības politikai.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Bojāta satura kļūda">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Lapu, ko mēģināt aplūkot, nevar attēlot, jo notikusi kļūda datu pārraidē.</p><ul><li>Lūdzu informējiet lapas īpašniekus par šo problēmu.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Vai arī varat pievienot izņēmumu…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Vediet mani prom!">
+<!ENTITY securityOverride.exceptionButtonLabel "Pievienot izņēmumu…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Jums nevajadzētu pievienot izņēmumu, ja neizmantojat pilnībā uzticamu interneta savienojumu, vai ja parasti šāds paziņojums par šo serveri neparādās.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Attālinātais XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Lūdzu, paziņojiet par šo problēmu vietnes īpašniekiem.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Neizdevās droši pieslēgties">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Papildus informācija:  SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Savienojums nav drošs">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Papildus informācija:  SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Savienojums nav drošs">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> izmanto novecojušu un nedrošu drošības tehnoloģiju. Uzbrucējs varētu piekļūt informācijai, kuru uzskatījāt par droši aizsargātu. Lapas administratoram vajadzēs salabot serveri, pirms varēsiet apmeklē lapu.</p><p>Kļūdas kods: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Tīkla protokola kļūda">
+<!ENTITY networkProtocolError.longDesc "<p>Lapu, kuru mēģināt skatīt, nevar tikt parādīta, jo tika konstatēta tīkla protokola kļūda.</p><ul><li>Lūdzu, sazinieties ar vietņu īpašniekiem, lai informētu viņus par šo problēmu.</li></ul>">

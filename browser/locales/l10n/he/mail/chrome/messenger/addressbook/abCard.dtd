@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "יצירת קשר">
+<!ENTITY Contact.accesskey               "ק">
+<!ENTITY Name.box                        "שם">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+
+<!ENTITY NameField1.label               "פרטי:">
+<!ENTITY NameField1.accesskey           "פ">
+<!ENTITY NameField2.label               "משפחה:">
+<!ENTITY PhoneticField1.label           "פונטי:">
+<!ENTITY PhoneticField2.label           "פונטי:">
+<!ENTITY DisplayName.label              "תצוגה:">
+<!ENTITY DisplayName.accesskey          "צ">
+<!ENTITY preferDisplayName.label        "תמיד להעדיף את שם התצוגה על פני כותרת ההודעה">
+<!ENTITY preferDisplayName.accesskey    "ע">
+<!ENTITY NickName.label                 "כינוי:">
+<!ENTITY NickName.accesskey             "כ">
+
+<!ENTITY PrimaryEmail.label             "דוא״ל:">
+<!ENTITY PrimaryEmail.accesskey         "ד">
+<!ENTITY SecondEmail.label              "דוא״ל משני:">
+<!ENTITY SecondEmail.accesskey          "ש">
+<!ENTITY PreferMailFormat.label         "ההעדפה היא לקבל הודעות בתצורת:">
+<!ENTITY PreferMailFormat.accesskey     "ק">
+<!ENTITY PlainText.label                "טקסט פשוט">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "לא ידוע">
+<!ENTITY chatName.label                 "שם בצ׳אט:">
+
+<!ENTITY WorkPhone.label                "עבודה:">
+<!ENTITY WorkPhone.accesskey            "ע">
+<!ENTITY HomePhone.label                "בית:">
+<!ENTITY HomePhone.accesskey            "ב">
+<!ENTITY FaxNumber.label                "פקס:">
+<!ENTITY FaxNumber.accesskey            "ק">
+<!ENTITY PagerNumber.label              "איתורית:">
+<!ENTITY PagerNumber.accesskey          "ז">
+<!ENTITY CellularNumber.label           "נייד:">
+<!ENTITY CellularNumber.accesskey       "נ">
+
+<!ENTITY Home.tab                       "פרטי">
+<!ENTITY Home.accesskey                 "פ">
+<!ENTITY HomeAddress.label              "כתובת:">
+<!ENTITY HomeAddress.accesskey          "כ">
+<!ENTITY HomeCity.label                 "עיר:">
+<!ENTITY HomeCity.accesskey             "ע">
+<!ENTITY HomeState.label                "מדינה/מחוז:">
+<!ENTITY HomeState.accesskey            "ד">
+<!ENTITY HomeZipCode.label              "מיקוד/תא דואר:">
+<!ENTITY HomeZipCode.accesskey          "ת">
+<!ENTITY HomeCountry.label              "ארץ:">
+<!ENTITY HomeCountry.accesskey          "א">
+<!ENTITY HomeWebPage.label              "אתר אינטרנט:">
+<!ENTITY HomeWebPage.accesskey          "ר">
+<!ENTITY Birthday.label                 "יום הולדת:">
+<!ENTITY Birthday.accesskey             "י">
+<!ENTITY Year.placeholder               "שנה">
+<!ENTITY Age.placeholder                "גיל">
+
+<!ENTITY Work.tab                       "עבודה">
+<!ENTITY Work.accesskey                 "ע">
+<!ENTITY JobTitle.label                 "כותרת:">
+<!ENTITY JobTitle.accesskey             "כ">
+<!ENTITY Department.label               "מחלקה:">
+<!ENTITY Department.accesskey           "ח">
+<!ENTITY Company.label                  "ארגון:">
+<!ENTITY Company.accesskey              "ר">
+<!ENTITY WorkAddress.label              "כתובת:">
+<!ENTITY WorkAddress.accesskey          "כ">
+<!ENTITY WorkCity.label                 "עיר:">
+<!ENTITY WorkCity.accesskey             "ע">
+<!ENTITY WorkState.label                "מדינה/מחוז:">
+<!ENTITY WorkState.accesskey            "ד">
+<!ENTITY WorkZipCode.label              "מיקוד/תא דואר:">
+<!ENTITY WorkZipCode.accesskey          "ת">
+<!ENTITY WorkCountry.label              "ארץ:">
+<!ENTITY WorkCountry.accesskey          "ר">
+<!ENTITY WorkWebPage.label              "אתר אינטרנט:">
+<!ENTITY WorkWebPage.accesskey          "א">
+
+<!ENTITY Other.tab                      "אחר">
+<!ENTITY Other.accesskey                "ח">
+<!ENTITY Custom1.label                  "מותאם אישית 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "מותאם אישית 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "מותאם אישית 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "מותאם אישית 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "הערות:">
+<!ENTITY Notes.accesskey                "ע">
+
+<!ENTITY Chat.tab                       "צ׳אט">
+<!ENTITY Chat.accesskey                 "צ">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "מזהה Jabber:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "כינוי ב־IRC:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "תמונה">
+<!ENTITY Photo.accesskey                "נ">
+<!ENTITY GenericPhoto.label             "תמונה גנרית">
+<!ENTITY GenericPhoto.accesskey         "ג">
+<!ENTITY DefaultPhoto.label             "בררת מחדל">
+<!ENTITY PhotoFile.label                "במחשב הזה">
+<!ENTITY PhotoFile.accesskey            "מ">
+<!ENTITY BrowsePhoto.label              "עיון">
+<!ENTITY BrowsePhoto.accesskey          "ע">
+<!ENTITY PhotoURL.label                 "באינטרנט">
+<!ENTITY PhotoURL.accesskey             "א">
+<!ENTITY PhotoURL.placeholder           "ניתן להקליד או להדביק כתובת של תמונה">
+<!ENTITY UpdatePhoto.label              "עדכון">
+<!ENTITY UpdatePhoto.accesskey          "ד">
+<!ENTITY PhotoDropTarget.label          "יש לגרור תמונה חדשה לכאן">

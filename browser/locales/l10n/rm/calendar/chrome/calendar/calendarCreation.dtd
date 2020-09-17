@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Crear in nov chalender" >
+<!ENTITY wizard.label             "Crear in nov chalender" >
+<!ENTITY wizard.description       "Posiziun dal chalender" >
+
+<!ENTITY initialpage.description    "Ti pos memorisar tes chalender sin tes computer u sin in server per l'access a distanza e per al cundivider cun tes amis u collavuraturs." >
+<!ENTITY initialpage.computer.label  "Sin mes computer">
+<!ENTITY initialpage.network.label  "En la rait">
+
+<!ENTITY locationpage.description         "Endatescha las infurmaziuns necessarias per l'access a distanza al chalender" >
+<!ENTITY locationpage.login.description   "Opziunal: endatescha in num d'utilisader ed in pled-clav" >
+<!ENTITY locationpage.username.label      "Num d'utilisader:" >
+<!ENTITY locationpage.password.label      "Pled-clav:" >
+
+<!ENTITY custompage.shortdescription  "Persunalisescha tes chalender" >
+<!ENTITY custompage.longdescription   "Ti pos dar in num a tes chalender ed attribuir ina colur als eveniments da quest chalender." >
+
+<!ENTITY finishpage.shortdescription  "Creà l'agenda" >
+<!ENTITY finishpage.longdescription   "Tes chalender è vegnì creà." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Auter">
+
+<!ENTITY buttons.create.label "Crear in chalender">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Chattar chalenders">
+<!ENTITY buttons.find.accesskey "C">
+
+<!ENTITY buttons.back.label "Enavos">
+<!ENTITY buttons.back.accesskey "E">
+
+<!ENTITY buttons.subscribe.label "Abunar">
+<!ENTITY buttons.subscribe.accesskey "A">
+
+<!ENTITY calendartype.label "Tip da chalender:">
+<!ENTITY location.label "Adressa:">
+<!ENTITY location.placeholder "URL u num dal host dal server dal chalender">
+
+<!ENTITY network.nocredentials.label "Questa adressa na pretenda naginas infurmaziuns d'annunzia">
+<!ENTITY network.loading.description "Spetga per plaschair durant che tes chalenders vegnan scuvrids.">
+<!ENTITY network.notfound.description "Impussibel da chattar chalenders en quest lieu. Controllescha per plaschair la configuraziun.">
+<!ENTITY network.authfail.description "Las infurmaziuns d'annunzia che ti has endatà n'èn betg vegnidas acceptadas. Controllescha p.pl. la configuraziun.">
+
+<!ENTITY network.subscribe.single.description "Tscherna per plaschair ils chalenders che ti vuls abunar.">
+<!ENTITY network.subscribe.multiple.description "Plirs tips da chalender èn disponibels en quest lieu. Tscherna per plaschair il tip da chalender e lura ils chalenders che ti vuls abunar.">

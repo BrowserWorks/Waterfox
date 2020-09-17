@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Lamed-ikome">
+<!ENTITY aboutAddons.header2                    "Lamed-ikome mamegi">
+
+<!ENTITY addonAction.enable                     "Mi tii">
+<!ENTITY addonAction.disable                    "Kijuko woko">
+<!ENTITY addonAction.uninstall                  "Pe I ket">
+<!ENTITY addonAction.undo                       "Dok cen">
+<!ENTITY addonAction.update                     "Ngec manyen">
+
+<!ENTITY addonUnsigned.message                  "Med-ikome man pe onongo kitwero moko ada ne ki &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "Nong ngec mapol">

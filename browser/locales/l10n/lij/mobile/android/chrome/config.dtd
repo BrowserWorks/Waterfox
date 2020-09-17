@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Çerca">
+
+<!ENTITY newPref.namePlaceholder       "Nomme">
+
+<!ENTITY newPref.valueBoolean          "Boolean">
+<!ENTITY newPref.valueString           "Stringa">
+<!ENTITY newPref.valueInteger          "Intrego">
+
+<!ENTITY newPref.stringPlaceholder     "Scrivi 'na stringa">
+<!ENTITY newPref.numberPlaceholder     "Scrivi 'n numero">
+
+<!ENTITY newPref.toggleButton          "Cangia">
+<!ENTITY newPref.cancelButton          "Anulla">
+
+<!ENTITY contextMenu.copyPrefName      "Còpia Nomme">
+<!ENTITY contextMenu.copyPrefValue     "Còpia Valô">

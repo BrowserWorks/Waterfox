@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Kter imedlis n tensa">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Isefka i d-yettwaketren i ukalas:">
+<!ENTITY fieldMapImport.next.label "Ɣeṛ zdat">
+<!ENTITY fieldMapImport.next.accesskey "z">
+<!ENTITY fieldMapImport.previous.label "Ɣeṛ deffir">
+<!ENTITY fieldMapImport.previous.accesskey "d">
+<!ENTITY fieldMapImport.text "Seqdec Ali d asawen akked ader d akesser akken ad temeɣruḍ urtan n imedlis n tensa n idis azelmaḍ ɣer isefka imeɣta n idis ayeffus. Kkec acraḍ n iferdisen ur tebɣiḍ ara ad teketreḍ.">
+<!ENTITY fieldMapImport.up.label "Ali">
+<!ENTITY fieldMapImport.up.accesskey "A">
+<!ENTITY fieldMapImport.down.label "Ader">
+<!ENTITY fieldMapImport.down.accesskey "d">
+<!ENTITY fieldMapImport.fieldListTitle "Urtan n imedlis n tensa">
+<!ENTITY fieldMapImport.dataTitle "Isefka yettwakelsen i ukter">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Akalas amezwaru yegber ismawen n wurtan">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "z">

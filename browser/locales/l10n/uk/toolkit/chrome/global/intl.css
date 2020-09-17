@@ -1,0 +1,19 @@
+/*
+ * This file contains all localizable skin settings such as 
+ *   font, layout, and geometry
+ */
+window { 
+  font: 3mm tahoma,arial,helvetica,sans-serif;
+}
+
+#MailPreferences {
+  min-height: 36em !important;
+}
+
+#bmPropsWindow {
+  min-width: 50em !important;
+}
+
+#migrationWizard {
+  min-width: 50em !important;
+}

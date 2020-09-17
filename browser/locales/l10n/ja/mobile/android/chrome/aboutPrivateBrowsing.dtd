@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "プライベートブラウジング">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "とトラッキング防止">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "プライベートブラウジングモードではありません">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; は、あなたのブラウジング行動を追跡するページの要素をブロックします。">
+<!ENTITY privatebrowsingpage.description.privateDetails "閲覧履歴を保存しませんが、ダウンロードしたファイルと新しいブックマークは端末に保存されます。">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "プライベートブラウジングでは、すべての閲覧履歴や Cookie が保存されません。ただし、追加したブックマークやダウンロードしたファイルは端末に保存されます。">
+
+<!ENTITY privatebrowsingpage.link.private "さらに詳細を知りたいですか？">
+<!ENTITY privatebrowsingpage.link.normal "新しいプライベートタブを開く">

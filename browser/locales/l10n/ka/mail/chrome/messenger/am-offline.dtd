@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "დისკზე ადგილის ეკონომიისთვის არ გადმოწერო:">
+<!ENTITY doNotDownloadNntp.label "თუ დისკზე ადგილის დაზოგვა გსურთ, ნუ გადმოწერთ კავშირგარეშე რეჟიმისთვის:">
+<!ENTITY doNotDownloadImap.label "დისკზე ადგილის გამოსათავისუფლებლად, სერვერიდან წერილების ჩამოტვირთვისა და ადგილობრივად შენახვის შეზღუდვა შესაძლებელია ასაკით ან ზომით.">
+<!ENTITY allFoldersOffline2.label "ყველა საქაღალდეში არსებული წერილების შენახვა ამ კომპიუტერში, მოცემული ანგარიშისთვის">
+<!ENTITY allFoldersOffline2.accesskey "ქ">
+<!ENTITY allFoldersOfflineNote.label "შენიშვნა: ამის შეცვლა, იმოქმედებს ანგარიშის ყველა საქაღალდეზე. ცალკეული საქაღალდის პარამეტრების გასამართად, გამოიყენეთ ღილაკი „დამატებითი“…">
+<!ENTITY offlineNotDownload.label "წერილები, რომელთა ზომაც აღემატება">
+<!ENTITY offlineNotDownload.accesskey "წ">
+<!ENTITY autosyncNotDownload.label "არ ჩამოიტვირთოს წერილები, რომელთა ზომა მეტია ვიდრე">
+<!ENTITY autosyncNotDownload.accesskey "ე">
+<!ENTITY kb.label "კბაიტს">
+<!ENTITY daysOld.label "დღეს">
+<!ENTITY message.label "წერილი">
+<!ENTITY nntpNotDownloadRead.label "წაკითხული წერილები">
+<!ENTITY nntpNotDownloadRead.accesskey "წ">
+<!ENTITY nntpDownloadMsg.label "წერილები, რომელთა ასაკი გადასცდა">
+<!ENTITY nntpDownloadMsg.accesskey "ი">
+<!ENTITY retentionCleanup.label "დისკზე ადგილის გასათავისუფლებლად შეიძლება ძველი წერილების რეგულარულად წაშლა.">
+<!ENTITY retentionCleanupImap.label "დისკზე ადგილის გასათავისუფლებლად შესაძლებელია ძველი გზავნილების შეუქცევადად წაშლა ორივეგან - ადგილობრივად და დაშორებულ სერვერზე.">
+<!ENTITY retentionCleanupPop.label "დისკზე ადგილის გასათავისუფლებლად შესაძლებელია ძველი გზავნილების შეუქცევადად წაშლა ადგილობრივად და დაშორებულ სერვერზეც.">
+<!ENTITY retentionKeepMsg.label "წერილთა წაშლა რომელთა ასაკიც აღემატება">
+<!ENTITY retentionKeepMsg.accesskey "ტ">
+<!ENTITY retentionKeepAll.label "ყველა წერილის შენარჩუნება">
+<!ENTITY retentionKeepAll.accesskey "ყ">
+<!ENTITY retentionKeepRecent.label "ყველას წაშლა უახლესების გარდა">
+<!ENTITY retentionKeepRecent.accesskey "რ">
+<!ENTITY retentionApplyToFlagged.label "ვარსკვლავიანი წერილების ყოველთვის შენარჩუნება">
+<!ENTITY retentionApplyToFlagged.accesskey "ვ">
+<!ENTITY nntpRemoveMsgBody.label "წერილების შიგთავსის წაშლა რომელთა ზომაც აღემატება">
+<!ENTITY nntpRemoveMsgBody.accesskey "შ">
+<!ENTITY offlineSelectNntp.label "ჯგუფების შერჩევა კავშირგარეშე გამოყენებისთვის…">
+<!ENTITY offlineSelectNntp.accesskey "ჩ">
+<!ENTITY offlineImapAdvancedOffline.label "დამატებით…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "მ">
+<!ENTITY syncGroupTitle.label "წერილების სინქრონიზაცია">
+<!ENTITY diskspaceGroupTitle.label "ადგილი დისკზე">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "ყველა წერილის ადგილობრივად სინქრონიზაცია ასაკის მიუხედავად">
+<!ENTITY allAutosync.accesskey           "დ">
+<!ENTITY ageAutosyncBefore.label         "უახლესი ფოსტის სინქრონიზაცია">
+<!ENTITY ageAutosync.accesskey           "ზ">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "დღის">
+<!ENTITY weekAgeInterval.label           "კვირის">
+<!ENTITY monthAgeInterval.label          "თვის">
+<!ENTITY yearAgeInterval.label           "წლის">
+<!ENTITY ageAutosyncAfter.label          "განმავლობაში">

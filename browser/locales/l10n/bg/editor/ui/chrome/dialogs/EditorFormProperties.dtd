@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Свойства на формуляр">
+
+<!ENTITY Settings.label "Настройки">
+
+<!ENTITY FormName.label "Име на формуляр:">
+<!ENTITY FormName.accesskey "И">
+<!ENTITY FormAction.label "URL за изпълнение:">
+<!ENTITY FormAction.accesskey "з">
+<!ENTITY FormMethod.label "Метод:">
+<!ENTITY FormMethod.accesskey "М">
+<!ENTITY FormEncType.label "Кодиране:">
+<!ENTITY FormEncType.accesskey "К">
+<!ENTITY FormTarget.label "Рамка цел:">
+<!ENTITY FormTarget.accesskey "Р">
+
+<!ENTITY RemoveForm.label "Премахване на формуляр">
+<!ENTITY RemoveForm.accesskey "х">

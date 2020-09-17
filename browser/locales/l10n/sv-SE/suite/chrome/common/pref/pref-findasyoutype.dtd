@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Sök medan du skriver">
+<!ENTITY findAsYouTypeBehavior.label "Sök medan du skriver">
+<!ENTITY findAsYouTypeTip.label "Tips: För att manuellt starta &quot;Hitta medan du skriver&quot; så skriv / för att hitta text eller ' för att hitta länkar, följt av texten som du vill hitta.">
+<!ENTITY findAsYouTypeTimeout.label "Avbryt sökandet efter några sekunders inaktivitet">
+<!ENTITY findAsYouTypeTimeout.accesskey "A">
+<!ENTITY findAsYouTypeSound.label "Ge en ljudsignal om texten inte hittas">
+<!ENTITY findAsYouTypeSound.accesskey "s">
+<!ENTITY findAsYouTypeEnableAuto.label "Hitta automatiskt när du skriver in på en webbsida:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "w">
+<!ENTITY findAsYouTypeAutoText.label "Vilken som helst text på sidan">
+<!ENTITY findAsYouTypeAutoText.accesskey "V">
+<!ENTITY findAsYouTypeAutoLinks.label "Länkar enbart">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "ä">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Visa verktygsraden för sökningar när &quot;Hitta medan du skriver&quot; används">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "S">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Notera: &quot;Hitta medan du skriver&quot; utan att visa verktygsraden för sökningar klarar inte av internationella bokstäver.">

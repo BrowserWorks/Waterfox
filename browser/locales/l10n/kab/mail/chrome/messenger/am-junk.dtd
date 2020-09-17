@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Iɣewwaṛen n uspam">
+<!ENTITY trainingDescription.label "Ma yettwarmed, yessefk ad s-tiniḍ i &brandShortName; akken ad yissin ad isulu imaylen ispamen s useqdec n tqeffalt n ufeggag n ifecka n uspam akken ad yecreḍ iznan ama d ispamen neɣ ala. Tesriḍ ad tesuluḍ iznan ispamen neɣ wid ur nelli ara d ispamen. Sakin &brandShortName; ad yizmir ad yecreḍ s wudem awurman.">
+<!ENTITY level.label "Rmed asenqed n tirawt n ispamen i umiḍan-agi">
+<!ENTITY level.accesskey "R">
+
+<!ENTITY move.label "Awi iznan ispamen imaynuten ɣer:">
+<!ENTITY move.accesskey "z">
+<!ENTITY junkFolderOn.label "Akaram n &quot;&amp;Uspam&quot; di:">
+<!ENTITY junkFolderOn.accesskey "p">
+<!ENTITY otherFolder.label "Wiyaḍ:">
+<!ENTITY otherFolder.accesskey "y">
+<!ENTITY purge1.label "Kkes s wudem awurman imaylen ispamen iqbuṛen nig n ">
+<!ENTITY purge1.accesskey "d">
+<!ENTITY purge2.label "ussan">
+
+<!ENTITY whitelistHeader.label "Ur cṛeḍ ara s wudem awurman imaylen amzun d ispamen ma yella amazay yella di:">
+<!ENTITY whitelistHeader.accesskey "c">
+
+<!ENTITY ispHeadersWarning.label "Ma yettwarmed, &brandShortName; ad yawi s wudem awurman iznan yecreḍ ufecku azɣaray amzun d ispamen.">
+<!ENTITY ispHeaders.label "Amen iqeṛṛa n tirawt ispamen yesbadu: ">
+<!ENTITY ispHeaders.accesskey "A">
+
+<!ENTITY junkClassification.label "Afran">
+<!ENTITY junkActions.label "Taniɣert akked tuṭṭfa">
+
+<!ENTITY globalJunkPrefs.label "Iɣewwaṛen imuta n uspam…">
+<!ENTITY globalJunkPrefs.accesskey "m">

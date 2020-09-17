@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Veti Faqeje">
+<!ENTITY location.label "Vendndodhje:">
+<!ENTITY lastModified.label "Ndryshuar Së Fundi Më:">
+<!ENTITY titleInput.label "Titull:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Autor:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "Përshkrim:">
+<!ENTITY descriptionInput.accessKey "P">
+<!ENTITY locationNewPage.label "[Faqe e re, ende e paruajtur]">
+<!ENTITY EditHEADSource1.label "Përdorues të përparuar:">
+<!ENTITY EditHEADSource2.label "Për përpunim lënde tjetër të fushës &lt;titull&gt;, përdorni &quot;Burim HTML&quot; te Menuja Shfaqje ose te Paneli i Mënyrës Përpunim.">

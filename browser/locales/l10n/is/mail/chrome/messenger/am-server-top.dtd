@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+
+<!ENTITY messageStorage.label "Póstgeymsla">
+<!ENTITY securitySettings.label "Öryggisstillingar">
+<!ENTITY serverSettings.label "Stillingar netþjóns">
+<!ENTITY serverType.label "Gerð netþjóns:">
+<!ENTITY serverName.label "Nafn netþjóns:">
+<!ENTITY serverName.accesskey "þ">
+<!ENTITY userName.label "Notandanafn:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "Gátt:">
+<!ENTITY port.accesskey "G">
+<!ENTITY serverPortDefault.label "Sjálfgefið:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Athuga með nýjan póst á ">
+<!ENTITY biffStart.accesskey "u">
+<!ENTITY biffEnd.label "mínútna fresti">
+<!ENTITY useIdleNotifications.label "Leyfa að tilkynna strax þegar nýr póstur kemur">
+<!ENTITY useIdleNotifications.accesskey "a">
+<!ENTITY connectionSecurity.label "Öryggi tengingar:">
+<!ENTITY connectionSecurity.accesskey "Ö">
+<!ENTITY connectionSecurityType-0.label "Ekkert">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ef tiltækt">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Auðkennisaðferð:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Skilja póst eftir á netþjóni">
+<!ENTITY leaveOnServer.accesskey "S">
+<!ENTITY headersOnly.label "Ná aðeins í hausa">
+<!ENTITY headersOnly.accesskey "ð">
+<!ENTITY deleteByAgeFromServer.label "Í allt að">
+<!ENTITY deleteByAgeFromServer.accesskey "a">
+<!ENTITY daysEnd.label "daga">
+<!ENTITY deleteOnServer2.label "Þangað til ég eyði þeim">
+<!ENTITY deleteOnServer2.accesskey "e">
+<!ENTITY downloadOnBiff.label "Niðurhala sjálfkrafa nýjum póstum">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "Þegar ég eyði pósti:">
+<!ENTITY modelMoveToTrash.label "Færa í þessa möppu:">
+<!ENTITY modelMoveToTrash.accesskey "F">
+<!ENTITY modelMarkDeleted.label "Merkja sem eytt">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "Fjarlægja strax">
+<!ENTITY modelDeleteImmediately.accesskey "F">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Hreinsa Innhólf (&quot;Expunge&quot;) þegar hætt er">
+<!ENTITY expungeOnExit.accesskey "e">
+<!ENTITY emptyTrashOnExit.label "Tæma rusl þegar forriti er lokað">
+<!ENTITY emptyTrashOnExit.accesskey "r">
+<!ENTITY loginAtStartup.label "Athuga með nýjan póst í ræsingu">
+<!ENTITY loginAtStartup.accesskey "A">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+   of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Spyrja áður en niðurhalað er meira en">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "póstum">
+<!ENTITY alwaysAuthenticate.label "Alltaf krefjast öruggs auðkennis þegar tengst er við þennan netþjón">
+<!ENTITY alwaysAuthenticate.accesskey "A">
+<!ENTITY abbreviate.label "Sýna nöfn fréttahópa í póstmöppu hliðslá sem:">
+<!ENTITY abbreviateOn.label "Fullt nafn (Til dæmis, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Skammstafa nöfn (Til dæmis, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Frekari stillingar…">
+<!ENTITY advancedButton.accesskey "F">
+<!ENTITY serverDefaultCharset2.label "Sjálfgefin textakóðun:">
+<!ENTITY localFolderPicker.label "Veldu staðbundna möppu">
+<!ENTITY browseFolder.label "Velja…">
+<!ENTITY browseFolder.accesskey "V">
+<!ENTITY browseNewsrc.label "Velja…">
+<!ENTITY browseNewsrc.accesskey "e">
+
+<!ENTITY accountTitle.label "Stillingar reiknings">
+<!ENTITY accountSettingsDesc.label "Eftirfarandi er sérstakur reikningur.  Engin auðkenni eru tengd við hann.">
+<!ENTITY storeType.label "Tegund póstgeymslu:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "Skrá per möppu (mbox)">
+<!ENTITY maildirStore.label "Skrá per skilaboð (maildir)">

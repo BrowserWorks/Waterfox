@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Форма қасиеттерi">
+
+<!ENTITY Settings.label "Баптаулар">
+
+<!ENTITY FormName.label "Форма аты:">
+<!ENTITY FormName.accesskey "а">
+<!ENTITY FormAction.label "Әрекет сілтемесі:">
+<!ENTITY FormAction.accesskey "е">
+<!ENTITY FormMethod.label "Тәсіл:">
+<!ENTITY FormMethod.accesskey "Т">
+<!ENTITY FormEncType.label "Кодталуы:">
+<!ENTITY FormEncType.accesskey "д">
+<!ENTITY FormTarget.label "Мақсат фреймі:">
+<!ENTITY FormTarget.accesskey "т">
+
+<!ENTITY RemoveForm.label "Форманы өшіру">
+<!ENTITY RemoveForm.accesskey "р">

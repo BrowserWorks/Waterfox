@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!ENTITY MsgSynchronize.label "Postaları indir ve eşzamanla">
+<!ENTITY MsgSelect.label "Kapalı hat için kullanılacaklar">
+<!ENTITY MsgSyncDesc.label "Posta Dizinlerini ve Haber gruplarını çevrim dışı kullanımı için seçtiyseniz, şimdi indirebilir yada eşzamanlayabilirsiniz.Bundan başka,&quot;Seç&quot; düğmesini tıklayarak posta dizinlerini ve haber gruplarını çevrim dışı kullanımı için seçebilirsiniz.">
+<!ENTITY MsgSyncDirections.label "Şunu İndir ve/veya eşzamanla:">
+<!ENTITY syncTypeMail.label "Posta mesajları">
+<!ENTITY syncTypeMail.accesskey "e">
+<!ENTITY syncTypeNews.label "Haber grubu iletileri">
+<!ENTITY syncTypeNews.accesskey "H">
+<!ENTITY sendMessage.label "Gönderilmemiş postaları gönder">
+<!ENTITY sendMessage.accesskey "G">
+<!ENTITY workOffline.label "İndirme ve/veya eşzamanlama bittikten sonra çevrim dışı çalış">
+<!ENTITY workOffline.accesskey "a">
+<!ENTITY selectButton.label "Seç…">
+<!ENTITY selectButton.accesskey "e">
+<!ENTITY MsgSelectDesc.label "Posta dizinlerini ve haber gruplarını çevrim dışı kullanımı için seç.">
+<!ENTITY MsgSelectInd.label "İndir">
+<!ENTITY MsgSelectItems.label "Dizinler ve haber grupları">

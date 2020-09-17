@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label "Пишување и адреси">
+<!ENTITY addressingGroupTitle.label "Адреси">
+<!ENTITY addressingText.label "Кога барам адреси:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label "Користи ги моите општи преференции за LDAP сервери">
+<!ENTITY useGlobal.accesskey "о">
+<!ENTITY editDirectories.label "Уреди…">
+<!ENTITY editDirectories.accesskey "е">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label "Користи друг LDAP сервер:">
+<!ENTITY directories.accesskey "d">
+
+<!-- am-addressing.xul -->
+
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label "Пишување">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label "Пишувај ги пораките во HTML формат">
+<!ENTITY useHtml.accesskey "С">
+<!ENTITY autoQuote.label "Автоматски цитирај ја оригиналната порака кога одговарам">
+<!ENTITY autoQuote.accesskey "ц">
+<!ENTITY aboveQuote.label "започни го мојот одговор над цитатот">
+<!ENTITY belowQuote.label "започни го мојот одговор под цитатот">
+<!ENTITY selectAndQuote.label "избери го цитатот">
+<!ENTITY place.label "и додај го мојот потпис">
+<!ENTITY place.accesskey "п">
+<!ENTITY belowText.label "под цитатот (препорачливо)">
+<!ENTITY aboveText.label "под одговорот (над цитатот)">
+

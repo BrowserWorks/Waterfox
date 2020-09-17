@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!ENTITY accountTitle.label "Tetapan Akaun">
+<!ENTITY accountName.label "Nama Akaun:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Identiti Piawai">
+<!ENTITY identityDesc.label "Setiap akaun ada identiti sendiri, iaitu maklumat yang boleh dilihat apabila penerima membaca mesej anda.">
+<!ENTITY name.label "Nama Anda:">
+<!ENTITY name.accesskey "A">
+<!ENTITY email.label "Alamat E-mel:">
+<!ENTITY email.accesskey "E">
+<!ENTITY replyTo.label "Alamat Balas-kepada:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Penerima akan membalas ke alamat yang lain">
+<!ENTITY organization.label "Organisasi:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Teks tandatangan:">
+<!ENTITY signatureText.accesskey "t">
+<!ENTITY signatureHtml.label "Gunakan HTML">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Lampir sahaja tandatangan dari fail:">
+<!ENTITY signatureFile.accesskey "f">
+<!ENTITY choose.label "Pilih…">
+<!ENTITY choose.accesskey "P">
+<!ENTITY editVCard.label "Edit Kad…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Lampir vCard dalam mesej">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Urus Identiti…">
+<!ENTITY manageIdentities.accesskey "U">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Pelayan Keluar (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "Guna Pelayan Piawai">
+
+<!ENTITY smtpServerEdit.label "Edit pelayan SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

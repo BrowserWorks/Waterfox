@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Sense títol)">
+<!ENTITY  newTab.label           "Pestanya nova">
+<!ENTITY  newTab.accesskey       "n">
+<!ENTITY  closeTab.label         "Tanca la pestanya">
+<!ENTITY  closeTab.accesskey         "c">
+<!ENTITY  closeOtherTabs.label   "Tanca les altres pestanyes">
+<!ENTITY  closeOtherTabs.accesskey         "l">
+<!ENTITY  reloadAllTabs.label    "Torna a carregar totes les pestanyes">
+<!ENTITY  reloadAllTabs.accesskey         "a">
+<!ENTITY  reloadTab.label        "Torna a carregar la pestanya">
+<!ENTITY  reloadTab.accesskey         "r">
+<!ENTITY  bookmarkGroup.label    "Afegeix a les adreces d'interès aquest grup de pestanyes…">
+<!ENTITY  bookmarkGroup.accesskey  "t">
+<!ENTITY  closeTabButton.tooltip   "Tanca la pestanya actual">
+<!ENTITY  newTabButton.tooltip   "Obre una pestanya nova">
+<!ENTITY  listAllTabs.tooltip    "Llista totes les pestanyes">
+<!ENTITY  undoCloseTab.label    "Desfés tancar la pestanya">
+<!ENTITY  undoCloseTab.accesskey  "D">

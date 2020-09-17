@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Ro‘yxat xossalari">
+
+<!ENTITY ListType.label "Ro‘yxati turi">
+<!ENTITY bulletStyle.label "Ko‘rsatkich uslubi:">
+<!ENTITY startingNumber.label "Boshlanishi:">
+<!ENTITY startingNumber.accessKey "B">
+<!ENTITY none.value "Yo‘q">
+<!ENTITY bulletList.value "Ko‘rsatkich (raqamlanmagan) ro‘yxati">
+<!ENTITY numberList.value "Raqamlangan ro‘yxat">
+<!ENTITY definitionList.value "Aniqlanish roʻyxati">
+<!ENTITY changeEntireListRadio.label "Butun ro‘yxatni o‘zgartirish">
+<!ENTITY changeEntireListRadio.accessKey "o">
+<!ENTITY changeSelectedRadio.label "Faqat tanlangan elementlarni o‘zgartirish">
+<!ENTITY changeSelectedRadio.accessKey "e">

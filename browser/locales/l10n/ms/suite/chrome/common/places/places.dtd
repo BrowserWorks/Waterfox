@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Pustaka">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Urus">
+<!ENTITY organize.accesskey    "U">
+<!ENTITY organize.tooltip      "Urus tandabuku anda">
+
+<!ENTITY file.close.label               "Tutup">
+<!ENTITY file.close.accesskey           "T">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Paparan">
+<!ENTITY views.accesskey                "P">
+<!ENTITY views.tooltip                  "Tukar paparan anda">
+<!ENTITY view.columns.label             "Papar Lajur">
+<!ENTITY view.columns.accesskey         "L">
+<!ENTITY view.sort.label                "Susun">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Tidak disusun">
+<!ENTITY view.unsorted.accesskey        "T">
+<!ENTITY view.sortAscending.label       "Tertib Susunan A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Tertib Susunan Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Import Tandabuku dari HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Eksport Tandabuku ke HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Import Data dari Pelayar Lain…">
+<!ENTITY importOtherBrowser.accesskey      "L">
+
+<!ENTITY cmd.backup.label               "Sandaran…">
+<!ENTITY cmd.backup.accesskey           "S">
+<!ENTITY cmd.restore2.label             "Pulih">
+<!ENTITY cmd.restore2.accesskey         "P">
+<!ENTITY cmd.restoreFromFile.label      "Pilih Fail…">
+<!ENTITY cmd.restoreFromFile.accesskey  "P">
+
+<!ENTITY cmd.deleteDomainData.label     "Lupakan Laman Ini">
+<!ENTITY cmd.deleteDomainData.accesskey "L">
+
+<!ENTITY cmd.open.label                  "Buka">
+<!ENTITY cmd.open.accesskey              "B">
+<!ENTITY cmd.open_window.label           "Buka dalam Tetingkap Baru">
+<!ENTITY cmd.open_window.accesskey       "B">
+<!ENTITY cmd.open_private_window.label     "Buka dalam Tetingkap Peribadi Baru">
+<!ENTITY cmd.open_private_window.accesskey "P">
+<!ENTITY cmd.open_tab.label              "Buka dalam Tab Baru">
+<!ENTITY cmd.open_tab.accesskey          "u">
+<!ENTITY cmd.open_all_in_tabs.label      "Buka Semua dalam Tab">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "B">
+
+<!ENTITY cmd.properties.label      "Sifat">
+<!ENTITY cmd.properties.accesskey  "i">
+
+<!ENTITY cmd.sortby_name.label              "Susun Mengikut Nama">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "s">
+
+<!ENTITY cmd.new_bookmark.label            "Tandabuku Baru…">
+<!ENTITY cmd.new_bookmark.accesskey        "B">
+<!ENTITY cmd.new_folder.label              "Folder Baru…">
+<!ENTITY cmd.new_folder.accesskey          "o">
+<!ENTITY cmd.context_new_folder.accesskey  "F">
+<!ENTITY cmd.new_separator.label           "Pemisah Baru">
+<!ENTITY cmd.new_separator.accesskey       "P">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Muat semula Live Bookmark">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "M">
+
+<!ENTITY col.name.label          "Nama">
+<!ENTITY col.tags.label          "Tag">
+<!ENTITY col.url.label           "Lokasi">
+<!ENTITY col.mostrecentvisit.label "Lawatan Terkini">
+<!ENTITY col.visitcount.label    "Bilangan Lawatan">
+<!ENTITY col.description.label   "Keterangan">
+<!ENTITY col.dateadded.label     "Ditambah">
+<!ENTITY col.lastmodified.label  "Terakhir Diubah">
+
+<!ENTITY search.placeholder  "Cari">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY detailsPane.more.label "Selanjutnya">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY detailsPane.less.label "Kurang">
+<!ENTITY detailsPane.less.accesskey "r">
+<!ENTITY detailsPane.selectAnItemText.description "Pilih item untuk dipapar dan diedit sifatnya">
+
+<!ENTITY view.label               "Papar">
+<!ENTITY view.accesskey           "r">
+<!ENTITY byDate.label             "Mengikut Tarikh">
+<!ENTITY byDate.accesskey         "T">
+<!ENTITY bySite.label             "Mengikut Laman">
+<!ENTITY bySite.accesskey         "L">
+<!ENTITY byMostVisited.label      "Mengikut Paling Dilawati">
+<!ENTITY byMostVisited.accesskey  "D">
+<!ENTITY byLastVisited.label      "Mengikut Terakhir Dilawati">
+<!ENTITY byLastVisited.accesskey  "T">
+<!ENTITY byDayAndSite.label       "Mengikut Tarikh dan Laman">
+<!ENTITY byDayAndSite.accesskey   "t">

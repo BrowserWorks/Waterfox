@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY matchAll.label     "Pas al die volgende">
+<!ENTITY matchAll.accesskey "a">
+<!ENTITY matchAny.label     "Pas enige van die volgende">
+<!ENTITY matchAny.accesskey "e">
+
+
+<!-- LOCALIZATION NOTE
+  The values below are used to control the widths of the search widgets.
+  Change the values only when the localized strings in the popup menus
+  are truncated in the widgets.
+ -->
+
+

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Imej">
+
+<!ENTITY imageBlocking.label            "Polisi Penerimaan Imej">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "Tentukan cara &brandShortName; mengendalikan imej.">
+
+<!ENTITY loadAllImagesRadio.label       "Muatkan semua imej">
+<!ENTITY loadAllImagesRadio.accesskey   "M">
+<!ENTITY loadOrgImagesRadio.label       "Hanya muatkan imej daripada pelayan pemula">
+<!ENTITY loadOrgImagesRadio.accesskey   "n">
+<!ENTITY loadNoImagesRadio.label        "Jangan muatkan apa-apa imej">
+<!ENTITY loadNoImagesRadio.accesskey    "J">
+<!ENTITY viewPermissions.label          "Urus Keizinan">
+<!ENTITY viewPermissions.accesskey      "K">
+<!ENTITY animLoopingTitle.label         "Imej animasi perlu gelung">
+<!ENTITY animLoopAsSpecified.label      "Mengikut bilangan yang ditentukan imej">
+<!ENTITY animLoopAsSpecified.accesskey  "m">
+<!ENTITY animLoopOnce.label             "Sekali">
+<!ENTITY animLoopOnce.accesskey         "S">
+<!ENTITY animLoopNever.label            "Jangan sesekali">
+<!ENTITY animLoopNever.accesskey        "g">

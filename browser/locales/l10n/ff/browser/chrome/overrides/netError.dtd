@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Loowgol hello waɗii caɗeele">
+<!ENTITY retry.label "Fuɗɗito">
+<!ENTITY returnToPreviousPage.label "Rutto">
+<!ENTITY returnToPreviousPage1.label "Rutto (Wasiyaa)">
+
+<!ENTITY viewCertificate.label "Yiy Sartifikaa">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Sarworde Nde Yiytaaka">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>So ndeen ñiiɓirde ena moƴƴi, aɗa waawi etaade ɗeeɗoo geɗe:</strong>
+<ul>
+  <li>Fuɗɗito so ɓooyii.</li>
+  <li>CƳeewto ceŋol laylaytol maa.</li>
+  <li>So ngon-ɗaa ko caggal ɓalal-jaynge, ƴeewto so &brandShortName; ena jogii yamiroore naatoyde e Geese.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Ƴeewto alkule puɗɗorɗe ɗee e innde fiilde ndee walla juume tappugol goɗɗe.</li> <li>Ƴeewto ngam so fiilde ndee dirtinaaka, innitaaka walla momtaaka.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Maa taw ko nde momtaande, dirtinaande, walla jamire fiilde ena kala ballagol.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>&brandShortName; horiima loowde ngoo hello.</p>">
+
+<!ENTITY captivePortal.title "Seŋo e laylaytol hee">
+<!ENTITY captivePortal.longDesc2 "<p>Aɗa foti seŋaade tawo e ngolɗoo laylaytol hade maa heɓde enternet.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Uddit nello seŋorgo e laylaytol ngol">
+
+<!ENTITY malformedURI.pageTitle "URL o moƴƴaani">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Fiilannde ɗaɓɓitaande ndee woodaani e kaasol &brandShortName;.</p><ul><li>Ngam reentino kisal, &brandShortName; naamnittaako piilanɗe doondiiɗe caɗeele e jaajol.</li><li>Dobo ngam fuɗɗitaade naamnito-ɗaa fiilannde ndee e lowre ndee</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Ñoƴƴu &quot;Fuɗɗito&quot; ngam faytude e mbayka ceŋol kesɗitinaa hello ngoo.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Tiiɗno jokkondir e jeyɓe lowre ndee ngam humpitde-ɓe ɗee caɗeele.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Tiiɗno jokkondir e jeyɓe lowre ndee ngam humpitde-ɓe ɗee caɗeele.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Ena wona ko maa aafaa won e topirɗe ngam waawde udditde ndee ñiiɓirde.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Ƴeewto teelte proxy ɗee ngam yuurnitaade so eɗe peewi.</li> <li>Jokkondir e jiiloowo laylaytol maa ngam ƴeewde so sarworde proxy ndee ena moƴƴi.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Ƴeewto teelte proxy ɗee ngam yuurnitaade so eɗe peewi.</li> <li>Ƴeewto so tawii ordinateer maa ena jogii seŋorde moƴƴere.</li> <li>So tawii ordinateer walla laylaytol maa koko suraa caggal ɓalal-jaynge, yuurno so &brandShortName; ena yamiraa naatde e geese.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ɗee caɗeele ena mbaawi arde so tawii ko a daaƴɗo walla caliiɗo kukiije.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Ƴeewto ngam yuurnitaade so yuɓɓo maa ena aafaa Personal Security Manager.</li> <li>Ɗum ena jolde so tawii teeltol sarworde ndee heftinaaka.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Hello ngo etoto-ɗaa naatnde ngoo waawaa hollireede sabu goongɗingol keɓe keɓaaɗe ɗee waawaa ƴeewteede.</li> <li>Tiiɗno jokkondir e jeyɓe lowre geese ndee ngam humpitde-ɓe caɗeele ɗee.</li> </ul>">
+
+<!ENTITY certerror.introPara2 "&brandShortName; tinii tanaa cooaaɗo wonande kisal, tee jokkaani haa <span class='hostname'/>. So aɗa yilloo ndee lowre, taƴooɓe ina mbaawi etaade wujjude kabaruuji baaɗi no pinle, iimeeluuji walla kabaruuji kartal keredi.">
+
+<!ENTITY certerror.sts.introPara "&brandShortName; yiytii huunde nde moƴƴaani e kisal, waɗde jokkaani haa <span class='hostname'/> sibu ndee lowre geese ina ɗaɓɓi ceŋol kisngol.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; yiytii saɗeende, waɗde jokkaani haa <span class='hostname'/>. Lowre geese ndee teeltiraaka no feewi walla montoor ordinateer maa reeglaaka e waktu moƴƴo.">
+<!ENTITY certerror.expiredCert.secondPara2 "Ina gasa tawa sartifikaa lowre geese ndee ko buntuɗo, ko ɗuum haɗata &brandShortName; seŋoraade kisal. So aɗa yilloo ndee lowre, yanooɓe ina mbaawi etaade wujjude kabaruuji baaɗi no pinle, iimeeluuji walla kabaruuji karal keredi.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Ina gasa tawa sartifikaa lowre geese ndee ko buntuɗo, ko ɗuum haɗata &brandShortName; seŋoraade kisal.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Ko mbaaw-ɗaa heen?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "<p>Ina gasa tawa saɗeende ndee jotondiri ko e lowre geese ndee, alaa ko mbaaw-ɗaa waɗde ngam safrude ɗum.</p><p>So tawii ngon-ɗaa ko e laylaytol antampiris walla so tawii aɗa huutoroo lidduwiris, aɗa waawi jokkondirde e kippuuji tammbol ngam heɓde ballal. Aɗa waawi kadi humpitde jiiloowo lowre geese ndee saɗeende ndee.</p>">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "<p>Montoor ordinateer maa tuugii ko e <span id='wrongSystemTime_systemDate2'/>. Yenane ñalngu, waktu e jurol waktu ordinateer ina teeltiraa no moƴƴi to teelte yuɓɓo too, caggal ɗuum loowtaa <span class='hostname'/></p>.
+<p>So tawii montoor maa reglaa ko e waktu moƴƴo oo, ina gasa tawa ko lowre geese ndee woni nde feewaani, ndeen noon a waawaa safrude saɗeende ndee. Aɗa waawi humptide jiiloowo lowre ndee saɗeende ndee.</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>Ellee saɗeende ndee jotondiri ko e lowre geese ndee tee a waawaa safrude nde. Aɗa waawi humpitde jiiloowo lowre geese ndee saɗeende ndee.</p>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Ndee lowre ena waawi tawo heɓotaako walla ko nde haljunde. Eto kadi ɗoo e ɓooyde.</li> <li>So a horiima loowde hay so hello, ƴeewto laylaytol ordinateer maa so ena seŋii.</li> <li>So tawii ordinateer walla laylaytol maa koko suraa caggal ɓalal-jaynge, yuurno so &brandShortName; ena yamiraa naatde e geese.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; haɗii ngo hello loowaade e ndii mbaydi sabu hello ngoo ena jogii dawirdol kisnal loowdi caliindi ɗum.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Hello ngo etot-ɗaa naatnde ngoo waawaa hollireede sabu juumre waɗii e baanjitagol keɓe ɗee.</p><ul><li>Tiiɗno jokkondir e jeyɓe lowre geese ndee ngam humpitde-ɓe caɗeele ɗee.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButton1Label "Jaɓ tanaa oo njokkaa">
+
+<!ENTITY errorReporting.automatic2 "Jaŋto juume hono ɗee ngam wallude Mozilla heftinde e falaade lowe bonnooje">
+<!ENTITY errorReporting.learnMore "Ɓeydu humpito…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Tiiɗno jokkondir e jeyɓe lowre ndee ngam humpitde-ɓe caɗe ɗee.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Humpito ceeɓtoto: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Jeertino: Ina soomi tanaa yeeso">
+<!ENTITY certerror.sts.pagetitle  "Hoto seŋo: soomi saɗeende kisal">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> ina jogii politik kisal biyeteengal HSTS (HTTP Strict Transport Security), ɗum firti ko &brandShortName; seŋortoo tan ko e kisal. A waawaa ɓeydude luulndal ngam yillaade ndee lowre.">
+<!ENTITY certerror.copyToClipboard.label "Natto binndol to ɗakkitorde">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> ena huutoroo teknolojii kiiɗtuɗo kadi beeɓɗo janngol. Ena weeɓana janyano saaktude humpito ngo cikkataa ena hisi. Maa jiiloowo oo feewnita sarworde ndee hade maa waawde yillaade lowre ndee.</p><p>Dokkol juumre: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Hello Daaƴaango">
+
+<!ENTITY clockSkewError.longDesc "Ordinateer maa ina sikki ko <span id='wrongSystemTime_systemDate1'/> haɗata &brandShortName; seŋoraade e kisal. Ngam yillaade <span class='hostname'></span>, waɗ montoor ordinateer maa e waktu to teelte yuɓɓo haa yahda e ñalngu e waktu jurol waktu gonangol ngol, caggal ɗuum kesɗitinaa <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Ena wayi hono teelte kisal laylaytol maa gaddata ɗee caɗe. Aɗa yiɗi artirde teelte goowaaɗe ɗee?">
+<!ENTITY prefReset.label "Artir teelte goowaaɗe">
+
+<!ENTITY networkProtocolError.longDesc "<p>Hello ngo etoto-ɗaa ɗisde ngoo waawaa ɗiseede sibu juumre yiytaande nder jaɓɓitorde geese.</p><ul><li>Tiiɗno jokkondir e joom en lowe geese ɗee ngam habrude ɗum en saɗeende ndee.</li></ul>">

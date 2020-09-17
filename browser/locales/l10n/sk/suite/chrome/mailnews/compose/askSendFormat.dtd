@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "Otázka správy HTML">
+
+<!ENTITY recipient.label "Niektorí adresáti nie sú v zozname adresátov schopných prijímať správy vo formáte HTML.">
+
+<!ENTITY question.label "Chcete previesť správu na text alebo odoslať ako HTML?">
+
+<!ENTITY plainTextAndHtml.label "Odoslať ako text aj HTML">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Odoslať ako text">
+<!ENTITY plainTextOnly.accesskey "t">
+<!ENTITY htmlOnly.label "Odoslať iba ako HTML">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Odoslať">
+<!ENTITY send.accesskey "O">

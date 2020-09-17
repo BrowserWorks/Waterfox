@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Նոր օրացույց" >
+<!ENTITY wizard.label             "Նոր օրացույց" >
+<!ENTITY wizard.description       "Տեղորոշե՛ք Ձեր օրացույցը" >
+
+<!ENTITY initialpage.description    "Ձեր օրացույցը կարող է պահվել Ձեր համակարգչում, կամ սպասարկչում, հեռակա միանալու, Ձեր ընկերների կամ գործընկերների հետ կիսվելու համար։" >
+<!ENTITY initialpage.computer.label  "Իմ համակարգչում">
+<!ENTITY initialpage.network.label  "Ցանցում">
+
+<!ENTITY locationpage.description         "Տեղեկացրե՛ք Ձեր հեռակա օրացույցի մուտք գործելու համար անհրաժեշտ տեղեկությունները" >
+<!ENTITY locationpage.login.description   "Ընտրովի․ մուտքագրե՛ք օգտատիրոջ անուն և գաղտնաբառ" >
+<!ENTITY locationpage.username.label      "Օգտանուն՝" >
+<!ENTITY locationpage.password.label      "Գաղտնաբառ՝" >
+
+<!ENTITY custompage.shortdescription  "Հարմարեցրե՛ք Ձեր օրացույցը" >
+<!ENTITY custompage.longdescription   "Դուք կարող Եք անվանել և գունավորել իրադարձությունները այս օրացույցում։" >
+
+<!ENTITY finishpage.shortdescription  "Օրացույցը ստեղծված է" >
+<!ENTITY finishpage.longdescription   "Ձեր օրացույցը ստեղծված է։" >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Այլ">
+
+<!ENTITY buttons.create.label "Նոր օրացույց">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Գտնել օրացույցեր">
+<!ENTITY buttons.find.accesskey "F">
+
+<!ENTITY buttons.back.label "Հետ">
+<!ENTITY buttons.back.accesskey "B">
+
+<!ENTITY buttons.subscribe.label "Բաժանորդագրվել">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "Օրացույցի տեսակ՝">
+<!ENTITY location.label "Տեղ՝">
+<!ENTITY location.placeholder "օրացույցի սպասարկչի URL կամ խնամորդի անուն">
+
+<!ENTITY network.nocredentials.label "Այս տեղը չի պահանջում հավատարմագրեր">
+<!ENTITY network.loading.description "Սպասե՛ք մինչ Ձեր օրացույցերը կհայտնաբերվեն։">
+<!ENTITY network.notfound.description "Այդտեղ օրացույց չգտնվեց։ Խնդրում ենք ստուգել Ձեր կարգավորումները։">
+<!ENTITY network.authfail.description "Ձեր մուտքագրած հավատարմությունը չի ընդունվել։ Խնդրում ենք ստուգել Ձեր կարգավորումները։">
+
+<!ENTITY network.subscribe.single.description "Ընտրե՛ք օրացույցեր, որոնց ցանկանում Եք գրանցվել։">
+<!ENTITY network.subscribe.multiple.description "Օրացույցերի բազում տարբերակներ հասանելի են այստեղ։ Ընտրե՛ք օրացույցի տեսակը, ինչից հետո նշե՛ք օրացույցեր որոնց կցանկանաք գրանցվել։">

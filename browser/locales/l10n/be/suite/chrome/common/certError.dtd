@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certerror.pagetitle "Злучэнне, якому няма даверу">
+<!ENTITY certerror.longpagetitle "Гэтаму злучэнню няма даверу">
+<!ENTITY certerror.introPara1 "Вы запрасілі &brandShortName; бяспечна
+злучыцца з <b>#1</b>, але мы не можам пацвердзіць, што ваша злучэнне бяспечнае.">
+<!ENTITY certerror.introPara2 "Звычайна, калі вы намагаецеся злучыцца бяспечна,
+пляцоўкі Сеціва прадастаўляюць давернае вызначэнне, каб даказаць, што вы
+патрапілі ў патрэбнае месца. Аднак адмету гэтай пляцоўкі нельга пацвердзіць.">
+<!ENTITY certerror.whatShouldIDo.heading "Што я мушу рабіць?">
+<!ENTITY certerror.whatShouldIDo.content "Калі вы звычайна злучаецеся
+з гэтай сеціўнай пляцоўкай без праблемаў, гэтая памылка можа значыць, што нехта
+спрабуе выдаць сябе за гэтую пляцоўку, і вы не павінны працягваць.">
+<!ENTITY certerror.getMeOutOfHere.label "Гэта гучыць кепска, перакіньце мяне на маю хатнюю старонку">
+<!ENTITY certerror.expert.heading "Я ўсведамляю рызыку">
+<!ENTITY certerror.expert.content "Калі вы ведаеце, што вы робіце, вы
+вы можаце загадаць &brandShortName; пачаць давяраць адмеце гэтай сеціўнай пляцоўкі.
+<b>Нават калі вы давяраеце пляцоўцы, гэта памылка можа сведчыць пра тое,
+што хтосьці ўблытваецца ў ваша злучэнне.</b>">
+<!ENTITY certerror.expert.contentPara2 "Не дадавайце выключэнне, калі
+вы не ведаеце, што існуе прычына, згодна якой гэтая сеціўная пляцоўка не ўжывае давернай адметы.">
+<!ENTITY certerror.addException.label "Дадаць выключэнне…">
+<!ENTITY certerror.technical.heading "Тэхнічныя падрабязнасці">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Navegación privada">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ protección de seguimiento">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "No estás en navegación privada">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; bloquea partes de las páginas que puede rastrear tu actividad de navegación.">
+<!ENTITY privatebrowsingpage.description.privateDetails "No guardaremos nada del historial, pero las descargas y los nuevos marcadores serán almacenados en tu dispositivo.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "En la navegación privada, nosotros no guardaremos nada del historial o cookies del navegador. Los marcadores que agregues y las descarga que realices serán almacenados en tu dispositivo.">
+
+<!ENTITY privatebrowsingpage.link.private "¿Quieres aprender más?">
+<!ENTITY privatebrowsingpage.link.normal "Abrir una nueva pestaña privada">

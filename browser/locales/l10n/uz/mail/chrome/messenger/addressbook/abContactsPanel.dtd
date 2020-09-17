@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+
+
+
+
+
+
+<!ENTITY addressbookPicker.label            "Manzil kitobi:">
+<!ENTITY addressbookPicker.accesskey        "k">
+
+
+<!ENTITY SearchNameOrEmail.label            "Nomi yoki e-pochtasi">
+
+<!ENTITY addtoToFieldMenu.label             "Qabul qiluvchi maydoniga qo‘shish">
+<!ENTITY addtoToFieldMenu.accesskey         "q">
+<!ENTITY addtoCcFieldMenu.label             "Cc maydoniga qo‘shish">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Bcc maydoniga qo‘shish">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "O‘chirish">
+<!ENTITY deleteAddrBookCard.accesskey       "O">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY toButton.label                     "Qabul qiluvchiga qo‘shish:">
+<!ENTITY toButton.accesskey                 "q">
+<!ENTITY ccButton.label                     "Cc qatoriga qo‘shish:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Bcc qatoriga qo‘shish:">
+<!ENTITY bccButton.accesskey                "B">

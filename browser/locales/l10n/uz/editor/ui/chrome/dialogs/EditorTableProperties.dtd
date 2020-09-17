@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Jadval xossalari">
+<!ENTITY applyButton.label                "Qo‘llash">
+<!ENTITY applyButton.accesskey            "Q">
+<!ENTITY closeButton.label                "Yopish">
+<!ENTITY tableTab.label                   "Jadval">
+<!ENTITY cellTab.label                    "Kataklar">
+<!ENTITY tableRows.label                  "Qatorlar">
+<!ENTITY tableRows.accessKey              "Q">
+<!ENTITY tableColumns.label               "Ustunlar:">
+<!ENTITY tableColumns.accessKey           "U">
+<!ENTITY tableHeight.label                "Bo‘yi:">
+<!ENTITY tableHeight.accessKey            "B">
+<!ENTITY tableWidth.label                 "Eni:">
+<!ENTITY tableWidth.accessKey             "E">
+<!ENTITY tableBorderSpacing.label         "Chegara va bo‘sh joylar">
+<!ENTITY tableBorderWidth.label           "Chegarasi:">
+<!ENTITY tableBorderWidth.accessKey       "C">
+<!ENTITY tableSpacing.label               "Bo‘sh joy qoldirish:">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "To‘ldirish:">
+<!ENTITY tablePadding.accessKey           "T">
+<!ENTITY tablePxBetwCells.label           "kataklar orasida piksel">
+<!ENTITY tablePxBetwBrdrCellContent.label "katak chegarasi va tarkibi orasidagi piksel">
+<!ENTITY tableAlignment.label             "Jadvalni moslash:">
+<!ENTITY tableAlignment.accessKey         "J">
+<!ENTITY tableCaption.label               "Sarlavha:">
+<!ENTITY tableCaption.accessKey           "S">
+<!ENTITY tableCaptionAbove.label          "Jadvalning tepasi">
+<!ENTITY tableCaptionBelow.label          "Jadvalning pasti">
+<!ENTITY tableCaptionLeft.label           "Jadvalning chapi">
+<!ENTITY tableCaptionRight.label          "Jadvalning o‘nggi">
+<!ENTITY tableCaptionNone.label           "Yo‘q">
+<!ENTITY tableInheritColor.label           "(Sahifani quyidagi orqali rangli ko‘rsatish)">
+
+<!ENTITY cellSelection.label              "Tanlash">
+<!ENTITY cellSelectCell.label             "Katak">
+<!ENTITY cellSelectRow.label              "Qator">
+<!ENTITY cellSelectColumn.label           "Ustun">
+<!ENTITY cellSelectNext.label             "Keyingi">
+<!ENTITY cellSelectNext.accessKey         "K">
+<!ENTITY cellSelectPrevious.label         "Oldingi">
+<!ENTITY cellSelectPrevious.accessKey     "O">
+<!ENTITY applyBeforeChange.label          "Joriy o‘zgarishlar tanlash o‘zgarishidan oldinn saqlanadi.">
+<!ENTITY cellContentAlignment.label       "Tarkibni taxlash">
+<!ENTITY cellHorizontal.label             "Gorizontal">
+<!ENTITY cellHorizontal.accessKey         "G">
+<!ENTITY cellVertical.label               "Vertikal:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Katak uslubi:">
+<!ENTITY cellStyle.accessKey              "K">
+<!ENTITY cellNormal.label                 "O‘rtacha">
+<!ENTITY cellHeader.label                 "Bosh qator">
+<!ENTITY cellTextWrap.label               "Matnni moslash:">
+<!ENTITY cellTextWrap.accessKey           "M">
+<!ENTITY cellWrap.label                   "Moslash">
+<!ENTITY cellNoWrap.label                 "Moslanmasin">
+<!ENTITY cellAlignTop.label               "Yuqori">
+<!ENTITY cellAlignMiddle.label            "O‘rta">
+<!ENTITY cellAlignBottom.label            "Quyi">
+<!ENTITY cellAlignJustify.label           "Moslashtirish">
+<!ENTITY cellInheritColor.label           "(Jadvalni quyidagi orqali rangli ko‘rsatish)">
+<!ENTITY cellUseCheckboxHelp.label        "Barcha tanlangan kataklar uchun qo‘llangan xossalarni aniqlash uchun tanlash tugmalaridan foydalaning">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label                       "Hajmi">
+<!ENTITY pixels.label                     "piksel">
+<!ENTITY backgroundColor.label            "Orqa fon rangi:">
+<!ENTITY backgroundColor.accessKey        "O">
+<!ENTITY AlignLeft.label                  "Chap">
+<!ENTITY AlignCenter.label                "Markaz">
+<!ENTITY AlignRight.label                 "O‘ng">

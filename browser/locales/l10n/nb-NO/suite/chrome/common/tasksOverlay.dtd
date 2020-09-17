@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label "Minimer">
+<!ENTITY minimizeWindowCmd.key "M">
+<!ENTITY zoomWindowCmd.label "Zoom">
+<!ENTITY navigatorCmd.label "Nettleser">
+<!ENTITY navigatorCmd.accesskey "N">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Nettsideutvikler">
+<!ENTITY editorCmd.accesskey "u">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Feilkonsoll">
+<!ENTITY errorConsoleCmd.accesskey "F">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "Nettleser">
+<!ENTITY taskComposer.tooltip "Nettsideutvikler">
+
+<!ENTITY webDevelopment.label "Nettsideutvikling">
+<!ENTITY webDevelopment.accesskey "e">
+
+<!ENTITY windowMenu.label "Vindu">
+<!ENTITY windowMenu.accesskey "u">
+
+<!ENTITY tasksMenu.label "Verktøy">
+<!ENTITY tasksMenu.accesskey "e">
+
+<!ENTITY datamanCmd.label "Databehandler">
+<!ENTITY datamanCmd.accesskey "D">
+
+<!ENTITY passwordManagerCmd.label "Passordbehandling">
+<!ENTITY passwordManagerCmd.accesskey "P">
+
+<!ENTITY passwordDisplayCmd.label "Behandle lagrede passord">
+<!ENTITY passwordDisplayCmd.accesskey "e">
+
+<!ENTITY passwordExpireCmd.label "Logg ut">
+<!ENTITY passwordExpireCmd.accesskey "u">
+
+<!ENTITY downloadManagerCmd.label "Nedlastinger">
+<!ENTITY downloadManagerCmd.accesskey "N">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Utvidelser">
+<!ENTITY addOnsManagerCmd.accesskey "U">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Bytt profil …">
+<!ENTITY switchProfileCmd.accesskey "y">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Konfigurer Sync …">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "Synkroniser nå">
+<!ENTITY syncSyncNowItem.accesskey "S">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Знайсці і замяніць">
+<!ENTITY findField.label "Знайсці тэкст:">
+<!ENTITY findField.accesskey "н">
+<!ENTITY replaceField.label "Замяніць (чым):">
+<!ENTITY replaceField.accesskey "м">
+<!ENTITY caseSensitiveCheckbox.label "Адрозніваць вялікія/малыя літары">
+<!ENTITY caseSensitiveCheckbox.accesskey "р">
+<!ENTITY wrapCheckbox.label "Вакол">
+<!ENTITY wrapCheckbox.accesskey "В">
+<!ENTITY backwardsCheckbox.label "Шукаць назад">
+<!ENTITY backwardsCheckbox.accesskey "н">
+<!ENTITY findNextButton.label "Знайсці наступны">
+<!ENTITY findNextButton.accesskey "З">
+<!ENTITY replaceButton.label "Замяніць">
+<!ENTITY replaceButton.accesskey "я">
+<!ENTITY replaceAndFindButton.label "Замяніць і знайсці">
+<!ENTITY replaceAndFindButton.accesskey "і">
+<!ENTITY replaceAllButton.label "Замяніць усе">
+<!ENTITY replaceAllButton.accesskey "У">
+<!ENTITY closeButton.label "Закрыць">
+<!ENTITY closeButton.accesskey "З">

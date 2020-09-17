@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Tze'n ruwa">
+<!ENTITY insertSmiley.accesskey "T">
+
+<!ENTITY smiley1Cmd.label "Tze'enïk">
+<!ENTITY smiley1Cmd.accesskey "T">
+<!ENTITY smiley1Cmd.tooltip "Tich'ap jun tze'n paläj">
+<!ENTITY smiley2Cmd.label "B'is">
+<!ENTITY smiley2Cmd.accesskey "B">
+<!ENTITY smiley2Cmd.tooltip "Tich'ik jun b'is ruwäch">
+<!ENTITY smiley3Cmd.label "Rek'wach">
+<!ENTITY smiley3Cmd.accesskey "R">
+<!ENTITY smiley3Cmd.tooltip "Tich'ik jun rek'wach wachaj">
+<!ENTITY smiley4Cmd.label "Juruj raq'">
+<!ENTITY smiley4Cmd.accesskey "J">
+<!ENTITY smiley4Cmd.tooltip "Tich'ik jun nujuruj raq' wachaj">
+<!ENTITY smiley5Cmd.label "Nitze'en">
+<!ENTITY smiley5Cmd.accesskey "N">
+<!ENTITY smiley5Cmd.tooltip "Tich'ik jun tze'n paläj">
+<!ENTITY smiley6Cmd.label "Nik'ix">
+<!ENTITY smiley6Cmd.accesskey "N">
+<!ENTITY smiley6Cmd.tooltip "Tich'ik jun nik'ïx paläj">
+<!ENTITY smiley7Cmd.label "Ka'i' ruk'u'x">
+<!ENTITY smiley7Cmd.accesskey "K">
+<!ENTITY smiley7Cmd.tooltip "Tich'ik jun ka'i' ruk'u'x paläj">
+<!ENTITY smiley8Cmd.label "Ajmayel">
+<!ENTITY smiley8Cmd.accesskey "a">
+<!ENTITY smiley8Cmd.tooltip "Tich'ik jun ajmayel paläj">
+<!ENTITY smiley9Cmd.label "Tz'ub'">
+<!ENTITY smiley9Cmd.accesskey "T">
+<!ENTITY smiley9Cmd.tooltip "Tich'ik jun tz'ub' wachaj">
+<!ENTITY smiley10Cmd.label "Sik'inel">
+<!ENTITY smiley10Cmd.accesskey "S">
+<!ENTITY smiley10Cmd.tooltip "Tich'ik jun sik'inel paläj">
+<!ENTITY smiley11Cmd.label "Tik'asäs">
+<!ENTITY smiley11Cmd.accesskey "T">
+<!ENTITY smiley11Cmd.tooltip "Tich'ik jun tik'asäs paläj">
+<!ENTITY smiley12Cmd.label "Pwäq-Chi'aj">
+<!ENTITY smiley12Cmd.accesskey "P">
+<!ENTITY smiley12Cmd.tooltip "Tich'ik jun pwäq-chi'aj paläj">
+<!ENTITY smiley13Cmd.label "Aqanaj-pa-Chi'aj">
+<!ENTITY smiley13Cmd.accesskey "a">
+<!ENTITY smiley13Cmd.tooltip "Tich'ik jun aqanaj-pa-chi'aj paläj">
+<!ENTITY smiley14Cmd.label "Ütz ruk'u'x">
+<!ENTITY smiley14Cmd.accesskey "Ü">
+<!ENTITY smiley14Cmd.tooltip "Tich'ik jun ütz ruk'u'x paläj">
+<!ENTITY smiley15Cmd.label "Oq'el">
+<!ENTITY smiley15Cmd.accesskey "q">
+<!ENTITY smiley15Cmd.tooltip "Tich'ik jun oq'el paläj">
+<!ENTITY smiley16Cmd.label "Chi'aj-e-Tz'apäl">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "Tich'ik jun chi'aj-e-tz'apäl paläj">
+<!ENTITY SmileButton.tooltip "Tich'ap jun tze'n paläj">

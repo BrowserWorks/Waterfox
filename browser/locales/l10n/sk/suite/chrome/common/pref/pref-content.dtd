@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Obsah">
+<!ENTITY pref.content.description               "Tieto nastavenia ovplyvňujú zobrazenie webových stránok a obsahu správ v programe &brandShortName;.">
+
+<!ENTITY siteIcons.label                        "Ikony webových stránok">
+<!ENTITY useSiteIcons.label                     "Zobrazovať ikony webových stránok">
+<!ENTITY useSiteIcons.accesskey                 "Z">
+<!ENTITY useFavIcons2.label                     "Skúsiť použiť ikonu servera, ak stránka neurčuje vlastnú">
+<!ENTITY useFavIcons2.accesskey                 "i">
+
+<!ENTITY scrolling.label                        "Posúvanie obsahu">
+<!ENTITY useAutoScroll.label                    "Použiť automatický posun">
+<!ENTITY useAutoScroll.accesskey                "t">
+<!ENTITY useSmoothScroll.label                  "Použiť plynulé posúvanie">
+<!ENTITY useSmoothScroll.accesskey              "o">
+
+<!ENTITY zoomPrefs.label                        "Nastavenia lupy">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "Rozsah od">
+<!ENTITY minZoom.accesskey                      "r">
+<!ENTITY maxZoom.label                          "do">
+<!ENTITY maxZoom.accesskey                      "d">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY siteSpecific.label                     "Pamätať si nastavenie lupy pre každú stránku zvlášť">
+<!ENTITY siteSpecific.accesskey                 "n">
+<!ENTITY textZoomOnly.label                     "Meniť veľkosť textu namiesto celého obsahu stránok">
+<!ENTITY textZoomOnly.accesskey                 "e">
+<!ENTITY enableAutomaticImageResizing.label     "Meniť veľkosť veľkých obrázkov na veľkosť okna">
+<!ENTITY enableAutomaticImageResizing.accesskey "M">
+
+<!ENTITY allowHWAccel.label                     "Použiť hardvérové urýchľovanie (ak je dostupné)">
+<!ENTITY allowHWAccel.accesskey                 "h">
+<!ENTITY blockAutoRefresh.label                 "Upozorniť, ak sa webová stránka pokúša o presmerovanie alebo obnovenie">
+<!ENTITY blockAutoRefresh.accesskey             "U">
+
+<!ENTITY showZoomStatusPanel.label              "Zobraziť nastavenie priblíženia v stavovom riadku">

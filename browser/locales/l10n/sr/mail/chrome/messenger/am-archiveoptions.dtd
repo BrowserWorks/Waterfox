@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Опције архивирања">
+<!ENTITY archiveGranularityPrefix.label "Када се архивирају поруке, смести их у:">
+<!ENTITY archiveFlat.label "Једну фасциклу">
+<!ENTITY archiveFlat.accesskey "ј">
+<!ENTITY archiveYearly.label "Годишње архивиране фасцикле">
+<!ENTITY archiveYearly.accesskey "Г">
+<!ENTITY archiveMonthly.label "Месечно архивиране фасцикле">
+<!ENTITY archiveMonthly.accesskey "М">
+<!ENTITY keepFolderStructure.label "Задржи постојећу структуру фасцикли архивираних порука">
+<!ENTITY keepFolderStructure.accesskey "З">
+<!ENTITY archiveExample.label "Пример">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Архиве">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Долазно">

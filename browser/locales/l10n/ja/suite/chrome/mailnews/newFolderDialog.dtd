@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "新しいフォルダー">
+<!ENTITY name.label                 "名前:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "作成先:">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "このサーバーではフォルダーの中身が制限されています。">
+<!ENTITY folderRestriction2.label   "新しいフォルダーに入れるものを選択してください:">
+<!ENTITY foldersOnly.label          "サブフォルダーだけを入れる">
+<!ENTITY messagesOnly.label         "メッセージだけを入れる">
+<!ENTITY accept.label               "フォルダーを作成">
+<!ENTITY accept.accesskey           "r">

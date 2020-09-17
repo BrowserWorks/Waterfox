@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Message Filters">
+<!ENTITY nameColumn.label "Szűrő neve">
+<!ENTITY activeColumn.label "Engedélyezve">
+<!ENTITY newButton.label "Új…">
+<!ENTITY newButton.accesskey "Ú">
+<!ENTITY editButton.label "Szerkesztés…">
+<!ENTITY editButton.accesskey "S">
+<!ENTITY deleteButton.label "Törlés">
+<!ENTITY deleteButton.accesskey "T">
+<!ENTITY reorderUpButton.label "Mozgatás felfelé">
+<!ENTITY reorderUpButton.accesskey "f">
+<!ENTITY reorderDownButton.label "Mozgatás lefelé">
+<!ENTITY reorderDownButton.accesskey "l">
+<!ENTITY filterHeader.label "Az engedélyezett szűrők a következő sorrendben fognak futni:">
+<!ENTITY filtersForPrefix.label "Szűrők a következőkhöz:">
+<!ENTITY filtersForPrefix.accesskey "z">
+<!ENTITY viewLogButton.label "Szűrőnapló">
+<!ENTITY viewLogButton.accesskey "n">
+<!ENTITY runFilters.label "Futtatás most">
+<!ENTITY runFilters.accesskey "F">
+<!ENTITY stopFilters.label "Leállítás">
+<!ENTITY stopFilters.accesskey "L">
+<!ENTITY folderPickerPrefix.label "Kijelölt szűrők futtatása ezen a mappán:">
+<!ENTITY folderPickerPrefix.accesskey "f">
+<!ENTITY choosethis.label "mappa kiválasztása">
+<!ENTITY choosethisnewsserver.label "hírkiszolgáló kiválasztása">

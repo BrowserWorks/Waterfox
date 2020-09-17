@@ -1,0 +1,39 @@
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+<!ENTITY pref.composer.title "Composer">
+
+<!ENTITY saving "बचत">
+<!ENTITY AutoSaveCheck "प्रत्येकलाई स्वचालित रूपमा बचत गर्नुहोस्">
+<!ENTITY minText "मिनेट">
+
+<!ENTITY exterLegend.label "बाह्य सम्पादक">
+<!ENTITY htmlSource "एचटीएमएल स्रोत:">
+<!ENTITY imageeditor "छवि:">
+<!ENTITY chooseButton.label "रोज्नुहोस्">
+
+<!ENTITY recentFiles.title "हालैका प्रयोग पृष्ठको मेनु">
+<!ENTITY documentsInMenu.label "सूचीकृत पृष्ठको अधिकतम सङ्ख्या:">
+<!ENTITY documentsInMenu.accesskey "n">
+
+<!ENTITY savingFiles.title "पृष्ठ बचत वा प्रकाशन गर्दा">
+<!ENTITY preserveExisting.label "मौलिक स्रोत ढाँचा संरक्षण गर्नुहोस्">
+<!ENTITY preserveExisting.accesskey "P">
+<!ENTITY preserveExisting.tooltip "लाइन विच्छेदन र पृष्ठको मौलिक ढाँचा संरक्षण गर्दछ">
+<!ENTITY saveAssociatedFiles.label "पृष्ठ बचत गर्ने बेलामा छवि र अन्य सम्बन्धित फाइल बचत गर्नुहोस्">
+<!ENTITY saveAssociatedFiles.accesskey "S">
+<!ENTITY showPublishDialog.label "पृष्ठ प्रकाशन गर्दा सधैँ प्रकाशन संवाद देखाउनुहोस्">
+<!ENTITY showPublishDialog.accesskey "A">
+
+<!ENTITY composerEditing.label "सम्पादन">
+<!ENTITY spellCheckInline.label "तपाईँले टाइप गरे अनुरूपको हिज्जे जाँच गर्नुहोस्">
+<!ENTITY spellCheckInline.accesskey "C">
+<!ENTITY maintainStructure.label "कक्ष घुसाउदा वा मेट्दा तालिका सजावट सुरक्षण गर्नुहोस्">
+<!ENTITY maintainStructure.tooltip "कक्ष घुसाएपछि वा मेटेपछि कक्ष स्वचालित रूपमा थपेर तालिकाको आयातकार आकार संरक्षण गर्दछ">
+<!ENTITY maintainStructure.accesskey "M">
+<!ENTITY useCSS.label "HTML तत्व र विशेषताका साटोमा CSS शैली प्रयोग गर्नुहोस्">
+<!ENTITY useCSS.accesskey "U">
+<!ENTITY crInPCreatesNewP.label "अनुच्छेदमा फर्काउदा सधैँ नयाँ अनुच्छेद सिर्जना गर्दछ">
+<!ENTITY crInPCreatesNewP.accesskey "R">

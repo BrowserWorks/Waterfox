@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Gegevens ymportearje">
+<!ENTITY migration.welcome "Wolkom">
+<!ENTITY migration.importing "Dwaande mei ymportearjen">
+<!ENTITY migration.list.description "&brandShortName; kin agindagegevens fan in protte populêre tapassingen ymportearje. Op jo kompjûter binne gegevens fan de folgjende tapassingen fûn. Selektearje fan hokker tapassing út jo gegevens ymportearje wolle.">
+<!ENTITY migration.progress.description "Dwaande mei ymportearjen fan selektearre gegevens">

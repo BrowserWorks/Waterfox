@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Caché">
+<!ENTITY pref.cache.caption              "Estabelecer as opcións da caché">
+<!ENTITY cachePara                       "A caché conserva copias das páxinas web visitadas frecuentemente no disco duro. (Premendo no botón Recargar sempre se mostra a última versión dunha páxina.)">
+<!ENTITY cacheCheck.label                "Permtir que o &brandShortName; xestione o tamaño da caché">
+<!ENTITY cacheCheck.accesskey            "x">
+<!ENTITY diskCacheUpTo.label             "Usar ata">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "MB de espazo en disco na caché">
+<!ENTITY diskCacheFolder.label           "Localización do cartafol da caché:">
+<!ENTITY clearDiskCache.label            "Limpar a caché">
+<!ENTITY clearDiskCache.accesskey        "c">
+<!ENTITY chooseDiskCacheFolder.label     "Escoller cartafol…">
+<!ENTITY chooseDiskCacheFolder.accesskey "f">
+<!ENTITY diskCacheFolderExplanation      "Os ficheiros da caché almacenaranse nun cartafol chamado &quot;Caché&quot; do cartafol que especificou. Reinicie &brandShortName; para que os cambios teñan efecto.">
+<!ENTITY docCache.label                  "Compara a páxina na caché coa páxina na rede:">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "Unha vez por sesión">
+<!ENTITY checkEveryTime.label            "Cada vez que vexa a páxina">
+<!ENTITY checkNever.label                "Nunca">
+<!ENTITY checkAutomatically.label        "Cando a páxina está desactualizada">
+
+<!ENTITY prefetchTitle.label             "Precarga de ligazóns">
+<!ENTITY enablePrefetch.label            "Precargar as páxinas web mentes está inactivo, para que as ligazóns nas páxinas web deseñadas para precarga se carguen máis rápido">
+<!ENTITY enablePrefetch.accesskey        "P">

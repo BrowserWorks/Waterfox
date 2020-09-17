@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Søk">
+
+<!ENTITY newPref.namePlaceholder       "Navn">
+
+<!ENTITY newPref.valueBoolean          "Boolsk">
+<!ENTITY newPref.valueString           "Tekst">
+<!ENTITY newPref.valueInteger          "Tall">
+
+<!ENTITY newPref.stringPlaceholder     "Skriv inn en tekst">
+<!ENTITY newPref.numberPlaceholder     "Skriv inn et tall">
+
+<!ENTITY newPref.toggleButton          "Slå av/på">
+<!ENTITY newPref.cancelButton          "Avbryt">
+
+<!ENTITY contextMenu.copyPrefName      "Kopier navn">
+<!ENTITY contextMenu.copyPrefValue     "Kopier verdi">

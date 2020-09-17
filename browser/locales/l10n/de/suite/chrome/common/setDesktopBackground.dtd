@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Hintergrundbild einrichten">
+
+<!ENTITY position.label             "Position:">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "Kacheln">
+<!ENTITY position.stretch.label     "Strecken">
+<!ENTITY position.center.label      "Mitte">
+<!ENTITY position.fill.label        "Füllen">
+<!ENTITY position.fit.label         "Einpassen">
+<!ENTITY picker.label               "Farbe:">
+<!ENTITY picker.accesskey           "f">
+<!ENTITY preview.caption            "Vorschau">
+<!ENTITY apply.label                "Anwenden">
+<!ENTITY apply.accesskey            "A">
+<!ENTITY close.label                "Schließen">

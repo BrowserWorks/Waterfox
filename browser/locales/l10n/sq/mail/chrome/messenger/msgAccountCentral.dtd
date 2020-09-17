@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Email">
+<!ENTITY readMsgsLink.label           "Lexoni mesazhe">
+<!ENTITY composeMsgLink.label         "Shkruani një mesazh të ri">
+
+<!ENTITY newsSectionHdr.label         "Grupe Lajmesh">
+<!ENTITY subscribeNewsLink.label      "Administroni pajtime në grupe lajmesh">
+
+<!ENTITY feedsSectionHdr.label        "Prurje">
+<!ENTITY subscribeFeeds.label         "Administroni pajtime">
+
+<!ENTITY chat.label                   "Fjalosje">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Llogari">
+<!ENTITY subscribeImapFolders.label   "Administroni dosje pajtimesh">
+<!ENTITY settingsLink.label           "Shihni rregullimet për këtë llogari">
+<!ENTITY setupNewAcct.label           "Rregulloni një llogari:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Veçori të Mëtejshme">
+<!ENTITY searchMsgsLink.label         "Kërkoni në mesazhe">
+<!ENTITY filtersLink.label            "Administroni filtra mesazhesh">
+<!ENTITY junkSettings.label           "Rregullime për postë të pavlerë">
+<!ENTITY offlineLink.label            "Rregullime për jo në linjë">

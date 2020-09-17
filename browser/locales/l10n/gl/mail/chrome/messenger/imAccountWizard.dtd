@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Asistente da conta de chat">
+
+<!ENTITY accountProtocolTitle.label   "Rede de chat">
+<!ENTITY accountProtocolInfo.label    "Escolla a rede da súa conta de chat.">
+<!ENTITY accountProtocolField.label   "Rede:">
+<!ENTITY accountProtocolGetMore.label "Obter máis…">
+
+<!ENTITY accountUsernameTitle.label   "Nome de usuario">
+<!ENTITY accountUsernameDuplicate.label "Esta xa está configurada!">
+
+<!ENTITY accountPasswordTitle.label   "Contrasinal">
+<!ENTITY accountPasswordInfo.label    "Escriba o seu contrasinal na caixa de abaixo.">
+<!ENTITY accountPasswordField.label   "Contrasinal:">
+<!ENTITY accountPasswordManager.label "O contrasinal introducido aquí almacenarase no Xestor de contrasinais. Deixe a caixa en branco se desexa que o contrasinal se lle pida en cada conexión.">
+
+<!ENTITY accountAdvancedTitle.label   "Opcións avanzadas">
+<!ENTITY accountAdvancedInfo.label    "Pode saltarse este paso se o desexa.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Avisarme de correo novo">
+<!ENTITY accountAliasGroupbox.caption "Alias local">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Este só se verá nas súas conversacións cando vostede fala, os contactos remotos non o verán.">
+<!ENTITY accountProxySettings.caption "Configuración do proxy">
+<!ENTITY accountProxySettings.change.label     "Cambiar…">
+<!ENTITY accountProxySettings.change.accessKey "C">
+
+<!ENTITY accountSummaryTitle.label   "Resumo">
+<!ENTITY accountSummaryInfo.label    "A continuación amosarase un resumo da información que introduciu. Comprobe os datos antes de crear a conta.">
+<!ENTITY accountSummary.connectNow.label "Conectar esta conta agora.">

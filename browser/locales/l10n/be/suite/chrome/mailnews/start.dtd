@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Калі ласка Пошты і Навінакупаў &brandShortName;">
+<!ENTITY headline.label 'Калі ласка да Пошты і Навінакупаў <a id="vendorURL" href="">&brandShortName;</a>!'>
+<!ENTITY description.label "Пошта і Навінакупы &brandShortName; – магутны спажывец пошты і навінаў з адкрытымі 
+зыходнікамі, які падтрымлівае ўдасканаленае выяўленне пошты-лухты і іншыя карысныя асаблівасці.">
+<!ENTITY features.title "Асаблівасці">
+<!ENTITY feat_multiacc.label "Падтрымка шматлікіх рахункаў">
+<!ENTITY feat_junk.label "Выяўленне пошты-лухты">
+<!ENTITY feat_feeds.label "Чытач жывільніка">
+<!ENTITY feat_filters.label "Сіты лістоў">
+<!ENTITY feat_htmlmsg.label "Падтрымка HTML лістоў">
+<!ENTITY feat_abook.label "Адрасная кніга">
+<!ENTITY feat_tags.label "Уладкавальные меціны і праявы пошты">
+<!ENTITY feat_integration.label "Шчыльнае ўзаемадзеянне з наборам прыстасаванняў &brandShortName;">
+<!ENTITY dict.title "Слоўнікі">
+<!ENTITY dict_intro.label "Слоўнікі, якія ўжываюцца для праверкі правапісу вашых лістоў.">
+<!ENTITY dict_info.label 'Шмат якія дадатковыя мовы могуць быць усталяваны з раздзелу
+<a id="dictURL" href="">Слоўнікі</a>
+<a href="https://addons.mozilla.org/seamonkey/">Дадаткаў Mozilla</a>.'>
+<!ENTITY info.title "Падрабязней">
+<!ENTITY info_bugs.label '<a href="http://www.mozilla.org/mailnews/">Мы</a> вітаем паведамленні аб хібах і запыты
+асаблівасцяў, але спачатку пачытайце <a id="releaseNotesURL" href="">заўвагі аб выданнях</a> і 
+запытайце <a href="https://bugzilla.mozilla.org/query.cgi">Багзіла</a>.'>

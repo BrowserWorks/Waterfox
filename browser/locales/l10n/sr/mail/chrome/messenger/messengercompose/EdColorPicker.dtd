@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Боја">
+<!ENTITY lastPickedColor.label "Последње изабрана боја">
+<!ENTITY lastPickedColor.accessKey "л">
+<!ENTITY chooseColor1.label "Изаберите боју:">
+<!ENTITY chooseColor2.label "Унесите текстуалну HTML боју">
+<!ENTITY chooseColor2.accessKey "б">
+<!ENTITY setColorExample.label "(нпр.: &quot;#0000ff&quot; или &quot;blue&quot;):">
+<!ENTITY default.label "Подразумевано">
+<!ENTITY default.accessKey "д">
+<!ENTITY palette.label "Палета:">
+<!ENTITY standardPalette.label "Стандардно">
+<!ENTITY webPalette.label "Све веб боје">
+<!ENTITY background.label "Позадина за:">
+<!ENTITY background.accessKey "П">
+<!ENTITY table.label "Табела">
+<!ENTITY table.accessKey "Т">
+<!ENTITY cell.label "Ћелије">
+<!ENTITY cell.accessKey "
+е">

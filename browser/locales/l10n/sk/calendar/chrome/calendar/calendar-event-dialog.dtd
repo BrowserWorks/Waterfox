@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Upraviť položku" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Zachovať dĺžku trvania pri zmene dátumu ukončenia">
+<!ENTITY event.dialog.keepDurationButton.accesskey "a">
+
+<!ENTITY newevent.from.label                "Od" >
+<!ENTITY newevent.to.label                  "Do" >
+
+<!ENTITY newevent.status.label                    "Stav" >
+<!ENTITY newevent.status.accesskey                "S" >
+<!ENTITY newevent.eventStatus.none.label          "Nešpecifikovaný" >
+<!ENTITY newevent.eventStatus.none.accesskey      "e" >
+<!ENTITY newevent.todoStatus.none.label           "Nešpecifikovaný" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Zrušená" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "Z" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Zrušená" >
+<!ENTITY newevent.status.tentative.label          "Predbežná" >
+<!ENTITY newevent.status.tentative.accesskey      "n" >
+<!ENTITY newevent.status.confirmed.label          "Potvrdená" >
+<!ENTITY newevent.status.confirmed.accesskey      "P" >
+<!ENTITY newevent.status.needsaction.label        "Vyžaduje akciu" >
+<!ENTITY newevent.status.inprogress.label         "Prebieha" >
+<!ENTITY newevent.status.completed.label          "Dokončená" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "Dokončené na &#37;">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Upozorniť účastníkov">
+<!ENTITY event.attendees.notify.accesskey            "U">
+<!ENTITY event.attendees.notifyundisclosed.label     "Poslať každému účastníkovi zvlášť">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "d">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Použitím tejto voľby odošlete každému z účastníkov samostatnú pozvánku. Každá pozvánka obsahuje len účastníka, ktorému je posielaná. Identita ostatných účastníkov ostáva utajená.">
+<!ENTITY event.attendees.disallowcounter.label       "Zakázať protinávrhy">
+<!ENTITY event.attendees.disallowcounter.accesskey   "a">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Indikuje, že neakceptujete protinávrhy">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Nová">
+<!ENTITY  event.menu.item.new.accesskey                   "o">
+<!ENTITY  event.menu.item.new.event.label                 "Udalosť">
+<!ENTITY  event.menu.item.new.event.accesskey             "U">
+<!ENTITY  event.menu.item.new.task.label                  "Úloha">
+<!ENTITY  event.menu.item.new.task.accesskey              "h">
+<!ENTITY  event.menu.item.new.message.label               "Správa">
+<!ENTITY  event.menu.item.new.message.accesskey           "S">
+<!ENTITY  event.menu.item.new.contact.label               "Kontakt adresára">
+<!ENTITY  event.menu.item.new.contact.accesskey           "a">
+<!ENTITY  event.menu.item.close.label                     "Zavrieť">
+<!ENTITY  event.menu.item.close.accesskey                 "Z">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Uložiť">
+<!ENTITY  event.menu.item.save.accesskey                  "U">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Uložiť a zavrieť">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "v">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "Odstrániť…">
+<!ENTITY  event.menu.item.delete.accesskey                "d">
+<!ENTITY  event.menu.item.page.setup.label                "Nastavenie tlače">
+<!ENTITY  event.menu.item.page.setup.accesskey            "N">
+<!ENTITY  event.menu.item.print.label                     "Tlačiť">
+<!ENTITY  event.menu.item.print.accesskey                 "T">
+
+<!ENTITY  event.menu.edit.label                           "Upraviť">
+<!ENTITY  event.menu.edit.accesskey                       "U">
+<!ENTITY  event.menu.edit.undo.label                      "Späť">
+<!ENTITY  event.menu.edit.undo.accesskey                  "S">
+<!ENTITY  event.menu.edit.redo.label                      "Znovu">
+<!ENTITY  event.menu.edit.redo.accesskey                  "Z">
+<!ENTITY  event.menu.edit.cut.label                       "Vystrihnúť">
+<!ENTITY  event.menu.edit.cut.accesskey                   "V">
+<!ENTITY  event.menu.edit.copy.label                      "Kopírovať">
+<!ENTITY  event.menu.edit.copy.accesskey                  "K">
+<!ENTITY  event.menu.edit.paste.label                     "Prilepiť">
+<!ENTITY  event.menu.edit.paste.accesskey                 "P">
+<!ENTITY  event.menu.edit.select.all.label                "Vybrať všetko">
+<!ENTITY  event.menu.edit.select.all.accesskey            "a">
+
+<!ENTITY  event.menu.view.label                           "Zobraziť">
+<!ENTITY  event.menu.view.accesskey                       "Z">
+<!ENTITY  event.menu.view.toolbars.label                  "Panely">
+<!ENTITY  event.menu.view.toolbars.accesskey              "P">
+<!ENTITY  event.menu.view.toolbars.event.label            "Panel udalostí">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "u">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Prispôsobiť…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "P">
+<!ENTITY  event.menu.view.showlink.label                  "Zobraziť súvisiaci odkaz">
+<!ENTITY  event.menu.view.showlink.accesskey              "o">
+
+<!ENTITY  event.menu.options.label                            "Možnosti">
+<!ENTITY  event.menu.options.accesskey                        "M">
+<!ENTITY  event.menu.options.attendees.label                  "Pozvať účastníkov…">
+<!ENTITY  event.menu.options.attendees.accesskey              "P">
+<!ENTITY  event.menu.options.timezone2.label                  "Zobraziť časové pásma">
+<!ENTITY  event.menu.options.timezone2.accesskey              "a">
+<!ENTITY  event.menu.options.priority2.label                  "Priorita">
+<!ENTITY  event.menu.options.priority2.accesskey              "r">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Neurčená">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "u">
+<!ENTITY  event.menu.options.priority.low.label               "Nízka">
+<!ENTITY  event.menu.options.priority.low.accesskey           "N">
+<!ENTITY  event.menu.options.priority.normal.label            "Normálna">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "o">
+<!ENTITY  event.menu.options.priority.high.label              "Vysoká">
+<!ENTITY  event.menu.options.priority.high.accesskey          "V">
+<!ENTITY  event.menu.options.privacy.label                    "Súkromie">
+<!ENTITY  event.menu.options.privacy.accesskey                "S">
+<!ENTITY  event.menu.options.privacy.public.label             "Verejná udalosť">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "V">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Zobraziť iba dátum a čas">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "Z">
+<!ENTITY  event.menu.options.privacy.private.label            "Súkromná udalosť">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "S">
+<!ENTITY  event.menu.options.show.time.label                  "Zobraziť čas ako">
+<!ENTITY  event.menu.options.show.time.accesskey              "Z">
+<!ENTITY  event.menu.options.show.time.busy.label             "Zaneprázdnený">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "Z">
+<!ENTITY  event.menu.options.show.time.free.label             "Voľný">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "V">
+
+<!ENTITY event.invite.attendees.label                     "Pozvať účastníkov…">
+<!ENTITY event.invite.attendees.accesskey                 "P">
+<!ENTITY event.email.attendees.label                      "Napísať e-mail pre všetkých účastníkov…">
+<!ENTITY event.email.attendees.accesskey                  "a">
+<!ENTITY event.email.tentative.attendees.label            "Napísať e-mail pre nerozhodnutých účastníkov…">
+<!ENTITY event.email.tentative.attendees.accesskey        "N">
+<!ENTITY event.remove.attendees.label2                    "Odstrániť všetkých účastníkov">
+<!ENTITY event.remove.attendees.accesskey                 "O">
+<!ENTITY event.remove.attendee.label                      "Odstrániť účastníka">
+<!ENTITY event.remove.attendee.accesskey                  "d">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Uložiť">
+<!ENTITY  event.toolbar.saveandclose.label                "Uložiť a zavrieť">
+<!ENTITY  event.toolbar.delete.label                      "Odstrániť">
+<!ENTITY  event.toolbar.attendees.label                   "Pozvať účastníkov">
+<!ENTITY  event.toolbar.privacy.label                     "Súkromie">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Uložiť">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Uložiť a zavrieť">
+<!ENTITY  event.toolbar.delete.tooltip                    "Odstrániť">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Pozvať účastníkov">
+<!ENTITY  event.toolbar.attachments.tooltip               "Pridať prílohy">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Zmeniť súkromie">
+<!ENTITY  event.toolbar.priority.tooltip                  "Zmeniť prioritu">
+<!ENTITY  event.toolbar.status.tooltip                    "Zmeniť stav">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Zmeniť čas zaneprázdnený/dostupný">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Použiť protinávrh">
+<!ENTITY counter.button.proposal.accesskey                "p">
+<!ENTITY counter.button.proposal.tooltip2                 "Polia budú vyplnené na základe údajov z protinávrhu a všetci účastníci budú upozornení zodpovedajúcim spôsobom po uložení udalosti s prípadnými ďalšími zmenami">
+<!ENTITY counter.button.original.label                    "Použiť pôvodné údaje">
+<!ENTITY counter.button.original.accesskey                "u">
+<!ENTITY counter.button.original.tooltip2                 "Tieto polia budú vyplnené podľa pôvodnej udalosti pred vytvorením protinávrhu">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Názov:" >
+<!ENTITY event.title.textbox.accesskey                    "N">
+<!ENTITY event.location.label                             "Miesto konania:" >
+<!ENTITY event.location.accesskey                         "M">
+<!ENTITY event.categories.label                           "Kategória:">
+<!ENTITY event.categories.accesskey                       "g">
+<!ENTITY event.categories.textbox.label                   "Pridať novú kategóriu" >
+<!ENTITY event.calendar.label                             "Kalendár:" >
+<!ENTITY event.calendar.accesskey                         "K">
+<!ENTITY event.attendees.label                            "Účastníci:" >
+<!ENTITY event.attendees.accesskey                        "a">
+<!ENTITY event.alldayevent.label                          "Celodenná udalosť" >
+<!ENTITY event.alldayevent.accesskey                      "e">
+<!ENTITY event.from.label                                 "Začiatok:" >
+<!ENTITY event.from.accesskey                             "Z">
+<!ENTITY task.from.label                                  "Začiatok:" >
+<!ENTITY task.from.accesskey                              "Z">
+<!ENTITY event.to.label                                   "Koniec:" >
+<!ENTITY event.to.accesskey                               "c">
+<!ENTITY task.to.label                                    "Termín splnenia:" >
+<!ENTITY task.to.accesskey                                "T">
+<!ENTITY task.status.label                                "Stav:" >
+<!ENTITY task.status.accesskey                            "S">
+<!ENTITY event.repeat.label                               "Opakovať:" >
+<!ENTITY event.repeat.accesskey                           "O">
+<!ENTITY event.until.label                                "Do:">
+<!ENTITY event.until.accesskey                            "D">
+<!ENTITY event.reminder.label                             "Pripomenúť:" >
+<!ENTITY event.reminder.accesskey                         "r">
+<!ENTITY event.description.label                          "Popis:" >
+<!ENTITY event.description.accesskey                      "P">
+<!ENTITY event.attachments.label                          "Prílohy:" >
+<!ENTITY event.attachments.accesskey                      "h" >
+<!ENTITY event.attachments.menubutton.label               "Pripojiť">
+<!ENTITY event.attachments.menubutton.accesskey           "i">
+<!ENTITY event.attachments.url.label                      "Webová stránka…">
+<!ENTITY event.attachments.url.accesskey                  "W">
+<!ENTITY event.attachments.popup.remove.label             "Odstrániť" >
+<!ENTITY event.attachments.popup.remove.accesskey         "d" >
+<!ENTITY event.attachments.popup.open.label               "Otvoriť" >
+<!ENTITY event.attachments.popup.open.accesskey           "O" >
+<!ENTITY event.attachments.popup.removeAll.label          "Odstrániť všetky" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "v" >
+<!ENTITY event.attachments.popup.attachPage.label         "Pripojiť webovú stránku…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "w" >
+<!ENTITY event.url.label                                  "Súvisiaci odkaz:" >
+<!ENTITY event.priority2.label                            "Priorita:">
+
+<!ENTITY event.reminder.none.label                        "Nepripomínať " >
+<!ENTITY event.reminder.0minutes.before.label             "0 minút pred" >
+<!ENTITY event.reminder.5minutes.before.label             "5 minút pred" >
+<!ENTITY event.reminder.15minutes.before.label            "15 minút pred" >
+<!ENTITY event.reminder.30minutes.before.label            "30 minút pred" >
+<!ENTITY event.reminder.1hour.before.label                "1 hodinu pred" >
+<!ENTITY event.reminder.2hours.before.label               "2 hodiny pred" >
+<!ENTITY event.reminder.12hours.before.label              "12 hodín pred" >
+<!ENTITY event.reminder.1day.before.label                 "1 deň pred" >
+<!ENTITY event.reminder.2days.before.label                "2 dni pred" >
+<!ENTITY event.reminder.1week.before.label                "1 týždeň pred" >
+<!ENTITY event.reminder.custom.label                      "Vlastné…" >
+
+<!ENTITY event.reminder.multiple.label                    "Viacnásobné pripomienky…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Čas ako:">
+<!ENTITY event.statusbarpanel.privacy.label               "Súkromie:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Úprava opakovaní">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Neopakovať">
+<!ENTITY event.repeat.daily.label                       "Každý deň">
+<!ENTITY event.repeat.weekly.label                      "Každý týždeň">
+<!ENTITY event.repeat.every.weekday.label               "Každý pracovný deň">
+<!ENTITY event.repeat.bi.weekly.label                   "Každý druhý týždeň">
+<!ENTITY event.repeat.monthly.label                     "Každý mesiac">
+<!ENTITY event.repeat.yearly.label                      "Každý rok">
+<!ENTITY event.repeat.custom.label                      "Vlastné…">
+
+<!ENTITY event.recurrence.pattern.label                 "Šablóna opakovaní">
+<!ENTITY event.recurrence.occurs.label                  "Periodicita:" >
+<!ENTITY event.recurrence.day.label                     "denná" >
+<!ENTITY event.recurrence.week.label                    "týždenná" >
+<!ENTITY event.recurrence.month.label                   "mesačná" >
+<!ENTITY event.recurrence.year.label                    "ročná" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Každých" >
+<!ENTITY repeat.units.days.both                         "dní" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Každý pracovný deň v týždni" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Každý" >
+<!ENTITY repeat.units.weeks.both                        "týždeň" >
+<!ENTITY event.recurrence.on.label                      "Deň:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Každý" >
+<!ENTITY repeat.units.months.both                       "mesiac" >
+<!ENTITY event.recurrence.monthly.every.label           "Každý" >
+<!ENTITY event.recurrence.monthly.first.label           "Prvý">
+<!ENTITY event.recurrence.monthly.second.label          "Druhý">
+<!ENTITY event.recurrence.monthly.third.label           "Tretí">
+<!ENTITY event.recurrence.monthly.fourth.label          "Štvrtý">
+<!ENTITY event.recurrence.monthly.fifth.label           "Piaty">
+<!ENTITY event.recurrence.monthly.last.label            "Posledný">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "nedeľa" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "pondelok" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "utorok" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "streda" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "štvrtok" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "piatok" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "sobota" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "Deň v mesiaci">
+<!ENTITY event.recurrence.repeat.recur.label            "Tieto dni">
+
+<!ENTITY event.recurrence.every.label                        "Každý:" >
+<!ENTITY repeat.units.years.both                             "rok" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Každý" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "január" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "február" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "marec" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "apríl" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "máj" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "jún" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "júl" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "august" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "september" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "október" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "november" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "december" >
+<!ENTITY event.recurrence.yearly.every.label                 "Každý">
+<!ENTITY event.recurrence.yearly.first.label                 "Prvý">
+<!ENTITY event.recurrence.yearly.second.label                "Druhý">
+<!ENTITY event.recurrence.yearly.third.label                 "Tretí">
+<!ENTITY event.recurrence.yearly.fourth.label                "Štvrtý">
+<!ENTITY event.recurrence.yearly.fifth.label                 "Piaty">
+<!ENTITY event.recurrence.yearly.last.label                  "Posledný">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "nedeľa" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "pondelok" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "utorok" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "streda" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "štvrtok" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "piatok" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "sobota" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "deň" >
+<!ENTITY event.recurrence.of.label                           "v mesiaci" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "január" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "február" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "marec" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "apríl" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "máj" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "jún" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "júl" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "august" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "september" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "október" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "november" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "december" >
+
+<!ENTITY event.recurrence.range.label                   "Rozsah opakovaní">
+<!ENTITY event.recurrence.forever.label                 "Bez konečného dátumu" >
+<!ENTITY event.recurrence.repeat.for.label              "Vytvoriť schôdzku" >
+<!ENTITY event.recurrence.appointments.label            "krát" >
+<!ENTITY event.repeat.until.label                       "Opakovať do dátumu" >
+<!ENTITY event.recurrence.preview.label                 "Ukážka">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Pozvaní účastníci">
+<!ENTITY event.organizer.label                  "Organizátor">
+<!ENTITY event.freebusy.suggest.slot            "Navrhnutý vhodný čas:">
+<!ENTITY event.freebusy.button.next.slot        "Ďalší vhodný čas">
+<!ENTITY event.freebusy.button.previous.slot    "Predchádzajúci vhodný čas">
+<!ENTITY event.freebusy.zoom                    "Zmena veľkosti:">
+<!ENTITY event.freebusy.legend.free             "Voľný" >
+<!ENTITY event.freebusy.legend.busy             "Zaneprázdnený" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Neistý" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Mimo kancelárie" >
+<!ENTITY event.freebusy.legend.unknown          "Žiadne informácie" >
+<!ENTITY event.attendee.role.required           "Vyžadovaná účasť">
+<!ENTITY event.attendee.role.optional           "Voliteľná účasť">
+<!ENTITY event.attendee.role.chair              "Organizátor">
+<!ENTITY event.attendee.role.nonparticipant     "Nezúčastňuje sa">
+<!ENTITY event.attendee.usertype.individual     "Jednotlivec">
+<!ENTITY event.attendee.usertype.group          "Skupina">
+<!ENTITY event.attendee.usertype.resource       "Prostriedok">
+<!ENTITY event.attendee.usertype.room           "Miestnosť">
+<!ENTITY event.attendee.usertype.unknown        "Neznáme">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Spresnite časové pásmo">
+<!ENTITY event.timezone.custom.label     "Ďalšie časové pásma…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Všeobecné">
+<!ENTITY read.only.title.label           "Názov:">
+<!ENTITY read.only.calendar.label        "Kalendár:">
+<!ENTITY read.only.event.start.label     "Dátum začatia:">
+<!ENTITY read.only.task.start.label      "Dátum začatia:">
+<!ENTITY read.only.event.end.label       "Dátum ukončenia:">
+<!ENTITY read.only.task.due.label        "Termín splnenia:">
+<!ENTITY read.only.repeat.label          "Opakovanie:">
+<!ENTITY read.only.location.label        "Miesto konania:">
+<!ENTITY read.only.category.label        "Kategória:">
+<!ENTITY read.only.organizer.label       "Organizátor:">
+<!ENTITY read.only.reminder.label        "Pripomienka:">
+<!ENTITY read.only.attachments.label     "Prílohy:">
+<!ENTITY read.only.attendees.label       "Účastníci">
+<!ENTITY read.only.description.label     "Popis">
+<!ENTITY read.only.link.label            "Súvisiaci odkaz">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Uložiť a zavrieť">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Uloží zmeny a zavrie okno bez zmeny vašej účasti či odoslania odpovedí">
+<!ENTITY summary.dialog.accept.label            "Prijať">
+<!ENTITY summary.dialog.accept.tooltiptext      "Prijme pozvanie">
+<!ENTITY summary.dialog.tentative.label         "Predbežne prijať">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Predbežne prijme pozvanie">
+<!ENTITY summary.dialog.decline.label           "Odmietnuť">
+<!ENTITY summary.dialog.decline.tooltiptext     "Odmietne pozvanie">
+<!ENTITY summary.dialog.dontsend.label          "Neodoslať odpoveď">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Zmení stav vašej účasti a zavrie okno bez odoslania odpovede organizátorovi">
+<!ENTITY summary.dialog.send.label              "Odoslať odpoveď">
+<!ENTITY summary.dialog.send.tooltiptext        "Pošle odpoveď organizátorovi a zavrie okno">

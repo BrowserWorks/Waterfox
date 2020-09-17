@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label           "Tekstiala omadused">
+
+<!ENTITY Settings.label              "Sätted">
+
+<!ENTITY TextAreaName.label          "Välja nimi:">
+<!ENTITY TextAreaName.accessKey      "V">
+<!ENTITY TextAreaRows.label          "Ridu:">
+<!ENTITY TextAreaRows.accessKey      "R">
+<!ENTITY TextAreaCols.label          "Veerge:">
+<!ENTITY TextAreaCols.accessKey      "V">
+<!ENTITY TextAreaReadOnly.label      "Ainult lugemiseks">
+<!ENTITY TextAreaReadOnly.accessKey  "A">
+<!ENTITY TextAreaDisabled.label      "Keelatud">
+<!ENTITY TextAreaDisabled.accessKey  "K">
+<!ENTITY TextAreaTabIndex.label      "Kaardi indeks:">
+<!ENTITY TextAreaTabIndex.accessKey  "r">
+<!ENTITY TextAreaAccessKey.label     "Kiirklahv:">
+<!ENTITY TextAreaAccessKey.accessKey "i">
+<!ENTITY InitialText.label           "Algne tekst:">
+<!ENTITY InitialText.accessKey       "s">
+
+<!ENTITY TextAreaWrap.label          "Murdmise režiim:">
+<!ENTITY TextAreaWrap.accessKey      "M">
+<!ENTITY WrapDefault.value           "vaikimisi">
+<!ENTITY WrapOff.value               "väljas">
+<!ENTITY WrapHard.value              "tugev">
+<!ENTITY WrapSoft.value              "pehme">
+<!ENTITY WrapPhysical.value          "füüsiline">
+<!ENTITY WrapVirtual.value           "virtuaalne">

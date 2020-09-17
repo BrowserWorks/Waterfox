@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Желідегі контакттар">
+<!ENTITY offlineContactsHeader.label   "Желіде емес контакттар">
+<!ENTITY conversationsHeader.label     "Сөйлесулер">
+<!ENTITY searchResultConversation.label "Іздеу нәтижесі">
+<!ENTITY chat.noConv.title             "Сөйлесулер осында көрсетілетін болады.">
+<!ENTITY chat.noConv.description       "Сөйлесуді бастау үшін, сол жақ панельдегі контакттар тізімін қолданыңыз.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; ішінде бұл контакт үшін сақталған алдындағы сөйлесулер жоқ.">
+<!ENTITY chat.noAccount.title             "Сіз чат тіркелгісін әлі баптаған жоқсыз.">
+<!ENTITY chat.noAccount.description       "&brandShortName; үшін сізге чат тіркелгісін баптауға көмектесуге рұқсат ету.">
+<!ENTITY chat.accountWizard.button       "Бастау">
+<!ENTITY chat.noConnectedAccount.title             "Сіздің чат тіркелгілеріңіз байланыспаған.">
+<!ENTITY chat.noConnectedAccount.description       "Оларды &quot;Чат қалып-күйі&quot; сұхбатынан байланыстыра аласыз:">
+<!ENTITY chat.showAccountManager.button       "Чат қалып-күйін көрсету">
+
+<!ENTITY chat.participants             "Қатысушылар:">
+<!ENTITY chat.previousConversations    "Алдыңғы сөйлесулер:">
+<!ENTITY chat.ongoingConversation      "Жүріп жатқан сөйлесулер">
+
+<!ENTITY openConversationCmd.label     "Сөйлесуді бастау">
+<!ENTITY openConversationCmd.accesskey "т">
+<!ENTITY closeConversationCmd.label    "Сөйлесуді жабу">
+<!ENTITY closeConversationCmd.accesskey "ж">
+<!ENTITY aliasCmd.label                "Атын ауыстыру">
+<!ENTITY aliasCmd.accesskey            "А">
+<!ENTITY deleteCmd.label               "Контактты өшіру">
+<!ENTITY deleteCmd.accesskey           "ш">
+
+<!ENTITY openConversationButton.tooltip  "Сөйлесуді бастау">
+<!ENTITY closeConversationButton.tooltip "Сөйлесуді жабу">
+
+<!ENTITY addBuddyButton.label          "Контактты қосу">
+<!ENTITY joinChatButton.label          "Чатқа кіру">
+<!ENTITY chatAccountsButton.label      "Тіркелгілерді көрсету">
+
+<!ENTITY status.available          "Қолжетерлік">
+<!ENTITY status.unavailable        "Қолжетерсіз">
+<!ENTITY status.offline            "Желіде емес">
+
+<!ENTITY openLinkCmd.label            "Сілтемені ашу…">
+<!ENTITY openLinkCmd.accesskey        "а">

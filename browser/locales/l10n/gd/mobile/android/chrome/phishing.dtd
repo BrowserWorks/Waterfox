@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "A-mach às an àite seo leam!">
+<!ENTITY safeb.palm.decline.label "Leig seachad an rabhadh seo">
+<!ENTITY safeb.palm.reportPage.label "Carson a chaidh an duilleag seo a bhacadh?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Comhairle air a sholar le <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Chaidh aithris gur e duilleag ionnsaighe a tha seo!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Chaidh aithris gur e duilleag ionnsaighe a tha ann an <span id='malware_sitename'/> agus chaidh bacadh a chur air a-rèir do roghainnean tèarainteachd.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Feuchaidh duilleagan ionnsaighe ri prògraman a stàladh a ghoideas fiosrachadh prìobhaideach ort, a chleachdas an coimpiutair agad gus ionnsaigh a thoirt air feadhainn eile no gus cron a chur air an inneal agad.</p><p>Tha cuid dhe na duilleagan ionnsaighe a’ sgaoileadh bathar-bog cronail a dh’aona-ghnothach ach tha torr dhiubh gan cur gu mì-fheum gun fhios is gun chead nan sealbhadairean aca.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Làrach ionnsaighe!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Chaidh aithris gur e duilleag ionnsaighe a tha ann an <span id='phishing_sitename'/> agus chaidh bacadh a chur air a-rèir do roghainnean tèarainteachd.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Chaidh làraichean ionnsaighe a dhealbhachadh gus an car a thoirt asad ach an dèan thu rud cunnartach, can gun stàlaicheadh tu bathar-bog no gun innseadh tu fiosrachadh pearsanta mu fhaclan-faire, àireamhan fòn no cairtean-creideis.</p><p>Ma chuireas tu fiosrachadh sam bith a-steach air an duilleag-lìn seo, dh'fhaoidte gun dèid d' aithne a ghoid no foill eile a dhèanamh leis.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Làrach a sgaoileas bathar-bog gun iarrtas!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Chaidh aithris gur e duilleag a sgaoileas bathar-bog gun iarrtas a tha ann an <span id='unwanted_sitename'/> agus chaidh bacadh a chur air a-rèir do roghainnean tèarainteachd.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Feuchaidh duilleagan mar seo bathar-bog a stàladh air am bi coltas foilleil agus a mì-ghnàthaicheas an siostam agam air dòighean nach iarradh tu.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Dh’fhaoidte gu bheil bathar-bog droch rùnach air an làrach seo">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "Bhac &brandShortName; an làrach seo oir dh’fhaoidte gum feuch e ri aplacaidean cunnartach a stàladh a ghoideas no a sguabas às fiosrachadh (mar eisimpleir, dealbhan, faclan-faire, teachdaireachdan is cairtean-creideis).">

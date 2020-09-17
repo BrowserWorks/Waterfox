@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label  "Käyttäjäkohtainen sanakirja">
+
+<!ENTITY wordEditField.label  "Uusi sana:">
+<!ENTITY wordEditField.accessKey  "U">
+<!ENTITY AddButton.label  "Lisää">
+<!ENTITY AddButton.accessKey  "L">
+<!ENTITY DictionaryList.label  "Sanoja sanastossa:">
+<!ENTITY DictionaryList.accessKey  "s">
+<!ENTITY RemoveButton.label  "Poista">
+<!ENTITY RemoveButton.accessKey  "P">
+
+<!ENTITY CloseButton.label  "Sulje">
+<!ENTITY CloseButton.accessKey  "S">

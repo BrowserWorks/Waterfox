@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label     "Välj användarprofil">
+<!ENTITY            profileManager.title  "&brandShortName;s profilhanterare">
+
+<!ENTITY            manage.label          "Hantera profiler…">
+<!ENTITY            manage.accesskey      "H">
+<!ENTITY            select.label          "Använd profil">
+
+<!ENTITY            availableProfiles.label   "Tillgängliga profiler">
+
+<!ENTITY            introStart.label         "För att få åtkomst till din personliga profil, som innehåller dina lagrade meddelanden, inställningar och annan personlig information, välj din profil ur listan, och klicka på &start.label; för att påbörja sessionen.">
+<!ENTITY            introSwitch.label        "För att byta till en annan profil, som innehåller lagrade meddelanden, inställningar och annan personlig information, välj den profilen ur listan, och klicka på &select.label; för att börja använda den profilen.">
+<!ENTITY            profileManagerText.label "&brandShortName; lagrar information om dina inställningar, bokmärken, lagrade meddelanden och andra användarposter i din användarprofil.">
+
+<!ENTITY            autoSelect.label         "Använd denna profil som standard">
+<!ENTITY            autoSelect.accesskey     "s">
+
+<!ENTITY            start.label              "Starta &brandShortName;">
+<!ENTITY            exit.label               "Avsluta">
+
+<!ENTITY            newButton.label          "Skapa profil…">
+<!ENTITY            newButton.accesskey      "S">
+<!ENTITY            renameButton.label       "Byt namn på profil…">
+<!ENTITY            renameButton.accesskey   "B">
+<!ENTITY            deleteButton.label       "Ta bort profil…">
+<!ENTITY            deleteButton.accesskey   "T">
+
+<!ENTITY            offlineState.label       "Arbeta nedkopplad">
+<!ENTITY            offlineState.accesskey   "n">

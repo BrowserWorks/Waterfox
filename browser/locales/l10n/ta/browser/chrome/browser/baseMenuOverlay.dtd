@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName; பற்றி">
+<!ENTITY aboutProduct2.accesskey  "A">
+
+<!ENTITY preferencesCmdMac.label        "முன்னுரிமைகள்…">
+
+<!ENTITY servicesMenuMac.label          "சேவைகள்">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; மறை">
+
+<!ENTITY hideOtherAppsCmdMac.label      "மற்றவற்றை மறை">
+
+<!ENTITY showAllAppsCmdMac.label        "அனைத்தையும் காட்டு">
+

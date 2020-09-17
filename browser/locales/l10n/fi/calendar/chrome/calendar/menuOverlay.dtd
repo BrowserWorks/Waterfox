@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Uusi tapahtuma…">
+<!ENTITY event.new.event.accesskey              "t">
+
+<!ENTITY event.new.task                         "Uusi tehtävä…">
+<!ENTITY event.new.task.accesskey               "h">
+
+<!ENTITY calendar.import.label                  "Tuo…">
+<!ENTITY calendar.import.accesskey              "u">
+
+<!ENTITY calendar.export.label                  "Vie…">
+<!ENTITY calendar.export.accesskey              "V">
+
+<!ENTITY calendar.publish.label                 "Julkaise…">
+<!ENTITY calendar.publish.accesskey             "s">
+
+<!ENTITY calendar.deletecalendar.label          "Poista valittu kalenteri…">
+<!ENTITY calendar.deletecalendar.accesskey      "P">
+<!ENTITY calendar.unsubscribecalendar.label     "Peruuta valitun kalenterin tilaus…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "v">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Poista valittu kalenteri…">
+<!ENTITY calendar.removecalendar.accesskey      "P">
+
+
+<!ENTITY calendar.menu.customize.label          "Muokkaa…">
+<!ENTITY calendar.menu.customize.accesskey      "M">
+
+<!ENTITY showUnifinderCmd.label                 "Etsi tapahtumia">
+<!ENTITY showUnifinderCmd.accesskey             "E">
+<!ENTITY showUnifinderCmd.tooltip               "Näytä/piilota Etsi tapahtumia -paneeli">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Näytä tehtävät kalenterissa">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "N">
+
+<!ENTITY goTodayCmd.label                       "Tähän päivään">
+<!ENTITY goTodayCmd.accesskey                   "h">
+
+<!ENTITY showCurrentView.label                  "Nykyinen näkymä">
+<!ENTITY showCurrentView.accesskey              "N">
+
+<!ENTITY calendar.properties.label              "Kalenterin ominaisuudet…">
+<!ENTITY calendar.properties.accesskey          "K">

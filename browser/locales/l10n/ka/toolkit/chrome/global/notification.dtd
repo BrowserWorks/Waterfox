@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeNotification.tooltip "ამ შეტყობინების დახურვა">
+
+<!ENTITY checkForUpdates "განახლებების შემოწმება…">
+
+<!ENTITY learnMoreNoEllipsis "იხილეთ ვრცლად">
+
+<!ENTITY defaultButton.label "კარგი!">
+<!ENTITY defaultButton.accesskey "კ">
+
+<!ENTITY moreActionsButton.accessibleLabel "დამატებითი მოქმედებები">

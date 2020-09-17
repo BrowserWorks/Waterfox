@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Preuzmi i sinkroniziraj poruke">
+<!ENTITY MsgSelect.label "Stavke za izvanmrežno korištenje">
+<!ENTITY MsgSyncDesc.label "Ako ste već odabrali mape e-pošte ili interesne grupe za izvanmrežno korištenje, možete ih sada preuzeti i/ili sinkronizirati. Inače, koristite gumb &quot;Odaberi&quot; da biste odabrali mape pošte i interesne grupe za izvanmrežno korištenje.">
+<!ENTITY MsgSyncDirections.label "Preuzmi i/ili sinkroniziraj sljedeće:">
+<!ENTITY syncTypeMail.label "Poruke e-pošte">
+<!ENTITY syncTypeMail.accesskey "P">
+<!ENTITY syncTypeNews.label "Poruke s interesnih grupa">
+<!ENTITY syncTypeNews.accesskey "n">
+<!ENTITY sendMessage.label "Pošalji neposlane poruke">
+<!ENTITY sendMessage.accesskey "s">
+<!ENTITY workOffline.label "Radi izvanmrežno kada preuzimanje i/ili sinkronizacija završi">
+<!ENTITY workOffline.accesskey "R">
+<!ENTITY selectButton.label "Odaberi…">
+<!ENTITY selectButton.accesskey "e">
+<!ENTITY MsgSelectDesc.label "Odaberi mape e-pošte i interesne grupe za izvanmrežno korištenje.">
+<!ENTITY MsgSelectInd.label "Preuzmi">
+<!ENTITY MsgSelectItems.label "Mape i interesne grupe">

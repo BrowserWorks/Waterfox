@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "পরিশোধক নিয়মাবলী">
+
+<!ENTITY filterName.label "পরিশোধকের নাম: (i)">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "অপ্রয়োজনীয়">
+<!ENTITY notJunk.label "অপ্রয়োজনীয় নয়">
+
+<!ENTITY lowestPriorityCmd.label "সবচেয়ে কম">
+<!ENTITY lowPriorityCmd.label "কম">
+<!ENTITY normalPriorityCmd.label "স্বাভাবিক">
+<!ENTITY highPriorityCmd.label "বেশী">
+<!ENTITY highestPriorityCmd.label "সবচেয়ে বেশী">
+
+<!ENTITY contextDesc.label "পরিশোধক প্রয়োগ করা হবে যখন: (w)">
+<!ENTITY contextManual.label "স্বচালিত">
+
+<!ENTITY filterActionDesc.label "এই কাজগুলো করা হবে: (P)">
+<!ENTITY filterActionDesc.accesskey "P">
+<!-- New Style Filter Rule Actions -->
+
+<!ENTITY moveMessage.label "বার্তা এখানে সরান">
+<!ENTITY copyMessage.label "বার্তা এখানে অনুলিপি করুন">
+<!ENTITY forwardTo.label "বার্তা এখানে ফরওয়ার্ড করুন">
+<!ENTITY replyWithTemplate.label "ফর্মা সহ জবাব দিন">
+<!ENTITY markMessageRead.label "পঠিত হিসেবে চিহ্নিত করুন">
+<!ENTITY markMessageStarred.label "তারা যোগ করুন">
+<!ENTITY setPriority.label "অগ্রাধিকারের স্তর নির্ধারণ করুন">
+<!ENTITY addTag.label "বার্তা ট্যাগ করুন">
+<!ENTITY setJunkScore.label "অপ্রয়োজনীয় হিসেবে নির্ধারণ করুন">
+<!ENTITY deleteMessage.label "বার্তা মুছে ফেলুন">
+<!ENTITY deleteFromPOP.label "POP সার্ভার থেকে মুছে ফেলা হবে">
+<!ENTITY fetchFromPOP.label "POP সার্ভার থেকে আনা হবে">
+<!ENTITY ignoreThread.label "থ্রেড উপেক্ষা করা হবে">
+<!ENTITY ignoreSubthread.label "সাবথ্রেড উপেক্ষা করা হবে">
+<!ENTITY watchThread.label "থ্রেড পর্যবেক্ষণ করা হবে">
+<!ENTITY stopExecution.label "পরিশোধক চালানো থামানো হবে">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Nova glista d'e-mail">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Agiuntar a: ">
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "Num da la glista: ">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "Surnum da la glista: ">
+<!ENTITY ListNickName.accesskey         "N">
+<!ENTITY ListDescription.label          "Descripziun: ">
+<!ENTITY ListDescription.accesskey      "e">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Endatescha adressas d'e-mail per las agiuntar a la glista d'e-mail:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Ensi">
+<!ENTITY DownButton.label               "Engiu">
+

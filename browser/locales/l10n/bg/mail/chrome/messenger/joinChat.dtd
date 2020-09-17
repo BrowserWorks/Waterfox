@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "Присъединяване към разговор">
+<!ENTITY name.label                     "Стая">
+<!ENTITY optional.label                 "(допълнително)">
+<!ENTITY account.label                  "Сметка">
+<!ENTITY autojoin.label                 "Автоматично присъединяване">
+<!ENTITY autojoin.accesskey             "А">

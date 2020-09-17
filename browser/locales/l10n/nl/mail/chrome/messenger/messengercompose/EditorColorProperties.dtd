@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Paginakleuren en achtergrond">
+<!ENTITY pageColors.label "Paginakleuren">
+<!ENTITY defaultColorsRadio.label "Standaardkleuren van lezer (kleuren niet in pagina instellen)">
+<!ENTITY defaultColorsRadio.accessKey "S">
+<!ENTITY defaultColorsRadio.tooltip "Alleen de kleurinstellingen van de browser (van de lezer) gebruiken">
+<!ENTITY customColorsRadio.label "Aangepaste kleuren gebruiken:">
+<!ENTITY customColorsRadio.accessKey "A">
+<!ENTITY customColorsRadio.tooltip "Deze kleurinstellingen hebben voorrang op de browserinstellingen van de lezer">
+
+<!ENTITY normalText.label "Normale tekst">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Koppelingstekst">
+<!ENTITY linkText.accessKey "K">
+<!ENTITY activeLinkText.label "Actieve koppeling">
+<!ENTITY activeLinkText.accessKey "c">
+<!ENTITY visitedLinkText.label "Bezochte koppeling">
+<!ENTITY visitedLinkText.accessKey "z">
+<!ENTITY background.label "Achtergrond:">
+<!ENTITY background.accessKey "h">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Achtergrondafbeelding:">
+<!ENTITY backgroundImage.accessKey "t">
+<!ENTITY backgroundImage.tooltip "Een afbeeldingsbestand gebruiken als achtergrond voor uw pagina">
+<!ENTITY backgroundImage.shortenedDataURI "Gegevens-URI is ingekort (Kopiëren plaatst de volledige URI op het klembord)">

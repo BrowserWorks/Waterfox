@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Wujb'äl">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Ticholajïx">
+<!ENTITY organize.accesskey    "T">
+<!ENTITY organize.tooltip      "Ke'acholajij ri taq yaketal">
+
+<!ENTITY file.close.label               "Titz'apïx">
+<!ENTITY file.close.accesskey           "T">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Taq tzub'al">
+<!ENTITY views.accesskey                "T">
+<!ENTITY views.tooltip                  "Tajala' rutzub'al">
+<!ENTITY view.columns.label             "Kek'ut pe ri taq tem">
+<!ENTITY view.columns.accesskey         "t">
+<!ENTITY view.sort.label                "Ticholajïx">
+<!ENTITY view.sort.accesskey            "c">
+<!ENTITY view.unsorted.label            "Man ticholajïx">
+<!ENTITY view.unsorted.accesskey        "M">
+<!ENTITY view.sortAscending.label       "Ticholajïx A > '">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Ticholajïx Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Kek'am pe taq yaketal pa HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "K">
+<!ENTITY exportBookmarksToHTML.label       "Kek'wäx el taq yaketal pa HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "K">
+<!ENTITY importOtherBrowser.label          "Kejik' pe taq tzij richin junchik okik'amaya'l…">
+<!ENTITY importOtherBrowser.accesskey      "j">
+
+<!ENTITY cmd.backup.label               "Tiwachib'ëx…">
+<!ENTITY cmd.backup.accesskey           "T">
+<!ENTITY cmd.restore2.label             "Titzolïx">
+<!ENTITY cmd.restore2.accesskey         "T">
+<!ENTITY cmd.restoreFromFile.label      "Ticha' Yakb'äl…">
+<!ENTITY cmd.restoreFromFile.accesskey  "T">
+
+<!ENTITY col.name.label          "B'i'aj">
+<!ENTITY col.tags.label          "Taq etal">
+<!ENTITY col.url.label           "Rochochib'al">
+<!ENTITY col.mostrecentvisit.label "Ruk'isib'äl Tz'etoj">
+<!ENTITY col.visitcount.label    "Jarupe' taq tz'etoj">
+<!ENTITY col.dateadded.label     "Tz'aqatisan">
+<!ENTITY col.lastmodified.label  "Ruk'isib'äl K'exoj">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Tijik' pe chuqa' tito' rij">
+<!ENTITY maintenance.accesskey  "T">
+<!ENTITY maintenance.tooltip    "Tijik' pe chuqa' tik'wäx el ri taq ayaketal">
+
+<!ENTITY backButton.tooltip  "Titzolin">
+
+<!ENTITY forwardButton.tooltip  "Tib'e chuwäch">
+
+<!ENTITY detailsPane.selectAnItemText.description "Tacha' jun ch'akulal richin natz'ët chuqa' nanük' ri taq ruch'akulal">
+

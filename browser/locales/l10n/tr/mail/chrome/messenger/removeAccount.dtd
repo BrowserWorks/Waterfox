@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Hesabı ve Verileri Sil">
+<!ENTITY removeButton.label           "Sil">
+<!ENTITY removeButton.accesskey       "S">
+<!ENTITY removeAccount.label          "Hesap bilgilerini sil">
+<!ENTITY removeAccount.accesskey      "b">
+<!ENTITY removeAccount.desc           "Yalnızca &brandShortName; yazılımındaki bu hesaba dair bilgileri siler. Sunucudaki asıl hesap bilgileriniz etkilenmez.">
+<!ENTITY removeData.label             "Mesaj verilerini sil">
+<!ENTITY removeData.accesskey         "M">
+<!ENTITY removeDataChat.label         "Yazışma verilerini sil">
+<!ENTITY removeDataChat.accesskey     "a">
+<!ENTITY removeDataLocalAccount.desc  "Bu hesapla ilişkili tüm iletileri, klasörleri ve filtreleri yerel diskinizden kaldırır. Hâlâ sunucuda duran iletileriniz varsa bu işlem onları etkilemez. Yerel verileri arşivlemek veya ileride &brandShortName; yazılımında yeniden kullanmak istiyorsanız bu seçeneği seçmeyin.">
+<!ENTITY removeDataServerAccount.desc "Bu hesapla ilişkili tüm iletileri, klasörleri ve filtreleri yerel diskinizden kaldırır. İletileriniz ve klasörleriniz sunucuda tutulmaya devam eder.">
+<!ENTITY removeDataChatAccount.desc   "Bu hesapla ilişkili tüm yazışma kayıtlarını yerel diskinizden siler.">
+<!ENTITY showData.label               "Veri konumunu göster">
+<!ENTITY showData.accesskey           "k">
+<!ENTITY progressPending              "Seçilen veriler siliniyor…">
+<!ENTITY progressSuccess              "Silme başarıyla tamamlandı.">
+<!ENTITY progressFailure              "Silme başarısız oldu.">

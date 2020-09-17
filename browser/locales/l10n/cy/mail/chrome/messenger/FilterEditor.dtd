@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Rheolau Hidlo">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Enw'r hidl:">
+<!ENTITY filterName.accesskey "E">
+
+<!ENTITY junk.label "Sbam">
+<!ENTITY notJunk.label "Nid Sbam">
+
+<!ENTITY lowestPriorityCmd.label "Isaf">
+<!ENTITY lowPriorityCmd.label "Isel">
+<!ENTITY normalPriorityCmd.label "Arferol">
+<!ENTITY highPriorityCmd.label "Uchel">
+<!ENTITY highestPriorityCmd.label "Uchaf">
+
+<!ENTITY contextDesc.label "Gosod yr hidl pan yn:">
+<!ENTITY contextIncomingMail.label "Estyn E-bost Newydd:">
+<!ENTITY contextIncomingMail.accesskey "E">
+<!ENTITY contextManual.label "Rhedeg â Llaw">
+<!ENTITY contextManual.accesskey "L">
+<!ENTITY contextBeforeCls.label "Hidlo cyn Dynodi fel Sbam">
+<!ENTITY contextAfterCls.label "Hidlo ar ôl Dynodi fel Sbam">
+<!ENTITY contextOutgoing.label "Ar ôl Anfon">
+<!ENTITY contextOutgoing.accesskey "n">
+<!ENTITY contextArchive.label "Archifo">
+<!ENTITY contextArchive.accesskey "A">
+
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Gwneud hyn:">
+<!ENTITY filterActionDesc.accesskey "G">
+
+<!ENTITY filterActionOrderWarning.label "Sylw: Bydd gweithredoedd hidlo'n cael eu rhedeg mewn trefn gwahanol.">
+<!ENTITY filterActionOrder.label "Gw. trefn weithredu">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Symud Neges i">
+<!ENTITY copyMessage.label "Copïo Neges i">
+<!ENTITY forwardTo.label "Anfon Neges Ymlaen i">
+<!ENTITY replyWithTemplate.label "Ateb gyda Thempled">
+<!ENTITY markMessageRead.label "Marcio wedi Darllen">
+<!ENTITY markMessageUnread.label "Marcio Heb ei Ddarllen">
+<!ENTITY markMessageStarred.label "Ychwanegu Seren">
+<!ENTITY setPriority.label "Gosod Blaenoriaeth i">
+<!ENTITY addTag.label "Tagio Neges">
+<!ENTITY setJunkScore.label "Gosod Statws Sbam i">
+<!ENTITY deleteMessage.label "Dileu Neges">
+<!ENTITY deleteFromPOP.label "Dileu o'r Gweinydd POP">
+<!ENTITY fetchFromPOP.label "Estyn o'r Gweinydd POP">
+<!ENTITY ignoreThread.label "Anwybyddu'r Edefyn">
+<!ENTITY ignoreSubthread.label "Anwybyddu'r Is-edefyn">
+<!ENTITY watchThread.label "Gwylio'r Edefyn">
+<!ENTITY stopExecution.label "Atal Gweithredu'r Hidl">
+
+<!ENTITY addAction.tooltip "Ychwanegu gweithred newydd">
+<!ENTITY removeAction.tooltip "Tynnu'r weithred hon">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

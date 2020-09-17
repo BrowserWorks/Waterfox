@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Formule ynfiere">
+
+<!ENTITY sourceEditField.label "Fier LaTeX-boarnekoade yn:">
+
+<!ENTITY options.label "Opsjes">
+<!ENTITY optionInline.label "Ynline modus">
+<!ENTITY optionInline.accesskey "N">
+<!ENTITY optionDisplay.label "Foarbyldmodus">
+<!ENTITY optionDisplay.accesskey "F">
+<!ENTITY optionLTR.label "Rjochting lofts-nei-rjochts">
+<!ENTITY optionLTR.accesskey "l">
+<!ENTITY optionRTL.label "Rjochting rjochts-nei-lofts">
+<!ENTITY optionRTL.accesskey "r">
+
+<!ENTITY insertButton.label "Ynfoegje">
+<!ENTITY insertButton.accesskey "Y">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Contrasinais principais">
+<!ENTITY  managepassword.caption                 "Caducidade do contrasinal mestre">
+<!ENTITY  managepassword.text                    "&brandShortName; preguntaralle o seu contrasinal principal:">
+<!ENTITY  managepassword.askfirsttime            "A primeira vez que se necesite">
+<!ENTITY  managepassword.askfirsttime.accesskey  "t">
+<!ENTITY  managepassword.askeverytime            "Cada vez que se necesite">
+<!ENTITY  managepassword.askeverytime.accesskey  "e">
+<!ENTITY  managepassword.asktimeout              "Se non se empregou durante ">
+<!ENTITY  managepassword.asktimeout.accesskey    "n">
+<!ENTITY  managepassword.timeout.unit            "minutos ou máis">
+
+<!ENTITY  changepassword.caption                 "Modificar o contrasinal principal">
+<!ENTITY  changepassword.text                    "O seu contrasinal principal protexe información confidencial como contrasinais de sitios web e certificados.">
+<!ENTITY  changepassword.button                  "Cambiar contrasinal…">
+<!ENTITY  changepassword.accesskey               "C">
+
+<!ENTITY  resetpassword.caption                  "Restabelecer o contrasinal principal">
+<!ENTITY  resetpassword.text                     "Se restabelece o seu contrasinal principal, perderanse todos os contrasinais gardados dos seus sitios web e correos, datos de formularios, certificados persoais e chaves privadas.">
+<!ENTITY  resetpassword.button                   "Restabelecer o contrasinal">
+<!ENTITY  resetpassword.accesskey                "R">

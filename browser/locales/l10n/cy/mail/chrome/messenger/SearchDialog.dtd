@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Chwilio am negeseuon yn:">
+<!ENTITY searchHeading.accesskey     "h">
+<!ENTITY searchSubfolders.label      "Chwilio is-ffolderi">
+<!ENTITY searchSubfolders.accesskey  "w">
+<!ENTITY searchOnServer.label        "Rhedeg chwilio ar weinydd">
+<!ENTITY searchOnServer.accesskey    "R">
+<!ENTITY resetButton.label           "Clirio">
+<!ENTITY resetButton.accesskey       "C">
+<!ENTITY openButton.label            "Agor">
+<!ENTITY openButton.accesskey        "A">
+<!ENTITY deleteButton.label          "Dileu">
+<!ENTITY deleteButton.accesskey      "D">
+<!ENTITY searchDialogTitle.label     "Chwilio drwy'r Negeseuon">
+<!ENTITY results.label               "Canlyniadau">
+<!ENTITY moveButton.label            "Symud I">
+<!ENTITY moveButton.accesskey        "I">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Agor yn Ffolder">
+<!ENTITY openInFolder.accesskey      "A">
+<!ENTITY saveAsVFButton.label        "Cadw fel Ffolder Chwilio">
+<!ENTITY saveAsVFButton.accesskey    "a">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Chwilio yn:">
+<!ENTITY abSearchHeading.accesskey   "h">
+<!ENTITY propertiesButton.label      "Priodweddau">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "Ysgrifennu">
+<!ENTITY composeButton.accesskey     "Y">
+<!ENTITY deleteCardButton.label      "Dileu">
+<!ENTITY deleteCardButton.accesskey  "D">
+<!ENTITY abSearchDialogTitle.label   "Chwilio Uwch drwy'r Llyfr Cyfeiriadau">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

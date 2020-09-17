@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Էջի հատկություններ">
+<!ENTITY location.label "Տեղադրությունը.">
+<!ENTITY lastModified.label "Վերջին փոփոխումը.">
+<!ENTITY titleInput.label "Անվանում.">
+<!ENTITY titleInput.accessKey "Ա">
+<!ENTITY authorInput.label "Հեղինակ.">
+<!ENTITY authorInput.accessKey "Հ">
+<!ENTITY descriptionInput.label "Նկարագրություն.">
+<!ENTITY descriptionInput.accessKey "Ն">
+<!ENTITY locationNewPage.label "[Նոր էջ, դեռ չի պահպանվել]">
+<!ENTITY EditHEADSource1.label "Մասնագետ օգտվողներ.">
+<!ENTITY EditHEADSource2.label "Խմբագրելու համար &lt;head&gt; մասը, օգտագործեք &quot;HTML Source&quot;՝ Տեսք ցանկում կամ Խմբագրման եղանակի գործիքաշերտում։">

@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Priodweddau Rhestr Dewis">
+
+<!ENTITY Select.label "Rhestr Dewis">
+<!ENTITY SelectName.label "Enw Rhestr:">
+<!ENTITY SelectName.accesskey "E">
+<!ENTITY SelectSize.label "Uchder:">
+<!ENTITY SelectSize.accesskey "U">
+<!ENTITY SelectMultiple.label "Dewis Niferus">
+<!ENTITY SelectMultiple.accesskey "D">
+<!ENTITY SelectDisabled.label "Analluogwyd">
+<!ENTITY SelectDisabled.accesskey "A">
+<!ENTITY SelectTabIndex.label "Mynegai Tab:">
+<!ENTITY SelectTabIndex.accesskey "M">
+
+<!ENTITY OptGroup.label "Grŵp Dewis">
+<!ENTITY OptGroupLabel.label "Label:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "Anablwyd">
+<!ENTITY OptGroupDisabled.accesskey "d">
+
+<!ENTITY Option.label "Dewis">
+<!ENTITY OptionText.label "Testun:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Gwerth:">
+<!ENTITY OptionValue.accesskey "G">
+<!ENTITY OptionSelected.label "Dewis Cyntaf">
+<!ENTITY OptionSelected.accesskey "D">
+<!ENTITY OptionDisabled.label "Anablwyd">
+<!ENTITY OptionDisabled.accesskey "A">
+
+<!ENTITY TextHeader.label "Testun">
+<!ENTITY ValueHeader.label "Gwerth">
+<!ENTITY SelectedHeader.label "Dewiswyd">
+
+<!ENTITY AddOption.label "Ychwanegu Dewis">
+<!ENTITY AddOption.accesskey "Y">
+<!ENTITY AddOptGroup.label "Ychwanegu Grŵp">
+<!ENTITY AddOptGroup.accesskey "Y">
+<!ENTITY RemoveElement.label "Tynnu">
+<!ENTITY RemoveElement.accesskey "T">
+<!ENTITY MoveElementUp.label "Symud i Fyny">
+<!ENTITY MoveElementUp.accesskey "F">
+<!ENTITY MoveElementDown.label "Symud i Lawr">
+<!ENTITY MoveElementDown.accesskey "L">

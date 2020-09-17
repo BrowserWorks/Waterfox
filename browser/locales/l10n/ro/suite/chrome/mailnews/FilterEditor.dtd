@@ -1,0 +1,60 @@
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# janimo <jani@ubuntu.com>
+# iulianv <iulianv@email.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Reguli filtrare">
+<!ENTITY filterEditorDialog.dimensions "width: 105ch;">
+<!ENTITY filterName.label "Nume filtru:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Nesolicitate">
+<!ENTITY notJunk.label "Nu e spam">
+
+<!ENTITY lowestPriorityCmd.label "Cea mai mică">
+<!ENTITY lowPriorityCmd.label "Încet">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY highPriorityCmd.label "Tare">
+<!ENTITY highestPriorityCmd.label "Cea mai mare">
+
+<!ENTITY contextDesc.label "Aplică filtrul când:">
+<!ENTITY contextDesc.accesskey "A">
+<!ENTITY contextIncoming.label "Se verifică mesajele">
+<!ENTITY contextManual.label "Rulează manual">
+<!ENTITY contextBoth.label "Se verifică mailul sau se rulează manual">
+<!ENTITY contextPostPlugin.label "Checking Mail (after classification)">
+<!ENTITY contextPostPluginBoth.label "Checking Mail (after classification) or Manually Run">
+
+<!ENTITY filterActionDesc.label "Efectuează următoarele acțiuni:">
+<!ENTITY filterActionDesc.accesskey "E">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Mută mesajul în">
+<!ENTITY copyMessage.label "Copiază mesajul în">
+<!ENTITY forwardTo.label "Retrimite mesajul către">
+<!ENTITY replyWithTemplate.label "Răspunde cu un șablon">
+<!ENTITY markMessageRead.label "Marchează ca citit">
+<!ENTITY markMessageStarred.label "Mark As Flagged">
+<!ENTITY setPriority.label "Schimbă prioritatea în">
+<!ENTITY addTag.label "Etichetează mesaj">
+<!ENTITY setJunkScore.label "Setează statutul de spam la">
+<!ENTITY deleteMessage.label "Șterge mesajul">
+<!ENTITY deleteFromPOP.label "Șterge de pe serverul POP">
+<!ENTITY fetchFromPOP.label "Adu de pe serverul POP">
+<!ENTITY ignoreThread.label "Ignoră conversația">
+<!ENTITY ignoreSubthread.label "Ignoră conversația din interior">
+<!ENTITY watchThread.label "Urmărește conversația">
+<!ENTITY stopExecution.label "Oprește executarea filtrului">

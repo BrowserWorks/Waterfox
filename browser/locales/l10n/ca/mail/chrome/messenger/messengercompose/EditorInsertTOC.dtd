@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Taula de continguts">
+<!ENTITY buildToc.label      "Construeix la taula de continguts a partir de:">
+<!ENTITY tag.label           "Etiqueta:">
+<!ENTITY class.label         "Classe:">
+<!ENTITY header1.label       "Nivell 1">
+<!ENTITY header2.label       "Nivell 2">
+<!ENTITY header3.label       "Nivell 3">
+<!ENTITY header4.label       "Nivell 4">
+<!ENTITY header5.label       "Nivell 5">
+<!ENTITY header6.label       "Nivell 6">
+<!ENTITY makeReadOnly.label  "Fes que la taula de continguts sigui només de lectura">
+<!ENTITY orderedList.label   "Numera totes les entrades de la taula de continguts">

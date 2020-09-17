@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Postavke">
+<!ENTITY propertiesMenu.accesskey           "P">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Postavke adresara">
+<!ENTITY abPropertiesMenu.accesskey         "a">
+<!ENTITY contactPropertiesMenu.label        "Postavke kontakta">
+<!ENTITY contactPropertiesMenu.accesskey    "k">
+<!ENTITY mailingListPropertiesMenu.label    "Postavke popisa primatelja">
+<!ENTITY mailingListPropertiesMenu.accesskey "P">
+
+<!ENTITY abContextMenuButton.tooltip        "Prikaži kontekstualni izbornik adresara">
+<!ENTITY addressbookPicker.label            "Adresar:">
+<!ENTITY addressbookPicker.accesskey        "r">
+<!ENTITY searchContacts.label               "Pretraži kontakte:">
+<!ENTITY searchContacts.accesskey           "n">
+<!ENTITY SearchNameOrEmail.label            "Ime ili e-pošta">
+
+<!ENTITY addtoToFieldMenu.label             "Dodaj u polje Prima">
+<!ENTITY addtoToFieldMenu.accesskey         "D">
+<!ENTITY addtoCcFieldMenu.label             "Dodaj u polje Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Dodaj u polje Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Obriši">
+<!ENTITY deleteAddrBookCard.accesskey       "O">
+<!ENTITY propertiesContext.label            "Postavke">
+<!ENTITY propertiesContext.accesskey        "P">
+<!ENTITY abPropertiesContext.label          "Postavke">
+<!ENTITY abPropertiesContext.accesskey      "P">
+<!ENTITY editContactContext.label           "Uredi kontakt">
+<!ENTITY editContactContext.accesskey       "e">
+<!ENTITY editMailingListContext.label       "Uredi popis">
+<!ENTITY editMailingListContext.accesskey   "e">
+
+<!ENTITY newContactAbContext.label          "Novi kontakt">
+<!ENTITY newContactAbContext.accesskey      "N">
+<!ENTITY newListAbContext.label             "Novi popis">
+<!ENTITY newListAbContext.accesskey         "N">
+
+<!ENTITY toButton.label                     "Dodaj u Prima:">
+<!ENTITY toButton.accesskey                 "D">
+<!ENTITY ccButton.label                     "Dodaj u Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Dodaj u Bcc:">
+<!ENTITY bccButton.accesskey                "B">

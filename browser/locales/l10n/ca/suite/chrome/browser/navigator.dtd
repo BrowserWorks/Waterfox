@@ -1,0 +1,82 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/navigator.xul -->
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+
+
+
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Navegació privada">
+
+<!ENTITY editPageCmd.label "Edita la pàgina">
+<!ENTITY editPageCmd.accesskey "d">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Barra de navegació">
+<!ENTITY navbarCmd.accesskey "n">
+<!ENTITY bookmarksToolbarCmd.label     "Barra de les adreces d'interès">
+<!ENTITY bookmarksToolbarCmd.accesskey "a">
+
+<!ENTITY closeWindow.label "Tanca la finestra">
+<!ENTITY closeWindow.accesskey "f">
+
+<!ENTITY minimizeButton.tooltip       "Minimitza">
+<!ENTITY restoreButton.tooltip        "Restaura">
+
+<!ENTITY feedsMenu.label "Subscriu-me a la pàgina">
+<!ENTITY feedsMenu.accesskey "S">
+
+<!ENTITY menuBar.tooltip                  "Barra de menú">
+<!ENTITY bookmarksToolbar.tooltip         "Barra de les adreces d'interès">
+<!ENTITY navigationToolbar.tooltip        "Barra de navegació">
+<!-- Toolbar items --> 
+
+<!ENTITY backButton.label             "Enrere">
+<!ENTITY backButton.tooltip           "Vés una pàgina enrere">
+<!ENTITY forwardButton.label          "Endavant">
+<!ENTITY forwardButton.tooltip        "Vés una pàgina endavant">
+<!ENTITY reloadButton.label           "Actualitza">
+<!ENTITY reloadButton.tooltip         "Actualitza la pàgina actual">
+<!ENTITY stopButton.label             "Atura">
+<!ENTITY stopButton.tooltip           "Atura la càrrega d'aquesta pàgina">
+<!ENTITY searchButton.label           "Cerca">
+<!ENTITY searchButton.tooltip         "Escriviu una paraula en el camp de l'esquerra i feu clic a Cerca">
+<!ENTITY goButton.label               "Vés">
+<!ENTITY goButton.tooltip             "Escriviu una ubicació en el camp de l'esquerra i feu clic a Vés">
+<!ENTITY printButton.label            "Imprimeix">
+<!ENTITY printButton.tooltip          "Imprimeix aquesta pàgina">
+
+<!ENTITY throbber.tooltip             "Vés a la pàgina inicial de &vendorShortName;">
+
+<!ENTITY locationBar.tooltip          "Introduïu el terme, paraula clau o adreça web per cercar">
+<!ENTITY locationBar.accesskey        "U">
+<!ENTITY locationBar.title            "Ubicació">
+<!ENTITY proxyIcon.tooltip            "Arrossega i deixa anar aquesta icona per crear un enllaç en aquesta pàgina">
+
+<!ENTITY searchItem.title             "Cerca">
+
+<!ENTITY bookmarksButton.label        "Adreces d'interès">
+<!ENTITY bookmarksButton.tooltip      "Llista d'adreces d'interès">
+<!ENTITY homeButton.label             "Inici">
+<!ENTITY bookmarksToolbarItem.label   "Elements de la barra d'adreces d'interès">
+<!ENTITY bookmarksToolbarChevron.tooltip "Mostra més adreces d'interès">
+<!-- Statusbar -->
+
+<!ENTITY  statusText.label            "Document: fet">
+
+<!ENTITY popupIcon.tooltiptext      "Desbloca les finestres emergents d'aquest lloc">
+
+<!ENTITY viewSecurityInfo.label      "Mostra la informació de seguretat">
+<!ENTITY viewSecurityInfo.accesskey  "s">
+<!ENTITY viewCertificate.label       "Visualitza el certificat">
+<!ENTITY viewCertificate.accesskey   "c">
+<!ENTITY viewCertManager.label       "Obre el Gestor de certificats">
+<!ENTITY viewCertManager.accesskey   "G">

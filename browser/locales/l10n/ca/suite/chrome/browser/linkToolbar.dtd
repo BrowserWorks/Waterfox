@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Link Toolbar Title -->
+
+<!ENTITY linkToolbar.label "Barra de navegació del lloc">
+<!ENTITY linkToolbar.accesskey "B">
+<!ENTITY linkToolbar.tooltip "Barra de navegació del lloc web">
+<!-- Link Toolbar visibility options -->
+
+<!ENTITY linkToolbarAlways.label "Mostra sempre">
+<!ENTITY linkToolbarAlways.accesskey "o">
+<!ENTITY linkToolbarAsNeeded.label "Mostra només quan calgui">
+<!ENTITY linkToolbarAsNeeded.accesskey "o">
+<!ENTITY linkToolbarNever.label "Amaga sempre">
+<!ENTITY linkToolbarNever.accesskey "m">
+<!-- Toolbar buttons, menus, and menuitems -->
+
+<!ENTITY topButton.label "Part superior">
+<!ENTITY upButton.label "Amunt">
+<!ENTITY firstButton.label "Primer">
+<!ENTITY prevButton.label "Anterior">
+<!ENTITY nextButton.label "Següent">
+<!ENTITY lastButton.label "Darrer">
+
+<!ENTITY documentButton.label "Document">
+
+<!ENTITY tocButton.label "Taula de continguts">
+<!ENTITY chapterButton.label "Capítols">
+<!ENTITY sectionButton.label "Seccions">
+<!ENTITY subSectionButton.label "Subseccions">
+<!ENTITY appendixButton.label "Apèndixs">
+<!ENTITY glossaryButton.label "Glossari">
+<!ENTITY indexButton.label "Índex">
+
+<!ENTITY moreButton.label "Més">
+
+<!ENTITY helpButton.label "Ajuda">
+<!ENTITY searchButton.label "Cerca">
+
+<!ENTITY authorButton.label "Autors">
+<!ENTITY copyrightButton.label "Copyright">
+
+<!ENTITY bookmarkButton.label "Adreces d'interès">
+
+<!ENTITY alternateButton.label "Altres versions">
+
+<!ENTITY feedButton.label "Subscriu-m'hi">

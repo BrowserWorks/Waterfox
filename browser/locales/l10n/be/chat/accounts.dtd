@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Рахункі  - &brandShortName;">
+<!ENTITY accountManager.width                "460">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Стан імгненных паведамленняў">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Стварыць рахунак">
+<!ENTITY accountManager.newAccount.accesskey "С">
+<!ENTITY accountManager.close.label          "Зачыніць">
+<!ENTITY accountManager.close.accesskey      "ч">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Няма наладжаных рахункаў!">
+<!ENTITY accountManager.noAccount.description 'Пстрыкніце кнопку "&accountManager.newAccount.label;", каб дазволіць &brandShortName; настаўляць вас падчас наладжвання новага рахунку.'>
+<!ENTITY account.autoSignOn.label     "Увайсці падчас запуску">
+<!ENTITY account.autoSignOn.accesskey "У">
+<!ENTITY account.connect.label        "Злучыцца">
+<!ENTITY account.connect.accesskey    "З">
+<!ENTITY account.disconnect.label     "Разлучыцца">
+<!ENTITY account.disconnect.accesskey "Р">
+<!ENTITY account.delete.label         "Выдаліць">
+<!ENTITY account.delete.accesskey     "В">
+<!ENTITY account.edit.label           "Уласцівасці">
+<!ENTITY account.edit.accesskey       "У">
+<!ENTITY account.moveup.label         "Рухаць угору">
+<!ENTITY account.movedown.label       "Рухаць уніз">
+<!ENTITY account.cancelReconnection.label         "Скасаваць перазлучэнне">
+<!ENTITY account.cancelReconnection.accesskey     "С">
+<!ENTITY account.copyDebugLog.label     "Скапіяваць метрыку наладкі">
+<!ENTITY account.copyDebugLog.accesskey "к">
+<!ENTITY account.showDebugLog.label     "Паказаць лог наладкі">
+<!ENTITY account.showDebugLog.accesskey "П">
+<!ENTITY account.connecting           "Злучэнне…">
+<!ENTITY account.disconnecting        "Разлучэнне…">
+<!ENTITY account.disconnected         "Не злучана">

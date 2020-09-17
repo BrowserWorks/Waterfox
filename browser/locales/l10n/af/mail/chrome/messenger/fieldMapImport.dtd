@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Voer adresboek in">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Ingevoerde data vir rekord: ">
+<!ENTITY fieldMapImport.next.label "Volgende">
+<!ENTITY fieldMapImport.next.accesskey "V">
+<!ENTITY fieldMapImport.previous.label "Vorige">
+<!ENTITY fieldMapImport.previous.accesskey "V">
+<!ENTITY fieldMapImport.text "Gebruik Skuif op en Skuif af om die adresboekvelde links met die korrekte data vir invoer regs te belyn. Ontmerk items wat u nie wil invoer nie.">
+<!ENTITY fieldMapImport.up.label "Skuif op">
+<!ENTITY fieldMapImport.up.accesskey "o">
+<!ENTITY fieldMapImport.down.label "Skuif af">
+<!ENTITY fieldMapImport.down.accesskey "a">
+<!ENTITY fieldMapImport.fieldListTitle "Adresboek-velde">
+<!ENTITY fieldMapImport.dataTitle "Neem data op vir invoer">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Eerste rekord bevat veldname">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "E">

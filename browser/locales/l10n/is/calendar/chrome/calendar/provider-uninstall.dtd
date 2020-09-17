@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title "Taka út þjónustu">
+<!ENTITY providerUninstall.accept.label "Afpanta valda áskrift">
+<!ENTITY providerUninstall.accept.accesskey "A">
+<!ENTITY providerUninstall.cancel.label "Halda viðbót">
+<!ENTITY providerUninstall.cancel.accesskey "H">
+<!ENTITY providerUninstall.preName.label "Þú hefur beðið um að taka eftirfarandi út eða gera óvirkt:">
+<!ENTITY providerUninstall.postName.label "Þetta gerir það að verkum að eftirfarandi dagatöl hér fyrir neðan verða gerð óvirk.">
+<!ENTITY providerUninstall.reinstallNote.label "Ef þú ætlar ekki að setja aftur inn þessa þjónustu, geturðu valið að hætta áskrift að dagatölum sem eru með þessa þjónustu.">

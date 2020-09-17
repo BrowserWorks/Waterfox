@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Revisar ortografía">
+
+<!ENTITY misspelledWord.label "Palabra mal escrita:">
+<!ENTITY wordEditField.label "Reemplazar con:">
+<!ENTITY wordEditField.accessKey "z">
+<!ENTITY checkwordButton.label "Revisar palabra">
+<!ENTITY checkwordButton.accessKey "s">
+<!ENTITY suggestions.label "Sugerencias:">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "Ignorar">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "Ignorar todo">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "Reemplazar">
+<!ENTITY replaceButton.accessKey "R">
+<!ENTITY replaceAllButton.label "Reemplazar todo">
+<!ENTITY replaceAllButton.accessKey "A">
+<!ENTITY stopButton.label "Detener">
+<!ENTITY stopButton.accessKey "D">
+<!ENTITY userDictionary.label "Diccionario personal:">
+<!ENTITY moreDictionaries.label "Descargar más diccionarios…">
+<!ENTITY addToUserDictionaryButton.label "Añadir palabra">
+<!ENTITY addToUserDictionaryButton.accessKey "d">
+<!ENTITY editUserDictionaryButton.label "Editar…">
+<!ENTITY editUserDictionaryButton.accessKey "E">
+<!ENTITY recheckButton2.label "Recomprobar texto">
+<!ENTITY recheckButton2.accessKey "b">
+<!ENTITY closeButton.label "Cerrar">
+<!ENTITY closeButton.accessKey "C">
+<!ENTITY sendButton.label "Enviar">
+<!ENTITY sendButton.accessKey "v">
+<!ENTITY languagePopup.label "Idioma:">
+<!ENTITY languagePopup.accessKey "m">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Својства поља формулара">
+<!ENTITY windowTitleImage.label "Својства слике формулара">
+
+<!ENTITY InputType.label "Врста поља">
+<!ENTITY InputType.accesskey "В">
+<!ENTITY text.value "Текст">
+<!ENTITY password.value "Лозинка">
+<!ENTITY checkbox.value "Кућица">
+<!ENTITY radio.value "Радио дугме">
+<!ENTITY submit.value "Дугме за подношење">
+<!ENTITY reset.value "Дугме за враћање">
+<!ENTITY file.value "Датотека">
+<!ENTITY hidden.value "Скривено">
+<!ENTITY image.value "Слика">
+<!ENTITY button.value "Дугме">
+
+<!ENTITY InputSettings.label "Подешавања поља">
+<!ENTITY InputName.label "Назив поља:">
+<!ENTITY InputName.accesskey "Н">
+<!ENTITY GroupName.label "Назив групе:">
+<!ENTITY GroupName.accesskey "Н">
+<!ENTITY InputValue.label "Вредност поља:">
+<!ENTITY InputValue.accesskey "В">
+<!ENTITY InitialValue.label "Почетна вредност:">
+<!ENTITY InitialValue.accesskey "В">
+<!ENTITY InputChecked.label "У почетку штиклирано">
+<!ENTITY InputChecked.accesskey "т">
+<!ENTITY InputSelected.label "У почетку одабрано">
+<!ENTITY InputSelected.accesskey "о">
+<!ENTITY InputReadOnly.label "Само за читање">
+<!ENTITY InputReadOnly.accesskey "С">
+<!ENTITY InputDisabled.label "Онемогућено">
+<!ENTITY InputDisabled.accesskey "е">
+<!ENTITY tabIndex.label "Индекс језичка:">
+<!ENTITY tabIndex.accesskey "И">
+<!ENTITY TextSize.label "Величина поља:">
+<!ENTITY TextSize.accesskey "П">
+<!ENTITY TextLength.label "Највећа дужина:">
+<!ENTITY TextLength.accesskey "у">
+<!ENTITY AccessKey.label "Приступни кључ:">
+<!ENTITY AccessKey.accesskey "к">
+<!ENTITY Accept.label "Прихватне врсте:">
+<!ENTITY Accept.accesskey "а">
+
+<!ENTITY ImageProperties.label "Својства слике…">
+<!ENTITY ImageProperties.accesskey "л">

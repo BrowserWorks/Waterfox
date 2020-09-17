@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label "Ficheru">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY newMenu.label "Nuevu">
+<!ENTITY newMenu.accesskey "N">
+
+<!ENTITY editMenu.label "Editar">
+<!ENTITY editMenu.accesskey "E">
+<!ENTITY undoCmd.label "Desfacer">
+<!ENTITY undoCmd.accesskey "f">
+<!ENTITY redoCmd.label "Refacer">
+<!ENTITY redoCmd.accesskey "R">
+<!ENTITY deleteCmd.label "Desaniciar">
+<!ENTITY deleteCmd.accesskey "n">
+<!ENTITY preferencesCmd2.label "Opciones">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label "Preferencies">
+<!ENTITY preferencesCmdUnix.accesskey "n">
+
+<!ENTITY viewMenu.label "Ver">
+<!ENTITY viewMenu.accesskey "V">
+<!ENTITY viewToolbarsMenu.label "Barres de ferramientes">
+<!ENTITY viewToolbarsMenu.accesskey "f">
+<!ENTITY showTaskbarCmd.label "Barra d'estáu">
+<!ENTITY showTaskbarCmd.accesskey "B">
+
+<!ENTITY closeCmd.label "Zarrar">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "Z">
+
+<!ENTITY quitApplicationCmd.label "Colar">
+<!ENTITY quitApplicationCmd.key "Q">
+<!ENTITY quitApplicationCmd.accesskey "C">
+
+<!ENTITY quitApplicationCmdUnix.label "Colar">
+<!ENTITY quitApplicationCmdUnix.accesskey "o">
+
+<!ENTITY quitApplicationCmdMac.label "Colar de &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey "a">

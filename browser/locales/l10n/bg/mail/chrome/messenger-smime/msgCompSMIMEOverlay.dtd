@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Без шифроване">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "з">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Изискване за шифроване">
+<!ENTITY menu_securityEncryptRequire.accesskey "ш">
+
+<!ENTITY menu_securitySign.label "Цифрово подписване на писмото">
+<!ENTITY menu_securitySign.accesskey "Ц">
+
+<!ENTITY menu_securityAttachMyKey.label "Прикачане на публичния ми ключ">
+<!ENTITY menu_securityAttachMyKey.accesskey "п">
+
+<!ENTITY menu_securityTech.label "Технология на шифроване">
+<!ENTITY menu_securityTech.accesskey "т">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Подробности за защитата">
+<!ENTITY menu_securityStatus.accesskey "б">
+
+<!ENTITY securityButton.label "Защита">
+<!ENTITY securityButton.tooltip "Преглед или промяна на настройките на защитата">
+
+<!ENTITY menu_viewSecurityStatus.label "Подробности за защитата на писмото">
+<!ENTITY menu_viewSecurityStatus.accesskey "щ">

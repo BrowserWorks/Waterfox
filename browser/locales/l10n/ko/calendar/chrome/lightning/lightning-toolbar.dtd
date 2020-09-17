@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name	"캘린더 도구모음">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "C">
+<!ENTITY lightning.toolbar.task.name		"ToDo 도구모음">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label		"동기화">
+<!ENTITY lightning.toolbar.sync.tooltip "캘린더를 새로고침하고 변경사항을 동기화">
+<!ENTITY lightning.toolbar.delete.label		"삭제">
+<!ENTITY lightning.toolbar.delete.tooltip "선택한 이벤트와 태스크를 삭제">
+<!ENTITY lightning.toolbar.edit.label		"편집">
+<!ENTITY lightning.toolbar.edit.tooltip "선택한 이벤트와 태스크를 편집">
+<!ENTITY lightning.toolbar.gototoday.label	"오늘로 이동">
+<!ENTITY lightning.toolbar.gototoday.tooltip "오늘로 이동">
+<!ENTITY lightning.toolbar.print.label		"인쇄">
+<!ENTITY lightning.toolbar.print.tooltip "이벤트와 태크스를 인쇄">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "캘린더">
+<!ENTITY lightning.toolbar.calendar.tooltip     "캘린더 탭으로 전환">
+<!ENTITY lightning.toolbar.calendar.accesskey "C">
+<!ENTITY lightning.toolbar.task.label         "태스크">
+<!ENTITY lightning.toolbar.task.tooltip         "ToDo 탭으로 전환">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "이벤트">
+<!ENTITY lightning.toolbar.newevent.tooltip   "새 이벤트 만들기">
+<!ENTITY lightning.toolbar.newtask.label      "태스크">
+<!ENTITY lightning.toolbar.newtask.tooltip    "새 태스크 만들기">
+
+<!-- Calendar and Task Mode Toolbar  -->
+<!ENTITY lightning.toolbar.day.label                 "일별">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "주별">
+<!ENTITY lightning.toolbar.week.accesskey            "W">
+<!ENTITY lightning.toolbar.multiweek.label           "여러 주">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "u">
+<!ENTITY lightning.toolbar.month.label               "월별">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "앱 메뉴">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip     "&brandShortName; 메뉴 표시">
+<!ENTITY lightning.toolbar.calendarmenu.label        "캘린더 창">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "P">
+<!ENTITY lightning.toolbar.calendarpane.label        "캘린더 창 보기">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "P">

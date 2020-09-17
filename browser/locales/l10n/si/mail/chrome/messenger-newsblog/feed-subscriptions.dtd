@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label "පෝෂක දායකත්වයන්">
+
+<!ENTITY feedTitle.label "සිරස්තලය:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "පෝෂක URL:">
+<!ENTITY feedLocation.accesskey      "U">
+
+<!ENTITY locationValidate.label      "වලංගුකරණය">
+<!ENTITY validateText.label          "වලංගුතාවය පරීක්ෂා කර url ලබාගන්න.">
+
+<!ENTITY feedFolder.label            "ලිපි (articles) තැන්පත් කරන්නේ මෙතුළ">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!ENTITY quickMode.label             "වෙබ් පිටුව පූරණය කරනවා වෙනුවට ලිපි සාරාංශය (article summary) පෙන්වන්න">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY button.addFeed.label       "එක් කරන්න">
+<!ENTITY button.addFeed.accesskey   "A">
+<!ENTITY button.removeFeed.label "ඉවත් කරන්න">
+<!ENTITY button.removeFeed.accesskey   "R">
+<!ENTITY button.importOPML.label "ආයාත">
+<!ENTITY button.importOPML.accesskey   "I">
+<!ENTITY button.exportOPML.label "නිර්යාත">
+<!ENTITY button.exportOPML.accesskey   "X">
+<!ENTITY button.exportOPML.tooltip   "Export Feeds with folder structure; ctrl click or ctrl enter to export Feeds as a list">
+
+<!ENTITY cmd.close.commandKey             "w">

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Fitxer">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Nou">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Edita">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "Desfés">
+<!ENTITY undoCmd.accesskey          "D">
+<!ENTITY redoCmd.label            "Refés">
+<!ENTITY redoCmd.accesskey          "R">
+<!ENTITY deleteCmd.label          "Suprimeix">
+<!ENTITY deleteCmd.accesskey        "u">
+<!ENTITY preferencesCmd2.label "Opcions">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "Preferències">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY customizeCmd.label "Personalitza">
+<!ENTITY customizeCmd.accesskey "t">
+
+<!ENTITY viewMenu.label          "Visualitza">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "Barres d'eines">
+<!ENTITY viewToolbarsMenu.accesskey      "B">
+<!ENTITY showTaskbarCmd.label          "Barra d'estat">
+<!ENTITY showTaskbarCmd.accesskey        "s">
+
+<!ENTITY closeCmd.label      "Tanca">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "c">
+
+<!ENTITY quitApplicationCmd.label  "Surt">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "u">
+
+<!ENTITY quitApplicationCmdUnix.label  "Surt">
+<!ENTITY quitApplicationCmdUnix.accesskey  "u">
+
+<!ENTITY quitApplicationCmdMac.label  "Surt del &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "u">

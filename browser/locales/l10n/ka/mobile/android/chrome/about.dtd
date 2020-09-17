@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName; პროგრამის შესახებ">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; საცდელი ვერსიაა და შესაძლოა არამდგრადად იმუშაოს.">
+<!ENTITY aboutPage.checkForUpdates.link         "შემოწმება განახლებებზე »">
+<!ENTITY aboutPage.checkForUpdates.checking     "განახლებების მოძიება…">
+<!ENTITY aboutPage.checkForUpdates.none         "განახლებები ვერ მოიძებნა">
+<!ENTITY aboutPage.checkForUpdates.available2   "ჩამოტვირთეთ განახლება">
+<!ENTITY aboutPage.checkForUpdates.downloading  "განახლების ჩამოტვირთვა…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "განახლების დაყენება">
+<!ENTITY aboutPage.faq.label                    "ხ.დ.კ.">
+<!ENTITY aboutPage.support.label                "მხარდაჭერა">
+<!ENTITY aboutPage.privacyPolicy.label          "პირადი მონაცემების დაცვის დებულება">
+<!ENTITY aboutPage.rights.label                 "იცოდეთ თქვენი უფლებები">
+<!ENTITY aboutPage.relNotes.label               "ინფორმაცია ვერსიაზე">
+<!ENTITY aboutPage.credits.label                "პროექტის მონაწილეები">
+<!ENTITY aboutPage.license.label                "ლიცენზიის შესახებ">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox და Firefox ლოგოები Mozilla-ს ფონდის სავაჭრო ნიშნებია. ყველა უფლება დაცულია.">

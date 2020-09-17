@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "ਲਿਖਣ ਟੂਲਬਾਰ">
+<!ENTITY previewToolbarCmd.label "ਝਲਕ">
+<!ENTITY previewToolbarCmd.tooltip "ਇਹ ਸਫ਼ੇ ਨੂੰ ਬਰਾਊਜ਼ਰ ਵਿੱਚ ਲੋਡ ਕਰੋ">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "ਟੈਕਸਟ ਵਿੱਚ ਐਕਸਪੋਰਟ ਕਰੋ…">
+<!ENTITY exportToTextCmd.accesskey "T">
+<!ENTITY previewCmd.label "ਸਫ਼ਾ ਬਰਾਊਜ਼ ਕਰੋ">
+<!ENTITY previewCmd.accesskey "w">
+<!ENTITY sendPageCmd.label "ਸਫ਼ਾ ਭੇਜੋ…">
+<!ENTITY sendPageCmd.accesskey "d">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "ਲਿਖਣ ਟੂਲਬਾਰ">
+<!ENTITY compositionToolbarCmd.accesskey "C">
+<!ENTITY formattingToolbarCmd.label "ਫਾਰਮੈਟ ਟੂਲਬਾਰ">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "ਸੋਧ ਮੋਡ ਟੂਲਬਾਰ">
+<!ENTITY editmodeToolbarCmd.accesskey "E">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "ਫਾਰਮੈਟ">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "ਗਰਿੱਡ ਦੀ ਸਥਿਤੀ">
+<!ENTITY grid.accesskey "t">
+<!ENTITY pageProperties.label "ਸਫ਼ਾ ਨਾਂ ਅਤੇ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ…">
+<!ENTITY pageProperties.accesskey "g">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "HTML ਵੈਧਤਾ">
+<!ENTITY validateCmd.accesskey "V">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "ਸਧਾਰਨ">
+<!ENTITY NormalMode.label "ਸਧਾਰਨ ਸੋਧ ਢੰਗ">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "ਟੇਬਲ ਹਾਸ਼ੀਆ ਅਤੇ ਨਾਂ ਨਾਲ ਐਂਕਰ ਵੇਖਾਓ">
+<!ENTITY AllTagsModeTab.label "HTML ਟੈਗ">
+<!ENTITY AllTagsMode.label "HTML ਟੈਗ">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "ਸਭ HTML ਟੈਗ ਲਈ ਆਈਕਾਨ ਵੇਖਾਓ">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "ਸਰੋਤ">
+<!ENTITY HTMLSourceMode.label "HTML ਸਰੋਤ">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "HTML ਸਰੋਤ ਸੋਧ">
+<!ENTITY PreviewModeTab.label "ਝਲਕ">
+<!ENTITY PreviewMode.label "ਝਲਕ">
+<!ENTITY PreviewMode.accesskey "P">
+<!ENTITY PreviewMode.tooltip "WYSIWYG ਵਜੋਂ ਵੇਖਾਓ (ਜਿਵੇਂ ਬਰਾਊਜ਼ਰ ਵਿੱਚ)">
+

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Gjej dhe Zëvendëso">
+<!ENTITY findField.label "Gjej tekst:">
+<!ENTITY findField.accesskey "G">
+<!ENTITY replaceField.label "Zëvendësoje me:">
+<!ENTITY replaceField.accesskey "m">
+<!ENTITY caseSensitiveCheckbox.label "Saktësisht siç është shkruar">
+<!ENTITY caseSensitiveCheckbox.accesskey "S">
+<!ENTITY wrapCheckbox.label "Mbështille përreth">
+<!ENTITY wrapCheckbox.accesskey "b">
+<!ENTITY backwardsCheckbox.label "Kërko mbrapsht">
+<!ENTITY backwardsCheckbox.accesskey "K">
+<!ENTITY findNextButton.label "Gjej Pasuesen">
+<!ENTITY findNextButton.accesskey "u">
+<!ENTITY replaceButton.label "Zëvendësoje">
+<!ENTITY replaceButton.accesskey "Z">
+<!ENTITY replaceAndFindButton.label "Zëvendëso dhe Gjej">
+<!ENTITY replaceAndFindButton.accesskey "d">
+<!ENTITY replaceAllButton.label "Zëvendësoji të Tëra">
+<!ENTITY replaceAllButton.accesskey "T">
+<!ENTITY closeButton.label "Mbylleni">
+<!ENTITY closeButton.accesskey "M">

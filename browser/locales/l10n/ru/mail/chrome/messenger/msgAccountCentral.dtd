@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Электронная почта">
+<!ENTITY readMsgsLink.label           "Прочитать сообщения">
+<!ENTITY composeMsgLink.label         "Создать новое сообщение">
+
+<!ENTITY newsSectionHdr.label         "Группы новостей">
+<!ENTITY subscribeNewsLink.label      "Управление подписками на группы новостей">
+
+<!ENTITY feedsSectionHdr.label        "Блоги и ленты новостей">
+<!ENTITY subscribeFeeds.label         "Управление подписками">
+
+<!ENTITY chat.label                   "Чат">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Учётные записи">
+<!ENTITY subscribeImapFolders.label   "Управление подписками на папки">
+<!ENTITY settingsLink.label           "Просмотр параметров этой учётной записи">
+<!ENTITY setupNewAcct.label           "Настроить учётную запись:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Дополнительные свойства">
+<!ENTITY searchMsgsLink.label         "Поиск сообщений…">
+<!ENTITY filtersLink.label            "Создать фильтры сообщений">
+<!ENTITY junkSettings.label           "Параметры анти-спам фильтров">
+<!ENTITY offlineLink.label            "Параметры автономной работы">

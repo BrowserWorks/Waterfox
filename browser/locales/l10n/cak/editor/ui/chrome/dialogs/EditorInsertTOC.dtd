@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Kipam Kemoj Kajtz'ik">
+<!ENTITY buildToc.label      "Tinuk' kipam kemoj rukajtz'ik:">
+<!ENTITY tag.label           "Etal:">
+<!ENTITY class.label         "Ruwäch:">
+<!ENTITY header1.label       "Chojwi' 1">
+<!ENTITY header2.label       "Chojwi' 2">
+<!ENTITY header3.label       "Chojwi' 3">
+<!ENTITY header4.label       "Chojwi' 4">
+<!ENTITY header5.label       "Chojwi' 5">
+<!ENTITY header6.label       "Chojwi' 6">
+<!ENTITY makeReadOnly.label  "Tib'an xa xe richin nisik'ïx ri rupam kemon kajtz'ik">
+<!ENTITY orderedList.label   "Ke'ajiläx konojel ri taq okitz'ib' pa ri rupam kemon kajtz'ik">

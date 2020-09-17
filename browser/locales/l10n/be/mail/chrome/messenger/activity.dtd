@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width2 "486">
+<!ENTITY window.height "330">
+
+<!ENTITY activity.title "Кіраўнік дзейнасці">
+
+<!ENTITY cmd.pause.label "Прыпыніць">
+<!ENTITY cmd.pause.accesskey "П">
+<!ENTITY cmd.resume.label "Працягнуць">
+<!ENTITY cmd.resume.accesskey "р">
+<!ENTITY cmd.cancel.label "Скасаваць">
+<!ENTITY cmd.cancel.accesskey "С">
+<!ENTITY cmd.undo.label "Адмяніць">
+<!ENTITY cmd.undo.accesskey "А">
+<!ENTITY cmd.recover.label "Аднавіць">
+<!ENTITY cmd.recover.accesskey "в">
+<!ENTITY cmd.retry.label "Паўтарыць">
+<!ENTITY cmd.retry.accesskey "ў">
+<!ENTITY cmd.removeFromList.label "Выдаліць з спіса">
+<!ENTITY cmd.removeFromList.accesskey "д">
+
+<!ENTITY cmd.close.commandkey "w">
+<!ENTITY cmd.close2.commandkey "j">
+<!ENTITY cmd.close2Unix.commandkey "y">
+<!ENTITY cmd.clearList.label "Ачысціць спіс">
+<!ENTITY cmd.clearList.tooltip "Выдаляе выкананыя, скасаваныя і няўдачныя адзінкі з спіса">
+<!ENTITY cmd.clearList.accesskey "ч">
+<!ENTITY cmd.find.commandkey "f">
+<!ENTITY cmd.search.commandkey "k">
+
+<!ENTITY searchBox.label "Пошук…">

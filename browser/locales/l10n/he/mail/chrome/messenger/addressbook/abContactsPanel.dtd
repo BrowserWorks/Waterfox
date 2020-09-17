@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "מאפיינים">
+<!ENTITY propertiesMenu.accesskey           "א">
+<!ENTITY propertiesCmd.key                  "פ">
+<!ENTITY abPropertiesMenu.label             "מאפייני פנקס כתובות">
+<!ENTITY abPropertiesMenu.accesskey         "פ">
+<!ENTITY contactPropertiesMenu.label        "מאפייני איש קשר">
+<!ENTITY contactPropertiesMenu.accesskey    "ש">
+<!ENTITY mailingListPropertiesMenu.label    "מאפייני רשימת דיוור">
+<!ENTITY mailingListPropertiesMenu.accesskey "ר">
+
+<!ENTITY abContextMenuButton.tooltip        "הצגת תפריט הקשר של פנקס כתובות">
+<!ENTITY addressbookPicker.label            "פנקס כתובות">
+<!ENTITY addressbookPicker.accesskey        "פ">
+<!ENTITY searchContacts.label               "חיפוש באנשי קשר:">
+<!ENTITY searchContacts.accesskey           "נ">
+<!ENTITY SearchNameOrEmail.label            "שם או דוא״ל">
+
+<!ENTITY addtoToFieldMenu.label             "הוספה לשדה אל">
+<!ENTITY addtoToFieldMenu.accesskey         "א">
+<!ENTITY addtoCcFieldMenu.label             "הוספה לשדה עותק">
+<!ENTITY addtoCcFieldMenu.accesskey         "ע">
+<!ENTITY addtoBccFieldMenu.label            "הוספה לשדה עותק מוסר">
+<!ENTITY addtoBccFieldMenu.accesskey        "מ">
+<!ENTITY deleteAddrBookCard.label           "מחיקה">
+<!ENTITY deleteAddrBookCard.accesskey       "מ">
+<!ENTITY propertiesContext.label            "מאפיינים">
+<!ENTITY propertiesContext.accesskey        "א">
+<!ENTITY abPropertiesContext.label          "מאפיינים">
+<!ENTITY abPropertiesContext.accesskey      "א">
+<!ENTITY editContactContext.label           "עריכת איש קשר">
+<!ENTITY editContactContext.accesskey       "ע">
+<!ENTITY editMailingListContext.label       "עריכת רשימה">
+<!ENTITY editMailingListContext.accesskey   "ע">
+
+<!ENTITY newContactAbContext.label          "איש קשר חדש">
+<!ENTITY newContactAbContext.accesskey      "ח">
+<!ENTITY newListAbContext.label             "רשימה חדשה">
+<!ENTITY newListAbContext.accesskey         "ד">
+
+<!ENTITY toButton.label                     "הוסף לשורה אל:">
+<!ENTITY toButton.accesskey                 "א">
+<!ENTITY ccButton.label                     "הוסף לעותק:">
+<!ENTITY ccButton.accesskey                 "ע">
+<!ENTITY bccButton.label                    "הוסף עותק סמוי:">
+<!ENTITY bccButton.accesskey                "ס">

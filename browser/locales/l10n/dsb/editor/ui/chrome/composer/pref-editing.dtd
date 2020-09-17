@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Nastajenja nowego boka">
+
+<!ENTITY  authorName.label          "Awtor:">
+<!ENTITY  authorName.accesskey      "t">
+<!ENTITY  pageColorHeader           "Standardny naglěd boka">
+
+<!ENTITY defaultColors.label        "Standardne barwy cytarja (Barwy w boku njenastajiś)">
+<!ENTITY defaultColors.accesskey    "S">
+<!ENTITY customColors.label         "Swójske barwy wužywaś:">
+<!ENTITY customColors.accesskey     "b">
+
+<!ENTITY normalText.label           "Normalny tekst">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "Wótkazowy tekst">
+<!ENTITY linkText.accesskey         "W">
+<!ENTITY activeLinkText.label       "Tekst aktiwnego wótkaza">
+<!ENTITY activeLinkText.accesskey   "a">
+<!ENTITY visitedLinkText.label      "Tekst woglědowanego wótkaza">
+<!ENTITY visitedLinkText.accesskey  "l">
+<!ENTITY background.label           "Slězyna:">
+<!ENTITY background.accesskey       "l">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Slězynowy wobraz:">
+<!ENTITY backgroundImage.accesskey  "z">
+<!ENTITY chooseFile.label           "Dataju wubraś…">
+<!ENTITY chooseFile.accesskey       "t">
+

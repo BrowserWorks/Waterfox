@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "拼字檢查">
+<!ENTITY generalSpelling.label                "一般">
+<!ENTITY checkSpellingWhenTyping.label        "輸入文字時檢查拼字:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "W">
+<!ENTITY dontCheckSpelling.label              "從不">
+<!ENTITY multilineCheckSpelling.label         "換行文字輸入區">
+<!ENTITY alwaysCheckSpelling.label            "所有文字輸入區">
+<!ENTITY spellForMailAndNews.label            "郵件與新聞群組">
+<!ENTITY checkSpellingBeforeSend.label        "寄送前先檢查拼字">
+<!ENTITY checkSpellingBeforeSend.accesskey    "C">
+<!ENTITY spellCheckInline.label               "打字時即時檢查拼字">
+<!ENTITY spellCheckInline.accesskey           "e">
+<!ENTITY languagePopup.label                  "語言:">
+<!ENTITY languagePopup.accessKey              "L">
+<!ENTITY moreDictionaries.label               "下載更多字典&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "沒有可用的字典。">
+

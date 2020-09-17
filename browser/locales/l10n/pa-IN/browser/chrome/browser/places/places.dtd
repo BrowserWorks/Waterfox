@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "ਲਾਇਬਰੇਰੀ">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "ਪਰਬੰਧ">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "ਆਪਣੇ ਬੁੱਕਮਾਰਕ ਦਾ ਪਰਬੰਧ ਕਰੋ">
+
+<!ENTITY file.close.label               "ਬੰਦ ਕਰੋ">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "ਝਲਕ">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "ਆਪਣੀ ਝਲਕ ਨੂੰ ਬਦਲੋ">
+<!ENTITY view.columns.label             "ਕਾਲਮ ਵੇਖੋ">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "ਲੜੀਬੱਧ">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "ਨਾ-ਲੜੀਬੱਧ">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "A > Z ਲੜੀਬੱਧ">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A ਲੜੀਬੱਧ">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "...HTML ਤੋਂ ਬੁੱਕਮਾਰਕ ਨੂੰ ਇੰਪੋਰਟ ਕਰੋ">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "...ਬੁੱਕਮਾਰਕ HTML ਵਿੱਚ ਐਕਸਪੋਰਟ ਕਰੋ">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "...ਹੋਰ ਬਰਾਊਜ਼ਰ ਤੋਂ ਡਾਟਾ ਇੰਪੋਰਟ ਕਰੋ">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "ਬੈਕਅੱਪ…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "ਬਹਾਲ ਕਰੋ">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "…ਫਾਈਲ ਨੂੰ ਚੁਣੋ">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "ਨਾਂ">
+<!ENTITY col.tags.label          "ਟੈਗ">
+<!ENTITY col.url.label           "ਟਿਕਾਣਾ">
+<!ENTITY col.mostrecentvisit.label "ਸਭ ਤੋਂ ਵੱਧ ਤਾਜ਼ਾ ਖੋਲ੍ਹੇ">
+<!ENTITY col.visitcount.label    "ਖੋਲ੍ਹਣ ਗਿਣਤੀ">
+<!ENTITY col.dateadded.label     "ਜੋੜਨ ਮਿਤੀ">
+<!ENTITY col.lastmodified.label  "ਆਖਰੀ ਸੋਧ">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "ਇੰਪੋਰਟ ਤੇ ਬੈਕਅੱਪ">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "ਆਪਣੇ ਬੁੱਕਮਾਰਕ ਇੰਪੋਰਟ ਕਰੋ ਤੇ ਬੈਕਅੱਪ ਲਵੋ">
+
+<!ENTITY backButton.tooltip  "ਪਿੱਛੇ ਜਾਓ">
+
+<!ENTITY forwardButton.tooltip  "ਅੱਗੇ ਚੱਲੋ">
+
+<!ENTITY detailsPane.selectAnItemText.description "ਕਿਸੇ ਆਈਟਮ ਨੂੰ ਵੇਖਣ ਤੇ ਉਸਦੀ ਵਿਸ਼ੇਸ਼ਤਾ ਸੋਧਣ ਲਈ ਚੁਣੋ">
+

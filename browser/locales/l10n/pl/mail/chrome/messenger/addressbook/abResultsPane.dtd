@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label "Książka adresowa">
+<!ENTITY Addrbook.accesskey "a">
+<!ENTITY GeneratedName.label "Imię i nazwisko">
+<!ENTITY GeneratedName.accesskey "n">
+<!ENTITY PrimaryEmail.label "E-mail">
+<!ENTITY PrimaryEmail.accesskey "E">
+<!ENTITY Company.label "Firma/organizacja">
+<!ENTITY Company.accesskey "O">
+<!ENTITY _PhoneticName.label "Wymowa">
+<!ENTITY _PhoneticName.accesskey "o">
+<!ENTITY NickName.label "Pseudonim">
+<!ENTITY NickName.accesskey "i">
+<!ENTITY SecondEmail.label "Dodatkowy e-mail">
+<!ENTITY SecondEmail.accesskey "y">
+<!ENTITY Department.label "Dział">
+<!ENTITY Department.accesskey "z">
+<!ENTITY JobTitle.label "Tytuł">
+<!ENTITY JobTitle.accesskey "T">
+<!ENTITY CellularNumber.label "Telefon komórkowy">
+<!ENTITY CellularNumber.accesskey "k">
+<!ENTITY PagerNumber.label "Pager">
+<!ENTITY PagerNumber.accesskey "P">
+<!ENTITY FaxNumber.label "Faks">
+<!ENTITY FaxNumber.accesskey "F">
+<!ENTITY HomePhone.label "Telefon domowy">
+<!ENTITY HomePhone.accesskey "d">
+<!ENTITY WorkPhone.label "Telefon służbowy">
+<!ENTITY WorkPhone.accesskey "s">
+<!ENTITY ChatName.label "Komunikator">
+<!ENTITY ChatName.accesskey "K">
+<!ENTITY sortAscending.label "Rosnąco">
+<!ENTITY sortAscending.accesskey "R">
+<!ENTITY sortDescending.label "Malejąco">
+<!ENTITY sortDescending.accesskey "M">

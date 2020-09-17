@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "Amaɣnay yesseklas imedyaten deg tkatut n uḥraz tuwnist, ticki takatut teččuṛ, imedyaten imaynuten ad sfeɛjen asekles seg tazwara.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Rmed Firefox agetsekar i tiririt n usekles n isefka s wudem asrid">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "Takatut n uḥraz teččur. Alemmec aqbur atan ad ittwasfeḍ. ">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "Asekles n umaɣnu ur iwjiḍ ara imira.  Ttxilek mdel akk isfuyla n tunigin tusligt. ">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "Asali…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Acercuṛ">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Isken-d timhalin iseqdac yiminig deg lawan n usekles, atan ttwaskenen-d s wudem ulkim am ucercur">
+<!ENTITY performanceUI.toolbar.js-calltree "Aseklu n usiwel">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Ad isebṛureq tiwuriwin Javascript anida iminig yettawi deqs n wakud deg usekles.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Isnasen">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Tesekanay anda tettwakren takatut di lawan usekles.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "Udlif JS">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Teskanay tanebdant usiwel n JavaScrupt deg lawan usekles">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Idlifen n uḥeṛṛi ">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "Asemday n wakud">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Akud yezrin di twuri-yagi yakk di tigad imumi tsawel.">
+<!ENTITY performanceUI.table.selfDuration             "Man-ukud ">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Akud yezrin kan di twuri-yagi.">
+<!ENTITY performanceUI.table.totalPercentage          "Asamday n tesqamt">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Afmiḍi n wakud yezrin di twuri-yagi akked di tigad imumi tsawel.">
+<!ENTITY performanceUI.table.selfPercentage           "Tasqamt tasuft">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Afmiḍi n wakud yezrin di twuri-yagi.">
+<!ENTITY performanceUI.table.samples                  "Imadyaten">
+<!ENTITY performanceUI.table.samples.tooltip          "Amḍan n tikal anda tawuri-yagi tella di tnebdant makken amaɣnay yeṭṭef-d amadya.">
+<!ENTITY performanceUI.table.function                 "Tawuri">
+<!ENTITY performanceUI.table.function.tooltip         "Isem d uɣballu n wadeg n tawuri n ulemmec">
+<!ENTITY performanceUI.table.totalAlloc               "Aḥerri asemday">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Amḍan asemday n uheṛṛi n tɣawsiwin n tukkist deg adig-agi.">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "Fren isefka a d-sekned di tesnakuṭ">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "Swel ismenyifen n tmellit.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "Tti aseklu n usiwel">
+<!ENTITY performanceUI.invertTree.tooltiptext "Tuttya n useklu n usiwel ad isken iberdan n isiwlen ittumeɣnun seg izilalen imaynuten ɣer iqbuṛen.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Tti udlif">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Tuttya n udlif ad isken iberdan n isawalen ittumeɣnun seg izilalen imaynuten ɣer iqbuṛen.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Sken isefka n telɣubliṭ Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Askan n isefka n telɣubliṭ ad irmed issaɣen n umaɣnay Javascript akken ad iseddu izamulen n telɣubliṭ Gecho.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "Sken asefrer JIT">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Wali JIT, isefka n usefrer n tukkist di yal akatar JavaScript.">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "Lebbeḍ aseklu n usniles">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Aplatir Arbre Recursion">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "Kles takatut">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Kles n asadur n takukt di timeɣna.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "Kles aḥeṛṛi">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Kles aḥeṛṛi n tɣawsa di timeɣna">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "Kles asnagar n tugna">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Kles asnagar n tugniwin di timeɣna.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "Aklas anazzal s">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "Seḥbes asekles s usenned ɣef ENTR">
+<!ENTITY performanceUI.console.stopCommandEnd   "Ɣer tdiwent">

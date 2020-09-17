@@ -1,0 +1,24 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Ulozte kopiu tohoto suboru ako userContent.css do priecinka chrome 
+ * v priecinku s pouzivatelskym profilom a upravte podla svojich predstav.
+ * 
+ * Tento subor sa pouziva k nastaveniu pouzivatelskych kaskadovych stylov
+ * na webovych strankach. Pravidla bez deklaracie !important budu prepisane
+ * kaskadovymi stylmi webovej stranky, pokial take existuju. Pravidla s 
+ * deklaraciou !important prevazia nad pravidlami na webovej stranke.
+ *
+ * priklad: odstranit blikajuce prvky
+ * blink { text-decoration: none !important; }
+ *
+ * priklad: nastavit vsetkym tabulkam cierny ramcek 2px siroky
+ * table { border: 2px black solid; }
+ *
+ *
+ * Viac prikladov najdete na http://www.mozilla.org/unix/customizing.html
+ *
+ */
+

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Бои и позадина на страницата">
+<!ENTITY pageColors.label "Бои на страницата">
+<!ENTITY defaultColorsRadio.label "Основни бои на корисникот (не ги поставувај боите од страницата)">
+<!ENTITY defaultColorsRadio.accessKey "О">
+<!ENTITY defaultColorsRadio.tooltip "Ќе се користат поставките за бои само од прелистувачот на корисникот">
+<!ENTITY customColorsRadio.label "Користи сопствени бои:">
+<!ENTITY customColorsRadio.accessKey "с">
+<!ENTITY customColorsRadio.tooltip "Овие поставки за бои ги одбиваат поставките на прелистувачот">
+
+<!ENTITY normalText.label "Нормален текст">
+<!ENTITY normalText.accessKey "Н">
+<!ENTITY linkText.label "Текст на врска">
+<!ENTITY linkText.accessKey "р">
+<!ENTITY activeLinkText.label "Текст на активна врска">
+<!ENTITY activeLinkText.accessKey "а">
+<!ENTITY visitedLinkText.label "Текст на посетена врска">
+<!ENTITY visitedLinkText.accessKey "в">
+<!ENTITY background.label "Позадина:">
+<!ENTITY background.accessKey "П">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Позадинска слика:">
+<!ENTITY backgroundImage.accessKey "и">
+<!ENTITY backgroundImage.tooltip "Користете слика како позадина на Вашата страница">

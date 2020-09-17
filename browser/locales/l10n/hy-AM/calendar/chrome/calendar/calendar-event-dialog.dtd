@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Խմբագրել տարր" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Պահպանել տևողությունը, վերջնական ամսաթիվ փոխելիս">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "Որտեղից" >
+<!ENTITY newevent.to.label                  "Դեպի" >
+
+<!ENTITY newevent.status.label                    "Վիճակ" >
+<!ENTITY newevent.status.accesskey                "S" >
+<!ENTITY newevent.eventStatus.none.label          "Ոչ անպայման" >
+<!ENTITY newevent.eventStatus.none.accesskey      "o" >
+<!ENTITY newevent.todoStatus.none.label           "Ոչ անպայման" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Փակված" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "n" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Փակված" >
+<!ENTITY newevent.status.tentative.label          "Նախնական" >
+<!ENTITY newevent.status.tentative.accesskey      "T" >
+<!ENTITY newevent.status.confirmed.label          "Հաստատված" >
+<!ENTITY newevent.status.confirmed.accesskey      "C" >
+<!ENTITY newevent.status.needsaction.label        "Գործողության կարիք ունի" >
+<!ENTITY newevent.status.inprogress.label         "Ընթացքում" >
+<!ENTITY newevent.status.completed.label          "Ավարտված է" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#37; կատարված">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Տեղեկացնել մասնակիցներին">
+<!ENTITY event.attendees.notify.accesskey            "f">
+<!ENTITY event.attendees.notifyundisclosed.label     "Առանձին հրավեր յուրաքանչյուր մասնակցի համար">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "x">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Այս տարբերակը ուղարկում է մեկ մասնակցին մեկ հրավեր: Յուրաքանչյուր հրավերի մեջ ընդգրկված է միայն ստացողը, այլ մասնակիցների ինքնությունը չբացահայտելու համար:">
+<!ENTITY event.attendees.disallowcounter.label       "Արգելել հաշվիչ">
+<!ENTITY event.attendees.disallowcounter.accesskey   "a">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Նշում է, որ դուք չեք ընդունի հակադարձումներ">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Նոր">
+<!ENTITY  event.menu.item.new.accesskey                   "N">
+<!ENTITY  event.menu.item.new.event.label                 "Իրադարձություն">
+<!ENTITY  event.menu.item.new.event.accesskey             "E">
+<!ENTITY  event.menu.item.new.task.label                  "Առաջադրանք">
+<!ENTITY  event.menu.item.new.task.accesskey              "T">
+<!ENTITY  event.menu.item.new.message.label               "Նամակ">
+<!ENTITY  event.menu.item.new.message.accesskey           "M">
+<!ENTITY  event.menu.item.new.contact.label               "Հասցեագրքի կապ">
+<!ENTITY  event.menu.item.new.contact.accesskey           "C">
+<!ENTITY  event.menu.item.close.label                     "Փակել">
+<!ENTITY  event.menu.item.close.accesskey                 "C">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Պահպանել">
+<!ENTITY  event.menu.item.save.accesskey                  "S">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Պահել և փակել">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "I">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "Ջնջել...">
+<!ENTITY  event.menu.item.delete.accesskey                "D">
+<!ENTITY  event.menu.item.page.setup.label                "Էջի կարգավորում">
+<!ENTITY  event.menu.item.page.setup.accesskey            "u">
+<!ENTITY  event.menu.item.print.label                     "Տպել">
+<!ENTITY  event.menu.item.print.accesskey                 "P">
+
+<!ENTITY  event.menu.edit.label                           "Խմբագրել">
+<!ENTITY  event.menu.edit.accesskey                       "E">
+<!ENTITY  event.menu.edit.undo.label                      "Հետարկել">
+<!ENTITY  event.menu.edit.undo.accesskey                  "U">
+<!ENTITY  event.menu.edit.redo.label                      "Վերարկել">
+<!ENTITY  event.menu.edit.redo.accesskey                  "R">
+<!ENTITY  event.menu.edit.cut.label                       "Կտրել">
+<!ENTITY  event.menu.edit.cut.accesskey                   "t">
+<!ENTITY  event.menu.edit.copy.label                      "Պատճենել">
+<!ENTITY  event.menu.edit.copy.accesskey                  "C">
+<!ENTITY  event.menu.edit.paste.label                     "Տեղադրել">
+<!ENTITY  event.menu.edit.paste.accesskey                 "P">
+<!ENTITY  event.menu.edit.select.all.label                "Նշել բոլորը">
+<!ENTITY  event.menu.edit.select.all.accesskey            "A">
+
+<!ENTITY  event.menu.view.label                           "Տեսք">
+<!ENTITY  event.menu.view.accesskey                       "V">
+<!ENTITY  event.menu.view.toolbars.label                  "Գործիքագաւտիներ">
+<!ENTITY  event.menu.view.toolbars.accesskey              "T">
+<!ENTITY  event.menu.view.toolbars.event.label            "Իրադարձությունների գործիքադարակ">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "E">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Կարգավորել…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "C">
+<!ENTITY  event.menu.view.showlink.label                  "Ցույց տալ կապակցված հղումը">
+<!ENTITY  event.menu.view.showlink.accesskey              "R">
+
+<!ENTITY  event.menu.options.label                            "Ընտրանքներ">
+<!ENTITY  event.menu.options.accesskey                        "O">
+<!ENTITY  event.menu.options.attendees.label                  "Հրավիրել մասնակիցներ…">
+<!ENTITY  event.menu.options.attendees.accesskey              "I">
+<!ENTITY  event.menu.options.timezone2.label                  "ցուցադրել ժամանակագոտիները">
+<!ENTITY  event.menu.options.timezone2.accesskey              "z">
+<!ENTITY  event.menu.options.priority2.label                  "Առաջնահերթություն">
+<!ENTITY  event.menu.options.priority2.accesskey              "y">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Ոչ անպայման">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "o">
+<!ENTITY  event.menu.options.priority.low.label               "Ցածր">
+<!ENTITY  event.menu.options.priority.low.accesskey           "L">
+<!ENTITY  event.menu.options.priority.normal.label            "Միջին">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "Բարձր">
+<!ENTITY  event.menu.options.priority.high.accesskey          "H">
+<!ENTITY  event.menu.options.privacy.label                    "Առաջնահերթություն">
+<!ENTITY  event.menu.options.privacy.accesskey                "P">
+<!ENTITY  event.menu.options.privacy.public.label             "Հանրային իրադարձություն">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "u">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Ցուցադրել միայն ժամանակը և ամսաթիվը">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "S">
+<!ENTITY  event.menu.options.privacy.private.label            "Անձնական իրադարձություն">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "r">
+<!ENTITY  event.menu.options.show.time.label                  "Ցուցադրել ժամանակը">
+<!ENTITY  event.menu.options.show.time.accesskey              "T">
+<!ENTITY  event.menu.options.show.time.busy.label             "Զբաղված">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "B">
+<!ENTITY  event.menu.options.show.time.free.label             "Ազատ">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "F">
+
+<!ENTITY event.invite.attendees.label                     "Հրավիրել մասնակիցների…">
+<!ENTITY event.invite.attendees.accesskey                 "I">
+<!ENTITY event.email.attendees.label                      "Գրել էլ․ նամակ բոլոր մասնակիցներին…">
+<!ENTITY event.email.attendees.accesskey                  "A">
+<!ENTITY event.email.tentative.attendees.label            "Գրել էլ․ նամակ անորոշ մասնակիցներին…">
+<!ENTITY event.email.tentative.attendees.accesskey        "U">
+<!ENTITY event.remove.attendees.label2                    "Հեռացնել բոլոր մասնակիցներին">
+<!ENTITY event.remove.attendees.accesskey                 "r">
+<!ENTITY event.remove.attendee.label                      "Հեռացնել մասնակից">
+<!ENTITY event.remove.attendee.accesskey                  "e">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Պահել">
+<!ENTITY  event.toolbar.saveandclose.label                "Պահել և փակել">
+<!ENTITY  event.toolbar.delete.label                      "Ջնջել">
+<!ENTITY  event.toolbar.attendees.label                   "Հրավիրել մասնակիցների">
+<!ENTITY  event.toolbar.privacy.label                     "Գաղտնիություն">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Պահել">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Պահել և փակել">
+<!ENTITY  event.toolbar.delete.tooltip                    "Ջնջել">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Հրավիրել մասնակիցների">
+<!ENTITY  event.toolbar.attachments.tooltip               "Ավելացնել հավելվածներ">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Գաղտնիության փոփոխություն">
+<!ENTITY  event.toolbar.priority.tooltip                  "Փոխել առաջնահերթությունը">
+<!ENTITY  event.toolbar.status.tooltip                    "Փոխել վիճակը">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Փոխել ազատ/զբաղված ժամանակը">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Ընդունել առաջարկը">
+<!ENTITY counter.button.proposal.accesskey                "p">
+<!ENTITY counter.button.proposal.tooltip2                 "Իրադարձութեան դաշտերը լրացուում են հակադիր արժեքները աւգտագործելիս, միայն  լրացուցիչ կամ առանց լրացուցիչ փոփոխութիւնները պահելուց կը տեղեկացնեն բոլոր մասնակիցներին։">
+<!ENTITY counter.button.original.label                    "Ընդունել բնօրինակ տվյալներ">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "Դաշտերը կստեղծվեն նախնական իրադարձության արժեքներից ելնելով, մինչև պատասխան առաջարկություն">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Վերնագիր՝" >
+<!ENTITY event.title.textbox.accesskey                    "I">
+<!ENTITY event.location.label                             "Տեղ՝" >
+<!ENTITY event.location.accesskey                         "L">
+<!ENTITY event.categories.label                           "Անվանակարգ՝">
+<!ENTITY event.categories.accesskey                       "y">
+<!ENTITY event.categories.textbox.label                   "Ավելացնել նոր անվանակարգ" >
+<!ENTITY event.calendar.label                             "Օրացույց՝" >
+<!ENTITY event.calendar.accesskey                         "C">
+<!ENTITY event.attendees.label                            "Մասնակիցներ՝" >
+<!ENTITY event.attendees.accesskey                        "n">
+<!ENTITY event.alldayevent.label                          "Օրվա բոլոր իրադարձությունները" >
+<!ENTITY event.alldayevent.accesskey                      "d">
+<!ENTITY event.from.label                                 "Սկսել՝" >
+<!ENTITY event.from.accesskey                             "S">
+<!ENTITY task.from.label                                  "Սկսել՝" >
+<!ENTITY task.from.accesskey                              "S">
+<!ENTITY event.to.label                                   "Ավարտ՝" >
+<!ENTITY event.to.accesskey                               "u">
+<!ENTITY task.to.label                                    "Վերջնաժամկետ՝" >
+<!ENTITY task.to.accesskey                                "u">
+<!ENTITY task.status.label                                "Վիճակ՝" >
+<!ENTITY task.status.accesskey                            "a">
+<!ENTITY event.repeat.label                               "Կրկնել՝" >
+<!ENTITY event.repeat.accesskey                           "R">
+<!ENTITY event.until.label                                "Մինչ՝">
+<!ENTITY event.until.accesskey                            "B">
+<!ENTITY event.reminder.label                             "Հիշեցում՝" >
+<!ENTITY event.reminder.accesskey                         "m">
+<!ENTITY event.description.label                          "Նկարագրություն՝" >
+<!ENTITY event.description.accesskey                      "p">
+<!ENTITY event.attachments.label                          "Կցորդներ՝" >
+<!ENTITY event.attachments.accesskey                      "h" >
+<!ENTITY event.attachments.menubutton.label               "Կցել">
+<!ENTITY event.attachments.menubutton.accesskey           "A">
+<!ENTITY event.attachments.url.label                      "Վեբ էջ…">
+<!ENTITY event.attachments.url.accesskey                  "W">
+<!ENTITY event.attachments.popup.remove.label             "Հեռացնել" >
+<!ENTITY event.attachments.popup.remove.accesskey         "R" >
+<!ENTITY event.attachments.popup.open.label               "Բացել" >
+<!ENTITY event.attachments.popup.open.accesskey           "O" >
+<!ENTITY event.attachments.popup.removeAll.label          "Հեռացնել բոլորը" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "A" >
+<!ENTITY event.attachments.popup.attachPage.label         "Կցել վեբ էջ…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "g" >
+<!ENTITY event.url.label                                  "Կապված հղումներ՝" >
+<!ENTITY event.priority2.label                            "Առաջնահերթ՝">
+
+<!ENTITY event.reminder.none.label                        "Հիշեցում չկա " >
+<!ENTITY event.reminder.0minutes.before.label             "0 րոպե մինչ" >
+<!ENTITY event.reminder.5minutes.before.label             "5 րոպե մինչ" >
+<!ENTITY event.reminder.15minutes.before.label            "15 րոպե մինչ" >
+<!ENTITY event.reminder.30minutes.before.label            "30 րոպե մինչ" >
+<!ENTITY event.reminder.1hour.before.label                "1 ժամ մինչ" >
+<!ENTITY event.reminder.2hours.before.label               "2 ժամ մինչ" >
+<!ENTITY event.reminder.12hours.before.label              "12 ժամ մինչ" >
+<!ENTITY event.reminder.1day.before.label                 "1 օր մինչ" >
+<!ENTITY event.reminder.2days.before.label                "2 օր մինչ" >
+<!ENTITY event.reminder.1week.before.label                "1 շաբաթ մինչ" >
+<!ENTITY event.reminder.custom.label                      "Ընտրել…" >
+
+<!ENTITY event.reminder.multiple.label                    "Բազմակի հիշեցումներ…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Ժամանակը՝">
+<!ENTITY event.statusbarpanel.privacy.label               "Գաղտնիություն՝">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Խմբագրել կրկնությունը">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Չի կրկնվում">
+<!ENTITY event.repeat.daily.label                       "Օրական">
+<!ENTITY event.repeat.weekly.label                      "Շաբաթական">
+<!ENTITY event.repeat.every.weekday.label               "Ամեն շաբաթ օր">
+<!ENTITY event.repeat.bi.weekly.label                   "Երկու շաբաթական">
+<!ENTITY event.repeat.monthly.label                     "Ամսական">
+<!ENTITY event.repeat.yearly.label                      "Տարեկան">
+<!ENTITY event.repeat.custom.label                      "Ընտրել…">
+
+<!ENTITY event.recurrence.pattern.label                 "Սահմանել կրկնություն">
+<!ENTITY event.recurrence.occurs.label                  "Կրկնություն" >
+<!ENTITY event.recurrence.day.label                     "օրական" >
+<!ENTITY event.recurrence.week.label                    "շաբաթական" >
+<!ENTITY event.recurrence.month.label                   "ամսական" >
+<!ENTITY event.recurrence.year.label                    "տարեկան" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Ամեն" >
+<!ENTITY repeat.units.days.both                         "Օր(եր)" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Ամեն շաբաթ օր" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Ամեն" >
+<!ENTITY repeat.units.weeks.both                        "Շաբաթ" >
+<!ENTITY event.recurrence.on.label                      "Ինչի վրա՝" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Ամեն" >
+<!ENTITY repeat.units.months.both                       "Ամիս" >
+<!ENTITY event.recurrence.monthly.every.label           "Ամեն" >
+<!ENTITY event.recurrence.monthly.first.label           "Առաջին">
+<!ENTITY event.recurrence.monthly.second.label          "Երկրորդ">
+<!ENTITY event.recurrence.monthly.third.label           "Երրորդ">
+<!ENTITY event.recurrence.monthly.fourth.label          "Չորրորդ">
+<!ENTITY event.recurrence.monthly.fifth.label           "Հինգերորդ">
+<!ENTITY event.recurrence.monthly.last.label            "Վերջին">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "Կիրակի" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "Երկուշաբթի" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "Երեքշաբթի" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "Չորեքշաբթի" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "Հինգշաբթի" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "Ուրբաթ" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "Շաբաթ" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "Ամսվա օրը">
+<!ENTITY event.recurrence.repeat.recur.label            "Կրկնել օրվա(երի) ընթացքում">
+
+<!ENTITY event.recurrence.every.label                        "Ամեն՝" >
+<!ENTITY repeat.units.years.both                             "Տարի(ներ)" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Ամեն՝" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "Հունվար" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "Փետրվար" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "Մարտ" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "Ապրիլ" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "Մայիս" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "Հունիս" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "Հուլիս" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "Օգոստոս" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "Սեպտեմբեր" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "Հոկտեմբեր" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "Նոյեմբեր" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "Դեկտեմբեր" >
+<!ENTITY event.recurrence.yearly.every.label                 "Ամեն">
+<!ENTITY event.recurrence.yearly.first.label                 "Առաջին">
+<!ENTITY event.recurrence.yearly.second.label                "Երկրորդ">
+<!ENTITY event.recurrence.yearly.third.label                 "Երրորդ">
+<!ENTITY event.recurrence.yearly.fourth.label                "Չորրորդ">
+<!ENTITY event.recurrence.yearly.fifth.label                 "Հինգերորդ">
+<!ENTITY event.recurrence.yearly.last.label                  "Վերջին">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "Կիրակի" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "Երկուշաբթի" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "Երեքշաբթի" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "Չորեքշաբթի" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "Հինգշաբթի" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "Ուրբաթ" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "Շաբաթ" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "օր" >
+<!ENTITY event.recurrence.of.label                           "հետևյալից" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "Հունվար" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "Փետրվար" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "Մարտ" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "Ապրիլ" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "Մայիս" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "Հունիս" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "Հուլիս" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "Օգոստոս" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "Սեպտեմբեր" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "Հոկտեմբեր" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "Նոյեմբեր" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "Դեկտեմբեր" >
+
+<!ENTITY event.recurrence.range.label                   "Կրկնության ընդգրկույթ">
+<!ENTITY event.recurrence.forever.label                 "Վերջնաժամկետ չկա" >
+<!ENTITY event.recurrence.repeat.for.label              "Ստեղծել" >
+<!ENTITY event.recurrence.appointments.label            "Հանդիպում(ներ)" >
+<!ENTITY event.repeat.until.label                       "Կրկնել մինչև" >
+<!ENTITY event.recurrence.preview.label                 "Նախադիտում">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Հրավիրեք մասնակիցների">
+<!ENTITY event.organizer.label                  "Կազմակերպիչ">
+<!ENTITY event.freebusy.suggest.slot            "Առաջարկել ժամանակի բնիկ՝">
+<!ENTITY event.freebusy.button.next.slot        "Հաջորդ փորակը">
+<!ENTITY event.freebusy.button.previous.slot    "Նախորդ փորակը">
+<!ENTITY event.freebusy.zoom                    "Մեծացում՝">
+<!ENTITY event.freebusy.legend.free             "Ազատ" >
+<!ENTITY event.freebusy.legend.busy             "Զբաղված" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Նախնական" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Գրասենյակից դուրս" >
+<!ENTITY event.freebusy.legend.unknown          "Տեղեկություն չկա" >
+<!ENTITY event.attendee.role.required           "Պահանջվող մասնակից">
+<!ENTITY event.attendee.role.optional           "Կամավոր մասնակից">
+<!ENTITY event.attendee.role.chair              "Վարել">
+<!ENTITY event.attendee.role.nonparticipant     "Ոչ մասնակից">
+<!ENTITY event.attendee.usertype.individual     "Անհատական">
+<!ENTITY event.attendee.usertype.group          "Խումբ">
+<!ENTITY event.attendee.usertype.resource       "Աղբյուր">
+<!ENTITY event.attendee.usertype.room           "Սենյակ">
+<!ENTITY event.attendee.usertype.unknown        "Անհայտ">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Խնդրում ենք նշել ժամային գոտին">
+<!ENTITY event.timezone.custom.label     "Ավել ժամանակագոտիներ…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Գլխավոր">
+<!ENTITY read.only.title.label           "Վերնագիր՝">
+<!ENTITY read.only.calendar.label        "Օրացույց՝">
+<!ENTITY read.only.event.start.label     "Սկզբի ամսաթիվ՝">
+<!ENTITY read.only.task.start.label      "Սկզբի ամսաթիվ՝">
+<!ENTITY read.only.event.end.label       "Ավարտի ամսաթիվ՝">
+<!ENTITY read.only.task.due.label        "Վերջնաժամկետ՝">
+<!ENTITY read.only.repeat.label          "Կրկնություն՝">
+<!ENTITY read.only.location.label        "Տեղ՝">
+<!ENTITY read.only.category.label        "Անվանակարգ՝">
+<!ENTITY read.only.organizer.label       "Կազմակերպիչ՝">
+<!ENTITY read.only.reminder.label        "Հիշեցում՝">
+<!ENTITY read.only.attachments.label     "Կցորդներ՝">
+<!ENTITY read.only.attendees.label       "Մասնակիցներ">
+<!ENTITY read.only.description.label     "Նկարագրություն">
+<!ENTITY read.only.link.label            "Կից հղում">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Պահել և փակել">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Պահպանել փոփոխությունները և փակել պատուհանը, առանց մասնակցի կարգավիճակի փոփոխության և պատասխան ուղարկելու">
+<!ENTITY summary.dialog.accept.label            "Ընդունել">
+<!ENTITY summary.dialog.accept.tooltiptext      "Ընդունել հրավերը">
+<!ENTITY summary.dialog.tentative.label         "Նախնական">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Նախօրոք ընդունել հրավերը">
+<!ENTITY summary.dialog.decline.label           "Մերժել">
+<!ENTITY summary.dialog.decline.tooltiptext     "Մերժել հրավերը">
+<!ENTITY summary.dialog.dontsend.label          "Չպատասխանել">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Փոխել Ձեր մասնակցության կարգավիճակը` առանց պատասխան ուղարկելու կազմակերպիչին և փակել պատուհանը">
+<!ENTITY summary.dialog.send.label              "Պատասխանել հիմա">
+<!ENTITY summary.dialog.send.tooltiptext        "Պատասխանել կազմակերպիչին  և փակել պատուհանը">

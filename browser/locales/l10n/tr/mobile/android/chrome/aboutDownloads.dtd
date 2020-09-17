@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "İndirilenler">
+<!ENTITY aboutDownloads.header                     "İndirdikleriniz">
+<!ENTITY aboutDownloads.empty                      "İndirme yok">
+
+<!ENTITY aboutDownloads.open                       "Aç">
+<!ENTITY aboutDownloads.remove                     "Sil">
+<!ENTITY aboutDownloads.removeAll                  "Tümünü sil">
+<!ENTITY aboutDownloads.pause                      "Duraklat">
+<!ENTITY aboutDownloads.resume                     "Devam et">
+<!ENTITY aboutDownloads.cancel                     "Vazgeç">
+<!ENTITY aboutDownloads.retry                      "Tekrar dene">

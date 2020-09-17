@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "Selain">
+
+<!ENTITY navRadio.label                 "Näytä">
+<!ENTITY navRadio.accesskey             "N">
+<!ENTITY navStartPageMenu.label         "Selaimen käynnistyttyä">
+<!ENTITY newWinPageMenu.label           "Uudessa ikkunassa">
+<!ENTITY newTabPageMenu.label           "Uudessa välilehdessä">
+
+<!ENTITY blankPageRadio.label           "Tyhjä sivu">
+<!ENTITY blankPageRadio.accesskey       "T">
+<!ENTITY homePageRadio.label            "Aloitussivu">
+<!ENTITY homePageRadio.accesskey        "A">
+<!ENTITY lastPageRadio.label            "Edellisessä välilehdessä auki ollut sivu">
+<!ENTITY lastPageRadio.accesskey        "E">
+<!ENTITY restoreSessionRadio.label      "Edellisen istunnon ikkunat ja välilehdet">
+<!ENTITY restoreSessionRadio.accesskey  "d">
+
+<!ENTITY restoreSessionIntro.label      "Kun istuntoa aletaan palauttaa">
+<!ENTITY restoreImmediately.label       "Palauta heti kaikki välilehdet">
+<!ENTITY restoreImmediately.accesskey   "e">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "Palauta">
+<!ENTITY restoreTabs.accesskey          "l">
+<!ENTITY restoreTabsAtATime.label       "välilehteä kerrallaan">
+<!ENTITY restoreDeferred.label          "Palauta välilehdet vain pyydettäessä">
+<!ENTITY restoreDeferred.accesskey      "i">
+
+<!ENTITY homePageIntro.label            "Aloitussivu-painikkeen painaminen avaa nämä sivut:">
+<!ENTITY useCurrent.label               "Käytä avointa sivua">
+<!ENTITY useCurrent.accesskey           "K">
+<!ENTITY useCurrentGroup.label          "Käytä avoimia välilehtiä">
+<!ENTITY useCurrentGroup.accesskey      "y">
+<!ENTITY browseFile.label               "Valitse tiedosto…">
+<!ENTITY browseFile.accesskey           "V">
+<!ENTITY useDefault.label               "Palauta oletus">
+<!ENTITY useDefault.accesskey           "P">
+
+<!ENTITY defaultBrowserGroup.label      "Oletusselain">
+<!ENTITY defaultBrowserButton.label     "Aseta oletusselaimeksi">
+<!ENTITY defaultBrowserButton.accesskey "o">
+<!ENTITY alreadyDefaultText             "&brandShortName; on jo järjestelmän oletusselain.">
+<!ENTITY defaultPendingText             "&brandShortName; asetetaan järjestelmän oletusselaimeksi, kun painat OK.">
+<!ENTITY wasMadeDefaultText             "&brandShortName; on asetettu järjestelmän oletusselaimeksi.">
+<!ENTITY makeDefaultText                "Aseta &brandShortName; järjestelmän oletusselaimeksi.">

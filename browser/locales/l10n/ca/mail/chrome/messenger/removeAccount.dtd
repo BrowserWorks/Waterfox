@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Suprimeix el compte i les dades">
+<!ENTITY removeButton.label           "Suprimeix">
+<!ENTITY removeButton.accesskey       "r">
+<!ENTITY removeAccount.label          "Suprimeix la informació del compte">
+<!ENTITY removeAccount.accesskey      "f">
+<!ENTITY removeAccount.desc           "Se suprimeix el compte únicament del &brandShortName;. No afecta el compte en el servidor.">
+<!ENTITY removeData.label             "Suprimeix les dades de missatges">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Elimina les dades de les converses">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Suprimeix del disc local tots els missatges, carpetes i filtres associats a aquest compte. Això no afecta alguns missatges, que poden romandre al servidor. No seleccioneu aquesta acció si teniu planificat arxivar les dades locals o tornar-les a utilitzar amb el &brandShortName; més endavant.">
+<!ENTITY removeDataServerAccount.desc "Suprimeix del disc local tots els missatges, carpetes i filtres associats a aquest compte. Els vostres missatges i carpetes romandran al servidor.">
+<!ENTITY removeDataChatAccount.desc   "Elimina tots els registres de converses d'aquest compte desats al disc local.">
+<!ENTITY showData.label               "Mostra la ubicació de les dades">
+<!ENTITY showData.accesskey           "M">
+<!ENTITY progressPending              "S'estan suprimint les dades seleccionades…">
+<!ENTITY progressSuccess              "La supressió s'ha realitzat correctament.">
+<!ENTITY progressFailure              "La supressió ha fallat.">

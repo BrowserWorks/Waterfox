@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Table Properties">
+<!ENTITY applyButton.label                "Apply">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "Close">
+<!ENTITY tableTab.label                   "Table">
+<!ENTITY cellTab.label                    "Cells">
+<!ENTITY tableRows.label                  "Rows:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Columns:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "Height:">
+<!ENTITY tableHeight.accessKey            "G">
+<!ENTITY tableWidth.label                 "Width:">
+<!ENTITY tableWidth.accessKey             "W">
+<!ENTITY tableBorderSpacing.label         "Borders and Spacing">
+<!ENTITY tableBorderWidth.label           "Border:">
+<!ENTITY tableBorderWidth.accessKey       "B">
+<!ENTITY tableSpacing.label               "Spacing:">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "Padding:">
+<!ENTITY tablePadding.accessKey           "P">
+<!ENTITY tablePxBetwCells.label           "pixels between cells">
+<!ENTITY tablePxBetwBrdrCellContent.label "pixels between cell border and content">
+<!ENTITY tableAlignment.label             "Table Alignment:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "Caption:">
+<!ENTITY tableCaption.accessKey           "N">
+<!ENTITY tableCaptionAbove.label          "Above Table">
+<!ENTITY tableCaptionBelow.label          "Below Table">
+<!ENTITY tableCaptionLeft.label           "Left of Table">
+<!ENTITY tableCaptionRight.label          "Right of table">
+<!ENTITY tableCaptionNone.label           "None">
+<!ENTITY tableInheritColor.label           "(Let page color show through)">
+
+<!ENTITY cellSelection.label              "Selection">
+<!ENTITY cellSelectCell.label             "Cell">
+<!ENTITY cellSelectRow.label              "Row">
+<!ENTITY cellSelectColumn.label           "Column">
+<!ENTITY cellSelectNext.label             "Next">
+<!ENTITY cellSelectNext.accessKey         "N">
+<!ENTITY cellSelectPrevious.label         "Previous">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!ENTITY applyBeforeChange.label          "Current changes will be applied before changing the selection.">
+<!ENTITY cellContentAlignment.label       "Content Alignment">
+<!ENTITY cellHorizontal.label             "Horizontal:">
+<!ENTITY cellHorizontal.accessKey         "Z">
+<!ENTITY cellVertical.label               "Vertical:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Cell Style:">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "Normal">
+<!ENTITY cellHeader.label                 "Header">
+<!ENTITY cellTextWrap.label               "Text Wrap:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "Wrap">
+<!ENTITY cellNoWrap.label                 "Don't wrap">
+<!ENTITY cellAlignTop.label               "Top">
+<!ENTITY cellAlignMiddle.label            "Middle">
+<!ENTITY cellAlignBottom.label            "Bottom">
+<!ENTITY cellAlignJustify.label           "Justify">
+<!ENTITY cellInheritColor.label           "(Let table color show through)">
+<!ENTITY cellUseCheckboxHelp.label        "Use checkboxes to determine which properties are applied to all selected cells">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Size">
+<!ENTITY pixels.label                     "pixels">
+<!ENTITY backgroundColor.label            "Background Color:">
+<!ENTITY backgroundColor.accessKey        "B">
+<!ENTITY AlignLeft.label                  "Left">
+<!ENTITY AlignCenter.label                "Center">
+<!ENTITY AlignRight.label                 "Right">

@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Scripts &amp; Plugins">
+
+<!ENTITY navigator.label                 "Navigator">
+<!ENTITY navigator.accesskey             "N">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "Enable JavaScript for">
+<!ENTITY allowScripts.label              "Permite scripturilor să:">
+<!ENTITY allowScripts.accesskey          "s">
+<!ENTITY allowWindowMoveResize.label     "mute sau să redimensioneze ferestre existente">
+<!ENTITY allowWindowFlip.label           "ridice sau să coboare ferestre">
+<!ENTITY allowWindowStatusChange.label   "schimbe textul din bara de stare">
+<!ENTITY allowWindowImageSrcChange.label "Change images">
+<!ENTITY allowContextmenuDisable.label   "dezactiveze sau să înlocuiască meniuri contextuale">
+<!ENTITY allowHideStatusBar.label        "ascundă bara de stare">
+
+<!ENTITY enablePlugin.label              "Enable Plugins for">
+
+<!ENTITY whenPluginsRequired.label       "When additional plugins are required">
+<!ENTITY displayNotification.label       "Display a notification bar at the top of the content area">
+<!ENTITY displayNotification.accesskey   "n">

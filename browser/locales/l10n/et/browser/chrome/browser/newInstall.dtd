@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Olulised uudised">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Firefoxi salvestatud andmete sünkroniseerimiseks selle &brandShortName;i paigaldusega logi sisse oma &syncBrand.fxAccount.label;ga.">
+<!ENTITY continue-button "Jätka">
+
+<!ENTITY mainText "Sellel &brandShortName;i paigaldusel on uus profiil. See ei jaga järjehoidjaid, paroole ja kasutaja sätteid teiste sellesse arvutisse paigaldatud Firefoxidega (kaasa arvatud Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition ja Firefox Nightly).">

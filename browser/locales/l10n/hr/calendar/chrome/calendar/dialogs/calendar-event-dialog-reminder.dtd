@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Postavi podsjetnike">
+<!ENTITY reminder.add.label                                "Dodaj">
+<!ENTITY reminder.add.accesskey                            "a">
+<!ENTITY reminder.remove.label                             "Ukloni">
+<!ENTITY reminder.remove.accesskey                         "U">
+
+<!ENTITY reminder.reminderDetails.label                    "Detalji podsjetnika">
+<!ENTITY reminder.action.label                             "Odaberi radnju podsjetnika">
+
+<!ENTITY reminder.action.alert.label                       "Prikaži upozorenje">
+<!ENTITY reminder.action.email.label                       "Pošalji e-poštu">
+
+<!ENTITY alarm.units.minutes                               "minute" >
+<!ENTITY alarm.units.hours                                 "sati" >
+<!ENTITY alarm.units.days                                  "dani" >

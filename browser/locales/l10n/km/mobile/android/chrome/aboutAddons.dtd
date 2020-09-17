@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "កម្មវិធី​បន្ថែម">
+<!ENTITY aboutAddons.header2                    "កម្មវិធី​បន្ថែម​របស់​អ្នក">
+
+<!ENTITY addonAction.enable                     "បើក">
+<!ENTITY addonAction.disable                    "បិទ">
+<!ENTITY addonAction.uninstall                  "លុប">
+<!ENTITY addonAction.undo                       "មិនធ្វើវិញ">
+<!ENTITY addonAction.update                     "ធ្វើ​បច្ចុប្បន្នភាព">
+
+<!ENTITY addonUnsigned.message                  "កម្មវិធី​ផ្នែក​បន្ថែម​នេះ​មិន​អាច​បញ្ជាក់​​ដោយ &brandShortName; បាន​ទេ។">
+<!ENTITY addonUnsigned.learnMore                "ស្វែងយល់​បន្ថែម">

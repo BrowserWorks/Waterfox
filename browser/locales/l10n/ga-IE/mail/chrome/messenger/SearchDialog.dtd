@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Cuardaigh teachtaireachtaí i:">
+<!ENTITY searchHeading.accesskey     "h">
+<!ENTITY searchSubfolders.label      "Cuardaigh i bhfofhillteáin">
+<!ENTITY searchSubfolders.accesskey  "e">
+<!ENTITY searchOnServer.label        "Rith an cuardach ar an bhfreastalaí">
+<!ENTITY searchOnServer.accesskey    "R">
+<!ENTITY resetButton.label           "Bánaigh">
+<!ENTITY resetButton.accesskey       "B">
+<!ENTITY openButton.label            "Oscail">
+<!ENTITY openButton.accesskey        "O">
+<!ENTITY deleteButton.label          "Scrios">
+<!ENTITY deleteButton.accesskey      "S">
+<!ENTITY searchDialogTitle.label     "Cuardaigh Teachtaireachtaí">
+<!ENTITY results.label               "Torthaí">
+<!ENTITY moveButton.label            "Bog Go">
+<!ENTITY moveButton.accesskey        "G">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Oscail i bhFillteán">
+<!ENTITY openInFolder.accesskey      "F">
+<!ENTITY saveAsVFButton.label        "Sábháil mar Fhillteán Cuardaigh">
+<!ENTITY saveAsVFButton.accesskey    "S">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Cuardaigh i:">
+<!ENTITY abSearchHeading.accesskey   "h">
+<!ENTITY propertiesButton.label      "Airíonna">
+<!ENTITY propertiesButton.accesskey  "A">
+<!ENTITY composeButton.label         "Scríobh">
+<!ENTITY composeButton.accesskey     "S">
+<!ENTITY deleteCardButton.label      "Scrios">
+<!ENTITY deleteCardButton.accesskey  "S">
+<!ENTITY abSearchDialogTitle.label   "Ardchuardach an Leabhair Sheoltaí">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

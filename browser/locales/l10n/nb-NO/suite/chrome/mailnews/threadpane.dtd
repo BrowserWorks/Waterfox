@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Tråd">
+<!ENTITY fromColumn.label "Avsender">
+<!ENTITY recipientColumn.label "Mottaker">
+<!ENTITY attachmentColumn.label "Vedlegg">
+<!ENTITY subjectColumn.label "Emne">
+<!ENTITY dateColumn.label "Dato">
+<!ENTITY priorityColumn.label "Prioritet">
+<!ENTITY tagsColumn.label "Etiketter">
+<!ENTITY accountColumn.label "Konto">
+<!ENTITY statusColumn.label "Status">
+<!ENTITY sizeColumn.label "Størrelse">
+<!ENTITY junkStatusColumn.label "Uønsket">
+<!ENTITY unreadColumn.label "Ikke lest">
+<!ENTITY totalColumn.label "Totalt">
+<!ENTITY readColumn.label "Lest">
+<!ENTITY receivedColumn.label "Mottatt">
+<!ENTITY flagColumn.label "Flagg">
+<!ENTITY locationColumn.label "Plassering">
+<!ENTITY idColumn.label "Mottatt rekkefølge">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Velg kolonner å vise">
+<!ENTITY threadColumn2.tooltip "Vis meldingstråder">
+<!ENTITY fromColumn2.tooltip "Sorter etter avsender">
+<!ENTITY recipientColumn2.tooltip "Sorter etter mottaker">
+<!ENTITY attachmentColumn2.tooltip "Sorter etter vedlegg">
+<!ENTITY subjectColumn2.tooltip "Sorter etter emne">
+<!ENTITY dateColumn2.tooltip "Sorter etter dato">
+<!ENTITY priorityColumn2.tooltip "Sorter etter prioritet">
+<!ENTITY tagsColumn2.tooltip "Sorter etter etiketter">
+<!ENTITY accountColumn2.tooltip "Sorter etter konto">
+<!ENTITY statusColumn2.tooltip "Sorter etter status">
+<!ENTITY sizeColumn2.tooltip "Sorter etter størrelse">
+<!ENTITY junkStatusColumn2.tooltip "Sorter etter uønsket-status">
+<!ENTITY unreadColumn2.tooltip "Antall uleste meldinger i tråden">
+<!ENTITY totalColumn2.tooltip "Totalt antall meldinger i meldingstråden">
+<!ENTITY readColumn2.tooltip "Sorter etter lest">
+<!ENTITY receivedColumn2.tooltip "Sorter etter dato mottatt">
+<!ENTITY flagColumn2.tooltip "Sorter etter flaggstatus">
+<!ENTITY locationColumn2.tooltip "Sorter etter plassering">
+<!ENTITY idColumn2.tooltip "Sorter etter mottaksrekkefølge">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Subscriptions Dialog -->
+
+<!ENTITY calendar.subscriptions.dialog.title                            "Takvimlere Abone Ol">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Bunu içeren takvimleri göster:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Ara">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Abone olacağınız takvimleri seçin:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Abone ol">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Abonelikten çık">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Ara…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Hiçbir eşleşme bulunamadı.">

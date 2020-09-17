@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY mailListWindowAdd.title        "Նամակների նոր ցանկ">
+<!-- Labels and Access Keys -->
+
+<!ENTITY addToAddressBook.label         "Ավելացնել՝">
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "Ցանկի անունը.">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "Ցանկի կեղծանունը.">
+<!ENTITY ListNickName.accesskey         "N">
+<!ENTITY ListDescription.label          "Նկարագրություն.">
+<!ENTITY ListDescription.accesskey      "Ն">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Նշեք էլ. հասցեներ՝ դրանք ավելացնելու համար նամակների ցանկին։">
+<!ENTITY AddressTitle.accesskey         "հ">
+<!ENTITY UpButton.label                 "Վեր">
+<!ENTITY DownButton.label               "Վար">
+

@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "គណនី - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "ស្ថានភាព​សារ​បន្ទាន់">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "គណនី​ថ្មី">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "បិទ">
+<!ENTITY accountManager.close.accesskey      "l">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "គ្មាន​គណនី​បាន​កំណត់​រចនាសម្ព័ន្ធ​នៅ​ឡើយ​ទេ">
+<!ENTITY accountManager.noAccount.description "ចុច​លើ​ប៊ូតុង &accountManager.newAccount.label; ដើម្បី​អនុញ្ញាត្តិ​ឲ្យ &brandShortName; ណែនាំាំ​អ្នក​ពី​ដំណើរការ​នៃ​ការ​កំណត់​រចនា​សម្ព័ន្ធ។">
+<!ENTITY account.autoSignOn.label     "ចូល​ពេល​ចាប់ផ្ដើម">
+<!ENTITY account.autoSignOn.accesskey "S">
+<!ENTITY account.connect.label        "តភ្ជាប់​">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "ផ្ដាច់">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "លុប">
+<!ENTITY account.delete.accesskey     "D">
+<!ENTITY account.edit.label           "លក្ខណសម្បត្តិ">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "ផ្លាស់ទី​ទៅ​លើ">
+<!ENTITY account.movedown.label       "ផ្លាស់​ទី​ចុះ​ក្រោម">
+<!ENTITY account.cancelReconnection.label         "បោះបង់​ការ​តភ្ជាប់​ឡើង​វិញ">
+<!ENTITY account.cancelReconnection.accesskey     "A">
+<!ENTITY account.copyDebugLog.label     "ចម្លង​កំណត់​ហេតុ​ការកែ​បញ្ហា">
+<!ENTITY account.copyDebugLog.accesskey "C">
+<!ENTITY account.showDebugLog.label     "បង្ហាញ​កំណត់ហេតុ​ការកែ​បញ្ហា">
+<!ENTITY account.showDebugLog.accesskey "H">
+<!ENTITY account.connecting           "កំពុង​តភ្ជាប់​…">
+<!ENTITY account.disconnecting        "កំពុង​ផ្ដាច់​…">
+<!ENTITY account.disconnected         "មិន​បាន​ភ្ជាប់">

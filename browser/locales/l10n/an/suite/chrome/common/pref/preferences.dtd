@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+
+<!ENTITY prefWindow.title "Preferencias">
+<!ENTITY categoryHeader "Categoría">
+<!ENTITY appear.label "Aparencia">
+<!ENTITY content.label "Conteniu">
+<!ENTITY fonts.label "Tipos de letra">
+<!ENTITY colors.label "Colors">
+<!ENTITY navigator.label "Navegador">
+<!ENTITY history.label "Historial">
+<!ENTITY languages.label "Idiomas">
+<!ENTITY applications.label "Aplic. auxiliars">
+<!ENTITY locationBar.label "Barra d'adrezas">
+<!ENTITY tabWindows.label "Navegación con pestanyas">
+<!ENTITY links.label "Comportamiento d'os vinclos">
+<!ENTITY offline.label "Sin connexión">
+<!ENTITY security.label "Privacy &amp; Security">
+<!ENTITY privatedata.label "Private Data">
+<!ENTITY cookies.label "Cookies">
+<!ENTITY images.label "Imachens">
+<!ENTITY popups.label "Finestras emerchents">
+<!ENTITY passwords.label "Claus d'acceso">
+<!ENTITY masterpass.label "Claus mayestras">
+<!ENTITY ssl.label "SSL">
+<!ENTITY certs.label "Certificaus">
+<!ENTITY sync.label "Sync">
+<!ENTITY advance.label "Abanzadas">
+<!ENTITY down.label "Descargar">
+<!ENTITY cache.label "Caché">
+<!ENTITY offlineApps.label "Offline Apps">
+<!ENTITY proxies.label "Proxies">
+<!ENTITY httpnetworking.label "Config. de HTTP">
+<!ENTITY smart.label "Instalación de software">
+<!ENTITY download.label "Descargas">
+<!ENTITY keynav.label "Navegación con teclau">
+<!ENTITY findAsYouType.label "Trobar a medida que escribe">
+<!ENTITY search.label "Busca en Internet">
+<!ENTITY policies.label "Politicas de seguranza">
+<!ENTITY mousewheel.label "Rueda d'o rato">
+<!ENTITY scriptsAndWindows.label "Scripts &amp; Plugins">
+<!ENTITY spellingPane.label  "Spelling">
+
+<!ENTITY focusSearch.key "f">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Ardshocruithe Cuntais">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Comhadlann an fhreastalaí IMAP:">
+<!ENTITY serverDirectory.accesskey "r">
+<!ENTITY usingSubscription.label "Taispeáin fillteáin liostáilte amháin">
+<!ENTITY usingSubscription.accesskey "T">
+<!ENTITY dualUseFolders.label "Tacaíonn an freastalaí le fillteáin ina bhfuil fofhillteáin agus teachtaireachtaí">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "Uasmhéid na gceangal freastalaí a chuirfear sa taisce">
+<!ENTITY maximumConnectionsNumber.accesskey "m">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Sonraíonn na roghanna seo na hainmspásanna ar d'fhreastalaí IMAP">
+<!ENTITY personalNamespace.label "Ainmspás pearsanta:">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Poiblí (roinnte):">
+<!ENTITY publicNamespace.accesskey "o">
+<!ENTITY otherUsersNamespace.label "Úsáideoirí Eile:">
+<!ENTITY otherUsersNamespace.accesskey "E">
+<!ENTITY overrideNamespaces.label "Ceadaigh don fhreastalaí na hainmspásanna seo a shárú">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3DeferringDesc.label "Agus ríomhphost á íoslódáil ó fhreastalaí an chuntais seo, úsáid an fillteán seo a leanas le haghaidh teachtaireachtaí nua:" >
+<!ENTITY accountInbox.label "Bosca isteach an chuntais seo">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Bosca Isteach cuntais eile">
+<!ENTITY deferToServer.accesskey "e">
+<!ENTITY deferGetNewMail.label "Cuir an freastalaí seo san áireamh agus ríomhphost nua á fháil">
+<!ENTITY deferGetNewMail.accesskey "i">

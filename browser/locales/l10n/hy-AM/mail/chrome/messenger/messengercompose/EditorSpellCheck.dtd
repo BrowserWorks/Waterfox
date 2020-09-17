@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Ստուգել ուղղագրությունը">
+
+<!ENTITY misspelledWord.label "Բացակայող բառ.">
+<!ENTITY wordEditField.label "Փոխարինել՝">
+<!ENTITY wordEditField.accessKey "Փ">
+<!ENTITY checkwordButton.label "Ստուգել բառը">
+<!ENTITY checkwordButton.accessKey "Ս">
+<!ENTITY suggestions.label "Առաջարկություններ.">
+<!ENTITY suggestions.accessKey "Ա">
+<!ENTITY ignoreButton.label "Անտեսել">
+<!ENTITY ignoreButton.accessKey "Ա">
+<!ENTITY ignoreAllButton.label "Անտեսել բոլորը">
+<!ENTITY ignoreAllButton.accessKey "Ա">
+<!ENTITY replaceButton.label "Փոխարինել">
+<!ENTITY replaceButton.accessKey "Փ">
+<!ENTITY replaceAllButton.label "Փոխարինել բոլորը">
+<!ENTITY replaceAllButton.accessKey "Փ">
+<!ENTITY stopButton.label "Կանգնեցնել">
+<!ENTITY stopButton.accessKey "գ">
+<!ENTITY userDictionary.label "Անձնական բառարան">
+<!ENTITY moreDictionaries.label "Ներբեռնել բառարաններ...">
+<!ENTITY addToUserDictionaryButton.label "Ավելացնել բառ">
+<!ENTITY addToUserDictionaryButton.accessKey "Ա">
+<!ENTITY editUserDictionaryButton.label "Խմբագրել...">
+<!ENTITY editUserDictionaryButton.accessKey "Խ">
+<!ENTITY recheckButton2.label "Վերստուգել տեքստը">
+<!ENTITY recheckButton2.accessKey "տ">
+<!ENTITY closeButton.label "Փակել">
+<!ENTITY closeButton.accessKey "Փ">
+<!ENTITY sendButton.label "Ուղարկել">
+<!ENTITY sendButton.accessKey "Ո">
+<!ENTITY languagePopup.label "Լեզուն.">
+<!ENTITY languagePopup.accessKey "Լ">

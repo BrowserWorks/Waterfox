@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Objavi stranicu">
+<!ENTITY windowTitleSettings.label    "Postavke objavljivanja">
+<!ENTITY publishTab.label             "Objavi">
+<!ENTITY settingsTab.label            "Postavke">
+<!ENTITY publishButton.label          "Objavi">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Naziv stranice:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Izaberite stranicu na koju želite objaviti">
+<!ENTITY newSiteButton.label          "Nova stranica">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Poddirektorij za ovu stranicu:">
+<!ENTITY docDirList.accesskey         "s">
+<!ENTITY docDirList.tooltip           "Izaberite ili upišite naziv udaljenog poddirektorija za ovu stranicu">
+<!ENTITY publishImgCheckbox.label     "Obuhvati slike i ostale fajlove">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip   "Objavi slike i druge fajlove referencirane na ovoj stranici">
+<!ENTITY sameLocationRadio.label      "Koristi istu lokaciju kao i stranica">
+<!ENTITY sameLocationRadio.accesskey  "K">
+<!ENTITY sameLocationRadio.tooltip    "Objavi fajlove na istu lokaciju na kojoj je stranica">
+<!ENTITY useSubdirRadio.label         "Koristi poddirektorij ove stranice:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Objavi fajlove u izabrani udaljeni poddirektorij">
+<!ENTITY otherDirList.tooltip         "Izaberite ili upišite naziv udaljenog poddirektorija gdje će biti objavljeni fajlovi">
+<!ENTITY pageTitle.label              "Naslov stranice:">
+<!ENTITY pageTitle.accesskey          "t">
+<!ENTITY pageTitle.tooltip            "Upišite naslov kako bi stranica bila prepoznatljiva u prozoru i zabilješkama">
+<!ENTITY pageTitleExample.label       "npr.: &quot;Moja web stranica&quot;">
+<!ENTITY filename.label               "Naziv fajla:">
+<!ENTITY filename.accesskey           "f">
+<!ENTITY filename.tooltip             "Upišite naziv za ovaj fajl, uključujući '.html' za web stranicu">
+<!ENTITY filenameExample.label        "npr.: &quot;mojastranica.html&quot;">
+<!ENTITY setDefaultButton.label       "Postavi kao glavno">
+<!ENTITY setDefaultButton.accesskey   "g">
+<!ENTITY removeButton.label           "Ukloni stranicu">
+<!ENTITY removeButton.accesskey       "r">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Objavljujem stranice">
+<!ENTITY serverInfo.label             "Podaci o serveru">
+<!ENTITY loginInfo.label              "Informacije za prijavu">
+<!ENTITY siteName.label               "Naziv stranice:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "Nadimak koji identificira ovu stranicu za objavljivanje (npr.: 'MojaStranica')">
+<!ENTITY siteUrl.label                "Adresa objavljivanja (npr.: 'ftp://ftp.mojisp.ba/mojekorisnickoime'):">
+<!ENTITY siteUrl.accesskey            "A">
+<!ENTITY siteUrl.tooltip              "FTP:// ili HTTP:// adresa koju ste dobili od vašeg ISP-a ili web hosting servisa">
+<!ENTITY browseUrl.label              "HTTP adresa vaše početne stranice (npr.: 'http://www.mojisp.ba/mojekorisnickoime'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "HTTP:// adresa vašeg početnog direktorija (ne upisujte naziv fajla)">
+<!ENTITY username.label               "Korisničko ime:">
+<!ENTITY username.accesskey           "K">
+<!ENTITY username.tooltip             "Korisničko ime koje koristite za prijavu na vaš ISP ili web hosting servis">
+<!ENTITY password.label               "Lozinka:">
+<!ENTITY password.accesskey           "z">
+<!ENTITY password.tooltip             "Lozinka za vaše korisničko ime">
+<!ENTITY savePassword.label           "Spasi lozinku">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Izaberite ovo kako bi sigurno spasili vašu lozinku koristeći Upravitelja lozinkama">

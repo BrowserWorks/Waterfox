@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Contos - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Status dals contos da chat">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Nov conto">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Serrar">
+<!ENTITY accountManager.close.accesskey      "r">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Anc betg configurà in conto">
+<!ENTITY accountManager.noAccount.description "Clicca sin il buttun &accountManager.newAccount.label; per ta laschar guidar da &brandShortName; tras il process per configurar in tal.">
+<!ENTITY account.autoSignOn.label     "S'annunziar cun aviar">
+<!ENTITY account.autoSignOn.accesskey "S">
+<!ENTITY account.connect.label        "Connectar">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "Deconnectar">
+<!ENTITY account.disconnect.accesskey "e">
+<!ENTITY account.delete.label         "Stizzar">
+<!ENTITY account.delete.accesskey     "z">
+<!ENTITY account.edit.label           "Caracteristicas">
+<!ENTITY account.edit.accesskey       "C">
+<!ENTITY account.moveup.label         "Spustar ensi">
+<!ENTITY account.movedown.label       "Spustar engiu">
+<!ENTITY account.cancelReconnection.label         "Interrumper il reconnectar">
+<!ENTITY account.cancelReconnection.accesskey     "I">
+<!ENTITY account.copyDebugLog.label     "Copiar il protocol dal debugadi">
+<!ENTITY account.copyDebugLog.accesskey "C">
+<!ENTITY account.showDebugLog.label     "Mussar il protocol dal debugadi">
+<!ENTITY account.showDebugLog.accesskey "g">
+<!ENTITY account.connecting           "Connectar…">
+<!ENTITY account.disconnecting        "Deconnectar…">
+<!ENTITY account.disconnected         "Betg connectà">

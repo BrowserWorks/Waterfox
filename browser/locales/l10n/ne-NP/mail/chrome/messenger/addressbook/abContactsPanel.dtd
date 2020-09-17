@@ -1,0 +1,15 @@
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookPicker.label "ठेगाना पुस्तिका:">
+<!ENTITY SearchNameOrEmail.label "नाम वा इमेल">
+
+<!ENTITY addtoToFieldMenu.label "लाई फिल्डमा थप्नुहोस्">
+<!ENTITY addtoCcFieldMenu.label "बोधार्थ प्रतिलिपि फिल्डमा थप्नुहोस्">
+<!ENTITY addtoBccFieldMenu.label "गुप्त बोधार्थ प्रतिलिपि फिल्डमा थप्नुहोस्">
+
+<!ENTITY toButton.label "लाई मा थप्नुहोस्:">
+<!ENTITY ccButton.label "बोधार्थ प्रतिलिपिमा थप्नुहोस्:">
+

@@ -1,0 +1,27 @@
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindow.title           "Listă de expediție">
+<!-- Labels -->
+<!ENTITY addToAddressBook.label         "Adaugă în:">
+
+<!ENTITY ListName.label                 "Numele listei:">
+<!ENTITY ListNickName.label             "Nume scurt:">
+<!ENTITY ListDescription.label          "Descriere:">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Tastați adrese de email în lista de mai jos:">
+
+<!-- Access Keys -->
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.accesskey             "l">
+<!ENTITY ListNickName.accesskey         "N">
+<!ENTITY ListDescription.accesskey      "e">
+

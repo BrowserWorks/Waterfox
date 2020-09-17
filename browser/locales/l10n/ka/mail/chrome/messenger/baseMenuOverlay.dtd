@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "დახმარება">
+<!ENTITY helpMenu.accesskey "დ">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "დახმარება">
+<!ENTITY helpMenuWin.accesskey "დ">
+<!ENTITY aboutProduct2.label "&brandShorterName; – შესახებ">
+<!ENTITY aboutProduct2.accesskey "შ">
+<!ENTITY helpTroubleshootingInfo.label     "მონაცემები გაუმართაობის მოსაგვარებლად">
+<!ENTITY helpTroubleshootingInfo.accesskey "მ">
+<!ENTITY helpSafeMode.label     "ხელახლა გაშვება გამორთული დამატებებით...">
+<!ENTITY helpSafeMode.accesskey "ხ">
+
+<!ENTITY helpSafeMode.stop.label     "ხელახლა გაშვება ჩართული დამატებებით">
+<!ENTITY helpSafeMode.stop.accesskey "ხ">
+<!ENTITY productHelp.label "&brandShortName; – დახმარება">
+<!ENTITY productHelp.accesskey "დ">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "კლავიატურის მალსახმობები">
+<!ENTITY helpKeyboardShortcuts.accesskey "კ">
+
+<!ENTITY helpFeedbackPage.label "გამოხმაურების გაგზავნა…">
+<!ENTITY helpFeedbackPage.accesskey "გ">
+
+<!ENTITY helpShowTour2.label "&brandShorterName; – გაცნობა">
+<!ENTITY helpShowTour2.accesskey "ო">
+
+<!ENTITY helpGetInvolvedPage.label "შემოგვიერთდით">
+<!ENTITY helpGetInvolvedPage.accesskey "ი">
+
+<!ENTITY helpDonationsPage.label "გაიღეთ შემოწირულობა">
+<!ENTITY helpDonationsPage.accesskey "მ">

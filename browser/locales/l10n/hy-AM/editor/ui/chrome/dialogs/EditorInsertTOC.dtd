@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Բովանդակության աղյուսակ">
+<!ENTITY buildToc.label      "Կառուցել բովանդակության աղյուսակը հետևյալից՝">
+<!ENTITY tag.label           "Կցապիտակ.">
+<!ENTITY class.label         "Դասը">
+<!ENTITY header1.label       "Մակարդակ 1">
+<!ENTITY header2.label       "Մակարդակ 2">
+<!ENTITY header3.label       "Մակարդակ 3">
+<!ENTITY header4.label       "Մակարդակ 4">
+<!ENTITY header5.label       "Մակարդակ 5">
+<!ENTITY header6.label       "Մակարդակ 6">
+<!ENTITY makeReadOnly.label  "Դարձնել բովանդակության աղյուսակը միայն կարդալու համար">
+<!ENTITY orderedList.label   "Բովանդակության աղյուսակի բոլոր դաշտերի քանակը">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Вибір редагування змін">
+<!ENTITY conflictWarning.label "Ця сторінка була змінена іншою програмою, але ви також повинні збережені зміни в Composer.">
+<!ENTITY conflictResolve.label "Виберіть які версії залишити:">
+<!ENTITY keepCurrentPageButton.label "Залишити поточні зміни сторінки">
+<!ENTITY useOtherPageButton.label "Замінити поточну сторінку іншими змінами">

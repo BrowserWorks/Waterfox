@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+
+<!-- Labels -->
+<!ENTITY addToAddressBook.label         "Amestar a: ">
+
+<!-- Access Keys -->
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "Nome de llista: ">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "Nomatu de llista: ">
+<!ENTITY ListNickName.accesskey         "o">
+<!ENTITY ListDescription.label          "Descripción: ">
+<!ENTITY ListDescription.accesskey      "e">
+
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Escribi direiciones de corréu p'amestales a la llista:">
+<!ENTITY UpButton.label                 "Mover arriba">
+<!ENTITY DownButton.label               "Mover abaxo">
+

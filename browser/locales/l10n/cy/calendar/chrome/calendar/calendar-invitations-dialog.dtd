@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Invitations Dialog -->
+
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Gwahoddiadau">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Diweddaru'r rhestr gwahoddedigion.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Heb ganfod gwahoddiadau heb eu cadarnhau.">
+<!-- Calendar Invitations List -->
+
+<!ENTITY calendar.invitations.list.accept.button.label                  "Derbyn">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Gwrthod">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Digwyddiad ailadroddus">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Digwyddiad drwy'r dydd">
+<!ENTITY calendar.invitations.list.location.text                        "Lleoliad: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Trefnydd: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Mynychwr: ">
+<!ENTITY calendar.invitations.list.none.text                            "Dim">

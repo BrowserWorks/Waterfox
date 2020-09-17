@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Używanie certyfikatów</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+
+<h1 id="using_certificates">Używanie certyfikatów</h1>
+
+<p>Certyfikat jest cyfrowym (komputerowym) odpowiednikiem dokumentu tożsamości. Podobnie jak w&nbsp;przypadku posiadania różnych dokumentów tożsamości dla różnych celów (prawo jazdy, dowód osobisty, paszport), jeden użytkownik komputera może posiadać wiele różnych certyfikatów dla różnych celów.</p>
+
+<p>Ten rozdział opisuje podstawowe czynności wykonywane przez użytkownika związane z&nbsp;certyfikatami.</p>
+
+<div class="contentsBox">W&nbsp;tym rozdziale:
+  <ul>
+    <li><a href="#getting_your_own_certificate">Uzyskiwanie własnego certyfikatu</a></li>
+    <li><a href="#checking_security_for_a_web_page">Sprawdzanie poziomu zabezpieczeń strony WWW</a></li>
+    <li><a href="#managing_certificates">Zarządzanie certyfikatami</a></li>
+    <li><a href="#managing_smart_cards_and_other_security_devices">Zarządzanie kartami inteligentnymi i&nbsp;innymi urządzeniami zabezpieczającymi</a></li>
+    <li><a href="#managing_ssl_warnings_and_settings">Zarządzanie ostrzeżeniami i&nbsp;ustawieniami SSL</a></li>
+    <li><a href="#controlling_validation">Kontrola ważności</a></li>
+  </ul>
+</div>
+
+<h1 id="getting_your_own_certificate">Uzyskiwanie własnego certyfikatu</h1>
+
+<p>Podobnie jak karta kredytowa czy prawo jazdy w&nbsp;życiu codziennym, certyfikat jest formą identyfikacji użytkownika w&nbsp;Internecie i&nbsp;innych sieciach komputerowych. Jak inne powszechnie używane dokumenty identyfikujące, certyfikat jest zwykle wydawany przez organizację upoważnioną do wydawania takich identyfikatorów. Organizacja wydająca certyfikaty nazywana jest <strong>organem certyfikacji</strong> (ang. certificate authority (CA)).</p>
+
+<p>Użytkownik może uzyskać certyfikat z&nbsp;publicznych organów certyfikacji, od administratora lub specjalnego organu certyfikacji wewnątrz swojej organizacji (firmy) lub przy pomocy serwisów WWW&nbsp;oferujących  specjalistyczne usługi wymagające lepszego uwierzytelnienia niż tradycyjna para: użytkownik &mdash; hasło.</p>
+
+<p>Podobnie jak wymagania dotyczące uzyskiwania prawa jazdy zależą od rodzaju pojazdów, którymi użytkownik będzie kierować, wymagania dotyczące uzyskiwania certyfikatu zależą od przewidywanych celów jego używania. W&nbsp;niektórych przypadkach uzyskanie certyfikatu może sprowadzać się do odwiedzenia strony WWW, podania kilku informacji osobistych i&nbsp;automatycznego pobrania pliku certyfikatu do przeglądarki. W&nbsp;innych przypadkach mogą zachodzić bardziej skomplikowane procedury uzyskiwania certyfikatu.</p>
+
+<p>Użytkownik może w&nbsp;każdej chwili uzyskać certyfikat odwiedzając witrynę organu certyfikacji i&nbsp;postępując zgodnie z&nbsp;instrukcjami podanymi na niej. Lista znanych światowych organów certyfikacji uznawanych przez program &brandShortName; dostępna jest na stronie <a href="http://www.mozilla.org/projects/security/certs/included/">Included Certificate List</a> (strona w&nbsp;języku angielskim).</p>
+
+<p>Pozyskany certyfikat jest automatycznie zachowywany w&nbsp;<a href="glossary.xhtml#security_device">urządzeniu zabezpieczającym</a>. Twoja przeglądarka jest domyślnie wyposażona we wbudowane programowe urządzenie zabezpieczające. Urządzeniem zabezpieczającym może również być urządzenie sprzętowe, np. karta inteligentna.</p>
+
+<p>Podobnie jak prawo jazdy czy dowód osobisty albo karta kredytowa, certyfikat jest cenną formą identyfikacji użytkownika, która może być nadużywana w&nbsp;przypadku dostania się w&nbsp;niepowołane ręce. Po uzyskaniu certyfikatu użytkownik powinien chronić go na dwa sposoby: przez utworzenie kopii zapasowej i&nbsp;ustawienie własnego <a href="glossary.xhtml#master_password">głównego hasła</a>.</p>
+
+<p>Przy instalacji nowego certyfikatu użytkownik może zostać poproszony o&nbsp;stworzenie jego kopii zapasowej. Jeśli dotychczas nie zostało ustanowione główne hasło zabezpieczające, w&nbsp;tym samym momencie zostanie wyświetlona propozycja jego utworzenia.</p>
+
+<p>Szczegółowe informacje o&nbsp;tworzeniu kopii zapasowej certyfikatów i&nbsp;ustawianiu głównego hasła w&nbsp;rozdziale <a href="certs_help.xhtml#your_certificates">Twoje certyfikaty</a>.</p>
+
+<p>[<a href="#using_certificates">Na początek rozdziału</a>]</p>
+
+<h1 id="checking_security_for_a_web_page">Sprawdzanie poziomu zabezpieczeń strony WWW</h1>
+
+<p>Przy oglądaniu dowolnej strony internetowej w&nbsp;okolicy prawego dolnego rogu okna pojawia się ikona kłódki. Ikona ta informuje użytkownika o&nbsp;tym, czy zawartość strony była zabezpieczona przez <a href="glossary.xhtml#encryption">szyfrowanie</a> podczas jej odbierania przez komputer:</p>
+
+<table summary="lock icons">
+  <tr>
+    <td><img alt="ikona zamkniętej kłódki" src="chrome://communicator/skin/icons/lock-secure.png"/></td>
+    <td>Zamknięta kłódka oznacza, że strona była zaszyfrowana podczas jej przesyłania do komputera.</td>
+  </tr>
+  <tr>
+    <td><img alt="ikona otwartej kłódki" src="chrome://communicator/skin/icons/lock-insecure.png"/></td>
+    <td>Otwarta kłódka lub jej brak oznacza, że strona nie była zaszyfrowana podczas przesyłania do komputera.</td>
+  </tr>
+  <tr>
+    <td><img alt="ikona złamanej kłódki" src="chrome://communicator/skin/icons/lock-broken.png"/></td>
+    <td>Złamana kłódka oznacza, że niektóre lub wszystkie elementy składające się na stronę WWW&nbsp;nie były zaszyfrowane podczas przesyłania, nawet pomimo tego, że kod HTML strony był przesłany w&nbsp;postaci zaszyfrowanej.</td>
+  </tr>
+</table>
+
+<p>Aby uzyskać więcej informacji na temat stanu szyfrowania odebranej strony, należy kliknąć ikonę kłódki (lub wybrać polecenie Informacje o&nbsp;stronie z&nbsp;menu Widok, a&nbsp;następnie kartę Zabezpieczenia).</p>
+
+<p>Karta Zabezpieczenia okna dialogowego Informacji o&nbsp;stronie zawiera dwa rodzaje informacji:</p>
+
+<ul>
+  <li>Górna część opisuje, czy tożsamość oglądanej strony WWW&nbsp;została sprawdzona.(Informacje na temat sprawdzania certyfikatów są opisane w&nbsp;części <a href="#controlling_validation">Kontrola ważności</a>.)</li>
+  <li>Dolna część opisuje, czy zawartość oglądanej strony była zaszyfrowana podczas jej przesyłania do komputera.</li>
+</ul>
+
+<p><strong>Ważne</strong>: Ikona kłódki opisuje jedynie stan szyfrowania strony podczas jej odbioru przez komputer użytkownika. Aby mieć informację o&nbsp;braku szyfrowania przy odbieraniu lub wysyłaniu informacji, <!-- TODO: start localizing -->or to block potentially harmful mixed content, select the appropriate SSL warning and mixed content options. See <a href="ssl_help.xhtml">Privacy &amp; Security Preferences - SSL</a> for details.<!-- TODO: stop localizing --></p>
+
+<p>[<a href="#using_certificates">Na początek rozdziału</a>]</p>
+
+<h1 id="managing_certificates">Zarządzanie certyfikatami</h1>
+
+<p>Do zarządzania posiadanymi certyfikatami można używać wbudowanego Menedżera certyfikatów. Certyfikaty mogą być przechowywane na dysku twardym komputera użytkownika, na <a href="glossary.xhtml#smart_card">kartach inteligentnych</a> lub innych urządzeniach zabezpieczających dołączonych do komputera użytkownika.</p>
+
+<p>Aby uruchomić Menedżera certyfikatów, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Prywatność i&nbsp;zabezpieczenia wybrać Certyfikaty. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Prywatność i&nbsp;zabezpieczenia.)</li>	
+  <li>Nacisnąć przycisk Menedżer certyfikatów.</li>
+</ol>
+
+<div class="contentsBox">W&nbsp;tym rozdziale:
+  <ul>
+    <li><a href="#managing_certificates_that_identify_you">Zarządzanie własnymi certyfikatami</a></li>
+    <li><a href="#managing_certificates_that_identify_people">Zarządzanie certyfikatami innych osób</a></li>
+    <li><a href="#managing_certificates_that_identify_servers">Zarządzanie certyfikatami serwerów</a></li>
+    <li><a href="#managing_certificates_that_identify_websites">Zarządzanie certyfikatami witryn</a></li>
+    <li><a href="#managing_certificates_that_identify_certificate_authorities">Zarządzanie certyfikatami organów certyfikacji</a></li>
+    <li><a href="#managing_certificates_that_identify_others">Zarządzanie innymi certyfikatami</a></li>
+  </ul>
+</div>
+
+<h2 id="managing_certificates_that_identify_you">Zarządzanie własnymi certyfikatami</h2>
+
+<p>Na górze okna dialogowego Menedżera certyfikatów można zauważyć kilka kart. Pierwsza z&nbsp;nich (widoczna domyślnie po otwarciu Menedżera) jest nazwana Twoje certyfikaty i&nbsp;po jej wybraniu w&nbsp;oknie dialogowym poniżej pokazywane są certyfikaty, które udostępnia przeglądarka lub klient poczty w&nbsp;celu identyfikacji bieżącego użytkownika. Certyfikaty te są umieszczone poniżej nazw organizacji, które je wydały.</p>
+
+<p>Aby wykonać jedną z&nbsp;czynności związanych z&nbsp;jednym lub wieloma certyfikatami, należy zaznaczyć dany certyfikat (lub przy pomocy jednoczesnego kliknięcia <span class="noMac">lewym</span> klawiszem myszy i&nbsp;przytrzymania klawisza <kbd class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd> zaznaczyć ich większą ilość), a&nbsp;następnie nacisnąć jeden z przycisków dostępnych na dole okna Menedżera certyfikatów. Naciśnięcie każdego z&nbsp;nich wywołuje kolejne okno dialogowe, pozwalające na dokończenie wybranej czynności. Więcej informacji o&nbsp;używaniu danego okna dialogowego jest dostępne po naciśnięciu przycisku Pomoc.</p>
+
+<p>Więcej informacji o&nbsp;przeglądaniu i zarządzaniu certyfikatami w&nbsp;rozdziale <a href="certs_help.xhtml#your_certificates">Twoje certyfikaty</a>.</p>
+
+<p>[<a href="#managing_certificates">Na początek rozdziału</a>]</p>
+
+<h2 id="managing_certificates_that_identify_people">Zarządzanie certyfikatami innych osób</h2>
+
+<p>Przy tworzeniu wiadomości poczty elektronicznej autor ma możliwość dołączenia do niej swojego podpisu cyfrowego. <a href="glossary.xhtml#digital_signature">Podpis cyfrowy</a> umożliwia odbiorcom wiadomości weryfikację oryginalności jej pochodzenia (czy faktycznie pochodzi od nadawcy widniejącego w&nbsp;polu Od: i&nbsp;czy nie została zafałszowana po drodze od nadawcy do odbiorcy).</p>
+
+<p>Przy każdej wysyłce wiadomości podpisanej cyfrowo automatycznie do niej jest dołączany certyfikat nadawcy (część publiczna). Ta część certyfikatu umożliwia odbiorcom wysyłanie do nadawcy wiadomości zaszyfrowanych.</p>
+
+<p>Jednym z&nbsp;najprostszych sposobów uzyskania części publicznej certyfikatu osoby trzeciej jest otrzymanie od niej wiadomości podpisanej cyfrowo. Menedżer certyfikatów automatycznie zachowuje certyfikaty osób trzecich otrzymane w&nbsp;ten sposób.</p>
+
+<p>Aby zobaczyć posiadane certyfikaty identyfikujące inne osoby, należy otworzyć kartę Inne osoby w&nbsp;oknie Menedżera certyfikatów. Użytkownik może wysyłać zaszyfrowane wiadomości poczty elektronicznej do każdej osoby, której ważny certyfikat posiada. Certyfikaty są umieszczone poniżej nazw organizacji, które je wydały.</p>
+
+<p>Aby wykonać jedną z&nbsp; czynności związanych z&nbsp;jednym lub wieloma certyfikatami, należy zaznaczyć dany certyfikat (lub przy pomocy jednoczesnego kliknięcia <span class="noMac">lewym</span> klawiszem myszy i&nbsp;przytrzymania klawisza <kbd class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd> zaznaczyć ich większą ilość), a&nbsp;następnie nacisnąć jeden z przycisków dostępnych na dole okna Menedżera certyfikatów. Naciśnięcie każdego z&nbsp;nich wywołuje kolejne okno dialogowe pozwalające na dokończenie wybranej czynności. Więcej informacji o&nbsp;używaniu danego okna jest dostępnych po naciśnięciu przycisku Pomoc.</p>
+
+<p>Więcej informacji o&nbsp;przeglądaniu i zarządzaniu tymi certyfikatami w&nbsp;rozdziale <a href="certs_help.xhtml#people">Inne osoby</a>.</p>
+
+<p>[<a href="#managing_certificates">Na początek rozdziału</a>]</p>
+
+<h2 id="managing_certificates_that_identify_servers">Zarządzanie certyfikatami serwerów</h2>
+
+<p>Niektóre witryny i&nbsp;serwery pocztowe używają certyfikatów w&nbsp;celach potwierdzania własnej tożsamości. Takie potwierdzenie jest wymagane przed rozpoczęciem szyfrowania informacji przesyłanych z&nbsp;serwera do komputera (lub w&nbsp;odwrotną stronę) i&nbsp;uniemożliwia tym samym odczyt danych w&nbsp;trakcie ich przesyłania.</p>
+
+<p>Jeżeli adres URL witryny zaczyna się od <tt>https://</tt>, posiada ona certyfikat. Jeżeli użytkownik odwiedzi taką stronę, a&nbsp;jej certyfikat został wydany przez organ certyfikacji, którego Menedżer certyfikatów nie posiada w&nbsp;swojej bazie, lub organ nie jest zaufany, przeglądarka wyświetli zapytanie o&nbsp;chęć zaakceptowania certyfikatu strony. Po akceptacji certyfikatu Menedżer certyfikatów doda go do swojej bazy certyfikatów witryn.</p>
+
+<p>Aby zobaczyć wszystkie posiadane certyfikaty witryn, należy otworzyć kartę Serwery w&nbsp;oknie Menedżera certyfikatów.</p>
+
+<p>Aby wykonać jedną z&nbsp; czynności związanych z&nbsp;jednym lub wieloma certyfikatami, należy zaznaczyć dany certyfikat (lub przy pomocy jednoczesnego kliknięcia <span class="noMac">lewym</span> klawiszem myszy i&nbsp;przytrzymania klawisza <kbd class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd> zaznaczyć ich większą ilość), a&nbsp;następnie nacisnąć jeden z przycisków dostępnych na dole okna Menedżera certyfikatów. Naciśnięcie każdego z&nbsp;nich wywołuje kolejne okno dialogowe pozwalające na dokończenie wybranej czynności. Więcej informacji o&nbsp;używaniu danego okna jest dostępnych po naciśnięciu przycisku Pomoc.</p>
+
+<p>Więcej informacji o&nbsp;przeglądaniu i zarządzaniu tymi certyfikatami w&nbsp;rozdziale <a href="certs_help.xhtml#servers">Serwery</a>.</p>
+
+<p>[<a href="#managing_certificates">Na początek rozdziału</a>]</p>
+
+<h2 id="managing_certificates_that_identify_certificate_authorities">Zarządzanie certyfikatami organów certyfikacji</h2>
+
+<p>Podobnie jak inne powszechnie używane formy identyfikacji użytkowników, certyfikat jest wydawany przez organizację, która została uznana za odpowiednio wiarygodną do wydawania certyfikatów. Organizacja wydająca certyfikaty nazywa się  <a href="glossary.xhtml#certificate_authority">organem certyfikacji</a>. Certyfikat identyfikujący organ certyfikacji jest nazywany certyfikatem organu certyfikacji.</p>
+
+<p>Menedżer certyfikatów zwykle posiada w&nbsp;swojej bazie wiele certyfikatów organów certyfikacji. Te certyfikaty umożliwiają Menedżerowi certyfikatów poprawne rozpoznawanie i&nbsp;pracę z&nbsp;certyfikatami wydanymi przez odpowiedni organ certyfikacji. Jednakże obecność certyfikatu organu certyfikacji na tej liście <em>nie</em> gwarantuje, że certyfikaty wydawane przez niego mogą być w&nbsp;każdym przypadku traktowane jako zaufane. Decyzja, które certyfikaty mogą być traktowane jako zaufane powinna zależeć od konkretnych potrzeb związanych z&nbsp;bezpieczeństwem systemu.</p>
+
+<p>Aby zobaczyć wszystkie posiadane certyfikaty organów certyfikacji, należy wyświetlić zawartość karty Organy certyfikacji w&nbsp;oknie Menedżera certyfikatów.</p>
+
+<p>Aby wykonać jedną z&nbsp; czynności związanych z&nbsp;jednym lub wieloma certyfikatami, należy zaznaczyć dany certyfikat (lub przy pomocy jednoczesnego kliknięcia <span class="noMac">lewym</span> klawiszem myszy i&nbsp;przytrzymania klawisza <kbd class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd> zaznaczyć ich większą ilość), a&nbsp;następnie nacisnąć jeden z przycisków dostępnych na dole okna Menedżera certyfikatów. Naciśnięcie każdego z&nbsp;nich wywołuje kolejne okno dialogowe pozwalające na dokończenie wybranej czynności. Więcej informacji o&nbsp;używaniu danego okna jest dostępnych po naciśnięciu przycisku Pomoc.</p>
+
+<p>Więcej informacji o&nbsp;przeglądaniu i zarządzaniu tymi certyfikatami w&nbsp;rozdziale <a href="certs_help.xhtml#authorities">Organy certyfikacji</a>.</p>
+
+<p>[<a href="#managing_certificates">Na początek rozdziału</a>]</p>
+
+<h2 id="managing_certificates_that_identify_others">Zarządzanie innymi certyfikatami</h2>
+
+<p>Aby zobaczyć wszystkie certyfikaty które nie pasują do żadnej z pozostałych kategorii, należy wyświetlić zawartość karty Inne w&nbsp;oknie Menedżera certyfikatów.</p>
+
+<p>Więcej informacji o&nbsp;przeglądaniu i zarządzaniu tymi certyfikatami w&nbsp;rozdziale <a href="certs_help.xhtml#others">Inne</a>.</p>
+
+<p>[<a href="#managing_certificates">Na początek rozdziału</a>]</p>
+
+<h1 id="managing_smart_cards_and_other_security_devices">Zarządzanie kartami inteligentnymi i&nbsp;innymi urządzeniami zabezpieczającymi</h1>
+
+<p>Karta inteligentna jest małym urządzeniem (typowo wielkości karty kredytowej). Posiada ona mikroprocesor i&nbsp;jest zdolna do przechowywania informacji identyfikujących użytkownika (takich, jak: <a href="glossary.xhtml#private_key">klucze prywatne</a>, czy <a href="glossary.xhtml#certificate">certyfikaty</a>) i&nbsp;wykonywania związanych z&nbsp;nimi operacji kryptograficznych.</p>
+
+<p>Aby używać kart inteligentnych, użytkownik zwykle potrzebuje czytnika kart inteligentnych (urządzenia sprzętowego), który jest przyłączany do komputera, oraz odpowiedniego oprogramowania kontrolującego pracę czytnika i&nbsp;karty.</p>
+
+<p>Karta inteligentna jest jednym z&nbsp;rodzajów urządzeń zabezpieczających. Innym rodzajem takiego urządzenia jest urządzenie sprzętowe (zwane też tokenem), które zawiera wbudowane odpowiednie mechanizmy kryptograficzne i&nbsp;posiada możliwość przechowywania informacji identyfikujących użytkownika. Aby pracować z&nbsp;wykorzystaniem kart inteligentnych i&nbsp;innych urządzeń zabezpieczających należy korzystać z&nbsp;Menedżera urządzeń zabezpieczających.</p>
+
+<div class="contentsBox">W&nbsp;tym rozdziale:
+  <ul>
+    <li><a href="#about_security_devices_and_modules">O&nbsp;urządzeniach i&nbsp;modułach zabezpieczeń</a></li>
+    <li><a href="#using_security_devices">Używanie urządzeń zabezpieczających</a></li>
+    <li><a href="#using_security_modules">Używanie modułów zabezpieczających</a></li>
+    <li><a href="#enable_fips_mode">Uaktywnianie trybu FIPS</a></li>
+  </ul>
+</div>
+
+<h2 id="about_security_devices_and_modules">O&nbsp;urządzeniach i&nbsp;modułach zabezpieczeń</h2>
+
+<p>Okno dialogowe Menedżera urządzeń zabezpieczających pokazuje wszystkie dostępne dla przeglądarki urządzenia zabezpieczające. Przy użyciu Menedżera istnieje możliwość zarządzania wszelkimi urządzeniami zabezpieczającymi (włączając w&nbsp;to karty inteligentne), które obsługują standard PKCS #11 (ang. Public Key Cryptography Standard (PKCS) #11).</p>
+
+<p><a href="glossary.xhtml#pkcs_11_module">Moduł PKCS #11</a> (czasami nazywany też modułem zabezpieczającym) zarządza jednym lub więcej urządzeniami zabezpieczającymi w&nbsp;zbliżony sposób do tego w&nbsp;jaki programowy sterownik sprzętu zarządza zewnętrznym urządzeniem (typu drukarka, czy modem). Przy instalacji karty inteligentnej, użytkownik musi również zainstalować odpowiedni dla niej moduł PKCS #11, jak również podłączyć do komputera czytnik karty.</p>
+
+<p>Domyślnie, Menedżer urządzeń zabezpieczających zarządza dwoma wewnętrznymi modułami PKCS #11, które z&nbsp;kolei zarządzają trzema urządzeniami zabezpieczającymi:</p>
+
+<ul>
+  <li><strong>&brandShortName; Internal PKCS #11 Module</strong>: Kontroluje dwa urządzenia zabezpieczające:
+    <ul>
+      <li><strong>Standardowe usługi szyfrujące</strong>: Specjalne urządzenie zabezpieczające, które wykonuje wszystkie operacje kryptograficzne wymagane przez wewnętrzny moduł PKCS #11 &brandShortName;.</li>
+      <li><strong>Urządzenie zabezpieczające</strong>: Przechowuje te certyfikaty i&nbsp;klucze użytkownika, które nie są przechowywane w&nbsp;zewnętrznych urządzeniach zabezpieczających. Dotyczy to zarówno certyfikatów dodawanych przez użytkownika, jak i&nbsp;tych, które są domyślnie instalowane z&nbsp;przeglądarką.</li>
+    </ul>
+  </li>
+  <li><strong>Builtin Roots Module</strong>: Zarządza specjalnym urządzeniem zabezpieczającym, zwanym Builtin Object Token. To urządzenie zawiera domyślne certyfikaty <a href="glossary.xhtml#ca_certificate">organów certyfikacji</a> instalowane z&nbsp;przeglądarką.</li>
+</ul>
+
+<p>[<a href="#managing_smart_cards_and_other_security_devices">Na początek rozdziału</a>]</p>
+
+<h2 id="using_security_devices">Używanie urządzeń zabezpieczających</h2>
+
+<p>Menedżer urządzeń zabezpieczających umożliwia wykonywanie czynności związanych z&nbsp;ich obsługą. Aby otworzyć okno dialogowe Menedżera urządzeń zabezpieczających, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Prywatność i&nbsp;zabezpieczenia wybrać Certyfikaty. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Prywatność i&nbsp;zabezpieczenia.)</li>	
+  <li>Nacisnąć przycisk Menedżer urządzeń zabezpieczających.</li>
+</ol>
+
+<p>Menedżer urządzeń zabezpieczających wyróżnia każdy dostępny moduł PKCS #11 pogrubieniem. Urządzenia zabezpieczające są widoczne jako pojedynczy moduł poniżej jego nazwy.</p>
+
+<p>Po zaznaczeniu urządzenia zabezpieczającego, w&nbsp;prawej części okna pojawiają się informacje o&nbsp;nim i&nbsp;zostają uaktywnione niektóre przyciski z&nbsp;prawej strony. Przykładowo, po zaznaczeniu pozycji Urządzenie zabezpieczające, można wykonać następujące czynności:</p>
+
+<ul>
+  <li>Naciśnięcie przycisku Zaloguj lub Wyloguj. Przy logowaniu się do urządzenia zabezpieczającego, użytkownik zostanie poproszony o&nbsp;podanie głównego hasła dla tego urządzenia. Zanim przeglądarka będzie mogła wykorzystywać usługi kryptograficzne dostępne w&nbsp;danym urządzeniu, użytkownik musi się do niego zalogować.</li>
+  <li>Naciśnięcie przycisku Zmień hasło powoduje wyświetlenie okna dialogowego zmiany głównego hasła urządzenia zabezpieczającego.</li>
+</ul>
+
+<p>Powyższe czynności mogą być wykonywane przy wykorzystaniu większości urządzeń zabezpieczających. Jednakże nie można ich wykonywać z&nbsp;modułami Builtin Object Token i&nbsp;Standardowe usługi szyfrujące. Te moduły są urządzeniami specjalnego przeznaczenia i&nbsp;w&nbsp;normalnych warunkach pracy przeglądarki muszą być dostępne cały czas.</p>
+
+<p>Więcej informacji można znaleźć w&nbsp;rozdziale <a href="certs_help.xhtml#device_manager">Menedżer urządzeń zabezpieczających</a>.</p>
+
+<p>[<a href="#managing_smart_cards_and_other_security_devices">Na początek rozdziału</a>]</p>
+
+<h2 id="using_security_modules">Używanie modułów zabezpieczających</h2>
+
+<p>Aby używać kart inteligentnych lub innych zewnętrznych urządzeń zabezpieczających, użytkownik musi najpierw zainstalować w&nbsp;komputerze oprogramowanie urządzenia i, jeśli to niezbędne, podłączyć urządzenie do komputera. Dokładne informacje na temat instalacji zewnętrznych urządzeń zabezpieczających są dostępne w&nbsp;dokumentacji urządzenia.</p>
+
+<p>Aby wczytać nowy moduł po jego poprawnym zainstalowaniu w&nbsp;komputerze, należy dalej postępować według poniższych czynności:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Prywatność i&nbsp;zabezpieczenia wybrać Certyfikaty. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Prywatność i&nbsp;zabezpieczenia.)</li>	
+  <li>Nacisnąć przycisk Menedżer urządzeń zabezpieczających</li>
+  <li>Nacisnąć przycisk Wczytaj.</li>
+  <li>W&nbsp;oknie dialogowym ładowania modułu PKCS #11, po naciśnięciu przycisku Przeglądaj, zlokalizować plik modułu i&nbsp;nacisnąć przycisk Otwórz.</li>
+  <li>Wypełnić pole nazwy modułu, poprzez naciśnięcie przycisku OK zapisać zmiany i&nbsp;zamknąć okno dialogowe ładowania nowego modułu.</li>
+</ol>
+
+<p>Po poprawnym wczytaniu nowy moduł pojawi się pod podaną nazwą na liście modułów.</p>
+
+<p>Aby usunąć moduł z&nbsp;pamięci, należy zaznaczyć jego nazwę i&nbsp;nacisnąć przycisk Usuń z&nbsp;pamięci.</p>
+
+<p>[<a href="#managing_smart_cards_and_other_security_devices">Na początek rozdziału</a>]</p>
+
+<h2 id="enable_fips_mode">Uaktywnianie trybu FIPS</h2>
+
+<p>Federal Information Processing Standards Publications (FIPS PUBS) 140-1 jest standardem rządu USA&nbsp;implementacji modułów kryptograficznych &mdash; czyli urządzeń sprzętowych lub programowych, które potrafią wykonywać operacje szyfrowania i&nbsp;deszyfrowania danych, lub inne operacje kryptograficzne (jak na przykład tworzenie lub weryfikowanie podpisów cyfrowych). Wiele urządzeń sprzedawanych instytucjom rządowym USA&nbsp;musi spełniać wymogi jednego lub wielu standardów FIPS.</p>
+
+<p>Aby uaktywnić w&nbsp;przeglądarce tryb FIPS, należy użyć Menedżera urządzeń zabezpieczających:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>Kliknąć na podkategorię Certyfikaty w&nbsp;kategorii Prywatność i&nbsp;zabezpieczenia. (Jeżeli nie są widoczne żadne podkategorie, należy podwójnym kliknięciem rozwinąć listę podkategorii).</li>
+  <li>Nacisnąć przycisk Menedżer urządzeń zabezpieczających</li>
+  <li>Nacisnąć przycisk Włącz FIPS. Gdy jest aktywny tryb FIPS, nazwa kategorii urządzeń NSS Internal PKCS #11 Module jest zmieniana na NSS Internal FIPS PKCS #11 Module i&nbsp;przycisk Włącz FIPS zmienia się na Wyłącz FIPS i&nbsp;wyszarza się.</li>
+</ol>
+
+<p>Aby wyłączyć tryb FIPS, należy nacisnąć przycisk Wyłącz FIPS. (Możliwe że bezpośrednio po aktywacji tego trybu przycisk będzie nieaktywny-wyszarzony, w&nbsp;takim wypadku należy zrestartować program).</p>
+
+<p>[<a href="#managing_smart_cards_and_other_security_devices">Na początek rozdziału</a>]</p>
+
+<h1 id="managing_ssl_warnings_and_settings">Zarządzanie ostrzeżeniami i&nbsp;ustawieniami SSL</h1>
+
+<p>Protokół SSL (ang. Secure Sockets Layer) umożliwia wymianę informacji pomiędzy komputerami w&nbsp;Internecie w&nbsp;postaci zaszyfrowanej. Informacje są kodowane podczas transmisji i&nbsp;dla osób postronnych są pozornie pozbawione sensu. SSL jest także używane do identyfikacji komputerów w&nbsp;Internecie przy pomocy  <a href="glossary.xhtml#certificate">certyfikatów</a>.</p>
+
+<p>Protokół TLS (ang. Transport Layer Security) jest nowym standardem opartym na SSL. Domyślnie przeglądarka obsługuje zarówno protokół SSL, jak i&nbsp;TLS. Takie rozwiązanie jest istotne z&nbsp;punktu widzenia użytkownika, gdyż gwarantuje poprawną pracę przeglądarki z&nbsp;niemal każdym istniejącym oprogramowaniem internetowym, które obsługuje dowolną wersję SSL lub TLS.</p>
+
+<p>Jednak w&nbsp;niektórych sytuacjach administrator systemu lub inne osoby odpowiedzialne za bezpieczeństwo systemu mogą mieć potrzebę dopasowania ustawień SSL dla celów szczególnej ochrony systemu, lub wyszukiwania błędów w&nbsp;starszych wersjach produktów.</p>
+
+<p>Użytkownik nie powinien zmieniać ustawień SSL, jeśli nie posiada odpowiedniej wiedzy w&nbsp;tym zakresie, lub nie posiada pomocy ze strony osoby znającej się na dopasowywaniu SSL. Gdy zachodzi potrzeba zmiany ustawień SSL, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>Kliknąć na podkategorię SSL w&nbsp;kategorii Prywatność i&nbsp;zabezpieczenia. (Jeżeli nie są widoczne żadne podkategorie, należy podwójnym kliknięciem rozwinąć listę podkategorii).</li>
+</ol>
+
+<p>Więcej informacji w&nbsp;rozdziale <a href="ssl_help.xhtml">Ustawienia SSL</a>.</p>
+
+<p>[<a href="#using_certificates">Na początek rozdziału</a>]</p>
+
+<h1 id="controlling_validation">Kontrola ważności</h1>
+
+<p>Jak podano powyżej w&nbsp;rozdziale zatytułowanym <a href="#getting_your_own_certificate">Uzyskiwanie własnego certyfikatu</a>, certyfikat jest formą identyfikacji jego posiadacza przeznaczoną na potrzeby Internetu i&nbsp;innych sieci komputerowych. Podobnie jak prawo jazdy, również certyfikat może w&nbsp;pewnych warunkach zostać unieważniony lub wygasnąć. Z&nbsp;tego powodu oprogramowanie zarządzające certyfikatami musi posiadać metody sprawdzania ważności certyfikatu przed jego zaakceptowaniem dla konkretnych celów identyfikacji użytkownika.</p>
+
+<p>Ten rozdział opisuje, w&nbsp;jaki sposób Menedżer certyfikatów sprawdza ważność certyfikatów i&nbsp;jak użytkownik może wpływać na proces tego sprawdzania. Aby zrozumieć proces kontroli ważności certyfikatów, należy zapoznać się z&nbsp;informacjami zawartymi w&nbsp;słowniku na temat <a href="glossary.xhtml#public-key_cryptography">kryptografii z&nbsp;kluczem publicznym</a>. W&nbsp;przypadku niepewności co do używania certyfikatów, należy przed jakimikolwiek próbami zmian ustawień przeglądarki zasięgnąć rady osoby doświadczonej (np. administratora systemu).</p>
+
+<div class="contentsBox">W&nbsp;tym rozdziale:
+  <ul>
+    <li><a href="#how_validation_works">Jak działa kontrola ważności</a></li>
+    <li><a href="#configuring_ocsp">Konfigurowanie OCSP</a></li>
+  </ul>
+</div>
+
+<h2 id="how_validation_works">Jak działa kontrola ważności</h2>
+
+<p>Menedżer certyfikatów przy każdej czynności związanej z&nbsp;użyciem lub podglądem zachowanego w&nbsp;nim certyfikatu, w&nbsp;kilku krokach dokonuje jego sprawdzenia. Podstawową czynnością jest potwierdzenie faktu, że podpis cyfrowy organu certyfikacji widniejący przy certyfikacie został utworzony przez ten organ certyfikacji, którego własny certyfikat jest: (po pierwsze) obecny na liście dostępnych dla Menedżera certyfikatów organów certyfikacji i&nbsp;(po drugie) traktowany jako zaufany do wystawiania tego typu certyfikatu, który jest poddawany kontroli.</p>
+
+<p>Jeżeli certyfikat organu certyfikacji nie jest obecny na liście Menedżera certyfikatów, <a href="glossary.xhtml#certificate_chain">łańcuch</a> tego certyfikatu musi posiadać certyfikat wyższego poziomu organu certyfikacji, który jest obecny na liście i&nbsp;posiada odpowiedni poziom zaufania. Menedżer certyfikatów potwierdza również, że sprawdzany certyfikat jest w&nbsp;chwili obecnej traktowany jako zaufany w&nbsp;magazynie certyfikatów. Jeśli którakolwiek z&nbsp;tych kontroli nie powiedzie się, Menedżer certyfikatów zaznacza certyfikat jako niezweryfikowany i&nbsp;nie przystąpi do rozpoznawania zawartości, którą taki certyfikat poświadcza.</p>
+
+<p>Certyfikat jednakże może pomyślnie przejść wszystkie testy i&nbsp;wciąż w&nbsp;niektórych przypadkach pozostać niewiarygodnym. Przykładowo, certyfikat może zostać unieważniony, ponieważ osoba trzecia uzyskała dostęp do klucza prywatnego pasującego do certyfikatu. Niewiarygodny certyfikat może umożliwiać niepowołanej osobie (lub witrynie WWW) podszywanie się pod prawowitego właściciela.</p>
+
+<p>Jednym ze sposobów uniknięcia powyższej sytuacji byłoby sprawdzanie przy weryfikacji przez Menedżera certyfikatów wcześniej pobranej listy certyfikatów unieważnionych (ang. certificate revocation list (CRL)). <!-- TODO: start localizing -->However, those lists may be large and need to be updated frequently in order to remain current and thus useful.<!-- TODO: stop localizing --></p>
+
+<p>Preferowanym sposobem uniknięcia sytuacji korzystania z&nbsp;unieważnionych certyfikatów jest użycie wyspecjalizowanych serwerów, które obsługują Protokół Weryfikacji Certyfikatu Online (ang. Online Certificate Status Protocol (OCSP)). Taki serwer jest w&nbsp;stanie udzielać odpowiedzi na zapytania przeglądarki o&nbsp;pojedyncze certyfikaty (więcej informacji w&nbsp;rozdziale <a href="#configuring_ocsp">Konfigurowanie OCSP</a> poniżej).</p>
+
+<p>Serwer, zwany serwerem potwierdzającym, odbiera uaktualnione listy CRL okresowo z&nbsp;serwerów tych organów certyfikacji, które wydały weryfikowane certyfikaty. Istnieje możliwość takiej konfiguracji Menedżera certyfikatów, żeby wysyłał zapytanie o&nbsp;status certyfikatu do serwera potwierdzającego i&nbsp;oczekiwał następnie na potwierdzenie statusu ważności certyfikatu.</p>
+
+<p>[<a href="#controlling_validation">Na początek rozdziału</a>]</p>
+
+<h2 id="configuring_ocsp">Konfigurowanie OCSP</h2>
+
+<p>Ustawienia kontrolujące OCSP stanowią część preferencji dotyczących certyfikatów. Aby je zobaczyć, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>Kliknąć na podkategorię Certyfikaty w&nbsp;kategorii Prywatność i&nbsp;zabezpieczenia. (Jeżeli nie są widoczne żadne podkategorie, należy podwójnym kliknięciem rozwinąć listę podkategorii).</li>
+</ol>
+
+<p>Więcej informacji o&nbsp;dostępnych opcjach OCSP można znaleźć w&nbsp;rozdziale <a href="certs_prefs_help.xhtml#ocsp">Prywatność i&nbsp;zabezpieczenia - Certyfikaty, OCSP</a>.</p>
+
+<p>[<a href="#controlling_validation">Na początek rozdziału</a>]</p>
+
+</body>
+</html>

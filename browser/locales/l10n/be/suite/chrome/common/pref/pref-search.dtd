@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.search.title "Пошук у Інтэрнэце">
+<!ENTITY legendHeader "Змоўчная машына пошуку">
+<!ENTITY defaultSearchEngine.label "Пошук з дапамогай:">
+<!ENTITY defaultSearchEngine.accesskey "д">
+<!ENTITY engineManager.label "Наладзіць машыны пошуку…">
+<!ENTITY searchResults.label "Вынікі пошуку">
+<!ENTITY openInTab.label "Адчыняць новыя ўстаўкі для вынікаў пошуку на бакавой палічцы">
+<!ENTITY openInTab.accesskey "н">
+<!ENTITY openContextSearchTab.label "Адчыняць устаўку замест акна для кантэкстнага пошуку сеціўнага пошуку з меню">
+<!ENTITY openContextSearchTab.accesskey "у">
+<!ENTITY openSidebarSearchPanel.label "Адчыняць устаўку пошуку на бакавой палічцы, калі вынікі пошуку даступны">
+<!ENTITY openSidebarSearchPanel.accesskey "ч">

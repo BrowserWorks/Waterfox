@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "Halaman laman web kadangkala boleh diperoleh dalam lebih daripada satu bahasa. Pilih bahasa untuk memaparkan halaman laman web ini, mengikut keutamaan.">
+<!ENTITY languages.customize.title                      "Bahasa">
+<!ENTITY langtitle.label                                "Bahasa Halaman Web">
+<!ENTITY languages.customize.prefAddLangDescript        "Pilih bahasa yang anda mahu tambah.">
+<!ENTITY languages.customize.addButton.label            "Tambah…">
+<!ENTITY languages.customize.addButton.accesskey        "T">
+<!ENTITY languages.customize.deleteButton.label         "Buang">
+<!ENTITY languages.customize.deleteButton.accesskey     "B">
+<!ENTITY languages.customize.add.title.label            "Tambah Bahasa">
+<!ENTITY languages.customize.available.label            "Bahasa:">
+<!ENTITY languages.customize.active.label               "Bahasa mengikut susunan keutamaan:">
+<!ENTITY languages.customize.active.accesskey           "B">
+<!ENTITY languages.customize.others.label               "Lain-lain:">
+<!ENTITY languages.customize.others.accesskey           "L">
+<!ENTITY languages.customize.Fallback2.grouplabel       "Pengekodan Teks untuk Kandungan Legasi">
+<!ENTITY languages.customize.Fallback2.label            "Pengekodan Teks Unduran:">
+<!ENTITY languages.customize.Fallback2.accesskey        "T">
+<!ENTITY languages.customize.Fallback2.desc             "Digunakan untuk kandungan legasi yang gagal mengisytiharkan pengekodan.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "contoh: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "Pindah Atas">
+<!ENTITY languages.customize.moveUp.accesskey           "A">
+<!ENTITY languages.customize.moveDown.label             "Pindah Bawah">
+<!ENTITY languages.customize.moveDown.accesskey         "B">

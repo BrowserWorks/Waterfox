@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Wó &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; jo eksperimentelny a móžo njestabilny byś.">
+<!ENTITY aboutPage.checkForUpdates.link         "Aktualizacije pytaś »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Aktualizacije se pytaju…">
+<!ENTITY aboutPage.checkForUpdates.none         "Aktualizacije njestoje k dispoziciji">
+<!ENTITY aboutPage.checkForUpdates.available2   "Aktualizaciju ześěgnuś">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Aktualizacija se ześěgujo…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Aktualizaciju instalěrowaś">
+<!ENTITY aboutPage.faq.label                    "CSP">
+<!ENTITY aboutPage.support.label                "Pódpěra">
+<!ENTITY aboutPage.privacyPolicy.label          "Pšawidła priwatnosći">
+<!ENTITY aboutPage.rights.label                 "Wó wašych pšawach">
+<!ENTITY aboutPage.relNotes.label               "Wersijowe informacije">
+<!ENTITY aboutPage.credits.label                "Źěkowanje">
+<!ENTITY aboutPage.license.label                "Licencne informacije">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox a loga Firefox su wikowe marki załožby Mozilla Foundation.">

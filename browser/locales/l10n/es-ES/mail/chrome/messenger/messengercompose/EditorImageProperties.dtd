@@ -1,0 +1,73 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!ENTITY windowTitle.label "Propiedades de la imagen">
+
+<!ENTITY pixelsPopup.value "píxeles">
+
+<!ENTITY locationEditField.label "URL de la imagen:">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "Teclee el nombre de archivo de la imagen o su ubicación">
+<!ENTITY locationEditField.shortenedDataURI "URI de datos acortada (Copiar pondrá la URI completa en el portapapeles)">
+<!ENTITY title.label "Consejo:">
+<!ENTITY title.accessKey "C">
+<!ENTITY title.tooltip "El atributo HTML 'title' que se muestra como consejo">
+<!ENTITY altText.label "Texto alternativo:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Teclee el texto a mostar en lugar de la imagen">
+<!ENTITY noAltText.label "No usar texto alternativo">
+<!ENTITY noAltText.accessKey "n">
+
+<!ENTITY previewBox.label "Vista preliminar">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- These controls are in the Dimensions tab panel -->
+<!ENTITY actualSize.label "Tamaño real:">
+<!ENTITY actualSizeRadio.label "Tamaño real">
+<!ENTITY actualSizeRadio.accessKey "A">
+<!ENTITY actualSizeRadio.tooltip "Restablecer al tamaño real de la imagen">
+<!ENTITY customSizeRadio.label "Tamaño personalizado">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "Cambiar el tamaño de la imagen al establecido en la página">
+<!ENTITY heightEditField.label "Altura:">
+<!ENTITY heightEditField.accessKey "u">
+<!ENTITY widthEditField.label "Anchura:">
+<!ENTITY widthEditField.accessKey "n">
+<!ENTITY constrainCheckbox.label "Mantener aspecto">
+<!ENTITY constrainCheckbox.accessKey "C">
+<!ENTITY constrainCheckbox.tooltip "Mantener la proporción en el aspecto de la imagen">
+
+<!ENTITY imagemapBox.label "Mapa de imagen">
+<!ENTITY removeImageMapButton.label "Eliminar">
+<!ENTITY removeImageMapButton.accessKey "R">
+
+<!ENTITY alignment.label "Alinear el texto con la imagen">
+<!ENTITY bottomPopup.value "En la parte inferior">
+<!ENTITY topPopup.value "En la parte superior
+">
+<!ENTITY centerPopup.value "En el centro">
+<!ENTITY wrapRightPopup.value "El texto fluye por la derecha">
+<!ENTITY wrapLeftPopup.value "El texto fluye por la izquierda">
+
+<!ENTITY spacingBox.label "Espacio">
+<!ENTITY leftRightEditField.label "Izquierda y derecha:">
+<!ENTITY leftRightEditField.accessKey "I">
+<!ENTITY topBottomEditField.label "Parte superior y parte inferior:">
+<!ENTITY topBottomEditField.accessKey "T">
+<!ENTITY borderEditField.label "Borde sólido:">
+<!ENTITY borderEditField.accessKey "B">
+
+<!ENTITY showImageLinkBorder.label "Mostrar el borde alrededor de la imagen-enlace">
+<!ENTITY showImageLinkBorder.accessKey "B">
+<!ENTITY LinkAdvancedEditButton.label "Edición avanzada del enlace…">
+<!ENTITY LinkAdvancedEditButton.accessKey "E">
+<!ENTITY LinkAdvancedEditButton.tooltip "Añada o modifique atributos HTML, atributos de estilo y JavaScript">
+
+<!ENTITY imageInputTab.label "Formulario">
+<!ENTITY imageLocationTab.label "Ubicación">
+<!ENTITY imageDimensionsTab.label "Dimensiones">
+<!ENTITY imageAppearanceTab.label "Apariencia">
+<!ENTITY imageLinkTab.label "Enlace">

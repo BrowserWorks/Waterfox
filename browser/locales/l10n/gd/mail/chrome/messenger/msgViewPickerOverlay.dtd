@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY viewPicker.label "Seall:">
+<!ENTITY viewPicker.accesskey "S">
+<!ENTITY viewAll.label "A h-uile">
+<!ENTITY viewAll.accesskey "A">
+<!ENTITY viewUnread.label "Gun leughadh">
+<!ENTITY viewUnread.accesskey "u">
+<!ENTITY viewNotDeleted.label "Gun sguabadh às">
+<!ENTITY viewNotDeleted.accesskey "d">
+<!ENTITY viewTags.label "Tagaichean">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "Seallaidhean gnàthaichte">
+<!ENTITY viewCustomViews.accesskey "S">
+<!ENTITY viewVirtualFolder.label "Sàbhail na tha thu a' coimhead air mar phasgan…">
+<!ENTITY viewVirtualFolder.accesskey "S">
+<!ENTITY viewCustomizeView.label "Gnàthaich…">
+<!ENTITY viewCustomizeView.accesskey "c">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Socruithe Nua Leathanaigh">
+
+<!ENTITY  authorName.label          "Údar:">
+<!ENTITY  authorName.accesskey      "d">
+<!ENTITY  pageColorHeader           "Cuma Réamhshocraithe na Leathanach">
+
+<!ENTITY defaultColors.label        "Dathanna réamhshocraithe an léitheora (Ná socraigh dathanna sa leathanach)">
+<!ENTITY defaultColors.accesskey    "D">
+<!ENTITY customColors.label         "Úsáid dathanna saincheaptha:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "Gnáththéacs">
+<!ENTITY normalText.accesskey       "n">
+<!ENTITY linkText.label             "Téacs naisc">
+<!ENTITY linkText.accesskey         "n">
+<!ENTITY activeLinkText.label       "Téacs naisc gníomhach">
+<!ENTITY activeLinkText.accesskey   "a">
+<!ENTITY visitedLinkText.label      "Téacs naisc feicthe">
+<!ENTITY visitedLinkText.accesskey  "f">
+<!ENTITY background.label           "Cúlra:">
+<!ENTITY background.accesskey       "C">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Íomhá chúlra:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "Roghnaigh Comhad…">
+<!ENTITY chooseFile.accesskey       "o">
+

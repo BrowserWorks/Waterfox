@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title  "Uusi tallennetun haun kansio">
+<!ENTITY name.label                  "Nimi:">
+<!ENTITY name.accesskey              "N">
+<!ENTITY description.label           "Luo alikansiona kansiolle:">
+<!ENTITY description.accesskey       "L">
+
+<!ENTITY searchTermCaption.label  "Tämän virtuaalikansion hakuehdot:">
+
+<!ENTITY folderSelectionCaption.label  "Valitse kansiot, joista haetaan:">
+<!ENTITY chooseFoldersButton.label  "Valitse…">
+<!ENTITY chooseFoldersButton.accesskey  "V">
+
+<!ENTITY searchOnline.label  "Hae yhteystilassa (Kansion avaaminen on hitaampaa, mutta kansio on aina ajantasalla)">
+<!ENTITY searchOnline.accesskey  "y">
+<!ENTITY newFolderButton.label       "Luo">
+<!ENTITY newFolderButton.accesskey   "L">
+<!ENTITY editFolderButton.label      "Päivitä">
+<!ENTITY editFolderButton.accesskey  "P">

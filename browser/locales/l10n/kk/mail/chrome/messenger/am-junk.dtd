@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Спам баптаулары">
+<!ENTITY trainingDescription.label "Іске қосылған болса, сізге алдымен &brandShortName; өнімін саймандар панеліндегі Спам батырмасы көмегімен хабарламаларды спам және спам емес белгілеу арқылы спам хаттарын тануға үйрету керек. Сізге спам хаттарын да, спам емес хаттарын да көрсету керек. Одан кейін &brandShortName; спам хаттарын автоматты түрде белгілей алатын болады.">
+<!ENTITY level.label "Бұл тіркелгі үшін спам поштасының адаптивті басқаруын іске қосу">
+<!ENTITY level.accesskey "е">
+
+<!ENTITY move.label "Жаңа спам хаттарын қайда жылжыту:">
+<!ENTITY move.accesskey "ж">
+<!ENTITY junkFolderOn.label "&quot;Спам&quot; бумасының орны:">
+<!ENTITY junkFolderOn.accesskey "С">
+<!ENTITY otherFolder.label "Басқа:">
+<!ENTITY otherFolder.accesskey "Б">
+<!ENTITY purge1.label "Келесіден ескілеу спам хаттарын автоөшіру">
+<!ENTITY purge1.accesskey "а">
+<!ENTITY purge2.label "күн">
+
+<!ENTITY whitelistHeader.label "Жіберуші келесіде болса, хаттарды спам ретінде автобелгілемеу: ">
+<!ENTITY whitelistHeader.accesskey "м">
+
+<!ENTITY ispHeadersWarning.label "Іске қосылған болса, &brandShortName; бұл сыртқы анықтаушымен белгіленген хабарламаларды спам ретінде автоматты түрде танитын болады.">
+<!ENTITY ispHeaders.label "Келесі орнатқан спам хаттарының тақырыптамаларына сену: ">
+<!ENTITY ispHeaders.accesskey "с">
+
+<!ENTITY junkClassification.label "Таңдау">
+<!ENTITY junkActions.label "Мақсаты және автоөшіру">
+
+<!ENTITY globalJunkPrefs.label "Глобалды спам баптаулары…">
+<!ENTITY globalJunkPrefs.accesskey "Г">

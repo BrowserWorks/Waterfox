@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Gelişmiş hesap ayarları">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP server directory:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Sadece abone olunan dizinleri göster">
+<!ENTITY usingSubscription.accesskey "e">
+<!ENTITY dualUseFolders.label "Sunucu, altdizinler ve ileti içeren dizinleri destekliyor.">
+<!ENTITY dualUseFolders.accesskey "S">
+<!ENTITY useIdle.label "Sunucu desteklerse IDLE komutunu kullan">
+<!ENTITY useIdle.accesskey "L">
+<!ENTITY maximumConnectionsNumber.label "Önbelleğe alınacak bağlantı sayısı üst sınırı">
+<!ENTITY maximumConnectionsNumber.accesskey "n">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "These preferences specify the namespaces on your IMAP server">
+<!ENTITY personalNamespace.label "Özel namespace:">
+<!ENTITY personalNamespace.accesskey "z">
+<!ENTITY publicNamespace.label "Genel (ortak kullanılan):">
+<!ENTITY publicNamespace.accesskey "e">
+<!ENTITY otherUsersNamespace.label "Diğer kullanıcılar:">
+<!ENTITY otherUsersNamespace.accesskey "i">
+<!ENTITY overrideNamespaces.label "Sunucuya bu Namespaces aktarılmasına izin ver">
+<!ENTITY overrideNamespaces.accesskey "N">
+<!ENTITY pop3Desc.label "Bu sunucunun pop3 hesaplarını indirdikten sonra, hesabın yerel dizinndeki 'Gelen' kutusundaki  saklayabilirsiniz.">
+<!ENTITY globalInbox.label "Gelen kutusunda sakla (Yerel gelen kutusu)">
+<!ENTITY globalInbox.accesskey "G">
+<!ENTITY accountDirectory.label "Sunucunun Gelen kutusunda sakla">
+<!ENTITY accountDirectory.accesskey "S">
+<!ENTITY deferToServer.label "Yandaki hesapların Gelen kutusunda sakla">
+<!ENTITY deferToServer.accesskey "k">
+<!ENTITY deferGetNewMail.label "Yeni mesajları indirirken sunucudan da indir">
+<!ENTITY deferGetNewMail.accesskey "s">

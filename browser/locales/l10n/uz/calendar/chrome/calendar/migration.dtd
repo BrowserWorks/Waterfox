@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Ma’lumotlar importi">
+<!ENTITY migration.welcome "Xush kelibsiz">
+<!ENTITY migration.importing "Import qilinmoqda">
+<!ENTITY migration.list.description "Ko‘pgina mashhur ilova dasturlardan &brandShortName; taqvimni import qila oladi. Kompyuteringizdagi quyidagi dasturlardan ma’lumotlar topildi. Xohlaganingizni tanlab, undan ma’lumotlarni import qilishingiz mumkin.">
+<!ENTITY migration.progress.description "Tanlangan ma’lumotlar import qilinmoqda">

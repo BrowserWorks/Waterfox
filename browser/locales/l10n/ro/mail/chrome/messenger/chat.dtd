@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Prieteni conectați">
+<!ENTITY offlineContactsHeader.label   "Prieteni offline">
+<!ENTITY conversationsHeader.label     "Conversații">
+<!ENTITY searchResultConversation.label "Rezultat căutare">
+<!ENTITY chat.noConv.title             "Conversația va fi afișată aici.">
+<!ENTITY chat.noConv.description       "Folosește lista de prieteni din panoul din stânga pentru a începe o conversație.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; nu are în prezent vreo conversație anterioară stocată pentru acest contact.">
+<!ENTITY chat.noAccount.title             "Încă nu ai configurat un cont de chat.">
+<!ENTITY chat.noAccount.description       "Permite lui &brandShortName; să te ghideze prin procesul de configurare al contului de chat.">
+<!ENTITY chat.accountWizard.button       "Începe">
+<!ENTITY chat.noConnectedAccount.title             "Conturile tale de chat nu sunt conectate.">
+<!ENTITY chat.noConnectedAccount.description       "Le poți conecta din fereastra de dialog „Stare chat”:">
+<!ENTITY chat.showAccountManager.button       "Afișează starea în chat">
+
+<!ENTITY chat.participants             "Participanți:">
+<!ENTITY chat.previousConversations    "Conversații anterioare:">
+<!ENTITY chat.ongoingConversation      "Conversație în desfășurare">
+
+<!ENTITY openConversationCmd.label     "Începe o conversație">
+<!ENTITY openConversationCmd.accesskey "c">
+<!ENTITY closeConversationCmd.label    "Închide conversația">
+<!ENTITY closeConversationCmd.accesskey "c">
+<!ENTITY aliasCmd.label                "Redenumire">
+<!ENTITY aliasCmd.accesskey            "m">
+<!ENTITY deleteCmd.label               "Elimină contactul">
+<!ENTITY deleteCmd.accesskey           "t">
+
+<!ENTITY openConversationButton.tooltip  "Începe o conversație">
+<!ENTITY closeConversationButton.tooltip "Închide conversația">
+
+<!ENTITY addBuddyButton.label          "Adaugă contact">
+<!ENTITY joinChatButton.label          "Conectează-te la chat">
+<!ENTITY chatAccountsButton.label      "Afișează conturile">
+
+<!ENTITY status.available          "Disponibil">
+<!ENTITY status.unavailable        "Indisponibil">
+<!ENTITY status.offline            "Offline">
+
+<!ENTITY openLinkCmd.label            "Deschide linkul…">
+<!ENTITY openLinkCmd.accesskey        "O">

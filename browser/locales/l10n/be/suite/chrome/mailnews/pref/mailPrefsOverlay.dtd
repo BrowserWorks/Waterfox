@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY enbPluginCheckMailNews.label "Пошта і Навінакупы">
+<!ENTITY enbPluginCheckMailNews.accesskey "о">
+<!ENTITY mail.label "Пошта і Навінакупы">
+<!ENTITY mail.accesskey "П">
+<!ENTITY addressbook.label "Адрасная кніга">
+<!ENTITY addressbook.accesskey "А">
+<!ENTITY viewingMessages.label "Адлюстраванне лістоў">
+<!ENTITY notifications.label "Апавяшчэнне">
+<!ENTITY address.label "Адрасаванне">
+<!ENTITY composingMessages.label "Укладанне">
+<!ENTITY format.label "Фармат дасылання">
+<!ENTITY return.label "Квіткі атрымання">
+<!ENTITY junk.label "Лухта і падазроная пошта">
+<!ENTITY tags.label "Меткі">
+<!ENTITY characterEncoding.label "Кадоўка знакаў">
+<!ENTITY networkStorage.label "Сетка і захоўванне">

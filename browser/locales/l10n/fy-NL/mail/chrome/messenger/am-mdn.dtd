@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Lêsbefêstigingen">
+<!ENTITY useGlobalPrefs.label         "Myn algemiene lêsbefêstigingsynstellingen brûke foar dizze account">
+<!ENTITY useGlobalPrefs.accesskey     "g">
+<!ENTITY globalReceipts.label         "Algemiene ynstellingen…">
+<!ENTITY globalReceipts.accesskey     "g">
+<!ENTITY useCustomPrefs.label         "Lêsbefêstiging oanpasse foar dizze account">
+<!ENTITY useCustomPrefs.accesskey     "p">
+<!ENTITY requestReceipt.label         "Altyd in lêsbefêstiging freegje by it ferstjoeren fan berjochten">
+<!ENTITY requestReceipt.accesskey     "t">
+<!ENTITY receiptArrive.label          "As in lêsbefêstiging oankomt:">
+<!ENTITY leaveIt.label                "Dy yn myn Postfek YN stean litte">
+<!ENTITY leaveIt.accesskey            "l">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Dy nei myn map &quot;Ferstjoerd&quot; ferpleatse">
+<!ENTITY moveToSent.accesskey         "f">
+<!ENTITY requestMDN.label             "As in fersyk foar in lêsbefêstiging oankomt:">
+<!ENTITY returnSome.label             "Yn de folgjende gefallen in lêsbefêstiging stjoere">
+<!ENTITY returnSome.accesskey         "o">
+<!ENTITY never.label                  "Nea in lêsbefêstiging stjoere">
+<!ENTITY never.accesskey              "s">
+<!ENTITY notInToCc.label              "As ik net yn de Oan of CC fan it berjocht stean:">
+<!ENTITY notInToCc.accesskey          "n">
+<!ENTITY outsideDomain.label          "As de ôfstjoerder bûten myn domein is:">
+<!ENTITY outsideDomain.accesskey      "b">
+<!ENTITY otherCases.label             "Yn alle oare gefallen:">
+<!ENTITY otherCases.accesskey         "a">
+<!ENTITY askMe.label                  "My freegje">
+<!ENTITY alwaysSend.label             "Altyd ferstjoere">
+<!ENTITY neverSend.label              "Nea ferstjoere">

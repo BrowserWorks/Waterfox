@@ -1,0 +1,220 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Aadressiraamat">
+<!ENTITY blankResultsPaneMessage.label                  "See aadressiraamat kuvab kontakte ainult pärast otsimist">
+<!ENTITY localResultsOnlyMessage.label                  "Kontakte võrguaadressiraamatutest ei kuvata enne otsimist">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Fail">
+<!ENTITY fileMenu.accesskey                             "F">
+<!ENTITY newMenu.label                                  "Uus">
+<!ENTITY newMenu.accesskey                              "U">
+<!ENTITY newContact.label                               "Aadressiraamatu kontakt...">
+<!ENTITY newContact.accesskey                           "A">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Meililist">
+<!ENTITY newListCmd.accesskey                           "l">
+<!ENTITY newAddressBookCmd.label                        "Aadressiraamat...">
+<!ENTITY newAddressBookCmd.accesskey                    "A">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP-i kataloog...">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "Kiri">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "K">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Kasutatakse Mac OS X'i aadressiraamatut">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Sulge">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "S">
+<!ENTITY printSetupCmd.label                            "Lehe sätted...">
+<!ENTITY printSetupCmd.accesskey                        "l">
+<!ENTITY printPreviewContactCmd.label                   "Kontakti printimise eelvaade">
+<!ENTITY printPreviewContactCmd.accesskey               "e">
+<!ENTITY printPreviewAddressBook.label                  "Aadressiraamatu printimise eelvaade">
+<!ENTITY printPreviewAddressBook.accesskey              "A">
+<!ENTITY printContactCmd.label                          "Prindi kontakt...">
+<!ENTITY printContactCmd.accesskey                      "P">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Prindi aadressiraamat...">
+<!ENTITY printAddressBook.accesskey                     "n">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Redigeerimine">
+<!ENTITY editMenu.accesskey                             "R">
+<!ENTITY deleteCmd.label                                "Kustuta">
+<!ENTITY deleteAbCmd.label                              "Kustuta aadressiraamat">
+<!ENTITY deleteContactCmd.label                         "Kustuta kontakt">
+<!ENTITY deleteContactsCmd.label                        "Kustuta kontaktid">
+<!ENTITY deleteListCmd.label                            "Kustuta list">
+<!ENTITY deleteListsCmd.label                           "Kustuta listid">
+<!ENTITY deleteItemsCmd.label                           "Kustuta elemendid">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesMenu.label                           "Omadused">
+<!ENTITY propertiesMenu.accesskey                       "O">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Aadressiraamatu omadused">
+<!ENTITY abPropertiesMenu.accesskey                     "o">
+<!ENTITY contactPropertiesMenu.label                    "Kontakti omadused">
+<!ENTITY contactPropertiesMenu.accesskey                "o">
+<!ENTITY mailingListPropertiesMenu.label                "Meililisti omadused">
+<!ENTITY mailingListPropertiesMenu.accesskey            "o">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Vaade">
+<!ENTITY viewMenu.accesskey                             "V">
+<!ENTITY viewToolbarsMenu.label                         "Tööriistaribad">
+<!ENTITY viewToolbarsMenu.accesskey                     "T">
+<!ENTITY menubarCmd.label                               "Menüüriba">
+<!ENTITY menubarCmd.accesskey                           "M">
+<!ENTITY showAbToolbarCmd.label                         "Aadressiraamatu riba">
+<!ENTITY showAbToolbarCmd.accesskey                     "A">
+<!ENTITY showTaskbarCmd.label                           "Olekuriba">
+<!ENTITY showTaskbarCmd.accesskey                       "l">
+<!ENTITY customizeToolbar.label                         "Kohanda...">
+<!ENTITY customizeToolbar.accesskey                     "K">
+<!ENTITY layoutMenu.label                               "Paigutus">
+<!ENTITY layoutMenu.accesskey                           "i">
+<!ENTITY showDirectoryPane.label                        "Kataloogide paneel">
+<!ENTITY showDirectoryPane.accesskey                    "o">
+<!ENTITY showContactPane2.label                         "Kontakti paneel">
+<!ENTITY showContactPane2.accesskey                     "K">
+<!ENTITY menu_ShowNameAs.label                          "Nime kuju">
+<!ENTITY menu_ShowNameAs.accesskey                      "N">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Eesnimi perekonnanimi">
+<!ENTITY firstLastCmd2.accesskey                        "E">
+<!ENTITY lastFirstCmd.label                             "Perekonnanimi, eesnimi">
+<!ENTITY lastFirstCmd.accesskey                         "P">
+<!ENTITY displayNameCmd.label                           "Kuvatav nimi">
+<!ENTITY displayNameCmd.accesskey                       "K">
+<!ENTITY sortMenu.label                                 "Sortimine">
+<!ENTITY sortMenu.accesskey                             "S">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Tööriistad">
+<!ENTITY tasksMenu.accesskey                            "T">
+<!ENTITY messengerCmd.label                             "E-post ja uudisgrupid">
+<!ENTITY messengerCmd.accesskey                         "E">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY addressBookCmd.label                           "Aadressiraamat">
+<!ENTITY addressBookCmd.accesskey                       "d">
+<!ENTITY addressBookCmd.key                             "B">
+<!ENTITY searchAddressesCmd.label                       "Aadresside otsing...">
+<!ENTITY searchAddressesCmd.accesskey                   "d">
+<!ENTITY importCmd.label                                "Impordi...">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Ekspordi...">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmd2.label                          "Valikud">
+<!ENTITY preferencesCmd2.accesskey                      "V">
+<!ENTITY preferencesCmdUnix.label                       "Eelistused">
+<!ENTITY preferencesCmdUnix.accesskey                   "E">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Uus kontakt">
+<!ENTITY newContactButton.accesskey                     "U">
+<!ENTITY newlistButton.label                            "Uus list">
+<!ENTITY newlistButton.accesskey                        "l">
+<!ENTITY showAsDefault.label                            "Avamisel kasutatav vaikekataloog">
+<!ENTITY showAsDefault.accesskey                        "m">
+<!ENTITY editPropertiesButton.label                     "Muuda">
+<!ENTITY propertiesContext.label                        "Omadused">
+<!ENTITY propertiesContext.accesskey                    "o">
+<!ENTITY abPropertiesContext.label                      "Omadused">
+<!ENTITY abPropertiesContext.accesskey                  "o">
+<!ENTITY editContactContext.label                       "Muuda kontakti">
+<!ENTITY editContactContext.accesskey                   "M">
+<!ENTITY editMailingListContext.label                   "Muuda meililisti">
+<!ENTITY editMailingListContext.accesskey               "M">
+<!ENTITY newmsgButton.label                             "Kirjuta">
+<!ENTITY newmsgButton.accesskey                         "K">
+<!ENTITY newIM.label                                    "Kiirsõnum">
+<!ENTITY newIM.accesskey                                "i">
+<!ENTITY printButton.label                              "Prindi…">
+<!ENTITY printButton.accesskey                          "P">
+<!ENTITY deleteButton2.label                            "Kustuta">
+<!ENTITY deleteButton2.accesskey                        "K">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY newContactButton.tooltip                       "Loo uus aadressiraamatu kontakt">
+<!ENTITY newlistButton.tooltip                          "Loo uus meililist">
+<!ENTITY editPropertiesButton.tooltip                   "Muuda valitud elementi">
+<!ENTITY editAbPropertiesButton.tooltip                 "Muuda valitud aadressiraamatu omadusi">
+<!ENTITY editContactPropertiesButton.tooltip            "Muuda valitud kontakti">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Muuda valitud meililisti">
+<!ENTITY newmsgButton.tooltip                           "Koosta uus kiri">
+<!ENTITY newIM.tooltip                                  "Saada kiirsõnum või vestle">
+<!ENTITY deleteButton2.tooltip                          "Kustuta valitud element">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Nimi või e-post">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "Täpsem aadressiotsing">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Kiirotsing">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Aadressiraamat">
+<!ENTITY Addrbook.accesskey                             "r">
+<!ENTITY GeneratedName.label                            "Nimi">
+<!ENTITY GeneratedName.accesskey                        "N">
+<!ENTITY PrimaryEmail.label                             "E-post">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "Nimi kiirsuhtluses">
+<!ENTITY ChatName.accesskey                             "i">
+<!ENTITY Company.label                                  "Organisatsioon">
+<!ENTITY Company.accesskey                              "O">
+<!ENTITY NickName.label                                 "Hüüdnimi">
+<!ENTITY NickName.accesskey                             "d">
+<!ENTITY SecondEmail.label                              "Muud e-posti aadressid">
+<!ENTITY SecondEmail.accesskey                          "t">
+<!ENTITY Department.label                               "Osakond">
+<!ENTITY Department.accesskey                           "a">
+<!ENTITY JobTitle.label                                 "Amet">
+<!ENTITY JobTitle.accesskey                             "m">
+<!ENTITY CellularNumber.label                           "Mobiiltelefon">
+<!ENTITY CellularNumber.accesskey                       "b">
+<!ENTITY PagerNumber.label                              "Peiler">
+<!ENTITY PagerNumber.accesskey                          "e">
+<!ENTITY FaxNumber.label                                "Faks">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Kodune telefon">
+<!ENTITY HomePhone.accesskey                            "u">
+<!ENTITY WorkPhone.label                                "Töötelefon">
+<!ENTITY WorkPhone.accesskey                            "f">
+<!ENTITY sortAscending.label                            "Kasvav">
+<!ENTITY sortAscending.accesskey                        "K">
+<!ENTITY sortDescending.label                           "Kahanev">
+<!ENTITY sortDescending.accesskey                       "h">
+<!ENTITY _PhoneticName.label                            "Nime hääldus">
+<!ENTITY _PhoneticName.accesskey                        "h">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Kontakt">
+<!ENTITY home.heading                                   "Kodu">
+<!ENTITY other.heading                                  "Muu">
+<!ENTITY chat.heading                                   "Kiirsuhtlus">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Töö">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Kirjeldus">
+<!ENTITY addresses.heading                              "Aadressid">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Vaata kaardil">
+<!ENTITY mapIt.tooltip                                  "Kuva adresaadi juures oleva aadressi asupaika veebis">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Aken">
+<!ENTITY minimizeWindow.label                           "Minimeeri">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Too kõik ette">
+<!ENTITY zoomWindow.label                               "Suurendus">

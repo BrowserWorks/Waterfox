@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Contos Firefox">
+<!ENTITY aboutAccounts.connected.description "Vos es connectite como">
+<!ENTITY aboutAccounts.syncPreferences.label "Toccar aqui pro controlar le parametros de Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "Nulle connexion a internet">
+<!ENTITY aboutAccounts.retry.label "Retentar">
+
+<!ENTITY aboutAccounts.restrictedError.title "Restringite">
+<!ENTITY aboutAccounts.restrictedError.description "Tu non pote gerer contos Firefox ab iste profilo.">

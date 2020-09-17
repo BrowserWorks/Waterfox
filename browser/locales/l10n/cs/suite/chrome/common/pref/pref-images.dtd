@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Obrázky">
+
+<!ENTITY imageBlocking.label            "Nastavení načítání obrázků">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "Upřesněte, jak má &brandShortName; zacházet s obrázky na stránce.">
+
+<!ENTITY loadAllImagesRadio.label       "Načítat všechny obrázky">
+<!ENTITY loadAllImagesRadio.accesskey   "h">
+<!ENTITY loadOrgImagesRadio.label       "Načítat pouze obrázky pocházející ze stejného serveru">
+<!ENTITY loadOrgImagesRadio.accesskey   "a">
+<!ENTITY loadNoImagesRadio.label        "Nenačítat žádné obrázky">
+<!ENTITY loadNoImagesRadio.accesskey    "N">
+<!ENTITY viewPermissions.label          "Spravovat oprávnění">
+<!ENTITY viewPermissions.accesskey      "S">
+<!ENTITY animLoopingTitle.label         "Animované obrázky by se měly opakovat">
+<!ENTITY animLoopAsSpecified.label      "Tolikrát, kolikrát obrázek specifikuje">
+<!ENTITY animLoopAsSpecified.accesskey  "T">
+<!ENTITY animLoopOnce.label             "Jednou">
+<!ENTITY animLoopOnce.accesskey         "J">
+<!ENTITY animLoopNever.label            "Nikdy">
+<!ENTITY animLoopNever.accesskey        "k">

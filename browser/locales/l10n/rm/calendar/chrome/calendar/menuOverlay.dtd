@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Nov eveniment…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "Nova incumbensa…">
+<!ENTITY event.new.task.accesskey               "m">
+
+<!ENTITY calendar.import.label                  "Importar…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Exportar…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Publitgar…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "Stizzar il chalender tschernì…">
+<!ENTITY calendar.deletecalendar.accesskey      "S">
+<!ENTITY calendar.unsubscribecalendar.label     "Deabunar il chalender tschernì…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "D">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Allontanar il chalender tschernì…">
+<!ENTITY calendar.removecalendar.accesskey      "A">
+
+
+<!ENTITY calendar.menu.customize.label          "Persumalisar…">
+<!ENTITY calendar.menu.customize.accesskey      "P">
+
+<!ENTITY showUnifinderCmd.label                 "Chattar eveniments">
+<!ENTITY showUnifinderCmd.accesskey             "C">
+<!ENTITY showUnifinderCmd.tooltip               "Mussar/zuppentar la lastra per chattar eveniments">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Mussar incumbensas en il chalender">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "p">
+
+<!ENTITY goTodayCmd.label                       "Oz">
+<!ENTITY goTodayCmd.accesskey                   "O">
+
+<!ENTITY showCurrentView.label                  "Vista actuala">
+<!ENTITY showCurrentView.accesskey              "a">
+
+<!ENTITY calendar.properties.label              "Preferenzas dal chalender…">
+<!ENTITY calendar.properties.accesskey          "c">

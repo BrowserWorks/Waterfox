@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Smiley Menu items -->
+
+<!ENTITY insertSmiley.label "Samhla-gnùis">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "Fiamh-ghàire">
+<!ENTITY smiley1Cmd.accesskey "F">
+<!ENTITY smiley1Cmd.tooltip "Cuir samhla-gnùis ann">
+<!ENTITY smiley2Cmd.label "Drèin">
+<!ENTITY smiley2Cmd.accesskey "D">
+<!ENTITY smiley2Cmd.tooltip "Cuir ann aghaigh air a bheil drèin">
+<!ENTITY smiley3Cmd.label "Sùil bheag">
+<!ENTITY smiley3Cmd.accesskey "S">
+<!ENTITY smiley3Cmd.tooltip "Cuir ann aghaidh a tha a' dèanamh na sùla bheag">
+<!ENTITY smiley4Cmd.label "Teanga a-mach">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "Cuir ann aghaidh leis an teanga a-mach">
+<!ENTITY smiley5Cmd.label "Gàire">
+<!ENTITY smiley5Cmd.accesskey "G">
+<!ENTITY smiley5Cmd.tooltip "Cuir ann aghaidh a tha a' dèanamh gàire">
+<!ENTITY smiley6Cmd.label "Nàire">
+<!ENTITY smiley6Cmd.accesskey "e">
+<!ENTITY smiley6Cmd.tooltip "Cuir ann aghaidh nàire">
+<!ENTITY smiley7Cmd.label "Dà bharail">
+<!ENTITY smiley7Cmd.accesskey "D">
+<!ENTITY smiley7Cmd.tooltip "Cuir ann aghaidh ann an dà bharail">
+<!ENTITY smiley8Cmd.label "Iongnadh">
+<!ENTITY smiley8Cmd.accesskey "I">
+<!ENTITY smiley8Cmd.tooltip "Cuir ann aghaidh air a bheil iongnadh">
+<!ENTITY smiley9Cmd.label "Pòg">
+<!ENTITY smiley9Cmd.accesskey "P">
+<!ENTITY smiley9Cmd.tooltip "Cuir ann aghaidh pòige">
+<!ENTITY smiley10Cmd.label "Èigh">
+<!ENTITY smiley10Cmd.accesskey "i">
+<!ENTITY smiley10Cmd.tooltip "Cuir ann aghaidh a tha ag èigheach">
+<!ENTITY smiley11Cmd.label "Sgoinneil">
+<!ENTITY smiley11Cmd.accesskey "S">
+<!ENTITY smiley11Cmd.tooltip "Cuir ann aghaidh sgoinneil">
+<!ENTITY smiley12Cmd.label "Beul-airgid">
+<!ENTITY smiley12Cmd.accesskey "B">
+<!ENTITY smiley12Cmd.tooltip "Cuir ann aghaidh le beul-airgid">
+<!ENTITY smiley13Cmd.label "Cas sa bheul">
+<!ENTITY smiley13Cmd.accesskey "C">
+<!ENTITY smiley13Cmd.tooltip "Cuir ann aghaidh le cas sa bheul">
+<!ENTITY smiley14Cmd.label "Neo-chiontach">
+<!ENTITY smiley14Cmd.accesskey "i">
+<!ENTITY smiley14Cmd.tooltip "Cuir ann aghaidh neo-chiontach">
+<!ENTITY smiley15Cmd.label "Gul">
+<!ENTITY smiley15Cmd.accesskey "G">
+<!ENTITY smiley15Cmd.tooltip "Cuir ann aghaidh a tha a' gul">
+<!ENTITY smiley16Cmd.label "Bilean dùinte">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "Cuir ann aghaidh air a bheil bilean dùinte">
+<!ENTITY SmileButton.tooltip "Cuir samhla-gnùis ann">
+

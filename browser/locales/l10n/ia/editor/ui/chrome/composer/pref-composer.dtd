@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Menu de paginas recente">
+<!ENTITY  documentsInMenu.label         "Numero maxime de paginas listate:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+<!ENTITY  savingFiles.title             "Salvante o publicante paginas">
+<!ENTITY  preserveExisting.label        "Conservar le structura HTML existente">
+<!ENTITY  preserveExisting.accesskey    "C">
+<!ENTITY  preserveExisting.tooltip      "Preserva interruptiones de linea e formattation original del pagina">
+<!ENTITY  saveAssociatedFiles.label     "Salvar imagines e altere files associate insimul al pagina">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "Sempre monstrar le dialogo Publicar quando se publica paginas">
+<!ENTITY  showPublishDialog.accesskey   "S">
+<!ENTITY  composerEditing.label         "Redaction">
+<!ENTITY  maintainStructure.label       "Mantener le disposition del tabella quando se insere o dele cellulas">
+<!ENTITY  maintainStructure.tooltip     "Conserva le forma rectangular del tabella per adder cellulas automaticamente post inserer o deler cellulas">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "Usar stilos CSS in loco de elementos e attributos HTML">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "Pulsar le clave invio crea sempre un nove paragrapho">
+<!ENTITY  crInPCreatesNewP.accesskey    "i">

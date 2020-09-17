@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Kuvat">
+
+<!ENTITY imageBlocking.label            "Kuvien hyväksymiskäytäntö">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "Voit määrittää, miten &brandShortName; menettelee kuvien suhteen.">
+
+<!ENTITY loadAllImagesRadio.label       "Lataa kaikki kuvat">
+<!ENTITY loadAllImagesRadio.accesskey   "L">
+<!ENTITY loadOrgImagesRadio.label       "Lataa vain kuvat, jotka ovat peräisin samalta palvelimelta kuin sivu itse">
+<!ENTITY loadOrgImagesRadio.accesskey   "v">
+<!ENTITY loadNoImagesRadio.label        "Älä lataa kuvia">
+<!ENTITY loadNoImagesRadio.accesskey    "Ä">
+<!ENTITY viewPermissions.label          "Muokkaa oikeuksia">
+<!ENTITY viewPermissions.accesskey      "M">
+<!ENTITY animLoopingTitle.label         "Toista animoidut kuvat">
+<!ENTITY animLoopAsSpecified.label      "Niin monta kertaa kuin kuva määrittää">
+<!ENTITY animLoopAsSpecified.accesskey  "N">
+<!ENTITY animLoopOnce.label             "Yhden kerran">
+<!ENTITY animLoopOnce.accesskey         "Y">
+<!ENTITY animLoopNever.label            "Älä toista">
+<!ENTITY animLoopNever.accesskey        "t">

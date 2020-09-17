@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Gestion des données personnelles">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "Tous les types de données">
+<!ENTITY select.cookies.label "Uniquement les cookies">
+<!ENTITY select.permissions.label "Uniquement les permissions">
+<!ENTITY select.preferences.label "Uniquement les préférences">
+<!ENTITY select.passwords.label "Uniquement les mots de passe">
+<!ENTITY select.storage.label "Uniquement le stockage">
+
+<!ENTITY domain.search.placeholder "Rechercher un domaine">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Domaine">
+
+<!ENTITY domain.ctx.forgetdomain.label "Supprimer tout ce qui concerne ce domaine">
+<!ENTITY domain.ctx.forgetdomain.accesskey "S">
+<!ENTITY domain.ctx.forgetglobal.label "Supprimer toutes les données">
+<!ENTITY domain.ctx.forgetglobal.accesskey "d">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Cookies">
+<!ENTITY tab.permissions.label "Permissions">
+<!ENTITY tab.preferences.label "Préférences">
+<!ENTITY tab.passwords.label "Mots de passe">
+<!ENTITY tab.storage.label "Stockage">
+<!ENTITY tab.formdata.label "Données de formulaire">
+<!ENTITY tab.forget.label "Supprimer">
+
+<!-- cookies -->
+<!ENTITY cookies.description "Ce domaine conserve les cookies suivants sur votre ordinateur :">
+
+<!ENTITY cookies.tree.host.label "Site web">
+<!ENTITY cookies.tree.name.label "Nom du cookie">
+<!ENTITY cookies.tree.expires.label "Expiration">
+
+<!ENTITY cookies.infobox.label "Informations sur le cookie sélectionné">
+
+<!ENTITY cookies.info.name.label "Nom :">
+<!ENTITY cookies.info.value.label "Contenu :">
+<!ENTITY cookies.info.host.label "Hôte :">
+<!ENTITY cookies.info.domain.label "Domaine :">
+<!ENTITY cookies.info.path.label "Chemin :">
+<!ENTITY cookies.info.sendtype.label "Envoyé pour :">
+<!ENTITY cookies.info.expires.label "Expiration :">
+
+<!ENTITY cookies.ctx.remove.label "Supprimer">
+<!ENTITY cookies.ctx.remove.accesskey "S">
+<!ENTITY cookies.ctx.selectAll.label "Tout sélectionner">
+<!ENTITY cookies.ctx.selectAll.accesskey "T">
+
+<!ENTITY cookies.button.remove.label "Supprimer">
+<!ENTITY cookies.button.remove.accesskey "S">
+
+<!ENTITY cookies.blockOnRemove.label "À la suppression, bloquer les sites web listés pour les empêcher de définir des cookies à l’avenir">
+<!ENTITY cookies.blockOnRemove.accesskey "b">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "Par défaut">
+<!ENTITY perm.AskAlways "Toujours demander">
+<!ENTITY perm.NeverSave "Ne jamais enregistrer">
+<!ENTITY perm.Allow "Autoriser">
+<!ENTITY perm.AllowSameDomain "Autoriser pour le même domaine">
+<!ENTITY perm.AllowSession "Autoriser pour la session">
+<!ENTITY perm.Block "Bloquer">
+
+<!ENTITY perm.host.placeholder "Saisissez un nom d’hôte">
+<!ENTITY perm.button.add.label "Ajouter">
+<!ENTITY perm.button.add.accesskey "A">
+
+<!-- preferences -->
+<!ENTITY prefs.description "Les préférences de contenu sont une manière pour &brandShortName; d’enregistrer ses paramètres tels que le niveau de zoom pour un site web en particulier.">
+
+<!ENTITY prefs.tree.host.label "Site web">
+<!ENTITY prefs.tree.name.label "Nom de la préférence">
+<!ENTITY prefs.tree.value.label "Valeur">
+
+<!ENTITY prefs.ctx.remove.label "Supprimer">
+<!ENTITY prefs.ctx.remove.accesskey "S">
+<!ENTITY prefs.ctx.selectAll.label "Tout sélectionner">
+<!ENTITY prefs.ctx.selectAll.accesskey "T">
+
+<!ENTITY prefs.button.remove.label "Supprimer">
+<!ENTITY prefs.button.remove.accesskey "S">
+
+<!-- passwords -->
+<!ENTITY pwd.description "Les mots de passe suivants sont enregistrés pour ce domaine :">
+
+<!ENTITY pwd.tree.host.label "Site web">
+<!ENTITY pwd.tree.username.label "Utilisateur">
+<!ENTITY pwd.tree.password.label "Mot de passe">
+
+<!ENTITY pwd.ctx.remove.label "Supprimer">
+<!ENTITY pwd.ctx.remove.accesskey "S">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Copier le mot de passe">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "C">
+<!ENTITY pwd.ctx.selectAll.label "Tout sélectionner">
+<!ENTITY pwd.ctx.selectAll.accesskey "T">
+
+<!ENTITY pwd.button.remove.label "Supprimer">
+<!ENTITY pwd.button.remove.accesskey "S">
+
+<!-- storage -->
+<!ENTITY storage.description "Ce domaine utilise les méthodes de stockage web suivantes sur votre ordinateur :">
+
+<!ENTITY storage.tree.host.label "Site web">
+<!ENTITY storage.tree.type.label "Type">
+<!ENTITY storage.tree.size.label "Taille">
+
+<!ENTITY storage.ctx.remove.label "Supprimer">
+<!ENTITY storage.ctx.remove.accesskey "S">
+<!ENTITY storage.ctx.selectAll.label "Tout sélectionner">
+<!ENTITY storage.ctx.selectAll.accesskey "T">
+
+<!ENTITY storage.button.remove.label "Supprimer">
+<!ENTITY storage.button.remove.accesskey "S">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "Rechercher des données de formulaires">
+
+<!ENTITY fdata.tree.fieldname.label "Nom de champ">
+<!ENTITY fdata.tree.value.label "Valeur saisie">
+<!ENTITY fdata.tree.usecount.label "Nombre d’utilisations">
+<!ENTITY fdata.tree.firstused.label "Première utilisation">
+<!ENTITY fdata.tree.lastused.label "Dernière utilisation">
+
+<!ENTITY fdata.ctx.remove.label "Supprimer">
+<!ENTITY fdata.ctx.remove.accesskey "S">
+<!ENTITY fdata.ctx.selectAll.label "Tout sélectionner">
+<!ENTITY fdata.ctx.selectAll.accesskey "T">
+
+<!ENTITY fdata.button.remove.label "Supprimer">
+<!ENTITY fdata.button.remove.accesskey "S">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Cookies">
+<!ENTITY forget.cookies.accesskey "C">
+<!ENTITY forget.permissions.label "Permissions">
+<!ENTITY forget.permissions.accesskey "P">
+<!ENTITY forget.preferences.label "Préférences de contenu">
+<!ENTITY forget.preferences.accesskey "o">
+<!ENTITY forget.passwords.label "Mots de passe">
+<!ENTITY forget.passwords.accesskey "a">
+<!ENTITY forget.storage.label "Stockage">
+<!ENTITY forget.storage.accesskey "S">
+<!ENTITY forget.formdata.label "Données de formulaire">
+<!ENTITY forget.formdata.accesskey "D">
+
+<!ENTITY forget.button.label "Supprimer ces données">
+<!ENTITY forget.button.accesskey "S">

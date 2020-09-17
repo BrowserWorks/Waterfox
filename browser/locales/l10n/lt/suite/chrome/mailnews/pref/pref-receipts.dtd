@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+
+<!ENTITY pref.receipts.title          "Laiškų pristatymo pažymos">
+<!ENTITY prefReceipts.caption         "Laiškų pristatymo pažymos">
+<!ENTITY requestReceipt.label         "Kai išsiunčiamas laiškas, paprašyti pranešti apie jo pristatymą">
+<!ENTITY requestReceipt.accesskey     "K">
+<!ENTITY receiptArrive.label          "Kai gaunamas pranešimas apie išsiųstą laišką:">
+<!ENTITY leaveIt.label                "palikti jį aplanke „Gauti laiškai“">
+<!ENTITY leaveIt.accesskey            "l">
+<!ENTITY moveToSent.label             "įdėti į išsiųstų laiškų aplanką">
+<!ENTITY moveToSent.accesskey         "d">
+<!ENTITY requestMDN.label             "Kai siuntėjas prašo pranešti apie laiško gavimą:">
+<!ENTITY returnSome.label             "išsiųsti pranešimus šiais atvejais (parinkite nuostatas):">
+<!ENTITY returnSome.accesskey         "k">
+<!ENTITY never.label                  "pranešimo nesiųsti">
+<!ENTITY never.accesskey              "n">
+<!ENTITY notInToCc.label              "jei nesate įrašytas į laiško „Kam“ arba „Kopija“ sąrašus:">
+<!ENTITY notInToCc.accesskey          "m">
+<!ENTITY outsideDomain.label          "jei siuntėjas yra iš kitos interneto srities:">
+<!ENTITY outsideDomain.accesskey      "t">
+<!ENTITY otherCases.label             "kitais atvejais:">
+<!ENTITY otherCases.accesskey         "k">
+<!ENTITY askMe.label                  "Paklausti">
+<!ENTITY alwaysSend.label             "Išsiųsti">
+<!ENTITY neverSend.label              "Neišsiųsti">

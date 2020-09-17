@@ -1,0 +1,290 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "მენიუს გახსნა">
+<!ENTITY navbarOverflow.label                "დამატებითი ხელსაწყოები...">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "ჩანართის მიმაგრება">
+<!ENTITY  unpinTab.label                     "მიმაგრების მოხსნა">
+
+<!ENTITY  listAllTabs.label      "ყველა ჩანართის სია">
+
+<!ENTITY tabCmd.label "ახალი ჩანართი">
+<!ENTITY openFileCmd.label "ფაილის გახსნა...">
+<!ENTITY printCmd.label "ამობეჭდვა…">
+
+<!ENTITY taskManagerCmd.label "ამოცანათა მმართველი">
+
+<!ENTITY menubarCmd.label "მენიუს ზოლი">
+<!ENTITY menubarCmd.accesskey "ზ">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "გადაადგილება">
+<!ENTITY personalbarCmd.label "სანიშნების ხელსაწყოთა ზოლი">
+<!ENTITY personalbarCmd.accesskey "ს">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "სანიშნები">
+<!ENTITY bookmarksToolbarItem.label "სანიშნების ზოლის ხელსაწყოები">
+
+<!ENTITY fullScreenCmd.label "სრული ეკრანი">
+
+
+<!ENTITY pictureInPictureHideToggle.label "ეკრანი-ეკრანში გადამრთველის დამალვა">
+<!ENTITY pictureInPictureHideToggle.accesskey "ე">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; – პარამეტრები">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "სხვა მოწყობილობის დაკავშირება…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "&brandProductName; – შესვლა">
+<!ENTITY fxa.menu.turnOnSync.label "ჩართეთ &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "&brandProductName; – მომსახურებები">
+<!ENTITY fxa.menu.account.label "ანგარიში">
+<!ENTITY fxa.menu.settings.label "პარამეტრები">
+<!ENTITY fxa.menu.accountSettings.label "ანგარიშის პარამეტრები">
+<!ENTITY fxa.menu.manageAccount2.label "ანგარიშის მართვა">
+<!ENTITY fxa.menu.signOut.label "გამოსვლა…">
+<!ENTITY fxa.menu.setupSync.label "გამართეთ &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "გაგზავნეთ ჩანართი მყისიერად ნებისმიერ მოწყობილობაზე, რომელზეც შესული ხართ.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "სრულ ეკრანზეა">
+<!ENTITY fullscreenWarning.generic.label "დოკუმენტი სრულ ეკრანზეა">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "სრული ეკრანიდან გამოსვლა (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "სრული ეკრანიდან გამოსვლა (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "მართავს თქვენს მაჩვენებელს. მართვის დასაბრუნებლად დააჭირეთ Esc ღილაკს.">
+<!ENTITY pointerlockWarning.generic.label "ეს დოკუმენტი მართავს თქვენს მაჩვენებელს. მართვის დასაბრუნებლად დააჭირეთ Esc ღილაკს.">
+
+<!ENTITY showAllBookmarks2.label "ყველა სანიშნის ჩვენება">
+<!ENTITY recentBookmarks.label "ბოლოს ჩანიშნული">
+<!ENTITY bookmarksToolbarChevron.tooltip "სხვა სანიშნების გამოჩენაც">
+
+<!ENTITY printButton.label            "ამობეჭდვა">
+<!ENTITY printButton.tooltip          "გვერდის ამობეჭდვა">
+
+<!ENTITY searchItem.title             "ძიება">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "საწყისი გვერდი">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; საწყისი გვერდი">
+
+<!ENTITY bookmarksButton.label          "სანიშნები">
+
+<!ENTITY bookmarksSubview.label             "სანიშნები">
+<!ENTITY bookmarksMenuButton2.label         "სანიშნების მენიუ">
+<!ENTITY bookmarksMenuButton.other.label    "სხვა სანიშნები">
+<!ENTITY bookmarksMenuButton.mobile.label   "მობილურის სანიშნები">
+<!ENTITY viewBookmarksSidebar2.label        "სანიშნების გვერდითი ზოლის ჩვენება">
+<!ENTITY hideBookmarksSidebar.label         "სანიშნების გვერდითი ზოლის დამალვა">
+<!ENTITY viewBookmarksToolbar.label         "სანიშნების ხელსაწყოთა ზოლის ჩვენება">
+<!ENTITY hideBookmarksToolbar.label         "სანიშნების ხელსაწყოთა ზოლის დამალვა">
+<!ENTITY searchBookmarks.label              "სანიშნების ძიება">
+<!ENTITY bookmarkingTools.label             "სანიშნების ხელსაწყოები">
+<!ENTITY addBookmarksMenu.label             "სანიშნების მენიუს დამატება ხელსაწყოთა ზოლზე">
+<!ENTITY removeBookmarksMenu.label          "სანიშნების მენიუს მოცილება ხელსაწყოთა ზოლიდან">
+
+<!ENTITY historyButton.label            "ისტორია">
+
+<!ENTITY downloads.label              "ჩამოტვირთვები">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "ჩამოტვირთვები">
+<!ENTITY addons.label                 "დამატებები">
+
+<!ENTITY webDeveloperMenu.label       "ვებშემუშავება">
+
+<!ENTITY newNavigatorCmd.label        "ახალი ფანჯარა">
+<!ENTITY newPrivateWindow.label     "ახალი პირადი ფანჯარა">
+
+<!ENTITY editMenu.label         "ჩასწორება">
+<!ENTITY preferencesCmd2.label       "პარამეტრები">
+<!ENTITY preferencesCmdUnix.label       "პარამეტრები">
+<!ENTITY logins.label                           "ანგარიშები და პაროლები">
+
+<!ENTITY overflowCustomizeToolbar.label       "ხელსაწყოთა ზოლის მორგება…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "ზ">
+
+<!ENTITY historyMenu.label "ისტორია">
+<!ENTITY historyUndoMenu.label "ბოლოს დახურული ჩანართები">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "ბოლოს დახურული ფანჯრები">
+
+<!ENTITY appMenuHistory.showAll.label "სრული ისტორიის ჩვენება">
+<!ENTITY appMenuHistory.clearRecent.label "უახლესი ისტორიის გასუფთავება…">
+<!ENTITY appMenuHistory.restoreSession.label "წინა სეანსის აღდგენა">
+<!ENTITY appMenuHistory.viewSidebar.label "ისტორიის გვერდითი ზოლის ჩვენება">
+<!ENTITY appMenuHistory.hideSidebar.label "ისტორიის გვერდითი ზოლის დამალვა">
+<!ENTITY appMenuHistory.recentHistory.label "უახლესი ისტორია">
+<!ENTITY appMenuHelp.label "დახმარება">
+
+<!ENTITY appMenuRemoteTabs.label "დასინქრონებული ჩანართები">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "გახსნილი ჩანართები არაა">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "სხვების ჩვენებაც">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "სხვა ჩანართების ჩვენებაც, ამ მოწყობილობიდან">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "ყველას ჩვენება">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "ყველა ჩანართის ჩვენება ამ მოწყობილობიდან">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "ჩართეთ ჩანართების სინქრონიზაცია თქვენი სხვა მოწყობილობებიდან ჩანართების სიის სანახავად.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "გსურთ სხვა მოწყობილობების ჩანართების აქ ნახვა?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "სინქრონიზაციის პარამეტრები">
+<!ENTITY appMenuRemoteTabs.welcome.label "იხილეთ ჩანართების სია თქვენი სხვა მოწყობილობებიდან.">
+<!ENTITY appMenuRemoteTabs.unverified.label "თქვენი ანგარიში საჭიროებს დამოწმებას.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "&syncBrand.shortName.label; — შესვლა…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "ჩართეთ &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "მოწყობილობების მართვა…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "დასინქრონებული ჩანართების გვერდითი ზოლის ნახვა">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "დასინქრონებული ჩანართების გვერდითი ზოლის დამალვა">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "სხვა მოწყობილობის დაკავშირება">
+
+<!ENTITY appMenuRecentHighlights.label "ბოლო მნიშვნელოვანი">
+
+<!ENTITY customizeMenu.addToToolbar.label "ხელსაწყოთა ზოლში დამატება">
+<!ENTITY customizeMenu.addToToolbar.accesskey "დ">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "ჩამოსაშლელ მენიუში დამატება">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "ჩ">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "ჩამოსაშლელი მენიუდან მოცილება">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "ც">
+<!ENTITY customizeMenu.removeFromToolbar.label "ხელსაწყოთა ზოლიდან მოცილება">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "ა">
+<!ENTITY customizeMenu.addMoreItems.label "სხვა ელემენტების დამატება…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "დ">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "დამატებით">
+
+<!ENTITY contentSearchSubmit.tooltip  "მოძებნა">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "ძიება">
+<!ENTITY searchIcon.tooltip           "ძიება">
+
+<!ENTITY openLinkCmdInTab.accesskey   "ჩ">
+
+<!ENTITY pageAction.copyLink.label    "ბმულის ასლი">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "გვერდის შენახვა Pocket-ში">
+<!ENTITY pocketMenuitem.label         "Pocket-ის სიის ნახვა">
+
+<!ENTITY emailPageCmd.label           "ბმულის გაგზავნა ელფოსტით…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "ზომის ცვლილება">
+
+<!ENTITY sidebarCloseButton.tooltip     "გვერდითი ზოლის დახურვა">
+
+<!ENTITY quitApplicationCmdWin2.label       "გასვლა">
+<!ENTITY quitApplicationCmdWin2.accesskey   "ლ">
+<!ENTITY quitApplicationCmdWin2.tooltip     "დატოვეთ &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "გამოსვლა">
+<!ENTITY quitApplicationCmd.accesskey   "გ">
+<!ENTITY quitApplicationCmdMac2.label   "დაიხუროს &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "დ">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "ამომხტომი ფანჯრების აკრძალვის პარამეტრების შეცვლა…">
+<!ENTITY editPopupSettings.label "ამომხტომი ფანჯრების აკრძალვის პარამეტრების ჩასწორება…">
+<!ENTITY editPopupSettings.accesskey "ჩ">
+<!ENTITY dontShowMessage.accesskey "დ">
+
+<!ENTITY findOnCmd.label     "პოვნა გვერდზე…">
+
+<!ENTITY spellAddDictionaries.label "ლექსიკონების დამატება…">
+<!ENTITY spellAddDictionaries.accesskey "ლ">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "ბრაუზერის ჩანართები">
+
+<!ENTITY syncBrand.shortName.label    "სინქრონიზაცია">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "თვითდამალვა">
+
+
+<!ENTITY uiTour.infoPanel.close "დახურვა">
+
+<!ENTITY panicButton.thankyou.msg1                "ბოლოს მონახულებული გვერდების ისტორია გასუფთავებულია.">
+<!ENTITY panicButton.thankyou.msg2                "მოინახულეთ გვერდები უსაფრთხოდ!">
+<!ENTITY panicButton.thankyou.buttonlabel         "გმადლობთ!">
+
+<!ENTITY updateAvailable.panelUI.label "&brandShorterName; განახლების ჩამოტვირთვა">
+<!ENTITY updateManual.panelUI.label "ჩამოიტვირთოს ახალი ვერსიის &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "მეტად ვეღარ განაახლებთ">
+<!ENTITY updateRestart.panelUI.label2 "გასაახლებლად, გაუშვით ხელახლა &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "მოწყობილობების დასინქრონება…">
+
+<!ENTITY pageAction.shareUrl.label "გაზიარება">
+<!ENTITY pageAction.shareMore.label "სხვა…">
+
+<!ENTITY libraryButton.tooltip "იხილეთ ისტორია, შენახული სანიშნები და ა. შ.">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "დამხმარე საშუალებები ჩართულია">

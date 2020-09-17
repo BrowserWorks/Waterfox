@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+  - License, v. 2.0. If a copy of the MPL was not distributed with this
+  - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "ਨਵਾਂ ਫੋਲਡਰ">
+<!ENTITY name.label                 "ਨਾਂ:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "ਇਸ ਦਾ ਇੱਕ ਅਧੀਨ-ਫੋਲਡਰ ਬਣਾਓ:">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "ਇਹ ਸਰਵਰ ਦੋ ਖਾਸ ਕਿਸਮ ਦੇ ਫੋਲਡਰਾਂ ਤੇ ਪਾਬੰਦੀ ਲਗਾਉਦਾ ਹੈ।">
+<!ENTITY folderRestriction2.label   "ਆਪਣੇ ਨਵੇਂ ਫੋਲਡਰ ਨੂੰ ਇਹ ਰੱਖਣ ਦਿਓ:">
+<!ENTITY foldersOnly.label          "ਸਿਰਫ ਫੋਲਡਰ">
+<!ENTITY messagesOnly.label         "ਸਿਰਫ ਸੁਨੇਹੇ">
+<!ENTITY accept.label               "Create Folder">
+<!ENTITY accept.accesskey           "r">

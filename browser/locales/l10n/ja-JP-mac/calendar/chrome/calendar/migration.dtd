@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: データの読み込み">
+<!ENTITY migration.welcome "データの読み込みの開始">
+<!ENTITY migration.importing "読み込み">
+<!ENTITY migration.list.description "&brandShortName; は他のアプリケーションからデータを読み込みできます。以下のアプリケーションのデータが見つかりました。どのデータを読み込むか選択してください。">
+<!ENTITY migration.progress.description "選択したデータの読み込み">

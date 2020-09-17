@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title "Праца сеткі HTTP">
+<!ENTITY prefDirect.label "Наладжванні прамога злучэння">
+<!ENTITY prefProxy.label "Наладжванні злучэння праз пасярэднік">
+<!ENTITY prefEnableHTTP10.label "Карыстацца HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey "К">
+<!ENTITY prefEnableHTTP10Proxy.accesskey "а">
+<!ENTITY prefEnableHTTP11.label "Карыстацца HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey "H">
+<!ENTITY prefEnableHTTP11Proxy.accesskey "T">
+<!ENTITY prefEnablePipelining.label "Дазволіць тунэляванне">
+<!ENTITY prefEnablePipelining.accesskey "Т">
+<!ENTITY prefEnablePipeliningProxy.accesskey "у">
+<!ENTITY prefPara "Злучэнні HTTP могуць быць наладжаны з дапамогай гэтых параметраў дзеля павялічэння прадукцыйнасці ці сумяшчальнасці. Напрыклад, асобныя паслугачы-пасярэднікі, патрабуюць HTTP/1.0 (прагледзьце заўвагі аб выданні дзеля падрабязнасцей). ">
+<!ENTITY prefPipeWarning "ПАПЯРЭДЖАННЕ: тунэляванне – гэта спробная асаблівасць, распрацаваная для паляпшэння прадукцыйнасці загрузкі старонак, але, на жаль, не вельмі добра падтрымліваецца асобнымі паслугачамі сеціва і пасярэднікамі.">
+<!ENTITY prefUseragent.label "Радок дзеяча карыстальніка">
+<!ENTITY prefFirefoxCompat.label "Паведаміць пра сумяшчальнасць Firefox">
+<!ENTITY prefFirefoxCompat.accesskey "F">

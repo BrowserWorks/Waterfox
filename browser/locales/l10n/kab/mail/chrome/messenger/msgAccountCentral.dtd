@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Imayl">
+<!ENTITY readMsgsLink.label           "Ɣer iznan">
+<!ENTITY composeMsgLink.label         "Aru izen amaynut">
+
+<!ENTITY newsSectionHdr.label         "Igrawen n isalen">
+<!ENTITY subscribeNewsLink.label      "Sefrek amulteɣ n ugraw n isalen">
+
+<!ENTITY feedsSectionHdr.label        "Isuddam">
+<!ENTITY subscribeFeeds.label         "Sefrek amulteɣ">
+
+<!ENTITY chat.label                   "Adiwenni usrid">
+<!ENTITY movemail.label               "Senkez imayl">
+
+<!ENTITY accountsSectionHdr.label     "Imiḍanen">
+<!ENTITY subscribeImapFolders.label   "Sefrek amulteɣ n ukaram">
+<!ENTITY settingsLink.label           "Rnu iɣwwaṛen i umiḍan-agi">
+<!ENTITY setupNewAcct.label           "Sbadu amiḍan">
+
+<!ENTITY advFeaturesSectionHdr.label  "Timhalin leqqayen">
+<!ENTITY searchMsgsLink.label         "Nadi iznan">
+<!ENTITY filtersLink.label            "Sefrek imzizdigen n yizen">
+<!ENTITY junkSettings.label           "Iɣewwaṛen n yizen spam">
+<!ENTITY offlineLink.label            "Iɛewwaṛen war tuqqna">

@@ -1,0 +1,226 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Compose: (no subject)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "ફાઈલ"> 
+<!ENTITY fileMenu.accesskey "f">
+<!ENTITY newMenu.label "નવો">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "સંદેશો">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "M">
+<!ENTITY attachMenu.label "જોડો">
+<!ENTITY attachMenu.accesskey "t">
+<!ENTITY attachFileCmd.label "ફાઈલો...">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "વેબ પાનું...">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "ખાનગી કાર્ડ (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY closeCmd.label "બંધ કરો">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "c">
+<!ENTITY saveCmd.label "સંગ્રહો">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "s">
+<!ENTITY saveAsCmd.label "આ રીતે સંગ્રહો">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsFileCmd.label "ફાઈલ...">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "ડ્રાફ્ટ">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "ટેમ્પ્લેટ">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY sendNowCmd.label "હમણાં મોકલો">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "પછી મોકલો">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "L">
+<!ENTITY printSetupCmd.label "પાના સુયોજન...">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printCmd.label "છાપો...">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "P"> 
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "ફેરફાર કરો"> 
+<!ENTITY editMenu.accesskey "e">
+<!ENTITY undoCmd.label "છેલ્લી ક્રિયા રદ કરો">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "u"> 
+<!ENTITY redoCmd.label "ફરીથી કરો">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "r"> 
+<!ENTITY cutCmd.key "X"> 
+<!ENTITY copyCmd.key "C"> 
+<!ENTITY pasteCmd.key "V">
+<!ENTITY editRewrapCmd.accesskey "w">
+<!ENTITY deleteCmd.label "કાઢી નાંખો">
+<!ENTITY deleteCmd.accesskey "d">
+<!ENTITY editRewrapCmd.label "ફરી લપેટો">
+<!ENTITY selectAllCmd.accesskey "a"> 
+<!ENTITY findAgainCmd.label "ફરીથી શોધો">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "પહેલાનું શોધો">
+<!ENTITY findPrevCmd.accesskey "v"> 
+
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "જુઓ"> 
+<!ENTITY viewMenu.accesskey "v">
+<!ENTITY viewToolbarsMenuNew.label "સાધનપટ્ટીઓ"> 
+<!ENTITY viewToolbarsMenuNew.accesskey "T"> 
+<!ENTITY showTaskbarCmd.label "સ્થિતિદર્શક પટ્ટી">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "કસ્ટમાઈઝ...">
+<!ENTITY customizeToolbar.accesskey "C">
+
+<!ENTITY addressSidebar.label "સંપર્કો બાજુની પટ્ટી"> 
+<!ENTITY addressSidebar.accesskey "o"> 
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "બંધારણ">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "વિકલ્પો">
+<!ENTITY optionsMenu.accesskey "p">
+<!ENTITY enableInlineSpellChecker.label "તમે લખો એ પ્રમાણે જોડણી બનાવો">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY quoteCmd.label "અવતરણ સંદેશો">
+<!ENTITY quoteCmd.accesskey "Q">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "ખાનગી કાર્ડ (vCard) જોડો">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "રસીદ મળી">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY autoFormatCmd.label "આપોઆપ-શોધો">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "માત્ર સાદું લખાણ">
+<!ENTITY plainTextFormatCmd.accesskey "p">
+<!ENTITY htmlFormatCmd.label "માત્ર ધનવાન લખાણ (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "r">
+<!ENTITY bothFormatCmd.label "સાદું અને ધનવાન (HTML) લખાણ">
+<!ENTITY bothFormatCmd.accesskey "l">
+<!ENTITY priorityMenu.label "પ્રાધાન્ય">
+<!ENTITY priorityMenu.accesskey "p">
+<!ENTITY priorityButton.label "પ્રાધાન્ય:">
+<!ENTITY lowestPriorityCmd.label "નિમ્ન">
+<!ENTITY lowestPriorityCmd.accesskey "l">
+<!ENTITY lowPriorityCmd.label "નીચું">
+<!ENTITY lowPriorityCmd.accesskey "o">
+<!ENTITY normalPriorityCmd.label "સામાન્ય">
+<!ENTITY normalPriorityCmd.accesskey "n">
+<!ENTITY highPriorityCmd.label "ઉચું">
+<!ENTITY highPriorityCmd.accesskey "i">
+<!ENTITY highestPriorityCmd.label "ઉચ્ચ">
+<!ENTITY highestPriorityCmd.accesskey "H">
+<!ENTITY fileCarbonCopyCmd.label "ને નકલ મોકલો">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "અહીં ફાઈલ કરો">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "સાધનો">
+<!ENTITY tasksMenu.accesskey "T">
+<!ENTITY messengerCmd.label "મેલ &amp; સમાચાર જૂથો">
+<!ENTITY messengerCmd.accesskey "m">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "સરનામા પુસ્તિકા">
+<!ENTITY addressBookCmd.accesskey "a">
+<!ENTITY preferencesCmdUnix.label       "પસંદગીઓ">
+<!ENTITY preferencesCmdUnix.accesskey   "n"> 
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "ન્યુનતમ કરો">
+<!ENTITY bringAllToFront.label "બધું અગ્ર ભાગમાં લાવો">
+<!ENTITY zoomWindow.label "નાનુમોટુ"> 
+<!ENTITY windowMenu.label "વિન્ડો"> 
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "મોકલો">
+<!ENTITY quoteButton.label "અવતરણ">
+<!ENTITY addressButton.label "સંપર્કો">
+<!ENTITY attachButton.label "જોડો">
+<!ENTITY spellingButton.label "જોડણી">
+<!ENTITY saveButton.label "સંગ્રહો">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "આ સંદેશાને હમણાં મોકલો"> 
+<!ENTITY sendlaterButton.tooltip "આ સંદેશાને પછી મોકલો"> 
+<!ENTITY quoteButton.tooltip "પહેલાના સંદેશાને અવતરિત કરો"> 
+<!ENTITY addressButton.tooltip "સરનામા પુસ્તિકામાંથી મેળવનાર પસંદ કરો"> 
+<!ENTITY saveButton.tooltip "આ સંદેશો સંગ્રહો"> 
+<!ENTITY cutButton.tooltip              "કાપો">
+<!ENTITY copyButton.tooltip             "નકલ કરો">
+<!ENTITY pasteButton.tooltip            "ચોંટાડો">
+
+<!-- Headers -->
+<!ENTITY fromAddr.accesskey "r"> 
+<!ENTITY subject.accesskey "S">
+
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+
+<!ENTITY SmileButton.tooltip "હસતું મોં દાખલ કરો">
+<!ENTITY smiley1Cmd.label "હસો">
+<!ENTITY smiley2Cmd.label "નિરાશ છો">
+<!ENTITY smiley3Cmd.label "આંખ મારો">
+<!ENTITY smiley4Cmd.label "ચાળા પાડો">
+<!ENTITY smiley5Cmd.label "મોટેથી હસો">
+<!ENTITY smiley6Cmd.label "શરમાવો">
+<!ENTITY smiley7Cmd.label "દુવિધામાં">
+<!ENTITY smiley8Cmd.label "આશ્ચર્યમાં">
+<!ENTITY smiley9Cmd.label "ચુંબન">
+<!ENTITY smiley10Cmd.label "મોટેથી રડો">
+<!ENTITY smiley11Cmd.label "નિશ્ચિંત">
+<!ENTITY smiley12Cmd.label "પૈસાકીય-દ્રષ્ટિ">
+<!ENTITY smiley13Cmd.label "ગાંડપણ">
+<!ENTITY smiley14Cmd.label "નાદાન">
+<!ENTITY smiley15Cmd.label "રડો">
+<!ENTITY smiley16Cmd.label "મોં સીવી દો">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "કોઈ સૂચનો મળ્યા નથી">
+<!ENTITY spellCheckIgnoreWord.label "શબ્દ અવગણો">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "શબ્દકોષમાં એડ-ઓન">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "છેલ્લી ક્રિયા રદ કરો">
+<!ENTITY undo.accesskey "U">
+<!ENTITY cut.label "કાપો">
+<!ENTITY cut.accesskey "t">
+<!ENTITY copy.label "નકલ કરો">
+<!ENTITY copy.accesskey "C">
+<!ENTITY paste.label "ચોંટાડો">
+<!ENTITY paste.accesskey "P">
+<!ENTITY pasteQuote.label "અવતરણ તરીકે ચોંટાડો">
+<!ENTITY pasteQuote.accesskey "Q">
+
+<!ENTITY openAttachment.label "ખોલો">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "કાઢી નાંખો">
+<!ENTITY delete.accesskey "D">
+<!ENTITY selectAll.label "બધું પસંદ કરો">
+<!ENTITY selectAll.accesskey "A">
+<!ENTITY attachFile.label "ફાઈલો જોડો...">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachPage.label "વેબ પાનું જોડો...">
+<!ENTITY attachPage.accesskey "W">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "સંપર્કો">
+

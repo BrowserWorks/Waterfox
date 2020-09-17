@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Khangela">
+
+<!ENTITY newPref.namePlaceholder       "Igama">
+
+<!ENTITY newPref.valueBoolean          "I-Boolean">
+<!ENTITY newPref.valueString           "Umtya">
+<!ENTITY newPref.valueInteger          "Inani elipheleleyo">
+
+<!ENTITY newPref.stringPlaceholder     "Faka umtya">
+<!ENTITY newPref.numberPlaceholder     "Faka inani">
+
+<!ENTITY newPref.toggleButton          "Isixhobo esitshintshwa ngokufanayo">
+<!ENTITY newPref.cancelButton          "Rhoxisa">
+
+<!ENTITY contextMenu.copyPrefName      "Kopa Igama">
+<!ENTITY contextMenu.copyPrefValue     "Kopa ixabiso">

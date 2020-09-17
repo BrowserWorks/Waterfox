@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Süzgeç Günlüğü">
+<!ENTITY viewLogInfo.text "Süzgeç günlüğü, hangi süzgeçlerin çalıştığını belgeleyen bir dosyadır. Aşağıdaki onay kutusunu kullanarak günlük tutulmasını etkinleştirebilirsiniz.">
+<!ENTITY clearLog.label "Günlüğü temizle">
+<!ENTITY clearLog.accesskey "G">
+<!ENTITY enableLog.label "Süzgeç günlüğünü etkinleştir">
+<!ENTITY enableLog.accesskey "z">
+<!ENTITY closeLog.label "Kapat">
+<!ENTITY closeLog.accesskey "t">

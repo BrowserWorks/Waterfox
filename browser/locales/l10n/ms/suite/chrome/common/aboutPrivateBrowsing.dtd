@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Anda berada dalam tetingkap Pelayaran Peribadi">
+<!ENTITY privatebrowsingpage.title.normal        "Adakah anda mahu mulakan Pelayaran Peribadi?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; tidak akan mengingati sejarah dalam tetingkap ini.">
+<!ENTITY privatebrowsingpage.status.normal       "Anda tidak berada dalam tetingkap peribadi.">
+
+<!ENTITY privatebrowsingpage.common.description  "Dalam tetingkap Pelayaran Peribadi, &brandShortName; tidak akan menyimpan sejarah pelayar, carian, muat turun, borang web, kuki atau fail internet sementara.  Tapi, tandabuku yang dicipta dan fail yang dimuat turun akan disimpan.">
+<!ENTITY privatebrowsingpage.track.warn          "Walaupun komputer ini tidak menyimpan apa-apa rekod sejarah pelayaran, tapi majikan atau penyedia perkhidmatan internet anda masih boleh menjejaki halaman yang sudah dilayari.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Ketahui selanjutnya">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "K">
+
+<!ENTITY privatebrowsingpage.close.info          "Setelah selesai, tutup tetingkap untuk menghentikan Pelayaran Peribadi.">
+<!ENTITY privatebrowsingpage.close.label         "Tutup tetingkap ini sekarang">
+<!ENTITY privatebrowsingpage.close.accesskey     "T">
+
+<!ENTITY privatebrowsingpage.start.info          "Untuk memulakan Pelayaran Peribadi, klik butang di bawah atau pilih Fail ▶ Baru ▶ Tetingkap Peribadi dari dalam menu.">
+<!ENTITY privatebrowsingpage.private.label       "Buka tetingkap peribadi baru">
+<!ENTITY privatebrowsingpage.private.accesskey   "B">

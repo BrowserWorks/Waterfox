@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Verificare ortografică">
+
+<!ENTITY misspelledWord.label "Cuvânt greșit:">
+<!ENTITY wordEditField.label "Înlocuiește cu:">
+<!ENTITY wordEditField.accessKey "c">
+<!ENTITY checkwordButton.label "Verifică cuvânt">
+<!ENTITY checkwordButton.accessKey "V">
+<!ENTITY suggestions.label "Sugestii:">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "Ignoră">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "Ignoră toate">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "Înlocuiește">
+<!ENTITY replaceButton.accessKey "l">
+<!ENTITY replaceAllButton.label "Înlocuiește toate">
+<!ENTITY replaceAllButton.accessKey "o">
+<!ENTITY stopButton.label "Oprire">
+<!ENTITY stopButton.accessKey "o">
+<!ENTITY userDictionary.label "Dicționar personal:">
+<!ENTITY moreDictionaries.label "Descarcă mai multe dicționare…">
+<!ENTITY addToUserDictionaryButton.label "Adaugă cuvânt">
+<!ENTITY addToUserDictionaryButton.accessKey "d">
+<!ENTITY editUserDictionaryButton.label "Editează…">
+<!ENTITY editUserDictionaryButton.accessKey "E">
+<!ENTITY recheckButton2.label "Verifică din nou textul">
+<!ENTITY recheckButton2.accessKey "t">
+<!ENTITY closeButton.label "Închide">
+<!ENTITY closeButton.accessKey "h">
+<!ENTITY sendButton.label "Trimite">
+<!ENTITY sendButton.accessKey "m">
+<!ENTITY languagePopup.label "Limbă:">
+<!ENTITY languagePopup.accessKey "L">

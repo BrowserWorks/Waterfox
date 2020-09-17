@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# BuBBaX <mikebubbax@yahoo.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# janimo <jani@ubuntu.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY pref.navigator.title           "Navigator">
+
+<!ENTITY navRadio.label                 "Afișare pe">
+<!ENTITY navRadio.accesskey             "A">
+<!ENTITY navStartPageMenu.label         "Pornirea Browser-ului">
+<!ENTITY newWinPageMenu.label           "Fereastră nouă">
+<!ENTITY newTabPageMenu.label           "Filă nouă">
+
+<!ENTITY blankPageRadio.label           "Pagină goală">
+<!ENTITY blankPageRadio.accesskey       "P">
+<!ENTITY homePageRadio.label            "Prima pagină">
+<!ENTITY homePageRadio.accesskey        "m">
+<!ENTITY lastPageRadio.label            "Ultima pagină vizitată">
+<!ENTITY lastPageRadio.accesskey        "l">
+<!ENTITY restoreSessionRadio.label      "Restaurează sesiunea anterioară">
+<!ENTITY restoreSessionRadio.accesskey  "R">
+
+<!ENTITY header2.label                  "Pagina de start">
+<!ENTITY homePageIntro.label            "Clicking the Home button takes you to this group of pages:">
+<!ENTITY useCurrent.label               "Folosește pagina curentă">
+<!ENTITY useCurrent.accesskey           "u">
+<!ENTITY useCurrentGroup.label          "Folosește Grupul Curent">
+<!ENTITY useCurrentGroup.accesskey      "G">
+<!ENTITY browseFile.label               "Alegere fișier…">
+<!ENTITY browseFile.accesskey           "A">
+<!ENTITY useDefault.label               "Restaurează">
+<!ENTITY useDefault.accesskey           "R">
+
+<!ENTITY defaultBrowserGroup.label      "Navigator implicit">
+<!ENTITY defaultBrowserButton.label     "Setați Browserul Implicit">
+<!ENTITY defaultBrowserButton.accesskey "S">
+<!ENTITY alreadyDefaultText             "&brandShortName; is already your default browser.">
+<!ENTITY defaultPendingText             "&brandShortName; will be set as your default browser when you click OK.">
+<!ENTITY makeDefaultText                "Set &brandShortName; as your default browser.">

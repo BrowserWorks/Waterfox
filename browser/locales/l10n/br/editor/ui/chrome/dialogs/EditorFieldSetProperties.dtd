@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Perzhioù an holl vaeziennoù">
+
+<!ENTITY Legend.label "Alc'hwez">
+<!ENTITY Legend.accesskey "A">
+
+<!ENTITY EditLegendText.label "Kemmañ an alc'hwez:">
+<!ENTITY EditLegendText.accesskey "K">
+<!ENTITY LegendAlign.label "Steudañ an alc'hwez:">
+<!ENTITY LegendAlign.accesskey "S">
+<!ENTITY AlignDefault.label "Dre ziouer">
+<!ENTITY AlignLeft.label "Kleiz">
+<!ENTITY AlignCenter.label "Kreiz">
+<!ENTITY AlignRight.label "Dehou">
+
+<!ENTITY RemoveFieldSet.label "Dilemel an holl vaeziennoù">
+<!ENTITY RemoveFieldSet.accesskey "D">

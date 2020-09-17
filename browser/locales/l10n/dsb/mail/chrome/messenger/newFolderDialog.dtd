@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Nowy zarědnik">
+<!ENTITY name.label                 "Mě:">
+<!ENTITY name.accesskey             "M">
+<!ENTITY description.label          "Ako pódzarědnik napóraś wót:">
+<!ENTITY description.accesskey      "A">
+<!ENTITY folderRestriction1.label   "Toś ten serwer wobgranicujo zarědniki na dwa specialnej parta.">
+<!ENTITY folderRestriction2.label   "Dowóliś, aby waš nowy zarědnik wopśimjeł:">
+<!ENTITY foldersOnly.label          "Jano zarědniki">
+<!ENTITY messagesOnly.label         "Jano powěsći">
+<!ENTITY accept.label               "Zarědnik napóraś">
+<!ENTITY accept.accesskey           "Z">

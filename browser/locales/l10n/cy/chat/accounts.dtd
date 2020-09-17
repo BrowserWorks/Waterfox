@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "Cyfrifon - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Statws negesu chwim">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Cyfrif Newydd">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Cau">
+<!ENTITY accountManager.close.accesskey      "u">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Dim cyfrif wedi'i ffurfweddu eto">
+<!ENTITY accountManager.noAccount.description "Cliciwch ar fotwm &accountManager.newAccount.label; i &brandShortName; eich arwain drwy'r broses o'i ffurfweddu.">
+<!ENTITY account.autoSignOn.label     "Mewngofnodi wrth gychwyn">
+<!ENTITY account.autoSignOn.accesskey "M">
+<!ENTITY account.connect.label        "Cysylltu">
+<!ENTITY account.connect.accesskey    "y">
+<!ENTITY account.disconnect.label     "Datgysylltu">
+<!ENTITY account.disconnect.accesskey "D">
+<!ENTITY account.delete.label         "Dileu">
+<!ENTITY account.delete.accesskey     "l">
+<!ENTITY account.edit.label           "Priodweddau">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "Symud i fyny">
+<!ENTITY account.movedown.label       "Symud i lawr">
+<!ENTITY account.cancelReconnection.label         "Diddymu ailgysylltu">
+<!ENTITY account.cancelReconnection.accesskey     "D">
+<!ENTITY account.copyDebugLog.label     "Copïo'r Cofnod Dadfygio">
+<!ENTITY account.copyDebugLog.accesskey "C">
+<!ENTITY account.showDebugLog.label     "Dangos y Cofnod Dadfygio">
+<!ENTITY account.showDebugLog.accesskey "D">
+<!ENTITY account.connecting           "Cysylltu…">
+<!ENTITY account.disconnecting        "Dad-gysylltu…">
+<!ENTITY account.disconnected         "Heb Gysylltu">

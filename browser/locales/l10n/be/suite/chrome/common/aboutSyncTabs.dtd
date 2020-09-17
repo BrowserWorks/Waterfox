@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabs.otherComputers.label "Устаўкі з іншых кампутараў">
+<!ENTITY tabs.searchText.label "Набярыце тэкст для шукання ўставак тут…">
+<!ENTITY tabs.context.openTab.label "Адчыніць гэтую ўстаўку">
+<!ENTITY tabs.context.openTab.accesskey "А">
+<!ENTITY tabs.context.openMultipleTabs.label "Адчыніць вылучаныя ўстаўкі">
+<!ENTITY tabs.context.openMultipleTabs.accesskey "А">
+<!ENTITY tabs.context.bookmarkSingleTab.label "Закласці гэтую ўстаўку…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey "З">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label "Закласці вылучаныя ўстаўкі…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey "З">
+<!ENTITY tabs.context.refreshList.label "Паднавіць спіс">
+<!ENTITY tabs.context.refreshList.accesskey "н">

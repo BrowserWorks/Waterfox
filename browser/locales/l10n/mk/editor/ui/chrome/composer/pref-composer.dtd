@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+<!ENTITY pref.composer.title "Composer">
+
+<!ENTITY saving "Снимам">
+<!ENTITY AutoSaveCheck "Автоматски снимај секои">
+<!ENTITY minText "минути">
+
+<!ENTITY exterLegend.label "Надворешни уредувачи">
+<!ENTITY htmlSource "HTML код:">
+<!ENTITY imageeditor "Слики:">
+<!ENTITY chooseButton.label "Избери">
+
+<!ENTITY recentFiles.title "Мени за скорешни страници">
+<!ENTITY documentsInMenu.label "Максимален број на прикажани страници:">
+<!ENTITY documentsInMenu.accesskey "б">
+
+<!ENTITY savingFiles.title "Кога снимам или објавувам страници">
+<!ENTITY preserveExisting.label "Зачувај го оригиналното форматирање на изворниот код">
+<!ENTITY preserveExisting.accesskey "р">
+<!ENTITY preserveExisting.tooltip "Ги чува прекините на линиите и оригиналното форматирање на страните">
+<!ENTITY saveAssociatedFiles.label "Снимај ги сликите и другите поврзани датотеки при снимањето на страниците">
+<!ENTITY saveAssociatedFiles.accesskey "С">
+<!ENTITY showPublishDialog.label "Секогаш прикажувај го дијалогот за објавување при објавување на страници">
+<!ENTITY showPublishDialog.accesskey "а">
+
+<!ENTITY composerEditing.label "Уредување">
+<!ENTITY spellCheckInline.label "Check spelling as you type">
+<!ENTITY spellCheckInline.accesskey "C">
+<!ENTITY maintainStructure.label "Задржи го распоредот на табелата при додавање или бришење на ќелии">
+<!ENTITY maintainStructure.tooltip "Ја задржува правоаголната форма на табелата со автоматско додавање на ќелии по внесувањето или бришењето на ќелии">
+<!ENTITY maintainStructure.accesskey "р">
+<!ENTITY useCSS.label "Користи CSS стилови наместо HTML елементи и атрибути">
+<!ENTITY useCSS.accesskey "о">
+<!ENTITY crInPCreatesNewP.label "Enter во пасус секогаш креира нов пасус">
+<!ENTITY crInPCreatesNewP.accesskey "E">

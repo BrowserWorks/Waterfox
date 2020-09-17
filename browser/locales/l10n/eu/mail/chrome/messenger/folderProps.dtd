@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Propietateak">
+
+<!ENTITY generalInfo.label                       "Argibide orokorrak">
+<!ENTITY folderCharsetFallback2.label            "Testu-kodeketa lehenetsia:">
+<!ENTITY folderCharsetFallback2.accesskey        "F">
+<!ENTITY folderCharsetEnforce2.label             "Aplikatu testu-kodeketa karpetako mezu guztiei (mezu bakoitzaren kodeketa ezarpenak eta auto-detekzioa ez ikusi egingo dira)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Berreraiki laburpen-fitxategiaren indizea">
+<!ENTITY folderRebuildSummaryFile2.label         "Konpondu karpeta">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "K">
+<!ENTITY folderRebuildSummaryFile.explanation    "Batzutan karpetaren indize-fitxategia (.msf) kaltetu egiten da eta mezuak faltan daudela edo ezabatutako mezuak oraindik erakusten direla eman lezake; karpeta konpontzeak arazo hauek desagerraraz ditzake.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Sartu karpeta honetako mezuak bilaketa globalaren emaitzetan">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "g">
+
+<!ENTITY retention.label "Gordetze-politika">
+<!ENTITY retentionUseAccount.label  "Erabili nire kontu-ezarpenak">
+<!ENTITY retentionUseAccount.accesskey "E">
+<!ENTITY daysOld.label "egun zahar">
+<!ENTITY message.label "mezu">
+<!ENTITY retentionCleanup.label "Diskoko lekua berreskuratzeko, mezu zaharrak betirako ezaba daitezke.">
+<!ENTITY retentionCleanupImap.label "Diskoko lekua berreskuratzeko, mezu zaharrak betirako ezaba daitezke, bai kopia lokalak eta baita urruneko zerbitzarian dauden jatorrizkoak ere.">
+<!ENTITY retentionCleanupPop.label "Diskoko lekua berreskuratzeko, mezu zaharrak betirako ezaba daitezke, urruneko zerbitzarian dauden jatorrizkoak barne.">
+<!ENTITY retentionDeleteMsg.label "Ezabatu hau baino mezu zaharragoak">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Ez ezabatu mezurik">
+<!ENTITY retentionKeepAll.accesskey "a">
+<!ENTITY retentionKeepRecent.label "Ezabatu guztiak azkenak izan ezik">
+<!ENTITY retentionKeepRecent.accesskey "z">
+<!ENTITY retentionApplyToFlagged.label "Mantendu beti mezu izardunak">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Sinkronizazioa">
+<!ENTITY folderCheckForNewMessages2.label         "Kontu honetarako mezu berriak eskuratzean, egiaztatu beti karpeta hau">
+<!ENTITY folderCheckForNewMessages2.accesskey     "K">
+
+<!ENTITY offlineFolder.check.label               "Hautatu karpeta hau lineaz kanpo erabiltzeko">
+<!ENTITY offlineFolder.check.accesskey           "H">
+<!ENTITY offlineFolder.button.label              "Deskargatu orain">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Hautatu berri-talde hau lineaz kanpo erabiltzeko">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "l">
+<!ENTITY offlineNewsgroup.button.label           "Deskargatu orain">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "Izena:">
+<!ENTITY folderProps.name.accesskey              "I">
+<!ENTITY folderProps.color.label                 "Ikono kolorea:">
+<!ENTITY folderProps.color.accesskey             "k">
+<!ENTITY folderProps.reset.tooltip               "Berrezarri kolore lehenetsia">
+<!ENTITY folderProps.location.label              "Kokalekua:">
+<!ENTITY folderProps.location.accesskey          "l">
+
+<!ENTITY folderSharingTab.label                  "Partekatzea">
+<!ENTITY privileges.button.label                 "Pribilegioak…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Hurrengo baimenak dituzu:">
+<!ENTITY folderOtherUsers.label                  "Karpetara honetara sarrera duten beste batzuk:">
+<!ENTITY folderType.label                        "Karpeta mota:">
+
+<!ENTITY folderQuotaTab.label                    "Kuota">
+<!ENTITY folderQuotaUsage.label                  "Erabilera:">
+<!ENTITY folderQuotaStatus.label                 "Egoera:">
+
+<!ENTITY numberOfMessages.label                  "Mezu kopurua:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "ezezaguna">
+<!ENTITY sizeOnDisk.label                        "Tamaina diskoan:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "ezezaguna">

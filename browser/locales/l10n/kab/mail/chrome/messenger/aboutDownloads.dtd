@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Ifuyla ikelsen">
+<!ENTITY aboutDownloads.empty                      "Ulac ifuyla ikelsen">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Ldi akaram amagbar">
+<!ENTITY cmd.show.accesskey                        "k">
+<!ENTITY cmd.showMac.label                         "Ldi di Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Ldi">
+<!ENTITY cmd.open.accesskey                        "L">
+<!ENTITY cmd.removeFromHistory.label               "Kkes seg umazray">
+<!ENTITY cmd.removeFromHistory.accesskey           "K">
+<!ENTITY cmd.clearList.label                       "Sfeḍ tabdart">
+<!ENTITY cmd.clearList.accesskey                   "S">
+<!ENTITY cmd.clearList.tooltip                     "Kkes akk inekcumen si tebdart n ifuyla yettwakelsen, ala isidar i teddun.">
+<!ENTITY cmd.searchDownloads.label                 "Nadi...">
+<!ENTITY cmd.searchDownloads.key                   "F">

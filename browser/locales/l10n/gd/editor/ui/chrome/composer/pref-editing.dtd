@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Roghainnean duilleige ùr">
+
+<!ENTITY  authorName.label          "Ùghdar:">
+<!ENTITY  authorName.accesskey      "h">
+<!ENTITY  pageColorHeader           "Riochd bunaiteach na duilleige">
+
+<!ENTITY defaultColors.label        "Dathan bunaiteach an leughadair (Na suidhich dathan san duilleag)">
+<!ENTITY defaultColors.accesskey    "D">
+<!ENTITY customColors.label         "Cleachd dathan gnàthaichte:">
+<!ENTITY customColors.accesskey     "C">
+
+<!ENTITY normalText.label           "Teacsa àbhaisteach">
+<!ENTITY normalText.accesskey       "T">
+<!ENTITY linkText.label             "Teacsa a' cheangail">
+<!ENTITY linkText.accesskey         "l">
+<!ENTITY activeLinkText.label       "Teacsa ceangail ghnìomaich">
+<!ENTITY activeLinkText.accesskey   "a">
+<!ENTITY visitedLinkText.label      "Teacsa ceangail a chaidh a chleachdadh">
+<!ENTITY visitedLinkText.accesskey  "T">
+<!ENTITY background.label           "Cùlaibh:">
+<!ENTITY background.accesskey       "b">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Dealbh a' chùlaibh:">
+<!ENTITY backgroundImage.accesskey  "D">
+<!ENTITY chooseFile.label           "Tagh faidhle…">
+<!ENTITY chooseFile.accesskey       "T">
+

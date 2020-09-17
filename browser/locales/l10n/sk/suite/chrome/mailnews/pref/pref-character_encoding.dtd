@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Kódovanie textu">
+<!ENTITY messageDisplay.caption          "Zobrazenie správ">
+<!ENTITY viewFallbackCharset2.label      "Kódovanie textu pre starší obsah:">
+<!ENTITY viewFallbackCharset2.accesskey  "d">
+<!ENTITY viewFallbackCharset.desc        "(Toto kódovanie textu je používané pre starší obsah, ktorý nedefinuje svoje kódovanie.)">
+
+<!ENTITY composingMessages.caption       "Odosielanie správ">
+<!ENTITY useMIME.label                   "Pre správy, ktoré obsahujú 8-bit znaky, použiť kódovanie MIME 'quoted printable'. Ak táto voľba nie je označená, správy budú odosielané bez zmeny.">
+<!ENTITY useMIME.accesskey               "r">
+<!ENTITY sendDefaultCharset2.label       "Predvolené kódovanie textu:">
+<!ENTITY sendDefaultCharset2.accesskey   "k">
+<!ENTITY replyInDefaultCharset3.label    "Ak je to možné, v odpovediach použiť predvolené kódovanie textu (ak táto voľba nie je označená, predvolené kódovanie bude použité len pre nové správy).">
+<!ENTITY replyInDefaultCharset3.accesskey "A">
+

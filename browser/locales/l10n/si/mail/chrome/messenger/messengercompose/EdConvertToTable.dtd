@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "වගුවට හැරවීම">
+<!ENTITY instructions1.label   "සකසනය තෝරාගත් කොටස තුළ සෑම ඡේදයක් සඳහාම නව වගුවක් සාදයි.">
+<!ENTITY instructions2.label   "තෝරාගත් කොටස තීරුවලට වෙන්කිරීම සඳහා භාවිතා කරන අකුර තෝරන්න:">
+<!ENTITY commaRadio.label      "කොමා ලකුණ">
+<!ENTITY spaceRadio.label      "හිඩැස (Space)">
+<!ENTITY otherRadio.label      "වෙනත් අකුරක්:">
+<!ENTITY deleteCharCheck.label "වෙන්කරන අකුර මකන්න">
+<!ENTITY collapseSpaces.label  "අතිරේක හිඩස් නොසලකා හරින්න">
+<!ENTITY collapseSpaces.tooltip "එකළඟ පිහිටි හිඩස් එක් වෙන්කරන අකුරක් බවට හරවන්න">

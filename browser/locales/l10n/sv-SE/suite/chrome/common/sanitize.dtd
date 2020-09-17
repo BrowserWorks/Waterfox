@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Rensa personliga data">
+<!ENTITY sanitizeItems.label             "Rensa ut följande poster nu:">
+
+<!ENTITY itemHistory.label               "Webbläsarhistorik">
+<!ENTITY itemHistory.accesskey           "W">
+<!ENTITY itemUrlBar.label                "Adressfältshistorik">
+<!ENTITY itemUrlBar.accesskey            "d">
+<!ENTITY itemDownloads.label             "Filhämtningshistorik">
+<!ENTITY itemDownloads.accesskey         "h">
+<!ENTITY itemFormSearchHistory.label     "Sparade formulärdata och sökhistorik">
+<!ENTITY itemFormSearchHistory.accesskey "S">
+<!ENTITY itemCache.label                 "Cache">
+<!ENTITY itemCache.accesskey             "C">
+<!ENTITY itemCookies.label               "Kakor">
+<!ENTITY itemCookies.accesskey           "K">
+<!ENTITY itemOfflineApps.label           "Webbplatsdata i nedkopplat läge">
+<!ENTITY itemOfflineApps.accesskey       "b">
+<!ENTITY itemPasswords.label             "Sparade lösenord">
+<!ENTITY itemPasswords.accesskey         "ö">
+<!ENTITY itemSessions.label              "Autentiserade sessioner">
+<!ENTITY itemSessions.accesskey          "A">
+
+<!ENTITY sanitizeButton.label            "Rensa personliga data nu">

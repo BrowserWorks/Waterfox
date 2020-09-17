@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY msgComposeWindow.title "Укладанне: (без тэмы)">
+<!ENTITY fromAddr.label "Ад:">
+<!ENTITY fromAddr.accesskey "А">
+<!ENTITY subject.label "Тэма:">
+<!ENTITY subject.accesskey "Т">
+<!ENTITY attachments.label "Далучэнні:">
+<!ENTITY attachments.accesskey "ч">
+<!ENTITY saveCmd.label "Захаваць">
+<!ENTITY saveCmd.accesskey "З">
+<!ENTITY saveAsCmd.label "Захаваць як">
+<!ENTITY saveAsCmd.accesskey "Я">
+<!ENTITY saveAsFileCmd.label "Файл…">
+<!ENTITY saveAsFileCmd.accesskey "Ф">
+<!ENTITY saveAsDraftCmd.label "Чарнавік">
+<!ENTITY saveAsDraftCmd.accesskey "Ч">
+<!ENTITY saveAsTemplateCmd.label "Узор">
+<!ENTITY saveAsTemplateCmd.accesskey "У">
+<!ENTITY attachMenu.label "Далучыць">
+<!ENTITY attachMenu.accesskey "л">
+<!ENTITY attachFileCmd.label "Файл(ы)…">
+<!ENTITY attachFileCmd.accesskey "Ф">
+<!ENTITY attachPageCmd.label "Старонку Сеціва…">
+<!ENTITY attachPageCmd.accesskey "С">
+<!ENTITY attachVCardCmd.label "Асабістую картку (vCard)">
+<!ENTITY attachVCardCmd.accesskey "А">
+<!ENTITY sendNowCmd.label "Даслаць зараз">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "Д">
+<!ENTITY sendLaterCmd.label "Даслаць пазней">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "П">
+<!ENTITY editRewrapCmd.label "Перазагінаць">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey "г">
+<!ENTITY accountManagerCmd.label "Наладжванні рахунку Пошты і Навінакупаў…">
+<!ENTITY accountManagerCmd.accesskey "П">
+<!ENTITY showComposeToolbarCmd.label "Паліца прылад пошты">
+<!ENTITY showComposeToolbarCmd.accesskey "о">
+<!ENTITY showFormatToolbarCmd.label "Паліца прыладаў фарматавання">
+<!ENTITY showFormatToolbarCmd.accesskey "Ф">
+<!ENTITY formatMenu.label "Фармат">
+<!ENTITY formatMenu.accesskey "р">
+<!ENTITY optionsMenu.label "Наладжванні">
+<!ENTITY optionsMenu.accesskey "Н">
+<!ENTITY quoteCmd.label "Працытаваць ліст">
+<!ENTITY quoteCmd.accesskey "ц">
+<!ENTITY selectAddressCmd.label "Адрасаты…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "А">
+<!ENTITY priorityMenu.label "Прыярытэт">
+<!ENTITY priorityMenu.accesskey "П">
+<!ENTITY lowestPriorityCmd.label "Найніжэйшы">
+<!ENTITY lowestPriorityCmd.accesskey "й">
+<!ENTITY lowPriorityCmd.label "Нізкі">
+<!ENTITY lowPriorityCmd.accesskey "Н">
+<!ENTITY normalPriorityCmd.label "Звычайны">
+<!ENTITY normalPriorityCmd.accesskey "З">
+<!ENTITY highPriorityCmd.label "Высокі">
+<!ENTITY highPriorityCmd.accesskey "с">
+<!ENTITY highestPriorityCmd.label "Найвышэйшы">
+<!ENTITY highestPriorityCmd.accesskey "в">
+<!ENTITY returnReceiptMenu.label "Квіток атрымання">
+<!ENTITY returnReceiptMenu.accesskey "т">
+<!ENTITY dsnMenu.label "Пацвярджэнне дастаўкі">
+<!ENTITY dsnMenu.accesskey "П">
+<!ENTITY outputFormatMenu.label "Фармат">
+<!ENTITY outputFormatMenu.accesskey "Ф">
+<!ENTITY autoFormatCmd.label "Сама-вызначэнне">
+<!ENTITY autoFormatCmd.accesskey "С">
+<!ENTITY plainTextFormatCmd.label "Толькі просты тэкст">
+<!ENTITY plainTextFormatCmd.accesskey "П">
+<!ENTITY htmlFormatCmd.label "Толькі аздоблены тэкст (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "з">
+<!ENTITY bothFormatCmd.label "Просты і аздоблены (HTML) тэкст">
+<!ENTITY bothFormatCmd.accesskey "і">
+<!ENTITY fileCarbonCopyCmd.label "Змясціць копію ў">
+<!ENTITY fileCarbonCopyCmd.accesskey "ь">
+<!ENTITY fileHereMenu.label "Пакласці тут">
+<!ENTITY sendButton.label "Даслаць">
+<!ENTITY addressButton.label "Адрас">
+<!ENTITY attachButton.label "Далучыць">
+<!ENTITY spellingButton.label "Праверка правапісу">
+<!ENTITY saveButton.label "Захаваць">
+<!ENTITY stopButton.label "Спыніць">
+<!ENTITY addressBar.tooltip "Адрасная паліца">
+<!ENTITY formatToolbar.tooltip "Паліца прылад фарматавання">
+<!ENTITY sendButton.tooltip "Даслаць гэты ліст зараз">
+<!ENTITY sendlaterButton.tooltip "Даслаць гэты ліст пазней">
+<!ENTITY addressButton.tooltip "Выбраць атрымальніка з адраснай кнігі">
+<!ENTITY attachButton.tooltip "Уключыць далучэнне">
+<!ENTITY saveButton.tooltip "Захаваць гэты ліст">
+<!ENTITY stopButton.tooltip "Спыніць цяперашні перанос">
+<!ENTITY openAttachment.label "Адчыніць">
+<!ENTITY openAttachment.accesskey "А">
+<!ENTITY renameAttachment.label "Змяніць назву…">
+<!ENTITY renameAttachment.accesskey "З">
+<!ENTITY deleteAttachment.accesskey "д">
+<!ENTITY selectAllAttachments.accesskey "у">
+<!ENTITY attachFile.label "Далучыць файл(ы)…">
+<!ENTITY attachFile.accesskey "Ф">
+<!ENTITY attachPage.label "Далучыць старонку Сеціва…">
+<!ENTITY attachPage.accesskey "с">

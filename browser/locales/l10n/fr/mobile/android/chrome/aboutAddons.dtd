@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Modules complémentaires">
+<!ENTITY aboutAddons.header2                    "Vos modules complémentaires">
+
+<!ENTITY addonAction.enable                     "Activer">
+<!ENTITY addonAction.disable                    "Désactiver">
+<!ENTITY addonAction.uninstall                  "Désinstaller">
+<!ENTITY addonAction.undo                       "Annuler">
+<!ENTITY addonAction.update                     "Mettre à jour">
+
+<!ENTITY addonUnsigned.message                  "Ce module n’a pas pu être vérifié par &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "En savoir plus">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "Excepcions">
+<!ENTITY treehead.sitename.label        "Puesto web">
+<!ENTITY treehead.status.label          "Estau">
+<!ENTITY remove.label                   "Eliminar puesto web">
+<!ENTITY remove.accesskey               "r">
+<!ENTITY removeall.label                "Eliminar totz os puestos web">
+<!ENTITY removeall.accesskey            "E">
+<!ENTITY address.label                  "Adreza d'o puesto web:">
+<!ENTITY address.accesskey              "A">
+<!ENTITY block.label                    "Bloquiar">
+<!ENTITY block.accesskey                "B">
+<!ENTITY session.label                  "Permitir entre a sesión">
+<!ENTITY session.accesskey              "s">
+<!ENTITY allow.label                    "Permitir">
+<!ENTITY allow.accesskey                "P">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Preberanie súborov">
+
+<!ENTITY downloadBehavior.label         "Pri spustení preberania">
+<!ENTITY doNothing.label                "Nič neotvárať">
+<!ENTITY doNothing.accesskey            "N">
+<!ENTITY openProgressDialog.label       "Otvoriť okno s priebehom preberania">
+<!ENTITY openProgressDialog.accesskey   "O">
+<!ENTITY openDM.label                   "Otvoriť správcu preberania súborov">
+<!ENTITY openDM.accesskey               "c">
+<!ENTITY flashWhenOpen.label            "Zvýrazniť okno správcu preberania súborov, ak je otvorené">
+<!ENTITY flashWhenOpen.accesskey        "Z">
+
+<!ENTITY downloadLocation.label         "Pri ukladaní súboru">
+<!ENTITY saveTo.label                   "Uložiť súbory do">
+<!ENTITY saveTo.accesskey               "s">
+<!ENTITY chooseDownloadFolder.label     "Vybrať priečinok…">
+<!ENTITY chooseDownloadFolder.accesskey "V">
+<!ENTITY alwaysAsk.label                "Vždy sa opýtať, kam uložiť súbory">
+<!ENTITY alwaysAsk.accesskey            "k">
+
+<!ENTITY downloadHistory.label          "História prevzatých súborov">
+<!ENTITY removeEntries.label            "Záznamy o preberaných súboroch odstraňovať:">
+<!ENTITY removeEntries.accesskey        "m">
+<!ENTITY whenCompleted.label            "po ich prevzatí">
+<!ENTITY whenQuittingApp.label          "pri ukončení &brandShortName;">
+<!ENTITY neverRemove.label              "nikdy">
+
+<!ENTITY finishedBehavior.label         "Pri ukončení preberania">
+<!ENTITY playSound.label                "Prehrať zvuk">
+<!ENTITY playSound.accesskey            "h">
+<!ENTITY showAlert.label                "Zobraziť upozornenie">
+<!ENTITY showAlert.accesskey            "b">
+<!ENTITY browse.label                   "Prehľadávať…">
+<!ENTITY browse.accesskey               "e">
+<!ENTITY playButton.label               "Prehrať">
+<!ENTITY playButton.accesskey           "r">

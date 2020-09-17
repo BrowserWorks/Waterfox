@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+
+
+
+<!ENTITY performanceUI.bufferStatusTooltip "Sábhálann an próifíleoir samplaí i maolán ciorclach; is é sin le rá go bhforscríobhfaidh sé samplaí ag tús an taifid nuair a shroicheann sé deireadh an mhaoláin.">
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.nonE10SBuild): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a non-multiprocess build. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Cumasaigh Firefox ilphróisis sna sainroghanna chun sonraí a thaifeadadh i bhfíor-am.">
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+
+<!ENTITY performanceUI.bufferStatusFull "Tá an maolán lán go béal. Seansamplaí á bhforscríobh anois.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+
+<!ENTITY performanceUI.unavailableNoticePB "Ní féidir próifíl a thaifeadadh faoi láthair. Dún gach fuinneog phríobháideach agus bain triail eile as.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+
+<!ENTITY performanceUI.loadingNotice "Á Luchtú…">
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+
+<!ENTITY performanceUI.toolbar.waterfall "Eas">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Taispeáin na hoibríochtaí éagsúla a dhéanann an brabhsálaí le linn taifeadta, leagtha amach go seicheamhach, mar eas.">
+<!ENTITY performanceUI.toolbar.js-calltree "Crann na nGlaonna">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Aibhsíonn sé seo na feidhmeanna JavaScript a gcaitheann an brabhsálaí an méid is mó ama iontu le linn taifeadta.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Leithdháilte">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Taispeáin cén áit ar dáileadh cuimhne le linn taifeadta.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "Bladhmchairt JS">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Taispeáin an chruach JavaScript le linn taifeadta.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Bladhmchairt Leithdháilte">
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+
+<!ENTITY performanceUI.table.totalDuration            "Am Iomlán">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Fad ama caite san fheidhm seo agus na feidhmeanna ar chuir sí glao orthu.">
+<!ENTITY performanceUI.table.selfDuration             "Féin-Am">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Fad ama caite san fheidhm seo amháin.">
+<!ENTITY performanceUI.table.totalPercentage          "Costas Iomlán">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Céatadán ama caite san fheidhm seo agus na feidhmeanna ar chuir sí glao orthu.">
+<!ENTITY performanceUI.table.selfPercentage           "Féinchostas">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Céatadán ama caite san fheidhm seo amháin.">
+<!ENTITY performanceUI.table.samples                  "Samplaí">
+<!ENTITY performanceUI.table.samples.tooltip          "Cé mhéad uair a bhí an fheidhm seo ar an gcruach nuair a rinne an próifíleoir sampla.">
+<!ENTITY performanceUI.table.function                 "Feidhm">
+<!ENTITY performanceUI.table.function.tooltip         "Ainm agus foinse na feidhme a ndearnadh sampláil di.">
+<!ENTITY performanceUI.table.totalAlloc               "Líon Iomlán na Leithdháilte Samplaithe">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Líon iomlán leithdháilte réada a bhí samplaithe ag an suíomh seo agus i bhfeidhmeanna glaoite.">
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+
+<!ENTITY performanceUI.options.filter.tooltiptext "Roghnaigh na sonraí le cur ar taispeáint ar an amlíne">
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+
+<!ENTITY performanceUI.options.gear.tooltiptext "Sainroghanna feidhmíochta.">
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+
+<!ENTITY performanceUI.invertTree             "Inbhéartaigh Crann na nGlaonna">
+<!ENTITY performanceUI.invertTree.tooltiptext "Nuair atá crann na nglaonna inbhéartaithe, taispeántar na glaonna is nuaí ar dtús, ansin ag leathnú amach go dtí na cinn níos sine.">
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+
+<!ENTITY performanceUI.invertFlameGraph             "Inbhéartaigh an Bhladhmchairt">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Nuair atá an bhladhmchairt inbhéartaithe, taispeántar na nglaonna ó na frámaí is nuaí, ag leathnú amach go dtí na cinn níos sine.">
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+
+<!ENTITY performanceUI.showPlatformData             "Taispeáin sonraí faoin ardán Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Má thaispeánann tú sonraí faoin ardán, beidh an próifíleoir JavaScript in ann siombailí ardáin Gecko a chur san áireamh.">
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+
+<!ENTITY performanceUI.showJITOptimizations             "Taispeáin Optamuithe JIT">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Déan taifead ar shonraí optamaithe JIT i ngach fráma JavaScript.">
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+
+<!ENTITY performanceUI.flattenTreeRecursion             "Leacaigh Athchúrsach sa Chrann">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Leacaigh athchúrsáil agus feidhmeanna á scrúdú.">
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableMemory             "Déan Taifead ar Chuimhne">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Déan taifead ar úsáid chuimhne le linn próifílithe.">
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableAllocations             "Taifead Gach Dáileadh">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Taifead dáileadh réada le linn próifílithe.">
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+
+<!ENTITY performanceUI.enableFramerate             "Déan Taifead ar an Ráta Frámaí">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Déan taifead ar an ráta frámaí le linn próifílithe.">
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+
+<!ENTITY performanceUI.console.recordingNoticeStart "Á thaifeadadh faoi láthair trí">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+
+<!ENTITY performanceUI.console.stopCommandStart "Stop an taifead trí">
+<!ENTITY performanceUI.console.stopCommandEnd   "a chur isteach sa gconsól.">

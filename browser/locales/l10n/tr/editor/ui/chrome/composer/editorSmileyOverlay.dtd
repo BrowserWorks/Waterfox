@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Yüz İfadesi">
+<!ENTITY insertSmiley.accesskey "Y">
+
+<!ENTITY smiley1Cmd.label "Gülümseme">
+<!ENTITY smiley1Cmd.accesskey "G">
+<!ENTITY smiley1Cmd.tooltip "Gülen bir yüz ekle">
+<!ENTITY smiley2Cmd.label "Kızgın">
+<!ENTITY smiley2Cmd.accesskey "K">
+<!ENTITY smiley2Cmd.tooltip "Kızgın bir yüz ekle">
+<!ENTITY smiley3Cmd.label "Göz Kırpma">
+<!ENTITY smiley3Cmd.accesskey "G">
+<!ENTITY smiley3Cmd.tooltip "Göz kırpan bir yüz ekle">
+<!ENTITY smiley4Cmd.label "Dil çıkaran">
+<!ENTITY smiley4Cmd.accesskey "t">
+<!ENTITY smiley4Cmd.tooltip "Dil çıkaran bir yüz ekle">
+<!ENTITY smiley5Cmd.label "Kahkaha Atma">
+<!ENTITY smiley5Cmd.accesskey "h">
+<!ENTITY smiley5Cmd.tooltip "Kahkaha atan bir yüz ekle">
+<!ENTITY smiley6Cmd.label "Utanmış">
+<!ENTITY smiley6Cmd.accesskey "U">
+<!ENTITY smiley6Cmd.tooltip "Utanmış bir yüz ekle">
+<!ENTITY smiley7Cmd.label "Kararsız">
+<!ENTITY smiley7Cmd.accesskey "K">
+<!ENTITY smiley7Cmd.tooltip "Kararsız bir yüz ekle">
+<!ENTITY smiley8Cmd.label "Şaşırmış">
+<!ENTITY smiley8Cmd.accesskey "m">
+<!ENTITY smiley8Cmd.tooltip "Şaşırmış bir yüz ekle">
+<!ENTITY smiley9Cmd.label "Öpücük">
+<!ENTITY smiley9Cmd.accesskey "p">
+<!ENTITY smiley9Cmd.tooltip "Öpen bir yüz ekle">
+<!ENTITY smiley10Cmd.label "Bağırma">
+<!ENTITY smiley10Cmd.accesskey "r">
+<!ENTITY smiley10Cmd.tooltip "Bağıran bir yüz ekle">
+<!ENTITY smiley11Cmd.label "Kendinden Emin">
+<!ENTITY smiley11Cmd.accesskey "K">
+<!ENTITY smiley11Cmd.tooltip "Kendinden emin bir yüz ekle">
+<!ENTITY smiley12Cmd.label "Para Delisi">
+<!ENTITY smiley12Cmd.accesskey "P">
+<!ENTITY smiley12Cmd.tooltip "Para delisi bir yüz ekle">
+<!ENTITY smiley13Cmd.label "Boşboğaz">
+<!ENTITY smiley13Cmd.accesskey "z">
+<!ENTITY smiley13Cmd.tooltip "Boşboğaz bir yüz ekle">
+<!ENTITY smiley14Cmd.label "Masum">
+<!ENTITY smiley14Cmd.accesskey "s">
+<!ENTITY smiley14Cmd.tooltip "Masum bir yüz ekle">
+<!ENTITY smiley15Cmd.label "Ağlamaklı">
+<!ENTITY smiley15Cmd.accesskey "A">
+<!ENTITY smiley15Cmd.tooltip "Ağlayan bir yüz ekle">
+<!ENTITY smiley16Cmd.label "Ağzı sıkı">
+<!ENTITY smiley16Cmd.accesskey "ğ">
+<!ENTITY smiley16Cmd.tooltip "Ağzı sıkı bir yüz ekle">
+<!ENTITY SmileButton.label "Yüz ifadesi ekle">
+<!ENTITY SmileButton.tooltip "Bir yüz ifadesi ekle">

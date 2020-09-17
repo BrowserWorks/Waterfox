@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "પસંદગી યાદી ગુણધર્મો">
+
+<!ENTITY Select.label "પસંદગી યાદી">
+<!ENTITY SelectName.label "યાદીનું નામ:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "ઊંચાઈ:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "ઘણી પસંદગી">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "નિષ્ક્રિય કરેલ">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "ટૅબ અનુક્રમ:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "વિકલ્પ જૂથ">
+<!ENTITY OptGroupLabel.label "લેબલ:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "નિષ્ક્રિય કરેલ">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "વિકલ્પ">
+<!ENTITY OptionText.label "લખાણ:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "કિંમત:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "પ્રારંભમાં પસંદ થયેલ">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "નિષ્ક્રિય કરેલ">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "લખાણ">
+<!ENTITY ValueHeader.label "કિંમત">
+<!ENTITY SelectedHeader.label "પસંદ કરેલ">
+
+<!ENTITY AddOption.label "વિકલ્પ એડ-ઓન">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "જૂથ એડ-ઓન">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "દૂર કરો">
+<!ENTITY RemoveElement.accesskey "R">
+<!ENTITY MoveElementUp.label "ઉપર ખસેડો">
+<!ENTITY MoveElementUp.accesskey "U">
+<!ENTITY MoveElementDown.label "નીચે ખસેડો">
+<!ENTITY MoveElementDown.accesskey "D">

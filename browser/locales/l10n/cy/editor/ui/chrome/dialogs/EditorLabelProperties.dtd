@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Priodweddau Label">
+
+<!ENTITY Settings.label "Gosodiadau">
+<!ENTITY Settings.accesskey "G">
+
+<!ENTITY EditLabelText.label "Golygu Testun:">
+<!ENTITY EditLabelText.accesskey "T">
+<!ENTITY LabelFor.label "Rheolaeth:">
+<!ENTITY LabelFor.accesskey "R">
+<!ENTITY AccessKey.label "Allwedd Mynediad:">
+<!ENTITY AccessKey.accesskey "A">
+
+<!ENTITY RemoveLabel.label "Tynnu Label">
+<!ENTITY RemoveLabel.accesskey "T">

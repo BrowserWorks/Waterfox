@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "नाम: ">
+<!ENTITY directoryName.accesskey           "n">
+<!ENTITY directoryHostname.label           "मेजबाननाम: ">
+<!ENTITY directoryHostname.accesskey       "o">
+<!ENTITY directoryBaseDN.label             "मूल DN: ">
+<!ENTITY directoryBaseDN.accesskey         "b">
+<!ENTITY findButton.label                  "पता करें">
+<!ENTITY findButton.accesskey              "f">
+<!ENTITY directorySecure.label             "सुरक्षित संबंधन (SSL) का प्रयोग करें">
+<!ENTITY directorySecure.accesskey         "U">
+<!ENTITY directoryLogin.label              "Bind DN: ">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "सामान्य">
+<!ENTITY Offline.tab                       "ऑफलाइन">
+<!ENTITY Advanced.tab                      "उन्नत">
+<!ENTITY portNumber.label                  "पोर्ट संख्या: ">
+<!ENTITY portNumber.accesskey              "p">
+<!ENTITY searchFilter.label                "खोज फिल्टर: ">
+<!ENTITY searchFilter.accesskey            "f">
+<!ENTITY scope.label                       "स्कोप: ">
+<!ENTITY scope.accesskey                   "c">
+<!ENTITY scopeOneLevel.label               "एक स्तर">
+<!ENTITY scopeOneLevel.accesskey           "L">
+<!ENTITY scopeSubtree.label                "उपतरू">
+<!ENTITY scopeSubtree.accesskey            "S">
+<!ENTITY return.label                      "इससे ज्यादा न लौटायें">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "परिणाम">
+<!ENTITY offlineText.label                 "आप इस निर्देशिका की स्थानीय कॉपी डाउनलोड कर सकते हैं ताकि इसका प्रयोग करें जब आप ऑफ़लाइन काम करें.">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">

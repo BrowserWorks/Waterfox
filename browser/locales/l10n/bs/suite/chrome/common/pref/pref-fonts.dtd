@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Fontovi">
+
+<!ENTITY  language.label                          "Fontovi za:">
+
+<!ENTITY  typefaces.label                         "Vrsta fonta">
+<!ENTITY  sizes.label                             "Veličina (u pikselima)">
+
+<!ENTITY  proportional.label                      "Proporcionalno:">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  monospace.label                         "Fiksna širina:">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Dekoracija:">
+<!ENTITY  cursive.label                           "Kurziv:">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Latinski">
+<!ENTITY  font.langGroup.japanese                 "Japanski">
+<!ENTITY  font.langGroup.trad-chinese             "Tradicionalni kineski (Tajvan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Pojednostavljeni kineski">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Tradicionalni kineski (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Korejski">
+<!ENTITY  font.langGroup.cyrillic                 "Ćirilica">
+<!ENTITY  font.langGroup.el                       "Grčki">
+<!ENTITY  font.langGroup.thai                     "Tajlandski">
+<!ENTITY  font.langGroup.hebrew                   "Hebrejski">
+<!ENTITY  font.langGroup.arabic                   "Arapski">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamilski">
+<!ENTITY  font.langGroup.armenian                 "Armenski">
+<!ENTITY  font.langGroup.bengali                  "Bengalski">
+<!ENTITY  font.langGroup.canadian                 "Objedinjeni kanadski slogovni">
+<!ENTITY  font.langGroup.ethiopic                 "Etiopski">
+<!ENTITY  font.langGroup.georgian                 "Gruzijski">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Kmerski">
+<!ENTITY  font.langGroup.malayalam                "Malezijski">
+<!ENTITY  font.langGroup.math                     "Matematički">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Sinhala">
+<!ENTITY  font.langGroup.tibetan                  "Tibetanski">
+<!ENTITY  font.langGroup.other                    "Ostali sistemi pisanja">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Minimalna veličina fonta:">
+<!ENTITY minSize.none                             "Nijedna">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  useDocumentFonts.label                  "Dozvoli dokumentima da koriste druge fontove">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Kada web stranica odabire vlastite fontove">
+<!ENTITY  useDefaultFont.label                    "Koristi moje izvorne fontove, ignorišući fontove koje je stranica odabrala">

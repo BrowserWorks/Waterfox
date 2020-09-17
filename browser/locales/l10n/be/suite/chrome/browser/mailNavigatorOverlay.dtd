@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label "Ліст">
+<!ENTITY newMessageCmd.accesskey "Л">
+<!ENTITY newMessageCmd.key "M">
+<!ENTITY newContactCmd.label "Сувязь…">
+<!ENTITY newContactCmd.accesskey "С">
+<!ENTITY sendPage.label "Даслаць старонку…">
+<!ENTITY sendPage.accesskey "Д">
+<!ENTITY contextSendThisPage.label "Даслаць гэтую старонку…">
+<!ENTITY contextSendThisPage.accesskey "с">
+<!ENTITY contextSendThisLink.label "Даслаць гэтую спасылку…">
+<!ENTITY contextSendThisLink.accesskey "у">
+<!ENTITY contextSendImage.label "Даслаць выяву…">
+<!ENTITY contextSendImage.accesskey "Д">
+<!ENTITY contextSendVideo.label "Даслаць відэя…">
+<!ENTITY contextSendVideo.accesskey "Д">
+<!ENTITY contextSendAudio.label "Даслаць гук…">
+<!ENTITY contextSendAudio.accesskey "Д">
+<!ENTITY contextSendFrame.label "Даслаць рамку…">
+<!ENTITY contextSendFrame.accesskey "ц">
+<!ENTITY sendLinkCmd.label "Даслаць спасылку…">
+<!ENTITY sendLinkCmd.accesskey "п">

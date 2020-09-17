@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- LOCALIZATION NOTE (messengerCmd.label): DONT_TRANSLATE -->
+<!ENTITY messengerCmd.label					"Sähköposti ja keskusteluryhmät">
+<!ENTITY messengerCmd.accesskey				"ä">
+<!ENTITY messengerCmd.commandkey			"2">
+<!ENTITY addressBookCmd.label				"Osoitekirja">  
+<!ENTITY addressBookCmd.accesskey			"O">
+<!ENTITY addressBookCmd.commandkey			"5">
+
+<!ENTITY taskMessenger.tooltip  "Sähköposti ja keskusteluryhmät">
+<!ENTITY taskAddressBook.tooltip  "Osoitekirja">
+
+<!-- searchAddressesCmd is also used by addressbook -->
+<!ENTITY searchAddressesCmd.label                       "Etsi osoitteista…">
+<!ENTITY searchAddressesCmd.accesskey                   "o">
+
+<!ENTITY searchMailCmd.label "Etsi viesteistä…">
+<!ENTITY searchMailCmd.accesskey "v">
+<!ENTITY searchMailCmd.key "f">

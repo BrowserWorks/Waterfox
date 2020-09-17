@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nove dossier de recerca salvate">
+<!ENTITY name.label                 "Nomine:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Crear como subdossier de:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "Configurar le criterios de recerca usate pro iste dossier de recerca salvate: ">
+
+<!ENTITY folderSelectionCaption.label "Selige le dossiers in le quales cercar: ">
+<!ENTITY chooseFoldersButton.label "Eliger…">
+<!ENTITY chooseFoldersButton.accesskey "E">
+
+<!ENTITY searchOnline.label "Cercar in linea (da resultatos actualisate pro dossiers IMAP e de gruppos ma augmenta le tempore necessari pro aperir le dossier)">
+<!ENTITY searchOnline.accesskey "S">
+<!ENTITY newFolderButton.label       "Crear">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "Actualisar">
+<!ENTITY editFolderButton.accesskey  "u">

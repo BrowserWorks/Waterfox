@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Cài đặt máy chủ gửi đi (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Khi quản lý danh tính của bạn, bạn có thể sử dụng máy chủ từ danh sách này bằng cách chọn nó làm máy chủ thư đi (SMTP) hoặc bạn có thể sử dụng máy chủ mặc định từ danh sách này bằng cách chọn &quot;Sử dụng máy chủ mặc định&quot;.">
+
+<!ENTITY smtpListAdd.label  "Thêm…">
+<!ENTITY smtpListAdd.accesskey  "d">
+<!ENTITY smtpListEdit.label "Chỉnh sửa…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "Xóa">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "Đặt thành mặc định">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDetails.label "Chi tiết về máy chủ được chọn:">
+<!ENTITY serverDescription.label "Mô tả: ">
+<!ENTITY serverName.label "Tên máy chủ: ">
+<!ENTITY serverPort.label "Cổng: ">
+<!ENTITY userName.label   "Tên đăng nhập: ">
+<!ENTITY connectionSecurity.label "Bảo mật kết nối: ">
+<!ENTITY authMethod.label   "Phương thức xác thực: ">

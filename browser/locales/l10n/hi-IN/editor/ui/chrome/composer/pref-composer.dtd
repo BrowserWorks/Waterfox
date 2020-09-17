@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "कंपोजर">
+
+<!ENTITY  saving                        "सहेज रहा है">
+<!ENTITY  AutoSaveCheck                 "स्वचालित रूप से सहेजता है हर">
+<!ENTITY  minText                       "मिनट">
+
+<!ENTITY  exterLegend.label             "बाहरी संपादक">
+<!ENTITY  htmlSource                    "HTML श्रोत:">
+<!ENTITY  imageeditor                   "चित्र:">
+<!ENTITY  chooseButton.label            "चुनें">
+
+<!ENTITY  recentFiles.title             "हाल का पृष्ठ मेनू">
+<!ENTITY  documentsInMenu.label         "सूचीबद्ध पृष्ठ की अधिकतम संख्या:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+
+<!ENTITY  savingFiles.title             "जब पृष्ठ सहेज या प्रकाशित कर रहा हो">
+<!ENTITY  preserveExisting.label        "मौलिक संरूपण संरक्षित रखें">
+<!ENTITY  preserveExisting.accesskey    "P">
+<!ENTITY  preserveExisting.tooltip      "पंक्ति टूटन और पेज के मौलिक संरूपण को संरक्षित रखें">
+<!ENTITY  saveAssociatedFiles.label     "चित्र व अन्य फाइल को पृष्ठ सहेजने के दौरान सहेजें">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "हमेशा प्रकाशित संवाद दिखायें जब पृष्ठ प्रकाशित किया जा रहा हो">
+<!ENTITY  showPublishDialog.accesskey   "A">
+
+<!ENTITY  composerEditing.label         "संपादन कर रहा है">
+<!ENTITY  maintainStructure.label       "सेल डालने या हटाने के दौरान तालिका लेआउट बनाये रखें">
+<!ENTITY  maintainStructure.tooltip     "तालिका के आयताकार आकार को स्वचालित रूप से संरक्षित रखें सेल के डालने व मिटाने के बाद">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "CSS शैली का प्रयोग करें HTML तत्व व गुण के बजाय">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "अनुच्छेद में आना हमेशा एक नया अनुच्छेद बनाता है">
+<!ENTITY  crInPCreatesNewP.accesskey    "R">

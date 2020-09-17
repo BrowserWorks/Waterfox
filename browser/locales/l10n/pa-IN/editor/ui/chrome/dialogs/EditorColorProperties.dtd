@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ਪੇਜ਼ ਰੰਗ ਅਤੇ ਬੈਕਗਰਾਊਂਡ">
+<!ENTITY pageColors.label "ਪੇਜ਼ ਰੰਗ">
+<!ENTITY defaultColorsRadio.label "ਪੜ੍ਹਨ ਲਈ ਡਿਫਾਲਟ ਰੰਗ (ਪੇਜ਼ ਵਿੱਚ ਰੰਗ ਨਾ ਚੁਣੋ)">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "ਦਰਸ਼ਕ ਬਰਾਊਜ਼ਰ ਤੋਂ ਹੀ ਰੰਗ ਸੈਟਿੰਗ ਚੁਣੋ">
+<!ENTITY customColorsRadio.label "ਕਸਟਮ ਰੰਗ ਵਰਤੋਂ:">
+<!ENTITY customColorsRadio.accessKey "C">
+<!ENTITY customColorsRadio.tooltip "ਇਹ ਰੰਗ ਸੈਟਿੰਗ ਦਰਸ਼ਕ ਬਰਾਊਜ਼ਰ ਸੈਟਿੰਗ ਨੂੰ ਤਬਦੀਲ ਕਰ ਦੇਵੇਗੀ">
+
+<!ENTITY normalText.label "ਸਧਾਰਨ ਟੈਕਸਟ">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "ਲਿੰਕ ਟੈਕਸਟ">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "ਸਰਗਰਮ ਲਿੰਕ ਟੈਕਸਟ">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "ਖੋਲ੍ਹੇ ਲਿੰਕ ਟੈਕਸਟ">
+<!ENTITY visitedLinkText.accessKey "V">
+<!ENTITY background.label "ਬੈਕਗਰਾਊਂਡ:">
+<!ENTITY background.accessKey "B">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "ਬੈਕਗਰਾਊਂਡ ਚਿੱਤਰ:">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "ਆਪਣੇ  ਪੇਜ਼ ਦੀ ਬੈਕਗਰਾਊਂਡ ਲਈ ਇੱਕ ਚਿੱਤਰ ਫਾਇਲ਼ ਦੀ ਵਰਤੋਂ ਕਰੋ">

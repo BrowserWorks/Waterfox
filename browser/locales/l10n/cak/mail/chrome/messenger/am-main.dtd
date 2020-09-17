@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Kinuk'ulem Rub'i' Taqoya'l">
+<!ENTITY accountName.label "Rub'i' Taqoya'l:">
+<!ENTITY accountName.accesskey "b">
+<!ENTITY identityTitle.label "B'anikil kan K'o wi">
+<!ENTITY identityDesc.label "Chi kijujunal ri taq rub'i' taqoya'l k'o jun kib'anikil, ja ri' ri etamab'äl nikitz'ë ch'aqa' chik winaqi' toq yekisik'ij ri taq atzijol.">
+<!ENTITY name.label "Ab'i':">
+<!ENTITY name.accesskey "A">
+<!ENTITY email.label "Rochochib'al Taqoya'l:">
+<!ENTITY email.accesskey "T">
+<!ENTITY replyTo.label "Tzolin-Tzij Ochochib'äl:">
+<!ENTITY replyTo.accesskey "o">
+<!ENTITY replyTo.placeholder "Ri k'ulunela' xtikitzolij tzij pa re jun chik ochochib'äl re'">
+<!ENTITY organization.label "Moloj:">
+<!ENTITY organization.accesskey "M">
+<!ENTITY signatureText.label "Rucholajem rutzij juch'un b'i'aj:">
+<!ENTITY signatureText.accesskey "c">
+<!ENTITY signatureHtml.label "Tokisäx HTML (tz'et.: &lt;b&gt;q'eqatz'ib'&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Titz'aqatisäx ri juch'un b'i'aj rik'in jun yakb'äl (rucholajem tzij, HTML, o wachib'äl):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Tinuk'…">
+<!ENTITY choose.label "Ticha'…">
+<!ENTITY choose.accesskey "c">
+<!ENTITY editVCard.label "Tinuk' Pirt'im…">
+<!ENTITY editVCard.accesskey "n">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Titz'aqatisäx ri vCard wichin pa taq tzijol">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Kenuk'samajïx taq B'anikil…">
+<!ENTITY manageIdentities.accesskey "K">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "K'uxasamaj Elem (SMTP):">
+<!ENTITY smtpName.accesskey "e">
+<!ENTITY smtpDefaultServer.label "Tokisäx ri K'uxasamaj ri ruk'amon wi pe">
+
+<!ENTITY smtpServerEdit.label "Tinuk' SMTP k'uxasamaj…">
+<!ENTITY smtpServerEdit.accesskey "P">

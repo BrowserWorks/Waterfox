@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "ગાળક લોગ">
+<!ENTITY viewLogInfo.text "ગાળક લોગ એ ફાઈલ છે કે જે શું ગાળકો ચાલ્યા કે નહિં તેનું દસ્તાવેજીકરણ કરે છે. લોગ કરવાનું સક્રિય કરવા માટે નીચેનો ચકાસણી બોક્સ વાપરો.">
+<!ENTITY clearLog.label "લોગ સાફ કરો">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "ગાળક લોગ સક્રિય કરો">
+<!ENTITY enableLog.accesskey "E">
+<!ENTITY closeLog.label "બંધ કરો">
+<!ENTITY closeLog.accesskey "o">

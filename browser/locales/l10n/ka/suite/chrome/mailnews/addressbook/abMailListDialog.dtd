@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindow.title           "დაგზავნის სია">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "დამატება: ">
+<!ENTITY addToAddressBook.accesskey     "დ">
+<!ENTITY ListName.label                 "სიის სახელი: ">
+<!ENTITY ListName.accesskey             "ხ">
+<!ENTITY ListNickName.label             "სიის მეტსახელი: ">
+<!ENTITY ListNickName.accesskey         "მ">
+<!ENTITY ListDescription.label          "აღწერილობა: ">
+<!ENTITY ListDescription.accesskey      "ღ">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "მიუთითეთ ელფოსტის მისამართები დაგზავნის სიაში ჩასამატებლად:">
+<!ENTITY AddressTitle.accesskey         "ფ">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "Prebieha preberanie súboru…">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "Pozastaviť">
+<!ENTITY cmd.resume.tooltip              "Pokračovať">
+<!ENTITY cmd.retry.tooltip               "Znova">
+<!ENTITY cmd.cancel.tooltip              "Zrušiť">
+<!ENTITY cmd.open.label                  "Otvoriť">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "Otvoriť priečinok so súborom">
+<!ENTITY cmd.show.accesskey              "t">
+<!ENTITY cmd.goToDownloadPage.label      "Prejsť na stránku so súborom">
+<!ENTITY cmd.goToDownloadPage.accesskey  "r">
+<!ENTITY cmd.copyDownloadLink.label      "Kopírovať adresu súboru">
+<!ENTITY cmd.copyDownloadLink.accesskey  "K">
+<!ENTITY closeWhenDone.label             "Po dokončení preberania zavrieť toto okno.">
+<!ENTITY closeWhenDone.accesskey         "d">

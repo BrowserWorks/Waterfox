@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Benvenite a &brandShortName;">
+<!ENTITY header2.label "Desira tu un nove adresse email?">
+<!ENTITY other.languages "Nos monstra solo le fornitores que offere adresses in tu area.· Clicca hic pro monstrar tote le fornitores.">
+<!ENTITY error.line1 "Desolate, impossibile trovar ulle adresses email suggerite.">
+<!ENTITY error.line2 "Tu pote tentar de cercar pseudonymos o ulle altere termino pro trovar plus emails.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Alsi tu pote provar un del">
+<!ENTITY error.suggest.middle "alternativas de conto email gratuite">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Holla ">
+<!ENTITY success.title.after ", le sequente adresses email es disponibile pro te:">
+<!ENTITY success.tip "(Tu pote alsi cercar pseudonymos o ulle altere termino pro trovar plus emails)">
+<!ENTITY partnership.description "In societate con plure fornitores, &brandShortName; pote offerer te un nove conto email. Justo plena tu prenomine e nomine de familia o ulle altere parolas que te place, in le campos supra, pro comenciar.">
+<!ENTITY existing.header "Ha tu jam un adresse que tu desira usar?">
+<!ENTITY tinyheader.title "Ha tu jam un adresse?">
+<!ENTITY tinyheader.existing "Saltar isto e usar mi email existente">
+<!ENTITY content.close "Io pensa que io configurara mi conto plus tarde.">
+<!ENTITY successful.title "Congratulationes!">
+<!ENTITY successful.successMessage "Tu ha implementate con successo tu conto.">
+<!ENTITY successful.write "Scriber alcun email">
+<!ENTITY successful.write.desc "Lassa tu amicos e familiares saper re tu nove adresse.<br/> Pro isto tu ha recipite iste nove conto, nonne?">
+<!ENTITY successful.customize "Personalisa &brandShortName; con alcun fresc additivos">
+<!ENTITY successful.customize.desc "Il ha milles de additivos pro personalisar &brandShortName; pro satisfacer tu specific necessitates.">
+<!ENTITY successful.attach "Attaccar un firma personal a mi email">
+<!ENTITY successful.attach.desc "Tu pote automaticamente attaccar un citation o alcun informationes re te mesme al fin de cata message que tu invia.">
+<!ENTITY successful.close "Clauder iste fenestra.">
+<!ENTITY input.namePlaceholder "Tu nomine, o pseudonymo">
+<!ENTITY input.search "Cercar">
+<!ENTITY search_engine.title "Personalisa tu motor de recerca">
+<!ENTITY search_engine.message "Tu fornitor de servicios email pote alsi fornir te capacitates de recerca web.">
+<!ENTITY search_engine.button "Finir">

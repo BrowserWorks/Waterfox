@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Chalender">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Eveniment…">
+<!ENTITY lightning.menupopup.new.event.accesskey "E">
+<!ENTITY lightning.menupopup.new.task.label     "Incumbensa…">
+<!ENTITY lightning.menupopup.new.task.accesskey "I">
+<!ENTITY lightning.menupopup.new.calendar.label "Chalendar…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "n">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Avrir">
+<!ENTITY lightning.menupopup.open.accesskey           "A">
+<!ENTITY lightning.menupopup.open.message.label       "Messadi memorisà…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "m">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Datoteca da chalender…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "c">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Chalender">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "Incumbensas">
+<!ENTITY lightning.menu.view.tasks.accesskey           "u">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Eveniments ed incumbensas">
+<!ENTITY lightning.menu.eventtask.accesskey            "v">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-Mail:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Preferir l'agendaziun dad e-mail da vart dal client">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Per entant pos ti mo activar questa opziun suenter avair configurà quest chalender en ses dialog da caracteristicas sch'il server dal chalender s'occupa da l'agendaziun.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Questa opziun è mo disponibla sch'il server dal chalender s'occupa da l'agendaziun. Activar permetta da duvrar l'agendaziun dad e-mail da standard sco alternativa en cas da panna enstagl da surlaschar quai al server.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Acceptar">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Acceptar l'invitaziun a l'eveniment">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Acceptar tuts">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Acceptar l'invitaziun per mintga occurrenza da quest eveniment">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Agiuntar">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Agiuntar l'eveniment al chalender">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Refusar">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Refusar l'invit a l'eveniment">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Refusar tuts">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Refusar l'invit per mintga occurrenza da quest eveniment">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Refusar">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Refusar la cuntraproposta">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Stizzar">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Stizzar dal chalender">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Detagls…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Mussar ils detagls da l'eveniment">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Betg ma mussar quests messadis">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Chalender">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Midar al tab dal chalender">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Dapli">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Cliccar qua per mussar ulteriuras opziuns">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Re-confermar">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Trametta ina re-conferma a l'organisatur">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Spustar">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Spustar l'eveniment">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Memorisar ina copia">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Memorisar ina copia da l'eveniment en il chalender, independentamain dad ina resposta a l'organisatur. La glista dals participants vegn stizzada.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Provisoric">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Acceptar provisoricamain l'invitaziun a l'eveniment">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Tuts provisoric">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Acceptar l'invitaziun a l'eveniment provisoricamain per mintga occurrenza da quest eveniment">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Actualisar">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Actualisar l'eveniment en il chalender">
+<!ENTITY lightning.imipbar.description                                      "Quest messadi cuntegna ina invitiaziun ad in'eveniment.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Trametter ussa ina resposta">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Trametter ina resposta a l'organisatur">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Trametter ina resposta a l'organisatur per l'entira seria">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Betg trametter ina resposta">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Midar tes status da participaziun senza trametter ina resposta a l'organisatur">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Midar tes status da participaziun per l'entira seria senza trametter ina resposta a l'organisatur">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Crear in nov chalender">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Mussar Mini-mais">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Mussar Mini-di">
+<!ENTITY todaypane.showMiniday.accesskey  "d">
+<!ENTITY todaypane.showNone.label "Mussar Nagut">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Mussar la trav Oz">
+<!ENTITY todaypane.showTodayPane.accesskey "o">
+<!ENTITY todaypane.statusButton.label "Trav Oz">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Vstavi znak">
+<!ENTITY category.label "Kategorija">
+<!ENTITY letter.label "Črka:">
+<!ENTITY letter.accessKey "Č">
+<!ENTITY character.label "Znak:">
+<!ENTITY character.accessKey "Z">
+<!ENTITY accentUpper.label "Velike črke z naglasnimi znamenji">
+<!ENTITY accentLower.label "Male črke z naglasnimi znamenji">
+<!ENTITY otherUpper.label "Ostale velike črke">
+<!ENTITY otherLower.label "Ostale male črke">
+<!ENTITY commonSymbols.label "Pogosti simboli">
+<!ENTITY insertButton.label "Vstavi">
+<!ENTITY closeButton.label "Zapri">

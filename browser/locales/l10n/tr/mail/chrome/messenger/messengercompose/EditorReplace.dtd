@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Bul ve Değiştir">
+<!ENTITY findField.label "Aranacak metin:">
+<!ENTITY findField.accesskey "A">
+<!ENTITY replaceField.label "Bununla değiştir:">
+<!ENTITY replaceField.accesskey "d">
+<!ENTITY caseSensitiveCheckbox.label "Büyük/küçük harfe duyarlı">
+<!ENTITY caseSensitiveCheckbox.accesskey "B">
+<!ENTITY wrapCheckbox.label "Baştan başla">
+<!ENTITY wrapCheckbox.accesskey "B">
+<!ENTITY backwardsCheckbox.label "Geriye doğru ara">
+<!ENTITY backwardsCheckbox.accesskey "y">
+<!ENTITY findNextButton.label "Sonrakini bul">
+<!ENTITY findNextButton.accesskey "S">
+<!ENTITY replaceButton.label "Değiştir">
+<!ENTITY replaceButton.accesskey "e">
+<!ENTITY replaceAndFindButton.label "Değiştir ve bul">
+<!ENTITY replaceAndFindButton.accesskey "D">
+<!ENTITY replaceAllButton.label "Tümünü değiştir">
+<!ENTITY replaceAllButton.accesskey "T">
+<!ENTITY closeButton.label "Kapat">
+<!ENTITY closeButton.accesskey "K">

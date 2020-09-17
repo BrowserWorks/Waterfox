@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "E-mail">
+<!ENTITY readMsgsLink.label           "Messadis legids">
+<!ENTITY composeMsgLink.label         "Scriver in nov messadi">
+
+<!ENTITY newsSectionHdr.label         "Gruppas da discussiun">
+<!ENTITY subscribeNewsLink.label      "Administrar abunaments da gruppas da discussiun">
+
+<!ENTITY feedsSectionHdr.label        "Feeds">
+<!ENTITY subscribeFeeds.label         "Administrar ils abunaments">
+
+<!ENTITY chat.label                   "Chat">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Contos">
+<!ENTITY subscribeImapFolders.label   "Administrar abunaments dad ordinaturs">
+<!ENTITY settingsLink.label           "Vesair la configuraziun da quest conto">
+<!ENTITY setupNewAcct.label           "Configurar in conto:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Funcziunalitads avanzadas">
+<!ENTITY searchMsgsLink.label         "Tschertgar messadis">
+<!ENTITY filtersLink.label            "Administrar ils filters da messadis">
+<!ENTITY junkSettings.label           "Configuraziun dal filter per messadis nungiavischads">
+<!ENTITY offlineLink.label            "Configuraziuns offline">

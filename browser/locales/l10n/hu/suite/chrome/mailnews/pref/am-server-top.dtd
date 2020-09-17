@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+
+<!ENTITY messageStorage.label "Üzenettároló">
+<!ENTITY securitySettings.label "Biztonsági beállítások">
+<!ENTITY serverSettings.label "Kiszolgáló beállításai">
+<!ENTITY serverType.label "Kiszolgálótípus:">
+<!ENTITY serverName.label "Kiszolgáló:">
+<!ENTITY serverName.accesskey "K">
+<!ENTITY userName.label "Felhasználónév:">
+<!ENTITY userName.accesskey "F">
+<!ENTITY port.label "Port:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Alapértelmezett:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Új üzenetek ellenőrzése ">
+<!ENTITY biffStart.accesskey "k">
+<!ENTITY biffEnd.label "percenként">
+<!ENTITY useIdleNotifications.label "Azonnali kiszolgálóértesítések engedélyezése új üzenetek érkezésekor">
+<!ENTITY useIdleNotifications.accesskey "e">
+<!ENTITY connectionSecurity.label "Connection security:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "None">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ha elérhető">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Hitelesítési módszer: ">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Üzenetek megtartása a kiszolgálón">
+<!ENTITY leaveOnServer.accesskey "m">
+<!ENTITY headersOnly.label "Csak a fejlécek letöltése">
+<!ENTITY headersOnly.accesskey "f">
+<!ENTITY deleteByAgeFromServer.label "Legfeljebb">
+<!ENTITY deleteByAgeFromServer.accesskey "L">
+<!ENTITY daysEnd.label "napig">
+<!ENTITY deleteOnServer2.label "Helyben törölt üzenetek eltávolítása a kiszolgálóról">
+<!ENTITY deleteOnServer2.accesskey "t">
+<!ENTITY downloadOnBiff.label "Új üzenetek automatikus letöltése">
+<!ENTITY downloadOnBiff.accesskey "a">
+<!ENTITY username.label "Az Ön felhasználóneve">
+<!ENTITY deleteMessagePrefix.label "Üzenet törlésekor:">
+<!ENTITY modelMoveToTrash.label "Áthelyezés ebbe a mappába:">
+<!ENTITY modelMoveToTrash.accesskey "e">
+<!ENTITY modelMarkDeleted.label "Megjelölés töröltként">
+<!ENTITY modelMarkDeleted.accesskey "j">
+<!ENTITY modelDeleteImmediately.label "Törlés azonnal">
+<!ENTITY modelDeleteImmediately.accesskey "T">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "A Beérkezett üzenetek mappa kitisztítása kilépéskor">
+<!ENTITY expungeOnExit.accesskey "k">
+<!ENTITY emptyTrashOnExit.label "A Törölt elemek mappa ürítése kilépéskor">
+<!ENTITY emptyTrashOnExit.accesskey "r">
+<!ENTITY loginAtStartup.label "Új üzenetek ellenőrzése indításkor">
+<!ENTITY loginAtStartup.accesskey "e">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+	 of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Jóváhagyás kérése, ha">
+<!ENTITY maxMessagesStart.accesskey "J">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "üzenetnél többet kellene letölteni">
+<!ENTITY alwaysAuthenticate.label "Hitelesítés kérése mindig, amikor ehhez a kiszolgálóhoz kapcsolódik">
+<!ENTITY alwaysAuthenticate.accesskey "H">
+<!ENTITY newsrcFilePath.label "newsrc fájl:">
+<!ENTITY newsrcPicker.label "Newsrc fájl kiválasztása">
+<!ENTITY abbreviate.label "Hírcsoportnevek megjelenítése a Levelezőmappák panelen:">
+<!ENTITY abbreviateOn.label "Teljes névvel (például: 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Rövidített névvel (például: 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Speciális…">
+<!ENTITY serverDefaultCharset2.label "Alapértelmezett kódolás:">
+<!ENTITY advancedButton.accesskey "S">
+<!ENTITY localPath.label "Helyi könyvtár:">
+<!ENTITY localFolderPicker.label "Helyi könyvtár kiválasztása">
+<!ENTITY browseFolder.label "Tallózás…">
+<!ENTITY browseFolder.accesskey "T">
+<!ENTITY browseNewsrc.label "Tallózás…">
+<!ENTITY browseNewsrc.accesskey "a">
+
+<!ENTITY accountTitle.label "Postafiók beállítások">
+<!ENTITY accountSettingsDesc.label "Ez egy speciális fiók. Nincs hozzá személyazonosság társítva.">
+<!ENTITY storeType.label "Üzenettároló típusa:">
+<!ENTITY storeType.accesskey "t">
+<!ENTITY mboxStore2.label "Minden mappa külön fájlba (mbox)">
+<!ENTITY maildirStore.label "Minden üzenet külön fájlba (maildir)">

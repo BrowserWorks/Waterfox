@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Client per defecte">
+<!ENTITY defaultClient.intro  "Utilitza el &brandShortName; com client per defecte per a:">
+
+<!ENTITY browser.label "Navegador">
+<!ENTITY email.label "Correu electrònic">
+<!ENTITY newsgroups.label "Grups de discussió">
+<!ENTITY feeds.label "Canals">
+
+<!ENTITY checkOnStartup.label "Fes sempre aquesta comprovació quan s'iniciï el &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "a">

@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Tietojen hallinta">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "Kaikki tietotyypit">
+<!ENTITY select.cookies.label "Vain evästeet">
+<!ENTITY select.permissions.label "Vain oikeudet">
+<!ENTITY select.preferences.label "Vain asetukset">
+<!ENTITY select.passwords.label "Vain salasanat">
+<!ENTITY select.storage.label "Vain tietovarastot">
+
+<!ENTITY domain.search.placeholder "Etsi verkkoalueista">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Verkkoalue">
+
+<!ENTITY domain.ctx.forgetdomain.label "Unohda tämä verkkoalue">
+<!ENTITY domain.ctx.forgetdomain.accesskey "U">
+<!ENTITY domain.ctx.forgetglobal.label "Unohda globaalit tiedot">
+<!ENTITY domain.ctx.forgetglobal.accesskey "U">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Evästeet">
+<!ENTITY tab.permissions.label "Oikeudet">
+<!ENTITY tab.preferences.label "Asetukset">
+<!ENTITY tab.passwords.label "Salasanat">
+<!ENTITY tab.storage.label "Tietovarastot">
+<!ENTITY tab.formdata.label "Lomaketiedot">
+<!ENTITY tab.forget.label "Unohda">
+
+<!-- cookies -->
+<!ENTITY cookies.description "Tietokoneellasi on seuraavat tämän verkkoalueen asettamat evästeet:">
+
+<!ENTITY cookies.tree.host.label "Sivusto">
+<!ENTITY cookies.tree.name.label "Evästeen nimi">
+<!ENTITY cookies.tree.expires.label "Vanhenee">
+
+<!ENTITY cookies.infobox.label "Valitun evästeen tiedot">
+
+<!ENTITY cookies.info.name.label "Nimi:">
+<!ENTITY cookies.info.value.label "Sisältö:">
+<!ENTITY cookies.info.host.label "Palvelin:">
+<!ENTITY cookies.info.domain.label "Verkkoalue:">
+<!ENTITY cookies.info.path.label "Polku:">
+<!ENTITY cookies.info.sendtype.label "Lähetä:">
+<!ENTITY cookies.info.expires.label "Vanhenee:">
+
+<!ENTITY cookies.ctx.remove.label "Poista">
+<!ENTITY cookies.ctx.remove.accesskey "P">
+<!ENTITY cookies.ctx.selectAll.label "Valitse kaikki">
+<!ENTITY cookies.ctx.selectAll.accesskey "V">
+
+<!ENTITY cookies.button.remove.label "Poista">
+<!ENTITY cookies.button.remove.accesskey "P">
+
+<!ENTITY cookies.blockOnRemove.label "Estä poistettuja sivustoja asettamasta evästeitä jatkossa">
+<!ENTITY cookies.blockOnRemove.accesskey "E">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "Oletus">
+<!ENTITY perm.AskAlways "Kysy aina">
+<!ENTITY perm.NeverSave "Älä koskaan tallenna">
+<!ENTITY perm.Allow "Salli">
+<!ENTITY perm.AllowSameDomain "Salli samalta verkkoalueelta">
+<!ENTITY perm.AllowSession "Salli istunnon ajaksi">
+<!ENTITY perm.Block "Estä">
+
+<!ENTITY perm.host.placeholder "Kirjoita palvelinnimi">
+<!ENTITY perm.button.add.label "Lisää">
+<!ENTITY perm.button.add.accesskey "L">
+
+<!-- preferences -->
+<!ENTITY prefs.description "Sisältöasetukset ovat &brandShortName;n tapa tallentaa sivustokohtaiset asetukset, esim. sivun suurennus.">
+
+<!ENTITY prefs.tree.host.label "Sivusto">
+<!ENTITY prefs.tree.name.label "Asetuksen nimi">
+<!ENTITY prefs.tree.value.label "Arvo">
+
+<!ENTITY prefs.ctx.remove.label "Poista">
+<!ENTITY prefs.ctx.remove.accesskey "P">
+<!ENTITY prefs.ctx.selectAll.label "Valitse kaikki">
+<!ENTITY prefs.ctx.selectAll.accesskey "V">
+
+<!ENTITY prefs.button.remove.label "Poista">
+<!ENTITY prefs.button.remove.accesskey "P">
+
+<!-- passwords -->
+<!ENTITY pwd.description "Seuraavat salasanat on tallennettu tätä verkkoaluetta varten:">
+
+<!ENTITY pwd.tree.host.label "Sivusto">
+<!ENTITY pwd.tree.username.label "Käyttäjätunnus">
+<!ENTITY pwd.tree.password.label "Salasana">
+
+<!ENTITY pwd.ctx.remove.label "Poista">
+<!ENTITY pwd.ctx.remove.accesskey "P">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Kopioi salasana">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "K">
+<!ENTITY pwd.ctx.selectAll.label "Valitse kaikki">
+<!ENTITY pwd.ctx.selectAll.accesskey "V">
+
+<!ENTITY pwd.button.remove.label "Poista">
+<!ENTITY pwd.button.remove.accesskey "P">
+
+<!-- storage -->
+<!ENTITY storage.description "Tämä verkkoalue käyttää seuraavia tietokoneellesi tallennettuja tietovarastoja:">
+
+<!ENTITY storage.tree.host.label "Sivusto">
+<!ENTITY storage.tree.type.label "Tyyppi">
+<!ENTITY storage.tree.size.label "Koko">
+
+<!ENTITY storage.ctx.remove.label "Poista">
+<!ENTITY storage.ctx.remove.accesskey "o">
+<!ENTITY storage.ctx.selectAll.label "Valitse kaikki">
+<!ENTITY storage.ctx.selectAll.accesskey "a">
+
+<!ENTITY storage.button.remove.label "Poista">
+<!ENTITY storage.button.remove.accesskey "o">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "Hakukenttätiedot">
+
+<!ENTITY fdata.tree.fieldname.label "Kentän nimi">
+<!ENTITY fdata.tree.value.label "Kirjoitettu arvo">
+<!ENTITY fdata.tree.usecount.label "Käyttökerrat">
+<!ENTITY fdata.tree.firstused.label "Käytetty ensimmäisen kerran">
+<!ENTITY fdata.tree.lastused.label "Käytetty viimeksi">
+
+<!ENTITY fdata.ctx.remove.label "Poista">
+<!ENTITY fdata.ctx.remove.accesskey "P">
+<!ENTITY fdata.ctx.selectAll.label "Valitse kaikki">
+<!ENTITY fdata.ctx.selectAll.accesskey "V">
+
+<!ENTITY fdata.button.remove.label "Poista">
+<!ENTITY fdata.button.remove.accesskey "P">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Evästeet">
+<!ENTITY forget.cookies.accesskey "E">
+<!ENTITY forget.permissions.label "Oikeudet">
+<!ENTITY forget.permissions.accesskey "O">
+<!ENTITY forget.preferences.label "Sisältöasetukset">
+<!ENTITY forget.preferences.accesskey "S">
+<!ENTITY forget.passwords.label "Salasanat">
+<!ENTITY forget.passwords.accesskey "a">
+<!ENTITY forget.storage.label "Tietovarastot">
+<!ENTITY forget.storage.accesskey "T">
+<!ENTITY forget.formdata.label "Lomaketiedot">
+<!ENTITY forget.formdata.accesskey "L">
+
+<!ENTITY forget.button.label "Unohda tämä tieto">
+<!ENTITY forget.button.accesskey "U">

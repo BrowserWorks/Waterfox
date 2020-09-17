@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; Անվտանգ եղանակ">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; այժմ գործում է անվտանգ եղանակում, որը ժամանակավորապես անջատում է Ձեր անհատական կարգավորումները, թեմաներն ու հավելումները:">
+<!ENTITY safeModeDescription2.label       "Դուք կարող էք այս փոփոխությունների մի մասը կամ ամբողջը դարձնել մշտական`">
+
+<!ENTITY disableAddons.label              "Անջատել բոլոր օժանդակիչները">
+<!ENTITY disableAddons.accesskey          "D">
+
+<!ENTITY resetToolbars.label              "Ետարկել գործիքները և կառավարիչները">
+<!ENTITY resetToolbars.accesskey          "R">
+
+<!ENTITY changeAndRestartButton.label     "Փոփոխել և վերագործարկել">
+<!ENTITY changeAndRestartButton.accesskey "M">
+
+<!ENTITY continueButton.label             "Շարունակել անվտանգ եղանակով">
+<!ENTITY continueButton.accesskey         "C">

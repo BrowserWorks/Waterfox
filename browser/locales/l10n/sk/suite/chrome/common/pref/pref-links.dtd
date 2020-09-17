@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Správanie sa odkazov">
+<!ENTITY newWindow.label "Správanie pri otváraní odkazov">
+<!ENTITY newWindowDescription.label "Otvárať odkazy, ktoré sa majú otvoriť v okne:">
+<!ENTITY newWindowRestriction.label "Keď skript chce otvoriť nové okno:">
+<!ENTITY external.label "Odkazy z iných aplikácií">
+<!ENTITY externalDescription.label "Odkazy z iných aplikácií otvárať:">
+<!ENTITY openCurrent.label "V aktuálnej karte/okne">
+<!ENTITY newWindowGroupCurrent.accesskey "V">
+<!ENTITY externalGroupCurrent.accesskey "a">
+<!ENTITY openTab.label "Na novej karte v aktuálnom okne">
+<!ENTITY newWindowGroupTab.accesskey "k">
+<!ENTITY externalGroupTab.accesskey "r">
+<!ENTITY openWindow.label "V novom okne">
+<!ENTITY newWindowGroupWindow.accesskey "o">
+<!ENTITY externalGroupWindow.accesskey "n">
+
+<!ENTITY divertAll.label "Vždy zmeniť okná na karty">
+<!ENTITY divertAll.accesskey "e">
+<!ENTITY divertNoFeatures.label "Nemeniť okná na karty">
+<!ENTITY divertNoFeatures.accesskey "m">
+<!ENTITY dontDivert.label "Vždy otvoriť nové okná">
+<!ENTITY dontDivert.accesskey "d">

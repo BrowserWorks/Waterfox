@@ -1,0 +1,25 @@
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "עורך מאפיין מתקדם">
+<!ENTITY AttName.label                  "תכונה: ">
+<!ENTITY AttValue.label                 "ערך: ">
+<!ENTITY PropertyName.label             "מאפיין:">
+<!ENTITY currentattributesfor.label     "תכונות נוכחיות עבור:">
+<!ENTITY tree.attributeHeader.label     "תכונה">
+<!ENTITY tree.propertyHeader.label      "מאפיין">
+<!ENTITY tree.valueHeader.label         "ערך">
+<!ENTITY tabHTML.label                  "תכונות HTML">
+<!ENTITY tabCSS.label                   "סגנון בתוך השורה">
+<!ENTITY tabJSE.label                   "אירועי JavaScript">
+
+<!ENTITY editAttribute.label    "לחץ על פריט למעלה כדי לשנות את ערכו">
+<!ENTITY removeAttribute.label  "הסרה">
+

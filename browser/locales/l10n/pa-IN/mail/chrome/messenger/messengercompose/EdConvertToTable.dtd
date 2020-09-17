@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ਟੇਬਲ ਵਿੱਚ ਬਦਲੋ">
+<!ENTITY instructions1.label   "ਨਿਰਮਾਤਾ ਚੋਣ ਵਿੱਚ ਹਰ ਪੈਰ੍ਹੇ ਲਈ ਇੱਕ ਨਵੀਂ ਟੇਬਲ ਕਤਾਰ ਬਣਾਏਗਾ।">
+<!ENTITY instructions2.label   "ਚੋਣ ਵਿੱਚ ਕਾਲਮ ਵੱਖਰੇ ਕਰਨ ਵਾਲੇ ਅੱਖਰ ਦੀ ਚੋਣ ਕਰੋ:">
+<!ENTITY commaRadio.label      "ਕਾਮਾ">
+<!ENTITY spaceRadio.label      "ਖਾਲੀ ਥਾਂ">
+<!ENTITY otherRadio.label      "ਹੋਰ ਅੱਖਰ:">
+<!ENTITY deleteCharCheck.label "ਵੱਖਰੇਵਾਂ ਅੱਖਰ ਹਟਾਓ">
+<!ENTITY collapseSpaces.label  "ਵਾਧੂ ਥਾਂ ਅਣਡਿੱਠੀ">
+<!ENTITY collapseSpaces.tooltip "ਨੇੜਲੀ ਖਾਲੀ ਥਾਂ ਨੂੰ ਇੱਕ ਥਾਂ ਵਿੱਚ ਤਬਦੀਲ ਕਰੋ">

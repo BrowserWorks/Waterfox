@@ -1,0 +1,94 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Kan nie die bladsy laai nie">
+<!ENTITY retry.label "Probeer weer">
+
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Kan nie koppel nie">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Hierdie adres het beperkings op">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Bediener nie gevind nie">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Kontroleer die adres vir tikfoute soos <strong>ww</strong>.example.com in plaas van <strong>www</strong>.example.com</li> <li>Indien u nie bladsye kan laai nie, kontroleer u rekenaar se netwerkverbinding.</li> <li>Indien u rekenaar of netwerk deur 'n brandmuur of instaanbediener beskerm word, maak seker dat &brandShortName; toegelaat word om toegang tot die web te verkry.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Lêer nie gevind nie">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Kontroleer die lêernaam vir bokas of onderkas of ander tikfoute.</li> <li>Kontroleer of die lêer verskuif, hernoem of geskrap is.</li> </ul>">
+
+
+
+<!ENTITY generic.title "Oeps.">
+<!ENTITY generic.longDesc "<p>&brandShortName; kan om een of ande rrede nie dié bladsy laai nie.</p>">
+
+<!ENTITY malformedURI.title "Die adres is ongeldig">
+<!ENTITY malformedURI.longDesc "<ul> <li>Webadresse word gewoonlik só geskryf <strong>http://www.voorbeeld.com/</strong></li> <li>Maak seker u gebruik vorentoe-skuinsstrepe (d.i. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Die verbinding is onderbreek">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+
+
+<!ENTITY netOffline.title "Aflynmodus">
+
+
+<!ENTITY contentEncodingError.title "Inhoudenkoderingsfout">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Kontak die webwerf se eienaar om hom oor die probleem in te lig.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Onveilige lêersoort">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Kontak die webwerf se eienaar om hom oor die probleem in te lig.</li> </ul>">
+
+<!ENTITY netReset.title "Die verbinding is teruggestel">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Die verbinding het uitgetel">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Die adres is nie verstaan nie">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Dalk moet u ander sagteware installeer om hierdie adres te open.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Die instaanbediener weier verbindings">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Kontroleer die instaanopstelling om te verseker dat dit korrek is.</li> <li>Kontak u netwerkadministrateur om te verseker dat die instaanbediener werk.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Kan nie die instaanbediener vind nie">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Kontroleer die instaanopstelling om te verseker dat dit korrek is.</li> <li>Kontroleer of u rekenaar 'n werkende netwerkverbinding het.</li> <li>Indien u rekenaar of netwerk deur 'n brandmuur of instaanbediener beskerm word, maak seker dat &brandShortName; toegelaat word om toegang tot die web te verkry.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Die bladsy herverwys nie behoorlik nie">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Hierdie probleem kan soms veroorsaak word deur koekies te deaktiveer of te weier om koekies te aanvaar.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Onverwagse respons vanaf bediener">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Kontroleer of die persoonlike sekuriteitbestuurder op u rekenaar geïnstalleer is.</li> <li>Dit kan wees vanweë 'n niestandaard-opstelling op die bediener.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Kon nie beveilig koppel nie">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Die bladsy wat u probeer bekyk, kan nie gewys word nie omdat die egtheid van die ontvangde data nie geverifieer kon word nie.</li> <li>Kontak die webwerf se eienaar om hom oor die probleem in te lig.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Kon nie beveilig koppel nie">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Dit kan 'n probleem wees met die bediener se opstelling, of dit is dalk iemand wat voorgee om die bediener te wees.</li> <li>Indien u in die verlede suksesvol aan dié bediener gekoppel het, kan die fout tydelik wees. Probeer gerus later.</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Die werf is moontlik tydelik onbeskikbaar of te besig. Probeer weer oor 'n paar sekondes.</li> <li>Indien u geen bladsye kan laai nie, kontroleer u rekenaar se netwerkverbinding.</li> <li>Indien u rekenaar of netwerk deur 'n brandmuur of instaanbediener beskerm word, maak seker dat &brandShortName; toegelaat word om toegang tot die web te verkry.</li></ul>">
+
+
+
+
+
+<!ENTITY securityOverride.linkText "Of u kan 'n uitsondering byvoeg…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Eina! Laat ek weg wees!">
+<!ENTITY securityOverride.exceptionButtonLabel "Voeg uitsondering by…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+

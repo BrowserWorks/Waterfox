@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Yeni Sayfa Ayarları">
+
+<!ENTITY  authorName.label          "Yazar:">
+<!ENTITY  authorName.accesskey      "a">
+<!ENTITY  pageColorHeader           "Varsayılan Sayfa Görünümü">
+
+<!ENTITY defaultColors.label        "Okuyucunun varsayılan renkleri (Sayfadaki renkleri ayarlama)">
+<!ENTITY defaultColors.accesskey    "v">
+<!ENTITY customColors.label         "Özel renkler kullan:">
+<!ENTITY customColors.accesskey     "r">
+
+<!ENTITY normalText.label           "Normal metin">
+<!ENTITY normalText.accesskey       "r">
+<!ENTITY linkText.label             "Bağlantı metni">
+<!ENTITY linkText.accesskey         "B">
+<!ENTITY activeLinkText.label       "Etkin bağlantı metni">
+<!ENTITY activeLinkText.accesskey   "a">
+<!ENTITY visitedLinkText.label      "Ziyaret edilmiş bağlantı metni">
+<!ENTITY visitedLinkText.accesskey  "Z">
+<!ENTITY background.label           "Arka plan:">
+<!ENTITY background.accesskey       "A">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Arka plan resmi:">
+<!ENTITY backgroundImage.accesskey  "A">
+<!ENTITY chooseFile.label           "Dosya Seç…">
+<!ENTITY chooseFile.accesskey       "ç">
+

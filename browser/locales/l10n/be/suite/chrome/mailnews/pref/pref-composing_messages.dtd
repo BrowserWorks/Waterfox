@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title "Укладанне">
+<!ENTITY generalComposing.label "Агульныя">
+<!ENTITY forwardMsg.label "Накіроўваць лісты:">
+<!ENTITY inline.label "Усярэдзіне">
+<!ENTITY inline.accesskey "У">
+<!ENTITY asAttachment.label "Як далучэнне">
+<!ENTITY asAttachment.accesskey "Д">
+<!ENTITY replyQuoteInline.label "Зрабіць вытрымку з бачных унутры далучэнняў у адказах">
+<!ENTITY replyQuoteInline.accesskey "в">
+<!ENTITY warnOnSendAccelKey.label "Сцвердзіць дасыланне ліста, калі яно выклікана клавіятурным выклічнікам ">
+<!ENTITY warnOnSendAccelKey.accesskey "С">
+<!ENTITY autoSave.label "Самастойна захоўваць ліст кожныя">
+<!ENTITY autoSave.accesskey "а">
+<!ENTITY autoSaveEnd.label "хвілінаў">
+<!ENTITY wrapOutMsg.label "Загінаць радкі простатэкставых лістоў пасля">
+<!ENTITY wrapOutMsg.accesskey "г">
+<!ENTITY char.label "знакаў">
+<!ENTITY defaultMessagesHeader.label "Змоўчкі для HTML лістоў">
+<!ENTITY font.label "Шрыфт:">
+<!ENTITY font.accesskey "Ш">
+<!ENTITY size.label "Памер:">
+<!ENTITY size.accesskey "П">
+<!ENTITY fontColor.label "Тэкст:">
+<!ENTITY fontColor.accesskey "Т">
+<!ENTITY bgColor.label "Фон:">
+<!ENTITY bgColor.accesskey "Ф">
+<!ENTITY selectHeaderType.label "Выберыце тып загалоўка адказу:">
+<!ENTITY selectHeaderType.accesskey "б">
+<!ENTITY noReplyOption.label "Без загалоўка адказу">
+<!ENTITY authorWroteOption.label "[Аўтар] напісаў:">
+<!ENTITY onDateAuthorWroteOption.label "[дата] [аўтар] напісаў:">
+<!ENTITY authorWroteOnDateOption.label "[Аўтар] напісаў [дата]:">

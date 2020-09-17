@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Foillsich an duilleag">
+<!ENTITY windowTitleSettings.label    "Foillsich na roghainnean">
+<!ENTITY publishTab.label             "Foillsich">
+<!ENTITY settingsTab.label            "Roghainnean">
+<!ENTITY publishButton.label          "Foillsich">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Ainm na làraich:">
+<!ENTITY siteList.accesskey           "A">
+<!ENTITY siteList.tooltip             "Tagh an làrach far an dèid fhoillseachadh">
+<!ENTITY newSiteButton.label          "Làrach ùr">
+<!ENTITY newSiteButton.accesskey      "L">
+<!ENTITY docDirList.label             "Fo-phasgan na làraich airson na duilleige seo:">
+<!ENTITY docDirList.accesskey         "s">
+<!ENTITY docDirList.tooltip           "Tagh no cuir a-steach ainm an fho-phasgan chèin airson na duilleige seo">
+<!ENTITY publishImgCheckbox.label     "Gabh a-steach dealbhan is faidhlichean eile">
+<!ENTITY publishImgCheckbox.accesskey "G">
+<!ENTITY publishImgCheckbox.tooltip   "Foillsich dealbhan is faidhlichean eile a tha an duilleag seo ag iomradh">
+<!ENTITY sameLocationRadio.label      "Cleachd an dearbh sheòladh 's a tha aig an duilleag">
+<!ENTITY sameLocationRadio.accesskey  "u">
+<!ENTITY sameLocationRadio.tooltip    "Foillsich na faidhlichean far a bheil an duilleag fhèin">
+<!ENTITY useSubdirRadio.label         "Cleachd fo-phasgan seo na làraich:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Foillsich na faidhlichean dhan fho-phasgan chèin a thagh thu">
+<!ENTITY otherDirList.tooltip         "Tagh no cuir a-steach ainm an fho-phasgan chèin far an dèid na faidhlichean fhoillseachadh">
+<!ENTITY pageTitle.label              "Tiotal na duilleige:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Cuir a-steach tiotal air a dh'aithnichear an duilleag san uinneag agus sna comharran-lìn">
+<!ENTITY pageTitleExample.label       "m.e.: &quot;An duilleag-lìn agamsa&quot;">
+<!ENTITY filename.label               "Ainm an fhaidhle:">
+<!ENTITY filename.accesskey           "f">
+<!ENTITY filename.tooltip             "Cuir a-steach ainm airson an fhaidhle seo, le '.html' aig an deireadh airson duilleag-lìn">
+<!ENTITY filenameExample.label        "m.e.: &quot;anduilleagagam.html&quot;">
+<!ENTITY setDefaultButton.label       "Suidhich e mar an roghainn bhunaiteach">
+<!ENTITY setDefaultButton.accesskey   "d">
+<!ENTITY removeButton.label           "Thoir air falbh làrach">
+<!ENTITY removeButton.accesskey       "r">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Làraichean foillseachaidh">
+<!ENTITY serverInfo.label             "Fiosrachadh an fhrithealaiche">
+<!ENTITY loginInfo.label              "Fiosrachadh logaidh a-steach">
+<!ENTITY siteName.label               "Ainm na làraich:">
+<!ENTITY siteName.accesskey           "A">
+<!ENTITY siteName.tooltip             "Far-ainm air a dh'aithnichear an làrach foillseachaidh seo (m.e.: 'AnLàrachAgam')">
+<!ENTITY siteUrl.label                "An seòladh foillseachaidh (m.e.: 'ftp://ftp.anispagam.com/antainmcleachdaicheagam'):">
+<!ENTITY siteUrl.accesskey            "A">
+<!ENTITY siteUrl.tooltip              "An seòladh FTP:// no HTTP:// a thug an t-ISP no seirbheis òstaireachd-lìn dhut">
+<!ENTITY browseUrl.label              "Seòladh HTTP na duilleige-dachaigh agad (m.e.: 'http://www.antispagam.com/antainmcleachdaicheagam'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "Seòladh HTTP:// am pasgan dachaigh agad (na gabh a-steach ainm an fhaidhle)">
+<!ENTITY username.label               "Ainm a' chleachdaiche:">
+<!ENTITY username.accesskey           "A">
+<!ENTITY username.tooltip             "An t-ainm cleachdaiche a chleachdas tu gus logadh a-steach aig an ISP no seirbheis òstaireachd-lìn agad">
+<!ENTITY password.label               "Facal-faire:">
+<!ENTITY password.accesskey           "F">
+<!ENTITY password.tooltip             "Am facal-faire a tha co-cheangailte ris an ainm chleachdaiche agad">
+<!ENTITY savePassword.label           "Sàbhail am facal-faire">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Tagh seo gus am facal-faire agad a shàbhaladh gu tèarainte le manaidsear nam faclan-faire">

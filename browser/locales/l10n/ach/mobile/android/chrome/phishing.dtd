@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Kwanya woko ki kany!">
+<!ENTITY safeb.palm.decline.label "Caa woko cik man">
+<!ENTITY safeb.palm.reportPage.label "Pingo kigengo potbuk man woko?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Lami tam obedo <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Potbuk me mony ma kimiyo ripote!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Pot buk me kakube man ma i <span id='malware_sitename'/> kimiyo ripot ni obedo kakube me mony kadong kigengo woko malube ki miti ni me ber bedo.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Pot buk ma kicobo temo keto purugram ma kwalo ngec pa dano, tii ki komputa mamegi me cobo jo mukene, onyo balo tic mamegi.</p><p>Pot buk mogo gabo purugram mabalo tic tektek, ento mogo time labongo ngec onyo twero ki bot wegi gi.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Kakube me bwola!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Pot buk me kakube man ma i <span id='phishing_sitename'/> kimiyo ripot ni obedo kakube me bwola kadong kigengo woko malube ki miti ni me ber bedo.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Kakube me bwola ki yubo gi me bwoli me timo gin ma rac, calo keto purugram, onyo nyuto ngec mamegi, calo mungi me donyo, namba cim mamegi onyo kad me bank mamegis.</p><p>Keto ngec mo i potbuk man me kakube twero kelo kwo me moko ada iyamo onyo goba mukene.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Kakube pi purugram mape kimito ma kimiyo ripote!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Pot buk me kakube man ma i <span id='unwanted_sitename'/> kimiyo ripot ni tye ki purugram ma pe mite kadong kigengo malube ki miti mme ber bedo ni.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Potbuk me purugram mape kimito teme me keto purugram ma twero bedo me bwola kadong balo nyonyo mamegi i yoo mape byeke.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Kakube ma tye anyim ni twero bedo ki purugram marac">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; ogengo potbuk man pien twero teme me keto purugram maraco ma kwalo onyo kwanyo woko ngec mamegi (me labolle, cal, mung me donyo, kwena ki kad me bank).">

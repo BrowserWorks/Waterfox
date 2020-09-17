@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label        "Otsitakse kaustast:">
+<!ENTITY searchHeading.accesskey    "i">
+<!ENTITY searchSubfolders.label     "Otsitakse ka alamkaustadest">
+<!ENTITY searchSubfolders.accesskey "m">
+<!ENTITY searchOnServer.label       "Otsitakse serverist">
+<!ENTITY searchOnServer.accesskey   "O">
+<!ENTITY resetButton.label          "Puhasta">
+<!ENTITY resetButton.accesskey      "P">
+<!ENTITY openButton.label           "Ava">
+<!ENTITY openButton.accesskey       "v">
+<!ENTITY deleteButton.label         "Kustuta">
+<!ENTITY deleteButton.accesskey     "K">
+<!ENTITY searchDialogTitle.label    "Kirjade otsimine">
+<!ENTITY results.label              "Tulemused">
+<!ENTITY moveButton.label           "Liiguta">
+<!ENTITY moveButton.accesskey       "i">
+<!ENTITY closeCmd.key               "W">
+<!ENTITY openInFolder.label         "Ava kaustas">
+<!ENTITY openInFolder.accesskey     "v">
+<!ENTITY saveAsVFButton.label       "Salvesta otsing kaustana">
+<!ENTITY saveAsVFButton.accesskey   "v">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label      "Otsitakse:">
+<!ENTITY abSearchHeading.accesskey  "t">
+<!ENTITY propertiesButton.label     "Omadused">
+<!ENTITY propertiesButton.accesskey "O">
+<!ENTITY composeButton.label        "Kirjuta">
+<!ENTITY composeButton.accesskey    "K">
+<!ENTITY deleteCardButton.label     "Kustuta">
+<!ENTITY deleteCardButton.accesskey "u">
+<!ENTITY abSearchDialogTitle.label  "Laiendatud otsing aadressiraamatust">
+

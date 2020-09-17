@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Txertatu karakterea">
+<!ENTITY category.label "Kategoria">
+<!ENTITY letter.label "Letra:">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "Karakterea:">
+<!ENTITY character.accessKey "K">
+<!ENTITY accentUpper.label "Maiuskula azentuduna">
+<!ENTITY accentLower.label "Minuskula azentuduna">
+<!ENTITY otherUpper.label "Bestelako maiuskula">
+<!ENTITY otherLower.label "Bestelako minuskula">
+<!ENTITY commonSymbols.label "Ikur arruntak">
+<!ENTITY insertButton.label "Txertatu">
+<!ENTITY closeButton.label "Itxi">

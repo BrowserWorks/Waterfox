@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Nova mapa">
+<!ENTITY name.label                 "Naziv:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Stvori podmapu od:">
+<!ENTITY description.accesskey      "S">
+<!ENTITY folderRestriction1.label   "Ovaj poslužitelj ograničava mape na dvije posebne vrste.">
+<!ENTITY folderRestriction2.label   "Dozvolite vašoj novoj mapi da sadrži:">
+<!ENTITY foldersOnly.label          "Samo mape">
+<!ENTITY messagesOnly.label         "Samo poruke">
+<!ENTITY accept.label               "Stvori mapu">
+<!ENTITY accept.accesskey           "r">

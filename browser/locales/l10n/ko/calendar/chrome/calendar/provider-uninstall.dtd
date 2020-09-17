@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "공급자 삭제">
+<!ENTITY providerUninstall.accept.label                    "선택사항 해지">
+<!ENTITY providerUninstall.accept.accesskey                "U">
+<!ENTITY providerUninstall.cancel.label                    "Keep Addon">
+<!ENTITY providerUninstall.cancel.accesskey                "K">
+<!ENTITY providerUninstall.preName.label                   "삭제 또는 사용안함:">
+<!ENTITY providerUninstall.postName.label                  "This will cause the calendars below to be disabled.">
+<!ENTITY providerUninstall.reinstallNote.label             "이 공급자를 재설치할 계획이 없다면, 이 공급자의 캘린더를 해지 하는 것을 선택할 수 있습니다.">

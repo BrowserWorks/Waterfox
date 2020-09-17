@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+
+<!ENTITY messageStorage.label "Úložisko správ">
+<!ENTITY securitySettings.label "Bezpečnostné nastavenia">
+<!ENTITY serverSettings.label "Nastavenie servera">
+<!ENTITY serverType.label "Typ servera:">
+<!ENTITY serverName.label "Názov servera:">
+<!ENTITY serverName.accesskey "z">
+<!ENTITY userName.label "Používateľské meno:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY port.label "Port:">
+<!ENTITY port.accesskey "r">
+<!ENTITY serverPortDefault.label "Štandardný:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Kontrolovať novú poštu každých">
+<!ENTITY biffStart.accesskey "K">
+<!ENTITY biffEnd.label "minút">
+<!ENTITY useIdleNotifications.label "Povoliť okamžité upozornenia pre nové správy">
+<!ENTITY useIdleNotifications.accesskey "o">
+<!ENTITY connectionSecurity.label "Zabezpečenie pripojenia:">
+<!ENTITY connectionSecurity.accesskey "e">
+<!ENTITY connectionSecurityType-0.label "žiadne">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ak je dostupné">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Metóda overenia:">
+<!ENTITY authMethod.accesskey "t">
+<!ENTITY leaveOnServer.label "Nechávať správy na serveri">
+<!ENTITY leaveOnServer.accesskey "c">
+<!ENTITY headersOnly.label "Prevziať len hlavičky správ">
+<!ENTITY headersOnly.accesskey "s">
+<!ENTITY deleteByAgeFromServer.label "najviac">
+<!ENTITY deleteByAgeFromServer.accesskey "j">
+<!ENTITY daysEnd.label "dní">
+<!ENTITY deleteOnServer2.label "až kým nebudú odstránené">
+<!ENTITY deleteOnServer2.accesskey "b">
+<!ENTITY downloadOnBiff.label "Automaticky prevziať novú poštu">
+<!ENTITY downloadOnBiff.accesskey "y">
+<!ENTITY username.label "Názov účtu">
+<!ENTITY deleteMessagePrefix.label "Pri odstránení správy:">
+<!ENTITY modelMoveToTrash.label "Presunúť ju do priečinka:">
+<!ENTITY modelMoveToTrash.accesskey "j">
+<!ENTITY modelMarkDeleted.label "Iba ju označiť ako odstránenú">
+<!ENTITY modelMarkDeleted.accesskey "b">
+<!ENTITY modelDeleteImmediately.label "Okamžite ju odstrániť">
+<!ENTITY modelDeleteImmediately.accesskey "s">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Pri ukončení vyčistiť (&quot;Expunge&quot;) priečinok Doručená pošta">
+<!ENTITY expungeOnExit.accesskey "x">
+<!ENTITY emptyTrashOnExit.label "Vyprázdniť kôš pri ukončení">
+<!ENTITY emptyTrashOnExit.accesskey "u">
+<!ENTITY loginAtStartup.label "Pri štarte skontrolovať novú poštu">
+<!ENTITY loginAtStartup.accesskey "v">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+	 of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Opýtať sa pri preberaní viac ako">
+<!ENTITY maxMessagesStart.accesskey "s">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "správ">
+<!ENTITY alwaysAuthenticate.label "Pri pripájaní sa na tento server vždy vyžadovať overenie">
+<!ENTITY alwaysAuthenticate.accesskey "s">
+<!ENTITY newsrcFilePath.label "Súbor newsrc:">
+<!ENTITY newsrcPicker.label "Vyberte súbor newsrc">
+<!ENTITY abbreviate.label "Zobraziť názvy diskusných skupín ako :">
+<!ENTITY abbreviateOn.label "Úplný názov (napr. 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Skratky (napr. 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Pokročilé…">
+<!ENTITY serverDefaultCharset2.label "Štandardné kódovanie textu:">
+<!ENTITY advancedButton.accesskey "i">
+<!ENTITY localPath.label "Lokálny priečinok:">
+<!ENTITY localFolderPicker.label "Výber lokálneho priečinka">
+<!ENTITY browseFolder.label "Prehľadávať…">
+<!ENTITY browseFolder.accesskey "h">
+<!ENTITY browseNewsrc.label "Prehľadávať…">
+<!ENTITY browseNewsrc.accesskey "d">
+
+<!ENTITY accountTitle.label "Nastavenia účtu">
+<!ENTITY accountSettingsDesc.label "Toto je špeciálny účet, s ktorým nie sú asociované žiadne identity.">
+<!ENTITY storeType.label "Spôsob ukladania správ:">
+<!ENTITY storeType.accesskey "S">
+<!ENTITY mboxStore2.label "Samostatný súbor pre každý priečinok (mbox)">
+<!ENTITY maildirStore.label "Samostatný súbor pre každú správu (maildir)">

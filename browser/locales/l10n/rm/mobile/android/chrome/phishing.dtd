@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Bandunar questa pagina">
+<!ENTITY safeb.palm.decline.label "Ignorar quest avertiment">
+<!ENTITY safeb.palm.reportPage.label "Pertge è questa pagina vegnida bloccada?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Avis da <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Rapportà sco pagina attatganta!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Questa pagina d'internet sut <span id='malware_sitename'/> è annunziada sco pagina attatganta ed è vegnida bloccada sin fundament da tias preferenzas da segirezza.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Websites attatgantas emprovan d'installar programs che engolan infurmaziuns privatas, dovran tes computer per attatgar auters u donnegian tes sistem.</p><p>Tschertas paginas attatgantas derasan sapientivamain software donnegiusa, ma bleras èn pertutgadas senza che l'administratur saja perencletg u infurmà.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Pagina che engiona!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "La pagina web sin <span id='phishing_sitename'/> è vegnida annunziada sco pagina che engiona e vegn bloccada sin fundament da tias preferenzas da segirezza.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Paginas che engionan vegnan creadas cun l'intent da ta surmanar da far insatge privlus, p.ex. installar software u tradir infurmaziuns persunalas sco pleds-clav, numers da telefon u da cartas da credit.</p><p>Cun endatar infurmaziuns sin questa pagina d'internet ristgas ti enguladitschs d'identitad ed autras furmas d'engion.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Rapportà sco pagina cun software nungiavischada!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Questa pagina web sut <span id='unwanted_sitename'/> è vegnida annunziada sco pagina che cuntegna software nungiavischada e vegn bloccada sin basa da tias preferenzas da segirezza.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Paginas cun software nungiavischada emprovan dad installar software che po engianar ed influenzar tes sistem en moda nunspetgada.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "La pagina en mira cuntegna eventualmain malware">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; ha bloccà questa pagina perquai ch'ella emprova eventualmain dad installar applicaziuns privlusas che engolan u stizzan tias datas (p.ex. fotos, pleds-clav, messadis e cartas da credit).">

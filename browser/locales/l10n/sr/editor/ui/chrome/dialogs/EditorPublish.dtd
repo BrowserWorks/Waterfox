@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Објави страницу">
+<!ENTITY windowTitleSettings.label    "Подешавања објављивања">
+<!ENTITY publishTab.label             "Објави">
+<!ENTITY settingsTab.label            "Подешавања">
+<!ENTITY publishButton.label          "Објави">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Назив места:">
+<!ENTITY siteList.accesskey           "е">
+<!ENTITY siteList.tooltip             "Изаберте на који сајт желите да објавите">
+<!ENTITY newSiteButton.label          "Ново место">
+<!ENTITY newSiteButton.accesskey      "Н">
+<!ENTITY docDirList.label             "Подфасцикла сајта за ову страницу:">
+<!ENTITY docDirList.accesskey         "с">
+<!ENTITY docDirList.tooltip           "Изаберите или унесите име удаљене подфасцикле за ову страницу">
+<!ENTITY publishImgCheckbox.label     "Укључи слике и друге датотеке">
+<!ENTITY publishImgCheckbox.accesskey "о">
+<!ENTITY publishImgCheckbox.tooltip   "Ојбави слике и друге датотеке које су укључене у ову страницу">
+<!ENTITY sameLocationRadio.label      "Користи исту путању као и за страницу">
+<!ENTITY sameLocationRadio.accesskey  "К">
+<!ENTITY sameLocationRadio.tooltip    "Објави датотеке у исту путању као и за страницу">
+<!ENTITY useSubdirRadio.label         "Користи подфасциклу овог сајта:">
+<!ENTITY useSubdirRadio.accesskey     "д">
+<!ENTITY useSubdirRadio.tooltip       "Објави датотеке у изабрану удаљену подфасциклу">
+<!ENTITY otherDirList.tooltip         "Изаберите или унесите назив удаљене подфасцикле где желите да се датотеке објаве">
+<!ENTITY pageTitle.label              "Наслов странице:">
+<!ENTITY pageTitle.accesskey          "т">
+<!ENTITY pageTitle.tooltip            "Унесите наслов да идентификујете страницу у прозору и у забелешкама">
+<!ENTITY pageTitleExample.label       "нпр.: &quot;Моја веб страница&quot;">
+<!ENTITY filename.label               "Име датотеке:">
+<!ENTITY filename.accesskey           "И">
+<!ENTITY filename.tooltip             "Унесите име за ову датотеку, укључујући „.html“ за веб страницу">
+<!ENTITY filenameExample.label        "e.g,: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label       "Подеси као подразумевано">
+<!ENTITY setDefaultButton.accesskey   "д">
+<!ENTITY removeButton.label           "Уклони место">
+<!ENTITY removeButton.accesskey       "У">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Места за објављивање">
+<!ENTITY serverInfo.label             "Подаци о серверу">
+<!ENTITY loginInfo.label              "Подаци о пријављивању">
+<!ENTITY siteName.label               "Име места:">
+<!ENTITY siteName.accesskey           "е">
+<!ENTITY siteName.tooltip             "Надимак који вас идентификује месту за објављивање (нпр.: 'MojSajt')">
+<!ENTITY siteUrl.label                "Адреса за објављивање (нпр.: 'ftp://ftp.mojisp.com/mojekorisnicko'):">
+<!ENTITY siteUrl.accesskey            "А">
+<!ENTITY siteUrl.tooltip              "FTP:// или HTTP:// адреса коју сте добили од вашег провајдера или хостинг фирме">
+<!ENTITY browseUrl.label              "HTTP адреса ваше почетне странице (нпр.: 'http://wwww.mojisp.com/mojekorisnicko'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "HTTP:// адреса ваше личне фасцикле (не укључујући име датотеке)">
+<!ENTITY username.label               "Корисничко име:">
+<!ENTITY username.accesskey           "К">
+<!ENTITY username.tooltip             "Корисничко име које се користи за пријаву на вашег провајдера или хостинг фирму">
+<!ENTITY password.label               "Лозинка:">
+<!ENTITY password.accesskey           "з">
+<!ENTITY password.tooltip             "Лозинка која одговара корисничком имену">
+<!ENTITY savePassword.label           "Сачувај лозинку">
+<!ENTITY savePassword.accesskey       "С">
+<!ENTITY savePassword.tooltip         "Изаберите ово да бисте сачували вашу лозинку на безбедно место са Управником лозинки">

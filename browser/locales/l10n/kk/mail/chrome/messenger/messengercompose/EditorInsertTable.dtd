@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Кестені кірістіру">
+
+<!ENTITY size.label "Өлшемі">
+<!ENTITY numRowsEditField.label "Жолдар:">
+<!ENTITY numRowsEditField.accessKey "л">
+<!ENTITY numColumnsEditField.label "Бағандар:">
+<!ENTITY numColumnsEditField.accessKey "Б">
+<!ENTITY widthEditField.label "Ені:">
+<!ENTITY widthEditField.accessKey "Е">
+<!ENTITY borderEditField.label "Шек:">
+<!ENTITY borderEditField.accessKey "Ш">
+<!ENTITY borderEditField.tooltip "Кесте шекарасы үшін санды енгізіңіз, немесе шекарасыз болу үшін нөлді (0) енгізіңіз">
+<!ENTITY pixels.label "пиксель">

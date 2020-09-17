@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Subscription Dialog -->
+
+
+<!ENTITY feedTitle.label             "Nosaukums:">
+<!ENTITY feedTitle.accesskey         "N">
+
+
+
+<!ENTITY locationValidate.label      "Validēt">
+
+
+
+<!-- Account Settings and Subscription Dialog -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Subscription Dialog -->
+
+<!ENTITY button.addFeed.label        "Pievienot">
+<!ENTITY button.addFeed.accesskey    "P">
+<!ENTITY button.updateFeed.label     "Atjaunināt">
+<!ENTITY button.updateFeed.accesskey "u">
+<!ENTITY button.removeFeed.label     "Noņemt">
+<!ENTITY button.removeFeed.accesskey "N">
+<!ENTITY button.importOPML.label     "Importēt">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Eksportēt">
+<!ENTITY button.exportOPML.accesskey "s">
+
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Aizvērt">

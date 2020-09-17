@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nuwe gestoorde soekvouer">
+<!ENTITY name.label                 "Naam:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Skep as 'n subvouer van:">
+<!ENTITY description.accesskey      "S">
+
+<!ENTITY searchTermCaption.label "Stel die soektogkriteria op wat vir hierdie gestoorde soektogvouer gebruik word: ">
+
+<!ENTITY folderSelectionCaption.label "Kies watter vouers deursoek moet word: ">
+<!ENTITY chooseFoldersButton.label "Kies…">
+<!ENTITY chooseFoldersButton.accesskey "K">
+
+<!ENTITY searchOnline.label "Soek aanlyn (gee jou bygewerkte resultate vir IMAP- en nuusvouers maar neem langer om vouer te open)">
+<!ENTITY searchOnline.accesskey "S">
+
+
+
+

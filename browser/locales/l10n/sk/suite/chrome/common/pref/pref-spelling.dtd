@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY prefSpelling.title                   "Kontrola pravopisu">
+<!ENTITY generalSpelling.label                "Všeobecné">
+<!ENTITY checkSpellingWhenTyping.label        "Pri písaní kontrolovať pravopis:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "r">
+<!ENTITY dontCheckSpelling.label              "nikdy">
+<!ENTITY multilineCheckSpelling.label         "vo viacriadkových poliach">
+<!ENTITY alwaysCheckSpelling.label            "vo všetkých poliach">
+<!ENTITY spellForMailAndNews.label            "Pošta a diskusné skupiny">
+<!ENTITY checkSpellingBeforeSend.label        "Kontrolovať pravopis pred odoslaním">
+<!ENTITY checkSpellingBeforeSend.accesskey    "K">
+<!ENTITY spellCheckInline.label               "Povoliť kontrolu pravopisu počas písania">
+<!ENTITY spellCheckInline.accesskey           "o">
+<!ENTITY languagePopup.label                  "Jazyk:">
+<!ENTITY languagePopup.accessKey              "J">
+<!ENTITY moreDictionaries.label               "Prevziať ďalšie slovníky&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "Nie sú dostupné žiadne slovníky.">

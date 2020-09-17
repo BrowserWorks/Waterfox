@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Vlastnosti tlačidla">
+
+<!ENTITY Settings.label "Nastavenia">
+
+<!ENTITY ButtonType.label "Typ">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Odoslať">
+<!ENTITY reset.value "Vynulovať">
+<!ENTITY button.value "Tlačidlo">
+
+<!ENTITY ButtonName.label "Názov:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Hodnota:">
+<!ENTITY ButtonValue.accesskey "H">
+<!ENTITY tabIndex.label "Poradie:">
+<!ENTITY tabIndex.accesskey "r">
+<!ENTITY ButtonDisabled.label "Zakázaný">
+<!ENTITY ButtonDisabled.accesskey "a">
+<!ENTITY AccessKey.label "Prístupový kláves:">
+<!ENTITY AccessKey.accesskey "s">
+
+<!ENTITY RemoveButton.label "Odstrániť tlačidlo">
+<!ENTITY RemoveButton.accesskey "d">

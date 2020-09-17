@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" > %brandDTD;]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Organizowanie wiadomości oraz kontrolowanie niechcianej poczty</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css" type="text/css"/>
+</head>
+
+<body>
+
+<h1 id="organizing_your_messages">Organizowanie wiadomości</h1>
+
+<div class="contentsBox">
+  <ul>
+    <li><a href="#creating_a_folder">Tworzenie folderu</a></li>
+    <li><a href="#renaming_a_folder">Zmiana nazwy folderu</a></li>
+    <li><a href="#moving_or_copying_a_folder">Przenoszenie lub kopiowanie folderu</a></li>
+    <li><a href="#filing_messages_in_folders">Umieszczanie wiadomości w folderach</a></li>
+    <li><a href="#sharing_folders_with_other_users">Współdzielenie folderów z innymi użytkownikami (tylko IMAP)</a></li>
+    <li><a href="#tagging_messages">Etykietowanie wiadomości</a></li>
+    <li><a href="#marking_or_flagging_messages">Zaznaczanie lub flagowanie wiadomości</a></li>
+    <li><a href="#using_message_views">Używanie widoków wiadomości</a></li>
+    <li><a href="#creating_message_filters">Tworzenie filtrów wiadomości</a></li>
+    <li><a href="#searching_through_messages">Wyszukiwanie w wiadomościach</a></li>
+  </ul>
+</div>
+
+<h2 id="creating_a_folder">Tworzenie folderu</h2>
+
+<p>Aby utworzyć katalog na wiadomości, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Plik wybrać Nowy, a następnie Podfolder.</li>
+  <li>Podać nazwę dla folderu.</li>
+  <li>Z rozwijanej listy wybrać lokalizację i potwierdzić, naciskając klawisz OK. Nowy utworzony folder pojawi się na liście folderów.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="renaming_a_folder">Zmiana nazwy folderu</h2>
+
+<p>Aby zmienić nazwę istniejącego juz folderu, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Wybrać katalog, którego nazwa ma zostać zmieniona.</li>
+  <li>Po wskazaniu na folder z menu plik wybrać Zmień nazwę folderu. Pojawi się okno zmiany nazwy.</li>
+  <li>Należy podać nową nazwę folderu i potwierdzić naciskając przycisk OK.</li>
+</ol>
+
+<p><strong>Uwaga</strong>: jeżeli zostanie zmieniona nazwa folderu, w którym są przechowywane <a href="#creating_message_filters">przefiltrowane wiadomości</a>, filtr zostanie automatycznie uaktualniony tak, aby używał przemianowanego folderu.</p>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="moving_or_copying_a_folder">Przenoszenie lub kopiowanie folderu</h2>
+
+<p>Foldery wraz z zawartością można kopiować pomiędzy kontami pocztowymi lub przenosić do innych folderów w obrębie tego samego konta.</p>
+
+<p>Aby przenieść lub skopiować folder, w głównym oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Wybrać folder, który ma być przeniesiony bądź skopiowany.</li>
+  <li>Wykonać jedno z poniższych:
+    <ul>
+      <li>Aby przenieść folder do innego folderu w obrębie tego samego konta, należy przeciągnąć wybrany folder na nazwę docelowego folderu. Przeniesiony folder stanie się jego podfolderem.</li>
+      <li>Aby skopiować folder do innego konta, należy przeciągnąć folder na nazwę wybranego konta.</li>
+      <li>Aby skopiować folder do innego folderu innego konta, należy przeciągnąć folder na nazwę innego folderu w innym koncie. Skopiowany folder stanie się podfolderem.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="filing_messages_in_folders">Umieszczanie wiadomości w folderach</h2>
+
+<p>Wiadomości pomiędzy katalogami można przenosić:</p>
+
+<ul>
+  <li>Zaznaczając wiadomość i naciskając przycisk Przenieś, wskazując folder docelowy.</li>
+  <li>Przeciągając wiadomości na wybrany docelowy folder.
+
+    <p><strong>Uwaga</strong>: podczas przeciągania wiadomości z folderu serwera IMAP lub POP do lokalnego katalogu (na dysku komputera), wiadomość jest przenoszona do folderu lokalnego i usuwana z folderu na serwerze.</p>
+  </li>
+</ul>
+
+<p>Aby skopiować wiadomość z folderu do folderu, należy:</p>
+
+<ol>
+  <li>Wybrać folder i wywołać menu kontekstowe klikając na nim prawym przyciskiem myszy.</li>
+  <li>Wybrać <q>Kopiuj do</q> i w rozwijanym menu wskazać konto oraz folder docelowy.</li>
+</ol>
+
+<p><strong>Wskazówka</strong>: wiadomości można również kopiować pomiędzy folderami, przytrzymując klawisz Shift podczas przeciągania wiadomości na wybrany folder.</p>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="sharing_folders_with_other_users">Współdzielenie folderów z innymi użytkownikami (tylko IMAP)</h2>
+
+<p>Użytkownicy posiadający konta na serwerach z obsługą protokołu IMAP mogą współdzielić katalogi poczty z innymi użytkownikami tej samej sieci. Współdzielenie katalogów pozwala kilku użytkownikom widzieć i pracować na tych samych wiadomościach, podobnie jak w grupach dyskusyjnych. Aby współdzielić katalogi, serwer IMAP musi obsługiwać ACL (Access Control List). W razie wątpliwości, czy współdzielenie katalogów jest obsługiwane, można to sprawdzić, kontaktując się z administratorem lub pomocą techniczną.</p>
+
+<p>Aby współdzielić folder z innymi użytkownikami w sieci lub wyświetlić informacje odnośnie współdzielenia dla folderu, w głównym oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Wybrać folder konta IMAP przeznaczony do współdzielenia lub wybrać folder, którego ustawienia udostępnienia mają zostać wyświetlone.
+
+    <p>Foldery należące do lokalnych folderów lub kont pocztowych typu POP nie mogą być współużytkowane.</p>
+  </li>
+  <li>Z menu Edycja wybrać Właściwości folderu.</li>
+  <li>Wybrać kartę Współużytkowanie.</li>
+  <li>Wybrać uprawnienia. Może wystąpić konieczność podania nazwy użytkownika i hasła.
+
+    <p>Przycisk uprawnień dostępny jest tylko jeżeli uprawnienia użytkownika pozwalają na zmianę uprawnień dla tego folderu. Jeżeli przycisk jest niewidoczny, możliwe jest wyświetlenie uprawnień współużytkowania folderu, lecz ich zmiana nie jest dostępna.</p>
+  </li>
+  <li>Aby dodać użytkowników i przydzielić im uprawnienia współużytkowania, należy podążać za instrukcjami wyświetlanymi przez program.
+    <ul>
+      <li><strong>Uprawnienia odczytu</strong>: użytkownicy mogą odczytywać wiadomości, jednak nie mogą ich modyfikować, usuwać lub kopiować wiadomości do folderu. Użytkownicy mogą oznaczać wiadomości flagą jako przeczytane lub nieprzeczytane. Szczegóły dotyczące oznaczania wiadomości flagą można znaleźć w rozdziale <a href="#marking_or_flagging_messages">Zaznaczanie lub flagowanie wiadomości</a>.</li>
+      <li><strong>Uprawnienia odczytu i zapisu</strong>: w odróżnieniu od uprawnień tylko do odczytu, użytkownicy mający te uprawnienia mogą dodatkowo modyfikować i usuwać wiadomości oraz przenosić lub kopiować wiadomości do folderu.</li>
+      <li><strong>Uprawnienia zarządzania</strong>: w odróżnieniu od uprawnień odczytu i zapisu, użytkownicy mający te uprawnienia mogą dodatkowo dodawać i usuwać użytkowników oraz zmieniać ich uprawnienia względem folderu.</li>
+    </ul>
+  </li>
+  <li>Aby zatwierdzić zmiany, należy nacisnąć przycisk OK.</li>
+  <li>Aby zamknąć okno właściwości folderu, należy nacisnąć przycisk OK.</li>
+</ol>
+
+<p>Współużytkowany folder posiada inną ikonę w widoku drzewa folderów konta pocztowego, aby podkreślić, że jest współużytkowany.</p>
+
+<p>Aby wysłać wiadomość powiadamiającą innych użytkowników o sposobie, w jaki mogą subskrybować współużytkowany folder, w głównym oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Wybrać współużytkowany folder.</li>
+  <li>Wywołać menu kontekstowe, klikając prawym przyciskiem myszy na ikonie folderu, a następnie wybrać Kopiuj adres folderu.</li>
+  <li>Wybrać Nowa, aby wyświetlić okno tworzenia wiadomości.</li>
+  <li>Przenieść zaznaczenie na treść wiadomości (np. poprzez wskazanie myszką) i z menu Edycja wybrać Wklej.</li>
+  <li>Zaadresować wiadomość, nadać temat oraz dodać treść wiadomości. Warto wyjaśnić adresatom, że mogą subskrybować współużytkowany folder poprzez otworzenie wklejonego wcześniej odnośnika.
+    
+    <p>Tylko adresaci wiadomości znajdujący się w tej samej sieci będą mieli możliwość subskrypcji współużytkowango folderu.</p>
+  </li>
+  <li>Wybrać Wyślij.</li>
+</ol>
+
+<h3 id="subscribing_to_a_shared_folder">Subskrybowanie współużytkowanego folderu</h3>
+
+<p>Subskrybowanie współużytkowanego folderu jest podobne do subskrybowania grup dyskusyjnych. Aby subskrybować współużytkowany folder, w oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Z menu Plik wybrać Subskrybuj. Pojawi się okno dialogowe subskrypcji.</li>
+  <li>Jeżeli zachodzi taka konieczność, to z rozwijanej listy należy wybrać właściwe konto IMAP.</li>
+  <li>Wskazać folder do subskrypcji.</li>
+  <li>Wybrać Subskrybuj lub zaznaczyć pole w kolumnie subskrypcji. Przy każdym subskrybowanym folderze widoczne jest zaznaczenie. Aby anulować subskrypcję, należy wybrać Anuluj subskrypcję.</li>
+  <li>Wybrać OK. Lista subskrybowanych folderów zostanie wyświetlona w widoku drzewa folderów w głównym oknie programu.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="tagging_messages">Etykietowanie wiadomości</h2>
+
+<p>W celu łatwiejszego zarządzania wiadomościami można nadawać im etykiety. Do wyboru są standardowe nazwy i kolory etykiet, można też zmodyfikować je i dostosować do własnych potrzeb.</p>
+
+<p>Stworzenie filtru znacznie ułatwia zarządzanie wiadomościami, umożliwiając automatyczne nadawanie etykiet pobieranym wiadomościom od wybranych nadawców. Możliwe jest stworzenie filtru, który wiadomości od szefa będzie oznaczał jako <q>Ważne</q> &mdash; ich tytuły będą wyróżniane kolorem czerwonym. Więcej informacji na ten temat w rozdziale <a href="#creating_message_filters">Tworzenie filtrów wiadomości</a>.</p>
+
+<h3 id="applying_a_tag">Nadawanie etykiety</h3>
+
+<p>Aby nadać etykietę wiadomości, w oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Wybrać wiadomość, której ma zostać nadana etykieta.</li>
+  <li>Z menu Wiadomość wybrać Etykieta.</li>
+  <li>Wybrać z listy etykietę do nadania.</li>
+</ol>
+
+<p>Wiersz z podsumowaniem wiadomości zostanie wyróżniony kolorem etykiety z najwyższym priorytetem, a Nagłówek wiadomości kolorem wybranej etykiety. Aby zobaczyć tekst etykiety, należy wyświetlić kolumnę etykiet w głównym oknie programu.</p>
+
+<p><strong>Wskazówka</strong>: aby szybko nadawać lub usuwać etykiety wiadomości, należy zaznaczyć jedną lub więcej wiadomości i wybrać na klawiaturze jeden z klawiszy z cyframi od 1 do 9. Aby usunąć wszystkie etykiety należy wybrać 0.</p>
+
+<p>Aby wyświetlić kolumnę etykiet, w głównym oknie Kuriera Poczty należy:</p>
+
+<ul>
+  <li>Kliknąć ikonę Pokaż/Ukryj kolumny <img src="images/columns.png" /> i wybrać na liście Etykieta.</li>
+</ul>
+
+<p><strong>Wskazówka</strong>: etykiety są powiązane ze skonfigurowanymi kontami. Przykładowo, jeżeli wiadomość z nadaną etykietą zostanie przeniesiona lub skopiowana do innego konta, etykieta nie zostanie zachowana. Podobnie, jeżeli wiadomość z nadaną etykietą zostanie przekazana do innego adresata, etykieta wiadomości również nie zostanie zachowana. W przypadku kont IMAP, jeżeli serwer IMAP obsługuje konfigurowalne przez użytkowników słowa kluczowe, etykiety wiadomości zostaną zachowane i będą dostępne podczas logowania z innej lokalizacji lub innego programu.</p>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h3 id="customizing_tags">Dostosowywanie etykiet</h3>
+
+<p>Możliwe jest dostosowanie kolorów etykiet oraz ich tekstu i kolejności do własnych potrzeb.</p>
+
+<p>Aby dostosować etykiety, w głównym oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Etykiety. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+  <li>Zmienić tekst etykiety lub zastąpić własnym. Tekst etykiety może zawierać do 32 znaków.</li>
+  <li>Aby zmienić kolor etykiety, należy wybrać pole koloru obok tekstu etykiety i wskazać nowy kolor.</li>
+  <li>Naciskając przyciski W górę i W dół zmienić kolejność etykiet. Etykiety na górze listy będą miały większy priorytet przy oznaczaniu wiadomości kolorami.</li>
+  <li>Nacisnąć przycisk OK.</li>
+</ol>
+
+<p>Zmiany zostaną natychmiast zastosowane dla wszystkich wiadomości z nadanymi etykietami we wszystkich skonfigurowanych kontach.</p>
+
+<p><strong>Wskazówka</strong>: aby zrezygnować z ustawień użytkownika i przywrócić domyślne kolory i teksty etykiet, należy postąpić według powyższej instrukcji i wybrać Przywróć Domyślne.</p>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h3 id="sorting_messages_by_tags">Sortowanie wiadomości według etykiet</h3>
+
+<p>Aby posortować wiadomości według etykiet, w głównym oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Aby wyświetlić kolumnę etykiet jeśli nie jest widoczna, należy kliknąć ikonę Pokaż/Ukryj kolumny <img src="images/columns.png" /> i wybrać na liście Etykieta.</li>
+  <li>Wskazać nagłówek kolumny, aby posortować wiadomości według etykiet. Wiadomości z takimi samymi etykietami zostaną posortowane według dat.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h3 id="removing_tags">Usuwanie etykiet</h3>
+
+<p>Aby usunąć etykietę wiadomości, w oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Zaznaczyć jedną lub więcej wiadomości z nadanymi etykietami.</li>
+  <li>Z menu Wiadomość wybrać Etykieta.</li>
+  <li>Wybrać etykietę do usunięcia lub <q>Brak</q>, aby usunąć wszystkie etykiety z tej wiadomości.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="marking_or_flagging_messages">Zaznaczanie lub flagowanie wiadomości</h2>
+
+<p>Możliwe jest oznaczenie przeczytanej wiadomości jako nieprzeczytanej celem późniejszego ponownego jej przeczytania lub odpowiedzenia na nią.</p>
+
+<p>Aby oznaczyć wiadomość jako nieprzeczytaną, w oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Wybrać katalog poczty lub grup dyskusyjnych, aby wyświetlić zawarte w nim wiadomości.</li>
+  <li>Wskazać każdą wiadomość do oznaczenia w kolumnie Przeczytano każdej wiadomości do oznaczenia jako nieprzeczytaną. Przy wiadomościach oznaczonych jako nieczytane wyświetlany jest symbol <img src="images/mail_unread.png" /> w kolumnie Przeczytano. Wiadomości oznaczone jako czytane wyróżniane są symbolem <img src="images/mail_read.png" /> w kolumnie Przeczytano. Jeżeli kolumna porzeczytano jest ukryta, należy wybrać ikonę Pokaż/Ukryj kolumny <img src="images/columns.png" /> i wskazać Przeczytano na liście.</li>
+</ol>
+
+<table>
+  <tr>
+    <td colspan="4"><img src="images/mail_read_column.png" hspace="81" vspace="0" /></td>
+  </tr>
+  <tr>
+    <td width="80"></td>
+    <td><strong>Kolumna Przeczytano</strong></td>
+  </tr>
+</table>
+
+<p>Możliwe jest oznaczenie wiadomości w celu późniejszego pobrania dla <a href="mailnews_offline.xhtml#downloading_selected_or_flagged_messages_for_offline_use">dostępności w trybie offline</a>.</p>
+
+<p>Aby oznaczyć wiadomość, w oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Wybrać katalog poczty lub grup dyskusyjnych, aby wyświetlić zawarte w nim wiadomości.</li>
+  <li>Wskazać w kolumnie Oznaczono każdą wiadomość przeznaczoną do późniejszego pobrania. Oznaczenie flagą <img src="images/mail_flag.png" /> pojawia się po wskazaniu wiadomości. Jeżeli kolumna oznaczenia jest ukryta, należy kliknąć ikonę Pokaż/Ukryj kolumny <img src="images/columns.png" /> i wybrać z listy Oznaczono.</li>
+</ol>
+
+<table>
+  <tr>
+    <td colspan="4"><img src="images/mail_flag_column.png" hspace="81" vspace="0" /></td>
+  </tr>
+  <tr>
+    <td width="80"></td>
+    <td><strong>Kolumna Oznaczone</strong></td>
+  </tr>
+</table>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="using_message_views">Używanie widoków wiadomości</h2>
+
+<p>Widok listy wiadomości może być modyfikowany przy użyciu filtrów w celu
+łatwiejszego zarządzania wiadomościami.</p>
+
+<p>Aby użyć filtrowania widoku wiadomości, należy z menu Widok wybrać Wiadomości. Następnie wybrać jedną z opcji z listy.</p>
+
+<ul>
+  <li><strong>Wszystkie</strong> – wszystkie wiadomości zostaną wyświetlone.</li>
+  <li><strong>Nieczytane</strong> – tylko wiadomości oznaczone jako nieczytane zostaną wyświetlone.</li>
+  <li><strong>Etykiety</strong> – po wybraniu <a href="#tagging_messages">Etykiety</a> zostaną wyświetlone wiadomości z wybraną etykietą.</li>
+  <li><strong>Użytkownika</strong> – domyślnie dostępnych jest pięć rodzajów skonfigurowanych widoków: <q>Od znajomych</q>, <q>Ostatnie wiadomości</q>, <q>Z ostatnich 5 dni</q>, <q>Pożądane</q> oraz <q>Posiadające załączniki</q>.</li>
+  <li><strong>Dostosuj</strong> – pozwala modyfikować oraz tworzyć nowe widoki użytkownika.</li>
+</ul>
+
+<p><strong>Wskazówka</strong>: można szybko zmieniać tryby widoków wiadomości przy pomocy panelu Wyświetl z paska narzędzi wyszukiwania. Jeżeli pasek narzędzi wyszukiwania jest ukryty, należy z menu Widok wybrać Pokaż/Ukryj, a następnie Pasek narzędzi wyszukiwania.</p>
+
+<p><img src="images/mail_quicksearch.png" /></p>
+
+<h3 id="creating_a_custom_view">Dostosowywanie widoku</h3>
+
+<p>Możliwe jest dostosowanie widoku listy wiadomości, aby wyświetlić jedynie
+wiadomości spełniających wybrane kryteria.</p>
+
+<p>W celu zmiany lub stworzenia nowego widoku dla listy wiadomości, należy:</p>
+
+<ol>
+  <li>Z menu Widok wybrać Wiadomości i następnie Dostosuj.</li>
+  <li>Aby stworzyć własny widok, należy wybrać Nowy. Aby zmodyfikować istniejący widok, należy wybrać widok oraz nacisnąć przycisk Edytuj.</li>
+  <li>Podać nazwę dla widoku.</li>
+  <li>Wybrać odpowiednie opcje: <q>spełniają <em>wszystkie</em> poniższe kryteria</q> lub <q>spełniają <em>dowolne</em> poniższe kryteria</q>.</li>
+  <li>Z rozwijanej listy należy wybrać kryteria przeszukiwania wiadomości (np. <q>Temat</q>, <q>Nadawca</q>, <q>zawiera</q>, <q>nie zawiera</q>), a następnie wpisać warunek przeszukiwania.
+
+    <p><strong>Wskazówka</strong>: aby wyszukać wiadomości zawierające nagłówek nie występujący na pierwszej rozwijanej liście (np. zawierające nagłówek Resent-From), należy wybrać Dostosuj, a następnie podać nazwę nagłówka, pod kątem którego mają zostać przeszukane wiadomości. Kurier Poczty &brandShortName; doda skonfigurowany nagłówek do rozwijanej listy, aby możliwy był jego wybór i wyszukiwanie pod jego kątem. Dobrze jest się upewnić, czy wprowadzony nagłówek jest poprawny, ponieważ program wyszuka tylko wiadomości, które dokładnie spełniają wprowadzony
+warunek.</p></li>
+  <li>Wybrać Dodaj nową regułę w celu dodania kryteriów lub Usuń tę regułę, aby usunąć wskazane kryteria przeszukiwania.</li>
+  <li>Nacisnąć przycisk OK, aby potwierdzić ustawienia.</li>
+  <li>Nacisnąć przycisk OK w oknie Dostosowywania widoku wiadomości. Wybrane ustawienia widoku zostaną zastosowane automatycznie.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="creating_message_filters">Tworzenie filtrów wiadomości</h2>
+
+<p>Filtry wiadomości pozwalają na łatwe organizowanie zarządzania wiadomościami. Można tworzyć filtry wiadomości, które Kurier Poczty &brandShortName; zastosuje, aby automatycznie wykonać pewne operacje na przychodzących wiadomościach według zdefiniowanych reguł. Przykładowo, można stworzyć filtr, który automatycznie przeniesie przychodzącą wiadomość do wybranego folderu. Filtry wiadomości są zależne od kont pocztowych (przynależą do każdego z osobna).</p>
+
+<p>Aby wyświetlić okno filtrów wiadomości, w oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Z menu Narzędzia wybrać Filtrowanie wiadomości.</li>
+  <li>W przypadku, gdy skonfigurowano więcej kont pocztowych, wybrać właściwe dla zastosowania filtrów.</li>
+  <li>Wybrać Nowy. W oknie Reguły filtrów należy określić reguły, według których filtr będzie sortował wiadomości oraz wykonywał na nich operacje.</li>
+  <li>Podać nazwę dla filtru.</li>
+  <li>Wybrać, kiedy filtry mają być stosowane. Ta opcja umożliwia wybranie sposobu stosowania filtrów: automatycznie (podczas sprawdzania poczty), w razie potrzeby (podczas ręcznego uruchamiania) bądź w obydwu przypadkach. <q>Po filtrowaniu niechcianych</q> oznacza, że przed zastosowaniem tego filtra, wiadomości będą sprawdzane, czy są pożądane jak i czy nie są próbą oszustwa.</li>
+  <li>Wybrać odpowiednie opcje: <q>do wiadomości spełniających <em>wszystkie</em> kryteria</q>, <q>do wiadomości spełniających <em>dowolne</em> kryteria</q>, lub <q>do <em>wszystkich wiadomości</em></q>.</li>
+  <li>Z rozwijanej listy należy wybrać kryteria przeszukiwania wiadomości (np. <q>Temat</q>, <q>Nadawca</q>, <q>zawiera</q>, <q>nie zawiera</q>), a następnie wpisać warunek przeszukiwania.
+
+    <p><strong>Wskazówka</strong>: aby wyszukać wiadomości zawierające nagłówek nie występujący na pierwszej rozwijanej liście (np. zawierające nagłówek Resent-From), należy wybrać Dostosuj i następnie podać nazwę nagłówka, pod kątem którego mają zostać przeszukane wiadomości. Kurier Poczty &brandShortName; doda skonfigurowany nagłówek do rozwijanej listy, aby możliwy był jego wybór i wyszukiwanie pod jego kątem. Dobrze jest się upewnić, czy wprowadzony nagłówek jest poprawny, ponieważ program wyszuka tylko wiadomości dokładnie spełniające wprowadzony warunek.</p>
+  </li>
+  <li>Nacisnąć przycisk Dodaj nową regułę (+) w celu dodania kryteriów lub Usuń tę regułę (-), aby usunąć wskazane kryteria przeszukiwania.</li>
+  <li>Z rozwijanej listy wybrać operację, która ma zostać wykonana na wiadomościach (np. Przenieś wiadomość do). Nacisnąć przycisk Dodaj nową czynność (+) w celu dodania czynności lub Usuń tę czynność (-), aby usunąć wskazane czynności.
+
+    <p><strong>Wskazówka</strong>: aby automatycznie nadawać etykiety przychodzącym wiadomościom, należy z rozwijanej listy wybrać <q>Oznacz etykietą</q>.</p>
+
+    <p><strong>Wskazówka</strong>: filtry wiadomości są stosowane jeden po drugim. W przypadku, gdy nie wszystkie filtry powinny zostać zastosowane, np. gdy wszystkie wiadomości od szefa mają zostać oznaczone etykietą <q>Ważne</q> oraz wszystkie wiadomości zawierające słowo <q>Memorandum</q> w temacie mają być przeniesione do osobnego folderu, jednak wiadomości od szefa nie, nawet jeżeli zawierają słowo <q>Memorandum</q> w temacie, należy jako pierwszy filtr ustawić filtr zawierający adres e-mail szefa. Filtr ten powinien zawierać dwie czynności: <q>Oznacz etykietą</q> jako <q>Ważne</q> oraz <q>Zatrzymaj wykonywanie filtru</q>.</p>
+  </li>
+  <li>Jeśli wybrano <q>Przeniesienie</q> bądź <q>Kopiowanie</q> wiadomości, należy wybrać docelowy folder dla wiadomości lub stworzyć nowy.</li>
+  <li>Nacisnąć przycisk OK, aby zatwierdzić ustawienia.</li>
+  <li>Aby zastosować filtry na obecnych wiadomościach w folderze, należy wybrać folder z rozwijanej listy, a następnie nacisnąć przycisk <q>Filtruj</q>.</li>
+  <li>Nacisnąć przycisk OK w oknie filtrów wiadomości. Filtr zacznie działać w momencie potwierdzenia przyciskiem OK.</li>
+</ol>
+
+<p><strong>Uwaga</strong>: filtry mogą być stosowane ręcznie w dowolnym momencie. W tym celu należy w oknie Kuriera Poczty wybrać Narzędzia, a następnie Zastosuj filtry w bieżącym folderze, aby zastosować filtry w obecnie wybranym folderze, bądź Zastosuj filtry na wiadomości, aby zastosować filtry na wybranej wiadomości (jeśli jakakolwiek wiadomość jest zaznaczona).</p>
+
+<p>Aby zarządzać filtrami, w oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Z menu Narzędzia wybrać Filtrowanie wiadomości.</li>
+  <li>W przypadku, gdy skonfigurowano więcej kont pocztowych, wybrać właściwe dla zastosowania filtrów.</li>
+  <li>Wybrać z poniższych:</li>
+  <li style="list-style: none">
+    <ul>
+      <li><strong>Aby włączyć lub wyłączyć filtr</strong>: zaznaczyć pole po prawej stronie nazwy filtru, aby go włączyć lub odznaczyć, aby go wyłączyć.</li>
+      <li><strong>Aby zmienić filtr</strong>: należy wybrać nazwę filtru i nacisnąć przycisk Edytuj (lub podwójnie kliknąć na nazwie filtru), a następnie dokonać zmian w oknie dialogowym Reguły filtru.</li>
+      <li><strong>Aby usunąć filtr</strong>: należy wybrać nazwę filtru i nacisnąć przycisk Usuń.</li>
+      <li><strong>Aby zmienić kolejność, w jakiej filtry są aplikowane</strong>: na liście filtrów należy wybrać filtr i nacisnąć przycisk <q>Przenieś w górę</q> lub <q>Przenieś w dół</q>.
+
+        <p><strong>Uwaga</strong>: filtry są aplikowane do każdej przychodzącej wiadomości w ustalonej kolejności, aż do momentu, w którym działanie filtru spowoduje usunięcie wiadomości lub jej przeniesienie z folderu Odebrane.</p>
+      </li>
+    </ul>
+  </li>
+  <li>Nacisnąć przycisk OK po zakończeniu definiowania filtrów. Jeżeli utworzony został nowy filtr, to rozpocznie on działanie po naciśnięciu przycisku OK.</li>
+</ol>
+
+<p><strong>Uwaga</strong>: po usunięciu folderu, do którego filtr przenosił wiadomości, filtr przestanie działać, a przychodzące wiadomości spełniające określone w nim kryteria pozostaną w folderze Odebrane. Zmiana nazwy folderu lub zmiana jego położenia spowodują automatyczną aktualizację parametrów filtru, aby wciąż używał tego folderu.</p>
+
+<p><strong>Wskazówka</strong>: aby przenieść wiadomości do innych folderów za pomocą filtrów, należy użyć opcji Zastosuj filtry w bieżącym folderze dostępnej w menu Narzędzia.</p>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h3 id="filtering_messages_from_a_specific_sender">Filtrowanie wiadomości od określonego nadawcy</h3>
+
+<p>Można szybko utworzyć filtr dla wiadomości od określonego nadawcy. Przykładowo, można szybko zdefiniować filtr, aby automatycznie przenosić do folderu <q>Szkoła</q> wszystkie wiadomości przychodzące od nauczyciela Twojego dziecka.</p>
+
+<p>Aby utworzyć filtr dla wiadomości od określonego nadawcy, należy:</p>
+
+<ol>
+  <li>Wybrać wiadomość od tego nadawcy.</li>
+  <li>Z menu Wiadomość wybrać Utwórz filtr na podstawie wiadomości bądź w nagłówku wiadomości kliknąć prawym przyciskiem myszki na nadawcy i wybrać Utwórz wiadomość na podstawie.</li>
+  <li>Wyświetlone zostanie okno Reguły filtru z wpisanym adresem nadawcy jako kryterium filtru oraz wybrane działanie filtru (Przenieś wiadomość do). Tutaj można zmienić bądź dodać dodatkowe kryteria filtrowania.</li>
+  <li>Wybrać folder docelowy do przechowywania wiadomości od tego nadawcy. Istnieje również możliwość dodania dodatkowych czynności dla tego filtra bądź zmiana domyślnej czynności.</li>
+  <li>Jeżeli nie zostanie wprowadzona żadna nazwa dla tego filtra, to program &brandShortName; wybierze nazwę samemu na podstawie pierwszego kryterium wyszukiwania.</li>
+  <li>Nacisnąć przycisk OK, aby potwierdzić ustawienia. Wyświetlone zostanie okno dialogowe <a href="#creating_message_filters">Filtry wiadomości</a>, w którym można tworzyć, usuwać lub zmieniać filtry wiadomości.</li>
+  <li>Nacisnąć przycisk OK. Filtr rozpocznie działanie po naciśnięciu przycisku OK.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h2 id="searching_through_messages">Wyszukiwanie w wiadomościach</h2>
+
+<p>Kurier Poczty &brandShortName; umożliwia szybkie wyszukanie tekstu w pojedynczej wiadomości, wyszukiwanie wiadomości po temacie lub nadawcy albo użycie kombinacji kryteriów, aby dokładnie przeszukać wszystkie wiadomości w określonym folderze, grupie dyskusyjnej lub koncie.</p>
+
+<p>Aby wyszukać tekst w pojedynczej wiadomości, w oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Wybrać wiadomość, a z menu Edycja wybrać Znajdź w tej wiadomości.</li>
+  <li>Wprowadzić w oknie dialogowym tekst do wyszukania.</li>
+  <li>Nacisnąć przycisk Znajdź, aby zlokalizować pierwsze wystąpienie wyszukiwanego tekstu.</li>
+  <li>Kolejne naciskanie przycisku Znajdź spowoduje lokalizowanie kolejnych wystąpień wyszukiwanego tekstu. Naciśnięcie przycisku Anuluj zakończy wyszukiwanie.</li>
+  <li>Wybór z menu Edycja opcji Znajdź następne umożliwia kontynuowanie wyszukiwania tekstu w pozostałej części wiadomości.</li>
+</ol>
+
+<p>Aby szybko wyszukać w wybranym folderze wiadomości od określonego nadawcy lub o określonym temacie, w oknie Kuriera Poczty należy:</p>
+
+<ol>
+  <li>Z prawej strony napisu <q>Temat lub nadawca zawiera:</q> wprowadzić tekst lub nazwę nadawcy do wyszukania. Można wprowadzić tylko część wyrażenia lub dokładną treść do wyszukania.
+
+    <p>Po zakończeniu wprowadzania tekstu &brandShortName; wyświetli tylko te wiadomości w folderze, których temat lub nadawca zawiera wpisany tekst.</p>
+  </li>
+  <li>Nacisnąć przycisk Wyczyść, aby usunąć tekst do wyszukania i wyświetlić wszystkie wiadomości w aktualnym folderze.</li>
+</ol>
+
+<h3 id="searching_for_specific_messages">Wyszukiwanie konkretnych wiadomości</h3>
+
+<p>Można wyszukać określone wiadomości w folderach z wiadomościami pocztowymi lub w wiadomościach z grup dyskusyjnych. Aby rozpocząć, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Narzędzia wybrać Wyszukaj wiadomości. Wyświetlone zostanie okno dialogowe Wyszukaj wiadomości.</li>
+  <li>Obok <q>Wyszukaj wiadomości, które</q> należy wybrać z listy konto, grupę dyskusyjną lub folder, w którym ma być prowadzone wyszukiwanie.</li>
+  <li>Zaznaczyć <q>Kontynuuj wyszukiwanie w podfolderach</q>, aby wyszukiwać również we wszystkich podfolderach.</li>
+<!-- TODO: start localizing -->
+  <li>Next to <q>Perform search operations on</q>, select an option where to
+    search for messages in newsgroups or IMAP accounts:
+    <ul>
+      <li>Choose <q>Local system</q> to use only the information stored locally
+        for the search without any network activity. This mode includes all
+        major message headers. You can&apos;t search the message body locally
+        unless the account and its folders have been set up for
+        <a href="mailnews_account_settings.xhtml#synchronization_and_storage">synchronization</a>.
+      </li>
+      <li>Choose <q>Remote server</q> to perform all searches on the server
+        where the messages are located. This will allow you to also search for
+        contents in message bodies which have not been synchronized.</li>
+    </ul>
+<!-- TODO: stop localizing -->
+    <p><strong>Uwaga</strong>: menu będzie niedostępne, jeżeli nie będzie możliwe wyszukiwanie w wiadomościach przechowywanych na serwerze (np. w przypadku kont POP).</p>
+  </li>
+  <li>Wybrać, która z opcji dopasowywania warunków będzie używana w czasie wyszukiwania: spełnianie wszystkich czy dowolnego z kryteriów.</li>
+  <li>Użyć rozwijalnych list, aby wybrać kryteria wyszukiwania (przykładowo <q>Temat</q> i <q>zawiera</q>) i następnie wpisać tekst lub frazę do wyszukania.
+
+    <p><strong>Wskazówka</strong>: aby wyszukiwać wiadomości, których nagłówek nie jest zdefiniowany na rozwijalnej liście (przykładowo wyszukiwanie wiadomości, które zawierają nagłówek Resent-From (przesłane z), należy wybrać Dostosuj i wpisać nagłówek do wyszukiwania. Kurier Poczty doda go do rozwijalnej listy i będzie możliwe wybranie go do określenia kryterium wyszukiwania. Należy się upewnić, że nagłówek został wprowadzony poprawnie, ponieważ wyszukiwanie będzie prowadzone dokładnie według wprowadzonego tekstu.</p>
+  </li>
+  <li>Nacisnąć przycisk <q>+</q>, aby dodać kolejne kryterium lub przycisk <q>-</q>, aby usunąć kryterium.</li>
+  <li>Nacisnąć przycisk Znajdź, aby rozpocząć wyszukiwanie lub nacisnąć przycisk Wyczyść, aby usunąć kryteria wyszukiwania. Wyniki wyszukiwania znajdą się w dolnej części okna Wyszukaj wiadomości.
+    <ul>
+      <li>Aby wyświetlić wyszukaną wiadomość, należy ją zaznaczyć i nacisnąć przycisk Otwórz lub podwójnie kliknąć na niej.</li>
+      <li>Aby posortować wiadomości w innym porządku, należy kliknąć nagłówek kolumny, po której ma być przeprowadzone wyszukiwanie.</li>
+      <li>Aby przenieść lub skopiować wyszukane wiadomości z wyników wyszukiwania do innego folderu, należy zaznaczyć wiadomości i wybrać folder docelowy z rozwijalnej listy dostępnej po naciśnięciu przycisku Przenieś. Jeżeli folder docelowy jest w obrębie tego samego konta, to wiadomość jest przenoszona do niego. Jeżeli folder należy do innego konta, to wiadomość jest do niego kopiowana.</li>
+      <li>Aby usunąć wyszukaną wiadomość, należy ją zaznaczyć i nacisnąć przycisk Usuń.</li>
+      <li>Aby wyświetlić folder, w którym wiadomość jest przechowywana, należy zaznaczyć wiadomość i nacisnąć przycisk Otwórz folder wiadomości.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Na początek rozdziału</a>]</p>
+
+<h1 id="controlling_junk_mail">Kontrolowanie niechcianej poczty</h1>
+
+<p>W tym rozdziale opisane jest, jak używać Kuriera Poczty &brandShortName; do filtrowania niechcianych wiadomości i jak działa wykrywanie oszustw.</p>
+
+<div class="contentsBox">W tym rozdziale opisano:
+  <ul>
+    <li><a href="#using_junk_mail_controls">Filtr niechcianej poczty</a></li>
+    <li><a href="#junk_controls_options">Ustawienia filtru niechcianej poczty</a></li>
+    <li><a href="#junk_controls_and_filters">Filtr niechcianej poczty a filtry wiadomości</a></li>
+    <li><a href="#phishing_detection">Wykrywanie oszustw</a></li>
+  </ul>
+</div>
+
+<h2 id="using_junk_mail_controls">Filtr niechcianej poczty</h2>
+
+<p>Filtr niechcianej poczty &brandShortName; może oceniać przychodzące wiadomości i identyfikować wiadomości jako najprawdopodobniej niepożądane (niezamówione reklamy). Używana do tego jest metoda Bayesa. Najpierw należy nauczyć &brandShortName;, jak wyglądają wiadomości niechciane, wskazując, które wiadomości są pożądane, a które nie. Następnie włącza się automatyczną klasyfikację wiadomości. Jeżeli &brandShortName; zrobi błąd w rozpoznaniu wiadomości, to można go poprawić.</p>
+
+<p>Aby używać filtru niechcianej poczty, należy:</p>
+
+<ol>
+  <li>Najpierw nauczyć &brandShortName; rozpoznawać wiadomości niechciane i pożądane. Odpowiednie oznaczenie wiadomości można zmieniać trzema sposobami:
+    <ul>
+      <li>Z menu Wiadomość wybrać <q>Zaznacz</q> i odpowiednio <q>Jako niechcianą</q> lub <q>Jako pożądaną</q>.</li>
+      <li>Nacisnąć przycisk na pasku narzędziowym Niechcianej poczty.</li>
+      <li><img src="images/mail_junk_column.png" style="float:right" alt=""/>
+
+        <p>Kliknąć na znaczku w kolumnie statusu niechcianej poczty na liście wiadomości. Jeżeli kolumna nie jest widoczna, należy nacisnąć przycisk na prawym końcu nagłówka listy wiadomości (<img src="images/columns.png" alt=""/>) i wybrać z menu pozycję Status niechcianej poczty.</p>
+      </li>
+    </ul>
+
+    <p>Po zmianie statusu wiadomości w kolumnie statusu niechcianej poczty pojawi się lub zniknie ikona kosza odpowiednio wskazując status wybranej wiadomości.</p>
+  </li>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać kategorię Ustawienia niechcianej poczty dla konta pocztowego.</li>
+  <li>Po włączeniu funkcji filtrowania program &brandShortName; będzie automatycznie klasyfikował przychodzące wiadomości. (Więcej w rozdziale <a href="#junk_controls_options">Ustawienia filtru niechcianej poczty</a>. Szczegóły dotyczące innych ustawień można znaleźć w opisie panelu preferencji <a href="mailnews_account_settings.xhtml#junk_settings">Ustawienia niechcianej poczty</a>.)</li>
+  <li>Jeżeli uczenie było prowadzone na wiadomościach z wirusami, należy rozważyć wyłączenie białych list, ponieważ wiele wirusów wysyła zainfekowane wiadomości do osób z książki adresowej zainfekowanego komputera.</li>
+  <li>Należy poprawiać status niechcianej poczty dla nieprawidłowo oznaczonych wiadomości, zarówno niepożądanych jak i pożądanych.</li>
+  <li>Aby przeprowadzić analizę odebranych wcześniej wiadomości, należy wybrać te wiadomości i wybrać z menu Narzędzia opcję <q>Rozpoznaj w folderze niechciane wiadomości</q>.</li>
+</ol>
+
+<p><strong>Uwaga</strong>: &brandShortName; uruchomi filtrowanie niechcianej poczty tylko jeżeli baza wiadomości służących do uczenia zawiera również pożądane wiadomości. Jeżeli filtrowanie nie działa, należy wybrać kilka wiadomości i oznaczyć je jako pożądane.</p>
+
+<p>[<a href="#controlling_junk_mail">Na początek rozdziału</a>]</p>
+
+<h2 id="junk_controls_options">Ustawienia filtru niechcianej poczty</h2>
+
+<p>Aby dokładnie dostroić pracę filtru niechcianej poczty, należy użyć panelu <a href="#junk_and_suspect_preferences">Niechciana i podejrzana poczta</a>, aby określić ustawienia niezależne od konta oraz <a href="mailnews_account_settings.xhtml#junk_settings">ustawień niechcianej poczty</a> dla konkretnego konta.</p>
+
+<p>[<a href="#controlling_junk_mail">Na początek rozdziału</a>]</p>
+
+<h2 id="junk_controls_and_filters">Filtr niechcianej poczty a filtry wiadomości</h2>
+
+<p>Filtr niechcianej poczty jest uruchamiany po zakończeniu działania filtrów wiadomości zdefiniowanych przez użytkownika (jeżeli w ustawieniach filtra nie wybrano opcji sprawdzania <q>po filtrowaniu niechcianych</q>, co oznacza po filtrowaniu niechcianych jak i prób oszustwa) i obejmuje tylko wiadomości w folderze Odebrane oraz jego podfolderach. W ten sposób można najpierw przenieść do folderów poza folderem Odebrane wiadomości, co do których nie wiadomo, czy są niechciane. Spowoduje to, że nie zostaną one oznaczone jako niechciane. Jest to funkcja przydatna w przypadku newsletterów i moderowanych list pocztowych.</p>
+
+<p>[<a href="#controlling_junk_mail">Na początek rozdziału</a>]</p>
+
+<h2 id="phishing_detection">Wykrywanie oszustw</h2>
+
+<p>Podszywanie się (phishing) jest stosunkowo częstym schematem wyłudzania, w którym osoba lub grupa osób tworzy fałszywe strony WWW przeznaczone do oszukania adresatów wiadomości, aby poznać ich dane osobowe takie jak numery kart kredytowych, nazwy użytkowników kont, hasła czy numery PESEL. Używając nazw i marek banków, sieci handlowych oraz firm wydających karty kredytowe, wyłudzający często uzyskują pożądane informacje od nieświadomych odbiorców takich wiadomości.</p>
+
+<p>Odnośnik do strony podszywającej się można otrzymać w wiadomości e-mail, która wygląda na wysłaną z oficjalnego adresu danej firmy. Na taką stronę można również trafić aktywując odnośnik otrzymany w treści wiadomości przesłanej za pomocą komunikatora lub na stronach WWW.</p>
+
+<p><strong>Wskazówka</strong>: ponieważ sfałszowany <a href="glossary.xhtml#url">URL</a> może wyglądać bardzo podobnie do oryginalnego, bezpieczniej jest używać własnoręcznie utworzonych zakładek lub wprowadzać adres URL ręcznie w pasku adresu, zamiast aktywować odnośnik z wiadomości e-mail. Zawsze należy rozważyć możliwość sfałszowania adresu URL, gdy strona prosi o zalogowanie się lub podanie prywatnych danych.</p>
+
+<p>Wykrywanie oszustw w Kurierze Poczty &brandShortName; jest domyślnie włączone. Po napotkaniu wiadomości, która wygląda na próbującą oszukać użytkownika (scam), w oknie wiadomości wyświetlony zostanie pasek z ostrzeżeniem.</p>
+
+<p>Jeżeli użytkownik uważa, że wiadomość jest prawdziwa, może nacisnąć klawisz <q>Prawdziwa</q> i pasek z ostrzeżeniem zostanie wyłączony.</p>
+
+<p>Gdy użytkownik kliknie w wiadomości na odnośniku wyglądającym na sfałszowany, &brandShortName; wyświetli okno dialogowe z prośbą o potwierdzenie zanim strona WWW zostanie wyświetlona.</p>
+
+<p>Okno to zostanie wyświetlone, gdy wystąpi jedna z okoliczności: nazwę hosta w odnośniku stanowi <a href="glossary.xhtml#ip_address">adres IP</a> lub tekstowy URL jest nazwą hosta niezgodną z nazwą hosta podaną w odnośniku.</p>
+
+<p><strong>Uwaga</strong>: wykrywanie oszustw ma pierwszeństwo przed filtrem niechcianej poczty.</p>
+
+<p>Więcej informacji technicznych w dokumencie <a href="http://www.honeynet.org/papers/phishing/">Know your Enemy:
+  Phishing</a>, z angielskiego: Poznaj swojego wroga - Podszywanie się.</p>
+
+<p>[<a href="#controlling_junk_mail">Na początek rozdziału</a>]</p>
+
+</body>
+</html>

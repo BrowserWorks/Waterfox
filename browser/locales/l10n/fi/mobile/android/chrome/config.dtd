@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Hae">
+
+<!ENTITY newPref.namePlaceholder       "Nimi">
+
+<!ENTITY newPref.valueBoolean          "Totuusarvo">
+<!ENTITY newPref.valueString           "Merkkijono">
+<!ENTITY newPref.valueInteger          "Kokonaisluku">
+
+<!ENTITY newPref.stringPlaceholder     "Kirjoita merkkijono">
+<!ENTITY newPref.numberPlaceholder     "Kirjoita numero">
+
+<!ENTITY newPref.toggleButton          "Ota tai poista käytöstä">
+<!ENTITY newPref.cancelButton          "Peruuta">
+
+<!ENTITY contextMenu.copyPrefName      "Kopioi nimi">
+<!ENTITY contextMenu.copyPrefValue     "Kopioi arvo">

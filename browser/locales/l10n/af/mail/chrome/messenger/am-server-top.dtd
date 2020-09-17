@@ -1,0 +1,87 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from am-server-top.xul -->
+
+
+<!ENTITY messageStorage.label "Boodskapbewaring">
+<!ENTITY securitySettings.label "Sekuriteitsopstelling">
+<!ENTITY serverSettings.label "Bedieneropstelling">
+<!ENTITY serverType.label "Bedienersoort:">
+<!ENTITY serverName.label "Bedienernaam:">
+<!ENTITY serverName.accesskey "B">
+<!ENTITY userName.label "Gebruikernaam:">
+<!ENTITY userName.accesskey "n">
+<!ENTITY port.label "Poort:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Verstek:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Kontroleer vir nuwe boodskappe elke ">
+<!ENTITY biffStart.accesskey "e">
+<!ENTITY biffEnd.label "minute">
+
+
+<!ENTITY connectionSecurity.label "Verbindingsekuriteit:">
+<!ENTITY connectionSecurity.accesskey "V">
+<!ENTITY connectionSecurityType-0.label "Geen">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, indien beskikbaar">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Magtigingmetode:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Laat boodskappe op bediener agter">
+<!ENTITY leaveOnServer.accesskey "a">
+<!ENTITY headersOnly.label "Kry net kopskrifte">
+<!ENTITY headersOnly.accesskey "K">
+<!ENTITY deleteByAgeFromServer.label "Vir niks meer as">
+<!ENTITY deleteByAgeFromServer.accesskey "V">
+<!ENTITY daysEnd.label "dae">
+<!ENTITY deleteOnServer2.label "Totdat ek dit skrap">
+<!ENTITY deleteOnServer2.accesskey "s">
+<!ENTITY downloadOnBiff.label "Laai outomaties nuwe boodskappe af">
+<!ENTITY downloadOnBiff.accesskey "e">
+<!ENTITY deleteMessagePrefix.label "Wanneer ek 'n boodskap skrap:">
+<!ENTITY modelMoveToTrash.label "Skuif dit na hierdie vouer:">
+<!ENTITY modelMoveToTrash.accesskey "S">
+<!ENTITY modelMarkDeleted.label "Merk dit net as geskrap">
+<!ENTITY modelMarkDeleted.accesskey "M">
+<!ENTITY modelDeleteImmediately.label "Verwyder dit dadelik">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+
+<!ENTITY emptyTrashOnExit.label "Maak snippermandjie leeg tydens afsluiting">
+<!ENTITY emptyTrashOnExit.accesskey "a">
+<!ENTITY loginAtStartup.label "Kontroleer vir nuwe boodskappe aan begin">
+<!ENTITY loginAtStartup.accesskey "K">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+   of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Vra my voor meer aflaai as">
+<!ENTITY maxMessagesStart.accesskey "v">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "boodskappe">
+<!ENTITY alwaysAuthenticate.label "Versoek altyd magtiging wanneer aan hierdie bediener koppel">
+<!ENTITY alwaysAuthenticate.accesskey "e">
+<!ENTITY abbreviate.label "Vertoon nuusgroepname in die posvouer-paneel as:">
+<!ENTITY abbreviateOn.label "Volledige name (byvoorbeeld 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Afgekorte name (byvoorbeeld 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Gevorderd…">
+<!ENTITY advancedButton.accesskey "G">
+
+<!ENTITY localFolderPicker.label "Kies plaaslike gids">
+<!ENTITY browseFolder.label "Blaai…">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "Blaai…">
+<!ENTITY browseNewsrc.accesskey "B">
+
+<!ENTITY accountTitle.label "Rekeningopstelling">
+<!ENTITY accountSettingsDesc.label "Die volgende is 'n spesiale rekening.  Daar word geen identiteit mee geassosieer nie.">
+
+
+
+

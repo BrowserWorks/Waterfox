@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Odstrániť účet a údaje">
+<!ENTITY removeButton.label           "Odstrániť">
+<!ENTITY removeButton.accesskey       "O">
+<!ENTITY removeAccount.label          "Odstrániť údaje o účte">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "Odstráni sa iba záznam o tomto účte v aplikácii &brandShortName;. Samotný účet na serveri ostane neovplyvnený.">
+<!ENTITY removeData.label             "Odstrániť údaje správ">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Odstrániť údaje konverzácie">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Odstráni všetky správy, priečinky a filtre spojené s týmto účtom z vášho pevného disku. Toto neovplyvní niektoré správy, ktoré môžu stále ostať na serveri. Túto možnosť nevyberajte, ak plánujete archivovať miestne údaje alebo ich použiť v aplikácii &brandShortName; neskôr.">
+<!ENTITY removeDataServerAccount.desc "Odstráni všetky správy, priečinky a filtre spojené s týmto účtom z vášho pevného disku. Vaše správy a priečinky zostanú stále k dispozícii na serveri.">
+<!ENTITY removeDataChatAccount.desc   "Odstráni všetky údaje o konverzáciách tohto účtu uložené na pevnom disku.">
+<!ENTITY showData.label               "Zobraziť umiestnenie údajov">
+<!ENTITY showData.accesskey           "s">
+<!ENTITY progressPending              "Odstraňovanie zvolených údajov…">
+<!ENTITY progressSuccess              "Odstránenie bolo úspešné.">
+<!ENTITY progressFailure              "Odstránenie zlyhalo.">

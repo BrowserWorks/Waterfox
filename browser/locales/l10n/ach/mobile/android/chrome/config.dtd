@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Yeny">
+
+<!ENTITY newPref.namePlaceholder       "Nying">
+
+<!ENTITY newPref.valueBoolean          "gin matye kwede acel ki not">
+<!ENTITY newPref.valueString           "Tol">
+<!ENTITY newPref.valueInteger          "Namba ne">
+
+<!ENTITY newPref.stringPlaceholder     "Ket coc">
+<!ENTITY newPref.numberPlaceholder     "Ket namba">
+
+<!ENTITY newPref.toggleButton          "Lok">
+<!ENTITY newPref.cancelButton          "Juki">
+
+<!ENTITY contextMenu.copyPrefName      "Lok nying">
+<!ENTITY contextMenu.copyPrefValue     "Lok wel">

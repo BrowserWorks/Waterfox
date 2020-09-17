@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Asuddes &amp; Asenki">
+<!ENTITY addressingGroupTitle.label "Asuddes">
+<!ENTITY addressingText.label      "Ticki tettnadiḍ tansiwin:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Seqdec iɣewwaṛen inu  n uqeddac LDAP amatu deg umiḍan-agi">
+<!ENTITY useGlobal.accesskey       "q">
+<!ENTITY editDirectories.label     "Ẓreg ikaramen...">
+<!ENTITY editDirectories.accesskey "Ẓ">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Seqdec ">
+<!ENTITY directories.accesskey     "d">
+<!ENTITY directoriesNone.label     "Ula yiwen">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Asuddes">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Aru iznan deg umasal HTML">
+<!ENTITY useHtml.accesskey                    "H">
+<!ENTITY autoQuote.label                      "Bedder-d s wudem awurman izen aneẓli di tririt">
+<!ENTITY autoQuote.accesskey                  "B">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Di tririt gar tacciwin.">
+<!ENTITY quoting.accesskey                    "c">
+<!ENTITY aboveQuote.label                     "bdu tiririt inu nig n yizen aneẓli">
+<!ENTITY belowQuote.label                     "bdu tiririt inu daw n yizen aneẓli">
+<!ENTITY selectAndQuote.label                 "fren izen aneẓli">
+<!ENTITY place.label                          "u sers azmul inu">
+<!ENTITY place.accesskey                      "n">
+<!ENTITY belowText.label                      "daw n yizen aneẓli (yelha)">
+<!ENTITY aboveText.label                      "nig n tririt inu (daw n yizen aneẓli)">
+<!ENTITY includeSigOnReply.label              "seddu azmul di tririt">
+<!ENTITY includeSigOnReply.accesskey          "d">
+<!ENTITY includeSigOnForward.label            "seddu azmul i yiwellihen">
+<!ENTITY includeSigOnForward.accesskey        "l">
+
+<!ENTITY globalComposingPrefs.label           "Iɣewwaṛen n usuddes imuta…">
+<!ENTITY globalComposingPrefs.accesskey       "I">
+
+<!ENTITY globalAddressingPrefs.label          "Iɣewwaren n tira n tira n tensa imuta…">
+<!ENTITY globalAddressingPrefs.accesskey      "w">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Видалити обліковий запис і дані">
+<!ENTITY removeButton.label           "Видалити">
+<!ENTITY removeButton.accesskey       "В">
+<!ENTITY removeAccount.label          "Видалити інформацію облікового запису">
+<!ENTITY removeAccount.accesskey      "о">
+<!ENTITY removeAccount.desc           "Видаляє лише знання &brandShortName; про цей обліковий запис. Не зачіпає власне обліковий запис на сервері.">
+<!ENTITY removeData.label             "Видалити дані повідомлень">
+<!ENTITY removeData.accesskey         "п">
+<!ENTITY removeDataChat.label         "Видалити дані розмови">
+<!ENTITY removeDataChat.accesskey     "л">
+<!ENTITY removeDataLocalAccount.desc  "Видаляє всі повідомлення, теки й фільтри, що пов'язані з цим обліковим записом з вашого локального диска. Не зачіпає деякі повідомлення, що все ще можуть зберігатися на сервері. Не обирайте це, якщо ви плануєте архівувати локальні дані чи використовувати їх повторно в &brandShortName; згодом.">
+<!ENTITY removeDataServerAccount.desc "Видаляє всі повідомлення, теки й фільтри, що пов'язані з цим обліковим записом з вашого локального диска. Ваші повідомлення й теки все ще зберігаються на сервері.">
+<!ENTITY removeDataChatAccount.desc   "Видаляє всі розмови для цього облікового запису, що зберігаються на вашому локальному диску.">
+<!ENTITY showData.label               "Показати розташування даних">
+<!ENTITY showData.accesskey           "к">
+<!ENTITY progressPending              "Видалення обраних даних…">
+<!ENTITY progressSuccess              "Успішно видалено.">
+<!ENTITY progressFailure              "Помилка видалення.">

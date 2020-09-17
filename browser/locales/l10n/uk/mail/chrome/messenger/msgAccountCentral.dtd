@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Електронна пошта">
+<!ENTITY readMsgsLink.label           "Прочитати повідомлення">
+<!ENTITY composeMsgLink.label         "Написати повідомлення">
+
+<!ENTITY newsSectionHdr.label         "Групи новин">
+<!ENTITY subscribeNewsLink.label      "Упорядкувати групи новин">
+
+<!ENTITY feedsSectionHdr.label        "Стрічки">
+<!ENTITY subscribeFeeds.label         "Упорядкувати підписки">
+
+<!ENTITY chat.label                   "Чат">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Облікові записи">
+<!ENTITY subscribeImapFolders.label   "Упорядкувати підписки на теки">
+<!ENTITY settingsLink.label           "Перегляд параметрів цього облікового запису">
+<!ENTITY setupNewAcct.label           "Налаштувати обліковий запис:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Додаткові властивості">
+<!ENTITY searchMsgsLink.label         "Пошук повідомлень">
+<!ENTITY filtersLink.label            "Створити фільтри повідомлень">
+<!ENTITY junkSettings.label           "Параметри анти-спам фільтрів">
+<!ENTITY offlineLink.label            "Параметри автономної роботи">

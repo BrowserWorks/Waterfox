@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "ნაგულისხმები კლიენტი">
+<!ENTITY defaultClient.intro  "&brandShortName; პროგრამის ნაგულისხმებ კლიენტად გამოყენება:">
+
+<!ENTITY browser.label "ბრაუზერი">
+<!ENTITY email.label "ელფოსტა">
+<!ENTITY newsgroups.label "სიახლეთა ჯგუფები">
+<!ENTITY feeds.label "არხები">
+
+<!ENTITY checkOnStartup.label "ყოველთვის შემოწმება &brandShortName; პროგრამის გახსნისას">
+<!ENTITY checkOnStartup.accesskey "A">

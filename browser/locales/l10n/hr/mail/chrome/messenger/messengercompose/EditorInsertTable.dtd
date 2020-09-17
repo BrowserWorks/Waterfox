@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Umetni tablicu">
+
+<!ENTITY size.label "Veličina">
+<!ENTITY numRowsEditField.label "Redovi:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "Stupci:">
+<!ENTITY numColumnsEditField.accessKey "c">
+<!ENTITY widthEditField.label "Širina:">
+<!ENTITY widthEditField.accessKey "i">
+<!ENTITY borderEditField.label "Obrub:">
+<!ENTITY borderEditField.accessKey "b">
+<!ENTITY borderEditField.tooltip "Upiši broj za obrub tablice ili nulu (0) ukoliko ne želite obrub">
+<!ENTITY pixels.label "pikseli">

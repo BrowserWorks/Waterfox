@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "&brandShortName; rehegua">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; oñeha'ã gueteri ha ne'ĩrava oĩmba.">
+<!ENTITY aboutPage.checkForUpdates.link         "Ñembohekopyahu jeheka »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Ñembohekopyahu jeheka…">
+<!ENTITY aboutPage.checkForUpdates.none         "Ndaipóri ñembohekopyahu">
+<!ENTITY aboutPage.checkForUpdates.available2   "Ñembohekopyahu ñemboguejy">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Omboguejyhína ñembohekopyahu…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Ñembohekopyahu mohenda">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "Ñepytyvõ">
+<!ENTITY aboutPage.privacyPolicy.label          "Temiñemi purureko">
+<!ENTITY aboutPage.rights.label                 "Eikuaáke nde derécho">
+<!ENTITY aboutPage.relNotes.label               "Haipyre momaranduha">
+<!ENTITY aboutPage.credits.label                "Jepurupyrã">
+<!ENTITY aboutPage.license.label                "Marandu ñemoneĩete rehegua">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox ha Firefox ra'ãnga'ikuéra niko ha'e Fundación Mozilla mba'eteéva.">

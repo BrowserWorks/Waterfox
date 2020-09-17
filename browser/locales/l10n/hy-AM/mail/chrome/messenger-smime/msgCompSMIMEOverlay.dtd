@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Չգաղտնագրել">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "o">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Պահանջել գաղտնագում">
+<!ENTITY menu_securityEncryptRequire.accesskey "E">
+
+<!ENTITY menu_securitySign.label "Թվային ստորագրություն այս նամակի համար">
+<!ENTITY menu_securitySign.accesskey "ն">
+
+<!ENTITY menu_securityAttachMyKey.label "Կցեք իմ հանրային բանալին">
+<!ENTITY menu_securityAttachMyKey.accesskey "A">
+
+<!ENTITY menu_securityTech.label "Գաղտնագրման տեխնոլոգիա">
+<!ENTITY menu_securityTech.accesskey "T">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Դիտել անվտանգության ինֆոն">
+<!ENTITY menu_securityStatus.accesskey "I">
+
+<!ENTITY securityButton.label "Անվտանգություն">
+<!ENTITY securityButton.tooltip "Նայեք կամ փոխեք անվտանգության կարգավորումը">
+
+<!ENTITY menu_viewSecurityStatus.label "Նամակի անվտանգության ինֆո">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Quant al &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "El &brandShortName; és experimental i pot ser inestable.">
+<!ENTITY aboutPage.checkForUpdates.link         "Cerca actualitzacions »">
+<!ENTITY aboutPage.checkForUpdates.checking     "S'estan cercant actualitzacions…">
+<!ENTITY aboutPage.checkForUpdates.none         "No hi ha cap actualització">
+<!ENTITY aboutPage.checkForUpdates.available2   "Baixa l'actualització">
+<!ENTITY aboutPage.checkForUpdates.downloading  "S'està baixant l'actualització…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Instal·la l'actualització">
+<!ENTITY aboutPage.faq.label                    "PMF">
+<!ENTITY aboutPage.support.label                "Assistència">
+<!ENTITY aboutPage.privacyPolicy.label          "Política de privadesa">
+<!ENTITY aboutPage.rights.label                 "Coneixeu els vostres drets">
+<!ENTITY aboutPage.relNotes.label               "Notes de la versió">
+<!ENTITY aboutPage.credits.label                "Crèdits">
+<!ENTITY aboutPage.license.label                "Informació de la llicència">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "El Firefox i els logotips del Firefox són marques registrades de la Mozilla Foundation.">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label         "Сайт сілтемесі:">
+<!ENTITY docSubdir.label       "Парақтың ішкі бумасы:">
+<!ENTITY otherSubdir.label     "Суреттің ішкі бумасы:">
+
+<!ENTITY status.label          "Жариялау…">
+<!ENTITY fileList.label        "Жариялау күйі">
+<!ENTITY succeeded.label       "Сәтті аяқталды">
+<!ENTITY failed.label          "Сәтсіз">
+
+<!ENTITY keepOpen              "Жариялау аяқталғаннан кейін бұл терезені ашық ұстау.">
+<!ENTITY closeButton.label     "Жабу">

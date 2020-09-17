@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Matematika kiritish">
+
+<!ENTITY sourceEditField.label "LaTeX manba kodini kiritish:">
+
+<!ENTITY options.label "Tanlamalar">
+<!ENTITY optionInline.label "Ichki rejimi">
+<!ENTITY optionInline.accesskey "I">
+<!ENTITY optionDisplay.label "Ko‘rsatish rejimi">
+<!ENTITY optionDisplay.accesskey "K">
+<!ENTITY optionLTR.label "Chapdan o‘ngga yo‘nalishi">
+<!ENTITY optionLTR.accesskey "C">
+<!ENTITY optionRTL.label "O‘ngdan chapga yo‘nalishi">
+<!ENTITY optionRTL.accesskey "O">
+
+<!ENTITY insertButton.label "Kiritish">
+<!ENTITY insertButton.accesskey "K">

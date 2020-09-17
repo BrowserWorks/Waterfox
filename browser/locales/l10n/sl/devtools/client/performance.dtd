@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "Med spremljanjem delovanja se vzorci shranjujejo v krožni predpomnilnik. Ko se napolni, novi vzorci začnejo prepisovati vzorce na začetku spremljanja.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Omogočite Firefox v večprocesnem načinu za spremljanje podatkov v realnem času.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "Medpomnilnik je poln. Starejši vzorci bodo zdaj prepisani.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "Spremljanje trenutno ni na voljo. Zaprite vsa okna zasebnega brskanja in poskusite znova.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "Nalaganje …">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Časovnica">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Zaporedno v obliki slapa prikazuje različne operacije, ki jih izvaja brskalnik.">
+<!ENTITY performanceUI.toolbar.js-calltree "Drevo klicev">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Izpostavi funkcije JavaScripta, v katerih je brskalnik porabil največ časa.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Dodelitve">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Prikazuje, kam je bil dodeljen pomnilnik.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "Plameneč graf JS">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Prikazuje JavaScript klic čez pot snemanja.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Plameneč graf dodelitev">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "Skupen čas">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Čas izvajanja te funkcije in funkcij, ki jih le-ta kliče.">
+<!ENTITY performanceUI.table.selfDuration             "Lasten čas">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Čas izvajanja same funkcije.">
+<!ENTITY performanceUI.table.totalPercentage          "Skupna cena">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Odstotek izvajanja te funkcije in funkcij, ki jih le-ta kliče.">
+<!ENTITY performanceUI.table.selfPercentage           "Lastna cena">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Odstotek izvajanja same funkcije.">
+<!ENTITY performanceUI.table.samples                  "Vzorci">
+<!ENTITY performanceUI.table.samples.tooltip          "Število pojavitev funkcije na skladu, ko je bil med spremljanjem delovanja zajet vzorec.">
+<!ENTITY performanceUI.table.function                 "Funkcija">
+<!ENTITY performanceUI.table.function.tooltip         "Ime in lokacija vzorčene funkcije.">
+<!ENTITY performanceUI.table.totalAlloc               "Skupne vzorčne dodelitve">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Skupno število dodelitev objektov vzorčenih na tem mestu in v klicočih funkcijah.">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "Izberite, katere podatke želite prikazati v časovnici">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "Spremeni nastavitve učinkovitosti.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "Obrni drevo klicev">
+<!ENTITY performanceUI.invertTree.tooltiptext "Obrnjeno drevo klicev prikazuje spremljane poti klicev od najmlajših okvirjev do najstarejših.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Obrni plemeneč graf">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Obrnjen plemeneč graf prikazuje spremljane poti klicev od najmlajših okvirjev do najstarejših.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Prikaži podatke platforme Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Prikazovanje podatkov platforme bo v poročila o spremljanju delovanja JavaScripta vključilo simbole platforme Gecko.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "Prikaži optimizacije JIT">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Prikaži podatke optimizacije JIT, ki so bili vzorčeni v posameznih okvirjih JavaScripta.">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "Izravnaj rekurzijo dreves">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Izravnaj rekurzijo med pregledovanjem funkcij.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "Beleži pomnilnik">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Beleži rabo pomnilnika med spremljanjem.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "Beleži dodelitve">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Beleži dodelitve objektov med spremljanjem.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "Beleži hitrost sličic">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Beleži hitrost sličic med spremljanjem.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "Trenutno spremljanje preko">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "Ustavi spremljanje z vnosom">
+<!ENTITY performanceUI.console.stopCommandEnd   "v konzolo.">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Teagmhálaithe ar líne">
+<!ENTITY offlineContactsHeader.label   "Teagmhálaithe as líne">
+<!ENTITY conversationsHeader.label     "Comhráite">
+<!ENTITY searchResultConversation.label "Toradh cuardaigh">
+<!ENTITY chat.noConv.title             "Taispeánfar comhráite anseo.">
+<!ENTITY chat.noConv.description       "Úsáid an liosta teagmhálaithe sa phainéal ar chlé chun comhrá a thosú.">
+<!ENTITY chat.noPreviousConv.description       "Níl aon chomhrá leis an duine seo sábháilte ag &brandShortName; faoi láthair.">
+<!ENTITY chat.noAccount.title             "Níl cuntas comhrá socraithe agat fós.">
+<!ENTITY chat.noAccount.description       "Lig do &brandShortName; a bheith do do threorú agus do chuntas comhrá á shocrú.">
+<!ENTITY chat.accountWizard.button       "Tús maith">
+<!ENTITY chat.noConnectedAccount.title             "Níl do chuntais chomhrá ceangailte.">
+<!ENTITY chat.noConnectedAccount.description       "Is féidir iad a cheangal sa dialóg 'Stádas comhrá':">
+<!ENTITY chat.showAccountManager.button       "Taispeáin stádas comhrá">
+
+<!ENTITY chat.participants             "Rannpháirtithe:">
+<!ENTITY chat.previousConversations    "Comhráite Roimhe Seo:">
+<!ENTITY chat.ongoingConversation      "Comhrá ar siúl">
+
+<!ENTITY openConversationCmd.label     "Tosaigh Comhrá">
+<!ENTITY openConversationCmd.accesskey "C">
+<!ENTITY closeConversationCmd.label    "Dún Comhrá">
+<!ENTITY closeConversationCmd.accesskey "D">
+<!ENTITY aliasCmd.label                "Athainmnigh">
+<!ENTITY aliasCmd.accesskey            "A">
+<!ENTITY deleteCmd.label               "Bain an Teagmhálaí">
+<!ENTITY deleteCmd.accesskey           "B">
+
+<!ENTITY openConversationButton.tooltip  "Tosaigh comhrá">
+<!ENTITY closeConversationButton.tooltip "Dún comhrá">
+
+<!ENTITY addBuddyButton.label          "Cuir Teagmhálaí Leis">
+<!ENTITY joinChatButton.label          "Téigh isteach i gComhrá">
+<!ENTITY chatAccountsButton.label      "Taispeáin Cuntais">
+
+<!ENTITY status.available          "Ar Fáil">
+<!ENTITY status.unavailable        "Níl ar fáil">
+<!ENTITY status.offline            "As Líne">
+
+<!ENTITY openLinkCmd.label            "Oscail Nasc…">
+<!ENTITY openLinkCmd.accesskey        "O">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Yangi taqvim yaratish" >
+<!ENTITY wizard.label             "Yangi taqvim yaratish" >
+<!ENTITY wizard.description       "Taqvimingizni toping" >
+
+<!ENTITY initialpage.description    "Taqvimingizni kompyuteringizda saqlash mumkin yoki uni masofadan boshqarish yoki do‘stlaringiz va hamkorlaringiz bilan bo‘lishish uchun serverda joylashtirish ham mumkin." >
+<!ENTITY initialpage.computer.label  "Mening kompyuterimda">
+<!ENTITY initialpage.network.label  "Tarmoqda">
+
+<!ENTITY locationpage.description         "Masofadagi taqvimingizga kirish uchun nima kerakligi haqida ma’lumot kiriting" >
+<!ENTITY locationpage.login.description   "Ixtiyoriy: foydalanuvchi nomini yoki parolni kiriting" >
+<!ENTITY locationpage.username.label      "Foydalanuvchi:" >
+<!ENTITY locationpage.password.label      "Parol:" >
+
+<!ENTITY custompage.shortdescription  "Taqvimni moslash" >
+<!ENTITY custompage.longdescription   "Taqvimingizga taxallus berishingiz yoki ushbu taqvimdagi tadbirlarni ranlashingiz mumkin." >
+
+<!ENTITY finishpage.shortdescription  "Taqvim yaratildi" >
+<!ENTITY finishpage.longdescription   "Taqvimingiz yaratildi." >

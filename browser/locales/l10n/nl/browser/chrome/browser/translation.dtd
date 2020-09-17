@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  toolkit/intl/languageNames.ftl file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+<!ENTITY translation.thisPageIsIn.label         "Deze pagina is in het">
+<!ENTITY translation.translateThisPage.label    "Deze pagina vertalen?">
+<!ENTITY translation.translate.button           "Vertalen">
+<!ENTITY translation.notNow.button              "Niet nu">
+
+<!ENTITY translation.translatingContent.label   "Pagina-inhoud vertalen…">
+
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  toolkit/intl/languageNames.ftl file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+<!ENTITY translation.translatedFrom.label       "Deze pagina is van het">
+<!ENTITY translation.translatedTo.label         "naar het">
+<!ENTITY translation.translatedToSuffix.label   "vertaald">
+
+<!ENTITY translation.showOriginal.button        "Origineel tonen">
+<!ENTITY translation.showTranslation.button     "Vertaling tonen">
+
+<!ENTITY translation.errorTranslating.label     "Er is een fout opgetreden bij het vertalen van deze pagina.">
+<!ENTITY translation.tryAgain.button            "Opnieuw proberen">
+
+<!ENTITY translation.serviceUnavailable.label   "Vertaling is momenteel niet beschikbaar. Probeer het later opnieuw.">
+
+<!ENTITY translation.options.menu               "Opties">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "Deze website nooit vertalen">
+<!ENTITY translation.options.neverForSite.accesskey "D">
+<!ENTITY translation.options.preferences.label  "Vertaalvoorkeuren">
+<!ENTITY translation.options.preferences.accesskey "V">
+

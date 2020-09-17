@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Luchd-aithne air loidhne">
+<!ENTITY offlineContactsHeader.label   "Luchd-aithne far loidhne">
+<!ENTITY conversationsHeader.label     "Còmhraidhean">
+<!ENTITY searchResultConversation.label "Toradh luirg">
+<!ENTITY chat.noConv.title             "Chithear còmhraidhean an-seo.">
+<!ENTITY chat.noConv.description       "Cleachd liosta an luchd-aithne air a' phanail chlì gus tòiseachadh air còmhradh.">
+<!ENTITY chat.noPreviousConv.description       "Chan eil seann chòmhraidhean leis an neach seo aig &brandShortName; gu ruige seo.">
+<!ENTITY chat.noAccount.title             "Cha do shuidhich thu cunntas.">
+<!ENTITY chat.noAccount.description       "Leig le &brandShortName; do stiùireadh tron phròiseas gu cunntas cabadaich a chur air dòigh dhut.">
+<!ENTITY chat.accountWizard.button       "Toiseach tòiseachaidh">
+<!ENTITY chat.noConnectedAccount.title             "Chan eil na cunntasan cabadaich agad air ceangal.">
+<!ENTITY chat.noConnectedAccount.description       "&apos;S urrainn dhut an ceangal on chòmhradh &quot;Staid na cabadaich&quot;:">
+<!ENTITY chat.showAccountManager.button       "Seall staid na cabadaich">
+
+<!ENTITY chat.participants             "Com-pàirtichean:">
+<!ENTITY chat.previousConversations    "Seann còmhraidhean:">
+<!ENTITY chat.ongoingConversation      "Còmhradh a tha a' dol">
+
+<!ENTITY openConversationCmd.label     "Tòisich air còmhradh">
+<!ENTITY openConversationCmd.accesskey "T">
+<!ENTITY closeConversationCmd.label    "Dùin an còmhradh">
+<!ENTITY closeConversationCmd.accesskey "D">
+<!ENTITY aliasCmd.label                "Cuir ainm ùr air">
+<!ENTITY aliasCmd.accesskey            "C">
+<!ENTITY deleteCmd.label               "Thoir air falbh an neach-aithne seo">
+<!ENTITY deleteCmd.accesskey           "f">
+
+<!ENTITY openConversationButton.tooltip  "Tòisich air còmhradh">
+<!ENTITY closeConversationButton.tooltip "Dùin an còmhradh">
+
+<!ENTITY addBuddyButton.label          "Cuir neach-aithne ris">
+<!ENTITY joinChatButton.label          "Gabh pàirt sa chabadaich">
+<!ENTITY chatAccountsButton.label      "Seall na cunntasan">
+
+<!ENTITY status.available          "An làthair">
+<!ENTITY status.unavailable        "Trang">
+<!ENTITY status.offline            "Far loidhne">
+
+<!ENTITY openLinkCmd.label            "Fosgail an ceangal…">
+<!ENTITY openLinkCmd.accesskey        "F">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Imloni tekshirish">
+
+<!ENTITY misspelledWord.label "Xatol yozilgan so‘z:">
+<!ENTITY wordEditField.label "Almashtirish:">
+<!ENTITY wordEditField.accessKey "A">
+<!ENTITY checkwordButton.label "So‘zni tekshirish">
+<!ENTITY checkwordButton.accessKey "t">
+<!ENTITY suggestions.label "Tavsiyalar:">
+<!ENTITY suggestions.accessKey "T">
+<!ENTITY ignoreButton.label "E’tiborsiz qoldirish">
+<!ENTITY ignoreButton.accessKey "E">
+<!ENTITY ignoreAllButton.label "Barchasini e’tiborsiz qoldirish">
+<!ENTITY ignoreAllButton.accessKey "e">
+<!ENTITY replaceButton.label "Almashtirish">
+<!ENTITY replaceButton.accessKey "A">
+<!ENTITY replaceAllButton.label "Barchasini almashtirish">
+<!ENTITY replaceAllButton.accessKey "B">
+<!ENTITY stopButton.label "To‘xtatish">
+<!ENTITY stopButton.accessKey "o">
+<!ENTITY userDictionary.label "Shaxsiy lug‘at:">
+<!ENTITY moreDictionaries.label "Boshqa lug‘atlarni yuklab olish…">
+<!ENTITY addToUserDictionaryButton.label "So‘z qo‘shish">
+<!ENTITY addToUserDictionaryButton.accessKey "q">
+<!ENTITY editUserDictionaryButton.label "Tahrirlash…">
+<!ENTITY editUserDictionaryButton.accessKey "T">
+<!ENTITY recheckButton2.label "Matnni qayta tekshirish">
+<!ENTITY recheckButton2.accessKey "M">
+<!ENTITY closeButton.label "Yopish">
+<!ENTITY closeButton.accessKey "Y">
+<!ENTITY sendButton.label "Jo‘natish">
+<!ENTITY sendButton.accessKey "J">
+<!ENTITY languagePopup.label "Til:">
+<!ENTITY languagePopup.accessKey "T">

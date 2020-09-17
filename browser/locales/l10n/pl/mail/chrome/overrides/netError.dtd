@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Błąd wczytywania strony">
+<!ENTITY retry.label "Spróbuj ponownie">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Nie udało się nawiązać połączenia">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Zastrzeżony adres">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Nie odnaleziono adresu">
+<!ENTITY dnsNotFound.longDesc "<ul><li>Sprawdź, czy adres nie zawiera literówek jak np. <strong>ww</strong>.example.com zamiast <strong>www</strong>.example.com</li><li>Jeśli nie można otworzyć żadnej strony, sprawdź swoje połączenie sieciowe.</li><li>Jeśli ten komputer jest chroniony przez zaporę sieciową lub serwer proxy, sprawdź, czy program &brandShortName; jest uprawniony do łączenia się z Internetem.</li></ul>">
+
+<!ENTITY fileNotFound.title "Nie odnaleziono pliku">
+<!ENTITY fileNotFound.longDesc "<ul><li>Sprawdź wielkość liter oraz upewnij się, że nazwa pliku nie zawiera literówek lub innych błędów w pisowni.</li><li>Sprawdź, czy plik nie został przeniesiony, usunięty lub jego nazwa nie została zmieniona.</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Odmowa dostępu do pliku">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Plik mógł zostać usunięty, przeniesiony lub jego uprawnienia uniemożliwiają dostęp.</li></ul>">
+
+<!ENTITY generic.title "Wystąpił błąd">
+<!ENTITY generic.longDesc "<p>&brandShortName; nie jest w stanie otworzyć tej strony.</p>">
+
+<!ENTITY malformedURI.title "Nieprawidłowy adres">
+<!ENTITY malformedURI.longDesc "<ul><li>Adresy internetowe są zwykle postaci <strong>http://www.example.com/</strong></li><li>Należy sprawdzić, czy adres zawiera prawidłowe ukośniki (tzn. <strong>/</strong>).</li></ul>">
+
+<!ENTITY netInterrupt.title "Przerwane połączenie">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokument wygasł">
+<!ENTITY notCached.longDesc "<p>Żądany dokument nie jest dostępny w pamięci podręcznej.</p><ul><li>Ze względów bezpieczeństwa, &brandShortName; automatycznie nie pobiera ponownie prywatnych dokumentów.</li><li>Kliknij przycisk „Spróbuj ponownie”, aby jeszcze raz pobrać dokument z witryny.</li></ul>">
+
+<!ENTITY netOffline.title "Tryb offline">
+<!ENTITY netOffline.longDesc2 "<ul><li>Naciśnij „Spróbuj ponownie”, by przejść do trybu online i odświeżyć stronę.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Błąd kodowania zawartości">
+<!ENTITY contentEncodingError.longDesc "<ul><li>Proszę poinformować właścicieli witryny o tym problemie.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Niebezpieczny typ pliku">
+<!ENTITY unsafeContentType.longDesc "<ul><li>Proszę poinformować właścicieli witryny o tym problemie.</li></ul>">
+
+<!ENTITY netReset.title "Przerwane połączenie">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Przekroczono limit czasu połączenia">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Nieznany protokół">
+<!ENTITY unknownProtocolFound.longDesc "<ul><li>Aby otworzyć ten adres, może być konieczna instalacja innego programu.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Serwer proxy odrzuca połączenia">
+<!ENTITY proxyConnectFailure.longDesc "<ul><li>Należy sprawdzić, czy ustawienia serwerów proxy są prawidłowe.</li><li>Należy zapytać administratora sieci, czy serwer proxy funkcjonuje prawidłowo.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Nie odnaleziono serwera proxy">
+<!ENTITY proxyResolveFailure.longDesc "<ul><li>Należy sprawdzić, czy ustawienia serwerów proxy są prawidłowe.</li><li>Należy sprawdzić, czy połączenie z siecią komputera użytkownika funkcjonuje prawidłowo.</li><li>Jeśli ten komputer jest chroniony przez zaporę sieciową lub serwer proxy, należy sprawdzić, czy program &brandShortName; jest uprawniony do łączenia się z Internetem.</li></ul>">
+
+<!ENTITY redirectLoop.title "Pętla przekierowań">
+<!ENTITY redirectLoop.longDesc "<ul><li>Problem ten może się pojawić w wyniku zablokowania lub odrzucenia ciasteczek.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Nieoczekiwana odpowiedź serwera">
+<!ENTITY unknownSocketType.longDesc "<ul><li>Należy sprawdzić, czy zainstalowany jest menedżer zabezpieczeń (PSM).</li><li>Powodem tego błędu może też być niestandardowa konfiguracja serwera.</li></ul>">
+
+<!ENTITY nssFailure2.title "Nie udało się nawiązać bezpiecznego połączenia">
+<!ENTITY nssFailure2.longDesc2 "<ul><li>Otwierana strona nie może zostać wyświetlona, ponieważ nie udało się potwierdzić autentyczności otrzymanych danych.</li><li>Proszę poinformować właścicieli witryny o tym problemie.</li></ul>">
+
+<!ENTITY nssBadCert.title "Nie udało się nawiązać bezpiecznego połączenia">
+<!ENTITY nssBadCert.longDesc2 "<ul><li>Powodem tego może być nieprawidłowa konfiguracja serwera albo próba podania się za ten serwer przez podmiot nieuprawniony.</li><li>Jeśli użytkownik łączył się wcześniej z tym serwerem, błąd może być tymczasowy – w tej sytuacji należy spróbować ponownie później.</li></ul>">
+
+<!ENTITY sharedLongDesc "<ul><li>Witryna może być tymczasowo niedostępna lub przeciążona. Spróbuj ponownie za pewien czas.</li><li>Jeśli nie możesz otworzyć żadnej strony, sprawdź swoje połączenie sieciowe.</li><li>Jeśli ten komputer jest chroniony przez zaporę sieciową lub serwer proxy, należy sprawdzić, czy program &brandShortName; jest uprawniony do łączenia się z Internetem.</li></ul>">
+
+<!ENTITY cspBlocked.title "Zablokowane przez politykę bezpieczeństwa treści">
+<!ENTITY cspBlocked.longDesc "<p>Program &brandShortName; uniemożliwił tej stronie wczytanie treści w ten sposób, ponieważ jej polityka bezpieczeństwa treści na to nie pozwala.</p>">
+
+<!ENTITY xfoBlocked.title "Zablokowane przez politykę „X-Frame-Options”">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; uniemożliwił tej stronie wczytanie treści w tym kontekście, ponieważ jej polityka „X-Frame-Options” na to nie pozwala.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Błąd: treść uszkodzona">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Otwierana strona nie może zostać wyświetlona, ponieważ wykryto błąd w transmisji danych.</p><ul><li>Proszę poinformować właścicieli witryny o tym problemie.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Możesz także dodać wyjątek…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Zabierz mnie stąd">
+<!ENTITY securityOverride.exceptionButtonLabel "Dodaj wyjątek…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Nie powinno się dodawać wyjątku w przypadku korzystania z niezaufanego połączenia z Internetem, ani jeśli zwykle takie ostrzeżenie nie pojawia się podczas korzystania z tego serwera.</p><button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button><button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Zdalna treść XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Proszę poinformować właścicieli witryny o tym problemie.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Połączenie nie gwarantuje bezpieczeństwa">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> używa przestarzałej i podatnej na ataki technologii bezpieczeństwa. Atakujący mógłby łatwo odszyfrować informacje, które miały być bezpieczne. Administrator strony musi naprawić serwer, zanim będzie można ją odwiedzić.</p><p>Kod błędu: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Zablokowana strona">
+
+<!ENTITY networkProtocolError.title "Błąd protokołu sieciowego">
+<!ENTITY networkProtocolError.longDesc "<p>Otwierana strona nie może zostać wyświetlona, ponieważ wykryto błąd w protokole sieciowym.</p><ul><li>Proszę poinformować właścicieli witryny o tym problemie.</li></ul>">

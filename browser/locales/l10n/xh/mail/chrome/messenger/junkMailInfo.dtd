@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Malunga Nemeyile Eyingxubevange">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "I-&brandShortName; ichonga ngokuzenzekela imiyalezo efikayo evela njengemeyile eyingxubevange (ekwaziwa ngokuba yimfitshimfitshi). Imiyalezo i-&brandShortName; ecinga ukuba yingxubvange iya kubonisa umqondiso wengxubevange">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Kuqala, kufuneka uqeqeshe i-&brandShortName; ukuze uchonge imeyile eyingxubevange ngokusebenzisa iqhosha lesixwexwe sezixhobo zemiyalelo Yengxubevange ukuphawula imiyalezo njengeyingxubevange okanye engeyiyo.">
+<!ENTITY info3.label   "Yakuba i-&brandShortName; iyichonge ngokuchanekileyo imeyile eyingxubevange, unako ukusebenzisa Izilawuli Zemeyile Eyingxubevange ukusenxisa imeyile efikayo eyingxubevange ngokuzenzekela kwisiqulathi seefayili Zengxubevange.">
+<!ENTITY info4.label   "Ngolwazi olungaphaya koku, nqomfa ku-Uncedo.">

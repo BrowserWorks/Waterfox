@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.masterpass.title                  "Hlavné heslá">
+<!ENTITY managepassword.caption                 "Doba platnosti hlavného hesla">
+<!ENTITY managepassword.text                    "&brandShortName; požiada o hlavné heslo:">
+<!ENTITY managepassword.askfirsttime            "Prvýkrát, keď ho bude potrebovať">
+<!ENTITY managepassword.askfirsttime.accesskey  "r">
+<!ENTITY managepassword.askeverytime            "Vždy, keď ho bude potrebovať">
+<!ENTITY managepassword.askeverytime.accesskey  "V">
+<!ENTITY managepassword.asktimeout              "Ak nebolo použité počas posledných ">
+<!ENTITY managepassword.asktimeout.accesskey    "A">
+<!ENTITY managepassword.timeout.unit            "minút alebo dlhšie">
+
+<!ENTITY changepassword.caption                 "Zmena hlavného hesla">
+<!ENTITY changepassword.text                    "Hlavné heslo chráni citlivé údaje, napríklad internetové heslá a certifikáty.">
+<!ENTITY changepassword.button                  "Zmeniť heslo…">
+<!ENTITY changepassword.accesskey               "Z">
+
+<!ENTITY resetpassword.caption                  "Vymazanie hlavného hesla">
+<!ENTITY resetpassword.text                     "Ak vymažete svoje hlavné heslo, všetky uložené internetové a e-mailové heslá, údaje formulárov, osobné certifikáty a súkromné kľúče budú vymazané.">
+<!ENTITY resetpassword.button                   "Vymazať heslo">
+<!ENTITY resetpassword.accesskey                "h">

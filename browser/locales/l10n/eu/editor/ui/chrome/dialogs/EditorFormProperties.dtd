@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Inprimaki propietateak">
+
+<!ENTITY Settings.label "Ezarpenak">
+
+<!ENTITY FormName.label "Inprimaki izena:">
+<!ENTITY FormName.accesskey "n">
+<!ENTITY FormAction.label "Ekintza URL-a:">
+<!ENTITY FormAction.accesskey "a">
+<!ENTITY FormMethod.label "Metodoa:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Kodeketa:">
+<!ENTITY FormEncType.accesskey "K">
+<!ENTITY FormTarget.label "Helburu markoa:">
+<!ENTITY FormTarget.accesskey "H">
+
+<!ENTITY RemoveForm.label "Ezabatu inprimakia">
+<!ENTITY RemoveForm.accesskey "E">

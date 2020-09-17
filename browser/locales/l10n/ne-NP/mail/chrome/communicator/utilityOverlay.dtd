@@ -1,0 +1,42 @@
+<!-- these things need to move into utilityOverlay.xul -->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items --> 
+
+
+<!ENTITY fileMenu.label "फाइल">
+<!ENTITY fileMenu.accesskey "f">
+<!ENTITY newMenu.label "नयाँ">
+<!ENTITY newMenu.accesskey "N">
+
+<!ENTITY editMenu.label "सम्पादन गर्नुहोस्">
+<!ENTITY editMenu.accesskey "e">
+<!ENTITY undoCmd.label "पूर्वस्थितिमा फर्काउनुहोस्">
+<!ENTITY undoCmd.accesskey "u">
+<!ENTITY redoCmd.label "रिडू गर्नुहोस्">
+<!ENTITY redoCmd.accesskey "r">
+<!ENTITY deleteCmd.label "मेट्नुहोस्">
+<!ENTITY deleteCmd.accesskey "d">
+<!ENTITY preferencesCmdUnix.label "प्राथमिकता">
+<!ENTITY preferencesCmdUnix.accesskey "n">
+
+<!ENTITY viewMenu.label "दृश्य">
+<!ENTITY viewMenu.accesskey "v">
+<!ENTITY viewToolbarsMenu.label "उपकरणपट्टी">
+<!ENTITY viewToolbarsMenu.accesskey "T">
+<!ENTITY showTaskbarCmd.label "वस्तुस्थिति पट्टी">
+<!ENTITY showTaskbarCmd.accesskey "S">
+
+<!ENTITY closeCmd.label "बन्द गर्नुहोस्">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "c">
+
+<!ENTITY quitApplicationCmd.label "बाहिरिनुहोस्">
+<!ENTITY quitApplicationCmd.key "Q">
+<!ENTITY quitApplicationCmd.accesskey "x">
+
+<!ENTITY quitApplicationCmdUnix.label "अन्त्य गर्नुहोस्">
+<!ENTITY quitApplicationCmdUnix.accesskey "q">
+

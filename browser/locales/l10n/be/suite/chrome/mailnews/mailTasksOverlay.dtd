@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messengerCmd.label "Пошта і Навінакупы">
+<!ENTITY messengerCmd.accesskey "П">
+<!ENTITY messengerCmd.commandkey "2">
+<!ENTITY addressBookCmd.label "Адрасная кніга">
+<!ENTITY addressBookCmd.accesskey "К">
+<!ENTITY addressBookCmd.commandkey "5">
+<!ENTITY taskMessenger.tooltip "Пошта і Навінакупы">
+<!ENTITY taskAddressBook.tooltip "Адрасная кніга">
+<!ENTITY searchAddressesCmd.label "Пошук адрасоў…">
+<!ENTITY searchAddressesCmd.accesskey "А">
+<!ENTITY searchMailCmd.label "Пошук лістоў…">
+<!ENTITY searchMailCmd.accesskey "П">
+<!ENTITY searchMailCmd.key "f">

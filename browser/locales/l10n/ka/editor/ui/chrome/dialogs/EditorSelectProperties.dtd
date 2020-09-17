@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "მონიშვნის სიის პარამეტრები">
+
+<!ENTITY Select.label "მონიშვნის სია">
+<!ENTITY SelectName.label "სიის სახელი:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "სიმაღლე:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "მრავალჯერადი მონიშვნა">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "ამორთული">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "დაფების საძიებელი:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "პარამეტრთა ჯგუფი">
+<!ENTITY OptGroupLabel.label "წარწერა:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "ამორთული">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "პარამეტრი">
+<!ENTITY OptionText.label "ტექსტი:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "მნიშვნელობა:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "თავიდან მონიშნული">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "ამორთული">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "ტექსტი">
+<!ENTITY ValueHeader.label "მნიშვნელობა">
+<!ENTITY SelectedHeader.label "მონიშნული">
+
+<!ENTITY AddOption.label "პარამეტრის დამატება">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "ჯგუფის დამატება">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "მოცილება">
+<!ENTITY RemoveElement.accesskey "R">
+<!ENTITY MoveElementUp.label "ზემოთ">
+<!ENTITY MoveElementUp.accesskey "U">
+<!ENTITY MoveElementDown.label "ქვემოთ">
+<!ENTITY MoveElementDown.accesskey "D">

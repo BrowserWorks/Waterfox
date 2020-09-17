@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+
+<!ENTITY pref.receipts.title          "Acuses de recibimiento">
+<!ENTITY prefReceipts.caption         "Acuses de recibimiento">
+<!ENTITY requestReceipt.label         "Al enviar mensaches, solicitar siempre un acuse de recibimiento">
+<!ENTITY requestReceipt.accesskey     "v">
+<!ENTITY receiptArrive.label          "Quan plegue un acuse de recibimiento:">
+<!ENTITY leaveIt.label                "Deixar-lo en a mía servilla de dentrada">
+<!ENTITY leaveIt.accesskey            "D">
+<!ENTITY moveToSent.label             "Move it to my &quot;Sent&quot; folder">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "Quan reciba una solicitut d'acuse de recibimiento:">
+<!ENTITY returnSome.label             "Devolver acuse de recibimiento ta qualques mensaches">
+<!ENTITY returnSome.accesskey         "a">
+<!ENTITY never.label                  "No ninviar nunca acuses de recibimiento">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Si no soi en o Ta: u Cc: d'o mensaje:">
+<!ENTITY notInToCc.accesskey          "j">
+<!ENTITY outsideDomain.label          "Si o remitente no ye en o mío dominio:">
+<!ENTITY outsideDomain.accesskey      "S">
+<!ENTITY otherCases.label             "En ltos demás casos:">
+<!ENTITY otherCases.accesskey         "t">
+<!ENTITY askMe.label                  "Preguntar-me/Preguntar'me">
+<!ENTITY alwaysSend.label             "Ninviar siempre">
+<!ENTITY neverSend.label              "No ninviar nunca">

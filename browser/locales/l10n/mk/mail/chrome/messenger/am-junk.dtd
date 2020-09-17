@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Поставки за отпад">
+<!ENTITY level.label "Прилагодливи контроли за отпадна пошта за оваа сметка">
+<!ENTITY level.accesskey "о">
+
+<!ENTITY move.label "Премести го новиот отпад во:">
+<!ENTITY junkFolderOn.label "&quot;Junk&quot; папка во:">
+<!ENTITY otherFolder.label "Друго:">
+<!ENTITY purge1.label "Автоматски бриши го отпадот постар од">
+<!ENTITY purge1.accesskey "в">
+<!ENTITY purge2.label "денови">
+
+<!ENTITY ispHeaders.label "Верувај во заглавјата за отпад од:">
+<!ENTITY ispHeaders.accesskey "р">
+

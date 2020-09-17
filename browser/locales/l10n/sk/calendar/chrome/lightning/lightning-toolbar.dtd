@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Panel nástrojov Kalendár">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "K">
+<!ENTITY lightning.toolbar.task.name "Panel nástrojov Úlohy">
+<!ENTITY lightning.toolbar.task.name.accesskey "h">
+
+<!ENTITY lightning.toolbar.sync.label "Synchronizovať">
+<!ENTITY lightning.toolbar.sync.tooltip "Znova načítať obsah kalendárov a synchronizovať zmeny">
+<!ENTITY lightning.toolbar.delete.label "Odstrániť">
+<!ENTITY lightning.toolbar.delete.tooltip "Odstrániť zvolené udalosti alebo úlohy">
+<!ENTITY lightning.toolbar.edit.label "Upraviť">
+<!ENTITY lightning.toolbar.edit.tooltip "Upraviť zvolenú udalosť alebo úlohu">
+<!ENTITY lightning.toolbar.gototoday.label "Prejsť na panel Dnes">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Prejsť na panel Dnes">
+<!ENTITY lightning.toolbar.print.label "Tlačiť">
+<!ENTITY lightning.toolbar.print.tooltip "Vytlačiť udalosti alebo úlohy">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Kalendár">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Prepnúť na kartu Kalendár">
+<!ENTITY lightning.toolbar.calendar.accesskey "K">
+<!ENTITY lightning.toolbar.task.label         "Úlohy">
+<!ENTITY lightning.toolbar.task.tooltip       "Prepnúť na kartu Úlohy">
+<!ENTITY lightning.toolbar.task.accesskey     "h">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Udalosť">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Vytvoriť novú udalosť">
+<!ENTITY lightning.toolbar.newtask.label      "Úloha">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Vytvoriť novú úlohu">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Deň">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Týždeň">
+<!ENTITY lightning.toolbar.week.accesskey            "T">
+<!ENTITY lightning.toolbar.multiweek.label           "Viac týždňov">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "V">
+<!ENTITY lightning.toolbar.month.label               "Mesiac">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Ponuka aplikácie">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Zobraziť hlavnú ponuku aplikácie &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Panel Kalendár">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "P">
+<!ENTITY lightning.toolbar.calendarpane.label        "Zobraziť panel Kalendár">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "Z">

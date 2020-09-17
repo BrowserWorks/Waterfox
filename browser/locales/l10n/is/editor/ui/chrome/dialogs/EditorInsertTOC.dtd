@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title "Innihald">
+<!ENTITY buildToc.label "Byggja efnisyfirlit frá:">
+<!ENTITY tag.label "Tag:">
+<!ENTITY class.label "Flokkur:">
+<!ENTITY header1.label "Stig 1">
+<!ENTITY header2.label "Stig 2">
+<!ENTITY header3.label "Stig 3">
+<!ENTITY header4.label "Stig 4">
+<!ENTITY header5.label "Stig 5">
+<!ENTITY header6.label "Stig 6">
+<!ENTITY makeReadOnly.label "Gera efnisyfirlit skrifvarið">
+<!ENTITY orderedList.label "Tölusetja allar færslur í efnisyfirliti">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Chwilio">
+
+<!ENTITY newPref.namePlaceholder       "Enw">
+
+<!ENTITY newPref.valueBoolean          "Booleaidd">
+<!ENTITY newPref.valueString           "Llinell">
+<!ENTITY newPref.valueInteger          "Cyfanrif">
+
+<!ENTITY newPref.stringPlaceholder     "Rhowch linyn">
+<!ENTITY newPref.numberPlaceholder     "Rhowch rif">
+
+<!ENTITY newPref.toggleButton          "Toglo">
+<!ENTITY newPref.cancelButton          "Diddymu">
+
+<!ENTITY contextMenu.copyPrefName      "Copïo Enw">
+<!ENTITY contextMenu.copyPrefValue     "Copïo Gwerth">

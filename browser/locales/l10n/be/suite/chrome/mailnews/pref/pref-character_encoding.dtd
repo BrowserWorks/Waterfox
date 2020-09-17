@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding.title "Кадоўка знакаў">
+<!ENTITY messageDisplay.caption "Адлюстраванне лістоў">
+<!ENTITY viewFallbackCharset.label "Запасная кадоўка знакаў:">
+<!ENTITY viewFallbackCharset.accesskey "З">
+<!ENTITY viewFallbackCharset.desc "(Ужываецца для састарэлага змесціва, якое не вызначае сваю кадоўку)">
+<!ENTITY composingMessages.caption "Укладанне лістоў">
+<!ENTITY useMIME.label "Ужываць MIME кадоўку 'quoted printable' для лістоў, якія змяшчаюць 8-бітавыя знакі. Пакіньце неадзначанай, каб дасылаць лісты як ёсць.">
+<!ENTITY useMIME.accesskey "У">
+<!ENTITY sendDefaultCharset.label "Змоўчная кадоўка знакаў:">
+<!ENTITY sendDefaultCharset.accesskey "д">
+<!ENTITY replyInDefaultCharset2.label "Ужываць, калі магчыма, змоўчную кадоўку знакаў у адказах. (Калі неадзначана, выкарыстоўваць яе будуць толькі новыя лісты.)">
+<!ENTITY replyInDefaultCharset2.accesskey "ж">

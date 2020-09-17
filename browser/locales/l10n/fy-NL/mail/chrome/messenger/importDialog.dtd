@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurances of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Ymportearje">
+<!ENTITY importAll.label    	    "Alles ymportearje">
+<!ENTITY importAll.accesskey      "A">
+<!ENTITY importMail.label         "E-mail">
+<!ENTITY importMail.accesskey     "E">
+<!ENTITY importFeeds.label        "Feedabonneminten">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "Adresboeken">
+<!ENTITY importAddressbook.accesskey "b">
+<!ENTITY importSettings.label     "Ynstellingen">
+<!ENTITY importSettings.accesskey "Y">
+<!ENTITY importFilters.label      "Filters">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "42em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName;-ymportearhelper">
+<!ENTITY importShortDesc.label    "E-mail, adresboeken, ynstellingen en filters fan oare programma’s ymportearje">
+
+<!ENTITY importDescription1.label "Dizze helper sil e-mailberjochten, adresboekgegevens, foarkarren en/of filters fan oare e-mailprogramma’s en bekende adresboekformaten ymportearje yn &brandShortName;.">
+<!ENTITY importDescription2.label "As dizze ien kear ymportearre binne, kinne jo se brûke yn &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Selektearje it type bestân dat jo ymportearje wolle:">
+<!ENTITY selectDescriptionB.label "Selektearje in besteand account of meitsje in nije oan:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Namme:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Der is gjin tapassing of bestân fûn om gegevens út te ymportearjen.">
+
+<!ENTITY back.label               "&lt; Foarige">
+<!ENTITY forward.label            "Folgjende &gt;">
+<!ENTITY finish.label             "Foltôgje">
+<!ENTITY cancel.label             "Annulearje">
+
+<!ENTITY select.label             "of selektearje it type gegevens om te ymportearjen:">
+
+<!ENTITY title.label              "Titel">
+<!ENTITY processing.label         "Ymportearje…">

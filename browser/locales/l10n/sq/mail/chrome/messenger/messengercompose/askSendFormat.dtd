@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "Pyetje për Postë HTML">
+
+<!ENTITY recipient.label "Disa nga marrësit nuk figurojnë si të aftë që mund të marrin postë HTML.">
+
+<!ENTITY question.label "Do të donit të shndërrohet mesazhi në tekst të thjeshtë apo doni ta dërgoni si HTML sido që të jetë?">
+
+<!ENTITY plainTextAndHtml.label "Dërgoje si Tekst të Thjeshtë dhe si HTML">
+<!ENTITY plainTextAndHtml.accesskey "e">
+<!ENTITY plainTextOnly.label "Dërgoje Vetëm si Tekst të Thjeshtë">
+<!ENTITY plainTextOnly.accesskey "T">
+<!ENTITY htmlOnly.label "Dërgoje Vetëm si HTML">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Dërgoje">
+<!ENTITY send.accesskey "D">

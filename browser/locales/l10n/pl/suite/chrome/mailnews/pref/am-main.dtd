@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!ENTITY accountTitle.label "Konfiguracja konta">
+<!ENTITY accountName.label "Nazwa konta:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Domyślna tożsamość">
+<!ENTITY identityDesc.label "Poniższe dane określają tożsamość posiadacza konta i umożliwiają odbiorcom wiadomości identyfikację nadawcy.">
+<!ENTITY name.label "Imię i nazwisko:">
+<!ENTITY name.accesskey "I">
+<!ENTITY email.label "Adres e-mail:">
+<!ENTITY email.accesskey "m">
+<!ENTITY replyTo.label "Zwrotny adres e-mail:">
+<!ENTITY replyTo.accesskey "z">
+<!ENTITY replyTo.placeholder "Adresaci będą wysyłać odpowiedzi na ten adres zwrotny">
+<!ENTITY organization.label "Firma/Organizacja:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Sygnaturka:">
+<!ENTITY signatureText.accesskey "g">
+<!ENTITY signatureHtml.label "Używaj HTML">
+<!ENTITY signatureHtml.accesskey "H">
+<!ENTITY signatureFile.label "Używaj sygnaturki z pliku:">
+<!ENTITY signatureFile.accesskey "U">
+<!ENTITY choose.label "Wybierz…">
+<!ENTITY choose.accesskey "b">
+<!ENTITY editVCard.label "Edytuj wizytówkę…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Dołączaj wizytówkę do wysyłanych wiadomości">
+<!ENTITY attachVCard.accesskey "D">
+
+<!ENTITY manageIdentities.label "Zarządzaj tożsamościami…">
+<!ENTITY manageIdentities.accesskey "Z">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Serwer poczty wychodzącej (SMTP):">
+<!ENTITY smtpName.accesskey "p">
+<!ENTITY smtpDefaultServer.label "Użyj domyślnego serwera">
+
+<!ENTITY smtpServerEdit.label "Edytuj serwer SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

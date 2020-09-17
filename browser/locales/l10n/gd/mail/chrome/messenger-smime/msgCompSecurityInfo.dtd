@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Tèarainteachd na teachdaireachd">
+<!ENTITY subject.plaintextWarning "An aire: Cha bhi loidhnichean cuspair de theachdaireachdan puist-dhealain air an crioptachadh idir.">
+<!ENTITY status.heading "Thàid susbaint do theachdaireachd a chur mar seo:">
+<!ENTITY status.signed "Le ainm digiteach:">
+<!ENTITY status.encrypted "Crioptaichte:">
+<!ENTITY status.certificates "Teisteanasan:">
+<!ENTITY view.label "Sealladh">
+<!ENTITY view.accesskey "S">
+<!ENTITY tree.recipient "Faightear">
+<!ENTITY tree.status "Staid">
+<!ENTITY tree.issuedDate "Air fhoillseachadh">
+<!ENTITY tree.expiresDate "Falbhaidh an ùine air">

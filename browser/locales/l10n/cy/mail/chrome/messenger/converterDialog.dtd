@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Troswr Math Cadw Neges">
+<!ENTITY converterDialog.continueButton "Ymlaen">
+<!ENTITY converterDialog.cancelButton "Diddymu">
+<!ENTITY converterDialog.finishButton "Gorffen">
+<!ENTITY converterDialog.complete "Mae'r trosi wedi ei gwblhau. Bydd &brandShortName; nawr yn ail gychwyn.">
+<!ENTITY converterDialog.error "Methodd y trosi.">
+

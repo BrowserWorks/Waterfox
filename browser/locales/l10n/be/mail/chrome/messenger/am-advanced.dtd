@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Наладжванні выходнага паслугача (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Падчас кіравання вашымі адметамі, вы можаце ўжыць паслугач з спіса, выбраць яго як Выходны Паслугач (SMTP), або скарыстацца змоўчным паслугачом з гэтага спісу, вылучыўшы &quot;Ужыць змоўчны паслугач&quot;.">
+
+<!ENTITY smtpListAdd.label  "Дадаць…">
+<!ENTITY smtpListAdd.accesskey  "д">
+<!ENTITY smtpListEdit.label "Правіць…">
+<!ENTITY smtpListEdit.accesskey "П">
+<!ENTITY smtpListDelete.label "Выдаліць">
+<!ENTITY smtpListDelete.accesskey "В">
+<!ENTITY smtpListSetDefault.label "Усталяваць як змоўчны">
+<!ENTITY smtpListSetDefault.accesskey "з">
+
+<!ENTITY serverDetails.label "Падрабязнасці вылучанага сервера:">
+<!ENTITY serverDescription.label "Апісанне:">
+<!ENTITY serverName.label "Назва паслугача:">
+<!ENTITY serverPort.label "Порт:">
+<!ENTITY userName.label   "Імя карыстальніка:">
+<!ENTITY connectionSecurity.label "Бяспека злучэння:">
+<!ENTITY authMethod.label   "Метад апазнавання:">

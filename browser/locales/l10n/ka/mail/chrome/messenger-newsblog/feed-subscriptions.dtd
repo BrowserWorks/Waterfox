@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "ხელმოწერები არხზე">
+<!ENTITY learnMore.label             "იხილეთ ვრცლად, არხების შესახებ">
+
+<!ENTITY feedTitle.label             "სათაური:">
+<!ENTITY feedTitle.accesskey         "თ">
+
+<!ENTITY feedLocation.label          "არხის URL:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "მიუთითეთ არხის მართებული URL">
+<!ENTITY locationValidate.label      "შემოწმება">
+<!ENTITY validateText.label          "მისამართების შემოწმების ჩართვა.">
+
+<!ENTITY feedFolder.label            "სტატიების შენახვა საქაღალდეში:">
+<!ENTITY feedFolder.accesskey        "ქ">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "ახალი სტატიების შემოწმება ყოველ ">
+<!ENTITY biffStart.accesskey         "წ">
+<!ENTITY biffMinutes.label           "წუთში">
+<!ENTITY biffMinutes.accesskey       "თ">
+<!ENTITY biffDays.label              "დღე">
+<!ENTITY biffDays.accesskey          "დ">
+<!ENTITY recommendedUnits.label      "გამომქვეყნებლის რჩევით:">
+
+<!ENTITY quickMode.label             "სტატიის ანოტაციის ჩვენება ვებგვერდის ჩატვირთვის ნაცვლად">
+<!ENTITY quickMode.accesskey         "ც">
+
+<!ENTITY autotagEnable.label         "ჭდეების ავტომატურად შექმნა, &lt;კატეგორიის&gt; სახელის არხიდან">
+<!ENTITY autotagEnable.accesskey     "ა">
+<!ENTITY autotagUsePrefix.label      "წინსართი ჭდეები:">
+<!ENTITY autotagUsePrefix.accesskey  "ჭ">
+<!ENTITY autoTagPrefix.placeholder   "წინსართი ჭდის შეყვანა">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "დამატება">
+<!ENTITY button.addFeed.accesskey    "ტ">
+<!ENTITY button.verifyFeed.label     "დამოწმება">
+<!ENTITY button.verifyFeed.accesskey "მ">
+<!ENTITY button.updateFeed.label     "განახლება">
+<!ENTITY button.updateFeed.accesskey "გ">
+<!ENTITY button.removeFeed.label     "მოცილება">
+<!ENTITY button.removeFeed.accesskey "ც">
+<!ENTITY button.importOPML.label     "შემოტანა">
+<!ENTITY button.importOPML.accesskey "შ">
+<!ENTITY button.exportOPML.label     "გატანა">
+<!ENTITY button.exportOPML.accesskey "გ">
+<!ENTITY button.exportOPML.tooltip   "არხების ექსპორტი საქაღალდეების სტრუქტურით; ctrl-დაწკაპვა ან ctrl-enter არხების სიის სხაით ექსპორტისთვის">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "დახურვა">

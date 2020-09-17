@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "Chatga qo‘shilish">
+<!ENTITY name.label                     "Xona">
+<!ENTITY optional.label                 "(ixtiyoriy)">
+<!ENTITY account.label                  "Hisob">
+<!ENTITY autojoin.label                 "Bu chat xonasiga avtomatik qo‘shilish">
+<!ENTITY autojoin.accesskey             "a">

@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "لائبریری">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "تنظیم کریں">
+<!ENTITY organize.accesskey    "ت">
+<!ENTITY organize.tooltip      "اپنی بک مارک تنظیم کریں">
+
+<!ENTITY file.close.label               "بند کریں">
+<!ENTITY file.close.accesskey           "ب">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "نظارے">
+<!ENTITY views.accesskey                "ن">
+<!ENTITY views.tooltip                  "اپنا نظارہ تبدیل کریں">
+<!ENTITY view.columns.label             "کالم دکھائیں">
+<!ENTITY view.columns.accesskey         "ک">
+<!ENTITY view.sort.label                "چھانٹیں">
+<!ENTITY view.sort.accesskey            "چ">
+<!ENTITY view.unsorted.label            "ناچھانٹا ہوا">
+<!ENTITY view.unsorted.accesskey        "ن">
+<!ENTITY view.sortAscending.label       "ا > ے چھانٹی سیٹنگ">
+<!ENTITY view.sortAscending.accesskey   "ا">
+<!ENTITY view.sortDescending.label      "ے > ا چھانٹی سیٹنگ">
+<!ENTITY view.sortDescending.accesskey  "ے">
+
+<!ENTITY importBookmarksFromHTML.label     "HTML سے بک مارک درآمد کریں ...">
+<!ENTITY importBookmarksFromHTML.accesskey "د">
+<!ENTITY exportBookmarksToHTML.label       "بک مارک HTML میں برآمد کریں ...">
+<!ENTITY exportBookmarksToHTML.accesskey   "ب">
+<!ENTITY importOtherBrowser.label          "کسی دوسرے براؤزر سے کوائف درآمد کریں ...">
+<!ENTITY importOtherBrowser.accesskey      "د">
+
+<!ENTITY cmd.backup.label               "پشتارہ…">
+<!ENTITY cmd.backup.accesskey           "پ">
+<!ENTITY cmd.restore2.label             "بحال کریں">
+<!ENTITY cmd.restore2.accesskey         "ب">
+<!ENTITY cmd.restoreFromFile.label      "مسل منتخاب کریں…">
+<!ENTITY cmd.restoreFromFile.accesskey  "م">
+
+<!ENTITY col.name.label          "نام">
+<!ENTITY col.tags.label          "ٹیگ">
+<!ENTITY col.url.label           "محل وقوع">
+<!ENTITY col.mostrecentvisit.label "سب سے حالیہ مصاحبہ">
+<!ENTITY col.visitcount.label    "ملاحظہ شماری">
+<!ENTITY col.dateadded.label     "اضافہ شدہ">
+<!ENTITY col.lastmodified.label  "آخری بار ترمیم کردہ">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "درآمد و پشتارہ">
+<!ENTITY maintenance.accesskey  "د">
+<!ENTITY maintenance.tooltip    "اپنی نشانیاں درآمد اور پشتارہ کریں">
+
+<!ENTITY backButton.tooltip  "واپس جائیں">
+
+<!ENTITY forwardButton.tooltip  "آگے بڑھیں">
+
+<!ENTITY detailsPane.selectAnItemText.description "شے کے خواص نظارہ اور تدوین کرنے کے لیے اسے منتخب کریں">
+

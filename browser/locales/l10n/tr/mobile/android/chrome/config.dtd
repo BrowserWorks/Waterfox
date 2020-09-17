@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Ara">
+
+<!ENTITY newPref.namePlaceholder       "İsim">
+
+<!ENTITY newPref.valueBoolean          "Boolean">
+<!ENTITY newPref.valueString           "Dizgi">
+<!ENTITY newPref.valueInteger          "Tam sayı">
+
+<!ENTITY newPref.stringPlaceholder     "Bir dizgi girin">
+<!ENTITY newPref.numberPlaceholder     "Bir sayı girin">
+
+<!ENTITY newPref.toggleButton          "Aç/kapat">
+<!ENTITY newPref.cancelButton          "İptal">
+
+<!ENTITY contextMenu.copyPrefName      "Adı kopyala">
+<!ENTITY contextMenu.copyPrefValue     "Değeri kopyala">

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Ֆայլ">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Նոր">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Խմբագրել">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "Հետարկել">
+<!ENTITY undoCmd.accesskey          "Հ">
+<!ENTITY redoCmd.label            "Կրկնել">
+<!ENTITY redoCmd.accesskey          "R">
+<!ENTITY deleteCmd.label          "Ջնջել">
+<!ENTITY deleteCmd.accesskey        "D">
+<!ENTITY preferencesCmd2.label "Ընտրանքներ">
+<!ENTITY preferencesCmd2.accesskey "Կ">
+<!ENTITY preferencesCmdUnix.label       "Նախապատվություններ">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY customizeCmd.label "Հարմարեցնել">
+<!ENTITY customizeCmd.accesskey "t">
+
+<!ENTITY viewMenu.label          "Տեսք">
+<!ENTITY viewMenu.accesskey        "Տ">
+<!ENTITY viewToolbarsMenu.label        "Գործիքագոտիներ">
+<!ENTITY viewToolbarsMenu.accesskey      "Գ">
+<!ENTITY showTaskbarCmd.label          "Վիճակի տող">
+<!ENTITY showTaskbarCmd.accesskey        "u">
+
+<!ENTITY closeCmd.label      "Փակել">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "C">
+
+<!ENTITY quitApplicationCmd.label  "Փակել">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "x">
+
+<!ENTITY quitApplicationCmdUnix.label  "Փակել">
+<!ENTITY quitApplicationCmdUnix.accesskey  "Q">
+
+<!ENTITY quitApplicationCmdMac.label  "Փակել &brandShortName;-ը">
+<!ENTITY quitApplicationCmdMac.accesskey  "Q">

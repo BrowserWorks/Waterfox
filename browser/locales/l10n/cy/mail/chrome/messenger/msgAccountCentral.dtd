@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "E-bost">
+<!ENTITY readMsgsLink.label           "Darllen negeseuon">
+<!ENTITY composeMsgLink.label         "Ysgrifennu neges newydd">
+
+<!ENTITY newsSectionHdr.label         "Grwpiau Newyddion">
+<!ENTITY subscribeNewsLink.label      "Rheoli tanysgrifiadau grwpiau newyddion">
+
+<!ENTITY feedsSectionHdr.label        "Llif">
+<!ENTITY subscribeFeeds.label         "Rheoli tanysgrifiadau">
+
+<!ENTITY chat.label                   "Sgwrs">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Cyfrifon">
+<!ENTITY subscribeImapFolders.label   "Rheoli tanysgrifiadau ffolderi">
+<!ENTITY settingsLink.label           "Edrych ar osodiadau'r cyfrif">
+<!ENTITY setupNewAcct.label           "Gosod cyfrif:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Nodweddion Uwch">
+<!ENTITY searchMsgsLink.label         "Chwilio negeseuon">
+<!ENTITY filtersLink.label            "Rheoli hidlau negeseuon">
+<!ENTITY junkSettings.label           "Gosodiadau sbam">
+<!ENTITY offlineLink.label            "Gosodiadau all-lein">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Privégegevens wissen">
+<!ENTITY sanitizeItems.label             "De volgende gegevens nu wissen:">
+
+<!ENTITY itemHistory.label               "Navigatiegeschiedenis">
+<!ENTITY itemHistory.accesskey           "N">
+<!ENTITY itemUrlBar.label                "Locatiebalkgeschiedenis">
+<!ENTITY itemUrlBar.accesskey            "L">
+<!ENTITY itemDownloads.label             "Downloadgeschiedenis">
+<!ENTITY itemDownloads.accesskey         "D">
+<!ENTITY itemFormSearchHistory.label     "Opgeslagen formulier- en zoekgeschiedenis">
+<!ENTITY itemFormSearchHistory.accesskey "f">
+<!ENTITY itemCache.label                 "Buffer">
+<!ENTITY itemCache.accesskey             "B">
+<!ENTITY itemCookies.label               "Cookies">
+<!ENTITY itemCookies.accesskey           "C">
+<!ENTITY itemOfflineApps.label           "Offlinewebsitegegevens">
+<!ENTITY itemOfflineApps.accesskey       "O">
+<!ENTITY itemPasswords.label             "Opgeslagen wachtwoorden">
+<!ENTITY itemPasswords.accesskey         "w">
+<!ENTITY itemSessions.label              "Geauthenticeerde sessies">
+<!ENTITY itemSessions.accesskey          "s">
+
+<!ENTITY sanitizeButton.label            "Privégegevens nu wissen">

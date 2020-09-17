@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Muokkauspalkki">
+<!ENTITY previewToolbarCmd.label "Selaa">
+<!ENTITY previewToolbarCmd.tooltip "Lataa tämä sivu selaimessa">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Vie tekstiksi…">
+<!ENTITY exportToTextCmd.accesskey "V">
+<!ENTITY previewCmd.label "Selaa sivua">
+<!ENTITY previewCmd.accesskey "S">
+<!ENTITY sendPageCmd.label "Lähetä sivu…">
+<!ENTITY sendPageCmd.accesskey "L">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Muokkauspalkki">
+<!ENTITY compositionToolbarCmd.accesskey "M">
+<!ENTITY formattingToolbarCmd.label "Muotoilu">
+<!ENTITY formattingToolbarCmd.accesskey "o">
+<!ENTITY editmodeToolbarCmd.label "Muokkaustila">
+<!ENTITY editmodeToolbarCmd.accesskey "u">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Muotoilu">
+<!ENTITY formatMenu.accesskey "u">
+<!ENTITY grid.label "Sijoitusruudukko">
+<!ENTITY grid.accesskey "r">
+<!ENTITY pageProperties.label "Sivun otsikko ja ominaisuudet…">
+<!ENTITY pageProperties.accesskey "m">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Tarkasta HTML">
+<!ENTITY validateCmd.accesskey "T">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normaali">
+<!ENTITY NormalMode.label "Normaali muokkaustila">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Näytä taulukkojen kehykset sekä nimetyt ankkurit">
+<!ENTITY AllTagsModeTab.label "HTML-tunnukset">
+<!ENTITY AllTagsMode.label "HTML-tunnukset">
+<!ENTITY AllTagsMode.accesskey "u">
+<!ENTITY AllTagsMode.tooltip "Näytä kuvake jokaisen HTML-tunnuksen kohdalla">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Lähdekoodi">
+<!ENTITY HTMLSourceMode.label "HTML-lähdekoodi">
+<!ENTITY HTMLSourceMode.accesskey "ä">
+<!ENTITY HTMLSourceMode.tooltip "Muokkaa HTML-lähdekoodia">
+<!ENTITY PreviewModeTab.label "Esikatselu">
+<!ENTITY PreviewMode.label "Esikatselu">
+<!ENTITY PreviewMode.accesskey "E">
+<!ENTITY PreviewMode.tooltip "Näytä sivu sellaisena kuin se näkyy mm. selaimessa">

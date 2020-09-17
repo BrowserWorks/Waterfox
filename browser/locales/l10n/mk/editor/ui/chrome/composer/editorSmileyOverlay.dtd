@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Smiley Menu items -->
+
+<!ENTITY insertSmiley.label "Смешко">
+<!ENTITY insertSmiley.accesskey "С">
+
+<!ENTITY smiley1Cmd.label "Насмевка">
+<!ENTITY smiley1Cmd.accesskey "с">
+<!ENTITY smiley1Cmd.tooltip "Внесува насмеано лице">
+<!ENTITY smiley2Cmd.label "Незадоволно">
+<!ENTITY smiley2Cmd.accesskey "е">
+<!ENTITY smiley2Cmd.tooltip "Внесува незадоволно лице">
+<!ENTITY smiley3Cmd.label "Намигни">
+<!ENTITY smiley3Cmd.accesskey "Н">
+<!ENTITY smiley3Cmd.tooltip "Внесува лице кое намига">
+<!ENTITY smiley4Cmd.label "Исплазен јазик">
+<!ENTITY smiley4Cmd.accesskey "ј">
+<!ENTITY smiley4Cmd.tooltip "Внесува лице со исплазен јазик">
+<!ENTITY smiley5Cmd.label "Се смеам">
+<!ENTITY smiley5Cmd.accesskey "м">
+<!ENTITY smiley5Cmd.tooltip "Внесува лице кое се смее">
+<!ENTITY smiley6Cmd.label "Засрамено">
+<!ENTITY smiley6Cmd.accesskey "е">
+<!ENTITY smiley6Cmd.tooltip "Внесува засрамено лице">
+<!ENTITY smiley7Cmd.label "Неодлучно">
+<!ENTITY smiley7Cmd.accesskey "у">
+<!ENTITY smiley7Cmd.tooltip "Внесува неодлучно лице">
+<!ENTITY smiley8Cmd.label "Изненадување">
+<!ENTITY smiley8Cmd.accesskey "д">
+<!ENTITY smiley8Cmd.tooltip "Внесува изненадено лице">
+<!ENTITY smiley9Cmd.label "Бакнеж">
+<!ENTITY smiley9Cmd.accesskey "к">
+<!ENTITY smiley9Cmd.tooltip "Внесува лице кое бакнува">
+<!ENTITY smiley10Cmd.label "Викај">
+<!ENTITY smiley10Cmd.accesskey "и">
+<!ENTITY smiley10Cmd.tooltip "Внесува лице кое вика">
+<!ENTITY smiley11Cmd.label "Кул">
+<!ENTITY smiley11Cmd.accesskey "у">
+<!ENTITY smiley11Cmd.tooltip "Внесува кул лице">
+<!ENTITY smiley12Cmd.label "Уста полна пари">
+<!ENTITY smiley12Cmd.accesskey "т">
+<!ENTITY smiley12Cmd.tooltip "Внесува лице со уста полна пари">
+<!ENTITY smiley13Cmd.label "Нога во уста">
+<!ENTITY smiley13Cmd.accesskey "о">
+<!ENTITY smiley13Cmd.tooltip "Внесува лице со нога во уста">
+<!ENTITY smiley14Cmd.label "Невино">
+<!ENTITY smiley14Cmd.accesskey "и">
+<!ENTITY smiley14Cmd.tooltip "Внесува невино лице">
+<!ENTITY smiley15Cmd.label "Плачи">
+<!ENTITY smiley15Cmd.accesskey "л">
+<!ENTITY smiley15Cmd.tooltip "Внесува лице кое плаче">
+<!ENTITY smiley16Cmd.label "Залепени усни">
+<!ENTITY smiley16Cmd.accesskey "а">
+<!ENTITY smiley16Cmd.tooltip "Внесува лице со залепени усни">
+<!ENTITY SmileButton.tooltip "Внесува насмеано лице">
+

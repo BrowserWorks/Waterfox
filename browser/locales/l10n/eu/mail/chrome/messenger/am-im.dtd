@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Kontuaren propietateak">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Orokorra">
+<!ENTITY account.advanced              "Aukera aurreratuak">
+<!ENTITY account.name                  "Erabiltzaile-izena:">
+<!ENTITY account.password              "Pasahitza:">
+<!ENTITY account.alias                 "Aliasa:">
+<!ENTITY account.newMailNotification   "Jakinarazi posta berria jasotzean">
+<!ENTITY account.autojoin              "Automatikoki sartzeko kanalak:">
+<!ENTITY account.proxySettings.caption "Proxy-ezarpenak:">
+<!ENTITY account.proxySettings.change.label     "Aldatu…">
+<!ENTITY account.proxySettings.change.accessKey "A">

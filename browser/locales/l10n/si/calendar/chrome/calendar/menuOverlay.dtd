@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "නව සිදුවීම…">
+<!ENTITY event.new.event.key                    "N">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.todo                         "නව කාර්යය…">
+<!ENTITY event.new.todo.key                     "T">
+<!ENTITY event.new.todo.accesskey               "T">
+
+<!ENTITY calendar.new.server.label              "නව දිනදර්ශනය…">
+<!ENTITY calendar.new.server.key                "L">
+<!ENTITY calendar.new.server.accesskey          "l">
+
+<!ENTITY calendar.print.label                   "මුද්‍රණය…">
+<!ENTITY calendar.print.key                     "P">
+<!ENTITY calendar.print.accesskey               "P">
+
+<!ENTITY calendar.import.label                  "ආයාත කරන්න…">
+<!ENTITY calendar.import.key                    "I">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "නිර්යාත කරන්න…">
+<!ENTITY calendar.export.accesskey              "E">
+<!ENTITY calendar.export.selection.label        "තේරීම නිර්යාත කරන්න…">
+<!ENTITY calendar.export.selection.accesskey    "S">
+
+<!ENTITY calendar.publish.label                 "පළ කරන්න…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "තෝරාගත් දිනදර්ශනය මකන්න…">
+<!ENTITY calendar.deletecalendar.accesskey      "D">
+
+<!ENTITY calendar.menu.customize.label          "රිසිකරණය…">
+<!ENTITY calendar.menu.customize.accesskey      "C">
+
+<!ENTITY showUnifinderCmd.label                 "සිදුවීම් සොයන්න">
+<!ENTITY showUnifinderCmd.accesskey             "F">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "දිනදර්ශනය තුළ කාර්යයන් පෙන්වන්න">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "T">
+
+<!ENTITY calendar.menu.numberofweeks.label      "බහු-සති පෙනුමේ විශාලත්වය">
+<!ENTITY calendar.menu.numberofweeks.2          "සති දෙකහි">
+<!ENTITY calendar.menu.numberofweeks.3          "සති තුනයි">
+<!ENTITY calendar.menu.numberofweeks.4          "සති හතරයි">
+<!ENTITY calendar.menu.numberofweeks.5          "සති පහයි">
+<!ENTITY calendar.menu.numberofweeks.6          "සති හයයි">
+
+<!ENTITY goTodayCmd.label                       "අද">
+<!ENTITY goTodayCmd.accesskey                   "T">
+
+<!ENTITY goPreviousCmd.day.label                "පෙර දිනය">
+<!ENTITY goPreviousCmd.week.label               "පෙර සතිය">
+<!ENTITY goPreviousCmd.month.label              "පෙර මාසය">
+<!ENTITY goPreviousCmd.accesskey                "P">
+
+<!ENTITY goNextCmd.day.label                    "ඊළඟ දිනය">
+<!ENTITY goNextCmd.week.label                   "ඊළඟ සතිය">
+<!ENTITY goNextCmd.month.label                  "ඊළඟ මාසය">
+<!ENTITY goNextCmd.all.accesskey                "e">
+
+<!ENTITY showCurrentView.label                  "පවතින පෙනුම">
+<!ENTITY showCurrentView.accesskey              "V">
+
+<!ENTITY calendar.properties.label              "දිනදර්ශනයේ ලක්ෂණ…">
+<!ENTITY calendar.properties.accesskey          "C">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Eiginleikar takka">
+<!ENTITY Settings.label "Stillingar">
+<!ENTITY ButtonType.label "Gerð">
+<!ENTITY ButtonType.accesskey "G">
+<!ENTITY submit.value "Senda">
+<!ENTITY reset.value "Endursetja">
+<!ENTITY button.value "Hnappur">
+<!ENTITY ButtonName.label "Nafn:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Gildi:">
+<!ENTITY ButtonValue.accesskey "G">
+<!ENTITY tabIndex.label "Dálk tilvísun:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY ButtonDisabled.label "Óvirkt">
+<!ENTITY ButtonDisabled.accesskey "v">
+<!ENTITY AccessKey.label "Aðgangslykill:">
+<!ENTITY AccessKey.accesskey "k">
+<!ENTITY RemoveButton.label "Eyða takka">
+<!ENTITY RemoveButton.accesskey "E">

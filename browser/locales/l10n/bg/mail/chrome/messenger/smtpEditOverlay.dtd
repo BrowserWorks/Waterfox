@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Настройки">
+<!ENTITY security.caption "Защита и удостоверяване">
+<!ENTITY serverName.label "Име на сървъра:">
+<!ENTITY serverName.accesskey "И">
+<!ENTITY serverDescription.label "Описание:">
+<!ENTITY serverDescription.accesskey "О">
+<!ENTITY serverPort.label "Порт:">
+<!ENTITY serverPort.accesskey "П">
+<!ENTITY userName.label "Потребителско име:">
+<!ENTITY userName.accesskey "П">
+<!ENTITY connectionSecurity.label "Защита на връзка:">
+<!ENTITY connectionSecurity.accesskey "ъ">
+<!ENTITY connectionSecurityType-0.label "Без">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ако е налично">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP сървър">
+<!ENTITY serverPortDefault.label "По подразбиране:">
+<!ENTITY authMethod.label "Метод на удостоверяване:">
+<!ENTITY authMethod.accesskey "у">

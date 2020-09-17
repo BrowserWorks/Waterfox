@@ -1,0 +1,85 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "මධ්‍යම රාත්‍රී" >
+<!ENTITY time.noon "මධ්‍යාහ්න" >
+<!-- 
+<!ENTITY time.1 "1:00 පෙ.ව." >
+<!ENTITY time.2 "2:00 පෙ.ව." >
+<!ENTITY time.3 "3:00 පෙ.ව." >
+<!ENTITY time.4 "4:00 පෙ.ව." >
+<!ENTITY time.5 "5:00 පෙ.ව." >
+<!ENTITY time.6 "6:00 පෙ.ව." >
+<!ENTITY time.7 "7:00 පෙ.ව." >
+<!ENTITY time.8 "8:00 පෙ.ව." >
+<!ENTITY time.9 "9:00 පෙ.ව." >
+<!ENTITY time.10 "10:00 පෙ.ව." >
+<!ENTITY time.11 "11:00 පෙ.ව." >
+
+
+<!ENTITY time.13 "1:00 ප.ව." >
+<!ENTITY time.14 "2:00 ප.ව." >
+<!ENTITY time.15 "3:00 ප.ව." >
+<!ENTITY time.16 "4:00 ප.ව." >
+<!ENTITY time.17 "5:00 ප.ව." >
+<!ENTITY time.18 "6:00 ප.ව." >
+<!ENTITY time.19 "7:00 ප.ව." >
+<!ENTITY time.20 "8:00 ප.ව." >
+<!ENTITY time.21 "9:00 ප.ව." >
+<!ENTITY time.22 "10:00 ප.ව." >
+<!ENTITY time.23 "11:00 ප.ව." >
+-->
+
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "ඉරිදා" >
+<!ENTITY day.1.Ddd.accesskey "S">
+<!ENTITY day.2.Ddd "සදුදා" >
+<!ENTITY day.2.Ddd.accesskey "M">
+<!ENTITY day.3.Ddd "අඟ" >
+<!ENTITY day.3.Ddd.accesskey "T">
+<!ENTITY day.4.Ddd "බදාදා" >
+<!ENTITY day.4.Ddd.accesskey "W">
+<!ENTITY day.5.Ddd "බ්‍රහ" >
+<!ENTITY day.5.Ddd.accesskey "h">
+<!ENTITY day.6.Ddd "සිකු" >
+<!ENTITY day.6.Ddd.accesskey "F">
+<!ENTITY day.7.Ddd "සෙන" >
+<!ENTITY day.7.Ddd.accesskey "a">
+
+<!ENTITY day.1.name "ඉරිදා" >
+<!ENTITY day.2.name "සදුදා" >
+<!ENTITY day.3.name "අඟහරුවාදා" >
+<!ENTITY day.4.name "බදාදා" >
+<!ENTITY day.5.name "බ්‍රහස්පතින්දා" >
+<!ENTITY day.6.name "සිකුරාදා" >
+<!ENTITY day.7.name "සෙනසුරාදා" >
+
+<!-- Units -->
+<!ENTITY calendar.global.units.minute   "මිනිත්තුව">
+<!ENTITY calendar.global.units.minutes  "මිනිත්තු">
+<!ENTITY calendar.global.units.hour     "පැයක්">
+<!ENTITY calendar.global.units.hours    "පැය">
+<!ENTITY calendar.global.units.day      "දිනක්">
+<!ENTITY calendar.global.units.days     "දින">
+
+<!ENTITY month.1.name "ජනවාරි" >
+<!ENTITY month.2.name "පෙබරවාරි" >
+<!ENTITY month.3.name "මාර්තු" >
+<!ENTITY month.4.name "අප්‍රේල්" >
+<!ENTITY month.5.name "මැයි" >
+<!ENTITY month.6.name "ජුනි" >
+<!ENTITY month.7.name "ජූලි" >
+<!ENTITY month.8.name "අගොස්තු" >
+<!ENTITY month.9.name "සැප්තැම්බර්" >
+<!ENTITY month.10.name "ඔක්තොමබර්" >
+<!ENTITY month.11.name "නොවැම්බර්" >
+<!ENTITY month.12.name "දෙසැම්බර්" >
+
+<!ENTITY onemonthbackward.tooltip "මසක් පසුපසට" >
+<!ENTITY onemonthforward.tooltip "මසක් පෙර" >
+<!ENTITY showToday.tooltip "අද දිනයට">
+<!ENTITY onedayforward.tooltip "දිනක් ඉදිරියට">
+<!ENTITY onedaybackward.tooltip "දිනක් පසුපසට">
+<!ENTITY showselectedday.tooltip "තෝරාගත් දිනට වැඩසටහන් පෙන්වන්න">

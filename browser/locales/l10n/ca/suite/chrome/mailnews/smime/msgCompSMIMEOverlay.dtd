@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+
+<!ENTITY menu_securityEncryptRequire.label "Requereix xifratge">
+<!ENTITY menu_securityEncryptRequire.accesskey "e">
+
+<!ENTITY menu_securitySign.label "Signa digitalment">
+<!ENTITY menu_securitySign.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Seguretat del missatge">
+<!ENTITY menu_securityStatus.accesskey "g">
+
+<!ENTITY securityButton.label "Seguretat">
+<!ENTITY securityButton.tooltip "Mostra o canvia els paràmetres de seguretat">
+
+<!ENTITY menu_viewSecurityStatus.label "Informació de seguretat del missatge">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

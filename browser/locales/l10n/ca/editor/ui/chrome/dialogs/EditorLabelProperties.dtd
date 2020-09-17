@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propietats de l'etiqueta">
+
+<!ENTITY Settings.label "Paràmetres">
+<!ENTITY Settings.accesskey "P">
+
+<!ENTITY EditLabelText.label "Edita el text:">
+<!ENTITY EditLabelText.accesskey "t">
+<!ENTITY LabelFor.label "Per al control:">
+<!ENTITY LabelFor.accesskey "P">
+<!ENTITY AccessKey.label "Clau d'accés:">
+<!ENTITY AccessKey.accesskey "C">
+
+<!ENTITY RemoveLabel.label "Suprimeix l'etiqueta">
+<!ENTITY RemoveLabel.accesskey "S">

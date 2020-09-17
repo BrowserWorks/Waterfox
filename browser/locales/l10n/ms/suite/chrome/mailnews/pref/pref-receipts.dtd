@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "Resit Pemberitahu Serahan">
+<!ENTITY prefReceipts.caption         "Resit Pemberitahu Serahan">
+<!ENTITY requestReceipt.label         "Apabila menghantar mesej, sentiasa minta resit pemberitahu serahan">
+<!ENTITY requestReceipt.accesskey     "A">
+<!ENTITY receiptArrive.label          "Apabila resit pemberitahuan serahan diterima:">
+<!ENTITY leaveIt.label                "Biarkan dalam Peti Masuk">
+<!ENTITY leaveIt.accesskey            "B">
+<!ENTITY moveToSent.label             "Pindahkan ke dalam folder &quot;Dihantar&quot;">
+<!ENTITY moveToSent.accesskey         "P">
+<!ENTITY requestMDN.label             "Apabila saya diminta menyerahkan resit pemberitahu serahan:">
+<!ENTITY returnSome.label             "Izinkan resit pemberitahu serahan dihantar kepada sesetengah mesej">
+<!ENTITY returnSome.accesskey         "I">
+<!ENTITY never.label                  "Jangan sesekali hantar resit pemberitahu serahan">
+<!ENTITY never.accesskey              "J">
+<!ENTITY notInToCc.label              "Jika saya tiada dalam Kepada atau Cc mesej:">
+<!ENTITY notInToCc.accesskey          "K">
+<!ENTITY outsideDomain.label          "Jika pengirim dari luar domain saya:">
+<!ENTITY outsideDomain.accesskey      "p">
+<!ENTITY otherCases.label             "Dalam hal yang lain:">
+<!ENTITY otherCases.accesskey         "l">
+<!ENTITY askMe.label                  "Tanya saya">
+<!ENTITY alwaysSend.label             "Sentiasa hantar">
+<!ENTITY neverSend.label              "Jangan sesekali hantar">

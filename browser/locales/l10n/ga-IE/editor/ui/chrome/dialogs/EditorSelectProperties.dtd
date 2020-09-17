@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Airíonna an Liosta Roghnúcháin">
+
+<!ENTITY Select.label "Liosta Roghnúcháin">
+<!ENTITY SelectName.label "Ainm an Liosta:">
+<!ENTITY SelectName.accesskey "n">
+<!ENTITY SelectSize.label "Airde:">
+<!ENTITY SelectSize.accesskey "A">
+<!ENTITY SelectMultiple.label "Ilroghnú">
+<!ENTITY SelectMultiple.accesskey "I">
+<!ENTITY SelectDisabled.label "Díchumasaithe">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "Innéacs Cluaisín:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "Grúpa Roghanna">
+<!ENTITY OptGroupLabel.label "Lipéad:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "Díchumasaithe">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "Rogha">
+<!ENTITY OptionText.label "Téacs:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Luach:">
+<!ENTITY OptionValue.accesskey "L">
+<!ENTITY OptionSelected.label "Roghnaithe ar dTús">
+<!ENTITY OptionSelected.accesskey "s">
+<!ENTITY OptionDisabled.label "Díchumasaithe">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "Téacs">
+<!ENTITY ValueHeader.label "Luach">
+<!ENTITY SelectedHeader.label "Roghnaithe">
+
+<!ENTITY AddOption.label "Cuir Rogha Leis">
+<!ENTITY AddOption.accesskey "o">
+<!ENTITY AddOptGroup.label "Cuir Grúpa Leis">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "Bain">
+<!ENTITY RemoveElement.accesskey "B">
+<!ENTITY MoveElementUp.label "Bog Suas">
+<!ENTITY MoveElementUp.accesskey "u">
+<!ENTITY MoveElementDown.label "Bog Síos">
+<!ENTITY MoveElementDown.accesskey "o">

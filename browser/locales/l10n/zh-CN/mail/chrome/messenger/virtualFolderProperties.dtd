@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "新建即时搜索文件夹">
+<!ENTITY name.label                 "名称：">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "在所选文件夹下创建子文件夹：">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "配置用于此搜索文件夹的搜索条件：">
+
+<!ENTITY folderSelectionCaption.label "选择要搜索的文件夹：">
+<!ENTITY chooseFoldersButton.label "选择…">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "在线搜索（可获取最新的 IMAP 和新闻文件夹的结果，但是会增加打开文件夹所需的时间）">
+<!ENTITY searchOnline.accesskey "S">
+<!ENTITY newFolderButton.label       "创建">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "更新">
+<!ENTITY editFolderButton.accesskey  "U">

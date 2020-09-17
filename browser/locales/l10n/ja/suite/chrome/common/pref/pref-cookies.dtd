@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title		"Cookie">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label		"Cookie 受け入れポリシー">
+
+<!ENTITY disableCookies.label		"すべての Cookie を拒否する">
+<!ENTITY disableCookies.accesskey	"B">
+
+<!ENTITY accNo3rdPartyCookies.label	"文書があるウェブサイトからの Cookie のみ許可する (第三者 Cookie を除く)">
+<!ENTITY accNo3rdPartyCookies.accesskey	"o">
+
+<!ENTITY acc3rdPartyVisited.label	"以前訪れたウェブサイトのみ第三者 Cookie として許可する">
+<!ENTITY acc3rdPartyVisited.accesskey	"v">
+
+<!ENTITY accAllCookies.label		"すべての Cookie を許可する">
+<!ENTITY accAllCookies.accesskey	"c">
+
+<!ENTITY cookieRetentionPolicy.label	"Cookie 保持ポリシー">
+
+<!ENTITY acceptNormally.label		"すべての Cookie を許可する (サイト管理者の指示に従う)">
+<!ENTITY acceptNormally.accesskey	"n">
+
+<!ENTITY acceptForSession.label		"現在のセッションのみ許可する (ブラウザー終了時にリセット)">
+<!ENTITY acceptForSession.accesskey	"s">
+
+<!ENTITY acceptforNDays.label		"有効期限を指定する:">
+<!ENTITY acceptforNDays.accesskey	"f">
+<!ENTITY days.label			"日">
+
+<!ENTITY manageCookies.label		"Cookie とサイト設定の管理">
+<!ENTITY manageCookiesDescription.label	"Cookie マネージャーは、保存されている Cookie を整理したりサイト設定を見直したりできます。また、上記の設定に関係なく、サイト別の設定を追加することもできます。">
+
+<!ENTITY viewCookies.label		"Cookie の管理">
+<!ENTITY viewCookies.accesskey		"M">

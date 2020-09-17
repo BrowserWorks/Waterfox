@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewPicker.label "Wyświetlaj:">
+<!ENTITY viewPicker.accesskey "i">
+<!ENTITY viewAll.label "Wszystkie">
+<!ENTITY viewAll.accesskey "W">
+<!ENTITY viewUnread.label "Nieprzeczytane">
+<!ENTITY viewUnread.accesskey "N">
+<!ENTITY viewNotDeleted.label "Nieusunięte">
+<!ENTITY viewNotDeleted.accesskey "s">
+<!ENTITY viewTags.label "Etykiety">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "Widoki użytkownika">
+<!ENTITY viewCustomViews.accesskey "u">
+<!ENTITY viewVirtualFolder.label "Zapisz widok jako folder…">
+<!ENTITY viewVirtualFolder.accesskey "Z">
+<!ENTITY viewCustomizeView.label "Dostosuj…">
+<!ENTITY viewCustomizeView.accesskey "D">

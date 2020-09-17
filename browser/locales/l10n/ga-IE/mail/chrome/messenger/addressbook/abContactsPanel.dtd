@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Airíonna">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Airíonna an Leabhair Sheoltaí">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Airíonna an Teagmhálaí">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Airíonna an Liosta Ríomhphoist">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Taispeáin Roghchlár Comhthéacs an Leabhair Seoltaí">
+<!ENTITY addressbookPicker.label            "Leabhar Seoltaí:">
+<!ENTITY addressbookPicker.accesskey        "e">
+<!ENTITY searchContacts.label               "Cuardaigh Teagmhálaithe:">
+<!ENTITY searchContacts.accesskey           "m">
+<!ENTITY SearchNameOrEmail.label            "Ainm nó Seoladh Ríomhphoist">
+
+<!ENTITY addtoToFieldMenu.label             "Cuir leis an réimse Chuig">
+<!ENTITY addtoToFieldMenu.accesskey         "C">
+<!ENTITY addtoCcFieldMenu.label             "Cuir leis an réimse Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "l">
+<!ENTITY addtoBccFieldMenu.label            "Cuir leis an réimse Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Scrios">
+<!ENTITY deleteAddrBookCard.accesskey       "S">
+<!ENTITY propertiesContext.label            "Airíonna">
+<!ENTITY propertiesContext.accesskey        "i">
+<!ENTITY abPropertiesContext.label          "Airíonna">
+<!ENTITY abPropertiesContext.accesskey      "i">
+<!ENTITY editContactContext.label           "Cuir Teagmhálaí in Eagar">
+<!ENTITY editContactContext.accesskey       "E">
+<!ENTITY editMailingListContext.label       "Cuir an Liosta in Eagar">
+<!ENTITY editMailingListContext.accesskey   "E">
+
+<!ENTITY newContactAbContext.label          "Teagmhálaí Nua">
+<!ENTITY newContactAbContext.accesskey      "g">
+<!ENTITY newListAbContext.label             "Liosta Nua">
+<!ENTITY newListAbContext.accesskey         "L">
+
+<!ENTITY toButton.label                     "Cuir le Chuig:">
+<!ENTITY toButton.accesskey                 "C">
+<!ENTITY ccButton.label                     "Cuir le Cc:">
+<!ENTITY ccButton.accesskey                 "l">
+<!ENTITY bccButton.label                    "Cuir le Bcc:">
+<!ENTITY bccButton.accesskey                "B">

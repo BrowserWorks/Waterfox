@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "SSL/TLS protokollaversiot">
+<!ENTITY SSLTLSWarnings.caption             "SSL/TLS varoitukset">
+<!ENTITY SSLMixedContent.caption            "Yhdistelmäsisältö">
+<!ENTITY SSLClientAuthMethod.caption        "Asiakkaan varmenteen valinta">
+
+<!ENTITY pref.ssltls.title                  "Transport Layer Security (SSL/TLS)">
+<!ENTITY limit.description                  "Voit valita, millä salausmenetelmillä on sallittua muodostaa suojattu yhteys. Voit valita joko yhden tai useita versioita.">
+<!ENTITY limit.enable.label                 "Salli:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName; voi varoittaa sinua avaamasi sivun turvallisuustasosta. Näytä varoitus, kun:">
+<!ENTITY warn.enteringsecure                "Avattaessa salattua sivua">
+<!ENTITY warn.enteringsecure.accesskey      "A">
+<!ENTITY warn.insecurepost                  "Lähetettäessä tietoa salaamatta">
+<!ENTITY warn.insecurepost.accesskey        "L">
+<!ENTITY warn.leavingsecure                 "Siirryttäessä salatulta sivulta salaamattomalle sivulle">
+<!ENTITY warn.leavingsecure.accesskey       "S">
+
+<!ENTITY mixed.description                  "Salatut sivut voivat sisältää salaamatonta sisältöä, joka on alttiina salakuuntelulle tai väärentämiselle. &brandShortName; pystyy havaitsemaan ja estämään sen:">
+<!ENTITY warn.mixedactivecontent            "Näytä varoitus, jos salatulla sivulla on suojaamatonta sisältöä">
+<!ENTITY warn.mixedactivecontent.accesskey  "N">
+<!ENTITY block.activecontent                "Älä lataa salatulla sivulla olevaa suojaamatonta sisältöä">
+<!ENTITY block.activecontent.accesskey      "u">
+<!ENTITY warn.mixeddisplaycontent           "Näytä varoitus, jos salatulla sivulla on muunlaista yhdistelmäsisältöä">
+<!ENTITY warn.mixeddisplaycontent.accesskey "r">
+<!ENTITY block.displaycontent               "Älä lataa muunlaista salatulla sivulla olevaa yhdistelmäsisältöä">
+<!ENTITY block.displaycontent.accesskey     "m">
+
+<!ENTITY certselect.description             "Valitse miten &brandShortName; valitsee turvallisuusvarmenteen sivustoille, jotka sitä vaativat:">
+<!ENTITY certselect.auto                    "Valitse automaattisesti">
+<!ENTITY certselect.auto.accesskey          "V">
+<!ENTITY certselect.ask                     "Kysy joka kerta">
+<!ENTITY certselect.ask.accesskey           "K">

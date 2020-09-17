@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;： 数据导入">
+<!ENTITY migration.welcome "欢迎">
+<!ENTITY migration.importing "导入">
+<!ENTITY migration.list.description "&brandShortName; 可以从很多常用应用软件中导入日历数据，数据来自于您电脑中所发现的以下应用软件，请选择您想导入数据的软件。">
+<!ENTITY migration.progress.description "导入所选数据">

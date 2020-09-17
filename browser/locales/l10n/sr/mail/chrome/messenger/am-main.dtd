@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Подешавања налога">
+<!ENTITY accountName.label "Име налога:">
+<!ENTITY accountName.accesskey "н">
+<!ENTITY identityTitle.label "Подразумевани идентитет">
+<!ENTITY identityDesc.label "Сваки налог има идентитет који представља све податке који други људи виде када читају ваше поруке.">
+<!ENTITY name.label "Ваше име:">
+<!ENTITY name.accesskey "В">
+<!ENTITY email.label "Мејл адреса:">
+<!ENTITY email.accesskey "Е">
+<!ENTITY catchAll.label "Одговори користећи овај идентитет када се заглавља доставе подударају:">
+<!ENTITY catchAll.accesskey "д">
+<!ENTITY replyTo.label "Одговори-на адреса:">
+<!ENTITY replyTo.accesskey "с">
+<!ENTITY replyTo.placeholder "Примаоци ће одговорити на ову другу адресу">
+<!ENTITY organization.label "Организација:">
+<!ENTITY organization.accesskey "О">
+<!ENTITY signatureText.label "Текст потписа:">
+<!ENTITY signatureText.accesskey "к">
+<!ENTITY signatureHtml.label "Користи HTML (нпр.: &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Качи потпис из датотеке (текст, HTML или слика):">
+<!ENTITY signatureFile.accesskey "т">
+<!ENTITY edit.label "Уреди…">
+<!ENTITY choose.label "Изабери…">
+<!ENTITY choose.accesskey "з">
+<!ENTITY editVCard.label "Уреди картицу…">
+<!ENTITY editVCard.accesskey "т">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Закачи мој vCard на поруке">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Управљај идентитетима…">
+<!ENTITY manageIdentities.accesskey "У">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Одлазни сервер (SMTP):">
+<!ENTITY smtpName.accesskey "л">
+<!ENTITY smtpDefaultServer.label "Користи подразумевани сервер">
+
+<!ENTITY smtpServerEdit.label "Уреди SMTP сервер…">
+<!ENTITY smtpServerEdit.accesskey "P">

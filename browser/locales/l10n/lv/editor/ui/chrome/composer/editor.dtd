@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+<!-- Toolbar-only items -->
+<!ENTITY previewToolbarCmd.label "Pārlūkot">
+<!ENTITY previewToolbarCmd.tooltip "Ielādēt šo lapu pārlūkā">
+<!-- File menu items -->
+
+
+
+
+
+<!-- View menu items -->
+
+<!ENTITY formattingToolbarCmd.label "Formatēšanas rīkjosla">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Rediģēšanas režīma rīkjosla">
+<!ENTITY editmodeToolbarCmd.accesskey "e">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "Formatēt">
+<!ENTITY formatMenu.accesskey "o">
+
+
+
+
+<!-- Tools menu items -->
+
+<!-- Display Mode toolbar and View menu items -->
+
+
+
+<!ENTITY AllTagsModeTab.label "HTML birkas">
+<!ENTITY AllTagsMode.label "HTML birkas">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Attēlot ikonas visām HTML birkām">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+
+<!ENTITY HTMLSourceMode.label "HTML pirmkods">
+<!ENTITY HTMLSourceMode.accesskey "H">
+
+<!ENTITY PreviewModeTab.label "Priekšskatījums">
+<!ENTITY PreviewMode.label "Priekšskatījums">
+<!ENTITY PreviewMode.accesskey "P">
+

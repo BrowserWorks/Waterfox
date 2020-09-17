@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Axenda de enderezos">
+<!ENTITY blankResultsPaneMessage.label                  "Esta axenda de enderezos só amosa contactos despois dunha busca">
+<!ENTITY localResultsOnlyMessage.label                  "Os contactos das axendas de enderezos remotas non se amosan ata que busca">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Ficheiro">
+<!ENTITY fileMenu.accesskey                             "h">
+<!ENTITY newMenu.label                                  "Novo">
+<!ENTITY newMenu.accesskey                              "v">
+<!ENTITY newContact.label                               "Contacto da axenda de enderezos…">
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Lista de correo…">
+<!ENTITY newListCmd.accesskey                           "l">
+<!ENTITY newAddressBookCmd.label                        "Axenda de enderezos…">
+<!ENTITY newAddressBookCmd.accesskey                    "x">
+<!ENTITY newLDAPDirectoryCmd.label                      "Directorio LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "Mensaxe">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "n">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Utilizar a axenda de enderezos de Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Pechar">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "P">
+<!ENTITY printSetupCmd.label                            "Configuración da páxina…">
+<!ENTITY printSetupCmd.accesskey                        "u">
+<!ENTITY printPreviewContactCmd.label                   "Previsualización do contacto">
+<!ENTITY printPreviewContactCmd.accesskey               "v">
+<!ENTITY printPreviewAddressBook.label                  "Previsualización da axenda de enderezos">
+<!ENTITY printPreviewAddressBook.accesskey              "d">
+<!ENTITY printContactCmd.label                          "Imprimir contacto…">
+<!ENTITY printContactCmd.accesskey                      "m">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Imprimir axenda de enderezos…">
+<!ENTITY printAddressBook.accesskey                     "x">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Editar">
+<!ENTITY editMenu.accesskey                             "t">
+<!ENTITY deleteCmd.label                                "Eliminar">
+<!ENTITY deleteAbCmd.label                              "Eliminar a axenda de enderezos">
+<!ENTITY deleteContactCmd.label                         "Eliminar contacto">
+<!ENTITY deleteContactsCmd.label                        "Eliminar contactos">
+<!ENTITY deleteListCmd.label                            "Eliminar lista">
+<!ENTITY deleteListsCmd.label                           "Eliminar listas">
+<!ENTITY deleteItemsCmd.label                           "Eliminar elementos">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Ver">
+<!ENTITY viewMenu.accesskey                             "V">
+<!ENTITY viewToolbarsMenu.label                         "Barras de ferramentas">
+<!ENTITY viewToolbarsMenu.accesskey                     "t"> 
+<!ENTITY menubarCmd.label                               "Barra de menú">
+<!ENTITY menubarCmd.accesskey                           "m">
+<!ENTITY showAbToolbarCmd.label                         "Barra da axenda de enderezos">
+<!ENTITY showAbToolbarCmd.accesskey                     "o">
+<!ENTITY showTaskbarCmd.label                           "Barra de estado">
+<!ENTITY showTaskbarCmd.accesskey                       "d">
+<!ENTITY customizeToolbar.label                         "Personalizar…">
+<!ENTITY customizeToolbar.accesskey                     "z">
+<!ENTITY layoutMenu.label                               "Deseño">
+<!ENTITY layoutMenu.accesskey                           "ñ">
+<!ENTITY showDirectoryPane.label                        "Panel de directorio">
+<!ENTITY showDirectoryPane.accesskey                    "d">
+<!ENTITY showContactPane2.label                         "Panel de contactos">
+<!ENTITY showContactPane2.accesskey                     "c">
+<!ENTITY menu_ShowNameAs.label                          "Amosar nome como">
+<!ENTITY menu_ShowNameAs.accesskey                      "s"> 
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Nome e apelidos">
+<!ENTITY firstLastCmd2.accesskey                        "e"> 
+<!ENTITY lastFirstCmd.label                             "Apelidos, nome">
+<!ENTITY lastFirstCmd.accesskey                         "l">
+<!ENTITY displayNameCmd.label                           "Texto de 'Mostrar'">
+<!ENTITY displayNameCmd.accesskey                       "T">
+<!ENTITY sortMenu.label                                 "Ordenar por">
+<!ENTITY sortMenu.accesskey                             "d">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Ferramentas">
+<!ENTITY tasksMenu.accesskey                            "F">
+<!ENTITY messengerCmd.label                             "Correo e grupo de noticias">
+<!ENTITY messengerCmd.accesskey                         "r">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Buscar enderezos…">
+<!ENTITY searchAddressesCmd.accesskey                   "d">
+<!ENTITY importCmd.label                                "Importar…">
+<!ENTITY importCmd.accesskey                            "a">
+<!ENTITY exportCmd.label                                "Exportar…">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmd2.label                          "Opcións">
+<!ENTITY preferencesCmd2.accesskey                      "O">
+<!ENTITY preferencesCmdUnix.label                       "Preferencias">
+<!ENTITY preferencesCmdUnix.accesskey                   "f">
+
+<!-- Address Book Toolbar and Context Menus -->  
+<!ENTITY newContactButton.label                         "Novo contacto">
+<!ENTITY newContactButton.accesskey                     "c">
+<!ENTITY newlistButton.label                            "Nova lista">
+<!ENTITY newlistButton.accesskey                        "l">
+<!ENTITY newmsgButton.label                             "Escribir">
+<!ENTITY newmsgButton.accesskey                         "b">
+<!ENTITY newIM.label                                    "Mensaxe instantánea">
+<!ENTITY newIM.accesskey                                "a">
+<!ENTITY deleteButton2.label                            "Eliminar">
+<!ENTITY deleteButton2.accesskey                        "l">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY newContactButton.tooltip                       "Crear un novo contacto na axenda de enderezos">
+<!ENTITY newlistButton.tooltip                          "Crear unha lista">
+<!ENTITY newmsgButton.tooltip                           "Enviar unha mensaxe de correo">
+<!ENTITY newIM.tooltip                                  "Enviar unha mensaxe instantánea ou chat">
+<!ENTITY deleteButton2.tooltip                           "Eliminar o elemento seleccionado">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Nome ou correo electrónico">
+<!ENTITY SearchNameOrEmail.accesskey                    "n">
+<!ENTITY advancedButton.tooltip                         "Busca avanzada de enderezo">
+<!ENTITY quickSearchCmd.key                             "z">
+<!ENTITY searchItem.title "Busca rápida">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Axenda de enderezos">
+<!ENTITY Addrbook.accesskey                             "x">
+<!ENTITY GeneratedName.label                            "Nome">
+<!ENTITY GeneratedName.accesskey                        "e">
+<!ENTITY PrimaryEmail.label                             "Correo electrónico">
+<!ENTITY PrimaryEmail.accesskey                         "e">
+<!ENTITY ChatName.label                                 "Nome das conversas">
+<!ENTITY ChatName.accesskey                             "c">
+<!ENTITY Company.label                                  "Organización">
+<!ENTITY Company.accesskey                              "z">
+<!ENTITY NickName.label                                 "Alcume">
+<!ENTITY NickName.accesskey                             "u">
+<!ENTITY SecondEmail.label                              "Correo electrónico adicional">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "Departamento">
+<!ENTITY Department.accesskey                           "a">
+<!ENTITY JobTitle.label                                 "Título">
+<!ENTITY JobTitle.accesskey                             "T">
+<!ENTITY CellularNumber.label                           "Móbil">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "Busca">
+<!ENTITY PagerNumber.accesskey                          "s">
+<!ENTITY FaxNumber.label                                "Fax">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Teléfono particular">
+<!ENTITY HomePhone.accesskey                            "p">
+<!ENTITY WorkPhone.label                                "Teléfono do traballo">
+<!ENTITY WorkPhone.accesskey                            "t">
+<!ENTITY sortAscending.label                            "Ascendente">
+<!ENTITY sortAscending.accesskey                        "n">
+<!ENTITY sortDescending.label                           "Descendente">
+<!ENTITY sortDescending.accesskey                       "D">
+<!ENTITY _PhoneticName.label                            "Nome fonético">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Contacto">
+<!ENTITY home.heading                                   "Domicilio">
+<!ENTITY other.heading                                  "Outro">
+<!ENTITY chat.heading                                   "Conversas">
+<!ENTITY phone.heading                                  "Teléfono">
+<!ENTITY work.heading                                   "Traballo">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Descrición">
+<!ENTITY addresses.heading                              "Enderezos">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Obter mapa">
+<!ENTITY mapIt.tooltip                                  "Mostrar un mapa deste enderezo da Internet">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label "Xanela">
+<!ENTITY minimizeWindow.label "Minimizar">
+<!ENTITY minimizeWindow.key "z">
+<!ENTITY bringAllToFront.label "Traer todo á fronte">
+<!ENTITY zoomWindow.label "Zoom">

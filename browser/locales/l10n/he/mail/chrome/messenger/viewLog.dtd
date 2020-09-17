@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "יומן מסנן">
+<!ENTITY viewLogInfo.text "יומן המסנן מתעד אילו מסננים הופעלו. השתמש בתיבת הסימון שלהלן כדי לאפשר את הרישום ביומן.">
+<!ENTITY clearLog.label "נקה יומן">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "אפשר רישום יומן למסנן">
+<!ENTITY enableLog.accesskey "E">
+<!ENTITY closeLog.label "סגירה">
+<!ENTITY closeLog.accesskey "o">
+
+

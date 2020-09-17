@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Práve sa nachádzate v okne režimu Súkromné prehliadanie">
+<!ENTITY privatebrowsingpage.title.normal        "Chcete sa prepnúť do režimu Súkromné prehliadanie?">
+
+<!ENTITY privatebrowsingpage.status.private      "Prehliadač &brandShortName; nebude v tomto okne zaznamenávať žiadnu históriu.">
+<!ENTITY privatebrowsingpage.status.normal       "Práve sa nenachádzate v okne režimu Súkromné prehliadanie.">
+
+<!ENTITY privatebrowsingpage.common.description  "Počas práce v okne režimu Súkromné prehliadanie nebude prehliadač &brandShortName; zaznamenávať históriu navštívených stránok a vyhľadávania, záznamy o prevzatých súboroch, údaje zadané do formulárov, cookies a dočasné internetové súbory. Prevzaté súbory a vytvorené záložky však ostanú zachované.">
+<!ENTITY privatebrowsingpage.track.warn          "Aj keď sa v tomto počítači nebudú ukladať žiadne údaje o prehliadaných stránkach, váš poskytovateľ internetového pripojenia či zamestnávateľ môžu napriek tomu sledovať, ktoré stránky navštevujete.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Ďalšie informácie">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "a">
+
+<!ENTITY privatebrowsingpage.close.info          "Ak budete chcieť opustiť režim Súkromné prehliadanie, jednoducho zatvorte toto okno.">
+<!ENTITY privatebrowsingpage.close.label         "Zavrieť toto okno">
+<!ENTITY privatebrowsingpage.close.accesskey     "Z">
+
+<!ENTITY privatebrowsingpage.start.info          "Ak chcete spustiť režim Súkromné prehliadanie, kliknite na tlačidlo nižšie alebo z hlavnej ponuky zvoľte Súbor ▶ Nový objekt ▶ Súkromné okno.">
+<!ENTITY privatebrowsingpage.private.label       "Otvoriť nové Súkromné okno">
+<!ENTITY privatebrowsingpage.private.accesskey   "O">

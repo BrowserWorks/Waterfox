@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Asistent chatowego konta">
+
+<!ENTITY accountProtocolTitle.label   "Chatowa seś">
+<!ENTITY accountProtocolInfo.label    "Pšosym wubjeŕśo seś za swójo chatowe konto.">
+<!ENTITY accountProtocolField.label   "Seś:">
+<!ENTITY accountProtocolGetMore.label "Wěcej…">
+
+<!ENTITY accountUsernameTitle.label   "Wužywarske mě">
+<!ENTITY accountUsernameDuplicate.label "Toś to konto jo se južo konfigurěrowało!">
+
+<!ENTITY accountPasswordTitle.label   "Gronidło">
+<!ENTITY accountPasswordInfo.label    "Pšoym zapódajśo swójo gronidło w slědujucem kašćiku.">
+<!ENTITY accountPasswordField.label   "Gronidło:">
+<!ENTITY accountPasswordManager.label "Gronidło, kótarež sćo how zapódał, buźo se w zastojniku gronidłow składowaś. Wóstajśo toś ten kašćik prozny, jolic cośo, až kuždy raz, gaž se toś to konto zwězujo, se was za wašym gronidłom pšašaju.">
+
+<!ENTITY accountAdvancedTitle.label   "Rozšyrjone nastajenja">
+<!ENTITY accountAdvancedInfo.label    "Móžośo rady toś ten kšac pśeskócyś, jolic to cośo.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Wó nowej e-maili informěrowaś">
+<!ENTITY accountAliasGroupbox.caption "Lokalny alias">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "To zwobraznijo se we wašych konwersacijach jano pótom, gaž komunicěrujośo, daloke kontakty njebudu to wiźeś.">
+<!ENTITY accountProxySettings.caption "Proksy-nastajenja">
+<!ENTITY accountProxySettings.change.label     "Změniś…">
+<!ENTITY accountProxySettings.change.accessKey "Z">
+
+<!ENTITY accountSummaryTitle.label   "Zespominanje">
+<!ENTITY accountSummaryInfo.label    "Zespominanje informacijow, kótarež sćo zapódał, se dołojce zwobraznjujo. Pšosym pśekontrolěrujśo to, až konto njejo załožone.">
+<!ENTITY accountSummary.connectNow.label "Toś to konto něnto zwězaś.">

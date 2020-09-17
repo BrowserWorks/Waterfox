@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; csökkentett mód">
+<!ENTITY window.width                 "37em">
+
+<!ENTITY safeModeDescription.label    "A &brandShortName; most csökkentett módban fut, ideiglenesen tiltva vannak az egyéni beállítások, témák és kiegészítők.">
+<!ENTITY safeModeDescription2.label   "A változtatások némelyikét vagy mindegyikét állandóvá teheti:">
+
+<!ENTITY disableAddons.label          "Minden kiegészítő letiltása">
+<!ENTITY disableAddons.accesskey      "M">
+
+<!ENTITY resetToolbars.label          "Eszköztárak és ablakméretek visszaállítása">
+<!ENTITY resetToolbars.accesskey      "E">
+
+<!ENTITY deleteBookmarks.label        "A biztonsági mentéseket kivéve minden könyvjelző törlése">
+<!ENTITY deleteBookmarks.accesskey    "t">
+
+<!ENTITY resetUserPrefs.label         "Minden felhasználói beállítás visszaállítása a &brandShortName; alapértelmezéseire">
+<!ENTITY resetUserPrefs.accesskey     "f">
+
+<!ENTITY restoreSearch.label          "Alapértelmezett keresők helyreállítása">
+<!ENTITY restoreSearch.accesskey      "A">
+
+<!ENTITY changeAndRestartButton.label "Változtatások végrehajtása és újraindítás">
+<!ENTITY continueButton.label         "Folytatás csökkentett módban">

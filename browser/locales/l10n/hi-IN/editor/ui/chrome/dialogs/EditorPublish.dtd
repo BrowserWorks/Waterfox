@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label         "पृष्ठ प्रकाशित करें">
+<!ENTITY windowTitleSettings.label "जमावट प्रकाशित करें">
+
+<!ENTITY publishTab.label         "प्रकाशित करें">
+<!ENTITY settingsTab.label        "जमावट">
+
+<!ENTITY publishButton.label      "प्रकाशित करें">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label           "साइट नाम:">
+<!ENTITY siteList.tooltip         "साइट चुनें जिसमें आप प्रकाशित करना चाहते हैं">
+<!ENTITY newSiteButton.label      "नया साइट">
+<!ENTITY siteDirList.label        "अपने प्रकाशन साइट में एक शब्दकोश नाम चुनें या टाइप करें:">
+<!ENTITY siteDirList.tooltip      "दूरस्थ उपनिर्देशिका का नाम चुनें या डालें जिसमें प्रकाशित किया जाना है">
+<!ENTITY docDirList.label         "साइट उपनिर्देशिका इस पृष्ठ के लिये:">
+<!ENTITY publishImgCheckbox.label "चित्र व अन्य फाइल शामिल करें">
+<!ENTITY publishImgCheckbox.tooltip "चित्र व अन्य हस्तांतरित फाइल प्रकाशित करें इस पृष्ठ द्वारा संदर्भित">
+<!ENTITY sameLocationRadio.label  "पृष्ठ के रूप में समान अवस्थिति चुनें">
+<!ENTITY sameLocationRadio.tooltip "पृष्ठ के समान समान अवस्थिति में फाइल प्रकाशित करें">
+<!ENTITY useSubdirRadio.label     "इस साइट उपनिर्देशिका का प्रयोग करें:">
+<!ENTITY useSubdir.tooltip        "दूरस्थ उपनिर्देशिका का नाम चुनें या डालें जहां फाइल प्रकाशित होगा">
+<!ENTITY chooseDirButton.label    "चुनें...">
+<!ENTITY pageTitle.label          "पृष्ठ शीर्षक:">
+<!ENTITY pageTitle.tooltip        "विंडो व पुस्तकचिह्न में पृष्ठ परिचय के लिये शीर्षक डालें">
+<!ENTITY pageTitleExample.label   "उदा.: &quot;My Web Page&quot;">
+<!ENTITY filename.label           "फाइलनाम:">
+<!ENTITY filename.tooltip         "इस फाइल के लिये एक नाम डालें, वेबपेज के लिये'.html' के साथ">
+<!ENTITY filenameExample.label    "उदा,: &quot;mypage.html&quot;">
+<!ENTITY relatedDocs.label        "प्रकाशनार्थ अन्य फाइल">
+<!ENTITY setDefaultButton.label   "मूलभूत के रूप में सेट करें">
+<!ENTITY setDefSiteAndDir.label   "मूलभूत साइट औऱ निर्देशिका के रूप में सेट करें">
+<!ENTITY removeButton.label       "साइट हटायें">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label   "साइट प्रकाशित कर रहा है">
+<!ENTITY serverInfo.label     "सर्वर सूचना">
+<!ENTITY loginInfo.label      "लॉगिन सूचना">
+<!ENTITY siteName.label       "साइट नाम:">
+<!ENTITY siteName.tooltip     "एक उपनाम जो इस प्रकाशन साइट को पहचानता है (उदा.: 'MySite')">
+<!ENTITY siteUrl.label        "प्रकाशन पता (उदा.: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.tooltip      "FTP:// या HTTP:// पता आपके ISP या वेब होस्टंग सेवा द्वारा प्रदत्त">
+<!ENTITY browseUrl.label      "आपके पहला पन्ना का HTTP पता (उदा.: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.tooltip    "आपके होम निर्देशिका का HTTP:// पता (फाइलनाम मत शामिल करें)">
+<!ENTITY username.label       "उपयोक्ता नाम:">
+<!ENTITY username.tooltip     "उपयोक्ता नाम जिसे आप अपने ISP या वेब होस्टिंग सेवा में जाने के लिये प्रयोग करते हैं">
+<!ENTITY password.label       "शब्दकूट:">
+<!ENTITY password.tooltip     "आपके उपयोक्ता नाम के साथ जुड़ा शब्दकूट">
+<!ENTITY savePassword.label   "शब्दकूट सहेजें">
+<!ENTITY savePassword.tooltip "शब्दकूट प्रबंधक के प्रयोग से अपने शब्दकूट को सुरक्षित रूप से सहेजने के लिये इसे चुनें">

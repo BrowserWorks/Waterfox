@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Runuk'ulem Ruk'uxamaj Elem (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Toq ye'anuk'samajij ri taq ab'anikil, yatikïr nawokisaj jun ruk'uxasamaj re cholb'äl re' rik'in nacha' achi'el Ruk'uxasamaj Elem (SMTP), o yatikïr nacha' ri k'uxasamaj k'o wi pa re cholb'äl re' rik'in nacha' &quot;Tokisäx K'uxasamaj K'o wi&quot;.">
+
+<!ENTITY smtpListAdd.label  "Titz'aqatisäx…">
+<!ENTITY smtpListAdd.accesskey  "t">
+<!ENTITY smtpListEdit.label "Tinuk'…">
+<!ENTITY smtpListEdit.accesskey "n">
+<!ENTITY smtpListDelete.label "Tiyuj">
+<!ENTITY smtpListDelete.accesskey "y">
+<!ENTITY smtpListSetDefault.label "Tichap chi K'o wi">
+<!ENTITY smtpListSetDefault.accesskey "p">
+
+<!ENTITY serverDetails.label "Cha'on rub'anikil k'uxasamaj:">
+<!ENTITY serverDescription.label "Tzijoxkil: ">
+<!ENTITY serverName.label "Rub'i' K'uxasamaj: ">
+<!ENTITY serverPort.label "B'ey: ">
+<!ENTITY userName.label   "Rub'i' winäq: ">
+<!ENTITY connectionSecurity.label "Rujikomal Okem: ">
+<!ENTITY authMethod.label   "Rujikib'axik b'eyal: ">

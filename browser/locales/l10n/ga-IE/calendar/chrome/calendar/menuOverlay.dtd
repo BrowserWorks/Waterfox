@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Event Menu -->
+
+<!ENTITY event.new.event                        "Imeacht Nua…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "Tasc Nua…">
+<!ENTITY event.new.task.accesskey               "k">
+
+<!ENTITY calendar.import.label                  "Iompórtáil…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Easpórtáil…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Foilsigh…">
+<!ENTITY calendar.publish.accesskey             "F">
+
+<!ENTITY calendar.deletecalendar.label          "Scrios an Féilire Roghnaithe…">
+<!ENTITY calendar.deletecalendar.accesskey      "S">
+<!ENTITY calendar.unsubscribecalendar.label     "Díliostáil ón Fhéilire Roghnaithe...">
+<!ENTITY calendar.unsubscribecalendar.accesskey "D">
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+
+<!ENTITY calendar.removecalendar.label          "Bain an Féilire Roghnaithe…">
+<!ENTITY calendar.removecalendar.accesskey      "B">
+
+
+<!ENTITY calendar.menu.customize.label          "Saincheap…">
+<!ENTITY calendar.menu.customize.accesskey      "c">
+
+<!ENTITY showUnifinderCmd.label                 "Aimsigh Imeachtaí">
+<!ENTITY showUnifinderCmd.accesskey             "m">
+<!ENTITY showUnifinderCmd.tooltip               "Scoránaigh an pána cuardaigh imeachtaí">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Taispeáin Tascanna san Fhéilire">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "T">
+
+<!ENTITY goTodayCmd.label                       "Inniu">
+<!ENTITY goTodayCmd.accesskey                   "I">
+
+<!ENTITY showCurrentView.label                  "Amharc Reatha">
+<!ENTITY showCurrentView.accesskey              "R">
+
+<!ENTITY calendar.properties.label              "Airíonna an Fhéilire…">
+<!ENTITY calendar.properties.accesskey          "F">

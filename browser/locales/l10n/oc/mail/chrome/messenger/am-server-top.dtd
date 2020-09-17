@@ -1,0 +1,76 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+
+<!ENTITY securitySettings.label "Paramètres de seguretat">
+<!ENTITY serverSettings.label "Paramètres del servidor">
+<!ENTITY serverType.label "Tipe de servidor :">
+<!ENTITY serverName.label "Nom del servidor :">
+<!ENTITY serverName.accesskey "N">
+<!ENTITY userName.label "Nom d'utilizaire :">
+<!ENTITY userName.accesskey "o">
+<!ENTITY port.label "Pòrt :">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Defaut :">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Verificar los messatges novèls cada ">
+<!ENTITY biffStart.accesskey "V">
+<!ENTITY biffEnd.label "minutas">
+<!ENTITY connectionSecurity.label "Seguretat de la connexion :">
+<!ENTITY connectionSecurity.accesskey "S">
+<!ENTITY connectionSecurityType-0.label "Pas cap">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, se disponible">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY leaveOnServer.label "Daissar los messatges sul servidor">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "Telecargar unicament las entèstas">
+<!ENTITY headersOnly.accesskey "e">
+<!ENTITY deleteByAgeFromServer.label "Pendent al maximum">
+<!ENTITY deleteByAgeFromServer.accesskey "x">
+<!ENTITY daysEnd.label "jorns">
+<!ENTITY deleteOnServer2.label "Fins a quora los suprimi ">
+<!ENTITY deleteOnServer2.accesskey "u">
+<!ENTITY downloadOnBiff.label "Telecargar automaticament los messatges novèls">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "Quand suprimi un messatge :">
+<!ENTITY modelMoveToTrash.label "lo metre dins aqueste dorsièr :">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "lo marcar coma suprimit">
+<!ENTITY modelMarkDeleted.accesskey "q">
+<!ENTITY modelDeleteImmediately.label "lo suprimir immediatament">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Netejar lo dorsièr « Corrièr entrant » en quitant.">
+<!ENTITY expungeOnExit.accesskey "e">
+<!ENTITY emptyTrashOnExit.label "Viodar la banesta en quitant">
+<!ENTITY emptyTrashOnExit.accesskey "d">
+<!ENTITY loginAtStartup.label "Verificar lo corrièr a l'aviada">
+<!ENTITY loginAtStartup.accesskey "r">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+	 of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Me demandar abans de telecargar mai de ">
+<!ENTITY maxMessagesStart.accesskey "t">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "messatges.">
+<!ENTITY alwaysAuthenticate.label "Demandar totjorn una autentificacion al moment de la connexion a aqueste servidor">
+<!ENTITY alwaysAuthenticate.accesskey "j">
+<!ENTITY abbreviate.label "Afichar los noms dels gropes de discussion dins lo panèl dels dorsièrs de corrièr coma :">
+<!ENTITY abbreviateOn.label "dels noms complets (per exemple « mozilla.dev.apps.thunderbird »)">
+<!ENTITY abbreviateOff.label "dels noms abreujats (per exemple « m.d.a.thunderbird »)">
+<!ENTITY advancedButton.label "Avançats…">
+<!ENTITY advancedButton.accesskey "s">
+<!ENTITY localFolderPicker.label "Seleccionar un repertòro local">
+<!ENTITY browseFolder.label "Percórrer…">
+<!ENTITY browseFolder.accesskey "P">
+<!ENTITY browseNewsrc.label "Percórrer…">
+<!ENTITY browseNewsrc.accesskey "a">
+

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Enporti adresaron">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Datumoj de enportata rikordo: ">
+<!ENTITY fieldMapImport.next.label "Sekva">
+<!ENTITY fieldMapImport.next.accesskey "S">
+<!ENTITY fieldMapImport.previous.label "Antaŭa">
+<!ENTITY fieldMapImport.previous.accesskey "A">
+<!ENTITY fieldMapImport.text "Uzu la butonojn “movi supren” kaj “movi malsupren” por alĝustigi kampojn de adresaro ĉe maldekstre al datumoj ĉe dekstre. Malmarku elementojn, kiujn vi ne volas enporti.">
+<!ENTITY fieldMapImport.up.label "Movi supren">
+<!ENTITY fieldMapImport.up.accesskey "s">
+<!ENTITY fieldMapImport.down.label "Movi malsupren">
+<!ENTITY fieldMapImport.down.accesskey "m">
+<!ENTITY fieldMapImport.fieldListTitle "Kampo de adresaro">
+<!ENTITY fieldMapImport.dataTitle "Enportata datumo de rikordo">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Unua rikordo enhavas nomojn de kampoj">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "U">

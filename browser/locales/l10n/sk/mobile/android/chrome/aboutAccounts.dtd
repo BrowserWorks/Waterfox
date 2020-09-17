@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Účty Firefox">
+<!ENTITY aboutAccounts.connected.description "Ste pripojený ako">
+<!ENTITY aboutAccounts.syncPreferences.label "Ťuknutím sem prejdete na nastavenia služby Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "Bez pripojenia k sieti Internet">
+<!ENTITY aboutAccounts.retry.label "Skúsiť znova">
+
+<!ENTITY aboutAccounts.restrictedError.title "Obmedzené">
+<!ENTITY aboutAccounts.restrictedError.description "Z tohto profilu nemôžete spravovať účty Firefox.">

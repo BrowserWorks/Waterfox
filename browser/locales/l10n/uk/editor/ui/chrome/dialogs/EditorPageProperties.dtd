@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Властивості сторінки">
+<!ENTITY location.label "Місцезнаходження:">
+<!ENTITY lastModified.label "Востаннє змінено:">
+<!ENTITY titleInput.label "Назва:">
+<!ENTITY titleInput.accessKey "Н">
+<!ENTITY authorInput.label "Автор:">
+<!ENTITY authorInput.accessKey "А">
+<!ENTITY descriptionInput.label "Опис:">
+<!ENTITY descriptionInput.accessKey "О">
+<!ENTITY locationNewPage.label "[Нова, ще не збережена сторінка]">
+<!ENTITY EditHEADSource1.label "Досвідчені користувачі:">
+<!ENTITY EditHEADSource2.label "Для зміни секції &lt;head&gt; використовуйте «Початковий HTML» у меню Вигляд або на панелі управління в режимі редагування.">

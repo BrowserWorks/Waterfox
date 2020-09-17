@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Asekles n yeznan">
+<!ENTITY securitySettings.label "Iɣewwaṛen n tɣellist">
+<!ENTITY serverSettings.label "Iɣewwaṛen n uqeddac">
+<!ENTITY serverType.label "Tawsit n uqeddac:">
+<!ENTITY serverName.label "Isem n uqeddac:">
+<!ENTITY serverName.accesskey "q">
+<!ENTITY userName.label "Isem n useqdec:">
+<!ENTITY userName.accesskey "s">
+<!ENTITY port.label "Tabburt:">
+<!ENTITY port.accesskey "r">
+<!ENTITY serverPortDefault.label "Amezwer:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Senqed iznan yal ">
+<!ENTITY biffStart.accesskey "z">
+<!ENTITY biffEnd.label "tisdatin">
+<!ENTITY useIdleNotifications.label "Sireg ilɣuten imiranen n uqeddac ticki iznan wwḍen-d">
+<!ENTITY useIdleNotifications.accesskey "S">
+<!ENTITY connectionSecurity.label "Taɣellist n tuqqna:">
+<!ENTITY connectionSecurity.accesskey "T">
+<!ENTITY connectionSecurityType-0.label "Ula yiwen">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ma yella">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Tarrayt n usesteb:">
+<!ENTITY authMethod.accesskey "r">
+<!ENTITY leaveOnServer.label "Eǧǧ-d iznan ɣef uqeddac">
+<!ENTITY leaveOnServer.accesskey "n">
+<!ENTITY headersOnly.label "Aggay n iqeṛṛa kan">
+<!ENTITY headersOnly.accesskey "g">
+<!ENTITY deleteByAgeFromServer.label "I tenzagt tafellayt n">
+<!ENTITY deleteByAgeFromServer.accesskey "f">
+<!ENTITY daysEnd.label "ussan">
+<!ENTITY deleteOnServer2.label "Arama kkseɣ-ten">
+<!ENTITY deleteOnServer2.accesskey "k">
+<!ENTITY downloadOnBiff.label "Zdem iznan imaynuten s wudem awurman">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "Ticki kkseɣ izen:">
+<!ENTITY modelMoveToTrash.label "Awi-t ɣer ukaram:">
+<!ENTITY modelMoveToTrash.accesskey "w">
+<!ENTITY modelMarkDeleted.label "Cṛeḍ amzun yettwakkes">
+<!ENTITY modelMarkDeleted.accesskey "m">
+<!ENTITY modelDeleteImmediately.label "Kkes-it tura">
+<!ENTITY modelDeleteImmediately.accesskey "u">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Sfeḍ tanaka (&quot;Expunge&quot;) di tuffɣa">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "Degger iɣuman di tuffɣa">
+<!ENTITY emptyTrashOnExit.accesskey "f">
+<!ENTITY loginAtStartup.label "Sen&amp;qed iznan imaynuten di tnekra">
+<!ENTITY loginAtStartup.accesskey "n">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "steqsi yid send azdam ugar n">
+<!ENTITY maxMessagesStart.accesskey "n">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "iznan">
+<!ENTITY alwaysAuthenticate.label "Sutur yal tiklet asesteb ticki teqqneḍ ɣer uqeddac">
+<!ENTITY alwaysAuthenticate.accesskey "y">
+<!ENTITY newsrcFilePath1.label "Afaylu News.rc:">
+<!ENTITY newsrcPicker1.label "Fren afaylu News.rc">
+<!ENTITY abbreviate.label "Sken agraw n isalen deg ugalis n ukaram n tirawt am:">
+<!ENTITY abbreviateOn.label "Ismawen imden (Amedya, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Ismawen wezzilen (Amedya, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Leqqayen…">
+<!ENTITY advancedButton.accesskey "q">
+<!ENTITY serverDefaultCharset2.label "Asettengel n uḍris amezwer:">
+<!ENTITY localPath1.label "Akaram adigan:">
+<!ENTITY localFolderPicker.label "Fren akaram adigan">
+<!ENTITY browseFolder.label "Ḍum…">
+<!ENTITY browseFolder.accesskey "Ḍ">
+<!ENTITY browseNewsrc.label "Ḍum…">
+<!ENTITY browseNewsrc.accesskey "u">
+
+<!ENTITY accountTitle.label "Iɣewwaṛen amiḍan">
+<!ENTITY accountSettingsDesc.label "Amiḍan-agi imeẓli.  Ulac timagiyin icudden ɣur-s.">
+<!ENTITY storeType.label "Tarrayt n usekles n yizen:">
+<!ENTITY storeType.accesskey "l">
+<!ENTITY mboxStore2.label "Afaylu i wekaram(mbox)">
+<!ENTITY maildirStore.label "Afaylu i yizen (maildir)">

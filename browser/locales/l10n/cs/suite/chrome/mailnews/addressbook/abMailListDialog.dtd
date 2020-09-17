@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindow.title           "Skupina">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Přidat do: ">
+<!ENTITY addToAddressBook.accesskey     "d">
+<!ENTITY ListName.label                 "Název: ">
+<!ENTITY ListName.accesskey             "N">
+<!ENTITY ListNickName.label             "Zkratka: ">
+<!ENTITY ListNickName.accesskey         "Z">
+<!ENTITY ListDescription.label          "Popis: ">
+<!ENTITY ListDescription.accesskey      "p">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Zadejte e-mailové adresy pro tuto skupinu:">
+<!ENTITY AddressTitle.accesskey         "m">

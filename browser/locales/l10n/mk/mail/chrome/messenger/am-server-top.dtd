@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+
+<!ENTITY securitySettings.label "Безбедносни поставки">
+<!ENTITY serverSettings.label "Поставки на серверот">
+<!ENTITY serverType.label "Тип:">
+<!ENTITY serverName.label "Сервер:">
+<!ENTITY serverName.accesskey "р">
+<!ENTITY userName.label "Корисник:">
+<!ENTITY userName.accesskey "и">
+<!ENTITY port.label "Порта:">
+<!ENTITY port.accesskey "П">
+<!ENTITY serverPortDefault.label "Станд.:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Проверувај за нови пораки секои">
+<!ENTITY biffStart.accesskey "к">
+<!ENTITY biffEnd.label "минути">
+<!ENTITY leaveOnServer.label "Остави ги пораките на серверот">
+<!ENTITY leaveOnServer.accesskey "г">
+<!ENTITY headersOnly.label "Преземи само заглавја">
+<!ENTITY headersOnly.accesskey "з">
+<!ENTITY deleteByAgeFromServer.label "Не повеќе од">
+<!ENTITY deleteByAgeFromServer.accesskey "о">
+<!ENTITY daysEnd.label "денови">
+<!ENTITY deleteOnServer2.label "Додека не ги избришам">
+<!ENTITY deleteOnServer2.accesskey "б">
+<!ENTITY downloadOnBiff.label "Автоматски преземај ги новите пораки">
+<!ENTITY downloadOnBiff.accesskey "м">
+<!ENTITY deleteMessagePrefix.label "Кога ќе избришам порака:">
+<!ENTITY modelMoveToTrash.label "Премести ја во папката за ѓубре">
+<!ENTITY modelMarkDeleted.label "Означи ја како избришана">
+<!ENTITY modelDeleteImmediately.label "Отстрани ја веднаш">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Исчисти го (&quot;Expunge&quot;) сандачето на излегување">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "При излегување испразни го ѓубрето">
+<!ENTITY emptyTrashOnExit.accesskey "б">
+<!ENTITY loginAtStartup.label "При стартување провери дали има нови пораки">
+<!ENTITY loginAtStartup.accesskey "с">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency 
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+	 of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Прашај ме пред да преземеш повеќе од">
+<!ENTITY maxMessagesStart.accesskey "м">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "пораки">
+<!ENTITY alwaysAuthenticate.label "При секое поврзување со овој сервер барај идентификување">
+<!ENTITY alwaysAuthenticate.accesskey "и">
+<!ENTITY abbreviate.label "Прикажи ги имињата на дискусионите групите во панелот за пошта како:">
+<!ENTITY abbreviateOn.label "Цели имиња (на пример, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Крати ги имињата (на пример: 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Напредно…">
+<!ENTITY advancedButton.accesskey "а">
+<!ENTITY localFolderPicker.label "Избор на локален директориум">
+<!ENTITY browseFolder.label "Разгледај…">
+<!ENTITY browseFolder.accesskey "Р">
+<!ENTITY browseNewsrc.label "Разгледај…">
+<!ENTITY browseNewsrc.accesskey "з">
+

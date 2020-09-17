@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "მოცემული საფოსტო ანგარიშის პარამეტრების მითითება:">
+
+<!ENTITY settingsTab.label       "პარამეტრები">
+<!ENTITY copiesFoldersTab.label "ასლები და საქაღალდეები">
+<!ENTITY addressingTab.label    "შექმნა და დამისამართება">
+
+<!ENTITY publicData.label        "საჯარო მონაცემები">
+<!ENTITY privateData.label       "პირადი მონაცემები">
+<!ENTITY identityAlias.label     "იარლიყით:">
+<!ENTITY identityAlias.accesskey "ყ">

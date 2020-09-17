@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZilla innstillinger">
+
+<!ENTITY loading.label  "Vent, laster …">
+
+<!ENTITY homepage.url   "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "ChatZilla hjemmesiden">
+
+<!ENTITY object.add.label       "Legg til …">
+<!ENTITY object.add.hint        "Legg til et nytt nettverk, kanal eller bruker for å sette innstillinger på">
+<!ENTITY object.add.accesskey   "L">
+
+<!ENTITY object.del.label       "Fjern">
+<!ENTITY object.del.hint        "Fjerner dette objektet, sammen med innstillinger">
+<!ENTITY object.del.accesskey   "F">
+
+<!ENTITY object.reset.label     "Tilbakestill">
+<!ENTITY object.reset.hint      "Tilbakestiller dette objektets innstillinger til standardverdier">
+<!ENTITY object.reset.accesskey "T">
+
+<!ENTITY dialog.apply   "Bruk">
+
+<!ENTITY network "Nettverk">
+<!ENTITY channel "Kanal">
+<!ENTITY user    "Bruker">
+
+<!ENTITY config.add.title "Legg til innstillingsobjekt">
+
+<!ENTITY config.type.label        "Type:">
+<!ENTITY config.type.hint         "Type objekt å legge til innstilling for">
+<!ENTITY config.type.accesskey    "T">
+<!ENTITY config.network.label     "Nettverk:">
+<!ENTITY config.network.hint      "Offentlig navn for nettverket, eller servernavn">
+<!ENTITY config.network.accesskey "O">
+<!ENTITY config.target.label      "Mål:">
+<!ENTITY config.target.hint       "Målkanal eller brukernavn">
+<!ENTITY config.target.accesskey  "M">

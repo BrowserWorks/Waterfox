@@ -1,0 +1,116 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is Mozilla Communicator client code, released
+   - March 31, 1998.
+   -
+   - The Initial Developer of the Original Code is
+   - Netscape Communications Corporation.
+   - Portions created by the Initial Developer are Copyright (C) 1998-1999
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either of the GNU General Public License Version 2 or later (the "GPL"),
+   - or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the GPL or the LGPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->
+
+<!ENTITY tableWindow.title "Iinkcazelo Ngeempawu Zetheyibhile">
+<!ENTITY applyButton.label "Sebenzisa">
+<!ENTITY applyButton.accesskey "S">
+<!ENTITY closeButton.label "Vala">
+<!ENTITY tableTab.label "Itheyibhile">
+<!ENTITY cellTab.label "Iiseli">
+<!ENTITY tableRows.label "Imiqolo exwesileyo:">
+<!ENTITY tableRows.accessKey "I">
+<!ENTITY tableColumns.label "Imiqolo eyehlayo:">
+<!ENTITY tableColumns.accessKey "I">
+<!ENTITY tableHeight.label "Ukuphakama:">
+<!ENTITY tableHeight.accessKey "K">
+<!ENTITY tableWidth.label "Ububanzi:">
+<!ENTITY tableWidth.accessKey "U">
+<!ENTITY tableBorderSpacing.label "Imida Nokushiywa Kwezikhewu">
+<!ENTITY tableBorderWidth.label "Umda:">
+<!ENTITY tableBorderWidth.accessKey "U">
+<!ENTITY tableSpacing.label "Ukushiywa kwezikhewu:">
+<!ENTITY tableSpacing.accessKey "U">
+<!ENTITY tablePadding.label "Kongezwa iinkcukacha:">
+<!ENTITY tablePadding.accessKey "K">
+<!ENTITY tablePxBetwCells.label "amachokoza phakathi kweeseli">
+<!ENTITY tablePxBetwBrdrCellContent.label "amachokoza phakathi komda weseli nesiqulatho">
+<!ENTITY tableAlignment.label "Ulungelelaniso Lwetheyibhile:">
+<!ENTITY tableAlignment.accessKey "U">
+<!ENTITY tableCaption.label "Inkcazelo ngomfanekiso:">
+<!ENTITY tableCaption.accessKey "F">
+<!ENTITY tableCaptionAbove.label "Itheyibhile Engentla">
+<!ENTITY tableCaptionBelow.label "Itheyibhile Engezantsi">
+<!ENTITY tableCaptionLeft.label "Ngasekhohlo Kwetheyibhile">
+<!ENTITY tableCaptionRight.label "Ngasekunene kwetheyibhile">
+<!ENTITY tableCaptionNone.label "Akukho">
+<!ENTITY tableInheritColor.label "(Yenza ukuba umbala wekhasi ubonise konke)">
+
+<!ENTITY cellPercent.label "ipesenti yetheyibhile">
+<!ENTITY cellSelection.label "Okukhethwayo">
+<!ENTITY cellSelectCell.label "Iseli">
+<!ENTITY cellSelectRow.label "Umqolo oxwesileyo">
+<!ENTITY cellSelectColumn.label "Umqolo owehlayo">
+<!ENTITY cellSelectNext.label "Okulandelayo">
+<!ENTITY cellSelectNext.accessKey "O">
+<!ENTITY cellSelectPrevious.label "Okwangaphambili">
+<!ENTITY cellSelectPrevious.accessKey "O">
+<!ENTITY cellApplyBeforeMove.label "Sebenzisa iinguquko phambi kokuguqula okukhethiweyo">
+<!ENTITY cellKeepCurrentData.label "Gcina imimiselo yangoku">
+<!-- LOCALIZATION NOTE Next 2 form 1 sentence (we don't want to use HTML tag to wrap) -->
+<!ENTITY applyBeforeChange1.label "Kuya kusetyenziswa iinguquko zangoku">
+<!ENTITY applyBeforeChange2.label "phambi kokuguqula okukhethiweyo.">
+<!ENTITY cellRowSpan.label "Ithuba Lomqolo Oxwesileyo:">
+<!ENTITY cellColSpan.label "Ithuba Lomqolo Owehlayo:">
+<!ENTITY cellContentAlignment.label "Ulungelelwaniso Lwesiqulatho">
+<!ENTITY cellHorizontal.label "Ngokobubanzi:">
+<!ENTITY cellHorizontal.accessKey "B">
+<!ENTITY cellVertical.label "Ngokobude:">
+<!ENTITY cellVertical.accessKey "N">
+<!ENTITY cellStyle.label "Isimbo Seseli:">
+<!ENTITY cellStyle.accessKey "I">
+<!ENTITY cellNormal.label "Okuqhelekileyo">
+<!ENTITY cellHeader.label "Umbhalo Ongasentla Kwekhasi">
+<!ENTITY cellTextWrap.label "Ukugqithela Kumgca Olandelayo Kwesiqendu:">
+<!ENTITY cellTextWrap.accessKey "U">
+<!ENTITY cellWrap.label "Qhuba ngokuzenzekela kumgca olandelayo">
+<!ENTITY cellNoWrap.label "Musa ukugqithela kumgca olandelayo">
+<!ENTITY cellAlignTop.label "Ngaphezulu">
+<!ENTITY cellAlignMiddle.label "Kwindawo ephakathi">
+<!ENTITY cellAlignBottom.label "Emazantsi">
+<!ENTITY cellAlignJustify.label "Lungelelanisa macala">
+<!ENTITY cellAlignAtChar.label "Kumbhalo Onjengonobumba:">
+<!ENTITY cellInheritColor.label "(Yenza ukuba umbala wetheyibhile ubonise konke)">
+<!ENTITY cellUseCheckboxHelp.label "Sebenzisa iibhokisi zokuqwalasela ukufumanisa ukuba zeziphi iinkcazelo ngeempawu ezisebenza kuzo zonke iiseli ezikhethiweyo">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label "Ubukhulu">
+<!ENTITY pixels.label "amachokoza eskrinini">
+<!ENTITY backgroundColor.label "Umbala Ongasemva Eskrinini:">
+<!ENTITY backgroundColor.accessKey "O">
+<!ENTITY AlignLeft.label "Ekhohlo">
+<!ENTITY AlignCenter.label "Embindini">
+<!ENTITY AlignRight.label "Ekunene">

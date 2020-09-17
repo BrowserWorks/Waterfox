@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Embanner ar perzhioù kempleshoc'h">
+<!ENTITY AttName.label                  "Doareenn : ">
+<!ENTITY AttValue.label                 "Gwerzh :">
+<!ENTITY PropertyName.label             "Perzh : ">
+<!ENTITY currentattributesfor.label     "Doareennoù bremanel evit :">
+<!ENTITY tree.attributeHeader.label     "Doareenn">
+<!ENTITY tree.propertyHeader.label      "Perzh">
+<!ENTITY tree.valueHeader.label         "Gwerzh">
+<!ENTITY tabHTML.label                  "Doareennoù HTML">
+<!ENTITY tabCSS.label                   "Stil eeun">
+<!ENTITY tabJSE.label                   "Degouezhioù JavaScript">
+
+<!ENTITY editAttribute.label    "Klikañ war an ergorenn a-us evit embann he gwerzh">
+<!ENTITY removeAttribute.label  "Dilemel">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Invitations Dialog -->
+
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Cuirí">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Tá liosta na gcuirí á nuashonrú.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Níor aimsíodh aon chuireadh neamhdhaingnithe.">
+<!-- Calendar Invitations List -->
+
+<!ENTITY calendar.invitations.list.accept.button.label                  "Glac Leis">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Diúltaigh">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Á athdhéanamh gach">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Imeacht ar feadh an lae">
+<!ENTITY calendar.invitations.list.location.text                        "Suíomh: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Eagraí: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Rannpháirtí: ">
+<!ENTITY calendar.invitations.list.none.text                            "Gan sonrú">

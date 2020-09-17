@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY GeneratedName.label                   "Ime">
+<!ENTITY PrimaryEmail.label                    "Email">
+<!ENTITY Company.label                         "Organizacija">
+<!ENTITY _PhoneticName.label                   "Fonetsko ime">
+<!ENTITY NickName.label                        "Nadimak">
+<!ENTITY SecondEmail.label                     "Dodatni email">
+<!ENTITY Department.label                      "Odjel">
+<!ENTITY JobTitle.label                        "Naslov">
+<!ENTITY CellularNumber.label                  "Mobitel">
+<!ENTITY PagerNumber.label                     "Pejdžer">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY HomePhone.label                       "Kućni telefon">
+<!ENTITY WorkPhone.label                       "Poslovni telefon">
+<!ENTITY ScreenName.label                      "Ime na ekranu">
+<!ENTITY sortAscending.label                   "Rastući">
+<!ENTITY sortDescending.label                  "Opadajući">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "Sastavi email za">
+<!ENTITY copyAddress.label                     "Kopiraj email adresu">
+<!ENTITY deleteAddrBookCard.label              "Izbriši">
+<!ENTITY newAddrBookCard.label                 "Nova kartica…">
+<!ENTITY newAddrBookMailingList.label          "Nova mailing lista…">
+<!ENTITY addrBookCardProperties.label          "Svojstva">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Programa de millora de l'experiència d'usuari del ChatZilla">
+<!ENTITY window.size   "width: 45em;">
+
+<!ENTITY intro.label "El programa de millora de l'experiència d'usuari del ChatZilla recull informació de com empreu el ChatZilla, sense interrompre-us. Això ajuda als desenvolupadors a identificar quines característiques millorar. No s'utilitza cap informació per a identificar-vos o contactar-vos.">
+
+<!ENTITY groupSend.label   "Envia les dades següents:">
+<!ENTITY sendClient.label  "Quan el ChatZilla és obert i tancat">
+<!ENTITY sendClient.accesskey    "o">
+<!ENTITY sendCommand.label "Ordres, menús i diàlegs que s'utilitzen">
+<!ENTITY sendCommand.accesskey   "d">
+<!ENTITY sendID.label      "El vostre identificador únic:">
+<!ENTITY sendIDSrc.label   "(generat aleatòriament)">
+
+<!ENTITY groupNotSent.label     "Dades que mai s'envien:">
+<!ENTITY notsentNickname.label  "El vostre sobrenom">
+<!ENTITY notsentMessages.label  "El contingut dels missatges, incloent-hi les accions i els avisos">
+<!ENTITY notsentArguments.label "Els arguments i les dades qye es donen a totes les ordres, menús i diàlegs">
+<!ENTITY notsentURLs.label      "Els noms i URL de xarxes, servidors, canals i usuaris">
+<!ENTITY notsentFiles.label     "Els noms i el contingut dels fitxers rebuts i enviats">

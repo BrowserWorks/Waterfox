@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Message Header View Popup -->
+
+<!ENTITY AddToAddressBook.label            "Adhibir a la libreta d'adrezas…">
+<!ENTITY AddToAddressBook.accesskey        "b">
+<!ENTITY EditContact.label                 "Edit Contact…">
+<!ENTITY EditContact.accesskey             "E">
+<!ENTITY ViewContact.label                 "View Contact">
+<!ENTITY ViewContact.accesskey             "V">
+<!ENTITY SendMailTo.label                  "Ninviar mensaje a…">
+<!ENTITY SendMailTo.accesskey              "s">
+<!ENTITY CopyEmailAddress.label            "Copiar adreza de correu electronico">
+<!ENTITY CopyEmailAddress.accesskey        "C">
+<!ENTITY CreateFilterFrom.label            "Creyar filtro a partir de…">
+<!ENTITY CreateFilterFrom.accesskey        "f">
+<!ENTITY openInBrowser.label               "Open in Browser">
+<!ENTITY openInBrowser.accesskey           "O">
+<!ENTITY bookmarkLinkCmd.label             "Bookmark This Link…">
+<!ENTITY bookmarkLinkCmd.accesskey         "B">
+<!ENTITY copyLinkCmd.label                 "Copiar adreza de l'enlace">
+<!ENTITY copyLinkCmd.accesskey             "C">
+<!ENTITY CopyMessageId.label               "Copiar Message-ITZ">
+<!ENTITY CopyMessageId.accesskey           "M">
+<!ENTITY OpenMessageForMsgId.label         "Ubrir mensache ta ista ITZ">
+<!ENTITY OpenMessageForMsgId.accesskey     "U">
+<!ENTITY OpenBrowserWithMsgId.label        "Ubrir navegador con Message-ITZ">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "n">

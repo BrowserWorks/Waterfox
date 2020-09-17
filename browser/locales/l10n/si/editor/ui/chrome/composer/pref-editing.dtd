@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "නව පිටු සැකසුම්">
+
+<!ENTITY  authorName.label          "කතුවරයා:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "පෙරනිමි පිටු පෙනුම">
+
+<!ENTITY defaultColors.label	    "කියවන්නාගේ පෙරනිමි වර්ණ(පිටුවේ වර්ණ භාවිතා නොකරන්න)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label 	    "රිසිකරණ වර්ණ භාවිතා කරන්න:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "සාමාන්‍ය පාඨ">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "සබැඳියේ පාඨ">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "සක්‍රීය සබැඳියේ පාඨ">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "ප්‍රවේශ වූ සබැඳියේ පාඨ">
+<!ENTITY visitedLinkText.accesskey  "V">
+<!ENTITY background.label           "පසුතලය:">
+<!ENTITY background.accesskey       "B">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "පසුතල රූපය:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "ගොනුව තෝරන්න…">
+<!ENTITY chooseFile.accesskey       "o">
+

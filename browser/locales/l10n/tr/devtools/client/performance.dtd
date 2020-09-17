@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "Profilleyici örnekleri dairesel bir tamponda depolar ve tampon bir kayıt için sınıra ulaştığı zaman yeni örnekler kaydın başındaki örneklerin üstüne yazılmaya başlanır.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Gerçek zamanlı kayıt verilerini render etkmek için tercihlerden çok işlemli Firefox’u etkinleştirin.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "Tampon doldu. Eski örneklerin üstüne yazılmaya başlanıyor.">
+
+<!-- LOCALIZATION NOTE (performanceUI.unavailableNoticePB): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "Profil kaydı şu anda kullanılamıyor. Lütfen tüm gizli gezinti pencerelerini kapatıp yeniden deneyin.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "Yükleniyor…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Şelale">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Kayıt sırasında tarayıcının gerçekleştirdiği farklı operasyonları bir şelale gibi sıralanmış halde gösterir.">
+<!ENTITY performanceUI.toolbar.js-calltree "Çağrı Ağacı">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Tarayıcının kayıt sırasında en çok zaman harcadığı fonksiyonları vurgular.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Atamalar">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Kayıt sırasında belleğin nereye atandığını gösterir.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS Flame Chart">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Kayıt boyunca JavaScript çağrı yığınını gösterir.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Atamalar Flame Chart’ı">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "Toplam süre">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Bu fonksiyonda ve onun çağırdığı fonksiyonlarda geçen süre.">
+<!ENTITY performanceUI.table.selfDuration             "Kendi süresi">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Yalnızca bu fonksiyon içinde geçen süre.">
+<!ENTITY performanceUI.table.totalPercentage          "Toplam maliyet">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Bu fonksiyonda ve onun çağırdığı fonksiyonlarda geçen sürenin yüzdesi.">
+<!ENTITY performanceUI.table.selfPercentage           "Kendi maliyeti">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Yalnızca bu fonksiyon içinde geçen sürenin yüzdesi.">
+<!ENTITY performanceUI.table.samples                  "Örnekler">
+<!ENTITY performanceUI.table.samples.tooltip          "Profilleyici örnek aldığı sırada bu fonksiyonun yığında bulunma sayısı.">
+<!ENTITY performanceUI.table.function                 "Fonksiyon">
+<!ENTITY performanceUI.table.function.tooltip         "Örneklenen fonksiyonun adı ve kaynak konumu.">
+<!ENTITY performanceUI.table.totalAlloc               "Örneklenen toplam atama">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Bu konumda ve arananlarda örneklenen toplam nesne ataması">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "Zaman çizelgesinde gösterilecek verileri seçin">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "Performans tercihlerini yapılandırır.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "Çağrı ağacını ters çevir">
+<!ENTITY performanceUI.invertTree.tooltiptext "Çağrı ağacını tersine çevirmek, profillenen çağrı yollarını en yeni çerçevelerden eski çerçevelere doğru görüntüler.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Flame chart’ı tersine çevir">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Flame chart’ı tersine çevirmek, profillenen çağrı yollarını en yeni çerçevelerden eski çerçevelere doğru görüntüler.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Gecko platform verilerini göster">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Platform verilerini göstermek, JavaScript Profilleyici raporlarına Gecko platform sembollerinin dahil edilmesini sağlar.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "JIT iyileştirmelerini göster">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Her JavaScript karesinde örneklenen JIT iyileştirmelerini gösterir.">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "Özyineleme ağacını düzleştir">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Fonksiyonları denetlerken özyinelemeyi düzleştir.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "Belleği kaydet">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Profilleme yaparken bellek tüketimini kaydet.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "Atamaları kaydet">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Profilleme yaparken nesne atamalarını kaydeder.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "Kare hızını kaydet">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Profilleme yaparken kare hızını (framerate) kaydet.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "Şu anda">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "Konsola">
+<!ENTITY performanceUI.console.stopCommandEnd   "yazarak kaydı durdurabilirsiniz.">

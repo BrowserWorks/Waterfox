@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+
+<!ENTITY window.width2                    "485">
+<!ENTITY window.height                    "300">
+
+<!ENTITY activity.title                  "Upravnik aktivnosti">
+
+<!ENTITY cmd.pause.label                  "Pauziraj">
+<!ENTITY cmd.pause.accesskey              "P">
+<!ENTITY cmd.resume.label                 "Nastavi">
+<!ENTITY cmd.resume.accesskey             "N">
+<!ENTITY cmd.cancel.label                 "Otkaži">
+<!ENTITY cmd.cancel.accesskey             "O">
+<!ENTITY cmd.undo.label                   "Poništi">
+<!ENTITY cmd.undo.accesskey               "P">
+<!ENTITY cmd.recover.label                "Obnovi">
+<!ENTITY cmd.recover.accesskey            "v">
+<!ENTITY cmd.retry.label                  "Pokušaj ponovo">
+<!ENTITY cmd.retry.accesskey              "P">
+<!ENTITY cmd.removeFromList.label         "Ukloni sa liste">
+<!ENTITY cmd.removeFromList.accesskey     "e">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "Očisti listu">
+<!ENTITY cmd.clearList.tooltip            "Uklanja završene, otkazane i neuspješne stavke s popisa">
+<!ENTITY cmd.clearList.accesskey          "O">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "Traži…">

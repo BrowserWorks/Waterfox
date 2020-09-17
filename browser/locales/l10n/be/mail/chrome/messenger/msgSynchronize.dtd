@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Загрузка і сінхранізацыя лістоў">
+<!ENTITY MsgSelect.label "Адзінкі для карыстання па-за сеткай">
+<!ENTITY MsgSyncDesc.label "Калі вы ўжо маеце вылучаныя паштовыя папкі ці навінакупы для карыстання па-за сеткай, вы можаце загрузіць/сінхранізаваць іх зараз. Іначай скарыстайце кнопку &quot;Вылучыць&quot;, каб выбраць паштовыя папкі і навінакупы для ўжывання па-за сеткай.">
+<!ENTITY MsgSyncDirections.label "Загрузіць і/або сінхранізаваць наступныя:">
+<!ENTITY syncTypeMail.label "Паштовыя лісты">
+<!ENTITY syncTypeMail.accesskey "П">
+<!ENTITY syncTypeNews.label "Лісты навінакупаў">
+<!ENTITY syncTypeNews.accesskey "н">
+<!ENTITY sendMessage.label "Адправіць недасланыя лісты">
+<!ENTITY sendMessage.accesskey "А">
+<!ENTITY workOffline.label "Працаваць па-за сеткай калі загрузка/сінхранізацыя здзейсніцца">
+<!ENTITY workOffline.accesskey "з">
+<!ENTITY selectButton.label "Вылучыць…">
+<!ENTITY selectButton.accesskey "л">
+<!ENTITY MsgSelectDesc.label "Выберыце паштовыя папкі і навінакупы для карыстання па-за сеткай.">
+<!ENTITY MsgSelectInd.label "Загрузка">
+<!ENTITY MsgSelectItems.label "Папкі і навінакупы">

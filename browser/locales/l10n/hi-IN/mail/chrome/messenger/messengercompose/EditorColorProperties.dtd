@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "पृष्ठ रंग व पृष्ठभूमि">
+<!ENTITY pageColors.label "पृष्ठ रंग">
+<!ENTITY defaultColorsRadio.label "पाठक का मूलभूत रंग (पृष्ठ में रंग मत सेट करें)">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "रंग जमावट को दर्शक (पाठक) के ब्रॉउजर से देखें">
+<!ENTITY customColorsRadio.label "पसंदीदा रंग प्रयोग करें:">
+<!ENTITY customColorsRadio.accessKey "C">
+<!ENTITY customColorsRadio.tooltip "ये रंग जमावट दर्शक के ब्रॉउजर जमावट को अध्यारोहित करता है">
+
+<!ENTITY normalText.label "सामान्य पाठ">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "लिंक जांच">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "सक्रिय लिंक जांच">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "देखा गया लिंक जांच">
+<!ENTITY visitedLinkText.accessKey "V">
+<!ENTITY background.label "पृष्ठभूमि:">
+<!ENTITY background.accessKey "B">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "पृष्ठभूमि चित्र:">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "अपने पृष्ठ के लिये पृष्ठभूमि के लिये एक चित्र फाइल का प्रयोग करें">

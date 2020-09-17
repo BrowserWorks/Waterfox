@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "तपाईँले खोल्न छान्नुभएको छ:">
+<!ENTITY  from.label                  "बाट:">
+<!ENTITY  actionQuestion.label        "&brandShortName; ले यो फाइललाई के गर्नुपर्छ?">
+
+<!ENTITY  openWith.label              "खोल्नुहोस्">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "अन्य…">
+
+<!ENTITY  saveFile.label              "फाइल सङ्ग्रह गर्नुहोस्">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "यस्तो फाइलको लागि अब सधैँ यही कार्य दोहोर्‍याउनुहोस् ।">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "यसको प्रकार:">
+
+<!ENTITY  chooseHandlerMac.label      "छान्नुहोस्…">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "ब्राउज गर्नुहोस्...">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "के तपाईँ यो फाइल सङ्ग्रह गर्न चाहनुहुन्छ?">

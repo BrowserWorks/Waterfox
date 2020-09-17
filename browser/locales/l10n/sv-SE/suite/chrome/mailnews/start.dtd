@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Välkommen till &brandShortName; E-post &amp; Grupper">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Välkommen till <a id="vendorURL" href="">&brandShortName;</a> E-post &amp; Grupper!'>
+<!ENTITY description.label
+"&brandShortName; E-post &amp; Grupper är ett kraftfullt e-post- och diskussionsgruppsprogram 
+byggt på öppen källkod, och som stöder avancerad igenkänning av skräppost och andra praktiska funktioner.">
+<!ENTITY features.title "Funktioner">
+<!ENTITY feat_multiacc.label "Stöd för flera konton">
+<!ENTITY feat_junk.label "Skräppostidentifiering">
+<!ENTITY feat_feeds.label "Kanalläsare">
+<!ENTITY feat_filters.label "Meddelandefilter">
+<!ENTITY feat_htmlmsg.label "Stöd för HTML-meddelanden">
+<!ENTITY feat_abook.label "Adressbok">
+<!ENTITY feat_tags.label "Anpassningsbara etiketter och e-postvyer">
+<!ENTITY feat_integration.label
+"Nära integrerad med &brandShortName;s programsvit">
+<!ENTITY dict.title "Ordlistor">
+<!ENTITY dict_intro.label "Ordlistor används för att kontrollera stavningen i meddelandetext.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'För många olika språk finns det  
+<a id="dictURL" href="">ordlistor</a>  
+att hämta på <a href="http://addons.mozilla.org/">Mozilla Add-ons</a>.'>
+<!ENTITY dict_info.label2
+'Många olika språk kan installeras från sektionen <a id="dictURL" href="">Ordlistor</a> på <a href="https://addons.thunderbird.net/seamonkey/"> SeaMonkey och Thunderbird-tillägg</a>.'>
+<!ENTITY info.title "Mer information">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="http://www.mozilla.org/mailnews/">Vi</a> välkomnar buggrapporter och förslag
+på nya funktioner, men läs <a id="releaseNotesURL" href="">versionsfakta</a> och gör en
+sökning i <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> först.'>

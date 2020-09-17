@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Last ned og synkroniser meldinger">
+<!ENTITY MsgSelect.label "Elementer for frakoblet bruk">
+<!ENTITY MsgSyncDesc.label "Dersom du allerede har valgt e-postmapper eller nyhetsgrupper for frakoblet bruk, kan du laste ned og/eller synkronisere dem nå. Ellers kan du bruke «Velg»-knappen for å velge e-postmappene og nyhetsgruppene du vil bruke frakoblet.">
+<!ENTITY MsgSyncDirections.label "Last ned og/eller synkroniser følgende:">
+<!ENTITY syncTypeMail.label "E-postmeldinger">
+<!ENTITY syncTypeMail.accesskey "m">
+<!ENTITY syncTypeNews.label "Nyhetsgruppemeldinger">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "Send usendte meldinger">
+<!ENTITY sendMessage.accesskey "u">
+<!ENTITY workOffline.label "Arbeid frakoblet når nedlasting/synkronisering er ferdig">
+<!ENTITY workOffline.accesskey "f">
+<!ENTITY selectButton.label "Velg …">
+<!ENTITY selectButton.accesskey "V">
+<!ENTITY MsgSelectDesc.label "Velg e-postmappene og nyhetsgruppene du ønsker å bruke frakoblet.">
+<!ENTITY MsgSelectInd.label "Last ned">
+<!ENTITY MsgSelectItems.label "Mapper og nyhetsgrupper">

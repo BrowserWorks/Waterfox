@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "安全資訊">
+<!ENTITY securityTab.label "安全性">
+<!ENTITY securityHeading.label "您必須指定簽署用以及加密用的憑證才能收發含簽章或加密過的訊息。">
+<!ENTITY encryptionGroupTitle.label "加密">
+<!ENTITY encryptionChoiceLabel.label "寄送郵件時的預設加密設定:">
+<!ENTITY neverEncrypt.label "不使用（不加密）">
+<!ENTITY neverEncrypt.accesskey "N">
+<!ENTITY alwaysEncryptMessage.label "必要（除非所有收件者都有憑證否則不寄出）">
+<!ENTITY alwaysEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert.message "使用此憑證來加解密寄給您的郵件:">
+<!ENTITY digitalSign.certificate.button "選擇…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "清除">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "選擇…">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "清除">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "數位簽章">
+<!ENTITY signMessage.label "加上數位簽章（預設）">
+<!ENTITY signMessage.accesskey "D">
+<!ENTITY signingCert.message "使用此憑證簽署您寄出的郵件:">
+
+<!ENTITY certificates.label "憑證">
+<!ENTITY manageCerts2.label "管理憑證…">
+<!ENTITY manageCerts2.accesskey "M">
+<!ENTITY manageDevices.label "管理安全裝置…">
+<!ENTITY manageDevices.accesskey "g">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "選擇憑證">
+<!ENTITY certPicker.info  "憑證:">
+<!ENTITY certPicker.detailsLabel "所選憑證的詳細資訊:">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Taq Richinil Ruxaq">
+<!ENTITY location.label "Ochochib'al:">
+<!ENTITY lastModified.label "Ruk'isib'äl K'exoj:">
+<!ENTITY titleInput.label "B'i'aj:">
+<!ENTITY titleInput.accessKey "B">
+<!ENTITY authorInput.label "B'anel:">
+<!ENTITY authorInput.accessKey "B">
+<!ENTITY descriptionInput.label "Tzijoxkil:">
+<!ENTITY descriptionInput.accessKey "T">
+<!ENTITY locationNewPage.label "[K'ak'a' ruxaq, k'a man yakon ta]">
+<!ENTITY EditHEADSource1.label "Q'axinäq taq winäq:">
+<!ENTITY EditHEADSource2.label "Richin ninuk' ri rupam ri &lt;head&gt; jachonem, tokisäx &quot;HTML Xe'el&quot; pa ri K'utsamaj Titz'et o Tinuk' pa Rub'anikil Samajib'äl.">

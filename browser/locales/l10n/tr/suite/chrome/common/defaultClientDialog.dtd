@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title "Öntanımlı istemci">
+<!ENTITY defaultClient.intro "&brandShortName; aşağıdaki hizmetler için öntanımlı istemci olarak kullanılsın:">
+
+<!ENTITY browser.label "Browser">
+<!ENTITY email.label "E-posta">
+<!ENTITY newsgroups.label "Haber Grupları">
+<!ENTITY feeds.label "Feeds">
+
+<!ENTITY checkOnStartup.label "Bu kontrolü &brandShortName; uygulamasının her açılışında uygula">
+<!ENTITY checkOnStartup.accesskey "B">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!ENTITY addressing.label          "编写 &amp; 地址簿">
+<!ENTITY addressingGroupTitle.label "地址查找">
+<!ENTITY autocompleteToMyDomain.label     "自动在地址上添加我的域名">
+<!ENTITY autocompleteToMyDomain.accesskey "o">
+<!ENTITY addressingText.label      "查找地址时：">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "对此账户使用我的全局 LDAP 服务器">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "编辑目录…">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "使用其他 LDAP 服务器：">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "无">
+
+<!-- am-addressing.xul -->
+
+<!ENTITY compositionGroupTitle.label          "编写">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "以 HTML 格式编写消息">
+<!ENTITY useHtml.accesskey                    "C">
+<!ENTITY autoQuote.label                      "回复时自动引用原始消息">
+<!ENTITY autoQuote.accesskey                  "m">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "当引用时，">
+<!ENTITY quoting.accesskey                    "q">
+<!ENTITY aboveQuote.label                     "在引用内容之前回复">
+<!ENTITY belowQuote.label                     "在引用内容之后回复">
+<!ENTITY selectAndQuote.label                 "选择引用内容">
+<!ENTITY place.label                          "并附加我的签名">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "在引用内容之后（建议）">
+<!ENTITY aboveText.label                      "在我的回复之后（在引用内容之前）">
+<!ENTITY includeSigOnReply.label              "回复包含签名">
+<!ENTITY includeSigOnReply.accesskey          "I">
+<!ENTITY includeSigOnForward.label            "转发时包含签名">
+<!ENTITY includeSigOnForward.accesskey        "w">
+
+<!ENTITY globalComposingPrefs.label           "全局撰写设置…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "全局地址设置…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

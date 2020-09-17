@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Private Data' prefs settings
+    These entities go on top of the sanitize.dtd definitions
+-->
+<!ENTITY pref.privatedata.title           "Súkromné údaje">
+
+
+<!ENTITY clearPrivateData.label           "Vymazať súkromné údaje">
+
+<!ENTITY alwaysClear.label                "Pri ukončení programu &brandShortName; vždy odstrániť súkromné údaje">
+<!ENTITY alwaysClear.accesskey            "k">
+
+<!ENTITY askBeforeClear.label             "Pred odstránením súkromných údajov sa vždy opýtať">
+<!ENTITY askBeforeClear.accesskey         "o">
+
+<!ENTITY clearDataSettings.label          "Pri odstraňovaní súkromných údajov programu &brandShortName; odstrániť:">
+
+<!--LOCALIZATION NOTE (clearDataDialog.label, clearDataSilent.label, clearDataDialog.accesskey):
+  The only difference bettween the two labels is that one calls a dialog, the other doesn't.
+  The same accesskey is used for both labels.
+-->
+<!ENTITY clearDataDialog.label            "Vymazať teraz…">
+<!ENTITY clearDataSilent.label            "Vymazať teraz">
+<!ENTITY clearDataDialog.accesskey        "d">

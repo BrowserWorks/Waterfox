@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Dataja">
+<!ENTITY fileMenu.accesskey        "D">
+<!ENTITY newMenu.label            "Nowy">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Wobźěłaś">
+<!ENTITY editMenu.accesskey        "b">
+<!ENTITY undoCmd.label            "Slědk wześ">
+<!ENTITY undoCmd.accesskey          "S">
+<!ENTITY redoCmd.label            "Wóspjetowaś">
+<!ENTITY redoCmd.accesskey          "W">
+<!ENTITY deleteCmd.label          "Wulašowaś">
+<!ENTITY deleteCmd.accesskey        "l">
+<!ENTITY preferencesCmd2.label "Nastajenja">
+<!ENTITY preferencesCmd2.accesskey "N">
+<!ENTITY preferencesCmdUnix.label       "Nastajenja">
+<!ENTITY preferencesCmdUnix.accesskey     "t">
+
+<!ENTITY customizeCmd.label "Pśiměriś">
+<!ENTITY customizeCmd.accesskey "m">
+
+<!ENTITY viewMenu.label          "Naglěd">
+<!ENTITY viewMenu.accesskey        "N">
+<!ENTITY viewToolbarsMenu.label        "Symbolowe rědki">
+<!ENTITY viewToolbarsMenu.accesskey      "S">
+<!ENTITY showTaskbarCmd.label          "Statusowa rědka">
+<!ENTITY showTaskbarCmd.accesskey        "t">
+
+<!ENTITY closeCmd.label      "Zacyniś">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "c">
+
+<!ENTITY quitApplicationCmd.label  "Skóńcyś">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "S">
+
+<!ENTITY quitApplicationCmdUnix.label  "Skóńcyś">
+<!ENTITY quitApplicationCmdUnix.accesskey  "S">
+
+<!ENTITY quitApplicationCmdMac.label  "&brandShortName; spušćiś">
+<!ENTITY quitApplicationCmdMac.accesskey  "u">

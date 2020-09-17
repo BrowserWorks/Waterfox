@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Ffolder Chwilio wedi'i Chadw Newydd">
+<!ENTITY name.label                 "Enw:">
+<!ENTITY name.accesskey             "E">
+<!ENTITY description.label          "Creu fel is-ffolder o:">
+<!ENTITY description.accesskey      "i">
+
+<!ENTITY searchTermCaption.label "Ffurfweddu'r meini prawf chwilio ar gyfer y ffolder chwilio a gadwyd: ">
+
+<!ENTITY folderSelectionCaption.label "Dewis ffolderi i'w chwilio: ">
+<!ENTITY chooseFoldersButton.label "Dewis…">
+<!ENTITY chooseFoldersButton.accesskey "D">
+
+<!ENTITY searchOnline.label "Chwilio Ar-lein (Mae'n cynnig y canlyniadau diweddaraf ar ffolderi IMAP a Newyddion ond mae'n cymryd mwy o amser i agor y ffolder)">
+<!ENTITY searchOnline.accesskey "A">
+<!ENTITY newFolderButton.label       "Creu">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "Diweddaru">
+<!ENTITY editFolderButton.accesskey  "D">

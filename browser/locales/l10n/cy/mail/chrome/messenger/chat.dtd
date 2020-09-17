@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Cysylltiadau Ar-lein">
+<!ENTITY offlineContactsHeader.label   "Cysylltiadau All-lein">
+<!ENTITY conversationsHeader.label     "Sgyrsiau">
+<!ENTITY searchResultConversation.label "Canlyniadau chwilio">
+<!ENTITY chat.noConv.title             "Bydd trafodaethau'n cael eu dangos yn fan hyn.">
+<!ENTITY chat.noConv.description       "Defnyddiwch y rhestr cysylltiadau yn y panel ar y chwith er mwyn cychwyn trafodaeth.">
+<!ENTITY chat.noPreviousConv.description       "Nid oes gan &brandShortName; unrhyw drafodaethau blaenorol wedi eu cadw gyda'r cysylltiad yma.">
+<!ENTITY chat.noAccount.title             "Nid ydych wedi creu cyfrif sgwrsio eto.">
+<!ENTITY chat.noAccount.description       "Gadewch i &brandShortName; eich tywys drwy'r broses o greu cyfrif sgwrsio.">
+<!ENTITY chat.accountWizard.button       "Cychwyn arni">
+<!ENTITY chat.noConnectedAccount.title             "Nid yw eich cyfrifon sgwrsio wedi'u cysylltu.">
+<!ENTITY chat.noConnectedAccount.description       "Mae modd eu cysylltu drwy'r ddeialog 'Statws sgwrsio':">
+<!ENTITY chat.showAccountManager.button       "Dangos statws sgwrsio">
+
+<!ENTITY chat.participants             "Cyfranogwyr:">
+<!ENTITY chat.previousConversations    "Sgyrsiau Blaenorol:">
+<!ENTITY chat.ongoingConversation      "Sgwrs gyfredol">
+
+<!ENTITY openConversationCmd.label     "Cychwyn Sgwrs">
+<!ENTITY openConversationCmd.accesskey "C">
+<!ENTITY closeConversationCmd.label    "Gorffen Sgwrs">
+<!ENTITY closeConversationCmd.accesskey "G">
+<!ENTITY aliasCmd.label                "Ailenwi">
+<!ENTITY aliasCmd.accesskey            "A">
+<!ENTITY deleteCmd.label               "Tynnu Cysylltiad">
+<!ENTITY deleteCmd.accesskey           "T">
+
+<!ENTITY openConversationButton.tooltip  "Cychwyn trafodaeth">
+<!ENTITY closeConversationButton.tooltip "Gorffen trafodaeth">
+
+<!ENTITY addBuddyButton.label          "Ychwanegu Cysylltiad">
+<!ENTITY joinChatButton.label          "Ymuno â Sgwrs">
+<!ENTITY chatAccountsButton.label      "Dangos Cyfrifon">
+
+<!ENTITY status.available          "Ar Gael">
+<!ENTITY status.unavailable        "Ddim ar Gael">
+<!ENTITY status.offline            "All-lein">
+
+<!ENTITY openLinkCmd.label            "Agor Dolen…">
+<!ENTITY openLinkCmd.accesskey        "D">

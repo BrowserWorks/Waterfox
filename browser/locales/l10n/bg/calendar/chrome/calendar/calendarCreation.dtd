@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Създаване на нов календар" >
+<!ENTITY wizard.label             "Създаване на нов календар" >
+<!ENTITY wizard.description       "Намиране на вашия календар" >
+
+<!ENTITY initialpage.description    "Календарът може да бъде запазен местно или на сървър, за да бъде достъпен отдалечено или за да го споделяте с приятели или колеги." >
+<!ENTITY initialpage.computer.label  "Локално">
+<!ENTITY initialpage.network.label  "На сървър">
+
+<!ENTITY locationpage.description         "Осигурете информация за достъп до календара, намиращ се на отдалечен сървър." >
+<!ENTITY locationpage.login.description   "Ако е нужно, въведете потребителско име и парола" >
+<!ENTITY locationpage.username.label      "Потребителско име:" >
+<!ENTITY locationpage.password.label      "Парола:" >
+
+<!ENTITY custompage.shortdescription  "Настройване на вашия календар" >
+<!ENTITY custompage.longdescription   "Може да дадете кратко име и цвят на събитията от този календар." >
+
+<!ENTITY finishpage.shortdescription  "Календарът е създаден" >
+<!ENTITY finishpage.longdescription   "Календарът е създаден." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+
+
+
+
+
+<!ENTITY location.label "Местоположение:">
+
+

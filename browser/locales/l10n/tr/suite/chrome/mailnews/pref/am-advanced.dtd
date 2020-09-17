@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Giden posta sunucusu (SMTP) ayarları">
+<!-- LOCALIZATION NOTE (smtpDesc.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDesc.label "Sadece bir tane giden posta sunucusu(SMTP) belirlemeniz yeterlidir. Giden posta sunucunuzun ismini giriniz.">
+
+<!ENTITY smtpListAdd.label "Ekle…">
+<!ENTITY smtpListAdd.accesskey "l">
+<!ENTITY smtpListEdit.label "Düzenle…">
+<!ENTITY smtpListEdit.accesskey "e">
+<!ENTITY smtpListDelete.label "Kaldır">
+<!ENTITY smtpListDelete.accesskey "r">
+<!ENTITY smtpListSetDefault.label "Varsayılan olarak ata">
+<!ENTITY smtpListSetDefault.accesskey "V">
+
+<!ENTITY serverDescription.label "Açıklama: ">
+<!ENTITY serverName.label "Sunucu ismi: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label "Kullanıcı ismi: ">
+<!ENTITY connectionSecurity.label "Bağlantı güvenliği: ">
+<!ENTITY authMethod.label "Authentication method: ">

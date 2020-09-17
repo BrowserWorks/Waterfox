@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label "Рэдактар пашыраных уласцівасцяў">
+<!ENTITY AttName.label "Атрыбут:">
+<!ENTITY AttValue.label "Значэнне:">
+<!ENTITY PropertyName.label "Уласцівасць:">
+<!ENTITY currentattributesfor.label "Цяперашні атрыбут для:">
+<!ENTITY tree.attributeHeader.label "Атрыбут">
+<!ENTITY tree.propertyHeader.label "Уласцівасць">
+<!ENTITY tree.valueHeader.label "Значэнне">
+<!ENTITY tabHTML.label "Атрыбуты HTML">
+<!ENTITY tabCSS.label "Убудаваны стыль">
+<!ENTITY tabJSE.label "Падзеі JavaScript">
+
+<!ENTITY editAttribute.label "Пстрыкніце па адзінцы ўгары, каб рэдагаваць яе значэнне">
+<!ENTITY removeAttribute.label "Выдаліць">

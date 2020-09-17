@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Көмек">
+<!ENTITY helpMenu.accesskey "К">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Көмек">
+<!ENTITY helpMenuWin.accesskey "К">
+<!ENTITY aboutProduct2.label "&brandShorterName; туралы">
+<!ENTITY aboutProduct2.accesskey "а">
+<!ENTITY helpTroubleshootingInfo.label     "Техникалық ақпарат">
+<!ENTITY helpTroubleshootingInfo.accesskey "а">
+<!ENTITY helpSafeMode.label     "Сөндірілген қосымшалармен қайта қосу…">
+<!ENTITY helpSafeMode.accesskey "р">
+<!ENTITY helpSafeMode.stop.label     "Сөндірілген қосымшалармен қайта қосу">
+<!ENTITY helpSafeMode.stop.accesskey "р">
+<!ENTITY productHelp.label "&brandShortName; көмегі">
+<!ENTITY productHelp.accesskey "м">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Пернетақта жарлықтары">
+<!ENTITY helpKeyboardShortcuts.accesskey "т">
+
+<!ENTITY helpFeedbackPage.label "Кері байланыс хабарламасын жіберу…">
+<!ENTITY helpFeedbackPage.accesskey "с">
+
+<!ENTITY helpShowTour2.label "&brandShorterName; ішіне cаяхат">
+<!ENTITY helpShowTour2.accesskey "т">
+
+<!ENTITY helpGetInvolvedPage.label "Үлес қосу">
+<!ENTITY helpGetInvolvedPage.accesskey "у">
+
+<!ENTITY helpDonationsPage.label "Демеушілік ету">
+<!ENTITY helpDonationsPage.accesskey "м">

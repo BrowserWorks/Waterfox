@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Ny händelse…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "Ny uppgift…">
+<!ENTITY event.new.task.accesskey               "u">
+
+<!ENTITY calendar.import.label                  "Importera…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label       			"Exportera…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Publicera…">
+<!ENTITY calendar.publish.accesskey             "P">
+
+<!ENTITY calendar.deletecalendar.label          "Ta bort vald kalender…">
+<!ENTITY calendar.deletecalendar.accesskey      "T">
+
+<!ENTITY calendar.unsubscribecalendar.label     "Avregistrera vald kalender…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "v">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Ta bort vald kalender…">
+<!ENTITY calendar.removecalendar.accesskey      "b">
+
+<!ENTITY calendar.menu.customize.label          "Anpassa...">
+<!ENTITY calendar.menu.customize.accesskey      "A">
+
+<!ENTITY showUnifinderCmd.label                 "Sök händelser">
+<!ENTITY showUnifinderCmd.accesskey             "h">
+<!ENTITY showUnifinderCmd.tooltip               "Växla panelen sök händelser">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Visa Uppgifter i kalender">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "V">
+
+<!ENTITY goTodayCmd.label                       "Idag">
+<!ENTITY goTodayCmd.accesskey                   "I">
+
+<!ENTITY showCurrentView.label                  "Aktuell vy">
+<!ENTITY showCurrentView.accesskey              "v">
+
+<!ENTITY calendar.properties.label              "Kalenderinställningar…">
+<!ENTITY calendar.properties.accesskey          "K">

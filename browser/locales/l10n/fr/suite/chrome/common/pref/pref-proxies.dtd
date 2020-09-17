@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Proxies">
+<!ENTITY  pref.proxies.desc             "Un proxy est un service réseau qui peut filtrer et accélérer votre connexion internet.">
+<!ENTITY  proxyTitle.label              "Configuration du serveur proxy pour accéder à Internet">
+<!ENTITY  directTypeRadio.label         "Pas de proxy">
+<!ENTITY  directTypeRadio.accesskey     "P">
+<!ENTITY  systemTypeRadio.label         "Utiliser les paramètres proxy du système">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  manualTypeRadio.label         "Configuration manuelle du proxy :">
+<!ENTITY  manualTypeRadio.accesskey     "C">
+<!ENTITY  wpadTypeRadio.label           "Découvrir automatiquement la configuration du proxy">
+<!ENTITY  wpadTypeRadio.accesskey       "D">
+<!ENTITY  autoTypeRadio.label           "Adresse de configuration automatique du proxy :">
+<!ENTITY  autoTypeRadio.accesskey       "e">
+<!ENTITY  reload.label                  "Actualiser">
+<!ENTITY  reload.accesskey              "s">
+<!ENTITY  http.label                    "Proxy :">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  port.label                    "Port :">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "Avancé…">
+<!ENTITY  advanced.accesskey            "v">
+<!ENTITY  noproxy.label                 "Pas de proxy pour :">
+<!ENTITY  noproxy.accesskey             "r">
+<!ENTITY  noproxyExplain.label          "Exemples : .mozilla.org, .asso.fr, 192.168.1.0/24">

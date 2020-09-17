@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "קבצים שמורים">
+<!ENTITY aboutDownloads.empty                      "אין קבצים שמורים">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "פתיחת תיקיה מכילה">
+<!ENTITY cmd.show.accesskey                        "ת">
+<!ENTITY cmd.showMac.label                         "הצגה ב־Finder">
+<!ENTITY cmd.showMac.accesskey                     "צ">
+<!ENTITY cmd.open.label                            "פתיחה">
+<!ENTITY cmd.open.accesskey                        "פ">
+<!ENTITY cmd.removeFromHistory.label               "הסרה מההיסטוריה">
+<!ENTITY cmd.removeFromHistory.accesskey           "ס">
+<!ENTITY cmd.clearList.label                       "פינוי הרשימה">
+<!ENTITY cmd.clearList.accesskey                   "פ">
+<!ENTITY cmd.clearList.tooltip                     "הסרת כל הרשומות מרשימת הקבצים השמורים, למעט הורדות המתבצעות כעת.">
+<!ENTITY cmd.searchDownloads.label                 "חיפוש…">
+<!ENTITY cmd.searchDownloads.key                   "ח">

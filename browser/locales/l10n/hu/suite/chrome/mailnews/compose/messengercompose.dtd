@@ -1,0 +1,140 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Új üzenet: (nincs tárgy)">
+
+<!ENTITY fromAddr.label "Feladó:">
+<!ENTITY fromAddr.accesskey "F">
+<!ENTITY toAddr.label "Címzett:">
+<!ENTITY ccAddr.label "Másolat:">
+<!ENTITY bccAddr.label "Rejtett másolat:">
+<!ENTITY replyAddr.label "Válaszcím:">
+<!ENTITY newsgroupsAddr.label "Hírcsoport:">
+<!ENTITY followupAddr.label "Hírcsop. vál.:">
+<!ENTITY subject.label "Tárgy:">
+<!ENTITY subject.accesskey "T">
+<!ENTITY attachments.label "Mellékletek:">
+<!ENTITY attachments.accesskey "M">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Mentés">
+<!ENTITY saveCmd.accesskey "M">
+<!ENTITY saveAsCmd.label "Mentés másként">
+<!ENTITY saveAsCmd.accesskey "e">
+<!ENTITY saveAsFileCmd.label "Fájl">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Piszkozat">
+<!ENTITY saveAsDraftCmd.accesskey "P">
+<!ENTITY saveAsTemplateCmd.label "Sablon">
+<!ENTITY saveAsTemplateCmd.accesskey "S">
+<!ENTITY attachMenu.label "Melléklet">
+<!ENTITY attachMenu.accesskey "t">
+<!ENTITY attachFileCmd.label "Fájlok…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "Weboldal…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Személyi kártya (vCard)">
+<!ENTITY attachVCardCmd.accesskey "k">
+<!ENTITY sendNowCmd.label "Küldés azonnal">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "Küldés később">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "l">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Újratördelés">
+<!ENTITY editRewrapCmd.key "j">
+<!ENTITY editRewrapCmd.accesskey  "r">
+<!ENTITY accountManagerCmd.label "Postafiókok beállításai…">
+<!ENTITY accountManagerCmd.accesskey "P">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "Fő eszköztár">
+<!ENTITY showComposeToolbarCmd.accesskey "e">
+<!ENTITY showFormatToolbarCmd.label "Formázás eszköztár">
+<!ENTITY showFormatToolbarCmd.accesskey "F">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Formátum">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Beállítások">
+<!ENTITY optionsMenu.accesskey "B">
+
+<!ENTITY quoteCmd.label "Üzenet idézése">
+<!ENTITY quoteCmd.accesskey "z">
+<!ENTITY selectAddressCmd.label "Címek kiválasztása…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "C">
+
+<!ENTITY priorityMenu.label "Sürgősség">
+<!ENTITY priorityMenu.accesskey "S">
+<!ENTITY lowestPriorityCmd.label "Nem sürgős">
+<!ENTITY lowestPriorityCmd.accesskey "e">
+<!ENTITY lowPriorityCmd.label "Kevéssé sürgős">
+<!ENTITY lowPriorityCmd.accesskey "K">
+<!ENTITY normalPriorityCmd.label "Normál">
+<!ENTITY normalPriorityCmd.accesskey "o">
+<!ENTITY highPriorityCmd.label "Sürgős">
+<!ENTITY highPriorityCmd.accesskey "S">
+<!ENTITY highestPriorityCmd.label "Rendkívül sürgős">
+<!ENTITY highestPriorityCmd.accesskey "R">
+
+<!ENTITY returnReceiptMenu.label "Tértivevény">
+<!ENTITY returnReceiptMenu.accesskey "T">
+<!ENTITY dsnMenu.label "Értesítés a kézbesítésről">
+<!ENTITY dsnMenu.accesskey "N">
+
+<!ENTITY outputFormatMenu.label "Formátum">
+<!ENTITY outputFormatMenu.accesskey  "F">
+<!ENTITY autoFormatCmd.label "Automatikus felismerés">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Csak sima szöveg">
+<!ENTITY plainTextFormatCmd.accesskey "s">
+<!ENTITY htmlFormatCmd.label "Csak Rich Text (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "R">
+<!ENTITY bothFormatCmd.label "Sima és Rich Text (HTML) szöveg">
+<!ENTITY bothFormatCmd.accesskey "H">
+
+<!ENTITY fileCarbonCopyCmd.label "Elküldött üzenet iktatása">
+<!ENTITY fileCarbonCopyCmd.accesskey "E">
+<!ENTITY fileHereMenu.label "Iktatás itt">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Küldés">
+<!ENTITY addressButton.label "Cím">
+<!ENTITY attachButton.label "Melléklet">
+<!ENTITY spellingButton.label "Helyesírás">
+<!ENTITY saveButton.label "Mentés">
+<!ENTITY stopButton.label "Leállítás">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Címsor">
+<!ENTITY formatToolbar.tooltip "Formázás eszköztár">
+<!ENTITY sendButton.tooltip "Üzenet elküldése azonnal"> 
+<!ENTITY sendlaterButton.tooltip "Üzenet elküldése később"> 
+<!ENTITY addressButton.tooltip "Egy címzett kiválasztása a címjegyzékből"> 
+<!ENTITY attachButton.tooltip "Melléklet hozzáadása"> 
+<!ENTITY saveButton.tooltip "Az üzenet mentése"> 
+<!ENTITY stopButton.tooltip "Átvitel megszakítása"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Megnyitás">
+<!ENTITY openAttachment.accesskey "M">
+<!ENTITY renameAttachment.label "Átnevezés">
+<!ENTITY renameAttachment.accesskey "n">
+<!ENTITY deleteAttachment.accesskey "l">
+<!ENTITY selectAllAttachments.accesskey "e">
+<!ENTITY attachFile.label "Fájl(ok) csatolása…">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachPage.label "Weboldal csatolása…">
+<!ENTITY attachPage.accesskey "W">

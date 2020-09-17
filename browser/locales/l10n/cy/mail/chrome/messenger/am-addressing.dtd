@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Ysgrifennu a Chyfeiriadau">
+<!ENTITY addressingGroupTitle.label "Cyfeirio">
+<!ENTITY addressingText.label      "Wrth chwilio am gyfeiriadau:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Defnyddio fy newisiadau gweinydd LDAP eang ar gyfer y cyfrif hwn">
+<!ENTITY useGlobal.accesskey       "D">
+<!ENTITY editDirectories.label     "Golygu Cyfeiriaduron…">
+<!ENTITY editDirectories.accesskey "C">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Defnyddio gweinydd LDAP gwahanol:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "Dim">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Ysgrifennu">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Ysgrifennu negeseuon yn fformat HTML">
+<!ENTITY useHtml.accesskey                    "Y">
+<!ENTITY autoQuote.label                      "Dyfynnu'r neges wreiddiol yn awtomatig wrth ateb">
+<!ENTITY autoQuote.accesskey                  "D">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Pan yn dyfynnu">
+<!ENTITY quoting.accesskey                    "d">
+<!ENTITY aboveQuote.label                     "cychwyn fy ateb uwchlaw'r dyfyniad">
+<!ENTITY belowQuote.label                     "cychwyn fy ateb o dan y dyfyniad">
+<!ENTITY selectAndQuote.label                 "dewis y dyfyniad">
+<!ENTITY place.label                          "a gosod fy llofnod">
+<!ENTITY place.accesskey                      "l">
+<!ENTITY belowText.label                      "islaw'r dyfyniad (argymhellir)">
+<!ENTITY aboveText.label                      "o dan fy ateb (uwchlaw'r dyfyniad)">
+<!ENTITY includeSigOnReply.label              "Cynnwys llofnod mewn atebion">
+<!ENTITY includeSigOnReply.accesskey          "a">
+<!ENTITY includeSigOnForward.label            "Cynnwys llofnod wrth anfon ymlaen">
+<!ENTITY includeSigOnForward.accesskey        "y">
+
+<!ENTITY globalComposingPrefs.label           "Dewisiadau Cyfansoddi Eang…">
+<!ENTITY globalComposingPrefs.accesskey       "D">
+
+<!ENTITY globalAddressingPrefs.label          "Dewisiadau Cyfansoddi Eang…">
+<!ENTITY globalAddressingPrefs.accesskey      "C">

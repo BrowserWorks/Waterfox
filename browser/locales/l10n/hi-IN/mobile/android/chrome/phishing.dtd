@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "यहाँ से मुझे बाहर निकालें!">
+<!ENTITY safeb.palm.decline.label "इस चेतावनी को अनदेखा करें">
+<!ENTITY safeb.palm.reportPage.label "यह पृष्ठ क्यों रोका गया था?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "सुझाव प्रदाता <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "रिपोर्ट की गई हमलावर साइट!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "<span id='malware_sitename'/> पर यह वेब पृष्ठ एक अटैक पृष्ठ के रूप में सूचित किया गया है और आपके सुरक्षा प्राथमिकताओं के आधार पर अवरूद्ध किया गया है.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>भेद्य पृष्ठ प्रोग्राम संस्थापित करने की कोशिश करते हैं जो निजी सूचनाओं को चुराते हैं, आपके कम्प्यूटर का उपयोग अन्य को भेदने के लिए करते हैं , या आपके तंत्र को क्षति पहुँचाते हैं.</p><p>कुछ भेद्य पृष्ठ साभिप्राय हानिकारक सॉफ्टवेयर को अस्तव्यस्त करते हैं लेकिन बहुत से बिना मालिक की जानकारी या अनुमति के बिना समझौता कर लेते हैं.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "धोखादायक साईट!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "इस वेब पृष्ठ पे <span id='phishing_sitename'/> को धोखादायक सूचित किया गया है और आपकी प्राथमिकताओं के अनुसार अवरोधित कर दिया गया है.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>भ्रमकारी साइट्स आपको भ्रमित कर आपकी निजी जानकारी जैसे फ़ोन नंबर, पासवर्ड, क्रेडिट कार्ड का दुरुपयोग या आपके डिवाइस मैं आपत्तिजनक सॉफ्टवेयर इनस्टॉल करके आपको उलझाने हेतु डिज़ाइन की गई हैं.</p><p>वेब के माध्यम से दर्ज की गई कोई भी व्यक्तिगत जानकारी आपकी पहचान के लिए घातक हो सकती है.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "अवांछित सॉफ्टवेयर साइट रिपोर्टेड किया गया!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "This web page at <span id='unwanted_sitename'/> has been reported as an attack page and has been blocked based on your security preferences.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "अवांछित सॉफ्टवेयर पृष्ठ वह सॉफ्टवेयर स्थापित करने का प्रयास करें जो भ्रामक हो सकता है और अप्रत्याशित तरीके में आपके तंत्र को प्रभावित कर सकता है.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "आगे साइट में मैलवेयर हो सकता है">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; इस पृष्ठ को अवरुद्ध कर दिया गया क्योंकि यह हानिकारक एप्प को स्थापित करने कि कोशिश कर रहा होगा जो की आपके जानकारियों को चुरा अथवा मिटा सकता था (उदाहरण के लिए, फ़ोटो, पासवर्ड, संदेश और क्रेडिट कार्ड).">

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "Mushjul">
+<!ENTITY mouseWheelPanel.label           "Ange hur mushjulet ska fungera tillsammans med denna ändringstangent: ">
+<!ENTITY usingJustTheWheel.label         "Ingen ändringstangent">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Alternativ">
+<!ENTITY usingWheelAndCtrl.label2        "Ctrl">
+<!ENTITY usingWheelAndShft.label2        "Shift">
+<!ENTITY mouseWheelGroup.label           "Vertikal rullning">
+<!ENTITY mouseWheelHorizGroup.label      "Horisontell rullning">
+<!ENTITY sameAsVertical.label            "Samma som vertikal rullning">
+<!ENTITY sameAsVertical.accesskey        "v">
+<!ENTITY doNothing.label                 "Gör ingenting">
+<!ENTITY doNothing.accesskey             "G">
+<!ENTITY doNothingHoriz.accesskey        "i">
+<!ENTITY scrollDocument.label            "Rulla dokumentet">
+<!ENTITY scrollDocument.accesskey        "R">
+<!ENTITY scrollDocumentHoriz.accesskey   "d">
+<!ENTITY history.label                   "Gå bakåt eller framåt i historiken">
+<!ENTITY history.accesskey               "k">
+<!ENTITY historyHoriz.accesskey          "b">
+<!ENTITY zoom.label                      "Zooma in eller ut sidan">
+<!ENTITY zoom.accesskey                  "Z">
+<!ENTITY zoomHoriz.accesskey             "u">
+<!ENTITY wheelSpeed.label                "Mushjulets känslighet">
+<!ENTITY wheelSpeed.accesskey            "k">
+<!ENTITY wheelSpeedHoriz.accesskey       "h">
+<!ENTITY reverseDirection.label          "Omvänd riktning">
+<!ENTITY reverseDirection.accesskey      "m">
+<!ENTITY reverseDirectionHoriz.accesskey "n">

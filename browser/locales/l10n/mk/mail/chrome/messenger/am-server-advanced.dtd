@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Напредни поставки за сметката">
+<!ENTITY serverDirectory.label "Директориум на IMAP серверот:">
+<!ENTITY serverDirectory.accesskey "Д">
+<!ENTITY usingSubscription.label "Покажи ги само папките на кои сум претплатен(а)">
+<!ENTITY usingSubscription.accesskey "к">
+<!ENTITY dualUseFolders.label "Серверот поддржува папки кои содржат подпапки и пораки">
+<!ENTITY dualUseFolders.accesskey "п">
+<!ENTITY maximumConnectionsNumber.label "Максимален број на серверски врски кои може да се кешираат">
+<!ENTITY maximumConnectionsNumber.accesskey "М">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "These preferences specify the namespaces on your IMAP server">
+<!ENTITY personalNamespace.label "Лично место:">
+<!ENTITY personalNamespace.accesskey "Л">
+<!ENTITY publicNamespace.label "Јавно (делено):">
+<!ENTITY publicNamespace.accesskey "о">
+<!ENTITY otherUsersNamespace.label "Други корисници:">
+<!ENTITY otherUsersNamespace.accesskey "у">
+<!ENTITY overrideNamespaces.label "Дозволи серверот да ги одбие овие имиња">
+<!ENTITY overrideNamespaces.accesskey "Д">
+<!ENTITY deferToServer.label "Сандаче за друга сметка">
+<!ENTITY deferToServer.accesskey "д">
+<!ENTITY deferGetNewMail.label "При проверување на пошта проверувај ја и оваа сметка">
+<!ENTITY deferGetNewMail.accesskey "и">

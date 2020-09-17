@@ -1,0 +1,303 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Pegañ hep furmaozañ">
+<!ENTITY pasteNoFormatting.accesskey "h">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Pegañ evel ur meneg">
+<!ENTITY pasteAsQuotationCmd.accesskey "m">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Enlakaat">
+<!ENTITY insertMenu.accesskey "E">
+<!ENTITY insertLinkCmd2.label "Ere…">
+<!ENTITY insertLinkCmd2.accesskey "r">
+<!ENTITY insertLinkCmd2.key "i">
+<!ENTITY insertAnchorCmd.label "Eor anvet…">
+<!ENTITY insertAnchorCmd.accesskey "a">
+<!ENTITY insertImageCmd.label "Skeudenn…">
+<!ENTITY insertImageCmd.accesskey "S">
+<!ENTITY insertHLineCmd.label "Linenn a-blaen">
+<!ENTITY insertHLineCmd.accesskey "b">
+<!ENTITY insertTableCmd.label "Taolenn…">
+<!ENTITY insertTableCmd.accesskey "T">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Jedoniezh…">
+<!ENTITY insertMathCmd.accesskey "J">
+<!ENTITY insertCharsCmd.label "Arouezennoù hag arouezioù…">
+<!ENTITY insertCharsCmd.accesskey "A">
+<!ENTITY insertBreakAllCmd.label "Troc'h dindan ar skeudenn(où)">
+<!ENTITY insertBreakAllCmd.accesskey "k">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Krouiñ un ere…">
+<!ENTITY createLinkCmd.accesskey "r">
+<!ENTITY editLinkCmd.label "Embann an ere en ur bajennad nevez">
+<!ENTITY editLinkCmd.accesskey "m">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "Diuz un nodrezh">
+<!ENTITY fontfaceMenu.label "Nodrezh">
+<!ENTITY fontfaceMenu.accesskey "N">
+<!ENTITY fontVarWidth.label "Led kemmus">
+<!ENTITY fontVarWidth.accesskey "k">
+<!ENTITY fontFixedWidth.label "Led digemmus">
+<!ENTITY fontFixedWidth.accesskey "d">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "Diuzañ ur vent nodrezh">
+<!ENTITY decreaseFontSize.label "Bihanoc'h">
+<!ENTITY decreaseFontSize.accesskey "B">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Brasoc'h">
+<!ENTITY increaseFontSize.accesskey "s">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Ment">
+<!ENTITY fontSizeMenu.accesskey "e">
+<!ENTITY size-tinyCmd.label "Munut">
+<!ENTITY size-tinyCmd.accesskey "M">
+<!ENTITY size-smallCmd.label "Bihan">
+<!ENTITY size-smallCmd.accesskey "B">
+<!ENTITY size-mediumCmd.label "Krenn">
+<!ENTITY size-mediumCmd.accesskey "K">
+<!ENTITY size-largeCmd.label "Braz">
+<!ENTITY size-largeCmd.accesskey "z">
+<!ENTITY size-extraLargeCmd.label "Bras kenañ">
+<!ENTITY size-extraLargeCmd.accesskey "e">
+<!ENTITY size-hugeCmd.label "Divent">
+<!ENTITY size-hugeCmd.accesskey "D">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Stil testenn">
+<!ENTITY fontStyleMenu.accesskey "S">
+<!ENTITY styleBoldCmd.label "Tev">
+<!ENTITY styleBoldCmd.accesskey "T">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Stouet">
+<!ENTITY styleItalicCmd.accesskey "S">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Islinennañ">
+<!ENTITY styleUnderlineCmd.accesskey "I">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "En arosod outi">
+<!ENTITY styleStrikeThruCmd.accesskey "r">
+<!ENTITY styleSuperscriptCmd.label "Dreistskript">
+<!ENTITY styleSuperscriptCmd.accesskey "p">
+<!ENTITY styleSubscriptCmd.label "Feur">
+<!ENTITY styleSubscriptCmd.accesskey "F">
+<!ENTITY styleNonbreakingCmd.label "Didorr">
+<!ENTITY styleNonbreakingCmd.accesskey "D">
+<!ENTITY styleEm.label "Splannaat">
+<!ENTITY styleEm.accesskey "p">
+<!ENTITY styleStrong.label "Splannaat kreñvoc'h">
+<!ENTITY styleStrong.accesskey "t">
+<!ENTITY styleCite.label "Meneg">
+<!ENTITY styleCite.accesskey "n">
+<!ENTITY styleAbbr.label "Berradennoù">
+<!ENTITY styleAbbr.accesskey "a">
+<!ENTITY styleAcronym.label "Moranv">
+<!ENTITY styleAcronym.accesskey "r">
+<!ENTITY styleCode.label "Boneg">
+<!ENTITY styleCode.accesskey "o">
+<!ENTITY styleSamp.label "Ec'hankad ar standilhon">
+<!ENTITY styleSamp.accesskey "k">
+<!ENTITY styleVar.label "Argemmenn">
+<!ENTITY styleVar.accesskey "g">
+
+<!ENTITY formatFontColor.label "Liv an destenn…">
+<!ENTITY formatFontColor.accesskey "L">
+<!ENTITY tableOrCellColor.label "Liv drekleur an daolenn pe ar gellig…">
+<!ENTITY tableOrCellColor.accesskey "d">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Dilemel an eorioù anvet">
+<!ENTITY formatRemoveNamedAnchors.accesskey "r">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Rannbennad">
+<!ENTITY paragraphMenu.accesskey "R">
+<!ENTITY paragraphParagraphCmd.label "Rannbennad">
+<!ENTITY paragraphParagraphCmd.accesskey "R">
+<!ENTITY heading1Cmd.label "Talbenn 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Talbenn 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Talbenn 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Talbenn 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Talbenn 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Talbenn 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Lec'hienn">
+<!ENTITY paragraphAddressCmd.accesskey "L">
+<!ENTITY paragraphPreformatCmd.label "Rakmentrezh">
+<!ENTITY paragraphPreformatCmd.accesskey "m">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Roll">
+<!ENTITY formatlistMenu.accesskey "l">
+<!ENTITY noneCmd.label "Tra ebet">
+<!ENTITY noneCmd.accesskey "e">
+<!ENTITY listBulletCmd.label "Gant padelligoù">
+<!ENTITY listBulletCmd.accesskey "p">
+<!ENTITY listNumberedCmd.label "Niverennet">
+<!ENTITY listNumberedCmd.accesskey "N">
+<!ENTITY listTermCmd.label "Termen">
+<!ENTITY listTermCmd.accesskey "T">
+<!ENTITY listDefinitionCmd.label "Despizadenn">
+<!ENTITY listDefinitionCmd.accesskey "D">
+<!ENTITY listPropsCmd.label "Perzhioù ar rollad…">
+<!ENTITY listPropsCmd.accesskey "l">
+
+<!ENTITY ParagraphSelect.tooltip "Dibabit mentrezh ar rannbennad">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Korf testenn">
+<!ENTITY bodyTextCmd.accesskey "t">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Desteudañ">
+<!ENTITY alignMenu.accesskey "e">
+<!ENTITY alignLeft.label "Kleiz">
+<!ENTITY alignLeft.accesskey "K">
+<!ENTITY alignLeft.tooltip "Desteudañ war an tu kleiz">
+<!ENTITY alignCenter.label "Kreiz">
+<!ENTITY alignCenter.accesskey "K">
+<!ENTITY alignCenter.tooltip "Desteudañ e kreiz">
+<!ENTITY alignRight.label "Dehou">
+<!ENTITY alignRight.accesskey "D">
+<!ENTITY alignRight.tooltip "Desteudañ war an tu dehou">
+<!ENTITY alignJustify.label "Marzekaat">
+<!ENTITY alignJustify.accesskey "r">
+<!ENTITY alignJustify.tooltip "Desteudañ marzekaet">
+
+<!ENTITY increaseIndent.label "Kreskiñ ar c'hilañ">
+<!ENTITY increaseIndent.accesskey "i">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Digreskiñ ar c'hilañ">
+<!ENTITY decreaseIndent.accesskey "D">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Drekleur ha livioù ar bajennad…">
+<!ENTITY colorsAndBackground.accesskey "u">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Taolenn">
+<!ENTITY tableMenu.accesskey "T">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Diuzañ">
+<!ENTITY tableSelectMenu.accesskey "D">
+
+<!ENTITY tableSelectMenu2.label "Diuzad en daolenn">
+<!ENTITY tableSelectMenu2.accesskey "D">
+<!ENTITY tableInsertMenu2.label "Enlakaat un daolenn">
+<!ENTITY tableInsertMenu2.accesskey "n">
+<!ENTITY tableDeleteMenu2.label "Dilemel an daolenn">
+<!ENTITY tableDeleteMenu2.accesskey "i">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Enlakaat">
+<!ENTITY tableInsertMenu.accesskey "E">
+<!ENTITY tableTable.label "Taolenn">
+<!ENTITY tableTable.accesskey "T">
+<!ENTITY tableRow.label "Renkad">
+<!ENTITY tableRows.label "Linenn(où)">
+<!ENTITY tableRow.accesskey "n">
+<!ENTITY tableRowAbove.label "Renkad a-us">
+<!ENTITY tableRowAbove.accesskey "R">
+<!ENTITY tableRowBelow.label "Renkad a-zindan">
+<!ENTITY tableRowBelow.accesskey "z">
+<!ENTITY tableColumn.label "Bann">
+<!ENTITY tableColumns.label "Bann(où)">
+<!ENTITY tableColumn.accesskey "n">
+<!ENTITY tableColumnBefore.label "Bann a-raok">
+<!ENTITY tableColumnBefore.accesskey "r">
+<!ENTITY tableColumnAfter.label "Bann goude">
+<!ENTITY tableColumnAfter.accesskey "a">
+<!ENTITY tableCell.label "Kellig">
+<!ENTITY tableCells.label "Kellig(où)">
+<!ENTITY tableCell.accesskey "l">
+<!ENTITY tableCellContents.label "Kelligadoù">
+<!ENTITY tableCellContents.accesskey "a">
+<!ENTITY tableAllCells.label "An holl gelligoù">
+<!ENTITY tableAllCells.accesskey "A">
+<!ENTITY tableCellBefore.label "Kellig a-raok">
+<!ENTITY tableCellBefore.accesskey "K">
+<!ENTITY tableCellAfter.label "Kellig war-lerc'h">
+<!ENTITY tableCellAfter.accesskey "g">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Dilemel">
+<!ENTITY tableDeleteMenu.accesskey "D">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "j">
+<!ENTITY tableJoinCells.accesskey "j">
+<!ENTITY tableSplitCell.label "Troc'hañ ar gellig e daou">
+<!ENTITY tableSplitCell.accesskey "c">
+<!ENTITY convertToTable.label "Krouiñ un daolenn diouzh an diuzad">
+<!ENTITY convertToTable.accesskey "r">
+<!ENTITY tableProperties.label "Perzhioù an daolenn…">
+<!ENTITY tableProperties.accesskey "o">
+
+<!ENTITY imageToolbarCmd.label "Skeudenn">
+<!ENTITY imageToolbarCmd.tooltip "Enlakaat ur skeudenn nevez pe embann perzhioù ar skeudenn diuzet">
+<!ENTITY hruleToolbarCmd.label "Linenn a-blaen">
+<!ENTITY hruleToolbarCmd.tooltip "Enlakaat ul linenn a-blaen pe embann perzhioù al linenn diuzet">
+<!ENTITY tableToolbarCmd.label "Taolenn">
+<!ENTITY tableToolbarCmd.tooltip "Enlakaat un daolenn nevez pe embann perzhioù an daolenn diuzet">
+<!ENTITY linkToolbarCmd.label "Ere">
+<!ENTITY linkToolbarCmd.tooltip "Enlakaat un ere nevez pe embann perzhioù an ere diuzet">
+<!ENTITY anchorToolbarCmd.label "Eor">
+<!ENTITY anchorToolbarCmd.tooltip "Enlakaat un eor nevez anvet pe embann perzhioù an eor diuzet">
+<!ENTITY TextColorButton.tooltip "Dibab ul liv evit an destenn">
+<!ENTITY BackgroundColorButton.tooltip "Dibab al liv evit an drekleur">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Ment an nodrezh">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Ment nodrezh bihanoc'h">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Ment nodrezh brasoc'h">
+<!ENTITY boldToolbarCmd.tooltip "Tev">
+<!ENTITY italicToolbarCmd.tooltip "Stouet">
+<!ENTITY underlineToolbarCmd.tooltip "Islinennañ">
+<!ENTITY bulletListToolbarCmd.tooltip "Arloañ pe zilemel ar roll dre badelligoù">
+<!ENTITY numberListToolbarCmd.tooltip "Arloañ pe lemel kuit ar roll niverennet">
+<!ENTITY outdentToolbarCmd.tooltip "Kilañ an destenn (dilec'hiañ a-gleiz)">
+<!ENTITY indentToolbarCmd.tooltip "Kilañ an destenn (dilec'hiañ a-zehou)">
+<!ENTITY AlignPopupButton.tooltip "Dibab steudadur an destenn">
+<!ENTITY InsertPopupButton.tooltip "Enlakaat un ere, eor, skeudenn, linenn a-blaen pe un daolenn">
+<!ENTITY alignLeftButton.tooltip "Desteudañ an destenn ouzh ar marz gleiz">
+<!ENTITY alignCenterButton.tooltip "Desteudañ an destenn e kreiz">
+<!ENTITY alignRightButton.tooltip "Desteudañ an destenn a-hed ar marz dehou">
+<!ENTITY alignJustifyButton.tooltip "Marzekaat an destenn a-hed ar marzoù kleiz ha dehou">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Enlakaat">
+<!ENTITY insertTOC.accesskey      "E">
+<!ENTITY updateTOC.label          "Hizivaat">
+<!ENTITY updateTOC.accesskey      "z">
+<!ENTITY removeTOC.label          "Dilemel">
+<!ENTITY removeTOC.accesskey      "D">
+<!ENTITY tocMenu.label            "Taolenn an endalc'hadoù…">
+<!ENTITY tocMenu.accesskey        "T">

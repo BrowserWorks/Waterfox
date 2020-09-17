@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Perzhioù ar maeziennoù testenn">
+
+<!ENTITY Settings.label "Arventennoù">
+
+<!ENTITY TextAreaName.label "Anv ar vaezienn:">
+<!ENTITY TextAreaName.accessKey "A">
+<!ENTITY TextAreaRows.label "Linennoù:">
+<!ENTITY TextAreaRows.accessKey "L">
+<!ENTITY TextAreaCols.label "Bannoù:">
+<!ENTITY TextAreaCols.accessKey "B">
+<!ENTITY TextAreaReadOnly.label "Lenn hepken">
+<!ENTITY TextAreaReadOnly.accessKey "e">
+<!ENTITY TextAreaDisabled.label "Diweredekaet">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "Menegva taolennata:">
+<!ENTITY TextAreaTabIndex.accessKey "M">
+<!ENTITY TextAreaAccessKey.label "Stokell moned:">
+<!ENTITY TextAreaAccessKey.accessKey "S">
+<!ENTITY InitialText.label "Testenn gentañ:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "Mod kenglotañ:">
+<!ENTITY TextAreaWrap.accessKey "o">
+<!ENTITY WrapDefault.value "Dre ziouer">
+<!ENTITY WrapOff.value "Diweredekaet">
+<!ENTITY WrapHard.value "Kalet">
+<!ENTITY WrapSoft.value "Flour">
+<!ENTITY WrapPhysical.value "Alvezel">
+<!ENTITY WrapVirtual.value "Galloudel">

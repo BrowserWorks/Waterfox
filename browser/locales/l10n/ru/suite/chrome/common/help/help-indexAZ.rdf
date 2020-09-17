@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:nc="http://home.netscape.com/NC-rdf#">
+
+  <rdf:Description about="urn:root">
+    <nc:subheadings>
+      <rdf:Seq>
+        <rdf:li> <rdf:Description ID="c" nc:name="C"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="h" nc:name="H"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="i" nc:name="I"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="j" nc:name="J"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="l" nc:name="L"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="o" nc:name="O"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="p" nc:name="P"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="s" nc:name="S"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="1" nc:name="А"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="2" nc:name="Б"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="3" nc:name="В"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="4" nc:name="Г"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="5" nc:name="Д"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="6" nc:name="Е"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="7" nc:name="Ж"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="8" nc:name="З"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="9" nc:name="И"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="10" nc:name="К"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="11" nc:name="Л"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="12" nc:name="М"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="13" nc:name="Н"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="14" nc:name="О"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="15" nc:name="П"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="16" nc:name="Р"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="17" nc:name="С"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="18" nc:name="Т"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="19" nc:name="У"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="20" nc:name="Ф"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="21" nc:name="Х"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="22" nc:name="Ц"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="23" nc:name="Ч"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="24" nc:name="Ш"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="25" nc:name="Щ"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="26" nc:name="Э"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="27" nc:name="Ю"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="28" nc:name="Я"/> </rdf:li>
+      </rdf:Seq>
+    </nc:subheadings>
+  </rdf:Description>
+</rdf:RDF>

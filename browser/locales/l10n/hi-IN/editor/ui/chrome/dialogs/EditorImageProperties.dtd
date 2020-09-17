@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "चित्र गुण">
+
+<!ENTITY pixelsPopup.value "पिक्सेल">
+<!ENTITY percentPopup.value "प्रतिशत">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "चित्र अवस्थिति:">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "चित्र का फाइलनाम व अवस्थिति टाइप करें">
+<!ENTITY title.label "टूलटिप:">
+<!ENTITY title.accessKey "T">
+<!ENTITY title.tooltip "html 'शीर्षक' गुण जो टूलटिप के रूप में प्रदर्शित करता है">
+<!ENTITY altText.label "वैकल्पिक पाठ:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "चित्र के स्थान पर प्रदर्शन के लिये पाठ टाइप करें">
+<!ENTITY noAltText.label "वैकल्पिक पाठ मत टाइप करें">
+<!ENTITY noAltText.accessKey "D">
+
+<!ENTITY previewBox.label "चित्र पूर्वावलोकन">
+<!ENTITY MoreFewerButton.tooltip "संपादन करने के लिये ज्यादा या कम प्रदर्श">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "वास्तविक आकार:">
+<!ENTITY actualSizeRadio.label "वास्तविक आकार">
+<!ENTITY actualSizeRadio.accessKey "A">
+<!ENTITY actualSizeRadio.tooltip "चित्र के वास्तविक आकार में वापस जायें">
+<!ENTITY customSizeRadio.label "पसंदीदा आकार">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "चित्र के आकार में बदलें जैसा कि पृष्ठ में प्रदर्शित है">
+<!ENTITY heightEditField.label "ऊंचाई:">
+<!ENTITY heightEditField.accessKey "G">
+<!ENTITY widthEditField.label "चौड़ाई:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY constrainCheckbox.label "निर्धारक">
+<!ENTITY constrainCheckbox.accessKey "C">
+<!ENTITY constrainCheckbox.tooltip "चित्र का पहलू अनुपात बनाये रखें">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "चित्र मानचित्र">
+<!ENTITY removeImageMapButton.label "हटायें">
+<!ENTITY removeImageMapButton.accessKey "R">
+<!ENTITY editImageMapButton.label "संपादित करें...">
+<!ENTITY editImageMapButton.tooltip "इस चित्र के लिये क्लिक करने योग्य हॉटस्पॉट बनायें">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "पाठ को चित्र के साथ समायोजित करें">
+<!ENTITY bottomPopup.value "तल पर">
+<!ENTITY topPopup.value "शीर्ष पर">
+<!ENTITY centerPopup.value "केंद्र में">
+<!ENTITY wrapRightPopup.value "दायीं ओर लपेटें">
+<!ENTITY wrapLeftPopup.value "बांयी ओर लपेटें">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "खाली जगह">
+<!ENTITY spacingBox.tooltip "चित्र के गिर्द स्थान के लिये संख्या टाइप करें">
+<!ENTITY leftRightEditField.label "बांयें व दायें:">
+<!ENTITY leftRightEditField.accessKey "L">
+<!ENTITY topBottomEditField.label "शीर्ष व तल:">
+<!ENTITY topBottomEditField.accessKey "T">
+<!ENTITY borderEditField.label "ठोस किनारा:">
+<!ENTITY borderEditField.accessKey "B">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "लिंक चित्र के गिर्द किनारा दिखायें">
+<!ENTITY showImageLinkBorder.accessKey "B">
+
+<!-- These controls may be added some day; currently not used -->
+<!ENTITY makePageBackgroundCheckbox.label "पृष्ठ पृष्ठभूमि बनायें">
+<!ENTITY makePageBackgroundCheckbox.tooltip "अपने पृष्ठ के लिये चित्र को बतौर पृष्ठभूमि प्रयोग करें">
+<!ENTITY editImageButton.label "चित्र संपादित करें">
+<!ENTITY editImageButton.tooltip "अन्य प्रोग्राम में चित्र फाइल संपादित करें">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "प्रपत्र">
+<!ENTITY imageLocationTab.label "स्थान">
+<!ENTITY imageDimensionsTab.label "आयाम">
+<!ENTITY imageAppearanceTab.label "प्रकटन">
+<!ENTITY imageLinkTab.label "लिंक">

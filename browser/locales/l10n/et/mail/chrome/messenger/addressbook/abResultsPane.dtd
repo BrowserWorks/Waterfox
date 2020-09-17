@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Aadressiraamat">
+<!ENTITY Addrbook.accesskey                    "A">
+<!ENTITY GeneratedName.label                   "Nimi">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "E-post">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organisatsioon">
+<!ENTITY Company.accesskey                     "O">
+<!ENTITY _PhoneticName.label                   "Nime hääldus">
+<!ENTITY _PhoneticName.accesskey               "h">
+<!ENTITY NickName.label                        "Hüüdnimi">
+<!ENTITY NickName.accesskey                    "ü">
+<!ENTITY SecondEmail.label                     "Muu e-post">
+<!ENTITY SecondEmail.accesskey                 "u">
+<!ENTITY Department.label                      "Osakond">
+<!ENTITY Department.accesskey                  "d">
+<!ENTITY JobTitle.label                        "Amet">
+<!ENTITY JobTitle.accesskey                    "t">
+<!ENTITY CellularNumber.label                  "Mobiil">
+<!ENTITY CellularNumber.accesskey              "b">
+<!ENTITY PagerNumber.label                     "Peiler">
+<!ENTITY PagerNumber.accesskey                 "r">
+<!ENTITY FaxNumber.label                       "Faks">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Kodune telefon">
+<!ENTITY HomePhone.accesskey                   "K">
+<!ENTITY WorkPhone.label                       "Töötelefon">
+<!ENTITY WorkPhone.accesskey                   "ö">
+<!ENTITY ChatName.label                        "Nimi kiirsuhtluses">
+<!ENTITY ChatName.accesskey                    "s">
+<!ENTITY sortAscending.label                   "Kasvav">
+<!ENTITY sortAscending.accesskey               "v">
+<!ENTITY sortDescending.label                  "Kahanev">
+<!ENTITY sortDescending.accesskey              "h">

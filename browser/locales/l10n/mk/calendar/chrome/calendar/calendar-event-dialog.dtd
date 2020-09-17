@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY event.title.label "Уредување">
+<!ENTITY newevent.title.label "Наслов">
+<!ENTITY newevent.title.accesskey "а">
+<!ENTITY newevent.itemType.event.label "Настан">
+<!ENTITY newevent.itemType.todo.label "Задача">
+<!ENTITY newevent.location.label "Локација">
+<!ENTITY newevent.location.accesskey "Л">
+<!ENTITY newevent.from.label "Од">
+<!ENTITY newevent.from.accesskey "О">
+<!ENTITY newevent.to.label "До">
+<!ENTITY newevent.to.accesskey "Д">
+<!ENTITY newevent.alldayevent.label "Целодневно">
+<!ENTITY newevent.alldayevent.accesskey "Ц">
+<!ENTITY newevent.date.label "Датум">
+<!ENTITY newevent.date.accesskey "Д">
+<!ENTITY newtodo.duedate.label "Краен рок">
+<!ENTITY newtodo.duedate.accesskey "К">
+<!ENTITY newevent.repeat2.label "Повторување">
+<!ENTITY newevent.repeat2.accesskey "у">
+<!ENTITY newevent.set.label "Шаблон за повторување…">
+<!ENTITY newevent.set.accesskey "Ш">
+<!ENTITY newevent.server.label "Календар">
+<!ENTITY newevent.server.accesskey "р">
+<!ENTITY newtodo.categories.label "Категорија">
+<!ENTITY newtodo.categories.accesskey "ј">
+<!ENTITY newevent.description.label "Опис">
+<!ENTITY newevent.description.accesskey "п">
+<!ENTITY newevent.attendees.label "Ќе бидат присутни">
+<!ENTITY newevent.attendees.accesskey "б">
+<!ENTITY newevent.attendees.sendEmail.label "Прати им покана на гостите по e-пошта">
+<!ENTITY newevent.privacy.label "Приватност">
+<!ENTITY newevent.privacy.accesskey "в">
+<!ENTITY newevent.public.label "Јавно">
+<!ENTITY newevent.private.label "Приватно">
+<!ENTITY newevent.confidential.label "Доверливо">
+<!ENTITY newtodo.priority.label "Приоритет">
+<!ENTITY newtodo.priority.accesskey "П">
+<!ENTITY priority.level.none "Неодредено">
+<!ENTITY priority.level.none.accesskey "е">
+<!ENTITY priority.level.low "Ниско">
+<!ENTITY priority.level.low.accesskey "с">
+<!ENTITY priority.level.medium "Средно">
+<!ENTITY priority.level.medium.accesskey "н">
+<!ENTITY priority.level.high "Високо">
+<!ENTITY priority.level.high.accesskey "и">
+<!ENTITY newevent.status.label "Статус">
+<!ENTITY newevent.status.accesskey "С">
+<!ENTITY newevent.status.none.label "Неодредено">
+<!ENTITY newevent.status.cancelled.label "Откажано">
+<!ENTITY newevent.status.tentative.label "Непотврдено">
+<!ENTITY newevent.status.confirmed.label "Потврдено">
+<!ENTITY newevent.status.needsaction.label "Треба да се делува">
+<!ENTITY newevent.status.inprogress.label "Во тек">
+<!ENTITY newevent.status.completed.label "Завршено на">
+<!ENTITY newevent.alarm.label "Аларм">
+<!ENTITY newevent.alarm.accesskey "м">
+<!ENTITY newevent.none.label "Нема">
+<!ENTITY newevent.15minutes.before.label "15 минути пред настанот">
+<!ENTITY newevent.30minutes.before.label "30 минути пред настанот">
+<!ENTITY newevent.custom.label "Прилагоди">
+<!ENTITY newevent.uri.label "URL">
+<!ENTITY newevent.uri.accesskey "U">
+<!ENTITY newevent.uri.visit.label "Посети URL">
+<!ENTITY newevent.uri.visit.accesskey "П">
+<!ENTITY newtodo.percentcomplete.label "&#037; Завршено">
+<!ENTITY calendar.more.label "Повеќе">
+<!ENTITY calendar.less.label "Помалку">
+<!ENTITY alarm.units.minutes "минути">
+<!ENTITY alarm.units.hours "часови">
+<!ENTITY alarm.units.days "денови">
+<!ENTITY alarm.start.warning "Потребен е почетен датум за овој аларм.">
+<!ENTITY alarm.due.warning "Потребен е краен датум за овој аларам.">
+<!ENTITY newevent.before.label "пред">
+<!ENTITY newevent.after.label "после">
+<!ENTITY newevent.endtime.warning "Времето на почеток е после времето на завршување.">
+<!ENTITY newevent.readonly.item.warning "Календарот е во мод за читање само. Промени не се дозволени.">
+<!ENTITY newevent.readonly.cal.warning "Календарот е во режим кој дозволува само читање.">
+<!ENTITY newtodo.repeatstart.warning "Почетен датум е потребен за настанот што се повторува.">

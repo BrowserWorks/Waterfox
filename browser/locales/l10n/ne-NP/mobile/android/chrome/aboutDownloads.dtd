@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "डाउनलोडहरू">
+<!ENTITY aboutDownloads.header                     "तपाईँको डाउनलोडहरू">
+<!ENTITY aboutDownloads.empty                      "कुनै डाउनलोडहरू छैनन्">
+
+<!ENTITY aboutDownloads.open                       "खोल्नुहोस्">
+<!ENTITY aboutDownloads.remove                     "मेट्नुहोस्">
+<!ENTITY aboutDownloads.removeAll                  "सबै मेट्नुहोस्">
+<!ENTITY aboutDownloads.pause                      "रोक्नुहोस्">
+<!ENTITY aboutDownloads.resume                     "पुनः निरन्तरता दिनुहोस्">
+<!ENTITY aboutDownloads.cancel                     "रद्द गर्नुहोस्">
+<!ENTITY aboutDownloads.retry                      "पुनः प्रयास गर्नुहोस्">

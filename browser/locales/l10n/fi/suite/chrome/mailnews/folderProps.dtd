@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Ominaisuudet">
+
+<!ENTITY generalInfo.label                       "Yleiset tiedot">
+<!ENTITY folderCharsetFallback2.label            "Merkistökoodaus virhetilanteessa:">
+<!ENTITY folderCharsetFallback2.accesskey        "v">
+<!ENTITY folderCharsetEnforce2.label             "Käytä merkistökoodausta kansion kaikkiin viesteihin (viestikohtaiset merkistökoodausasetukset ja automaattinen tunnistus ohitetaan)">
+<!ENTITY folderCharsetEnforce2.accesskey         "y">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Kokoa yhteenvetotiedoston indeksi uudelleen">
+<!ENTITY folderRebuildSummaryFile2.label         "Korjaa kansio">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "K">
+<!ENTITY folderRebuildSummaryFile.explanation    "Joskus kansion indeksitiedosto (.msf) vaurioituu, minkä seurauksena saattaan näyttää siltä, että viestejä on kadonnut, tai että jo poistetut viestit ovat vielä olemassa; kansion korjaaminen voi korjata nämä asiat.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Sisällytä tässä kansiossa olevat viestit yleisen haun tuloksiin">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "S">
+
+<!ENTITY retention.label "Viestien säilytyskäytäntö">
+<!ENTITY retentionUseAccount.label "Käytä tilini asetuksia">
+<!ENTITY retentionUseAccount.accesskey "u">
+<!ENTITY daysOld.label "päivää vanhoja">
+<!ENTITY message.label "viestiä">
+<!ENTITY retentionCleanup.label "Säilytä viestit:">
+<!ENTITY retentionCleanupImap.label "Kiintolevytilaa voidaan vapauttaa poistamalla vanhat viestit lopullisesti sekä omalta koneelta, että palvelimelta.">
+<!ENTITY retentionCleanupPop.label "Kiintolevytilaa voidaan vapauttaa poistamalla vanhat viestit lopullisesti.">
+<!ENTITY retentionDeleteMsg.label "Poista viestit, jotka ovat yli">
+<!ENTITY retentionDeleteMsg.accesskey "P">
+<!ENTITY retentionKeepAll.label "Älä poista mitään viestejä">
+<!ENTITY retentionKeepAll.accesskey "a">
+<!ENTITY retentionKeepRecent.label "Poista kaikki paitsi uusimmat">
+<!ENTITY retentionKeepRecent.accesskey "P">
+<!ENTITY retentionApplyToFlagged.label "Älä koskaan poista lipulla merkittyjä viestejä">
+<!ENTITY retentionApplyToFlagged.accesskey "s">
+
+<!ENTITY folderSynchronizationTab.label          "Synkronointi">
+<!ENTITY folderCheckForNewMessages2.label        "Tarkasta tämä kansio aina kun tämän tilin uusia viestejä noudetaan">
+<!ENTITY folderCheckForNewMessages2.accesskey    "T">
+
+<!ENTITY offlineFolder.check.label               "Kansio on käytettävissä yhteydettömässä tilassa">
+<!ENTITY offlineFolder.check.accesskey           "s">
+<!ENTITY offlineFolder.button.label              "Nouda heti">
+<!ENTITY offlineFolder.button.accesskey          "d">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Keskusteluryhmä on käytettävissä yhteydettömässä tilassa">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Nouda heti">
+<!ENTITY offlineNewsgroup.button.accesskey       "d">
+
+<!ENTITY folderProps.name.label                  "Nimi:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Osoite:">
+<!ENTITY folderProps.location.accesskey          "O">
+
+<!ENTITY folderSharingTab.label                  "Yhteiskäyttö">
+<!ENTITY privileges.button.label                 "Oikeudet…">
+<!ENTITY privileges.button.accesskey             "O">
+<!ENTITY permissionsDesc.label                   "Sinulla on seuraavat oikeudet:">
+<!ENTITY folderType.label                        "Kansion tyyppi:">
+
+<!ENTITY folderQuotaTab.label                    "Kiintiö">
+<!ENTITY folderQuotaRoot.label                   "Kiintiön juuri:">
+<!ENTITY folderQuotaUsage.label                  "Käytössä:">
+<!ENTITY folderQuotaStatus.label                 "Tila:">
+
+<!ENTITY numberOfMessages.label                  "Viestien lukumäärä:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "tuntematon">
+<!ENTITY sizeOnDisk.label                        "Koko levyllä:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "tuntematon">

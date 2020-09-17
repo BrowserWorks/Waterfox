@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title "Reikningar - &brandShortName;">
+<!ENTITY accountManager.width "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title "Staða skyndiskilaboða">
+<!ENTITY accountsWindow2.style "width: 41em; height: 27em;">
+<!ENTITY accountManager.newAccount.label "Nýr reikningur">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label "Loka">
+<!ENTITY accountManager.close.accesskey "L">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title "Enginn reikningur skilgreindur">
+<!ENTITY accountManager.noAccount.description "Smelltu á &accountManager.newAccount.label; hnappinn til að fá &brandShortName; til að hjálpa þér við stillingar.">
+<!ENTITY account.autoSignOn.label "Innskrá í ræsingu">
+<!ENTITY account.autoSignOn.accesskey "s">
+<!ENTITY account.connect.label "Tengjast">
+<!ENTITY account.connect.accesskey "T">
+<!ENTITY account.disconnect.label "Aftengja">
+<!ENTITY account.disconnect.accesskey "A">
+<!ENTITY account.delete.label "Eyða">
+<!ENTITY account.delete.accesskey "ð">
+<!ENTITY account.edit.label "Eiginleikar">
+<!ENTITY account.edit.accesskey "E">
+<!ENTITY account.moveup.label "Færa upp">
+<!ENTITY account.movedown.label "Færa niður">
+<!ENTITY account.cancelReconnection.label "Hætta við að endurtengjast">
+<!ENTITY account.cancelReconnection.accesskey "a">
+<!ENTITY account.copyDebugLog.label "Afrita atburðaskrá">
+<!ENTITY account.copyDebugLog.accesskey "A">
+<!ENTITY account.showDebugLog.label "Sýna atburðaskrá">
+<!ENTITY account.showDebugLog.accesskey "S">
+<!ENTITY account.connecting "Tengist…">
+<!ENTITY account.disconnecting "Aftengist…">
+<!ENTITY account.disconnected "Ekki tengt">

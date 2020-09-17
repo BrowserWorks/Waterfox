@@ -1,0 +1,141 @@
+Versión 2.5:
+- Mejorada la generación de diminutivos acabados en -illo.
+- Añadidos diversos términos (cebarte, fálico, gomaespuma, pegándole, desamontonar, desequipar, desestructurar).
+- Añadidos algunos diminutivos (besito, enfermito, enfermillo, princesita).
+- Añadido "corrígelo" e inflexiones derivadas.
+- Añadidos casi un millar de gentilicios a la localización de Colombia.
+
+Versión 2.4:
+- Trasladados diversos lemas de noRAE a RAE, ya que actualmente están reconocidos
+  por la RAE.
+- Ajustado el ámbito de uso del lema "vídeo" a es_ES como RAE y a todas las localizaciones como noRAE.
+- Corregida la codificación del fichero de patrones de separación silábica.
+- Añadidos varios centenares de lemas con carácter global (para todas las localizaciones), entre los que figuran agroturismo, anisakis, antipersona, audioguía, birra, blaugrana, bótox, burka, cameo, ciclogénesis, euríbor, pilates, azulgrana, tetrabrick, externalizar, intencionalidad, lasaña, misceláneo, sincronización, corresponsable, migrante, interconexión, bisectriz, equilátero, aleatoriamente, interpolación, subíndice, abalconado, millardo, sunami, telefilme, tanqueta, aberzale, abuhardillado, combi, monoparental, apocalipsis, completeriamente, daltónico, distribuible, ergonomía, florín, generalista, legaña, mediateca, taiwanés o verificable, entre otros.
+- Añadidas varias decenas de lemas a diferentes localizaciones específicas, entre las que figuran amigovio, apunamiento, lonchera, mileurista, bicicleteada, bicicletería, enrulado, chop, chupi, bíper, basurita, citadino, identikit, aglomeramiento, cajonear, comelón o isidril, entre otros.
+
+Versión 2.3:
+- Añadida lista de topónimos de Perú.
+- Añadida lista de topónimos de Colombia.
+- Añadida lista de topónimos de Venezuela.
+- Ahora se reconoce como válida "internet", en minúsculas. "Internet" sigue
+  siendo válida.
+- "Sólo" y "guión" con tilde ya no se consideran palabras válidas, de acuerdo
+  con las últimas recomendaciones de la RAE.
+- Añadidas nuevas derivaciones para las formas verbales en imperativo con
+  clítico directo e indirecto, y actualizados varios verbos como menear y pasar.
+- Añadida las palabras abajeño y acomedido a diversas localizaciones.
+- Añadida la palabra abarrotero a es_BO, es_CO, es_EC y es_MX.
+- Añadida la palabra apapacho a es_HN y es_MX.
+- Añadidas chido, chingón, clóset a es_MX.
+- Añadidas varias siglas, como DD.HH., ONU, UNICEF, URSS.
+- Añadidos varios nombres propios como Aristóteles, Darwin, Eurípides, Hesíodo,
+  Homero, Ícaro, Mozilla, Nietzsche, Pitágoras, Platón, Plutarco, Policleto,
+  Poseidón, Sócrates, Sófocles y Spinoza.
+- Añadidas varias decenas de palabras, como apóstrofe, armonizador, asimetría,
+  autocontrol, autocrítica, bádminton, banalizar, colectivamente, constatación,
+  cuantificable, chucho, desaceleración, diáspora, distorsionador, empatía,
+  epistemología, fotón, fundamentalismo, granularidad, hámster, hispanoparlante,
+  huerco, kaki, kit, medible, medioambiente, mercantilización, metadato,
+  ornitólogo, paradójicamente, particionado, plafón, podólogo, polisémico,
+  posvacacional, proactivo, quirófano, retroalimentación, reumatoide, rúbrica,
+  silicona, similarmente, sintonía, sirope, teledirigido, vegano, velcro y video
+  (para ver la lista completa, consulta el enlace
+  https://github.com/sbosio/rla-es/milestone/7).
+- Mejorado el script de creación del diccionario para que funcione correctamente
+  en BSD y MacOS X, además de en Linux.
+
+Versión 2.2:
+- Añadido dérmico y sus variante de género y número.
+- Añadido prefijo ex y aplicado a varias palabras.
+- Añadidas varias palabras de tipo científico (hadrón, cuark, multímetro,
+  geotermia, geotérmica, capacitor).
+- Añadidas paralimpiada y paralimpíada, y sus plurales.
+- Añadidas múltiples palabras (formas verbales, sustantivos, adjetivos,
+  verbos...)
+
+Versión 2.1.1 (no publicada):
+- Revertido el cambio de codificación del diccionario de sinónimos, que
+  impedía su correcto funcionamiento.
+
+Versión 2.1:
+
+- Inclusión de Zarautz como topónimo válido en España, en consonancia con otros
+  topónimos que están añadidos con las dos formas, en castellano y en la lengua
+  oficial autonómica a la que pertenecen.
+- Corrección de errores en el script de generación del diccionario, que de hecho
+  provocó que los topónimos no se incluyeran en la versión 2.0, como anunciamos.
+- Añadida descripción en inglés al XML que contiene los metadatos de las extensiones
+  OXT de Apache OpenOffice y LibreOffice.
+- Actualizadas las referencias a las suites ofimáticas en los archivos de documentación,
+  para que reflejen los nombres correctos actuales de Apache OpenOffice y LibreOffice.
+- Corregido error en definición de archivo de separación silábica, que debe encontrarse
+  en codificación de 8 bits (ISO-8859-15) en lugar de UTF-8 para su correcto funcionamiento.
+- Añadidas las palabras válidas de un bloque de 100 usadas en Wikipedia que no estaban
+  reconocidas en el diccionario de RLA-ES.
+- Varias decenas de palabras añadidas de distintos tipos documentadas en otros registros
+  de GitHub (para ver la lista completa, consulta el enlace
+  https://github.com/sbosio/rla-es/issues?utf8=%E2%9C%93&q=is%3Aissue+milestone%3A%22Versi%C3%B3n+2.1%22+)
+
+Versión 2.0:
+- Cambio de la versión 0.9 a 2.0 para sincronizar numeración en complementos
+  de Apache OpenOffice/LibreOffice y Mozilla, y por los cambios producidos en
+  el diccionario.
+- Cambio de codificación de ISO-8859-1 a UTF-8.
+- Revisión de los topónimos mundiales (relación de países del mundo).
+- Inclusión de topónimos en Argentina y España.
+- Otras palabras nuevas (para ver la lista completa, consulta el enlace
+  https://github.com/sbosio/rla-es/issues?utf8=%E2%9C%93&q=milestone%3A%22Versi%C3%B3n+2.0%22).
+
+Versión 0.8:
+- Muchos términos nuevos correspondientes al bug 682 en Forja.rediris.es.
+- Migrado el proyecto a GitHub (https://github.com/sbosio/rla-es).
+
+Versión 0.7:
+- Más modificaciones en los ficheros de afijos (prefijo contra-).
+- Agregado de lemas faltantes, gracias a Alejandro Moreno y KNTRO.
+- Revisión de la lista de abreviaturas.
+- Corrección de archivos de sinónimos y creación de script asociado.
+
+Versión 0.6:
+- Modificaciones en los ficheros de afijos.
+- Agregado de lemas faltantes, gracias a los aportes de varios miembros de la
+  comunidad en español que se han sumado al proyecto.
+- Actualización del tesauro proporcionado por el proyecto OpenThes-ES.
+
+Versión 0.5:
+- Uso de la opción de "twofold stripping" de Hunspell en el archivo de
+  afijos.
+- Nueva bandera de sufijo "T" para palabras terminadas en ~able/~ible,
+  y re-etiquetado de las listas de palabras. Gracias a la colaboración
+  de Ricardo Palomares Martínez.
+- Correcciones y agregados enviados por:
+  · Ricardo Palomares Martínez.
+  · Gonzalo Higuera Díaz.
+- Nuevos patrones de separación silábica (trabajo en preparación) que
+  adopta otro enfoque recomendado por razones de estilo.
+
+Versión 0.4:
+- Un error de configuración hacía que no funcionara. Versión suprimida.
+
+Versión 0.3:
+- Correcciones a los ficheros de afijos para verbos mal catalogados como
+totalmente irregulares.
+- Correcciones y agregados enviados por:
+  · Gonzalo Higuera Díaz.
+  · César Romé.
+  · Ricardo Goldberger.
+  · Dylan Nicholson.
+- Eliminación de palabras poco usadas, desusadas y anticuadas.
+
+Versión 0.2:
+- Corrección de los infinitivos de verbos totalmente pronominales. Afecta
+también a la definición de los sufijos.
+- Correcciones y agregados enviados por:
+  · Juan Rey Saura.
+  · Carlos Dávila.
+  · Román Gelbort.
+- Se añadió el "voseo" utilizado en algunos países de América Latina, como
+forma verbal válida, en el fichero de afijos.
+
+Versión 0.1beta:
+- Lanzamiento inicial. Únicamente para pruebas.

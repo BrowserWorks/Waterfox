@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Inxertar espresión matemática">
+<!ENTITY sourceEditField.label "Introduz códigu LaTeX:">
+<!ENTITY options.label "Opciones">
+<!ENTITY optionInline.label "Mou incrustáu">
+<!ENTITY optionInline.accesskey "M">
+<!ENTITY optionDisplay.label "Mou de visualización">
+<!ENTITY optionDisplay.accesskey "v">
+<!ENTITY optionLTR.label "Direición d'esquierda a derecha">
+<!ENTITY optionLTR.accesskey "s">
+<!ENTITY optionRTL.label "Direición de derecha a esquierda">
+<!ENTITY optionRTL.accesskey "d">
+<!ENTITY example.label "Exemplu: ">
+<!ENTITY exampleText.label "\sqrt{x_1} + \frac{π^3}{2}">
+<!ENTITY insertButton.label "Inxertar">
+<!ENTITY insertButton.accesskey "I">

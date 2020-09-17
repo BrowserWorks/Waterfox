@@ -1,0 +1,78 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "نام شما:">
+<!ENTITY name.accesskey                  "ن">
+<!ENTITY name.text                       "نام شما؛ برای نشان داده شدن به دیگران">
+<!ENTITY email.label                     "آدرس پست الکترونیکی:">
+<!ENTITY email.accesskey                 "د">
+
+<!ENTITY password.label                  "گذرواژه">
+<!ENTITY password.accesskey              "گ">
+<!ENTITY password.placeholder            "گذرواژه">
+<!ENTITY password.text                   "اختیاری، برای تعیین صحت نام کاربری استفاده نخواهد شد">
+<!ENTITY rememberPassword.label          "یادآوری گذرواژه">
+<!ENTITY rememberPassword.accesskey      "ی">
+
+<!ENTITY imapLong.label                  "IMAP (پوشه‌های راه دور)">
+<!ENTITY pop3Long.label                  "POP3 (نگه داشتن نامه روی رایانه‌ی شما)">
+
+<!ENTITY incoming.label                  "ورودی:">
+<!ENTITY outgoing.label                  "خروجی:">
+<!ENTITY username.label                  "&amp;نام کاربری:">
+
+<!ENTITY auth.label                      "تصدیق‌هویت">
+
+
+
+<!ENTITY autodetect.label                "&amp;تشخیص خودکار">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "هیچ">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!ENTITY advancedSetup.label             "پیکربندی پیشرفته">
+<!ENTITY advancedSetup.accesskey         "پ">
+<!ENTITY cancel.label                    "انصراف">
+<!ENTITY cancel.accesskey                "ا">
+<!ENTITY continue.label                  "ادامه">
+<!ENTITY continue.accesskey              "د">
+<!ENTITY stop.label                      "توقف">
+<!ENTITY stop.accesskey                  "ت">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "امتحان مجدد">
+<!ENTITY half-manual-test.accesskey      "م">
+
+
+<!ENTITY warning.label                   "هشدار!">
+<!ENTITY incomingSettings.label          "تنظمیات ورودی:">
+<!ENTITY outgoingSettings.label          "تنظیمات خروجی:">
+<!ENTITY technicaldetails.label          "جزئیات فنی">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "متوجه خطرات هستم">
+<!ENTITY confirmWarning.accesskey        "م">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "انجام شد">
+<!ENTITY doneAccount.accesskey           "ا">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "تغییر تنظیمات جستجو">
+<!ENTITY changeSettings.accesskey        "ت">
+
+
+<!ENTITY insecureServer.tooltip.title    "هشدار! این یک سرویس دهنده‌ی نا امن است.">
+<!ENTITY insecureServer.tooltip.details  "برای جزئیات بیشتر روی دایره کلیک کنید.">
+
+
+

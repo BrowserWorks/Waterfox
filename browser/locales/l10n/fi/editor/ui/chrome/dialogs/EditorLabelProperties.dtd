@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label  "Tunnuksen ominaisuudet">
+
+<!ENTITY Settings.label  "Asetukset">
+<!ENTITY Settings.accesskey  "A">
+
+<!ENTITY EditLabelText.label  "Muokkaa tekstiä:">
+<!ENTITY EditLabelText.accesskey  "M">
+<!ENTITY LabelFor.label  "Seuraavalle kontrollille:">
+<!ENTITY LabelFor.accesskey  "k">
+<!ENTITY AccessKey.label  "Valintanäppäin:">
+<!ENTITY AccessKey.accesskey  "V">
+
+<!ENTITY RemoveLabel.label  "Poista tunniste">
+<!ENTITY RemoveLabel.accesskey  "o">

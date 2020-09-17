@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Chi rij ri Seq' Taqoya'l">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; ruyonil yerïl ri taq rutzijol ye'ok achi'el yetz'et chi e seq' taqoya'l (o spam). Ri taq rutzijol &brandShortName; ri yerutz'ët ke ri' xtikik'üt pe jun ruwachaj seq'">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Pa rutikirib'al, k'o chi nik'ut chuwäch ri &brandShortName; yerutz'ët ri taq seq' taqoya'l rik'in rokisaxik ri Seq' pitz'b'äl pa ri rukajtz'ik samajib'äl richin niya' ketal o nik'am el ketal ri taq seq' taqoya'l.">
+<!ENTITY info3.label   "Jumul toq ri &brandShortName; ütz yerutz'ët ri seq' taqoya'l, yatikïr ye'awokisaj ri taq Kichajib'al Seq' Taqoya'l richin kiyonil keq'asäx ri taq seq' taqoya'l ye'ok pa ri kiyakwuj Seq' taqoya'l.">
+<!ENTITY info4.label   "Richin ch'aqa' chik etamab'äl, tipitz' To'ïk.">

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Ұсынушыны өшіру">
+<!ENTITY providerUninstall.accept.label                    "Таңдалғанның жазылуын өшіру">
+<!ENTITY providerUninstall.accept.accesskey                "ш">
+<!ENTITY providerUninstall.cancel.label                    "Қосымшаны қалдыру">
+<!ENTITY providerUninstall.cancel.accesskey                "д">
+<!ENTITY providerUninstall.preName.label                   "Сіз өшіруді немесе сөндіруді сұрадыңыз:">
+<!ENTITY providerUninstall.postName.label                  "Нәтижесінде төмендегі күнтізбелер сөндірілетін болады.">
+<!ENTITY providerUninstall.reinstallNote.label             "Бұл ұсынушыны қайта орнатуды жоспарлаған болмасаңыз, бұл ұсынушының күнтізбелеріне жазылуды өшіруді қалай аласыз.">

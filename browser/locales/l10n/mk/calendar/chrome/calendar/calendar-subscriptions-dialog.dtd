@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!ENTITY calendar.subscriptions.dialog.title "Претплати се на календар">
+<!ENTITY calendar.subscriptions.dialog.search.label.value "Покажи календари кои содржат:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label "Пребарај">
+<!ENTITY calendar.subscriptions.dialog.select.label.value "Покажи календари за претплата:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label "Претплати се">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label "Откажи ја претплатата">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label "Барај…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label "Ништо не е пронајдено">

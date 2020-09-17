@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Enporzhiañ ar c'harned chomlec'hioù">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Roadennoù enporzhiet evit an enrolladur :">
+<!ENTITY fieldMapImport.next.label "War-lerc'h">
+<!ENTITY fieldMapImport.next.accesskey "l">
+<!ENTITY fieldMapImport.previous.label "Kent">
+<!ENTITY fieldMapImport.previous.accesskey "n">
+<!ENTITY fieldMapImport.text "Arverit ar biroù sevel ha diskenn evit lakaat da genglotañ maeziennoù ar c'harnedoù chomlec'hioù war an tu kleiz gant ar roadennoù reizh da enporzhiañ war an tu dehou. Digevaskit an ergorennoù na fell ket deoc'h enporzhiañ.">
+<!ENTITY fieldMapImport.up.label "Dilec'hiañ da grec'h">
+<!ENTITY fieldMapImport.up.accesskey "l">
+<!ENTITY fieldMapImport.down.label "Dilec'hiañ d'an diaz">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "Maeziennoù ar c'harned chomlec'hioù">
+<!ENTITY fieldMapImport.dataTitle "Roadennoù enrollañ da enporzhiañ">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Maezienn an anvioù zo e-barzh an enrolladur kentañ">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "e">

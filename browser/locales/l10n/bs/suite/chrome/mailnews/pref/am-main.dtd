@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!ENTITY accountTitle.label "Postavke računa">
+<!ENTITY accountName.label "Naziv računa:">
+<!ENTITY identityTitle.label "Glavni identitet">
+<!ENTITY identityDesc.label "Svaki račun ima svoj identitet, a to su informacije koje drugi ljudi vide kada čitaju vaše poruke.">
+<!ENTITY name.label "Vaše ime:">
+<!ENTITY email.label "Email adresa:">
+<!ENTITY replyTo.label "Adresa za odgovor:">
+<!ENTITY replyTo.placeholder "Primaoci će odgovarati na ovu adresu">
+<!ENTITY organization.label "Organizacija:">
+<!ENTITY signatureText.label "Tekst potpisa:">
+<!ENTITY signatureHtml.label "Koristi HTML">
+<!ENTITY signatureFile.label "Priloži potpis iz datoteke umjesto:">
+<!ENTITY choose.label "Izaberi…">
+<!ENTITY editVCard.label "Uredi karticu…">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Priloži moj vCard uz poruke">
+
+<!ENTITY manageIdentities.label "Upravljanje identitetima…">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Odlazni server (SMTP):">
+<!ENTITY smtpDefaultServer.label "Koristi glavni server">
+
+<!ENTITY smtpServerEdit.label "Uredi SMTP server…">

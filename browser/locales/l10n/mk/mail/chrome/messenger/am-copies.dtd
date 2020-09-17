@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Копии и папки">
+<!ENTITY sendingPrefix.label "При испраќање на нови пораки">
+<!ENTITY fccMailFolder.label "Направи копија во:">
+<!ENTITY fccMailFolder.accesskey "п">
+<!ENTITY fccReplyFollowsParent.label "Иста папка како пораката на која се одговара">
+<!ENTITY fccReplyFollowsParent.accesskey "т">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc до овие адреси за е-пошта:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY saveMessageDlg.label "Покажи дијалог за потврда при снимање на пораки">
+<!ENTITY saveMessageDlg.accesskey "с">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Папка со испратени пораки во:">
+<!ENTITY sentFolderOn.accesskey "е">
+<!ENTITY sentInOtherFolder.label "Друга:">
+<!ENTITY sentInOtherFolder.accesskey "а">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Папка со „Скици“ на:">
+<!ENTITY draftsFolderOn.accesskey "С">
+<!ENTITY draftInOtherFolder.label "Друга:">
+<!ENTITY draftInOtherFolder.accesskey "г">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Папка со „Шаблони“ на:">
+<!ENTITY templatesFolderOn.accesskey "М">
+<!ENTITY templateInOtherFolder.label "Друга:">
+<!ENTITY templateInOtherFolder.accesskey "р">

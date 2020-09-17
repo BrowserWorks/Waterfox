@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "New Saved Search Folder">
+<!ENTITY name.label                 "نام:">
+<!ENTITY name.accesskey             "ن">
+<!ENTITY description.label          "Create as a subfolder of:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "Configure the search criteria used for this saved search folder: ">
+
+<!ENTITY folderSelectionCaption.label "Select the folders to search: ">
+<!ENTITY chooseFoldersButton.label "انتخاب…">
+<!ENTITY chooseFoldersButton.accesskey "ا">
+
+<!ENTITY searchOnline.label "Search Online (Gives up-to-date results for IMAP and News folders but increases time to open the folder)">
+<!ENTITY searchOnline.accesskey "S">
+
+
+
+

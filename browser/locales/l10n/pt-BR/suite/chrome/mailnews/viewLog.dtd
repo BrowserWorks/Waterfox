@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Log de filtros">
+<!ENTITY viewLogInfo.text "O log de filtros armazena a atividade dos filtros executados nesta conta. Use a caixa de verificação abaixo para ativar o log de filtros.">
+<!ENTITY clearLog.label "Limpar log">
+<!ENTITY clearLog.accesskey "L">
+<!ENTITY enableLog.label "Armazenar a atividade dos filtros de mensagens">
+<!ENTITY enableLog.accesskey "A">
+<!ENTITY closeLog.label "Fechar">
+<!ENTITY closeLog.accesskey "F">

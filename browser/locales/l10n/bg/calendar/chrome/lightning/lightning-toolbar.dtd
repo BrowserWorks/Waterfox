@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Лента с инструменти на календара">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "к">
+<!ENTITY lightning.toolbar.task.name "Лента инструменти за задачи">
+<!ENTITY lightning.toolbar.task.name.accesskey "з">
+
+<!ENTITY lightning.toolbar.sync.label "Синхронизиране">
+<!ENTITY lightning.toolbar.sync.tooltip "Презареждане на календарите и синхронизиране на промените">
+<!ENTITY lightning.toolbar.delete.label "Изтриване">
+<!ENTITY lightning.toolbar.delete.tooltip "Изтриване на избраните събития или задачи">
+<!ENTITY lightning.toolbar.edit.label "Редактиране">
+<!ENTITY lightning.toolbar.edit.tooltip "Редактиране на избраното събитие или задача">
+<!ENTITY lightning.toolbar.gototoday.label "Отваряне на днешния ден">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Отваряне на днешния ден">
+<!ENTITY lightning.toolbar.print.label "Отпечатване">
+<!ENTITY lightning.toolbar.print.tooltip "Отпечатване на събития или задачи">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Календар">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Превключване към раздела с календара">
+<!ENTITY lightning.toolbar.calendar.accesskey "К">
+<!ENTITY lightning.toolbar.task.label         "Задачи">
+<!ENTITY lightning.toolbar.task.tooltip       "Превключване към раздела със задачи">
+<!ENTITY lightning.toolbar.task.accesskey     "З">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Събитие">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Създаване на ново събитие">
+<!ENTITY lightning.toolbar.newtask.label      "Задача">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Създаване на нова задача">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Ден">
+<!ENTITY lightning.toolbar.day.accesskey             "Д">
+<!ENTITY lightning.toolbar.week.label                "Седмица">
+<!ENTITY lightning.toolbar.week.accesskey            "С">
+<!ENTITY lightning.toolbar.multiweek.label           "Седмици">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "и">
+<!ENTITY lightning.toolbar.month.label               "Месец">
+<!ENTITY lightning.toolbar.month.accesskey           "М">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Меню с приложения">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Показване на менюто на &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Панел на календара">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "к">
+<!ENTITY lightning.toolbar.calendarpane.label        "Показване на панела на календара">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "к">

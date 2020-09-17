@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Xestionar certificados">
+<!ENTITY  managecerts.text         "Usar o xestor de certificados para xestionar os certificados persoais, os doutras persoas e as autoridades certificadoras.">
+<!ENTITY  managecerts.button       "Xestionar certificados…">
+<!ENTITY  managecerts.accesskey    "M">
+<!ENTITY  managedevices.caption    "Xestionar dispositivos de seguranza">
+<!ENTITY  managedevices.text       "Use este botón para xestionar os seus dispositivos de seguranza como, por exemplo, unha tarxeta intelixente.">
+<!ENTITY  managedevices.button     "Xestionar dispositivos de seguranza…">
+<!ENTITY  managedevices.accesskey  "S">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Certificados">
+<!ENTITY  certs.label              "Certificados">

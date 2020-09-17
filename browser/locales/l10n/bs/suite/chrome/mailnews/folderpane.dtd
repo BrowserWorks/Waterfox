@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY nameColumn.label   "Naziv"> 
+<!ENTITY unreadColumn.label "Nepročitano"> 
+<!ENTITY totalColumn.label "Ukupno"> 
+<!ENTITY folderSizeColumn.label "Veličina"> 
+<!ENTITY folderLocationToolbarItem.title "Lokacija foldera">
+<!ENTITY mailViewsToolbarItem.title "Prikazi pošte">
+<!ENTITY searchToolbarItem.title "Traži">
+<!ENTITY searchSubjectOrAddress.placeholder "Tražite termin ili adresu">

@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "이름:">
+<!ENTITY directoryName.accesskey           "n">
+<!ENTITY directoryHostname.label           "호스트 이름:">
+<!ENTITY directoryHostname.accesskey       "o">
+<!ENTITY directoryBaseDN.label             "Base DN:">
+<!ENTITY directoryBaseDN.accesskey         "b">
+<!ENTITY findButton.label                  "찾기">
+<!ENTITY findButton.accesskey              "f">
+<!ENTITY directorySecure.label             "보안된 연결 사용 (SSL)">
+<!ENTITY directorySecure.accesskey         "U">
+<!ENTITY directoryLogin.label              "DN 바인드:">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "일반">
+<!ENTITY Offline.tab                       "오프라인">
+<!ENTITY Advanced.tab                      "고급">
+<!ENTITY portNumber.label                  "포트 번호:">
+<!ENTITY portNumber.accesskey              "p">
+<!ENTITY searchFilter.label                "필터 검색:">
+<!ENTITY searchFilter.accesskey            "f">
+<!ENTITY scope.label                       "영역:">
+<!ENTITY scope.accesskey                   "c">
+<!ENTITY scopeOneLevel.label               "한 단계">
+<!ENTITY scopeOneLevel.accesskey           "L">
+<!ENTITY scopeSubtree.label                "하위 구조">
+<!ENTITY scopeSubtree.accesskey            "S">
+<!ENTITY return.label                      "리턴하지 않음">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "결과">
+<!ENTITY offlineText.label                 "오프라인에서 사용하도록 내 컴퓨터로 정보를 받아올 수 있습니다.">
+<!ENTITY saslMechanism.label               "로그인 방식: ">
+<!ENTITY saslMechanism.accesskey           "m">
+<!ENTITY saslOff.label                     "일반">
+<!ENTITY saslOff.accesskey                 "l">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">

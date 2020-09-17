@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderListTitle.title        "폴더 선택">
+<!ENTITY virtualFolderDesc.label       "검색할 폴더 선택">
+
+
+<!ENTITY folderName.label "폴더 이름">
+<!ENTITY folderSearch.label "검색">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label "Барај пораки во:">
+<!ENTITY searchHeading.accesskey "р">
+<!ENTITY searchSubfolders.label "Барај во потпапките">
+<!ENTITY searchSubfolders.accesskey "Б">
+<!ENTITY resetButton.label "Исчисти">
+<!ENTITY resetButton.accesskey "И">
+<!ENTITY openButton.label "Отвори">
+<!ENTITY openButton.accesskey "О">
+<!ENTITY deleteButton.label "Избриши">
+<!ENTITY deleteButton.accesskey "з">
+<!ENTITY searchDialogTitle.label "Пребарување во пораки">
+<!ENTITY results.label "Резултати">
+<!ENTITY closeCmd.key "W">
+<!ENTITY saveAsVFButton.label "Сними како папка со пребарување">
+<!ENTITY saveAsVFButton.accesskey "а">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label "Барај во:">
+<!ENTITY abSearchHeading.accesskey "ј">
+<!ENTITY propertiesButton.label "Својства">
+<!ENTITY propertiesButton.accesskey "в">
+<!ENTITY composeButton.label "Пишувај">
+<!ENTITY composeButton.accesskey "ј">
+<!ENTITY abSearchDialogTitle.label "Напредно пребарување на адресарот">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

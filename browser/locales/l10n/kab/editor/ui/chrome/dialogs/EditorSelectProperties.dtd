@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Timeẓliyin n tebdart n ufran">
+
+<!ENTITY Select.label "Tabdart n ufran">
+<!ENTITY SelectName.label "Isem n tebdart:">
+<!ENTITY SelectName.accesskey "s">
+<!ENTITY SelectSize.label "Teɣzi:">
+<!ENTITY SelectSize.accesskey "T">
+<!ENTITY SelectMultiple.label "Afran usgit">
+<!ENTITY SelectMultiple.accesskey "s">
+<!ENTITY SelectDisabled.label "Arurmid">
+<!ENTITY SelectDisabled.accesskey "A">
+<!ENTITY SelectTabIndex.label "Amatar n yiccer">
+<!ENTITY SelectTabIndex.accesskey "m">
+
+<!ENTITY OptGroup.label "Agraw n uɣewwaṛ">
+<!ENTITY OptGroupLabel.label "Tabzimt:">
+<!ENTITY OptGroupLabel.accesskey "T">
+<!ENTITY OptGroupDisabled.label "Arurmid">
+<!ENTITY OptGroupDisabled.accesskey "r">
+
+<!ENTITY Option.label "Aɣewwaṛ">
+<!ENTITY OptionText.label "Aḍris:">
+<!ENTITY OptionText.accesskey "r">
+<!ENTITY OptionValue.label "Azal:">
+<!ENTITY OptionValue.accesskey "A">
+<!ENTITY OptionSelected.label "Ittwafren di tazwara">
+<!ENTITY OptionSelected.accesskey "f">
+<!ENTITY OptionDisabled.label "Arurmid">
+<!ENTITY OptionDisabled.accesskey "r">
+
+<!ENTITY TextHeader.label "Aḍris">
+<!ENTITY ValueHeader.label "Azal">
+<!ENTITY SelectedHeader.label "Ifren">
+
+<!ENTITY AddOption.label "Rnu aɣewwaṛ">
+<!ENTITY AddOption.accesskey "w">
+<!ENTITY AddOptGroup.label "Rnu agraw">
+<!ENTITY AddOptGroup.accesskey "g">
+<!ENTITY RemoveElement.label "Kkes">
+<!ENTITY RemoveElement.accesskey "K">
+<!ENTITY MoveElementUp.label "Ali">
+<!ENTITY MoveElementUp.accesskey "A">
+<!ENTITY MoveElementDown.label "Ader">
+<!ENTITY MoveElementDown.accesskey "d">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Pomjenjenjowe kakosći">
+
+<!ENTITY Settings.label "Nastajenja">
+<!ENTITY Settings.accesskey "N">
+
+<!ENTITY EditLabelText.label "Tekst wobźěłaś:">
+<!ENTITY EditLabelText.accesskey "T">
+<!ENTITY LabelFor.label "Za kontrolu:">
+<!ENTITY LabelFor.accesskey "Z">
+<!ENTITY AccessKey.label "Pśistupna tasta:">
+<!ENTITY AccessKey.accesskey "P">
+
+<!ENTITY RemoveLabel.label "Pomjenjenje wótwónoźeś">
+<!ENTITY RemoveLabel.accesskey "m">

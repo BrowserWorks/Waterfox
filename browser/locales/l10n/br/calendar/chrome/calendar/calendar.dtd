@@ -1,0 +1,409 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- General -->
+<!ENTITY calendar.calendar.label     "Deiziataer">
+<!ENTITY calendar.calendar.accesskey "D">
+
+<!ENTITY calendar.newevent.button.tooltip         "Krouiñ un darvoud nevez" >
+<!ENTITY calendar.newtask.button.tooltip          "Krouiñ un drevell nevez" >
+
+<!ENTITY calendar.unifinder.todoitems.label       "Trevelloù" >
+<!ENTITY calendar.unifinder.showcompletedtodos.label "Skrammañ an trevelloù echuet">
+
+<!ENTITY calendar.today.button.label          "Hiziv">
+<!ENTITY calendar.tomorrow.button.label       "Warc'hoazh">
+<!ENTITY calendar.upcoming.button.label       "O tont">
+
+<!ENTITY calendar.events.filter.all.label "An holl darvoudoù">
+<!ENTITY calendar.events.filter.today.label "Darvoudoù hiziv">
+<!ENTITY calendar.events.filter.future.label "An holl darvoudoù da zont">
+<!ENTITY calendar.events.filter.current.label "Devezh diuzet er mare-mañ">
+<!ENTITY calendar.events.filter.currentview.label "Darvoudoù er gwel bremanel">
+<!ENTITY calendar.events.filter.next7Days.label "Darvoudoù er 7 devezh o tont">
+<!ENTITY calendar.events.filter.next14Days.label "Darvoudoù er 14 devezh o tont">
+<!ENTITY calendar.events.filter.next31Days.label "Darvoudoù en 31 devezh o tont">
+<!ENTITY calendar.events.filter.thisCalendarMonth.label "Darvoudoù er miz deiziataer-mañ">
+
+<!-- LOCALIZATION NOTE(calendar.unifinder.tree.done.tooltip)
+   - This label and tooltip is used for the column with the checkbox in the
+   - task tree view. -->
+<!ENTITY calendar.unifinder.tree.done.label                "Graet">
+<!ENTITY calendar.unifinder.tree.done.tooltip2             "Urzhiañ dre klokadur">
+<!ENTITY calendar.unifinder.tree.priority.label            "Tevet">
+<!ENTITY calendar.unifinder.tree.priority.tooltip2         "Urzhiañ dre tevet">
+<!ENTITY calendar.unifinder.tree.title.label               "Titl">
+<!ENTITY calendar.unifinder.tree.title.tooltip2            "Urzhiañ dre titl">
+<!ENTITY calendar.unifinder.tree.percentcomplete.label     "&#037; Echu">
+<!ENTITY calendar.unifinder.tree.percentcomplete.tooltip2  "Urzhiañ dre &#037; echu">
+<!ENTITY calendar.unifinder.tree.startdate.label           "Deraouiñ">
+<!ENTITY calendar.unifinder.tree.startdate.tooltip2        "Urzhiañ dre deiziad deraouiñ">
+<!ENTITY calendar.unifinder.tree.enddate.label             "Dibenn">
+<!ENTITY calendar.unifinder.tree.enddate.tooltip2          "Urzhiañ dre deiziad dibenn">
+<!ENTITY calendar.unifinder.tree.duedate.label             "Dleet">
+<!ENTITY calendar.unifinder.tree.duedate.tooltip2          "Urzhiañ dre deiziad dleet">
+<!ENTITY calendar.unifinder.tree.completeddate.label       "Klokaet">
+<!ENTITY calendar.unifinder.tree.completeddate.tooltip2    "Urzhian dre deiziad klokaet">
+<!ENTITY calendar.unifinder.tree.categories.label          "Rummad">
+<!ENTITY calendar.unifinder.tree.categories.tooltip2       "Urzhiañ dre rummad">
+<!ENTITY calendar.unifinder.tree.location.label            "Lec'hiadur">
+<!ENTITY calendar.unifinder.tree.location.tooltip2         "Urzhiañ dre lec'hiadur">
+<!ENTITY calendar.unifinder.tree.status.label              "Stad">
+<!ENTITY calendar.unifinder.tree.status.tooltip2           "Urzhiañ dre stad">
+<!ENTITY calendar.unifinder.tree.calendarname.label        "Anv an deiziataer">
+<!ENTITY calendar.unifinder.tree.calendarname.tooltip2     "Urzhian dre anv an deiziataer">
+<!ENTITY calendar.unifinder.tree.duration.label            "Dleet a-benn">
+<!ENTITY calendar.unifinder.tree.duration.tooltip2         "Urzhiañ dre an amzer a-raok ma vefe dleet">
+<!ENTITY calendar.unifinder.close.tooltip                  "Serriñ an enklask darvoudoù hag ar roll darvoudoù">
+
+<!ENTITY calendar.today.button.tooltip          "Mont da Hiziv" >
+<!ENTITY calendar.todaypane.button.tooltip      "Diskouez Panell Hiziv" >
+
+<!ENTITY calendar.day.button.tooltip            "Tremen d'ar gwel devezh" >
+<!ENTITY calendar.week.button.tooltip           "Tremen d'ar gwel sizhun" >
+<!ENTITY calendar.month.button.tooltip          "Tremen d'ar gwel miz" >
+<!ENTITY calendar.multiweek.button.tooltip      "Tremen d'ar gwel lies-sizhun" >
+
+<!ENTITY calendar.nextday.label                 "Devezh o-tont" >
+<!ENTITY calendar.prevday.label                 "Devezh a-raok" >
+<!ENTITY calendar.nextday.accesskey             "D" >
+<!ENTITY calendar.prevday.accesskey             "a" >
+<!ENTITY calendar.nextweek.label                "Ar sizhun a-zeu" >
+<!ENTITY calendar.prevweek.label                "Ar sizhun a-raok" >
+<!ENTITY calendar.nextweek.accesskey            "s" >
+<!ENTITY calendar.prevweek.accesskey            "r" >
+<!ENTITY calendar.nextmonth.label               "Ar miz a-zeu" >
+<!ENTITY calendar.prevmonth.label               "Ar miz a-raok" >
+<!ENTITY calendar.nextmonth.accesskey           "a" >
+<!ENTITY calendar.prevmonth.accesskey           "r" >
+
+<!ENTITY calendar.navigation.nextday.tooltip    "Un devezh war-raok" >
+<!ENTITY calendar.navigation.prevday.tooltip    "Un devezh kent" >
+<!ENTITY calendar.navigation.nextweek.tooltip   "Ur sizhun war-raok" >
+<!ENTITY calendar.navigation.prevweek.tooltip   "Ur sizhun kent" >
+<!ENTITY calendar.navigation.nextmonth.tooltip  "Ur miz war-raok" >
+<!ENTITY calendar.navigation.prevmonth.tooltip  "Ur miz kent" >
+
+<!ENTITY calendar.newevent.button.label         "Darvoud nevez" >
+<!ENTITY calendar.newtask.button.label          "Trevell nevez" >
+<!ENTITY calendar.print.button.label            "Moullañ" >
+<!ENTITY calendar.print.button.accesskey        "M">
+
+<!ENTITY calendar.day.button.label              "Devezh" >
+<!ENTITY calendar.week.button.label             "Sizhun" >
+<!ENTITY calendar.month.button.label            "Miz" >
+<!ENTITY calendar.multiweek.button.label        "Lies-sizhun" >
+<!ENTITY calendar.onlyworkday.checkbox.label    "Devezhioù labour nemetken" >
+<!ENTITY calendar.onlyworkday.checkbox.accesskey  "l" >
+<!ENTITY calendar.displaytodos.checkbox.label   "Trevelloù er gwel" >
+<!ENTITY calendar.displaytodos.checkbox.accesskey "T" >
+<!ENTITY calendar.completedtasks.checkbox.label     "Diskouez an trevelloù klokaet" >
+<!ENTITY calendar.completedtasks.checkbox.accesskey "t" >
+
+<!ENTITY calendar.orientation.label "Treiñ ar gwel" >
+<!ENTITY calendar.orientation.accesskey "T" >
+
+<!ENTITY calendar.search.options.searchfor "  a endalc'h">
+
+<!ENTITY calendar.list.header.label                 "Deiziataer">
+
+<!ENTITY calendar.task.filter.title.label           "Skrammañ">
+<!ENTITY calendar.task.filter.all.label             "Pep tra">
+<!ENTITY calendar.task.filter.all.accesskey         "P">
+<!ENTITY calendar.task.filter.today.label           "Hiziv">
+<!ENTITY calendar.task.filter.today.accesskey       "H">
+<!ENTITY calendar.task.filter.next7days.label       "Ar seizh devezh o tont">
+<!ENTITY calendar.task.filter.next7days.accesskey   "d">
+<!ENTITY calendar.task.filter.notstarted.label      "Trevelloù n'int ket bet kroget">
+<!ENTITY calendar.task.filter.notstarted.accesskey  "k">
+<!ENTITY calendar.task.filter.overdue.label         "Trevelloù tremenet o deiziad dle">
+<!ENTITY calendar.task.filter.overdue.accesskey     "O">
+<!ENTITY calendar.task.filter.completed.label       "Trevelloù klokaet">
+<!ENTITY calendar.task.filter.completed.accesskey   "T">
+<!ENTITY calendar.task.filter.open.label            "Trevelloù diglok">
+<!ENTITY calendar.task.filter.open.accesskey        "g">
+
+<!-- LOCALIZATION NOTE(calendar.task.filter.current.label)
+     "Current Tasks" will show all tasks, except those with a start date set
+     that is after today and after the selected date. If a task repeats, a
+     separate entry will be shown for each of the occurrences that happen on or
+     before today (or the selected date, whichever is later). -->
+<!ENTITY calendar.task.filter.current.label         "Trevelloù bremanel">
+<!ENTITY calendar.task.filter.current.accesskey     "b">
+
+<!ENTITY calendar.task-details.title.label           "titl">
+<!ENTITY calendar.task-details.organizer.label       "a-berzh">
+<!ENTITY calendar.task-details.priority.label        "tevet">
+<!ENTITY calendar.task-details.priority.low.label    "izel">
+<!ENTITY calendar.task-details.priority.normal.label "reizh">
+<!ENTITY calendar.task-details.priority.high.label   "uhel">
+<!ENTITY calendar.task-details.status.label          "stad">
+<!ENTITY calendar.task-details.category.label        "rummad">
+<!ENTITY calendar.task-details.repeat.label          "adlavar">
+<!ENTITY calendar.task-details.attachments.label     "stagadennoù">
+<!ENTITY calendar.task-details.start.label           "deiziad deraouiñ">
+<!ENTITY calendar.task-details.due.label             "deiziad dibenn">
+
+<!ENTITY calendar.task.category.button.tooltip  "Rummañ an trevelloù">
+<!ENTITY calendar.task.complete.button.tooltip  "Merkañ an trevelloù diuzet evel klokaet">
+<!ENTITY calendar.task.priority.button.tooltip  "Kemmañ an tevet">
+
+<!ENTITY calendar.task.text-filter.textbox.emptytext.base1           "Silañ an trevelloù... #1">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.nonmac "&lt;Ctrl+Shift+K&gt;">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.mac    "&lt;&#x21E7;&#x2318;K&gt;">
+
+<!-- Context Menu -->
+<!ENTITY calendar.context.modifyorviewitem.label      "DIgeriñ">
+<!ENTITY calendar.context.modifyorviewitem.accesskey  "D">
+<!ENTITY calendar.context.modifyorviewtask.label      "Digeriñ an drevell...">
+<!ENTITY calendar.context.modifyorviewtask.accesskey  "D">
+<!ENTITY calendar.context.newevent.label              "Darvoud nevez...">
+<!ENTITY calendar.context.newevent.accesskey          "D">
+<!ENTITY calendar.context.newtodo.label               "Trevell nevez...">
+<!ENTITY calendar.context.newtodo.accesskey           "n">
+<!ENTITY calendar.context.deletetask.label            "Dilemel an drevell">
+<!ENTITY calendar.context.deletetask.accesskey        "D">
+<!ENTITY calendar.context.deleteevent.label           "Dilemel an darvoud">
+<!ENTITY calendar.context.deleteevent.accesskey       "D">
+<!ENTITY calendar.context.cutevent.label              "Troc'hañ">
+<!ENTITY calendar.context.cutevent.accesskey          "T">
+<!ENTITY calendar.context.copyevent.label             "Eilañ">
+<!ENTITY calendar.context.copyevent.accesskey         "E">
+<!ENTITY calendar.context.pasteevent.label            "Pegañ">
+<!ENTITY calendar.context.pasteevent.accesskey        "e">
+<!ENTITY calendar.context.button.label                "Panell hiziv">
+<!ENTITY calendar.context.button.accesskey            "h">
+
+<!ENTITY calendar.context.attendance.menu.label                 "Perzhiadur">
+<!ENTITY calendar.context.attendance.menu.accesskey             "a">
+<!ENTITY calendar.context.attendance.occurrence.label           "Ar reveziadenn-mañ">
+<!ENTITY calendar.context.attendance.all2.label                 "Heuliadennoù klok">
+<!ENTITY calendar.context.attendance.send.label                 "Kas un notennaouenn bremañ">
+<!ENTITY calendar.context.attendance.send.accesskey             "S">
+<!ENTITY calendar.context.attendance.dontsend.label             "Chom hep kas an notennaouenn">
+<!ENTITY calendar.context.attendance.dontsend.accesskey         "D">
+
+<!ENTITY calendar.context.attendance.occ.accepted.accesskey     "A">
+<!ENTITY calendar.context.attendance.occ.accepted.label         "Asantet">
+<!ENTITY calendar.context.attendance.occ.tentative.accesskey    "y">
+<!ENTITY calendar.context.attendance.occ.tentative.label        "Asantet evit ar mare">
+<!ENTITY calendar.context.attendance.occ.declined.accesskey     "c">
+<!ENTITY calendar.context.attendance.occ.declined.label         "Nac'het">
+<!ENTITY calendar.context.attendance.occ.delegated.accesskey    "g">
+<!ENTITY calendar.context.attendance.occ.delegated.label        "Dileuriadet">
+<!ENTITY calendar.context.attendance.occ.needsaction.accesskey  "S">
+<!ENTITY calendar.context.attendance.occ.needsaction.label      "Goulenn a ra un ober c'hoazh">
+<!ENTITY calendar.context.attendance.occ.inprogress.accesskey   "I">
+<!ENTITY calendar.context.attendance.occ.inprogress.label       "War ober">
+<!ENTITY calendar.context.attendance.occ.completed.accesskey    "C">
+<!ENTITY calendar.context.attendance.occ.completed.label        "Klokaet">
+
+<!ENTITY calendar.context.attendance.all.accepted.accesskey     "e">
+<!ENTITY calendar.context.attendance.all.accepted.label         "Asantet">
+<!ENTITY calendar.context.attendance.all.tentative.accesskey    "v">
+<!ENTITY calendar.context.attendance.all.tentative.label        "Asantet evit ar mare">
+<!ENTITY calendar.context.attendance.all.declined.accesskey     "d">
+<!ENTITY calendar.context.attendance.all.declined.label         "Nac'het">
+<!ENTITY calendar.context.attendance.all.delegated.accesskey    "l">
+<!ENTITY calendar.context.attendance.all.delegated.label        "Dileuriet">
+<!ENTITY calendar.context.attendance.all.needsaction.accesskey  "l">
+<!ENTITY calendar.context.attendance.all.needsaction.label      "Goulenn a ra un ober c'hoazh">
+<!ENTITY calendar.context.attendance.all.inprogress.accesskey   "p">
+<!ENTITY calendar.context.attendance.all.inprogress.label       "War ober">
+<!ENTITY calendar.context.attendance.all.completed.accesskey    "m">
+<!ENTITY calendar.context.attendance.all.completed.label        "Klokaet">
+
+<!-- Task Context Menu -->
+<!ENTITY calendar.context.progress.label              "Araokadur">
+<!ENTITY calendar.context.progress.accesskey          "A">
+<!ENTITY calendar.context.priority.label              "Tevet">
+<!ENTITY calendar.context.priority.accesskey          "T">
+<!ENTITY calendar.context.postpone.label              "Ampellañ an trevell">
+<!ENTITY calendar.context.postpone.accesskey          "s">
+
+<!ENTITY percnt "&#38;#37;" ><!--=percent sign-->
+
+<!ENTITY calendar.context.markcompleted.label     "Merkañ klokaet">
+<!ENTITY calendar.context.markcompleted.accesskey "k">
+
+<!ENTITY progress.level.0             "0&percnt; klokaet">
+<!ENTITY progress.level.0.accesskey   "0">
+<!ENTITY progress.level.25            "25&percnt; klokaet">
+<!ENTITY progress.level.25.accesskey  "2">
+<!ENTITY progress.level.50            "50&percnt; klokaet">
+<!ENTITY progress.level.50.accesskey  "5">
+<!ENTITY progress.level.75            "75&percnt; klokaet">
+<!ENTITY progress.level.75.accesskey  "7">
+<!ENTITY progress.level.100            "100&percnt; klokaet">
+<!ENTITY progress.level.100.accesskey  "1">
+
+<!ENTITY priority.level.none                "Anspisaet">
+<!ENTITY priority.level.none.accesskey      "s">
+<!ENTITY priority.level.low                 "Izel">
+<!ENTITY priority.level.low.accesskey       "I">
+<!ENTITY priority.level.normal              "Reizh">
+<!ENTITY priority.level.normal.accesskey    "R">
+<!ENTITY priority.level.high                "Uhel">
+<!ENTITY priority.level.high.accesskey      "U">
+
+<!ENTITY calendar.context.postpone.1hour.label      "1 eur">
+<!ENTITY calendar.context.postpone.1hour.accesskey  "e">
+<!ENTITY calendar.context.postpone.1day.label       "1 devezh">
+<!ENTITY calendar.context.postpone.1day.accesskey   "d">
+<!ENTITY calendar.context.postpone.1week.label      "1 sizhun">
+<!ENTITY calendar.context.postpone.1week.accesskey  "s">
+
+<!ENTITY calendar.copylink.label       "Eilañ lec'hiadur an ere">
+<!ENTITY calendar.copylink.accesskey   "E">
+
+<!-- Task View -->
+<!-- Note that the above *.context.* strings are currently used for the other
+     task action buttons -->
+<!ENTITY calendar.taskview.delete.label     "Dilemel">
+
+<!-- Server Context Menu -->
+<!ENTITY calendar.context.newserver.label              "Deiziataer nevez...">
+<!ENTITY calendar.context.newserver.accesskey          "D">
+<!ENTITY calendar.context.findcalendar.label           "Kavout un deiziataer..." >
+<!ENTITY calendar.context.findcalendar.accesskey       "K" >
+<!ENTITY calendar.context.deleteserver2.label          "Dilemel un deiziataer...">
+<!ENTITY calendar.context.deleteserver2.accesskey      "i">
+
+<!-- LOCALIZATION NOTE (calendar.context.removeserver.label): Removing the
+      calendar is the general action of removing it, while deleting means to
+      clear the data and unsubscribing means just taking it out of the calendar
+      list. -->
+<!ENTITY calendar.context.removeserver.label           "Lemel kuit un deiziataer">
+<!ENTITY calendar.context.removeserver.accesskey       "L">
+<!ENTITY calendar.context.unsubscribeserver.label      "Digoumanantin d'un deiziataer...">
+<!ENTITY calendar.context.unsubscribeserver.accesskey  "g">
+<!ENTITY calendar.context.synccalendars.label          "Goubredañ deiziataerioù">
+<!ENTITY calendar.context.synccalendars.accesskey      "b">
+<!ENTITY calendar.context.publish.label                "Embann an deiziataer…">
+<!ENTITY calendar.context.publish.accesskey            "b">
+<!ENTITY calendar.context.export.label                 "Ezporzhiañ deiziataerioù...">
+<!ENTITY calendar.context.export.accesskey             "z">
+<!ENTITY calendar.context.properties.label             "Perzhioù">
+<!ENTITY calendar.context.properties.accesskey         "P">
+
+<!-- LOCALIZATION NOTE (calendar.context.showcalendar.accesskey)
+     This is the access key used for the showCalendar string -->
+<!ENTITY calendar.context.showcalendar.accesskey      "h">
+
+<!-- LOCALIZATION NOTE (calendar.context.hidecalendar.accesskey)
+     This is the access key used for the hideCalendar string -->
+<!ENTITY calendar.context.hidecalendar.accesskey      "H">
+
+<!-- LOCALIZATION NOTE (calendar.context.showonly.accesskey)
+     This is the access key used for the showOnlyCalendar string -->
+<!ENTITY calendar.context.showonly.accesskey           "N">
+<!ENTITY calendar.context.showall.label                "Skrammañ an holl deiziataerioù">
+<!ENTITY calendar.context.showall.accesskey            "S">
+
+<!ENTITY calendar.context.convertmenu.label              "Amdreiñ da">
+<!ENTITY calendar.context.convertmenu.accesskey.mail     "A">
+<!ENTITY calendar.context.convertmenu.accesskey.calendar "v">
+<!ENTITY calendar.context.convertmenu.event.label        "Darvoud...">
+<!ENTITY calendar.context.convertmenu.event.accesskey    "D">
+<!ENTITY calendar.context.convertmenu.message.label      "Kemennadenn...">
+<!ENTITY calendar.context.convertmenu.message.accesskey  "K">
+<!ENTITY calendar.context.convertmenu.task.label         "Trevell...">
+<!ENTITY calendar.context.convertmenu.task.accesskey     "T">
+
+<!ENTITY calendar.tasks.view.minimonth.label           "Mini-Miz">
+<!ENTITY calendar.tasks.view.minimonth.accesskey       "M">
+
+<!ENTITY calendar.tasks.view.calendarlist.label        "Listenn deiziataer">
+<!ENTITY calendar.tasks.view.calendarlist.accesskey    "L">
+
+<!ENTITY calendar.tasks.view.filtertasks.label           "Silañ trevelloù">
+<!ENTITY calendar.tasks.view.filtertasks.accesskey       "S">
+
+<!-- Calendar Alarm Dialog -->
+
+<!ENTITY calendar.alarm.location.label              "Lec'hiadur :" >
+<!ENTITY calendar.alarm.details.label               "Munudoù..." >
+
+<!ENTITY calendar.alarm.snoozefor.label             "Lakaat da ad-seniñ a-benn" >
+<!ENTITY calendar.alarm.snoozeallfor.label          "Lakaat da ad-seniñ an holl a-benn" >
+<!ENTITY calendar.alarm.title.label                 "Kounadurioù deiziataer" >
+<!ENTITY calendar.alarm.dismiss.label               "Argas" >
+<!ENTITY calendar.alarm.dismissall.label            "Argas an holl" >
+
+<!ENTITY calendar.alarm.snooze.5minutes.label       "5 munut" >
+<!ENTITY calendar.alarm.snooze.10minutes.label      "10 munut" >
+<!ENTITY calendar.alarm.snooze.15minutes.label      "15 munut" >
+<!ENTITY calendar.alarm.snooze.30minutes.label      "30 munut" >
+<!ENTITY calendar.alarm.snooze.45minutes.label      "45 munut" >
+<!ENTITY calendar.alarm.snooze.1hour.label          "1 eur" >
+<!ENTITY calendar.alarm.snooze.2hours.label         "2 eur" >
+<!ENTITY calendar.alarm.snooze.1day.label           "1 devezh" >
+
+<!-- LOCALIZATION NOTE (calendar.alarm.snooze.cancel)
+     This string is not seen in the UI, it is read by screen readers when the
+     user focuses the "Cancel" button in the "Snooze for..." popup of the alarm
+     dialog. -->
+<!ENTITY calendar.alarm.snooze.cancel               "Nullañ an adc'halv">
+
+<!-- Calendar Server Dialog -->
+<!ENTITY calendar.server.dialog.title.edit          "Embann an deiziataer">
+<!ENTITY calendar.server.dialog.name.label          "Anv an deiziataer :">
+
+<!-- Calendar Properties -->
+<!ENTITY calendarproperties.color.label                    "Liv :">
+<!ENTITY calendarproperties.webdav.label                   "iCalendar (ICS)">
+<!ENTITY calendarproperties.caldav.label                   "CalDAV">
+<!ENTITY calendarproperties.wcap.label                     "Sun Java System Calendar Server (WCAP)">
+<!ENTITY calendarproperties.format.label                   "Mentrezh :">
+<!ENTITY calendarproperties.location.label                 "Lec'hiadur :">
+<!ENTITY calendarproperties.refreshInterval.label          "Azgrenaat an deiziataer :">
+<!ENTITY calendarproperties.refreshInterval.manual.label   "Gant an dorn">
+<!ENTITY calendarproperties.name.label                     "Anv :">
+<!ENTITY calendarproperties.readonly.label                 "Lenn hepken">
+<!ENTITY calendarproperties.firealarms.label               "Skrammañ an adc'halvoù">
+<!ENTITY calendarproperties.cache3.label                   "Skor ezlinenn">
+<!ENTITY calendarproperties.enabled.label                  "Gweredekaat an deiziataer-mañ">
+<!ENTITY calendarproperties.forceDisabled.label            "N'eo ket bet kavet pourchaser an deiziataer-mañ. C'hoarvez a ra alies pa vez diweredekaet pe distaliet askouezhioù 'zo.">
+<!ENTITY calendarproperties.unsubscribe.label              "Digoumanantiñ">
+<!ENTITY calendarproperties.unsubscribe.accesskey          "D">
+
+<!-- Calendar Publish Dialog -->
+<!ENTITY calendar.publish.dialog.title              "Brudañ an deiziataer">
+<!ENTITY calendar.publish.url.label                 "O brudañ an URL">
+<!ENTITY calendar.publish.publish.button      "Brudañ">
+<!ENTITY calendar.publish.close.button      "Serriñ">
+
+<!ENTITY calendar.publish.example.url.description   "Un dra-bennak evel http://www.vadafariad.com/webdav/test.ics">
+
+<!-- Select Calendar Dialog -->
+<!ENTITY calendar.select.dialog.title    "Diuzañ un deiziataer">
+
+<!-- Calendar Printing -->
+<!ENTITY calendar.print.window.title "Moullañ un deiziataer">
+<!ENTITY calendar.print.title.label "Titl :">
+<!ENTITY calendar.print.layout.label "Pajennaozañ :">
+<!ENTITY calendar.print.range.label "Petra moullañ">
+<!ENTITY calendar.print.currentView2.label "Gwel bremanel">
+<!ENTITY calendar.print.selectedEventsAndTasks.label "Diuzañ darvoudoù/trevelloù">
+<!ENTITY calendar.print.tasks.label "Trevelloù">
+<!ENTITY calendar.print.events.label "Darvoudoù">
+<!ENTITY calendar.print.custom.label "Ledad deiziadoù personelaet">
+<!ENTITY calendar.print.from.label "A-berzh :">
+<!ENTITY calendar.print.to.label "Da :">
+<!ENTITY calendar.print.settingsGroup.label "Arventennoù moullañ">
+<!ENTITY calendar.print.optionsGroup.label "Dibarzhioù">
+<!ENTITY calendar.print.taskswithnoduedate.label "Trevelloù hep deiziad dleet">
+<!ENTITY calendar.print.completedtasks.label "Trevelloù klokaet">
+
+<!-- Error reporting -->
+<!ENTITY calendar.error.detail "Munudoù...">
+<!ENTITY calendar.error.code "Boneg fazi :">
+<!ENTITY calendar.error.description "Deskrivadur :">
+<!ENTITY calendar.error.title "C'hoarvezet ez eus bet ur fazi.">
+
+<!-- Extract buttons in message header -->
+<!ENTITY calendar.extract.event.button         "Ouzhpennañ e-giz un darvoud">
+<!ENTITY calendar.extract.task.button          "Ouzhpennañ e-giz un trevell">
+<!ENTITY calendar.extract.event.button.tooltip "Eztennañ titouroù deiziataer adalek ar gemennadenn-mañ hag ouzhpennañ anezho d'ho teiziataer evel un darvoud">
+<!ENTITY calendar.extract.task.button.tooltip  "Eztennañ titouroù deiziataer adalek ar gemennadenn-mañ hag ouzhpennañ anezho d'ho teiziataer evel un trevell">

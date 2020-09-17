@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "Nettleser">
+
+<!ENTITY navRadio.label                 "Vis ved">
+<!ENTITY navRadio.accesskey             "V">
+<!ENTITY navStartPageMenu.label         "Nettleseroppstart">
+<!ENTITY newWinPageMenu.label           "Nytt vindu">
+<!ENTITY newTabPageMenu.label           "Ny fane">
+
+<!ENTITY blankPageRadio.label           "Blank side">
+<!ENTITY blankPageRadio.accesskey       "B">
+<!ENTITY homePageRadio.label            "Hjemmeside">
+<!ENTITY homePageRadio.accesskey        "H">
+<!ENTITY lastPageRadio.label            "Sist besøkte side">
+<!ENTITY lastPageRadio.accesskey        "S">
+<!ENTITY restoreSessionRadio.label      "Gjenopprett forrige programøkt">
+<!ENTITY restoreSessionRadio.accesskey  "G">
+
+<!ENTITY restoreSessionIntro.label      "Ved gjenoppretting av programøkter og vinduer">
+<!ENTITY restoreImmediately.label       "Gjenopprett alle faner umiddelbart">
+<!ENTITY restoreImmediately.accesskey   "G">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "Gjenopprett">
+<!ENTITY restoreTabs.accesskey          "e">
+<!ENTITY restoreTabsAtATime.label       "fane(r) om gangen">
+<!ENTITY restoreDeferred.label          "Bare gjenopprett faner når jeg trenger dem">
+<!ENTITY restoreDeferred.accesskey      "B">
+
+<!ENTITY homePageIntro.label            "Når du trykker på Hjem-knappen vil denne gruppen av sider bli vist.">
+<!ENTITY useCurrent.label               "Bruk aktiv side">
+<!ENTITY useCurrent.accesskey           "u">
+<!ENTITY useCurrentGroup.label          "Bruk fanegruppe">
+<!ENTITY useCurrentGroup.accesskey      "g">
+<!ENTITY browseFile.label               "Velg fil …">
+<!ENTITY browseFile.accesskey           "V">
+<!ENTITY useDefault.label               "Bruk forvalg">
+<!ENTITY useDefault.accesskey           "f">
+
+<!ENTITY defaultBrowserGroup.label      "Standard nettleser">
+<!ENTITY defaultBrowserButton.label     "Sett standard nettleser">
+<!ENTITY defaultBrowserButton.accesskey "a">
+<!ENTITY alreadyDefaultText             "&brandShortName; er allerede standard nettleser.">
+<!ENTITY defaultPendingText             "&brandShortName; vil bli satt som standard nettleser når du trykker på OK.">
+<!ENTITY wasMadeDefaultText             "&brandShortName; er satt som standard nettleser.">
+<!ENTITY makeDefaultText                "Sett &brandShortName; som standard nettleser.">

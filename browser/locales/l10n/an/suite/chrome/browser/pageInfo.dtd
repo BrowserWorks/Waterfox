@@ -1,0 +1,122 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 38em;">
+
+<!ENTITY  copy.key               "C">
+<!ENTITY  copy.label             "Copiar">
+<!ENTITY  copy.accesskey         "C">
+<!ENTITY  selectall.key          "A">
+<!ENTITY  selectall.label        "Seleccionar tot">
+<!ENTITY  selectall.accesskey    "a">
+<!ENTITY  openHelpMac.key        "?">
+<!ENTITY  closeWindow.key        "w">
+<!ENTITY  copyLinks.label           "Copy Link(s)">
+<!ENTITY  copyLinks.accesskey       "L">
+<!ENTITY  openInNewTab.label        "Open in New Tab">
+<!ENTITY  openInNewTab.accesskey    "T">
+<!ENTITY  openInNewWindow.label     "Open in New Window">
+<!ENTITY  openInNewWindow.accesskey "W">
+
+<!ENTITY  generalTab            "Cheneral">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalURL            "Adreza:">
+<!ENTITY  generalType           "Tipo:">
+<!ENTITY  generalMode           "Modo de representación:">
+<!ENTITY  generalSize           "Grandaria:">
+<!ENTITY  generalReferrer       "URL de procedencia:">
+<!ENTITY  generalSource         "Orichen d'o caché:">
+<!ENTITY  generalModified       "Modificau:">
+<!ENTITY  generalEncoding       "Codificación:">
+<!ENTITY  generalMetaName       "Nombre">
+<!ENTITY  generalMetaContent    "Conteniu">
+<!ENTITY  generalSecurityDetails           "Detalles">
+<!ENTITY  generalSecurityDetails.accesskey "D">
+
+<!ENTITY  formsTab              "Formularios">
+<!ENTITY  formsTab.accesskey    "f">
+<!ENTITY  formAction            "Acción de formulario">
+<!ENTITY  formMethod            "Metodo">
+<!ENTITY  formName              "Nombre">
+<!ENTITY  formEncoding          "Codificación:">
+<!ENTITY  formTarget            "Destín:">
+<!ENTITY  formFields            "Campos:">
+<!ENTITY  formLabel             "Etiqueta">
+<!ENTITY  formFName             "Nombre d'o campo">
+<!ENTITY  formType              "Tipo">
+<!ENTITY  formCValue            "Valor actual">
+
+<!ENTITY  linksTab              "Vinclos">
+<!ENTITY  linksTab.accesskey    "l">
+<!ENTITY  linkName              "Nombre">
+<!ENTITY  linkAddress           "Adreza">
+<!ENTITY  linkType              "Tipo">
+<!ENTITY  linkTarget            "Destín">
+<!ENTITY  linkAccessKey         "Tecla d'acceso rapido">
+
+<!ENTITY  mediaTab              "Meyos">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaURL              "Adreza:">
+<!ENTITY  mediaAlt              "Texto alternativo:">
+<!ENTITY  mediaAltHeader        "Texto alternativo">
+<!ENTITY  mediaAddress          "Adreza">
+<!ENTITY  mediaType             "Tipo">
+<!ENTITY  mediaSize             "Grandaria">
+<!ENTITY  mediaCount            "Cuenta">
+<!ENTITY  mediaDimensions       "Dimensiones especificadas:">
+<!ENTITY  mediaPhysDimensions   "Dimensiones reals:">
+<!ENTITY  mediaTitle            "Titol:">
+<!ENTITY  mediaLongdesc         "Descripción larga:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Alzar como…">
+<!ENTITY  mediaSaveAs.accesskey "u">
+<!ENTITY  mediaSaveAs2.accesskey "a">
+<!ENTITY  mediaPreview          "Vista preliminar d'o meyo:">
+
+<!ENTITY  feedTab               "Canales">
+<!ENTITY  feedTab.accesskey     "C">
+<!ENTITY  feedSubscribe         "Suscribirse">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Permisos">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Usar valors preterminados">
+<!ENTITY  permAskAlways         "Preguntar siempre">
+<!ENTITY  permAllow             "Permitir">
+<!ENTITY  permAllowSession      "Permitir entre a sesión">
+<!ENTITY  permBlock             "Bloqueyar">
+<!ENTITY  permissionsFor        "Permisos para:">
+<!ENTITY  permImage             "Cargar imachens">
+<!ENTITY  permPopup             "Ubrir finestras emerchents">
+<!ENTITY  permCookie            "Establir cookies">
+<!ENTITY  permNotifications     "Show Notifications">
+<!ENTITY  permInstall           "Instalar extensions u temas">
+<!ENTITY  permGeo               "Compartir ubicación">
+
+<!ENTITY  securityTab           "Seguranza">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityHeader        "Información de seguranza ta ista pachina">
+<!ENTITY  securityView.certView "Veyer certificau">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Desconoixiu">
+
+
+<!ENTITY  securityView.identity.header   "Identidat d'o puesto web">
+<!ENTITY  securityView.identity.owner    "Propietario:">
+<!ENTITY  securityView.identity.domain   "Puesto web:">
+<!ENTITY  securityView.identity.verifier "Verificau por:">
+
+<!ENTITY  securityView.privacy.header                   "Privacy &amp; History">
+<!ENTITY  securityView.privacy.history                  "He visitau iste puesto web antes hue?">
+<!ENTITY  securityView.privacy.cookies                  "Ye alzando iste puesto web información (cookies) en o mío ordinador?">
+<!ENTITY  securityView.privacy.viewCookies              "Veyer cookies">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Ha alzau garra claus ta iste puesto web?">
+<!ENTITY  securityView.privacy.viewPasswords            "Veyer as claus alzadas">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "u">
+
+<!ENTITY  securityView.technical.header                 "Detalles tecnicos">

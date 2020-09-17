@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# BuBBaX <mikebubbax@yahoo.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY pref.cookies.title             "Cookie-urile">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Cookie Acceptance Policy">
+
+<!ENTITY accAllCookiesRadio.label       "Permiteți toate cookie-urile">
+<!ENTITY accAllCookiesRadio.accesskey   "c">
+
+<!ENTITY accOrgCookiesRadio.label       "Allow cookies for the originating website only">
+<!ENTITY accOrgCookiesRadio.accesskey   "o">
+
+<!ENTITY disableCookies.label           "Blochează cookie-urile">
+<!ENTITY disableCookies.accesskey       "B">
+
+<!ENTITY cookieRetentionPolicy.label    "Cookie Retention Policy">
+
+<!ENTITY acceptNormally.label           "Acceptă cookie-urile normale">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "Accept for current session only">
+<!ENTITY acceptForSession.accesskey     "s">
+
+<!ENTITY acceptforNDays.label           "Acceptă cookie-urile pentru">
+<!ENTITY acceptforNDays.accesskey       "A">
+<!ENTITY days.label                     "zile">
+
+<!ENTITY warnAboutCookies.label         "Întreabă pentru fiecare cookie">
+<!ENTITY warnAboutCookies.accesskey     "a">
+<!ENTITY forCurrentSession.label        "except for session cookies">
+<!ENTITY forCurrentSession.accesskey    "e">
+
+<!ENTITY manageCookies.label            "Manage Cookies and Sites">
+<!ENTITY manageCookiesDescription.label "Allows you to view and manage stored cookies and per-site settings for accepting and rejecting cookies. Per-site settings will override the settings above.">
+
+<!ENTITY viewCookies.label              "Managerul Cookie-urilor">
+<!ENTITY viewCookies.accesskey          "M">
+

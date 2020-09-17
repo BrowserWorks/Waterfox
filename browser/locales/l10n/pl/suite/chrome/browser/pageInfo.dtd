@@ -1,0 +1,122 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY pageInfoWindow.dimensions "width: 110ch; height: 38em;">
+
+<!ENTITY copy.key "C">
+<!ENTITY copy.label "Kopiuj">
+<!ENTITY copy.accesskey "K">
+<!ENTITY selectall.key "A">
+<!ENTITY selectall.label "Zaznacz wszystko">
+<!ENTITY selectall.accesskey "a">
+<!ENTITY openHelpMac.key "?">
+<!ENTITY closeWindow.key "w">
+<!ENTITY copyLinks.label "Kopiuj zaznaczone odnośniki">
+<!ENTITY copyLinks.accesskey "o">
+<!ENTITY openInNewTab.label "Otwórz w nowej karcie">
+<!ENTITY openInNewTab.accesskey "k">
+<!ENTITY openInNewWindow.label "Otwórz w nowym oknie">
+<!ENTITY openInNewWindow.accesskey "n">
+
+<!ENTITY generalTab "Ogólne">
+<!ENTITY generalTab.accesskey "O">
+<!ENTITY generalURL "URL:">
+<!ENTITY generalType "Typ:">
+<!ENTITY generalMode "Tryb wyświetlania:">
+<!ENTITY generalSize "Rozmiar:">
+<!ENTITY generalReferrer "Odsyłający URL:">
+<!ENTITY generalSource "Źródło:">
+<!ENTITY generalModified "Zmodyfikowany:">
+<!ENTITY generalEncoding2 "Kodowanie tekstu:">
+<!ENTITY generalMetaName "Nazwa">
+<!ENTITY generalMetaContent "Treść">
+<!ENTITY generalSecurityDetails "Szczegóły">
+<!ENTITY generalSecurityDetails.accesskey "S">
+
+<!ENTITY formsTab "Formularze">
+<!ENTITY formsTab.accesskey "F">
+<!ENTITY formAction "Czynność formularza">
+<!ENTITY formMethod "Metoda">
+<!ENTITY formName "Nazwa">
+<!ENTITY formEncoding "Kodowanie:">
+<!ENTITY formTarget "Cel:">
+<!ENTITY formFields "Pola:">
+<!ENTITY formLabel "Etykieta">
+<!ENTITY formFName "Nazwa pola">
+<!ENTITY formType "Typ">
+<!ENTITY formCValue "Bieżąca wartość">
+
+<!ENTITY linksTab "Odnośniki">
+<!ENTITY linksTab.accesskey "d">
+<!ENTITY linkName "Nazwa">
+<!ENTITY linkAddress "Adres">
+<!ENTITY linkType "Typ">
+<!ENTITY linkTarget "Atrybut „Target”">
+<!ENTITY linkAccessKey "Klawisz dostępu">
+
+<!ENTITY mediaTab "Media">
+<!ENTITY mediaTab.accesskey "M">
+<!ENTITY mediaURL "Adres:">
+<!ENTITY mediaAlt "Tekst alternatywny:">
+<!ENTITY mediaAltHeader "Tekst alternatywny">
+<!ENTITY mediaAddress "Adres">
+<!ENTITY mediaType "Typ">
+<!ENTITY mediaSize "Rozmiar">
+<!ENTITY mediaCount "Ilość">
+<!ENTITY mediaDimensions "Wymiary zadeklarowane:">
+<!ENTITY mediaPhysDimensions "Wymiary rzeczywiste">
+<!ENTITY mediaTitle "Tytuł:">
+<!ENTITY mediaLongdesc "Długi opis:">
+<!ENTITY mediaBlockImage.accesskey "B">
+<!ENTITY mediaSaveAs "Zapisz jako…">
+<!ENTITY mediaSaveAs.accesskey "Z">
+<!ENTITY mediaSaveAs2.accesskey "a">
+<!ENTITY mediaPreview "Podgląd:">
+
+<!ENTITY feedTab "Kanały">
+<!ENTITY feedTab.accesskey "K">
+<!ENTITY feedSubscribe "Subskrybuj">
+<!ENTITY feedSubscribe.accesskey "u">
+
+<!ENTITY permTab "Uprawnienia">
+<!ENTITY permTab.accesskey "U">
+<!ENTITY permUseDefault "Użyj domyślnych">
+<!ENTITY permAskAlways "Zawsze pytaj">
+<!ENTITY permAllow "Zezwalaj">
+<!ENTITY permAllowSession "Zezwalaj na czas sesji">
+<!ENTITY permBlock "Blokuj">
+<!ENTITY permissionsFor "Uprawnienia dla:">
+<!ENTITY permImage "Wczytywanie obrazów">
+<!ENTITY permPopup "Otwórz wyskakujące okna">
+<!ENTITY permCookie "Zapisywanie ciasteczek">
+<!ENTITY permNotifications "Wyświetlanie powiadomień">
+<!ENTITY permInstall "Instalacja rozszerzeń i motywów">
+<!ENTITY permGeo "Udostępnij położenie">
+
+<!ENTITY securityTab "Bezpieczeństwo">
+<!ENTITY securityTab.accesskey "B">
+<!ENTITY securityHeader "Informacje dotyczące bezpieczeństwa tej strony">
+<!ENTITY securityView.certView "Wyświetl certyfikat">
+<!ENTITY securityView.accesskey "c">
+<!ENTITY securityView.unknown "Nieznany">
+
+
+<!ENTITY securityView.identity.header "Tożsamość witryny">
+<!ENTITY securityView.identity.owner "Właściciel:">
+<!ENTITY securityView.identity.domain "Witryna: ">
+<!ENTITY securityView.identity.verifier "Zweryfikowane przez:">
+
+<!ENTITY securityView.privacy.header "Prywatność i historia">
+<!ENTITY securityView.privacy.history "Czy ta witryna była wcześniej odwiedzana?">
+<!ENTITY securityView.privacy.cookies "Czy ta witryna przechowuje informacje na tym komputerze (ciasteczka)?">
+<!ENTITY securityView.privacy.viewCookies "Wyświetl ciasteczka">
+<!ENTITY securityView.privacy.viewCookies.accessKey "k">
+<!ENTITY securityView.privacy.passwords "Czy hasła użyte na tej witrynie zostały zachowane?">
+<!ENTITY securityView.privacy.viewPasswords "Wyświetl zachowane hasła">
+<!ENTITY securityView.privacy.viewPasswords.accessKey "W">
+
+<!ENTITY securityView.technical.header "Szczegóły techniczne">

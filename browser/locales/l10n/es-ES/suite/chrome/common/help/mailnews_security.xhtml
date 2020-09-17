@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Firmar y cifrar mensajes</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+
+<body>
+  <h1 id="signing_and_encrypting_messages">Firmar y cifrar mensajes</h1>
+
+  <div class="contentsBox">En esta sección:
+    <ul>
+      <li><a href="#about_digital_signatures_and_encryption">Qué son
+        las firmas digitales y el cifrado</a></li>
+      <li><a href="#getting_other_peoples_certificates">Cómo se
+        consiguen certificados de otras personas</a></li>
+      <li><a href="#configuring_security_settings">Cómo se configuran
+        los certificados de firma y cifrado</a></li>
+      <li><a href="#signing_and_encrypting_a_new_message">Cómo se
+        firma y se cifra un mensaje nuevo</a></li>
+      <li><a href="#reading_signed_and_encrypted_messages">Cómo se lee
+        un mensaje firmado y cifrado</a></li>
+      <li><a href="#message_security_compose_window">Seguridad de los
+        mensajes: ventana Redactar</a></li>
+      <li><a href="#message_security_received_message">Seguridad de los
+        mensajes: mensaje recibido</a></li>
+    </ul>
+  </div>
+
+<h2 id="about_digital_signatures_and_encryption">Qué son las firmas
+  digitales y el cifrado</h2>
+
+<p>Al redactar un mensaje de correo, tiene la posibilidad de adjuntar una
+  firma digital. La <a href="glossary.xhtml#digital_signature">firma
+  digital</a> permite a los destinatarios del mensaje comprobar que el mensaje
+  viene realmente de usted y que no ha sido manipulado desde el momento del
+  envío.</p>
+
+<p>Al redactar un mensaje de correo, también puede cifrarlo si lo
+  desea. El <a href="glossary.xhtml#encryption">cifrado</a> hace que resulte
+  muy difícil para cualquiera, excepto el destinatario, leer el mensaje
+  mientras éste viaja por Internet.</p>
+
+<p>El firmado digital y el cifrado no están disponibles para los
+  mensajes de los grupos de noticias.</p>
+
+<p>Antes de firmar o cifrar un mensaje, debe seguir estos pasos:</p>
+
+<ol>
+  <li>Obtener uno o varios <a href=
+    "glossary.xhtml#certificate">certificados</a> (los equivalentes digitales
+    a los documentos de identidad). Si desea más información, consulte <a
+    href="using_certs_help.xhtml#getting_your_own_certificate">Cómo se
+    consigue un certificado propio</a>.</li>
+  <li>Configurar los valores de seguridad de su cuenta de correo. Para más
+    detalles, consulte <a href="mailnews_account_settings.xhtml#security">Cómo
+    se configuran los certificados de firma y cifrado</a>.</li>
+</ol>
+
+<p>Cuando haya seguido todos los pasos, siga las instrucciones que aparecen
+  en <a href="#signing_and_encrypting_a_new_message">Cómo se firma y se
+  cifra un mensaje nuevo</a>.</p>
+
+<p>En esta sección se ofrece una descripción breve y general del
+  funcionamiento de las firmas digitales y el cifrado. Si desea más datos
+  técnicos sobre la materia, consulte en Internet el documento
+  <a href="http://developer.mozilla.org/en/Introduction_to_Public-Key_Cryptography"
+  >Introduction to Public-Key Cryptography</a> (Introducción a la
+  criptografía de clave pública).</p>
+
+<h3 id="how_digital_signatures_work">Cómo funcionan las firmas digitales</h3>
+
+<p>Una firma digital es un código especial, único para cada mensaje, que se
+  crea con <a href="glossary.xhtml#public-key_cryptography">criptografía de
+  clave pública</a>.</p>
+
+<p>Las firmas digitales no tienen nada que ver con las firmas escritas, aunque
+  a veces se usan con propósitos legales similares, como la firma de un
+  contrato.</p>
+
+<p>Para crear una firma digital para un mensaje electrónico que vaya a enviar,
+  le hacen falta dos cosas:</p>
+
+<ul>
+  <li>Un <a href="glossary.xhtml#signing_certificate">certificado de
+    firma</a> que lo identifique para este propósito. Cada vez que
+    firme un mensaje, su certificado de firma se enviará con él.
+    El certificado incorpora una <a href="glossary.xhtml#public_key">clave
+    pública</a>. La presencia del certificado en el mensaje permite al
+    destinatario comprobar su firma digital.
+    <p>Tener un certificado se parece, en cierto modo, a incluir su nombre y
+      su teléfono en el listín telefónico, se trata de información pública
+      que ayuda a otras personas a comunicarse con usted.</p></li>
+  <li>Una <a href="glossary.xhtml#private_key">clave privada</a>, que se
+    crea y se almacena en el ordenador al obtener un certificado por vez
+    primera.
+    <p>La clave privada se protege mediante una <a href=
+      "glossary.xhtml#master_password">contraseña maestra,</a> y el navegador
+      no la revela a nadie. El programa de correo y grupos de noticias
+      emplea la clave privada para crear una firma digital única y
+      comprobable para todos los mensajes que desee firmar.</p></li>
+</ul>
+
+<h3 id="how_encryption_works">Cómo funciona el cifrado</h3>
+
+<p>Para cifrar un mensaje de correo, debe tener un <a href=
+  "glossary.xhtml#encryption_certificate">certificado de cifrado</a> para cada
+  uno de los destinatarios del mensaje. La clave pública de cada
+  certificado se usa para cifrar el mensaje para el destinatario en
+  cuestión.</p>
+
+<p>Si no posee un certificado para todos y cada uno de los destinatarios, el
+  mensaje no podrá cifrarse.</p>
+
+<p>El programa del destinatario usa la clave privada del destinatario, que
+  permanece en su propio ordenador, para descifrar el mensaje.</p>
+
+<p>[<a href="#signing_and_encrypting_messages">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="getting_other_peoples_certificates">Cómo se consiguen
+  certificados de otras personas</h2>
+
+<p>Cada vez que envíe un mensaje firmado digitalmente, automáticamente
+  enviará con él su certificado de cifrado. Por ello, una de las maneras
+  más sencillas de obtener el certificado de otra persona es que dicha
+  persona le envíe un mensaje cifrado digitalmente.</p>
+
+<p>Cuando reciba un mensaje de ese tipo, el <a href=
+  "certs_help.xhtml">administrador de certificados</a>, que es la parte del
+  navegador que controla los certificados, almacenará automáticamente el
+  certificado del remitente. Esto resulta útil porque le hará falta un
+  certificado para cada uno de los destinatarios de los mensajes de correo
+  que desee mandar cifrados.</p>
+
+<p>Otra forma de obtener certificados es buscarlos en un directorio
+  público de los que poseen muchas empresas, que son como los listines
+  <q>telefónicos</q>.</p>
+
+<p>También es posible buscar certificados automáticamente.
+  Esta característica está controlada por <a href=
+  "mailnews_preferences.xhtml#addressing_preferences">Preferencias de correo y
+  grupos de noticias - Direcciones</a> o <a href=
+  "mailnews_account_settings.xhtml#addressing">Configuración de cuentas de
+  correo y noticias - Direccionamiento</a>, que le permite configurar
+  &brandShortName; para buscar las direcciones de correo de destinatarios en un
+  directorio.</p>
+
+<p>Cuando utiliza una cuenta que está configurada para buscar
+  direcciones en un directorio, se usará ese mismo directorio para
+  buscar los certificados correspondientes cuando intente enviar un mensaje
+  cifrado a uno o más destinatarios de los cuales no se disponga el
+  certificado en un archivo local.</p>
+
+<p>También se acudirá al directorio para aquellos certificados
+  que falten localmente cuando abra el menú desplegable bajo el icono
+  Seguridad en la ventana Componer y escoja Ver información de
+  seguridad.</p>
+
+<p>[<a href="#signing_and_encrypting_messages">Volver al principio de la
+  sección</a>]</p>
+  
+<h2 id="configuring_security_settings">Cómo se configuran los
+  certificados de firma y cifrado</h2>
+
+<p>Una vez que haya obtenido un certificado (o varios) de correo
+  electrónico, deberá especificar los certificados que quiera
+  usar para firmar y cifrar mensajes.</p>
+
+<p>Si desea más información sobre obtención de
+  certificados de correo electrónico, consulte <a href=
+  "using_certs_help.xhtml#getting_your_own_certificate">Cómo se
+  consigue un certificado propio</a>.</p>
+
+<p>Para indicar los certificados de firma y cifrado que quiere usar con una
+  cuenta concreta, comience desde la ventana Correo:</p>
+
+<ol>
+  <li>Abra el menú Editar y seleccione Configuración de
+    cuentas de Correo y Noticias.</li>
+  <li>Haga clic en Seguridad, debajo del nombre de la cuenta de correo cuyos
+    valores de seguridad desea configurar.</li>
+  <li>Debajo de Firmado digital, haga clic en Seleccionar (es posible que se
+    le pida su <a href="glossary.xhtml#master_password">contraseña
+    maestra</a> para seguir adelante).
+    <p>Verá un cuadro de diálogo en el que podrá
+      seleccionar entre los certificados de firma disponibles.</p></li>
+  <li>Elija el certificado de firma que quiera usar y haga clic en
+    Aceptar.</li>
+  <li>Siga los mismos pasos con el cifrado. Haga clic en el botón
+    Seleccionar, elija el certificado de cifrado que desee usar y haga clic en
+    Aceptar.
+    <p>En algunos casos, tal vez pueda elegir para el cifrado el mismo
+      certificado que eligió para la firma digital; consulte con el
+      administrador del sistema para asegurarse.</p></li>
+</ol>
+
+<p>Opcionalmente, también puede indicar que desea firmar o cifrar
+  habitualmente todos los mensajes enviados desde una cuenta en concreto. La
+  configuración de cada cuenta se hace solamente por comodidad; los
+  valores predeterminados pueden anularse para mensajes individuales.</p>
+
+  <p>Para configurar los valores predeterminados de firma y cifrado, empiece
+  desde el panel de Seguridad de la cuenta (como se describió
+  anteriormente) y seleccione los valores de la forma siguiente:</p>
+
+  <ul>
+    <li>Debajo de Firma digital:
+      <ul>
+        <li><strong>Firmar mensajes digitalmente</strong>: cuando esta casilla
+        esté activada, todos los mensajes que envíe desde esta
+        cuenta se firmarán digitalmente, a no ser que indique lo
+        contrario antes de enviar un mensaje. Para anular esta opción
+        predeterminada, desactive la casilla.</li>
+      </ul>
+    </li>
+    <li>Debajo de Cifrado (elija una):
+      <ul>
+        <li><strong>Nunca</strong>: cuando esta opción esté
+        seleccionada, ninguno de los mensajes que envíe desde esta
+        cuenta estará cifrado, a no ser que indique lo contrario antes
+        de enviarlo.</li>
+        <li><strong>Requerido</strong>: cuando esta opción esté
+        seleccionada, todos los mensajes que envíe desde esta cuenta
+        estarán cifrados, pero sólo en caso de que posea
+        certificados válidos para cada uno de los destinatarios del
+        mensaje. Si no posee todos los certificados necesarios, el mensaje no
+        se enviará, a no ser que se desactive el cifrado para ese
+        mensaje.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p>Cuando haya terminado de configurar los valores de seguridad, haga clic
+  en Aceptar para confirmarlos.</p>
+
+  <p>[<a href="#signing_and_encrypting_messages">Volver al principio de la
+  sección</a>]</p>
+  
+  <h2 id="signing_and_encrypting_a_new_message">Cómo se firma y se
+  cifra un mensaje nuevo</h2>
+
+  <p>Para poder firmar digitalmente o cifrar cualquier mensaje, debe obtener al
+  menos un certificado de correo electrónico y configurar correctamente
+  los valores de seguridad de su correo. Si desea información
+  básica, consulte <a
+  href="#about_digital_signatures_and_encryption">Qué son las firmas
+  digitales y el cifrado</a>.</p>
+
+  <p>La configuración que se haya especificado en <a href=
+  "mailnews_account_settings.xhtml#security">Configuración de cuentas de correo
+  y grupos de noticias: seguridad</a> determinará los valores predeterminados de
+  cada ventana de redacción de mensajes que abra cuando vaya a
+  escribir.</p>
+
+  <p>Para abrir la ventana de redacción de mensajes, vaya a la ventana
+  Correo y pulse el botón Redactar. Inmediatamente identificará
+  los valores de seguridad predeterminados por la presencia o ausencia de estos
+  iconos en la esquina inferior derecha de la ventana:</p>
+
+  <table>
+    <tr>
+      <td><img src="chrome://messenger/skin/smime/icons/hdrSignOk.gif" alt=
+      "icono de firma digital"/></td>
+      <td>El mensaje estará firmado digitalmente (siempre que posea un
+      certificado de correo válido que lo identifique).</td>
+    </tr>
+    <tr>
+      <td><img src="chrome://messenger/skin/smime/icons/hdrCryptoOk.gif" alt=
+      "icono de cifrado"/></td>
+      <td>El mensaje estará cifrado (siempre que posea certificados
+      válidos para todos los destinatarios).</td>
+    </tr>
+  </table>
+
+  <p>Para activar o desactivar estos valores, haga clic en la flecha que
+  está justo debajo del icono de Seguridad de la barra de herramientas
+  de mensajes, hacia la parte superior de la ventana. Luego, en la lista
+  desplegable, seleccione el elemento que desee.</p>
+
+  <ul>
+    <li><strong>No cifrar este mensaje</strong>: elija este elemento para
+    desactivar el cifrado en este mensaje. El mensaje se enviará sin
+    cifrar por Internet.</li>
+    <li><strong>Cifrar este mensaje</strong>: elija este elemento para activar
+    el cifrado en este mensaje. El mensaje se enviará cifrado. No
+    obstante, no podrá enviarse a no ser que posea certificados
+    válidos para todos los destinatarios.</li>
+    <li><strong>Firmar digitalmente este mensaje</strong>: elija este elemento
+    para activar o desactivar la firma digital en este mensaje. Si hay una
+    marca de verificación, significa que el mensaje se
+    firmará.</li>
+    <li><strong>Ver información de seguridad</strong>: elija esta
+    opción para ver información detallada sobre el estado de
+    seguridad de este mensaje; lo ayudará a determinar, por ejemplo, si
+    necesita obtener un certificado para uno de los destinatarios.</li>
+  </ul>
+
+  <p>Para obtener información detallada sobre el estado de seguridad del
+  mensaje, también puede hacer clic en el icono de la llave o el
+  candado, como se explica en <a
+  href="#message_security_compose_window">Seguridad de los mensajes: ventana
+  Redactar</a>.</p>
+
+  <p>[<a href="#signing_and_encrypting_messages">Volver al principio de la
+  sección</a>]</p>
+  
+  <h2 id="reading_signed_and_encrypted_messages">Cómo se lee un mensaje
+  firmado y cifrado</h2>
+
+  <p>Cuando vea un mensaje firmado o cifrado en la ventana Correo, estos
+  iconos, cerca de la esquina superior derecha del encabezado, indicarán
+  el estado de seguridad del mensaje:</p>
+
+  <table>
+    <tr>
+      <td><img src="chrome://messenger/skin/smime/icons/hdrSignOk.gif" alt=
+      "icono de firma digital"/></td>
+      <td>El mensaje está firmado digitalmente y se ha validado. Si la
+      firma presenta problemas, la pluma aparece rota.</td>
+    </tr>
+    <tr>
+      <td><img src="chrome://messenger/skin/smime/icons/hdrSignUnknown.gif"
+      alt="icono desconocido"/></td>
+      <td>El mensaje está firmado, pero tiene un adjunto de gran
+      tamaño que no ha sido aún descargado del servidor IMAP.
+      Por ello, la firma no puede ser validada. Haga clic en el icono para
+      descargar el adjunto y validar la firma.</td>
+    </tr>
+    <tr>
+      <td><img src="chrome://messenger/skin/smime/icons/hdrCryptoOk.gif" alt=
+      "icono de cifrado"/></td>
+      <td>El mensaje está cifrado. Si el cifrado presenta problemas,
+      la llave aparece rota.</td>
+    </tr>
+  </table>
+
+  <p>Si desea más información sobre la validación de
+  certificados, consulte <a href=
+  "using_certs_help.xhtml#controlling_validation">Control de
+  validación</a>.</p>
+
+  <p>Para obtener más detalles sobre la seguridad del mensaje, haga clic
+  en el icono de la llave o el candado, o siga las instrucciones que se indican
+  en <a href="#message_security_received_messages">Seguridad de los mensajes:
+  mensajes recibidos</a>.</p>
+
+  <p>[<a href="#signing_and_encrypting_messages">Volver al principio de la
+  sección</a>]</p>
+  
+  <h2 id="message_security_compose_window">Seguridad de los mensajes: ventana
+  Redactar</h2>
+
+  <p>En esta sección se describe la ventana de seguridad del mensaje que
+  se puede abrir para cualquier mensaje que se vaya a redactar. Si aún
+  no ha llegado a la ventana Seguridad del mensaje, haga clic en el icono
+  Seguridad de la barra de herramientas de la ventana Redactar.</p>
+
+  <p>La ventana Seguridad del mensaje describe el modo en que se enviará
+  el mensaje:</p>
+
+  <ul>
+    <li><strong>Firmado digitalmente</strong>: esta línea indica si el
+    mensaje irá firmado. Hay tres posibilidades:
+      <ul>
+        <li><strong>Sí</strong>: se ha activado la firma digital para
+        este mensaje, hay un certificado válido que lo identifica y el
+        mensaje puede firmarse.</li>
+        <li><strong>No</strong>: se ha desactivado la firma digital para este
+        mensaje.</li>
+        <li><strong>Imposible</strong>: se ha activado la firma digital para
+        este mensaje. Sin embargo, no dispone de un <a href=
+        "glossary.xhtml#certificate">certificado</a> válido que lo
+        identifique o hay otros problemas que imposibilitan la firma del
+        mensaje.</li>
+      </ul>
+    </li>
+    <li><strong>Cifrado</strong>: esta línea indica si el mensaje
+    irá cifrado. Hay tres posibilidades:
+      <ul>
+        <li><strong>Sí</strong>: se ha activado el cifrado para este
+        mensaje, hay certificados válidos para todos los destinatarios
+        y el mensaje se puede cifrar.</li>
+        <li><strong>No</strong>: se ha desactivado el cifrado o bien no es
+        posible para este mensaje.</li>
+        <li><strong>Imposible</strong>: se ha activado el cifrado para este
+        mensaje. Sin embargo, faltan certificados para al menos uno de los
+        destinatarios de la lista, no hay ningún destinatario en la
+        lista, o hay problemas de otro tipo que imposibilitan el cifrado.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p>Cuando redacta un mensaje y selecciona una cuenta diferente, las
+    preferencias de firma y cifrado se actualizan para reflejar la
+    configuración la nueva cuenta seleccionada.</p>
+
+  <p>La ventana Seguridad del mensaje también lista los certificados de
+  los que se dispone para los destinatarios del mensaje:</p>
+
+  <ul>
+    <li><strong>Ver</strong>: para ver los detalles de cualquier certificado de
+    la lista, seleccione el nombre y haga clic en Ver.</li>
+  </ul>
+
+  <p>Si desea más información sobre la obtención de
+  certificados y la configuración de valores de seguridad de los
+  mensajes, consulte <a href="#signing_and_encrypting_messages">Firma y
+  cifrado de mensajes</a>.</p>
+
+  <p>Para indicar las opciones de firma o cifrado de un mensaje individual,
+  haga clic en la flecha que está al lado del botón Seguridad de
+  la ventana Redactar y seleccione las opciones que desee.</p>
+
+<p>Para establecer las preferencias de firma digital y cifrado para todos los
+  mensajes, consulte
+  <a href="mailnews_account_settings.xhtml#security">Configuración de cuentas
+  de correo y grupos de noticias: seguridad</a>.</p>
+
+  <p>[<a href="#signing_and_encrypting_messages">Volver al principio de la
+  sección</a>]</p>
+  
+<h2 id="message_security_received_message">Seguridad de los mensajes:
+  mensajes recibidos</h2>
+
+<p>Esta sección describe la ventana de Seguridad del mensaje, que se
+  puede abrir para cualquier mensaje que haya recibido. Si aún no ha
+  llegado a la ventana Seguridad del mensaje de un mensaje recibido, siga estos
+  pasos:</p>
+
+<ol>
+  <li>En la ventana Correo, seleccione el mensaje cuya información de
+    seguridad desea ver.</li>
+  <li>Abra el menú Ver y seleccione Información de seguridad
+    del mensaje.</li>
+</ol>
+
+<p>La ventana de Seguridad del mensaje muestra la siguiente
+  información:</p>
+
+<ul>
+  <li><strong>Firma digital</strong>: la sección superior indica si el mensaje
+    está firmado digitalmente y, de ser así, si la firma es válida.
+    <p>Si la validación ha fallado con OCSP activado, compruebe los
+      valores de OCSP en <a
+      href="certs_prefs_help.xhtml#privacy_and_security_preferences_certificates">Preferencias
+      de privacidad y seguridad - Certificados</a>. Si no está familiarizado
+      con OCSP, confirme los valores con su administrador de sistema. Si los
+      valores son correctos, es posible que haya un problema con el servicio
+      de OCSP o que el certificado que se usó para crear la firma ya no sea
+      válido.</p>
+    <p>Si la firma no es válida debido a un problema de los valores de
+      confianza de algún certificado, puede usar el <a href=
+      "certs_help.xhtml">Administrador de certificados</a> para ver o modificar
+      estas opciones.</p>
+  </li>
+  <li><strong>Ver certificado de firma</strong>: si el mensaje está
+    firmado, haga clic en este botón para ver el certificado que se
+    usó para firmarlo.</li>
+  <li><strong>Cifrado</strong>: la sección inferior indica si el
+    mensaje está cifrado y si existen problemas de cifrado.
+    <ul>
+      <li>Si el contenido del mensaje se ha alterado por el camino,
+        debería pedirle al remitente que volviera a enviárselo.
+        Es posible que los cambios se deban a problemas de red.</li>
+      <li>Si no tiene una copia de su propio certificado (el que usó
+        el remitente para cifrar el mensaje) en el ordenador, no podrá
+        recuperarse la clave privada necesaria para descifrar el mensaje. La
+        única solución es importar una copia de seguridad del
+        certificado y su clave privada correspondiente (consulte <a href=
+        "certs_help.xhtml#your_certificates">Sus certificados</a> si desea
+        más información). Si no tiene acceso a la copia de
+        seguridad del certificado, no podrá descifrar el mensaje.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#signing_and_encrypting_messages">Volver al principio de la
+  sección</a>]</p>
+
+</body>
+</html>

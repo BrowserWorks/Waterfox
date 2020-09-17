@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Inportatu helbide-liburua">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Inportatutako datuak erregistro honentzako: ">
+<!ENTITY fieldMapImport.next.label "Hurrengoa">
+<!ENTITY fieldMapImport.next.accesskey "H">
+<!ENTITY fieldMapImport.previous.label "Aurrekoa">
+<!ENTITY fieldMapImport.previous.accesskey "A">
+<!ENTITY fieldMapImport.text "Erabili 'Eraman gorantz' eta 'Eraman beherantz' teklak ezkerrean dauden helbide-liburuko eremuek bat egin dezaten inportatzen ari zaren eskuineko informazioarekin. Desmarkatu inportatu nahi ez dituzun elementuak.">
+<!ENTITY fieldMapImport.up.label "Eraman gorantz">
+<!ENTITY fieldMapImport.up.accesskey "g">
+<!ENTITY fieldMapImport.down.label "Eraman beherantz">
+<!ENTITY fieldMapImport.down.accesskey "b">
+<!ENTITY fieldMapImport.fieldListTitle "Helbide-liburuko eremuak">
+<!ENTITY fieldMapImport.dataTitle "Grabatu inportatzeko datuak">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Lehenengo erregistroak eremuen izenak dauzka">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "L">

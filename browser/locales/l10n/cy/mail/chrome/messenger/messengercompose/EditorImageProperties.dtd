@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Priodweddau Delwedd">
+
+<!ENTITY pixelsPopup.value "picseli">
+<!-- These are in the Location tab panel -->
+
+<!ENTITY locationEditField.label "Lleoliad delwedd:">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "Teipio enw neu leoliad ffeil y ddelwedd">
+<!ENTITY locationEditField.shortenedDataURI "URI data byrrach (bydd copi'n gosod yr URI llawn ar i'r clipfwrdd)">
+<!ENTITY title.label "Cyngor:">
+<!ENTITY title.accessKey "C">
+<!ENTITY title.tooltip "Y briodoledd 'teitl' sy'n cael ei ddangos fel cyngor">
+<!ENTITY altText.label "Testun eiledol:">
+<!ENTITY altText.accessKey "e">
+<!ENTITY altTextEditField.tooltip "Teipio testun i'w arddangos yn lle'r ddelwedd">
+<!ENTITY noAltText.label "Peidio defnyddio testun eiledol">
+<!ENTITY noAltText.accessKey "P">
+
+<!ENTITY previewBox.label "Rhagolwg Delwedd">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+
+<!ENTITY actualSize.label "Maint Gwirioneddol:">
+<!ENTITY actualSizeRadio.label "Maint Gwirioneddol">
+<!ENTITY actualSizeRadio.accessKey "M">
+<!ENTITY actualSizeRadio.tooltip "Dychwelyd i faint gwirioneddol y ddelwedd">
+<!ENTITY customSizeRadio.label "Maint Cyfaddasu">
+<!ENTITY customSizeRadio.accessKey "a">
+<!ENTITY customSizeRadio.tooltip "Newid maint y ddelwedd fel y'i dangosir ar y dudalen">
+<!ENTITY heightEditField.label "Uchder:">
+<!ENTITY heightEditField.accessKey "U">
+<!ENTITY widthEditField.label "Lled:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY constrainCheckbox.label "Cyfyngu">
+<!ENTITY constrainCheckbox.accessKey "f">
+<!ENTITY constrainCheckbox.tooltip "Cadw cyfradd agwedd y ddelwedd">
+<!-- These controls are in the Image Map box of the expanded area -->
+
+<!ENTITY imagemapBox.label "Map Delwedd">
+<!ENTITY removeImageMapButton.label "Tynnu">
+<!ENTITY removeImageMapButton.accessKey "T">
+<!-- These are the options for image alignment -->
+
+<!ENTITY alignment.label "Alinio Testun i'r Ddelwedd">
+<!ENTITY bottomPopup.value "Ar y gwaelod">
+<!ENTITY topPopup.value "Ar y brig">
+<!ENTITY centerPopup.value "Yn y canol">
+<!ENTITY wrapRightPopup.value "Amlapio i'r dde">
+<!ENTITY wrapLeftPopup.value "Amlapio i'r chwith">
+<!-- These controls are in the Spacing Box -->
+
+<!ENTITY spacingBox.label "Bylchu">
+<!ENTITY leftRightEditField.label "Chwith a De:">
+<!ENTITY leftRightEditField.accessKey "h">
+<!ENTITY topBottomEditField.label "Brig a Gwaelod:">
+<!ENTITY topBottomEditField.accessKey "B">
+<!ENTITY borderEditField.label "Ymyl Solet:">
+<!ENTITY borderEditField.accessKey "Y">
+<!-- These controls are in the Link Box -->
+
+<!ENTITY showImageLinkBorder.label "Dangos ymyl o amgylch delwedd gysylltiedig">
+<!ENTITY showImageLinkBorder.accessKey "D">
+<!ENTITY LinkAdvancedEditButton.label "Dolen Golygu Uwch…">
+<!ENTITY LinkAdvancedEditButton.accessKey "D">
+<!ENTITY LinkAdvancedEditButton.tooltip "Ychwanegu neu newid Priodweddau HTML, priodoleddau arddulliau a JavaScript">
+<!-- These tabs are currently used in the image input dialog -->
+
+<!ENTITY imageInputTab.label "Ffurflen">
+<!ENTITY imageLocationTab.label "Lleoliad">
+<!ENTITY imageDimensionsTab.label "Dimensiynau">
+<!ENTITY imageAppearanceTab.label "Gwedd">
+<!ENTITY imageLinkTab.label "Dolen">

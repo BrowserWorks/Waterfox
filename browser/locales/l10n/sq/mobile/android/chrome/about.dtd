@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Rreth &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName;-i është eksperimental dhe mund të jetë i paqëndrueshëm.">
+<!ENTITY aboutPage.checkForUpdates.link         "Kontrollo për Përditësime »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Po shihet për përditësime…">
+<!ENTITY aboutPage.checkForUpdates.none         "Nuk ka përditësime të passhme">
+<!ENTITY aboutPage.checkForUpdates.available2   "Shkarko përditësimin">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Po shkarkohet përditësimi…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Instaloni përditësimin">
+<!ENTITY aboutPage.faq.label                    "PBR">
+<!ENTITY aboutPage.support.label                "Asistencë">
+<!ENTITY aboutPage.privacyPolicy.label          "Rregulla Privatësie">
+<!ENTITY aboutPage.rights.label                 "Njihni Të Drejtat Tuaja">
+<!ENTITY aboutPage.relNotes.label               "Shënime Versioni">
+<!ENTITY aboutPage.credits.label                "Falënderime">
+<!ENTITY aboutPage.license.label                "Të dhëna Licencimi">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox-i dhe stemat e Firefox-it janë shenja tregtare të Mozilla Foundation-it.">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "移除行事曆提供者">
+<!ENTITY providerUninstall.accept.label                    "取消訂閱已選取的行事曆提供者">
+<!ENTITY providerUninstall.accept.accesskey                "U">
+<!ENTITY providerUninstall.cancel.label                    "保留附加元件">
+<!ENTITY providerUninstall.cancel.accesskey                "K">
+<!ENTITY providerUninstall.preName.label                   "您已要求移除或取消：">
+<!ENTITY providerUninstall.postName.label                  "這將導致下列行事曆無法被使用。">
+<!ENTITY providerUninstall.reinstallNote.label             "除非您打算重新安裝此行事曆提供者，否則建議您取消訂閱這個提供者的行事曆。">
+

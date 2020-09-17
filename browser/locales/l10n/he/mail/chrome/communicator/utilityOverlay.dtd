@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "קובץ">
+<!ENTITY fileMenu.accesskey        "ק">
+<!ENTITY newMenu.label            "חדש">
+<!ENTITY newMenu.accesskey          "ח">
+
+<!ENTITY editMenu.label          "עריכה">
+<!ENTITY editMenu.accesskey        "ע">
+<!ENTITY undoCmd.label            "בטל">
+<!ENTITY undoCmd.accesskey          "ט">
+<!ENTITY redoCmd.label            "בצע שוב">
+<!ENTITY redoCmd.accesskey          "צ">
+<!ENTITY deleteCmd.label          "מחק">
+<!ENTITY deleteCmd.accesskey        "ח">
+<!ENTITY preferencesCmd2.label "אפשרויות">
+<!ENTITY preferencesCmd2.accesskey "ע">
+<!ENTITY preferencesCmdUnix.label       "העדפות">
+<!ENTITY preferencesCmdUnix.accesskey     "ע">
+
+<!ENTITY viewMenu.label          "תצוגה">
+<!ENTITY viewMenu.accesskey        "ת">
+<!ENTITY viewToolbarsMenu.label        "סרגלי כלים">
+<!ENTITY viewToolbarsMenu.accesskey      "ם">
+<!ENTITY showTaskbarCmd.label          "שורת מצב">
+<!ENTITY showTaskbarCmd.accesskey        "ש">
+
+<!ENTITY closeCmd.label      "סגירה">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "ג">
+
+<!ENTITY quitApplicationCmd.label  "יציאה">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "צ">
+
+<!ENTITY quitApplicationCmdUnix.label  "יציאה">
+<!ENTITY quitApplicationCmdUnix.accesskey  "צ">
+
+<!ENTITY quitApplicationCmdMac.label  "יציאה מ־&brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "q">

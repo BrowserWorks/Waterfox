@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Discussion">
+<!ENTITY fromColumn.label "Expéditeur">
+<!ENTITY recipientColumn.label "Destinataire">
+<!ENTITY attachmentColumn.label "Pièces jointes">
+<!ENTITY subjectColumn.label "Sujet">
+<!ENTITY dateColumn.label "Date">
+<!ENTITY priorityColumn.label "Priorité">
+<!ENTITY tagsColumn.label "Étiquette">
+<!ENTITY accountColumn.label "Compte">
+<!ENTITY statusColumn.label "État">
+<!ENTITY sizeColumn.label "Taille">
+<!ENTITY junkStatusColumn.label "Statut indésirable">
+<!ENTITY unreadColumn.label "Non lus dans la discussion">
+<!ENTITY totalColumn.label "Total dans la discussion">
+<!ENTITY readColumn.label "Lu">
+<!ENTITY receivedColumn.label "Reçu">
+<!ENTITY flagColumn.label "Coché">
+<!ENTITY locationColumn.label "Adresse">
+<!ENTITY idColumn.label "Ordre de réception">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Sélectionner les colonnes à afficher">
+<!ENTITY threadColumn2.tooltip "Afficher les fils de discussion">
+<!ENTITY fromColumn2.tooltip "Trier par expéditeur">
+<!ENTITY recipientColumn2.tooltip "Trier par destinataire">
+<!ENTITY attachmentColumn2.tooltip "Trier par pièces jointes">
+<!ENTITY subjectColumn2.tooltip "Trier par sujet">
+<!ENTITY dateColumn2.tooltip "Trier par date">
+<!ENTITY priorityColumn2.tooltip "Trier par priorité">
+<!ENTITY tagsColumn2.tooltip "Trier par étiquette">
+<!ENTITY accountColumn2.tooltip "Trier par compte">
+<!ENTITY statusColumn2.tooltip "Trier par statut">
+<!ENTITY sizeColumn2.tooltip "Trier par taille">
+<!ENTITY junkStatusColumn2.tooltip "Trier par statut indésirable">
+<!ENTITY unreadColumn2.tooltip "Nombre de messages non lus dans le fil">
+<!ENTITY totalColumn2.tooltip "Nombre total de messages dans le fil">
+<!ENTITY readColumn2.tooltip "Trier par état de lecture">
+<!ENTITY receivedColumn2.tooltip "Trier par date de réception">
+<!ENTITY flagColumn2.tooltip "Trier par état de cochage">
+<!ENTITY locationColumn2.tooltip "Trier par adresse">
+<!ENTITY idColumn2.tooltip "Trier par ordre de réception">

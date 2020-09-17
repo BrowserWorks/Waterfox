@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Хабарламаларды қайда іздеу:">
+<!ENTITY searchHeading.accesskey     "з">
+<!ENTITY searchSubfolders.label      "Ішкі бумалардан іздеу">
+<!ENTITY searchSubfolders.accesskey  "е">
+<!ENTITY searchOnServer.label        "Іздеуді серверде орындау">
+<!ENTITY searchOnServer.accesskey    "ы">
+<!ENTITY resetButton.label           "Тазарту">
+<!ENTITY resetButton.accesskey       "Т">
+<!ENTITY openButton.label            "Ашу">
+<!ENTITY openButton.accesskey        "ш">
+<!ENTITY deleteButton.label          "Өшіру">
+<!ENTITY deleteButton.accesskey      "р">
+<!ENTITY searchDialogTitle.label     "Хабарламалардан іздеу">
+<!ENTITY results.label               "Нәтижелер">
+<!ENTITY moveButton.label            "Қайда жылжыту">
+<!ENTITY moveButton.accesskey        "й">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Бумада ашу">
+<!ENTITY openInFolder.accesskey      "м">
+<!ENTITY saveAsVFButton.label        "Іздеу бумасы ретінде сақтау">
+<!ENTITY saveAsVFButton.accesskey    "с">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Қайда іздеу:">
+<!ENTITY abSearchHeading.accesskey   "з">
+<!ENTITY propertiesButton.label      "Қасиеттері">
+<!ENTITY propertiesButton.accesskey  "с">
+<!ENTITY composeButton.label         "Жазу">
+<!ENTITY composeButton.accesskey     "з">
+<!ENTITY deleteCardButton.label      "Өшіру">
+<!ENTITY deleteCardButton.accesskey  "ш">
+<!ENTITY abSearchDialogTitle.label   "Кеңейтілген адрестік кітапшадан іздеу">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

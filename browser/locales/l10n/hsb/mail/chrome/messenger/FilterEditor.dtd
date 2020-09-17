@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filtrowe prawidła">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Mjeno filtra:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Čapor">
+<!ENTITY notJunk.label "Nječapor">
+
+<!ENTITY lowestPriorityCmd.label "Najniša">
+<!ENTITY lowPriorityCmd.label "Niska">
+<!ENTITY normalPriorityCmd.label "Normalna">
+<!ENTITY highPriorityCmd.label "Wysoka">
+<!ENTITY highestPriorityCmd.label "Najwyša">
+
+<!ENTITY contextDesc.label "Filter nałožić:">
+<!ENTITY contextIncomingMail.label "Nowa e-mejl so wobstaruje:">
+<!ENTITY contextIncomingMail.accesskey "N">
+<!ENTITY contextManual.label "Hdyž so manuelnje nałožuje">
+<!ENTITY contextManual.accesskey "H">
+<!ENTITY contextBeforeCls.label "Filter před čaporowej klasifikaciju">
+<!ENTITY contextAfterCls.label "Filter po čaporowej klasifikaciji">
+<!ENTITY contextOutgoing.label "Po słanju">
+<!ENTITY contextOutgoing.accesskey "s">
+<!ENTITY contextArchive.label "Archiwowanje">
+<!ENTITY contextArchive.accesskey "A">
+
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Tute akcije wuwjesć:">
+<!ENTITY filterActionDesc.accesskey "T">
+
+<!ENTITY filterActionOrderWarning.label "Kedźbu: Filtrowe akcije so w rozdźělnym porjedźe wuwjedu.">
+<!ENTITY filterActionOrder.label "Hlejće wuwjedźenski porjad">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Powěsć přesunyć do">
+<!ENTITY copyMessage.label "Powěsć kopěrować do">
+<!ENTITY forwardTo.label "Powěsć dale sposrědkować do">
+<!ENTITY replyWithTemplate.label "Z předłohu wotmołwić">
+<!ENTITY markMessageRead.label "Jako přečitany markěrować">
+<!ENTITY markMessageUnread.label "Jako njepřečitany markěrować">
+<!ENTITY markMessageStarred.label "Hwěžku přidać">
+<!ENTITY setPriority.label "Prioritu stajić na">
+<!ENTITY addTag.label "Powěsć markěrować">
+<!ENTITY setJunkScore.label "Čaporowy status stajić na">
+<!ENTITY deleteMessage.label "Powěsć zhašeć">
+<!ENTITY deleteFromPOP.label "Na POP-serwerje zhašeć">
+<!ENTITY fetchFromPOP.label "Z Pop-serwera wobstarać">
+<!ENTITY ignoreThread.label "Nitku ignorować">
+<!ENTITY ignoreSubthread.label "Podnitku ignorować">
+<!ENTITY watchThread.label "Nitku wobkedźbować">
+<!ENTITY stopExecution.label "Wuwjedźenje filtra zastajić">
+
+<!ENTITY addAction.tooltip "Nowu akciju přidać">
+<!ENTITY removeAction.tooltip "Tutu akciju wotstronić">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

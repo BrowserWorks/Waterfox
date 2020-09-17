@@ -1,0 +1,290 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Мәзірді ашу">
+<!ENTITY navbarOverflow.label                "Көбірек құралдар…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Бетті бекіту">
+<!ENTITY  unpinTab.label                     "Бетті босату">
+
+<!ENTITY  listAllTabs.label      "Барлық беттерді тізіп шығу">
+
+<!ENTITY tabCmd.label "Жаңа бет">
+<!ENTITY openFileCmd.label "Файлды ашу…">
+<!ENTITY printCmd.label "Баспаға шығару…">
+
+<!ENTITY taskManagerCmd.label "Тапсырмалар басқарушысы">
+
+<!ENTITY menubarCmd.label "Мәзір жолағы">
+<!ENTITY menubarCmd.accesskey "М">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Навигация">
+<!ENTITY personalbarCmd.label "Бетбелгілер панелі">
+<!ENTITY personalbarCmd.accesskey "Б">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Бетбелгілер">
+<!ENTITY bookmarksToolbarItem.label "Бетбелгілер панелінің элементтері">
+
+<!ENTITY fullScreenCmd.label "Толық экран режимі">
+
+
+<!ENTITY pictureInPictureHideToggle.label "Суреттегі сурет қосқышын жасыру">
+<!ENTITY pictureInPictureHideToggle.accesskey "ы">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; баптаулары">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Басқа құрылғыны байланыстыру…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "&brandProductName; ішіне кіру">
+<!ENTITY fxa.menu.turnOnSync.label "&syncBrand.shortName.label; іске қосу">
+<!ENTITY fxa.menu.firefoxServices.label "&brandProductName; қызметтері">
+<!ENTITY fxa.menu.account.label "Тіркелгі">
+<!ENTITY fxa.menu.settings.label "Баптаулар">
+<!ENTITY fxa.menu.accountSettings.label "Тіркелгі баптаулары">
+<!ENTITY fxa.menu.manageAccount2.label "Тіркелгіні басқару">
+<!ENTITY fxa.menu.signOut.label "Шығу…">
+<!ENTITY fxa.menu.setupSync.label "&syncBrand.shortName.label; баптау…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Бетті сіз кірген кез келген құрылғыға лезде жіберіңіз.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "енді толық экран режимінде">
+<!ENTITY fullscreenWarning.generic.label "Бұл құжат енді толық экран режимінде">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Толық экраннан шығу (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Толық экраннан шығу (Esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "курсорыңызды басқаруда. Басқаруды қайта алу үшін Esc басыңыз.">
+<!ENTITY pointerlockWarning.generic.label "Бұл құжат курсорыңызды басқаруда. Басқаруды қайта алу үшін Esc басыңыз.">
+
+<!ENTITY showAllBookmarks2.label "Барлық бетбелгілерді көрсету">
+<!ENTITY recentBookmarks.label "Соңынан қосылғандар">
+<!ENTITY bookmarksToolbarChevron.tooltip "Көбірек бетбелгілерді көрсету">
+
+<!ENTITY printButton.label            "Баспаға шығару">
+<!ENTITY printButton.tooltip          "Ағымдағы бетті баспаға шығару">
+
+<!ENTITY searchItem.title             "Іздеу">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Үйге">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; үй беті">
+
+<!ENTITY bookmarksButton.label          "Бетбелгілер">
+
+<!ENTITY bookmarksSubview.label             "Бетбелгілер">
+<!ENTITY bookmarksMenuButton2.label         "Бетбелгілер мәзірі">
+<!ENTITY bookmarksMenuButton.other.label    "Басқа бетбелгілер">
+<!ENTITY bookmarksMenuButton.mobile.label   "Мобильді бетбелгілер">
+<!ENTITY viewBookmarksSidebar2.label        "Бүйір панелін қарау">
+<!ENTITY hideBookmarksSidebar.label         "Бетбелгілер бүйір панелін жасыру">
+<!ENTITY viewBookmarksToolbar.label         "Бетбелгілер панелін қарау">
+<!ENTITY hideBookmarksToolbar.label         "Бетбелгілер құралдар панелін жасыру">
+<!ENTITY searchBookmarks.label              "Бетбелгілер ішінен іздеу">
+<!ENTITY bookmarkingTools.label             "Бетбелгілер құралдары">
+<!ENTITY addBookmarksMenu.label             "Бетбелгілер мәзірін құралдар панеліне қосу">
+<!ENTITY removeBookmarksMenu.label          "Бетбелгілер мәзірін құралдар панелінен алып тастау">
+
+<!ENTITY historyButton.label            "Тарихы">
+
+<!ENTITY downloads.label              "Жүктемелер">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Жүктемелер">
+<!ENTITY addons.label                 "Қосымшалар">
+
+<!ENTITY webDeveloperMenu.label       "Веб-әзірлеуші">
+
+<!ENTITY newNavigatorCmd.label        "Жаңа терезе">
+<!ENTITY newPrivateWindow.label     "Жаңа жекелік терезе">
+
+<!ENTITY editMenu.label         "Түзету">
+<!ENTITY preferencesCmd2.label       "Опциялар">
+<!ENTITY preferencesCmdUnix.label       "Параметрлер">
+<!ENTITY logins.label                           "Логиндер және парольдер">
+
+<!ENTITY overflowCustomizeToolbar.label       "Құралдар панелін баптау…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "б">
+
+<!ENTITY historyMenu.label "Тарихы">
+<!ENTITY historyUndoMenu.label "Жақында жабылған беттер">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Жақында жабылған терезелер">
+
+<!ENTITY appMenuHistory.showAll.label "Бүкіл тарихты көрсету">
+<!ENTITY appMenuHistory.clearRecent.label "Жуырдағы тарихты өшіру…">
+<!ENTITY appMenuHistory.restoreSession.label "Алдыңғы сессияны қалпына келтіру">
+<!ENTITY appMenuHistory.viewSidebar.label "Тарихтың бүйір панелін көрсету">
+<!ENTITY appMenuHistory.hideSidebar.label "Тарих бүйір панелін жабу">
+<!ENTITY appMenuHistory.recentHistory.label "Жуырдағы тарихы">
+<!ENTITY appMenuHelp.label "Көмек">
+
+<!ENTITY appMenuRemoteTabs.label "Синхрондалған беттер">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Ашық беттер жоқ">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Көбірек көрсету">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Бұл құрылғыдан көбірек беттерді көрсету">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Барлығын көрсету">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Бұл құрылғыдан барлық беттерді көрсету">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Басқа құрылғыларыңыздан беттер тізімдерін көру үшін беттерді синхрондауды іске қосыңыз.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Басқа құрылғыларыңыздан беттерді осында көргіңіз келе ме?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Синхрондау баптауларын ашу">
+<!ENTITY appMenuRemoteTabs.welcome.label "Басқа құрылғыларыңыздан беттер тізімін қарау.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Тіркелгіңіз расталуы тиіс.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "&syncBrand.shortName.label; ішіне кіру…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "&syncBrand.shortName.label; іске қосу…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Құрылғыларды басқару…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Синхрондалған беттер бүйір панелін қарау">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Синхрондалған беттер бүйір панелін жабу">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Басқа құрылғыны байланыстыру">
+
+<!ENTITY appMenuRecentHighlights.label "Соңғы Таңдамалылар">
+
+<!ENTITY customizeMenu.addToToolbar.label "Құралдар панеліне қосу">
+<!ENTITY customizeMenu.addToToolbar.accesskey "о">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Қайта аймалау мәзіріне қосу">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "м">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Қайта аймалау мәзіріне бекітуді алып тастау">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "а">
+<!ENTITY customizeMenu.removeFromToolbar.label "Құралдар панелінен өшіру">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "ш">
+<!ENTITY customizeMenu.addMoreItems.label "Көбірек элементтерді қосу…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "К">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Көбірек">
+
+<!ENTITY contentSearchSubmit.tooltip  "Іздеуді жіберу">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Іздеу">
+<!ENTITY searchIcon.tooltip           "Іздеу">
+
+<!ENTITY openLinkCmdInTab.accesskey   "б">
+
+<!ENTITY pageAction.copyLink.label    "Сілтемені көшіріп алу">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "Бетті Pocket-ке сақтау">
+<!ENTITY pocketMenuitem.label         "Pocket тізімін қарау">
+
+<!ENTITY emailPageCmd.label           "Сілтемені эл. поштамен жіберу…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Масштаб">
+
+<!ENTITY sidebarCloseButton.tooltip     "Бүйір панелін жабу">
+
+<!ENTITY quitApplicationCmdWin2.label       "Шығу">
+<!ENTITY quitApplicationCmdWin2.accesskey   "ы">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName; жұмысын аяқтау">
+<!ENTITY quitApplicationCmd.label       "Шығу">
+<!ENTITY quitApplicationCmd.accesskey   "Ш">
+<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName; жұмысын аяқтау">
+
+<!ENTITY allowPopups.accesskey "т">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "&quot;Атып шығатын&quot; терезелерді болдырмау параметрлерін өзгерту…">
+<!ENTITY editPopupSettings.label "&quot;Атып шығатын&quot; терезелерді болдырмау параметрлерін өзгерту…">
+<!ENTITY editPopupSettings.accesskey "т">
+<!ENTITY dontShowMessage.accesskey "п">
+
+<!ENTITY findOnCmd.label     "Осы парақтан іздеу…">
+
+<!ENTITY spellAddDictionaries.label "Сөздіктерді қосу…">
+<!ENTITY spellAddDictionaries.accesskey "С">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Браузер беттері">
+
+<!ENTITY syncBrand.shortName.label    "Синхрондау">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Автожасыру">
+
+
+<!ENTITY uiTour.infoPanel.close "Жабу">
+
+<!ENTITY panicButton.thankyou.msg1                "Жуырдағы тарихыңыз өшірілген.">
+<!ENTITY panicButton.thankyou.msg2                "Қауіпсіз шолу!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Рахмет!">
+
+<!ENTITY updateAvailable.panelUI.label "&brandShorterName; жаңартуын жүктеп алу">
+<!ENTITY updateManual.panelUI.label "&brandShorterName; жаңа нұсқасын жүктеп алыңыз">
+<!ENTITY updateUnsupported.panelUI.label "Болашақ жаңартуларды жасай алмайсыз">
+<!ENTITY updateRestart.panelUI.label2 "&brandShorterName; жаңарту үшін қайта іске қосу">
+
+<!ENTITY sendToDevice.syncNotReady.label "Құрылғыларды синхрондау…">
+
+<!ENTITY pageAction.shareUrl.label "Бөлісу">
+<!ENTITY pageAction.shareMore.label "Көбірек…">
+
+<!ENTITY libraryButton.tooltip "Тарихты, сақталған бетбелгілерді қарау және т.б.">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Қолжетерлілік мүмкіндіктері іске қосылған">

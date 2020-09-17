@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Словник користувача">
+
+<!ENTITY wordEditField.label "Нове слово:">
+<!ENTITY wordEditField.accessKey "Н">
+<!ENTITY AddButton.label "Додати">
+<!ENTITY AddButton.accessKey "Д">
+<!ENTITY DictionaryList.label "Слова в словнику:">
+<!ENTITY DictionaryList.accessKey "С">
+<!ENTITY RemoveButton.label "Прибрати">
+<!ENTITY RemoveButton.accessKey "П">
+
+<!ENTITY CloseButton.label "Закрити">
+<!ENTITY CloseButton.accessKey "З">

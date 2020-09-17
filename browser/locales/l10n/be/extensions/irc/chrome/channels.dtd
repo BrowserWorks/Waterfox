@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Злучэнне з каналам">
+<!ENTITY qsearch.label "Хуткі пошук:">
+<!ENTITY qsearch.accesskey "ш">
+<!ENTITY topics.label "Пошук тэмаў і назваў каналаў">
+<!ENTITY topics.accesskey "т">
+<!ENTITY join.label "Злучыцца">
+<!ENTITY join.accesskey "З">
+<!ENTITY minusers.label "Найменш карыстальнікаў:">
+<!ENTITY minusers.accesskey "м">
+<!ENTITY maxusers.label "Найбольш карыстальнікаў:">
+<!ENTITY maxusers.accesskey "б">
+<!ENTITY refresh.label "Абнавіць зараз">
+<!ENTITY refresh.accesskey "">
+<!ENTITY col.name "Назва">
+<!ENTITY col.users "Карыстальнікі">
+<!ENTITY col.topic "Тэма">

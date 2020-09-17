@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title "Adresní řádek">
+
+<!ENTITY autoComplete.label "Automatické doplňování">
+<!ENTITY autoCompleteMatchHistory.label        "Automaticky navrhovat stránky z historie">
+<!ENTITY autoCompleteMatchHistory.accesskey    "A">
+<!ENTITY autoCompleteMatchBookmarks.label      "Automaticky navrhovat stránky ze záložek">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "u">
+<!ENTITY autoCompleteAutoFill.label "Automaticky při psaní doplňovat nejlepší odhad">
+<!ENTITY autoCompleteAutoFill.accesskey "t">
+<!ENTITY autoCompleteShowPopup.label "Zobrazovat seznam vyhovujících výsledků">
+<!ENTITY autoCompleteShowPopup.accesskey "Z">
+<!ENTITY autoCompleteMatchOnlyTyped.label "Nabízet pouze dříve napsané webové adresy">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey "b">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label "Hledat shodu">
+<!ENTITY autoCompleteMatch.accesskey "H">
+<!ENTITY autoCompleteMatchAnywhere "Kdekoliv v adrese nebo titulku">
+<!ENTITY autoCompleteMatchWordsFirst "Kdekoliv, ale preferovat hranice slov">
+<!ENTITY autoCompleteMatchWords "Pouze na hranicích slov">
+<!ENTITY autoCompleteMatchStart "Pouze na začátku adresy nebo titulku">
+<!ENTITY showInternetSearch.label              "Zobrazit výchozí vyhledávací modul">
+<!ENTITY showInternetSearch.accesskey          "e">
+
+<!ENTITY formatting.label "Formátování">
+<!ENTITY domainFormatting.label "Zvýraznit hlavní doménu webových a FTP serverů">
+<!ENTITY domainFormatting.accesskey "h">
+<!ENTITY highlightSecure.label                 "Zvýraznit webové stránky s vysokou úrovní zabezpečeného připojení">
+<!ENTITY highlightSecure.accesskey             "Z">
+
+<!ENTITY unknownLocations.label "Neznámá adresa">
+<!ENTITY domainGuessing.label "Pokud není nalezena webová adresa, automaticky přidat k názvu „www.“ a „.cz“">
+<!ENTITY domainGuessing.accesskey "w">
+<!ENTITY keywords.label "Pokud není nalezena webová adresa, provést hledání ve vyhledávači">
+<!ENTITY keywords.accesskey "P">

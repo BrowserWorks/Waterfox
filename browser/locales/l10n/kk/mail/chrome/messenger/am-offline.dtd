@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Диск орнын үнемдеу үшін, келесіні жүктемеу:">
+<!ENTITY doNotDownloadNntp.label "Диск орнын үнемдеу үшін, желіден тыс режимі үшін келесіні жүктемеу:">
+<!ENTITY doNotDownloadImap.label "Диск орнын үнемдеу мақсатында, серверден хабарламаларды жүктеп алу және желіден тыс режимі үшін жергілікті көшірмелерді ұстау мерзімі немесе өлшемі бойынша шектеуге болады.">
+<!ENTITY allFoldersOffline2.label "Бұл компьютерде бұл тіркелгі үшін барлық бумаларда хабарламаларды сақтау">
+<!ENTITY allFoldersOffline2.accesskey "с">
+<!ENTITY allFoldersOfflineNote.label "Ескерту: Бұны өзгерту бұл тіркелдегі барлық бумаларға әсер етеді. Жеке-жеке бумаларды баптау үшін, Кеңейтілген… батырмасын басыңыз.">
+<!ENTITY offlineNotDownload.label "Келесіден үлкенірек хабарламалар">
+<!ENTITY offlineNotDownload.accesskey "м">
+<!ENTITY autosyncNotDownload.label "Келесіден үлкен хабарламаларды жүктемеу">
+<!ENTITY autosyncNotDownload.accesskey "м">
+<!ENTITY kb.label "КБ">
+<!ENTITY daysOld.label "күннен ескі">
+<!ENTITY message.label "хабарлама">
+<!ENTITY nntpNotDownloadRead.label "Оқылған хабарламалар">
+<!ENTITY nntpNotDownloadRead.accesskey "ы">
+<!ENTITY nntpDownloadMsg.label "Хабарламалар келесіден үлкенірек">
+<!ENTITY nntpDownloadMsg.accesskey "а">
+<!ENTITY retentionCleanup.label "Диск орнын босату үшін, ескі хабарламаларды толығымен өшіруге болады.">
+<!ENTITY retentionCleanupImap.label "Диск орнын босату үшін, ескі хабарламаларды толығымен өшіруге болады, соның ішінде жергілікті көшірмелер және қашықтағы сервердегі түпнұсқалар.">
+<!ENTITY retentionCleanupPop.label "Диск орнын босату үшін, ескі хабарламаларды толығымен өшіруге болады, соның ішінде қашықтағы сервердегі түпнұсқалар.">
+<!ENTITY retentionKeepMsg.label "Келесіден үлкенірек хабарламаларды өшіру">
+<!ENTITY retentionKeepMsg.accesskey "ш">
+<!ENTITY retentionKeepAll.label "Хабарламаларды өшірмеу">
+<!ENTITY retentionKeepAll.accesskey "м">
+<!ENTITY retentionKeepRecent.label "Барлығын өшіру, тек соңғыларын қалдырып">
+<!ENTITY retentionKeepRecent.accesskey "т">
+<!ENTITY retentionApplyToFlagged.label "Жұлдызшалы хабарламаларды әрқашан сақтау">
+<!ENTITY retentionApplyToFlagged.accesskey "т">
+<!ENTITY nntpRemoveMsgBody.label "Келесіден үлкен болып тұрған хабарламалар денелерін өшіру">
+<!ENTITY nntpRemoveMsgBody.accesskey "ш">
+<!ENTITY offlineSelectNntp.label "Желіден тыс қолдану үшін жаңалықтар топтарын таңдау…">
+<!ENTITY offlineSelectNntp.accesskey "т">
+<!ENTITY offlineImapAdvancedOffline.label "Қосымша…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "о">
+<!ENTITY syncGroupTitle.label "Хабарламаны синхрондау">
+<!ENTITY diskspaceGroupTitle.label "Дискідегі орын">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Жасына қарамай, барлық хабарламаларды жергілікті қоймаға синхрондау">
+<!ENTITY allAutosync.accesskey           "х">
+<!ENTITY ageAutosyncBefore.label         "Тек соңғыларын синхрондау">
+<!ENTITY ageAutosync.accesskey           "я">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Күн">
+<!ENTITY weekAgeInterval.label           "Апта">
+<!ENTITY monthAgeInterval.label          "Айлар">
+<!ENTITY yearAgeInterval.label           "Жылдар">
+<!ENTITY ageAutosyncAfter.label          "">

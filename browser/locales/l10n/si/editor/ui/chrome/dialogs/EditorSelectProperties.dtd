@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "තේරීම් ලැයිස්තු ලක්ෂණ">
+
+<!ENTITY Select.label "තේරීම් ලැයිස්තුව">
+<!ENTITY SelectName.label "ලැයිස්තු නම:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "උස:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "බහුවිධ තේරීම්">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "අබලැති">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "ටැබ් දර්ශකය:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "වරණ සමූහ">
+<!ENTITY OptGroupLabel.label "ලේබලය:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "අබලැති">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "වරණ">
+<!ENTITY OptionText.label "පාඨ:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "අගය:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "ආරම්භයේදී තෝරාගත්">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "අබලැති">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "පාඨ">
+<!ENTITY ValueHeader.label "අගය">
+<!ENTITY SelectedHeader.label "තෝරාගත්">
+
+<!ENTITY AddOption.label "වරණ එක් කරන්න">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "සමූහය එක් කරන්න">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "ඉවත් කරන්න">
+<!ENTITY RemoveElement.accesskey "R">
+<!ENTITY MoveElementUp.label "ඉහළට ගෙනයන්න">
+<!ENTITY MoveElementUp.accesskey "U">
+<!ENTITY MoveElementDown.label "පහළට ගෙනයන්න">
+<!ENTITY MoveElementDown.accesskey "D">

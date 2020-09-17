@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Deasaich an rud seo" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Glèidh an fhaid ma thèid an latha crìochnachaidh atharrachadh">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "O" >
+<!ENTITY newevent.to.label                  "Gu" >
+
+<!ENTITY newevent.status.label                    "Staid" >
+<!ENTITY newevent.status.accesskey                "S" >
+<!ENTITY newevent.eventStatus.none.label          "Gun sònrachadh" >
+<!ENTITY newevent.eventStatus.none.accesskey      "G" >
+<!ENTITY newevent.todoStatus.none.label           "Gun sònrachadh" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Air a sgur dheth" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "A" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Air a sgur dheth" >
+<!ENTITY newevent.status.tentative.label          "An dòchas" >
+<!ENTITY newevent.status.tentative.accesskey      "A" >
+<!ENTITY newevent.status.confirmed.label          "Air a dhearbhachadh" >
+<!ENTITY newevent.status.confirmed.accesskey      "c" >
+<!ENTITY newevent.status.needsaction.label        "Feumach air gnìomh" >
+<!ENTITY newevent.status.inprogress.label         "'Ga phròiseasadh" >
+<!ENTITY newevent.status.completed.label          "Air a choileanadh" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#037; deiseil">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Cuir fios dha na freastalaichean">
+<!ENTITY event.attendees.notify.accesskey            "f">
+<!ENTITY event.attendees.notifyundisclosed.label     "Cuireadh an t-aon do gach frithealaiche">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "x">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Ma thaghas tu seo, thèid cuireadh an t-aon a chur do gach frithealaiche. Chan fhaicear anns gach cuireadh ach ainm an neach ud agus chan fhaicear ainmean chàich.">
+<!ENTITY event.attendees.disallowcounter.label       "Na ceadaich frith-mholaidhean">
+<!ENTITY event.attendees.disallowcounter.accesskey   "a">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Tha seo a’ comharradh nach gabh thu ri frith-mholaidhean">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Ùr">
+<!ENTITY  event.menu.item.new.accesskey                   "r">
+<!ENTITY  event.menu.item.new.event.label                 "Tachartas">
+<!ENTITY  event.menu.item.new.event.accesskey             "T">
+<!ENTITY  event.menu.item.new.task.label                  "Saothair">
+<!ENTITY  event.menu.item.new.task.accesskey              "t">
+<!ENTITY  event.menu.item.new.message.label               "Teachdaireachd">
+<!ENTITY  event.menu.item.new.message.accesskey           "T">
+<!ENTITY  event.menu.item.new.contact.label               "Caraid o leabhar nan seòladh">
+<!ENTITY  event.menu.item.new.contact.accesskey           "C">
+<!ENTITY  event.menu.item.close.label                     "Dùin">
+<!ENTITY  event.menu.item.close.accesskey                 "D">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Sàbhail">
+<!ENTITY  event.menu.item.save.accesskey                  "S">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Sàbhail is dùin e">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "l">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "Sguab às…">
+<!ENTITY  event.menu.item.delete.accesskey                "S">
+<!ENTITY  event.menu.item.page.setup.label                "Roghainnean na duilleige">
+<!ENTITY  event.menu.item.page.setup.accesskey            "u">
+<!ENTITY  event.menu.item.print.label                     "Clò-bhuail">
+<!ENTITY  event.menu.item.print.accesskey                 "C">
+
+<!ENTITY  event.menu.edit.label                           "Deasaich">
+<!ENTITY  event.menu.edit.accesskey                       "e">
+<!ENTITY  event.menu.edit.undo.label                      "Neo-dhèan">
+<!ENTITY  event.menu.edit.undo.accesskey                  "N">
+<!ENTITY  event.menu.edit.redo.label                      "Ath-dhèan">
+<!ENTITY  event.menu.edit.redo.accesskey                  "A">
+<!ENTITY  event.menu.edit.cut.label                       "Gearr às">
+<!ENTITY  event.menu.edit.cut.accesskey                   "G">
+<!ENTITY  event.menu.edit.copy.label                      "Dèan lethbhreac">
+<!ENTITY  event.menu.edit.copy.accesskey                  "c">
+<!ENTITY  event.menu.edit.paste.label                     "Cuir ann">
+<!ENTITY  event.menu.edit.paste.accesskey                 "C">
+<!ENTITY  event.menu.edit.select.all.label                "Tagh a h-uile">
+<!ENTITY  event.menu.edit.select.all.accesskey            "a">
+
+<!ENTITY  event.menu.view.label                           "Sealladh">
+<!ENTITY  event.menu.view.accesskey                       "S">
+<!ENTITY  event.menu.view.toolbars.label                  "Na bàraichean-inneal">
+<!ENTITY  event.menu.view.toolbars.accesskey              "N">
+<!ENTITY  event.menu.view.toolbars.event.label            "Bàr-inneil nan tachartasan">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "e">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Gnàthaich…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "c">
+<!ENTITY  event.menu.view.showlink.label                  "Seall an ceangal a tha co-cheangailte ris">
+<!ENTITY  event.menu.view.showlink.accesskey              "r">
+
+<!ENTITY  event.menu.options.label                            "Roghainnean">
+<!ENTITY  event.menu.options.accesskey                        "o">
+<!ENTITY  event.menu.options.attendees.label                  "Thoir cuireadh do dh’fhreastalaichean…">
+<!ENTITY  event.menu.options.attendees.accesskey              "i">
+<!ENTITY  event.menu.options.timezone2.label                  "Seall an roinn-tìde">
+<!ENTITY  event.menu.options.timezone2.accesskey              "a">
+<!ENTITY  event.menu.options.priority2.label                  "Prìomhachas">
+<!ENTITY  event.menu.options.priority2.accesskey              "P">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Gun sònrachadh">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "G">
+<!ENTITY  event.menu.options.priority.low.label               "Ìseal">
+<!ENTITY  event.menu.options.priority.low.accesskey           "l">
+<!ENTITY  event.menu.options.priority.normal.label            "Àbhaisteach">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "b">
+<!ENTITY  event.menu.options.priority.high.label              "Àrd">
+<!ENTITY  event.menu.options.priority.high.accesskey          "r">
+<!ENTITY  event.menu.options.privacy.label                    "Prìobhaideachd">
+<!ENTITY  event.menu.options.privacy.accesskey                "P">
+<!ENTITY  event.menu.options.privacy.public.label             "Tachartas poblach">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "T">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Na seall ach an t-àm is an ceann-là">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "s">
+<!ENTITY  event.menu.options.privacy.private.label            "Tachartas prìobhaideach">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "r">
+<!ENTITY  event.menu.options.show.time.label                  "Seall an t-àm mar">
+<!ENTITY  event.menu.options.show.time.accesskey              "t">
+<!ENTITY  event.menu.options.show.time.busy.label             "Trang">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "T">
+<!ENTITY  event.menu.options.show.time.free.label             "Saor">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "S">
+
+<!ENTITY event.invite.attendees.label                     "Thoir cuireadh do dh’fhreastalaichean…">
+<!ENTITY event.invite.attendees.accesskey                 "i">
+<!ENTITY event.email.attendees.label                      "Sgrìobh post-dealain dhan a h-uile freastalaiche…">
+<!ENTITY event.email.attendees.accesskey                  "a">
+<!ENTITY event.email.tentative.attendees.label            "Sgrìobh post-dealain dha na freastalaichean nach eil cinnteach fhathast…">
+<!ENTITY event.email.tentative.attendees.accesskey        "S">
+<!ENTITY event.remove.attendees.label2                    "Thoir air falbh gach freastalaiche...">
+<!ENTITY event.remove.attendees.accesskey                 "r">
+<!ENTITY event.remove.attendee.label                      "Thoir am freastalaiche air falbh">
+<!ENTITY event.remove.attendee.accesskey                  "e">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Sàbhail">
+<!ENTITY  event.toolbar.saveandclose.label                "Sàbhail is dùin e">
+<!ENTITY  event.toolbar.delete.label                      "Sguab às">
+<!ENTITY  event.toolbar.attendees.label                   "Thoir cuireadh do dhaoine">
+<!ENTITY  event.toolbar.privacy.label                     "Prìobhaideachd">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Sàbhail">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Sàbhail is dùin e">
+<!ENTITY  event.toolbar.delete.tooltip                    "Sguab às">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Thoir cuireadh do dhaoine">
+<!ENTITY  event.toolbar.attachments.tooltip               "Cuir ceanglachan ris">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Atharraich a' phrìobhaideachd">
+<!ENTITY  event.toolbar.priority.tooltip                  "Atharraich am prìomhachas">
+<!ENTITY  event.toolbar.status.tooltip                    "Atharraich an staid">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Atharraich na h-amannan saora/tranga">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Cuir am moladh an sàs">
+<!ENTITY counter.button.proposal.accesskey                "m">
+<!ENTITY counter.button.proposal.tooltip2                 "Thèid na luachan on fhrith-mholadh a chur ann an raointean an tachartais; cha tèid fios a chur gu gach freastalaiche ach ma nì thu sàbhaladh leis no as aonais nan atharraichean">
+<!ENTITY counter.button.original.label                    "Cuir an dàta tùsail an sàs">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "Thèid luachan an tachartais thùsail a chur sna raointean mar a bha e mus deach am frith-mholadh a dhèanamh">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Tiotal:" >
+<!ENTITY event.title.textbox.accesskey                    "T">
+<!ENTITY event.location.label                             "Àite:" >
+<!ENTITY event.location.accesskey                         "i">
+<!ENTITY event.categories.label                           "Roinn-seòrsa:">
+<!ENTITY event.categories.accesskey                       "R">
+<!ENTITY event.categories.textbox.label                   "Cuir roinn-seòrsa ùr ris" >
+<!ENTITY event.calendar.label                             "Mìosachan:" >
+<!ENTITY event.calendar.accesskey                         "c">
+<!ENTITY event.attendees.label                            "Freastalaichean:" >
+<!ENTITY event.attendees.accesskey                        "n">
+<!ENTITY event.alldayevent.label                          "Tachartas fad an latha" >
+<!ENTITY event.alldayevent.accesskey                      "d">
+<!ENTITY event.from.label                                 "Àm-tòiseachaidh:" >
+<!ENTITY event.from.accesskey                             "s">
+<!ENTITY task.from.label                                  "Àm-tòiseachaidh:" >
+<!ENTITY task.from.accesskey                              "s">
+<!ENTITY event.to.label                                   "Àm-crìochnachaidh:" >
+<!ENTITY event.to.accesskey                               "u">
+<!ENTITY task.to.label                                    "Ceann-ama:" >
+<!ENTITY task.to.accesskey                                "C">
+<!ENTITY task.status.label                                "Cor:" >
+<!ENTITY task.status.accesskey                            "C">
+<!ENTITY event.repeat.label                               "Dèan a-rithist:" >
+<!ENTITY event.repeat.accesskey                           "r">
+<!ENTITY event.until.label                                "Gu ruige:">
+<!ENTITY event.until.accesskey                            "B">
+<!ENTITY event.reminder.label                             "Cuir 'nam chuimhne:" >
+<!ENTITY event.reminder.accesskey                         "m">
+<!ENTITY event.description.label                          "Tuairisgeul:" >
+<!ENTITY event.description.accesskey                      "T">
+<!ENTITY event.attachments.label                          "Ceanglachain:" >
+<!ENTITY event.attachments.accesskey                      "h" >
+<!ENTITY event.attachments.menubutton.label               "Cuir ris">
+<!ENTITY event.attachments.menubutton.accesskey           "C">
+<!ENTITY event.attachments.url.label                      "Duilleag-lìn…">
+<!ENTITY event.attachments.url.accesskey                  "D">
+<!ENTITY event.attachments.popup.remove.label             "Thoir air falbh" >
+<!ENTITY event.attachments.popup.remove.accesskey         "r" >
+<!ENTITY event.attachments.popup.open.label               "Fosgail" >
+<!ENTITY event.attachments.popup.open.accesskey           "o" >
+<!ENTITY event.attachments.popup.removeAll.label          "Thoir air falbh a h-uile" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "a" >
+<!ENTITY event.attachments.popup.attachPage.label         "Cuir duilleag-lìn ris…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "g" >
+<!ENTITY event.url.label                                  "Ceangal co-cheangailte:" >
+<!ENTITY event.priority2.label                            "Prìomhachas:">
+
+<!ENTITY event.reminder.none.label                        "Na cuir 'nam chuimhne " >
+<!ENTITY event.reminder.0minutes.before.label             "0 mionaid roimhe" >
+<!ENTITY event.reminder.5minutes.before.label             "5 mionaidean roimhe" >
+<!ENTITY event.reminder.15minutes.before.label            "Cairteal na h-uarach roimhe" >
+<!ENTITY event.reminder.30minutes.before.label            "Leth-uair a thìde roimhe" >
+<!ENTITY event.reminder.1hour.before.label                "1 uair a thìde roimhe" >
+<!ENTITY event.reminder.2hours.before.label               "2 uair a thìde roimhe" >
+<!ENTITY event.reminder.12hours.before.label              "12 uair a thìde roimhe" >
+<!ENTITY event.reminder.1day.before.label                 "1 latha roimhe" >
+<!ENTITY event.reminder.2days.before.label                "2 latha roimhe" >
+<!ENTITY event.reminder.1week.before.label                "1 seachdain roimhe" >
+<!ENTITY event.reminder.custom.label                      "Gnàthaichte…" >
+
+<!ENTITY event.reminder.multiple.label                    "Cuir 'nam chuimhne iomadh turas…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "An t-àm mar:">
+<!ENTITY event.statusbarpanel.privacy.label               "Prìobhaideachd:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Deasaich an tricead">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Cha tachair seo ach an aon turas">
+<!ENTITY event.repeat.daily.label                       "Gach latha">
+<!ENTITY event.repeat.weekly.label                      "Gach seachdain">
+<!ENTITY event.repeat.every.weekday.label               "Gach là-obrach dhen t-seachdain">
+<!ENTITY event.repeat.bi.weekly.label                   "Gach dàrna seachdain">
+<!ENTITY event.repeat.monthly.label                     "Gach mìos">
+<!ENTITY event.repeat.yearly.label                      "Gach bliadhna">
+<!ENTITY event.repeat.custom.label                      "Gnàthaichte…">
+
+<!ENTITY event.recurrence.pattern.label                 "Am pàtran ath-tachairt">
+<!ENTITY event.recurrence.occurs.label                  "Dèan a-rithist" >
+<!ENTITY event.recurrence.day.label                     "gach latha" >
+<!ENTITY event.recurrence.week.label                    "gach seachdain" >
+<!ENTITY event.recurrence.month.label                   "gach mìos" >
+<!ENTITY event.recurrence.year.label                    "gach bliadhna" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Gach" >
+<!ENTITY repeat.units.days.both                         "Là(ithean)" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Gach là-obrach" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Gach" >
+<!ENTITY repeat.units.weeks.both                        "Seachdain(ean)" >
+<!ENTITY event.recurrence.on.label                      "Cuin:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Gach" >
+<!ENTITY repeat.units.months.both                       "Mìos(an)" >
+<!ENTITY event.recurrence.monthly.every.label           "Gach" >
+<!ENTITY event.recurrence.monthly.first.label           "A' chiad">
+<!ENTITY event.recurrence.monthly.second.label          "An dàrna">
+<!ENTITY event.recurrence.monthly.third.label           "An treas">
+<!ENTITY event.recurrence.monthly.fourth.label          "An ceathramh">
+<!ENTITY event.recurrence.monthly.fifth.label           "An còigeamh">
+<!ENTITY event.recurrence.monthly.last.label            "Fear mu dheireadh">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "DiDòmhnaich" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "DiLuain" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "DiMàirt" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "DiCiadain" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "DiarDaoin" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "DihAoine" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "DiSathairne" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "Latha dhen mhìos">
+<!ENTITY event.recurrence.repeat.recur.label            "Dèan a-rithist air na làithean seo">
+
+<!ENTITY event.recurrence.every.label                        "Gach:" >
+<!ENTITY repeat.units.years.both                             "Bliadhna" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Gach" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "Faoilleach" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "Gearran" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "Màrt" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "Giblean" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "Cèitean" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "Ògmhios" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "Iuchar" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "Lùnastal" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "Sultain" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "Dàmhair" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "Samhain" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "Dùbhlachd" >
+<!ENTITY event.recurrence.yearly.every.label                 "Gach">
+<!ENTITY event.recurrence.yearly.first.label                 "A' chiad">
+<!ENTITY event.recurrence.yearly.second.label                "An dàrna">
+<!ENTITY event.recurrence.yearly.third.label                 "An treas">
+<!ENTITY event.recurrence.yearly.fourth.label                "An ceathramh">
+<!ENTITY event.recurrence.yearly.fifth.label                 "An còigeamh">
+<!ENTITY event.recurrence.yearly.last.label                  "Fear mu dheireadh">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "DiDòmhnaich" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "DiLuain" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "DiMàirt" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "DiCiadain" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "DiarDaoin" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "DihAoine" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "DiSathairne" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "latha" >
+<!ENTITY event.recurrence.of.label                           "a-mach à" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "Faoilleach" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "Gearran" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "Màrt" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "Giblean" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "Cèitean" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "Ògmhios" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "Iuchar" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "Lùnastal" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "Sultain" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "Dàmhair" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "Samhain" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "Dùbhlachd" >
+
+<!ENTITY event.recurrence.range.label                   "Raon nan ath-tachairt">
+<!ENTITY event.recurrence.forever.label                 "Gun latha crìochnachaidh" >
+<!ENTITY event.recurrence.repeat.for.label              "Cruthaich" >
+<!ENTITY event.recurrence.appointments.label            "Coinneamh(an)" >
+<!ENTITY event.repeat.until.label                       "Dèan a-rithist gu ruige" >
+<!ENTITY event.recurrence.preview.label                 "Ro-sheall">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Thoir cuireadh do dhaoine">
+<!ENTITY event.organizer.label                  "Eagraiche">
+<!ENTITY event.freebusy.suggest.slot            "Mol àm:">
+<!ENTITY event.freebusy.button.next.slot        "An ath-shlot">
+<!ENTITY event.freebusy.button.previous.slot    "An slot roimhe">
+<!ENTITY event.freebusy.zoom                    "Sùm:">
+<!ENTITY event.freebusy.legend.free             "Saor" >
+<!ENTITY event.freebusy.legend.busy             "Trang" >
+<!ENTITY event.freebusy.legend.busy_tentative   "An dòchas" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Chan eil mi san oifis" >
+<!ENTITY event.freebusy.legend.unknown          "Gun fhiosrachadh" >
+<!ENTITY event.attendee.role.required           "Freastalaiche riatanach">
+<!ENTITY event.attendee.role.optional           "Freastalaiche roghainneil">
+<!ENTITY event.attendee.role.chair              "Cathraiche">
+<!ENTITY event.attendee.role.nonparticipant     "Neo-fhreastalaiche">
+<!ENTITY event.attendee.usertype.individual     "Neach">
+<!ENTITY event.attendee.usertype.group          "Buidheann">
+<!ENTITY event.attendee.usertype.resource       "Goireas">
+<!ENTITY event.attendee.usertype.room           "Seòmar">
+<!ENTITY event.attendee.usertype.unknown        "Neo-aithnichte">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Sònraich an roinn-tìde">
+<!ENTITY event.timezone.custom.label     "Barrachd roinnean-tìde…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Coitcheann">
+<!ENTITY read.only.title.label           "Tiotal:">
+<!ENTITY read.only.calendar.label        "Mìosachan:">
+<!ENTITY read.only.event.start.label     "Latha tòiseachaidh:">
+<!ENTITY read.only.task.start.label      "Latha tòiseachaidh:">
+<!ENTITY read.only.event.end.label       "Latha crìochnachaidh:">
+<!ENTITY read.only.task.due.label        "Ceann-ama:">
+<!ENTITY read.only.repeat.label          "Dèan a-rithist:">
+<!ENTITY read.only.location.label        "Àite:">
+<!ENTITY read.only.category.label        "Roinn:">
+<!ENTITY read.only.organizer.label       "Eagraiche:">
+<!ENTITY read.only.reminder.label        "Cuimhnich:">
+<!ENTITY read.only.attachments.label     "Ceanglachain:">
+<!ENTITY read.only.attendees.label       "Freastalaichean">
+<!ENTITY read.only.description.label     "Tuairisgeul">
+<!ENTITY read.only.link.label            "Ceangal co-cheangailte">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Sàbhail is dùin e">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Sàbhail na h-atharraichean is dùin an uinneag gun a bhith ag atharrachadh staid a’ chom-pàirteachais no freagairt a chur">
+<!ENTITY summary.dialog.accept.label            "Gabh ris">
+<!ENTITY summary.dialog.accept.tooltiptext      "Gabh ris a’ chuireadh">
+<!ENTITY summary.dialog.tentative.label         "Gun chinnt">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Gabh ris a’ chuireadh ach gun chinnt">
+<!ENTITY summary.dialog.decline.label           "Diùlt">
+<!ENTITY summary.dialog.decline.tooltiptext     "Diùlt an cuireadh">
+<!ENTITY summary.dialog.dontsend.label          "Na cuir freagairt">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Atharraich staid a’ chom-pàirteachais agad gun fhreagairt a chur gun eagraiche is dùin an uinneag">
+<!ENTITY summary.dialog.send.label              "Cuir freagairt an-dràsta">
+<!ENTITY summary.dialog.send.tooltiptext        "Cuir freagairt gun eagraiche is dùin an uinneag">

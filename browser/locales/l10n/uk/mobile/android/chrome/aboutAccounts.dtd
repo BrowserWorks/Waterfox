@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Облікові записи Firefox">
+<!ENTITY aboutAccounts.connected.description "Ви підключені як">
+<!ENTITY aboutAccounts.syncPreferences.label "Торкніться тут для перевірки налаштувань синхронізації">
+
+<!ENTITY aboutAccounts.noConnection.title "Немає з’єднання з Інтернетом">
+<!ENTITY aboutAccounts.retry.label "Повторити">
+
+<!ENTITY aboutAccounts.restrictedError.title "Обмежено">
+<!ENTITY aboutAccounts.restrictedError.description "Ви не можете керувати обліковими записами Firefox з цього профілю.">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookPicker.label "ঠিকানা বই (k):">
+<!ENTITY addressbookPicker.accesskey "k">
+<!ENTITY SearchNameOrEmail.label "নাম বা ই-মেইল">
+
+<!ENTITY addtoToFieldMenu.label "প্রাপক ক্ষেত্রে যোগ করুন">
+<!ENTITY addtoCcFieldMenu.label "Cc ক্ষেত্রে যোগ করুন">
+<!ENTITY addtoBccFieldMenu.label "Bcc ক্ষেত্রে যোগ করুন">
+
+<!ENTITY deleteAddrBookCard.label "মুছে ফেলুন">
+
+<!ENTITY toButton.label "প্রাপকে যোগ করা হবে (A):">
+<!ENTITY toButton.accesskey "A">
+<!ENTITY ccButton.label "Cc-তে যোগ করা হবে (d):">
+<!ENTITY ccButton.accesskey "d">
+<!ENTITY bccButton.label "Bcc-তে যোগ করা হবে (B):">
+<!ENTITY bccButton.accesskey "B">

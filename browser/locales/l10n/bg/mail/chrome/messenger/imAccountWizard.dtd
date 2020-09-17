@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Помощник за сметки за разговор">
+
+<!ENTITY accountProtocolTitle.label   "Мрежи за разговор">
+<!ENTITY accountProtocolInfo.label    "Моля, изберете мрежата на вашата сметка за разговор.">
+<!ENTITY accountProtocolField.label   "Мрежа:">
+<!ENTITY accountProtocolGetMore.label "Изтегляне на повече…">
+
+<!ENTITY accountUsernameTitle.label   "Потребителско име">
+<!ENTITY accountUsernameDuplicate.label "Сметката вече е настроена!">
+
+<!ENTITY accountPasswordTitle.label   "Парола">
+<!ENTITY accountPasswordInfo.label    "Моля, въведете парола в полето по-долу.">
+<!ENTITY accountPasswordField.label   "Парола:">
+<!ENTITY accountPasswordManager.label "Въведената парола ще се запази в управлението на пароли. Оставете това поле празно, ако искате да бъде питани за вашата парола всеки път, когато се свързвате към тази сметка.">
+
+<!ENTITY accountAdvancedTitle.label   "За напреднали">
+<!ENTITY accountAdvancedInfo.label    "Можете да пропуснете тази стъпка, ако искате.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Известяване при нова поща">
+<!ENTITY accountAliasGroupbox.caption "Локален псевдоним">
+<!ENTITY accountAliasField.label      "Псевдоним:">
+<!ENTITY accountAliasInfo.label       "Ще бъде показвано само във вашите разговори докато говорите, отдалечените контакти няма да го виждат.">
+<!ENTITY accountProxySettings.caption "Настройки на прокси">
+<!ENTITY accountProxySettings.change.label     "Промяна…">
+<!ENTITY accountProxySettings.change.accessKey "П">
+
+<!ENTITY accountSummaryTitle.label   "Обобщение">
+<!ENTITY accountSummaryInfo.label    "По-долу е обобщението на информацията, която въведохте. Моля, проверете всички преди сметката да бъде създадена.">
+<!ENTITY accountSummary.connectNow.label "Свързване към сметката сега.">

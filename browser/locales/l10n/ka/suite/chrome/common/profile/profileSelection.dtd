@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "პროფილის შერჩევა">
+<!ENTITY            profileManager.title "&brandShortName; პროფილების მმართველი">
+
+<!ENTITY            manage.label     "პროფილების მართვა…">
+<!ENTITY            manage.accesskey "M">
+<!ENTITY            select.label     "პროფილის გამოყენება">
+
+<!ENTITY            availableProfiles.label "არსებული პროფილები">
+
+<!ENTITY            introStart.label         "პირადი პროფილის გასახსნელად, რომელიც თქვენს შენახულ წერილებს, პარამეტრებსა და სხვა პირად მონაცემებს შეიცავს, გთხოვთ შეარჩიოთ პროფილი სიიდან და სეანსის დასაწყებად დაწკაპოთ ღილაკი &start.label;.">
+<!ENTITY            introSwitch.label        "სხვა პროფილზე გადასასვლელად, რომელიც თქვენს შენახულ წერილებს, პარამეტრებსა და სხვა პირად მონაცემებს შეიცავს, გთხოვთ შეარჩიოთ პროფილი სიიდან და ამ პროფილით სარგებლობის დასაწყებად დაწკაპოთ ღილაკი &select.label;.">
+<!ENTITY            profileManagerText.label "&brandShortName; მონაცემებს თქვენი პარამეტრების, მახასიათებლების, სანიშნების, შენახული წერილებისა და სხვა ელემენტების შესახებ, თქვენს პროფილში ინახავს.">
+
+<!ENTITY            autoSelect.label         "ნაგულისხმევი, ამ პროფილისთვის">
+<!ENTITY            autoSelect.accesskey     "თ">
+
+<!ENTITY            start.label              "&brandShortName;-ის გაშვება">
+<!ENTITY            exit.label               "გასვლა">
+
+<!ENTITY            newButton.label          "პროფილის შექმნა…">
+<!ENTITY            newButton.accesskey      "პ">
+<!ENTITY            renameButton.label       "პროფილის გადარქმევა…">
+<!ENTITY            renameButton.accesskey   "გ">
+<!ENTITY            deleteButton.label       "პროფილის წაშლა…">
+<!ENTITY            deleteButton.accesskey   "ფ">
+
+<!ENTITY            offlineState.label       "კავშირგარეშე რეჟიმი">
+<!ENTITY            offlineState.accesskey   "კ">

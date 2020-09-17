@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Llogari Firefox">
+<!ENTITY aboutAccounts.connected.description "Jeni lidhur si">
+<!ENTITY aboutAccounts.syncPreferences.label "Prekeni këtu që të kontrolloni rregullimet e Sync-ut">
+
+<!ENTITY aboutAccounts.noConnection.title "S&apos;ka lidhje në Internet">
+<!ENTITY aboutAccounts.retry.label "Riprovoni">
+
+<!ENTITY aboutAccounts.restrictedError.title "E kufizuar">
+<!ENTITY aboutAccounts.restrictedError.description "S&apos;mund të administroni Llogari Firefox prej kësaj llogarie.">

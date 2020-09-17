@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "רשימת דיוור חדשה">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "הוסף אל:">
+<!ENTITY addToAddressBook.accesskey     "ה">
+<!ENTITY ListName.label                 "שם רשימה:">
+<!ENTITY ListName.accesskey             "ש">
+<!ENTITY ListNickName.label             "כינוי רשימה:">
+<!ENTITY ListNickName.accesskey         "כ">
+<!ENTITY ListDescription.label          "תיאור:">
+<!ENTITY ListDescription.accesskey      "ת">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "הקלד כתובות דוא״ל כדי להוסיפן לרשימת הדיוור:">
+<!ENTITY AddressTitle.accesskey         "ד">
+<!ENTITY UpButton.label                 "הזז למעלה">
+<!ENTITY DownButton.label               "הזז למטה">
+

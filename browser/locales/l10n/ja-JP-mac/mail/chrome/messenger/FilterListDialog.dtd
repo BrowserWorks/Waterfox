@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title			"メッセージフィルター">
+<!ENTITY nameColumn.label		"フィルター名">
+<!ENTITY activeColumn.label		"有効">
+<!ENTITY newButton.label		"新規...">
+<!ENTITY newButton.accesskey		"N">
+<!ENTITY newButton.popupCopy.label	"コピー...">
+<!ENTITY newButton.popupCopy.accesskey	"C">
+<!ENTITY editButton.label		"編集...">
+<!ENTITY editButton.accesskey		"E">
+<!ENTITY deleteButton.label		"削除">
+<!ENTITY deleteButton.accesskey		"t">
+<!ENTITY reorderTopButton		"一番上へ移動">
+<!ENTITY reorderTopButton.accessKey	"o">
+<!ENTITY reorderTopButton.toolTip	"フィルターを並べ替えて一番最初に実行します">
+<!ENTITY reorderUpButton.label		"上へ移動">
+<!ENTITY reorderUpButton.accesskey	"U">
+<!ENTITY reorderDownButton.label	"下へ移動">
+<!ENTITY reorderDownButton.accesskey	"D">
+<!ENTITY reorderBottomButton		"一番下へ移動">
+<!ENTITY reorderBottomButton.accessKey	"B">
+<!ENTITY reorderBottomButton.toolTip	"フィルターを並べ替えて一番最後に実行します">
+<!ENTITY filterHeader.label		"自動的にこれらのフィルターが上から順に評価されます。">
+<!ENTITY filtersForPrefix.label		"対象アカウント:">
+<!ENTITY filtersForPrefix.accesskey	"F">
+<!ENTITY viewLogButton.label		"フィルターログ">
+<!ENTITY viewLogButton.accesskey	"L">
+<!ENTITY runFilters.label		"今すぐ実行">
+<!ENTITY runFilters.accesskey		"R">
+<!ENTITY stopFilters.label		"停止">
+<!ENTITY stopFilters.accesskey		"S">
+<!ENTITY folderPickerPrefix.label	"フィルターを使用するフォルダー:">
+<!ENTITY folderPickerPrefix.accesskey	"c">
+<!ENTITY helpButton.label		"Help">
+<!ENTITY helpButton.accesskey		"H">
+<!ENTITY closeCmd.key			"W">
+<!ENTITY searchBox.emptyText		"フィルター名を検索...">

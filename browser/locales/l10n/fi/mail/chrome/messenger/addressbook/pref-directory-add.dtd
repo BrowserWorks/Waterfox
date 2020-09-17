@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Nimi: ">
+<!ENTITY directoryName.accesskey           "N">
+<!ENTITY directoryHostname.label           "Palvelin: ">
+<!ENTITY directoryHostname.accesskey       "P">
+<!ENTITY directoryBaseDN.label             "Kanta-DN: ">
+<!ENTITY directoryBaseDN.accesskey         "K">
+<!ENTITY findButton.label                  "Etsi">
+<!ENTITY findButton.accesskey              "E">
+<!ENTITY directorySecure.label             "Käytä suojattua yhteyttä (SSL):">
+<!ENTITY directorySecure.accesskey         "K">
+<!ENTITY directoryLogin.label              "Sidottu DN: ">
+<!ENTITY directoryLogin.accesskey          "d">
+<!ENTITY General.tab                       "Yleiset">
+<!ENTITY Offline.tab                       "Yhteydettömässä tilassa">
+<!ENTITY Advanced.tab                      "Lisäasetukset">
+<!ENTITY portNumber.label                  "Portti: ">
+<!ENTITY portNumber.accesskey              "P">
+<!ENTITY searchFilter.label                "Hakusuodatin: ">
+<!ENTITY searchFilter.accesskey            "H">
+<!ENTITY scope.label                       "Alue: ">
+<!ENTITY scope.accesskey                   "A">
+<!ENTITY scopeOneLevel.label               "Yksi taso">
+<!ENTITY scopeOneLevel.accesskey           "Y">
+<!ENTITY scopeSubtree.label                "Alipuu">
+<!ENTITY scopeSubtree.accesskey            "A">
+<!ENTITY return.label                      "Älä palauta yli">
+<!ENTITY return.accesskey                  "t">
+<!ENTITY results.label                     "tulosta">
+<!ENTITY offlineText.label                 "Luettelosta on mahdollista ladata paikallinen kopio, joka on käytettävissä ollessasi yhteydettömässä tilassa.">
+<!ENTITY saslMechanism.label               "Kirjautumistapa: ">
+<!ENTITY saslMechanism.accesskey           "K">
+<!ENTITY saslOff.label                     "Yksinkertainen">
+<!ENTITY saslOff.accesskey                 "Y">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">

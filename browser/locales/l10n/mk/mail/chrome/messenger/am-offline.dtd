@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "За да се зачува простор на дискот, не преземај:">
+<!ENTITY offlineNotDownload.label "Пораки поголеми од">
+<!ENTITY offlineNotDownload.accesskey "П">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "дена">
+<!ENTITY message.label "пораки">
+<!ENTITY nntpNotDownloadRead.label "Прочитаните пораки">
+<!ENTITY nntpNotDownloadRead.accesskey "р">
+<!ENTITY nntpDownloadMsg.label "Пораките постари од">
+<!ENTITY nntpDownloadMsg.accesskey "о">
+<!ENTITY retentionCleanup.label "За да се ослободи простор на дискот, старите пораки можe да се бришат:">
+<!ENTITY retentionKeepMsg.label "Избриши ги пораките постари од">
+<!ENTITY retentionKeepMsg.accesskey "з">
+<!ENTITY retentionKeepAll.label "Никогаш (не бриши ниту една порака)">
+<!ENTITY retentionKeepAll.accesskey "а">
+<!ENTITY offlineSelectNntp.label "Дискусиони групи за локална употреба…">
+<!ENTITY diskspaceGroupTitle.label "Простор на дискот">
+

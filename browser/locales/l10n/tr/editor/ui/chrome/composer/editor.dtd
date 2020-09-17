@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Düzenleme Araç Çubuğu">
+<!ENTITY previewToolbarCmd.label "Gözat">
+<!ENTITY previewToolbarCmd.tooltip "Bu sayfayı tarayıcıyla aç">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Metin olarak dışa aktar…">
+<!ENTITY exportToTextCmd.accesskey "M">
+<!ENTITY previewCmd.label "Sayfayı Göster">
+<!ENTITY previewCmd.accesskey "G">
+<!ENTITY sendPageCmd.label "Sayfa Gönder…">
+<!ENTITY sendPageCmd.accesskey "n">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Düzenleme Araç Çubuğu">
+<!ENTITY compositionToolbarCmd.accesskey "D">
+<!ENTITY formattingToolbarCmd.label "Biçem Araç Çubuğu">
+<!ENTITY formattingToolbarCmd.accesskey "B">
+<!ENTITY editmodeToolbarCmd.label "Düzenleme Kipi Araç Çubuğu">
+<!ENTITY editmodeToolbarCmd.accesskey "e">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Biçim">
+<!ENTITY formatMenu.accesskey "i">
+<!ENTITY grid.label "Konumlandırma ızgarası">
+<!ENTITY grid.accesskey "o">
+<!ENTITY pageProperties.label "Sayfa Başlığı ve Özellikleri…">
+<!ENTITY pageProperties.accesskey "e">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "HTML'i Doğrula">
+<!ENTITY validateCmd.accesskey "D">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normal">
+<!ENTITY NormalMode.label "Normal Düzenleme Kipi">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Tablo kenarlarını ve isimlendirilmiş çapaları göster">
+<!ENTITY AllTagsModeTab.label "HTML Etiketleri">
+<!ENTITY AllTagsMode.label "HTML Etiketleri">
+<!ENTITY AllTagsMode.accesskey "E">
+<!ENTITY AllTagsMode.tooltip "Tüm HTML etiketler simgeleri göster">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Kaynak">
+<!ENTITY HTMLSourceMode.label "HTML Kaynağı">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "HTML kaynağını düzenle">
+<!ENTITY PreviewModeTab.label "Ön izleme">
+<!ENTITY PreviewMode.label "Ön izleme">
+<!ENTITY PreviewMode.accesskey "z">
+<!ENTITY PreviewMode.tooltip "WYSIWYG olarak görüntüle (tarayıcıdaki gibi)">

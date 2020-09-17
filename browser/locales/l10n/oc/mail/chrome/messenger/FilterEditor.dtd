@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Modificar lo filtre">
+<!ENTITY filterName.label "Nom del filtre :">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Indesirable">
+<!ENTITY notJunk.label "Acceptable">
+
+<!ENTITY lowestPriorityCmd.label "Minimala">
+<!ENTITY lowPriorityCmd.label "Bassa">
+<!ENTITY normalPriorityCmd.label "Normala">
+<!ENTITY highPriorityCmd.label "Nauta">
+<!ENTITY highestPriorityCmd.label "Maximala">
+
+<!ENTITY contextDesc.label "Aplicar lo filtre :">
+<!ENTITY contextManual.label "Al moment de son execucion manuala">
+
+<!ENTITY filterActionDesc.label "Executar aquestas accions :">
+<!ENTITY filterActionDesc.accesskey "x">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Desplaçar lo messatge cap a">
+<!ENTITY copyMessage.label "Copiar lo messatge dins">
+<!ENTITY forwardTo.label "Transferir lo messatge a">
+<!ENTITY replyWithTemplate.label "Respondre amb lo modèl">
+<!ENTITY markMessageRead.label "Marcar coma legit">
+<!ENTITY markMessageStarred.label "Apondre un seguit">
+<!ENTITY setPriority.label "Definir la prioritat a">
+<!ENTITY addTag.label "Etiquetar lo messatge">
+<!ENTITY setJunkScore.label "Definir l'estatut indesirable a">
+<!ENTITY deleteMessage.label "Suprimir lo messatge">
+<!ENTITY deleteFromPOP.label "Suprimir del servidor POP">
+<!ENTITY fetchFromPOP.label "Rapatriar del servidor POP">
+<!ENTITY ignoreThread.label "Ignorar la discussion">
+<!ENTITY ignoreSubthread.label "Ignorar la discussion filha">
+<!ENTITY watchThread.label "Susvelhar la discussion">
+<!ENTITY stopExecution.label "Arrestar l'execucion del filtre">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->

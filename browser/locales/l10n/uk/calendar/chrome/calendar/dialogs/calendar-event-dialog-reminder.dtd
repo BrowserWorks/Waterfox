@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Налаштування нагадування">
+<!ENTITY reminder.add.label                                "Додати">
+<!ENTITY reminder.add.accesskey                            "Д">
+<!ENTITY reminder.remove.label                             "Вилучити">
+<!ENTITY reminder.remove.accesskey                         "В">
+
+<!ENTITY reminder.reminderDetails.label                    "Деталі нагадування">
+<!ENTITY reminder.action.label                             "Виберіть дію для нагадування">
+
+<!ENTITY reminder.action.alert.label                       "Показати виринаюче вікно">
+<!ENTITY reminder.action.email.label                       "Надіслати E-Mail">
+
+<!ENTITY alarm.units.minutes                               "хвилин" >
+<!ENTITY alarm.units.hours                                 "годин" >
+<!ENTITY alarm.units.days                                  "днів" >

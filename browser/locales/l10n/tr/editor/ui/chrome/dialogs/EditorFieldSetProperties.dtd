@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Alan Kümesi Özellikleri">
+
+<!ENTITY Legend.label "Gösterge">
+<!ENTITY Legend.accesskey "G">
+
+<!ENTITY EditLegendText.label "Göstergeyi Düzenle:">
+<!ENTITY EditLegendText.accesskey "D">
+<!ENTITY LegendAlign.label "Göstergeyi Hizala:">
+<!ENTITY LegendAlign.accesskey "s">
+<!ENTITY AlignDefault.label "Varsayılan">
+<!ENTITY AlignLeft.label "Sol">
+<!ENTITY AlignCenter.label "Orta">
+<!ENTITY AlignRight.label "Sağ">
+
+<!ENTITY RemoveFieldSet.label "Alan kümesini kaldır">
+<!ENTITY RemoveFieldSet.accesskey "l">

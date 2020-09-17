@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Yeni takvim oluştur" >
+<!ENTITY wizard.label             "Yeni bir takvim oluştur" >
+<!ENTITY wizard.description       "Takvim konumunu seçin" >
+
+<!ENTITY initialpage.description    "Takviminiz bilgisayarınızda yerel olarak depolanabilir veya bir sunucuya kaydedilebilir. Böylece ona uzaktan erişebilir ve onu arkadaşlarınızla paylaşabilirsiniz." >
+<!ENTITY initialpage.computer.label  "Bilgisayarımda">
+<!ENTITY initialpage.network.label  "Ağ üzerinde">
+
+<!ENTITY locationpage.description         "Uzaktaki takviminize ulaşmak için gerekli bilgileri sağlayın" >
+<!ENTITY locationpage.login.description   "Tercihe bağlı: Kullanıcı ve parola girin" >
+<!ENTITY locationpage.username.label      "Kullanıcı adı:" >
+<!ENTITY locationpage.password.label      "Parola:" >
+
+<!ENTITY custompage.shortdescription  "Takviminizi özelleştiririn" >
+<!ENTITY custompage.longdescription   "Takviminize bir takma ad verebilir ve bu takvimdeki etkinlikleri reklendirebilirsiniz." >
+
+<!ENTITY finishpage.shortdescription  "Takvim oluşturuldu" >
+<!ENTITY finishpage.longdescription   "Takviminiz oluşturuldu." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Diğer">
+
+<!ENTITY buttons.create.label "Takvim oluştur">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Takvimleri bul">
+<!ENTITY buttons.find.accesskey "b">
+
+<!ENTITY buttons.back.label "Geri">
+<!ENTITY buttons.back.accesskey "G">
+
+<!ENTITY buttons.subscribe.label "Abone ol">
+<!ENTITY buttons.subscribe.accesskey "A">
+
+<!ENTITY calendartype.label "Takvim türü:">
+<!ENTITY location.label "Konum:">
+<!ENTITY location.placeholder "Takvim sunucusunun URL'si veya ana bilgisayar adı">
+
+<!ENTITY network.nocredentials.label "Bu konum kimlik bilgileri gerektirmez">
+<!ENTITY network.loading.description "Lütfen takvimleriniz keşfedilirken bekleyin.">
+<!ENTITY network.notfound.description "Bu konumda takvim bulunamadı. Lütfen ayarlarınızı kontrol edin.">
+<!ENTITY network.authfail.description "Girdiğiniz kimlik bilgileri kabul edilmedi. Lütfen ayarlarınızı kontrol edin.">
+
+<!ENTITY network.subscribe.single.description "Lütfen abone olmak istediğiniz takvimleri seçin.">
+<!ENTITY network.subscribe.multiple.description "Bu konum için birden çok takvim türü var. Lütfen takvim türünü seçip abone olmak istediğiniz takvimleri işaretleyin.">

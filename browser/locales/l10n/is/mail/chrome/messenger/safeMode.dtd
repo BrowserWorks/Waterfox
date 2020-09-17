@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title "&brandShortName; Öryggishamur">
+<!ENTITY window.width "37em">
+
+<!ENTITY safeModeDescription.label "&brandShortName; er núna keyrandi í öryggisham, þessi hamur gerir tímabundið óvirkar allar sérsniðnar stillingar, þema, og viðbætur.">
+<!ENTITY safeModeDescription2.label "Þú getur gert sumar eða allar þessar breytingar varanlegar:">
+
+<!ENTITY disableAddons.label "Slökkva á öllum viðbótum">
+<!ENTITY disableAddons.accesskey "S">
+
+<!ENTITY resetToolbars.label "Endurstilla allar verkfæraslár og stjórntæki">
+<!ENTITY resetToolbars.accesskey "r">
+
+<!ENTITY changeAndRestartButton.label "Gera breytingar og endurræsa">
+<!ENTITY changeAndRestartButton.accesskey "G">
+
+<!ENTITY continueButton.label "Halda áfram í öryggisham">
+<!ENTITY continueButton.accesskey "H">

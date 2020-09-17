@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Mezőcsoport tulajdonságai">
+
+<!ENTITY Legend.label "Felirat">
+<!ENTITY Legend.accesskey "F">
+
+<!ENTITY EditLegendText.label "Felirat szerkesztése:">
+<!ENTITY EditLegendText.accesskey "s">
+<!ENTITY LegendAlign.label "Felirat igazítása:">
+<!ENTITY LegendAlign.accesskey "i">
+<!ENTITY AlignDefault.label "Alapértelmezett">
+<!ENTITY AlignLeft.label "Balra">
+<!ENTITY AlignCenter.label "Középre">
+<!ENTITY AlignRight.label "Jobbra">
+
+<!ENTITY RemoveFieldSet.label "Mezőcsoport eltávolítása">
+<!ENTITY RemoveFieldSet.accesskey "M">

@@ -1,0 +1,193 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problema al cargar la páxina">
+<!ENTITY retry.label "Reintentar">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Nun pue coneutase">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Esta direición ta restrinxida">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Sirvidor non alcontráu">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Comprueba que la direición nun tien errores d'escritura
+    del tipu <strong>ww</strong>.exemplu.com en cuenta de
+    <strong>www</strong>.exemplu.com</li>
+  <li>Si nun pues cargar denguna páxina, comprueba la conexón
+    de rede del equipu.</li>
+  <li>Si l'equipu o rede tán protexíos por un tornafueos
+    o proxy, asegúrate de que &brandShortName; tien permisu
+    p'acceder a la web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Ficheru non alcontráu">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Comprueba que'l nome de ficheru nun tien fallos
+   d'escritura, incluyendo l'usu de mayúscules.</li>
+  <li>Comprueba si se movió'l ficheru, se renomó o
+   desanició.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Ñegóse l'accesu al ficheru">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Quiciabes tea desaniciáu, movíu o que los permisos del ficheru tean evitándo l'accesu.</li>
+</ul>
+">
+
+<!ENTITY generic.title "¡Vaya!">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; nun pue cargar esta páxina por dalguna razón.</p>
+">
+
+<!ENTITY malformedURI.title "La direición nun ye válida">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Les direiciones web escríbense normalmente como
+    <strong>http://www.exemplu.com/</strong></li>
+  <li>Asegúrate de que tas usando barres enclinaes hacia
+    delantre (p.e. <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "La conexón interrumpióse">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Documentu caducáu">
+<!ENTITY notCached.longDesc "<p>El documentu solicitáu nun ta disponible na caché.</p><ul><li>Por precaución, &brandShortName; nun va solicitar automáticamente documentos con información sensible.</li><li>Calca en Intentar pa solicitar otra vegada'l documentu dende'l sitiu web.</li></ul>">
+
+<!ENTITY netOffline.title "Mou ensin conexón">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Calca &quot;Reintentar&quot; pa cambiar al mou con conexón y recargar la páxina.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Error de codificación de conteníu">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Por favor, contauta colos propietarios del sitiu web pa informa-yos d'esti problema.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Tipu de ficheru non seguru">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Por favor, contauta colos propietarios del sitiu web pa informa-yos d'esti problema.</li>
+</ul>">
+
+<!ENTITY netReset.title "La conexón reanicióse">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "La conexón caducó">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Nun s'entendió la direición">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Podríes tener qu'instalar otru software p'abrir esta direición.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "El sirvidor proxy ta refugando les conexones">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Comprueba la configuración de proxy p'asegurate de
+    que ye correuta.</li>
+  <li>Contauta col alministrador de rede p'asegurate de
+    que'l sirvidor proxy ta funcionando.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Nun pue alcontrase'l sirvidor proxy">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Comprueba la configuración de proxy p'asegurate de
+    que ye correuta.</li>
+  <li>Comprueba que l'equipu tien una conexón de rede
+    operativa.</li>
+  <li>Si l'equipu o rede ta protexíu por una tornafueos
+    o proxy, asegúrate de que &brandShortName; tien permisu
+    p'acceder a la web.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "La páxina nun ta redirixendo afayadizamente">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Esti problema a vegaes ta provocáu por desactivar o refugar
+    la receición de cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Rempuesta inesperada del sirvidor">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Comprueba que'l sistema tien l'alministrador personal
+   de seguridá instaláu.</li>
+  <li>Esto podría debese a una configuración non estándar nel
+   sirvidor.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Conexón segura fallida">
+<!ENTITY nssFailure2.longDesc2 "">
+
+<!ENTITY nssBadCert.title "La conexón segura falló">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Pue ser un problema cola configuración del sirvidor, o bien que daquién ta intentando suplantar al sirvidor.</li>
+  <li>Si tas seguru de que te coneutaste anteriomente a esti sirvidor con éxitu, el fallu pue ser temporal polo que se pue intentar nuevamente dientro d'un tiempu.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>El sitiu podría tar non disponible temporalmente o
+   enforma ocupáu. Vuelvi a intentalo nunos momentos.</li>
+  <li>Si nun pues cargar denguna páxina, comprueba la conexón
+   de rede del equipu.</li>
+  <li>Si l'equipu o rede tán protexíos por un tornafueos
+   o proxy, asegúrate de que &brandShortName; tien permisu
+   p'acceder a la web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Bloquiáu pola política de seguranza de conteníu">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; evitó qu'esta páxina cargue d'esti mou porque tien una política de seguranza de conteníu que nun lo permite.</p>">
+
+
+<!ENTITY securityOverride.linkText "O pues amestar una esceición…">
+<!ENTITY securityOverride.getMeOutOfHereButton "¡Sacáime d'equí!">
+<!ENTITY securityOverride.exceptionButtonLabel "Amestar esceición…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Nun tendríes d'amestar una esceición si tas usando una conexón a Internet na que nun confíes, o si nun tas avezáu a ver un avisu pa esti sirvidor.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "XUL remotu">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Por favor, contauta colos propietarios del sitiu web pa informa-yos d'esti problema.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+

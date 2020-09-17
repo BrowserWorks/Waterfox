@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Roghainnean na duilleige">
+<!ENTITY location.label "Seòladh:">
+<!ENTITY lastModified.label "Atharrachadh mu dheireadh:">
+<!ENTITY titleInput.label "Tiotal:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Ùghdar:">
+<!ENTITY authorInput.accessKey "a">
+<!ENTITY descriptionInput.label "Tuairisgeul:">
+<!ENTITY descriptionInput.accessKey "T">
+<!ENTITY locationNewPage.label "[Duilleag ùr, gun sàbhaladh fhathast]">
+<!ENTITY EditHEADSource1.label "Sàr-chleachdaichean:">
+<!ENTITY EditHEADSource2.label "Gus susbaint eile raon a&apos; &lt;chinn&gt; a dheasachadh, cleachd &quot;Bun-tùs an HTML&quot; sa chlàr-taice &quot;Sealladh&quot; no air a&apos; bhàr-inneal &quot;Modh deasachaidh&quot;.">

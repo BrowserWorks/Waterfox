@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Liity kanavaan">
+
+<!ENTITY network.label     "Verkko:">
+<!ENTITY network.accesskey "V">
+
+<!ENTITY channel.label     "Kanava:">
+<!ENTITY channel.accesskey "K">
+
+<!ENTITY topics.label     "Etsi myös aiheista">
+<!ENTITY topics.accesskey "E">
+
+<!ENTITY join.label     "Liity">
+<!ENTITY join.accesskey "L">
+
+<!ENTITY minusers.label     "Käyttäjiä vähintään:">
+<!ENTITY minusers.accesskey "h">
+
+<!ENTITY maxusers.label     "Käyttäjiä enintään:">
+<!ENTITY maxusers.accesskey "n">
+
+<!ENTITY refresh.label     "Päivitä">
+<!ENTITY refresh.accesskey "P">
+
+<!ENTITY network.hint.label "Kirjoita haluamasi verkon tai palvelimen nimi porttinumeroineen ja kanavan nimi, niin voit liittyä siihen.">
+
+<!ENTITY col.network "Verkko">
+<!ENTITY col.name  "Nimi">
+<!ENTITY col.users "Käyttäjiä">
+<!ENTITY col.topic "Aihe">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Roghainnean">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Roghainnean leabhar nan seòladh">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Roghainnean an neach-aithne">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Roghainnean na liosta puist">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Seall clàr-taice co-theacsail leabhar nan seòladh">
+<!ENTITY addressbookPicker.label            "Leabhar nan seòladh:">
+<!ENTITY addressbookPicker.accesskey        "L">
+<!ENTITY searchContacts.label               "Lorg san luchd-aithne:">
+<!ENTITY searchContacts.accesskey           "n">
+<!ENTITY SearchNameOrEmail.label            "Ainm no post-dealain">
+
+<!ENTITY addtoToFieldMenu.label             "Cuir ris an raon &quot;Gu&quot;">
+<!ENTITY addtoToFieldMenu.accesskey         "G">
+<!ENTITY addtoCcFieldMenu.label             "Cuir ris an raon &quot;Cc&quot;">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Add to Bcc field">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Sguab às">
+<!ENTITY deleteAddrBookCard.accesskey       "S">
+<!ENTITY propertiesContext.label            "Roghainnean">
+<!ENTITY propertiesContext.accesskey        "i">
+<!ENTITY abPropertiesContext.label          "Roghainnean">
+<!ENTITY abPropertiesContext.accesskey      "i">
+<!ENTITY editContactContext.label           "Deasaich an neach-aithne">
+<!ENTITY editContactContext.accesskey       "e">
+<!ENTITY editMailingListContext.label       "Deasaich an liosta">
+<!ENTITY editMailingListContext.accesskey   "e">
+
+<!ENTITY newContactAbContext.label          "Neach-aithne ùr">
+<!ENTITY newContactAbContext.accesskey      "N">
+<!ENTITY newListAbContext.label             "Liosta ùr">
+<!ENTITY newListAbContext.accesskey         "L">
+
+<!ENTITY toButton.label                     "Cuir ri &quot;Gu&quot;:">
+<!ENTITY toButton.accesskey                 "C">
+<!ENTITY ccButton.label                     "Cuir ri &quot;Cc&quot;:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Cuir ri &quot;Bcc&quot;:">
+<!ENTITY bccButton.accesskey                "B">

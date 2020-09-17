@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Szolgáltató eltávolítása">
+<!ENTITY providerUninstall.accept.label                    "Leiratkozás a kijelöltekről">
+<!ENTITY providerUninstall.accept.accesskey                "L">
+<!ENTITY providerUninstall.cancel.label                    "Kiegészítő megtartása">
+<!ENTITY providerUninstall.cancel.accesskey                "K">
+<!ENTITY providerUninstall.preName.label                   "A következő eltávolítását vagy letiltását kezdeményezte:">
+<!ENTITY providerUninstall.postName.label                  "Ez az alábbi naptárak letiltását fogja okozni.">
+<!ENTITY providerUninstall.reinstallNote.label             "Ha nem tervezi ennek a szolgáltatónak az újratelepítését, akkor leiratkozhat a szolgáltató naptárjairól.">

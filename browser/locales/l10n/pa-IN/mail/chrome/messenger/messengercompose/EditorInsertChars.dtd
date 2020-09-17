@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ਅੱਖਰ ਸ਼ਾਮਿਲ">
+<!ENTITY category.label "ਕੈਟਾਗਰੀ">
+<!ENTITY letter.label "ਅੱਖਰ:">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "ਅੱਖਰ:">
+<!ENTITY character.accessKey "C">
+<!ENTITY accentUpper.label "ਵੱਡੇ ਅੱਖਰ(ਅੰਗਰੇਜ਼ੀ)">
+<!ENTITY accentLower.label "ਛੋਟੇ  ਅੱਖਰ(ਅੰਗਰੇਜ਼ੀ)">
+<!ENTITY otherUpper.label "ਹੋਰ ਵੱਡੇ ਅੱਖਰ">
+<!ENTITY otherLower.label "ਹੋਰ ਛੋਟੇ ਅੱਖਰ">
+<!ENTITY commonSymbols.label "ਸਧਾਰਨ ਨਿਸ਼ਾਨ">
+<!ENTITY insertButton.label "ਸ਼ਾਮਿਲ">
+<!ENTITY closeButton.label "ਬੰਦ ਕਰੋ">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Dewin Mewnforio">
+
+<!ENTITY importFromWin.label            "Dewisiadau Mewnforio, Nodau Tudalen, Hanes, Cyfrineiriau, a data arall o:">
+<!ENTITY importFromNonWin.label         "Dewisiadau Mewnforio, Nodau Tudalen, Hanes, Cyfrineiriau a data arall o:">
+<!ENTITY importSourceNotFound.label     "Heb ganfod rhaglen i fewnforio data ohoni.">
+
+<!ENTITY importFromNothing.label        "Peidio mewnforio dim">
+<!ENTITY importFromNothing.accesskey    "P">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 neu'r diweddarach">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Gosodiadau Mewnforio a Ffolderi E-bost">
+<!ENTITY importItems.title              "Eitemau i'w Mewnforio">
+<!ENTITY importItems.label              "Dewis eitemau i'w mewnforio:">
+
+<!ENTITY migrating.title                "Mewnforio…">
+<!ENTITY migrating.label                "Mae'r eitemau canlynol yn cael eu mewnforio…">
+
+<!ENTITY selectProfile.title            "Dewis Proffil">
+<!ENTITY selectProfile.label            "Mae'r proffiliau canlynol ar gael i'w mewnforio o:">
+
+<!ENTITY done.title                     "Wedi Cwblhau Mewnforio">
+<!ENTITY done.label                     "Cafodd yr eitemau canlynol eu mewnforio'n llwyddiannus:">

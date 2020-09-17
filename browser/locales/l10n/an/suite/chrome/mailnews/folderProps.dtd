@@ -1,0 +1,73 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Propiedatz">
+
+<!ENTITY generalInfo.label                       "Información cheneral">
+<!ENTITY folderCharsetFallback.label             "Fallback Character Encoding:">
+<!ENTITY folderCharsetFallback.accesskey         "E">
+<!ENTITY folderCharsetEnforce.label              "Apply encoding to all messages in the folder (individual message character encoding settings and auto-detection will be ignored)">
+<!ENTITY folderCharsetEnforce.accesskey          "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Reconstruir o fichero indiz resumen">
+<!ENTITY folderRebuildSummaryFile2.label         "Reparar carpeta">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Qualques veces o fichero indiz d'a carpeta (.msf) se danya y puede pareixer que qualques mensaches validos desapareixen mientres que atros eliminaus siguen amostrar; reparar a carpeta puede correchir istes problemas.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Incluir mensaches en ista carpeta en os resultaus d'a busca global">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "I">
+
+<!ENTITY retention.label "Politica de retención">
+<!ENTITY retentionUseAccount.label "Usar os datos de mi cuenta">
+<!ENTITY retentionUseAccount.accesskey "i">
+<!ENTITY daysOld.label "días">
+<!ENTITY message.label "mensaches">
+<!ENTITY retentionCleanup.label "Conservar mensaches:">
+<!ENTITY retentionCleanupImap.label "Conservar mensaches, tanto las copias locals como os suyos orichinals en o servidor:">
+<!ENTITY retentionCleanupPop.label "Conservar mensaches, incluindo os suyos orichinals en o servidor:">
+<!ENTITY retentionDeleteMsg.label "Eliminar mensaches con mas de">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Totz os mensajes">
+<!ENTITY retentionKeepAll.accesskey "a">
+<!ENTITY retentionKeepRecent.label "Os mas modernos">
+<!ENTITY retentionKeepRecent.accesskey "O">
+<!-- LOCALIZATION NOTE: Unhide with .keepUnreadOnly { display: -moz-box; } -->
+<!ENTITY retentionKeepUnreadHidden.label "Eliminar siempre mensaches leitos (prevale sobre a configuración d'antiguidat)">
+<!ENTITY retentionApplyToFlagged.label "Conservar siempre mensaches sinyalaus">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Sincronización">
+<!ENTITY folderCheckForNewMessages2.label        "Al ubtener mensaches nuevos d'ista cuenta, comprobar siempre ista carpeta">
+<!ENTITY folderCheckForNewMessages2.accesskey    "b">
+
+<!ENTITY offlineFolder.check.label               "Trigar ista carpeta ta usar sin connexión">
+<!ENTITY offlineFolder.check.accesskey           "T">
+<!ENTITY offlineFolder.button.label              "Descargar agora">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Seleccionar iste grupo de noticias ta usar sin connexión">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Descargar agora">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "Nombre:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Ubicación:">
+<!ENTITY folderProps.location.accesskey          "U">
+
+<!ENTITY folderSharingTab.label                  "Compartir">
+<!ENTITY privileges.button.label                 "Privilechios…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Tiene os siguients permisos:">
+<!ENTITY folderType.label                        "Tipo de carpeta:">
+
+<!ENTITY folderQuotaTab.label                    "Conduta">
+<!ENTITY folderQuotaRoot.label                   "Conduta radiz:">
+<!ENTITY folderQuotaUsage.label                  "Uso:">
+<!ENTITY folderQuotaStatus.label                 "Estau:">
+
+<!ENTITY numberOfMessages.label                  "Number of messages:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "unknown">
+<!ENTITY sizeOnDisk.label                        "Size on disk:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "unknown">
