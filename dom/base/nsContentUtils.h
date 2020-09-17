@@ -3125,6 +3125,14 @@ public:
    */
   static bool GetSourceMapURL(nsIHttpChannel* aChannel, nsACString& aResult);
 
+  /**
+   * Returns the length of the parent-traversal path (in terms of the number of
+   * nodes) to an unparented/root node from aNode. An unparented/root node is
+   * considered to have a depth of 1, its children have a depth of 2, etc.
+   * aNode is expected to be non-null.
+   */
+  static uint32_t GetNodeDepth(nsINode* aNode);
+
 private:
   static bool InitializeEventTable();
 
