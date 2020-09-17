@@ -1824,6 +1824,10 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(nsDocument)
       cb.NoteXPCOMChild(mql);
     }
   }
+
+  if (tmp->mResizeObserverController) {
+    tmp->mResizeObserverController->Traverse(cb);
+  }
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(nsDocument)
@@ -1936,6 +1940,10 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsDocument)
   }
 
   tmp->mInUnlinkOrDeletion = false;
+
+  if (tmp->mResizeObserverController) {
+    tmp->mResizeObserverController->Unlink();
+  }
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 nsresult
@@ -12107,6 +12115,24 @@ nsDocument::DocAddSizeOfExcludingThis(nsWindowSizes* aWindowSizes) const
   // Measurement of the following members may be added later if DMD finds it
   // is worthwhile:
   // - many!
+}
+
+void
+nsDocument::AddResizeObserver(ResizeObserver* aResizeObserver)
+{
+  if (!mResizeObserverController) {
+    mResizeObserverController = MakeUnique<ResizeObserverController>(this);
+  }
+
+  mResizeObserverController->AddResizeObserver(aResizeObserver);
+}
+
+void
+nsDocument::ScheduleResizeObserversNotification() const
+{
+  if (mResizeObserverController) {
+    mResizeObserverController->ScheduleNotification();
+  }
 }
 
 already_AddRefed<nsIDocument>
