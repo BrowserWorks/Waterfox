@@ -1710,6 +1710,21 @@ SetFactor(const nsCSSValue& aValue, float& aField, RuleNodeCacheConditions& aCon
   case eCSSUnit_Null:
     return;
 
+  case eCSSUnit_Percent:
+    aField = aValue.GetPercentValue();
+    if (aFlags & SETFCT_POSITIVE) {
+      NS_ASSERTION(aField >= 0.0f, "negative value for positive-only property");
+      if (aField < 0.0f)
+        aField = 0.0f;
+    }
+    if (aFlags & SETFCT_OPACITY) {
+      if (aField < 0.0f)
+        aField = 0.0f;
+      if (aField > 1.0f)
+        aField = 1.0f;
+    }
+    return;
+
   case eCSSUnit_Number:
     aField = aValue.GetFloatValue();
     if (aFlags & SETFCT_POSITIVE) {
