@@ -1901,9 +1901,9 @@ pref("browser.ssb.enabled", false);
   pref("intl.multilingual.enabled", true);
   pref("intl.multilingual.downloadEnabled", true);
 #else
-  pref("intl.multilingual.enabled", false);
+  pref("intl.multilingual.enabled", true, locked);
   // AMO only serves language packs for release and beta versions.
-  pref("intl.multilingual.downloadEnabled", false);
+  pref("intl.multilingual.downloadEnabled", false, locked);
 #endif
 
 // Simulate conditions that will happen when the browser
