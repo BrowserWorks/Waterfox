@@ -811,7 +811,7 @@ PropertySupportsVariant(nsCSSPropertyID aPropertyID, uint32_t aVariant)
       case eCSSProperty_grid_row_end:
       case eCSSProperty_font_weight:
       case eCSSProperty_initial_letter:
-        supported = VARIANT_NUMBER;
+        supported = VARIANT_NUMBER | VARIANT_OPACITY;
         break;
 
       default:
@@ -874,7 +874,7 @@ inDOMUtils::CssPropertySupportsType(const nsAString& aProperty, uint32_t aType,
     break;
   case TYPE_NUMBER:
     // Include integers under "number"?
-    variant = VARIANT_NUMBER | VARIANT_INTEGER;
+    variant = VARIANT_NUMBER | VARIANT_INTEGER | VARIANT_OPACITY;
     break;
   default:
     // Unknown type

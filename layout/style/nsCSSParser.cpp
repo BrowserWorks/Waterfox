@@ -1166,7 +1166,7 @@ protected:
   }
   bool ParseNonNegativeNumber(nsCSSValue& aValue)
   {
-    return ParseSingleTokenNonNegativeVariant(aValue, VARIANT_NUMBER, nullptr);
+    return ParseSingleTokenNonNegativeVariant(aValue, VARIANT_NUMBER | VARIANT_OPACITY, nullptr);
   }
 
   // Helpers for some common ParseSingleTokenOneOrLargerVariant calls.
@@ -1176,7 +1176,7 @@ protected:
   }
   bool ParseOneOrLargerNumber(nsCSSValue& aValue)
   {
-    return ParseSingleTokenOneOrLargerVariant(aValue, VARIANT_NUMBER, nullptr);
+    return ParseSingleTokenOneOrLargerVariant(aValue, VARIANT_NUMBER | VARIANT_OPACITY, nullptr);
   }
 
   // http://dev.w3.org/csswg/css-values/#custom-idents
@@ -7497,6 +7497,7 @@ CSSParserImpl::ParseNonNegativeVariant(nsCSSValue& aValue,
                                VARIANT_NUMBER |
                                VARIANT_LENGTH |
                                VARIANT_PERCENT |
+                               VARIANT_OPACITY |
                                VARIANT_INTEGER)) == 0,
              "need to update code below to handle additional variants");
 
@@ -7537,6 +7538,7 @@ CSSParserImpl::ParseOneOrLargerVariant(nsCSSValue& aValue,
   // that we specifically handle.
   MOZ_ASSERT((aVariantMask & ~(VARIANT_ALL_NONNUMERIC |
                                VARIANT_NUMBER |
+                               VARIANT_OPACITY |
                                VARIANT_INTEGER)) == 0,
              "need to update code below to handle additional variants");
 
@@ -7664,9 +7666,9 @@ CSSParserImpl::ParseVariant(nsCSSValue& aValue,
       }
     }
   }
-  // Check VARIANT_NUMBER and VARIANT_INTEGER before VARIANT_LENGTH or
-  // VARIANT_ZERO_ANGLE.
-  if (((aVariantMask & VARIANT_NUMBER) != 0) &&
+  // Check VARIANT_NUMBER, number tokens for VARIANT_OPACITY, and 
+  // VARIANT_INTEGER before VARIANT_LENGTH or VARIANT_ZERO_ANGLE.
+  if (((aVariantMask & (VARIANT_NUMBER | VARIANT_OPACITY)) != 0) &&
       (eCSSToken_Number == tk->mType)) {
     aValue.SetFloatValue(tk->mNumber, eCSSUnit_Number);
     return CSSParseResult::Ok;
@@ -7676,6 +7678,7 @@ CSSParserImpl::ParseVariant(nsCSSValue& aValue,
     aValue.SetIntValue(tk->mInteger, eCSSUnit_Integer);
     return CSSParseResult::Ok;
   }
+
   if (((aVariantMask & (VARIANT_LENGTH | VARIANT_ANGLE |
                         VARIANT_FREQUENCY | VARIANT_TIME)) != 0 &&
        eCSSToken_Dimension == tk->mType) ||
@@ -7699,6 +7702,15 @@ CSSParserImpl::ParseVariant(nsCSSValue& aValue,
   if (((aVariantMask & VARIANT_PERCENT) != 0) &&
       (eCSSToken_Percentage == tk->mType)) {
     aValue.SetPercentValue(tk->mNumber);
+    return CSSParseResult::Ok;
+  }
+  // We need to store eCSSToken_Percentage in eCSSUnit_Number in order to 
+  // serialize opacity according to spec. All percentage tokens are stored 
+  // as floats, so no type conversion is needed to make this possible. 
+  // Percentage tokens have to be evaluated later than number tokens.
+  if (((aVariantMask & VARIANT_OPACITY) != 0) &&
+      (eCSSToken_Percentage == tk->mType)) {
+    aValue.SetFloatValue(tk->mNumber, eCSSUnit_Number);
     return CSSParseResult::Ok;
   }
   if (mUnitlessLengthQuirk) { // NONSTANDARD: Nav interprets unitless numbers as px
@@ -8220,7 +8232,7 @@ CSSParserImpl::ParseImageRect(nsCSSValue& aImage)
       break;
     }
 
-    static const int32_t VARIANT_SIDE = VARIANT_NUMBER | VARIANT_PERCENT;
+    static const int32_t VARIANT_SIDE = VARIANT_NUMBER | VARIANT_PERCENT | VARIANT_OPACITY;
     if (!ParseSingleTokenNonNegativeVariant(top, VARIANT_SIDE, nullptr) ||
         !ExpectSymbol(',', true) ||
         !ParseSingleTokenNonNegativeVariant(right, VARIANT_SIDE, nullptr) ||
@@ -10685,7 +10697,7 @@ CSSParserImpl::ParseWebkitGradientColorStop(nsCSSValueGradient* aGradient)
   if (mToken.mIdent.LowerCaseEqualsLiteral("color-stop")) {
     // Parse stop location, followed by comma.
     if (!ParseSingleTokenVariant(stop->mLocation,
-                                 VARIANT_NUMBER | VARIANT_PERCENT,
+                                 VARIANT_NUMBER | VARIANT_PERCENT | VARIANT_OPACITY,
                                  nullptr) ||
         !ExpectSymbol(',', true)) {
       SkipUntil(')'); // Skip to end of color-stop(...) expression.
@@ -15944,7 +15956,7 @@ static bool GetFunctionParseInformation(nsCSSKeyword aToken,
     {VARIANT_LBCALC, VARIANT_LBCALC, VARIANT_LBCALC},
     {VARIANT_ANGLE_OR_ZERO},
     {VARIANT_ANGLE_OR_ZERO, VARIANT_ANGLE_OR_ZERO},
-    {VARIANT_NUMBER},
+    {VARIANT_NUMBER|VARIANT_OPACITY},
     {VARIANT_LENGTH|VARIANT_NONNEGATIVE_DIMENSION},
     {VARIANT_LB|VARIANT_NONNEGATIVE_DIMENSION},
     {VARIANT_NUMBER, VARIANT_NUMBER},
@@ -17558,7 +17570,7 @@ CSSParserImpl::ParseScrollSnapPoints(nsCSSValue& aValue, nsCSSPropertyID aPropID
       nsCSSKeywords::LookupKeyword(mToken.mIdent) == eCSSKeyword_repeat) {
     nsCSSValue lengthValue;
     if (ParseNonNegativeVariant(lengthValue,
-                                VARIANT_LENGTH | VARIANT_PERCENT | VARIANT_CALC,
+                                VARIANT_LENGTH | VARIANT_PERCENT | VARIANT_OPACITY | VARIANT_CALC,
                                 nullptr) != CSSParseResult::Ok) {
       REPORT_UNEXPECTED(PEExpectedNonnegativeNP);
       SkipUntil(')');

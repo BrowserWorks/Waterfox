@@ -44,6 +44,7 @@
 #define VARIANT_IDENTIFIER      0x002000  // D
 #define VARIANT_IDENTIFIER_NO_INHERIT 0x004000 // like above, but excluding
 // 'inherit' and 'initial'
+#define VARIANT_OPACITY         0x008000  // Take floats and percents as input, output float.
 #define VARIANT_AUTO            0x010000  // A
 #define VARIANT_INHERIT         0x020000  // H eCSSUnit_Initial, eCSSUnit_Inherit, eCSSUnit_Unset
 #define VARIANT_NONE            0x040000  // O
