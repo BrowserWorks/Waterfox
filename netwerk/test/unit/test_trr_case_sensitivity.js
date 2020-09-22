@@ -123,7 +123,16 @@ add_task(async function test_trr_casing() {
       data: "8.8.8.8",
     },
   ]);
-  await new TRRDNSListener("a.test.com", "8.8.8.8");
+  let [inRequest, inRecord] = await new TRRDNSListener(
+    "a.test.com",
+    "8.8.8.8",
+    true,
+    undefined,
+    "",
+    false,
+    { flags: Ci.nsIDNSService.RESOLVE_CANONICAL_NAME }
+  );
+  equal(inRecord.canonicalName, "b.test.com");
 
   await trrServer.registerDoHAnswers("CAPITAL.COM", "A", [
     {
