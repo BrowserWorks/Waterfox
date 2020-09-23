@@ -1664,6 +1664,7 @@ sctp_process_a_data_chunk(struct sctp_tcb *stcb, struct sctp_association *asoc,
 	/* Process a data chunk */
 	/* struct sctp_tmit_chunk *chk; */
 	struct sctp_tmit_chunk *chk;
+	struct sctp_stream_in *strm;
 	uint32_t tsn, fsn, gap, mid;
 	struct mbuf *dmbuf;
 	int the_len;
@@ -2296,12 +2297,13 @@ finish_express_del:
 			/* All can be removed */
 			TAILQ_FOREACH_SAFE(control, &asoc->pending_reply_queue, next, ncontrol) {
 				TAILQ_REMOVE(&asoc->pending_reply_queue, control, next);
+				strm = &asoc->strmin[control->sinfo_stream];
 				sctp_queue_data_to_stream(stcb, asoc, control, abort_flag, &need_reasm_check);
 				if (*abort_flag) {
 					return (0);
 				}
 				if (need_reasm_check) {
-					(void)sctp_deliver_reasm_check(stcb, asoc, &asoc->strmin[control->sinfo_stream], SCTP_READ_LOCK_NOT_HELD);
+					(void)sctp_deliver_reasm_check(stcb, asoc, strm, SCTP_READ_LOCK_NOT_HELD);
 					need_reasm_check = 0;
 				}
 			}
@@ -2316,12 +2318,13 @@ finish_express_del:
 				 * control->sinfo_tsn > liste->tsn
 				 */
 				TAILQ_REMOVE(&asoc->pending_reply_queue, control, next);
+				strm = &asoc->strmin[control->sinfo_stream];
 				sctp_queue_data_to_stream(stcb, asoc, control, abort_flag, &need_reasm_check);
 				if (*abort_flag) {
 					return (0);
 				}
 				if (need_reasm_check) {
-					(void)sctp_deliver_reasm_check(stcb, asoc, &asoc->strmin[control->sinfo_stream], SCTP_READ_LOCK_NOT_HELD);
+					(void)sctp_deliver_reasm_check(stcb, asoc, strm, SCTP_READ_LOCK_NOT_HELD);
 					need_reasm_check = 0;
 				}
 			}
