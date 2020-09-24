@@ -238,11 +238,13 @@ def lto(value, c_compiler, ld64_known_good, target, instrumented_build):
         # Tell LTO not to inline functions above a certain size, to mitigate
         # binary size growth while still getting good performance.
         # (For hot functions, PGO will put a multiplier on this limit.)
-        if target.os == 'WINNT':
+        if target.os == 'WINNT' and c_compiler.type != 'clang':
             ldflags.append('-mllvm:-import-instr-limit=10');
         elif target.os == 'OSX':
             ldflags.append('-Wl,-mllvm,-import-instr-limit=10');
         elif c_compiler.type == 'clang':
+            ldflags.append('-Wl,-plugin-opt=-import-instr-limit=10');
+        elif target.os == 'WINNT' and c_compiler.type == 'clang':
             ldflags.append('-Wl,-plugin-opt=-import-instr-limit=10');
 
     return namespace(
