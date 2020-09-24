@@ -259,7 +259,7 @@ fi # COMPILE_ENVIRONMENT
 dnl ========================================================
 dnl set the defaults first
 dnl ========================================================
-MOZ_USER_DIR=".mozilla"
+MOZ_USER_DIR=".waterfox"
 
 MOZ_FIX_LINK_PATHS="-Wl,-rpath-link,${DIST}/bin -Wl,-rpath-link,${prefix}/lib"
 
@@ -1703,7 +1703,7 @@ MOZ_ARG_WITH_STRING(distribution-id,
     MOZ_DISTRIBUTION_ID="$val"])
 
 if test -z "$MOZ_DISTRIBUTION_ID"; then
-   MOZ_DISTRIBUTION_ID="org.mozilla"
+   MOZ_DISTRIBUTION_ID="net.waterfox"
 fi
 
 AC_DEFINE_UNQUOTED(MOZ_DISTRIBUTION_ID,"$MOZ_DISTRIBUTION_ID")
@@ -2722,7 +2722,7 @@ if test -z "$ANDROID_PACKAGE_NAME" ; then
    if test "$MOZ_APP_NAME" = "fennec"; then
       ANDROID_PACKAGE_NAME="org.mozilla.fennec_aurora"
    else
-      ANDROID_PACKAGE_NAME="org.mozilla.$MOZ_APP_NAME"
+      ANDROID_PACKAGE_NAME="net.waterfox.$MOZ_APP_NAME"
    fi
 fi
 
