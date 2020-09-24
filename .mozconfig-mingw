@@ -1,0 +1,58 @@
+unset MAKECAB
+
+TOOLTOOL_DIR=$HOME/tooltool9
+clang_path="${TOOLTOOL_DIR}/mingw-w64-clang"
+
+AR=llvm-ar
+BINDGEN_CFLAGS="-I$clang_path/x86_64-w64-mingw32/include/c++/v1 -I$clang_path/x86_64-w64-mingw32/include"
+CARGO="${TOOLTOOL_DIR}/rustc/bin/cargo"
+CBINDGEN="${TOOLTOOL_DIR}/cbindgen/cbindgen"
+CC="x86_64-w64-mingw32-clang"
+CC="${TOOLTOOL_DIR}/mingw-w64-clang/bin/x86_64-w64-mingw32-clang"
+CFLAGS="-DWIN32"
+CROSS_COMPILE=1
+CXX="x86_64-w64-mingw32-clang++"
+CXX="${TOOLTOOL_DIR}/mingw-w64-clang/bin/x86_64-w64-mingw32-clang++"
+CXXFLAGS="-fms-extensions -Wno-incompatible-ms-struct -DWIN32"
+HOST_CC="clang"
+HOST_CC="${TOOLTOOL_DIR}/mingw-w64-clang/bin/clang"
+HOST_CXX="clang++"
+HOST_CXX="${TOOLTOOL_DIR}/mingw-w64-clang/bin/clang++"
+LDFLAGS="-Wl,-L${TOOLTOOL_DIR}/clang/lib -L${TOOLTOOL_DIR}/mingw-w64-clang/x86_64-w64-mingw32/lib"
+LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}${TOOLTOOL_DIR}/mingw32/lib64:${TOOLTOOL_DIR}/mingw-w64-clang/lib:${TOOLTOOL_DIR}/mingw-w64-clang/lib32:${TOOLTOOL_DIR}/mingw-w64-clang/x86_64-w64-mingw32/lib"
+NASM="${TOOLTOOL_DIR}/nasm/bin/nasm"
+RANLIB=llvm-ranlib
+RUSTC="${TOOLTOOL_DIR}/rustc/bin/rustc"
+RUSTFMT="${TOOLTOOL_DIR}/rustc/bin/rustfmt"
+X=$(getconf NPROCESSORS_ONLN 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null)
+
+ac_add_options "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
+ac_add_options --disable-bits-download
+ac_add_options --disable-debug
+ac_add_options --disable-default-browser-agent
+ac_add_options --disable-dmd
+ac_add_options --disable-geckodriver
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-parental-controls
+ac_add_options --disable-profiling
+ac_add_options --disable-tests
+ac_add_options --disable-verify-mar
+ac_add_options --enable-application=browser
+ac_add_options --enable-default-toolkit=cairo-windows
+ac_add_options --enable-lto
+ac_add_options --enable-optimize="-O3 -msse3 -w"
+ac_add_options --enable-proxy-bypass-protection
+#ac_add_options --enable-rust-simd
+ac_add_options --enable-updater
+ac_add_options --target=x86_64-w64-mingw32
+ac_add_options --with-branding=browser/branding/waterfox
+ac_add_options --with-clang-path="$CC"
+ac_add_options --with-ccache
+ac_add_options --with-toolchain-prefix=x86_64-w64-mingw32-
+export MOZ_INCLUDE_SOURCE_INFO=1
+export MOZ_REQUIRE_SIGNING=0
+mk_add_options "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+mk_add_options "export PATH=${TOOLTOOL_DIR}/mingw-w64-clang/bin:${TOOLTOOL_DIR}/mingw32/bin:${TOOLTOOL_DIR}/wine/bin:${TOOLTOOL_DIR}/upx/bin:${TOOLTOOL_DIR}/fxc2/bin:$PATH"
+mk_add_options AUTOCLOBBER=1
+mk_add_options MOZ_MAKE_FLAGS=-j${X}
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/objdir-mingw64
