@@ -8680,7 +8680,7 @@
 # them for web content.
 - name: svg.context-properties.content.enabled
   type: bool
-  value: false
+  value: true
   mirror: always
 
 # Enable the use of display-lists for SVG hit-testing.
