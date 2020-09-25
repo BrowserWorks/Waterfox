@@ -65,20 +65,22 @@ void SandboxTestingChild::Bind(Endpoint<PSandboxTestingChild>&& aEndpoint) {
     struct stat st;
     static const char kAllowedPath[] = "/usr/lib";
 
-    ErrnoTest("fstatat_as_stat"_ns, true,
+    ErrnoTest(NS_LITERAL_CSTRING("fstatat_as_stat"), true,
               [&] { return fstatat(AT_FDCWD, kAllowedPath, &st, 0); });
-    ErrnoTest("fstatat_as_lstat"_ns, true, [&] {
+    ErrnoTest(NS_LITERAL_CSTRING("fstatat_as_lstat"), true, [&] {
       return fstatat(AT_FDCWD, kAllowedPath, &st, AT_SYMLINK_NOFOLLOW);
     });
 #  ifdef XP_LINUX
-    ErrnoTest("fstatat_as_fstat"_ns, true,
+    ErrnoTest(NS_LITERAL_CSTRING("fstatat_as_fstat"), true,
               [&] { return fstatat(0, "", &st, AT_EMPTY_PATH); });
 #  endif  // XP_LINUX
 #else     // XP_UNIX
-    SendReportTestResults("dummy_test"_ns,
+    SendReportTestResults(NS_LITERAL_CSTRING("dummy_test"),
                           /* shouldSucceed */ true,
                           /* didSucceed */ true,
-                          "The test framework fails if there are no cases."_ns);
+                          NS_LITERAL_CSTRING(
+                              "The test framework fails if there are no cases."
+                          ));
 #endif    // XP_UNIX
   }
 
@@ -117,7 +119,7 @@ void SandboxTestingChild::PosixTest(const nsCString& aName, bool aExpectSuccess,
   bool succeeded = aStatus == 0;
   nsAutoCString message;
   if (succeeded) {
-    message = "Succeeded"_ns;
+    message = NS_LITERAL_CSTRING("Succeeded");
   } else {
     message.AppendPrintf("Error: %s", strerror(aStatus));
   }
