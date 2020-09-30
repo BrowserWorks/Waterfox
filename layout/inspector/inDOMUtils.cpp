@@ -811,7 +811,7 @@ PropertySupportsVariant(nsCSSPropertyID aPropertyID, uint32_t aVariant)
       case eCSSProperty_grid_row_end:
       case eCSSProperty_font_weight:
       case eCSSProperty_initial_letter:
-        supported = VARIANT_NUMBER | VARIANT_OPACITY;
+        supported = VARIANT_NUMBER;
         break;
 
       default:
