@@ -923,7 +923,6 @@ static void GenerateBigIntInitialization(MacroAssembler& masm, unsigned offset,
     masm.call(SymbolicAddress::AllocateBigInt);
   }
   masm.storeCallPointerResult(scratch);
-  masm.branchTest32(Assembler::Zero, scratch, scratch, fail);
 
   masm.assertStackAlignment(ABIStackAlignment);
   masm.freeStack(frameSize);
@@ -932,6 +931,7 @@ static void GenerateBigIntInitialization(MacroAssembler& masm, unsigned offset,
   ignore.add(scratch);
   masm.PopRegsInMaskIgnore(save, ignore);
 
+  masm.branchTest32(Assembler::Zero, scratch, scratch, fail);
   masm.initializeBigInt64(Scalar::BigInt64, scratch, input);
 }
 
@@ -1276,10 +1276,19 @@ static bool GenerateJitEntry(MacroAssembler& masm, size_t funcExportIndex,
         break;
       }
       case ValType::I64: {
+        Label fail, done;
         GenPrintI64(DebugChannel::Function, masm, ReturnReg64);
         GenerateBigIntInitialization(masm, 0, ReturnReg64, scratchG, &fe,
-                                     &exception);
+                                     &fail);
         masm.boxNonDouble(JSVAL_TYPE_BIGINT, scratchG, JSReturnOperand);
+        masm.jump(&done);
+        masm.bind(&fail);
+        // Fixup the stack for the exception tail so that we can share it.
+        masm.reserveStack(frameSize);
+        masm.jump(&exception);
+        masm.bind(&done);
+        // Un-fixup the stack for the benefit of the assertion below.
+        masm.setFramePushed(0);
         break;
       }
       case ValType::V128: {
