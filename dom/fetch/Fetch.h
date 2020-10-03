@@ -147,6 +147,9 @@ class FetchBody : public FetchStreamHolder, public AbortFollower {
  public:
   friend class FetchBodyConsumer<Derived>;
 
+  using BodyStreamHolder::AddRef;
+  using BodyStreamHolder::Release;
+
   bool GetBodyUsed(ErrorResult& aRv) const;
 
   // For use in assertions. On success, returns true if the body is used, false
