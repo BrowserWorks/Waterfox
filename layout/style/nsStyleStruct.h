@@ -1995,8 +1995,11 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleText
   }
 
   bool WordCanWrapStyle() const {
-    return WhiteSpaceCanWrapStyle() &&
-           mOverflowWrap == NS_STYLE_OVERFLOWWRAP_BREAK_WORD;
+    if (!WhiteSpaceCanWrapStyle()) {
+      return false;
+    }
+    return (mOverflowWrap == NS_STYLE_OVERFLOWWRAP_BREAK_WORD ||
+            mOverflowWrap == NS_STYLE_OVERFLOWWRAP_ANYWHERE);
   }
 
   bool HasTextEmphasis() const {

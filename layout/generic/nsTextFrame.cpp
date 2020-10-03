@@ -8556,8 +8556,9 @@ nsTextFrame::AddInlineMinISizeForFlow(gfxContext *aRenderingContext,
     return;
   }
 
-  // If overflow-wrap is break-word, we can wrap everywhere.
-  if (textStyle->WordCanWrap(this)) {
+  // If overflow-wrap is 'anywhere', we can wrap everywhere.
+  if (textStyle->mOverflowWrap == NS_STYLE_OVERFLOWWRAP_ANYWHERE &&
+      textStyle->WordCanWrap(this)) {
     aData->OptionallyBreak();
     aData->mCurrentLine +=
       textRun->GetMinAdvanceWidth(Range(start, flowEndInTextRun));
