@@ -16,6 +16,9 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
+const { ExtensionSupport } = ChromeUtils.import(
+  "resource:///modules/ExtensionSupport.jsm"
+);
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -953,6 +956,11 @@ BrowserGlue.prototype = {
   // nsIObserver implementation
   observe: async function BG_observe(subject, topic, data) {
     switch (topic) {
+	  case "app-startup":
+		const { BootstrapLoader } = ChromeUtils.import("resource:///modules/BootstrapLoader.jsm");
+		AddonManager.addExternalExtensionLoader(BootstrapLoader);
+		console.log("Loaded BootstrapLoader");
+		break;
       case "notifications-open-settings":
         this._openPreferences("privacy-permissions");
         break;
