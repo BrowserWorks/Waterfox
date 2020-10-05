@@ -1277,7 +1277,14 @@ var Policies = {
 
   OfferToSaveLoginsDefault: {
     onBeforeUIStartup(manager, param) {
-      setDefaultPref("signon.rememberSignons", param);
+      let policies = Services.policies.getActivePolicies();
+      if ("OfferToSaveLogins" in policies) {
+        log.error(
+          `OfferToSaveLoginsDefault ignored because OfferToSaveLogins is present.`
+        );
+      } else {
+        setDefaultPref("signon.rememberSignons", param);
+      }
     },
   },
 
@@ -2020,7 +2027,20 @@ function setDefaultPref(prefName, prefValue, locked = false) {
         throw new Error(`Non-integer value for ${prefName}`);
       }
 
-      defaults.setIntPref(prefName, prefValue);
+      if (
+        defaults.getPrefType(prefName) == defaults.PREF_BOOL ||
+        prefName == "browser.bookmarks.restore_default_bookmarks" ||
+        prefName == "browser.places.importBookmarksHTML" ||
+        prefName == "extensions.getAddons.showPane"
+      ) {
+        // It's possible an int was used in place of a boolean due to legacy prefs and GPO.
+        // If so, we need to set it as a boolean. We had to hardcode these few preference
+        // names because they aren't set by default.
+        // See bug 1666836.
+        defaults.setBoolPref(prefName, !!prefValue);
+      } else {
+        defaults.setIntPref(prefName, prefValue);
+      }
       break;
 
     case "string":

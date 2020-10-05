@@ -275,9 +275,8 @@ mochitest-media:
             default: built-projects
     variants:
         by-test-platform:
-            android.*: ['socketprocess']
-            linux1804-64/debug: ['fission', 'socketprocess']
-            default: ['fission', 'socketprocess']
+            linux1804-64/debug: ['fission']
+            default: ['fission']
     loopback-video: true
     instance-size: large
     chunks:

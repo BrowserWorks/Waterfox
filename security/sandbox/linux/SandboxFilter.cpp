@@ -243,14 +243,21 @@ class SandboxPolicyCommon : public SandboxPolicyBase {
     auto path = reinterpret_cast<const char*>(aArgs.args[1]);
     auto buf = reinterpret_cast<statstruct*>(aArgs.args[2]);
     auto flags = static_cast<int>(aArgs.args[3]);
+
+    if (fd != AT_FDCWD && (flags & AT_EMPTY_PATH) != 0 &&
+        strcmp(path, "") == 0) {
+      return ConvertError(fstatsyscall(fd, buf));
+    }
+
     if (fd != AT_FDCWD && path[0] != '/') {
       SANDBOX_LOG_ERROR("unsupported fd-relative fstatat(%d, \"%s\", %p, %d)",
                         fd, path, buf, flags);
       return BlockedSyscallTrap(aArgs, nullptr);
     }
-    if ((flags & ~AT_SYMLINK_NOFOLLOW) != 0) {
+    if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT)) != 0) {
       SANDBOX_LOG_ERROR("unsupported flags %d in fstatat(%d, \"%s\", %p, %d)",
-                        (flags & ~AT_SYMLINK_NOFOLLOW), fd, path, buf, flags);
+                        (flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT)), fd,
+                        path, buf, flags);
       return BlockedSyscallTrap(aArgs, nullptr);
     }
     return (flags & AT_SYMLINK_NOFOLLOW) == 0 ? broker->Stat(path, buf)

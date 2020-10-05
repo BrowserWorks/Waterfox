@@ -907,16 +907,18 @@ org.do
 sld.do
 web.do
 
-// dz : https://en.wikipedia.org/wiki/.dz
+// dz : http://www.nic.dz/images/pdf_nic/charte.pdf
 dz
+art.dz
+asso.dz
 com.dz
+edu.dz
+gov.dz
 org.dz
 net.dz
-gov.dz
-edu.dz
-asso.dz
 pol.dz
-art.dz
+soc.dz
+tm.dz
 
 // ec : http://www.nic.ec/reg/paso1.asp
 // Submitted by registry <vabboud@nic.ec>
@@ -4697,13 +4699,12 @@ web.ni
 //      ccTLD for the Netherlands
 nl
 
-// no : http://www.norid.no/regelverk/index.en.html
-// The Norwegian registry has declined to notify us of updates. The web pages
-// referenced below are the official source of the data. There is also an
-// announce mailing list:
-// https://postlister.uninett.no/sympa/info/norid-diskusjon
+// no : https://www.norid.no/en/om-domenenavn/regelverk-for-no/
+// Norid geographical second level domains : https://www.norid.no/en/om-domenenavn/regelverk-for-no/vedlegg-b/
+// Norid category second level domains : https://www.norid.no/en/om-domenenavn/regelverk-for-no/vedlegg-c/
+// Norid category second-level domains managed by parties other than Norid : https://www.norid.no/en/om-domenenavn/regelverk-for-no/vedlegg-d/
 no
-// Norid generic domains : http://www.norid.no/regelverk/vedlegg-c.en.html
+// Norid category second level domains : https://www.norid.no/en/om-domenenavn/regelverk-for-no/vedlegg-c/
 fhs.no
 vgs.no
 fylkesbibl.no
@@ -4711,13 +4712,13 @@ folkebibl.no
 museum.no
 idrett.no
 priv.no
-// Non-Norid generic domains : http://www.norid.no/regelverk/vedlegg-d.en.html
+// Norid category second-level domains managed by parties other than Norid : https://www.norid.no/en/om-domenenavn/regelverk-for-no/vedlegg-d/
 mil.no
 stat.no
 dep.no
 kommune.no
 herad.no
-// no geographical names : http://www.norid.no/regelverk/vedlegg-b.en.html
+// Norid geographical second level domains : https://www.norid.no/en/om-domenenavn/regelverk-for-no/vedlegg-b/
 // counties
 aa.no
 ah.no
@@ -7109,7 +7110,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2020-09-09T17:29:56Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2020-09-17T17:33:58Z
 // This list is auto-generated, don't edit it manually.
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -9184,7 +9185,7 @@ nokia
 // northwesternmutual : 2015-06-18 Northwestern Mutual Registry, LLC
 northwesternmutual
 
-// norton : 2014-12-04 Symantec Corporation
+// norton : 2014-12-04 NortonLifeLock Inc.
 norton
 
 // now : 2015-06-25 Amazon Registry Services, Inc.
@@ -11232,6 +11233,10 @@ drud.us
 // Submitted by Richard Harper <richard@duckdns.org>
 duckdns.org
 
+// Bip : https://bip.sh
+// Submitted by Joel Kennedy <joel@bip.sh>
+bip.sh
+
 // bitbridge.net : Submitted by Craig Welch, abeliidev@gmail.com
 bitbridge.net
 
@@ -12002,6 +12007,7 @@ googleapis.com
 googlecode.com
 pagespeedmobilizer.com
 publishproxy.com
+translate.goog
 withgoogle.com
 withyoutube.com
 
@@ -13374,7 +13380,9 @@ cx.ua
 
 // WP Engine : https://wpengine.com/
 // Submitted by Michael Smith <michael.smith@wpengine.com>
+// Submitted by Brandon DuRette <brandon.durette@wpengine.com>
 wpenginepowered.com
+js.wpenginepowered.com
 
 // Impertrix Solutions : <https://impertrixcdn.com>
 // Submitted by Zhixiang Zhao <csuite@impertrix.com>
