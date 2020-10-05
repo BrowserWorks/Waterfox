@@ -2269,8 +2269,8 @@ this.XPIDatabase = {
     }
 
     if (this.isDisabledLegacy(aAddon)) {
-      logger.warn(`disabling legacy extension ${aAddon.id}`);
-      return false;
+      logger.warn(`enabling legacy extension ${aAddon.id}`);
+      return true;
     }
 
     if (AddonManager.checkCompatibility) {
