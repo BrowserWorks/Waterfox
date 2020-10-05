@@ -23,7 +23,10 @@ TESTING_JS_MODULES += [
     "test/AppUiTestDelegate.jsm",
 ]
 
-DIRS += ["schemas"]
+DIRS += [
+    "common",
+    "schemas",
+]
 
 BROWSER_CHROME_MANIFESTS += [
     "test/browser/browser-private.ini",

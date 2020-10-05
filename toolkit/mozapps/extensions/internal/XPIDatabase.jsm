@@ -864,6 +864,7 @@ AddonWrapper = class {
 
     if (addon.optionsType) {
       switch (parseInt(addon.optionsType, 10)) {
+        case AddonManager.OPTIONS_TYPE_DIALOG:
         case AddonManager.OPTIONS_TYPE_TAB:
         case AddonManager.OPTIONS_TYPE_INLINE_BROWSER:
           return hasOptionsURL ? addon.optionsType : null;
@@ -2269,8 +2270,8 @@ this.XPIDatabase = {
     }
 
     if (this.isDisabledLegacy(aAddon)) {
-      logger.warn(`disabling legacy extension ${aAddon.id}`);
-      return false;
+      logger.warn(`enabling legacy extension ${aAddon.id}`);
+      return true;
     }
 
     if (AddonManager.checkCompatibility) {
