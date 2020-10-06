@@ -9,6 +9,7 @@
 #include "nsIChannel.h"
 #include "nsILoadGroup.h"
 #include "nsIInterfaceRequestorUtils.h"
+#include "nsProxyRelease.h"
 
 // Change this if we want to cancel and remove the associated preload on removal
 // of all <link rel=preload> tags from the tree.
@@ -41,9 +42,8 @@ PreloaderBase::RedirectSink::RedirectSink(PreloaderBase* aPreloader,
     : mPreloader(aPreloader), mCallbacks(aCallbacks) {}
 
 PreloaderBase::RedirectSink::~RedirectSink() {
-  MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread(),
-                        "Should figure out how to safely drop mPreloader "
-                        "otherwise");
+  NS_ReleaseOnMainThread("RedirectSink::mPreloader::mRef",
+                         mPreloader.TakeRef());
 }
 
 NS_IMPL_ISUPPORTS(PreloaderBase::RedirectSink, nsIInterfaceRequestor,
