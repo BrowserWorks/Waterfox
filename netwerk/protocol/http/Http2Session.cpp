@@ -3950,9 +3950,12 @@ Http2Session::CreateTunnel(nsHttpTransaction *trans,
   // transaction so that an auth created by the connect can be mappped
   // to the correct security callbacks
 
-  RefPtr<SpdyConnectTransaction> connectTrans =
-    new SpdyConnectTransaction(ci, aCallbacks, trans->Caps(), trans, this);
-  DebugOnly<bool> rv = AddStream(connectTrans, nsISupportsPriority::PRIORITY_NORMAL, false, nullptr);
+  RefPtr<nsHttpConnectionInfo> clone(ci->Clone());
+  RefPtr<SpdyConnectTransaction> connectTrans = new SpdyConnectTransaction(
+      clone, aCallbacks, trans->Caps(), trans, this);
+  DebugOnly<bool> rv =
+      AddStream(connectTrans, nsISupportsPriority::PRIORITY_NORMAL, false,
+                nullptr);
   MOZ_ASSERT(rv);
   Http2Stream *tunnel = mStreamTransactionHash.Get(connectTrans);
   MOZ_ASSERT(tunnel);
