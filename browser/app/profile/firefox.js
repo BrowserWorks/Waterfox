@@ -1184,7 +1184,7 @@ pref("services.sync.prefs.sync.browser.contentblocking.category", true);
 pref("services.sync.prefs.sync.browser.contentblocking.features.strict", true);
 pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
 pref("services.sync.prefs.sync.browser.ctrlTab.recentlyUsedOrder", true);
-pref("services.sync.prefs.sync.browser.discovery.enabled", true);
+pref("services.sync.prefs.sync.browser.discovery.enabled", false, locked);
 pref("services.sync.prefs.sync.browser.download.useDownloadDir", true);
 pref("services.sync.prefs.sync.browser.formfill.enable", true);
 pref("services.sync.prefs.sync.browser.link.open_newwindow", true);
@@ -1321,8 +1321,8 @@ pref("browser.newtabpage.activity-stream.asrouter.useRemoteL10n", false, locked)
 
 // These prefs control if Discovery Stream is enabled.
 pref("browser.newtabpage.activity-stream.discoverystream.enabled", false, locked);
-pref("browser.newtabpage.activity-stream.discoverystream.hardcoded-basic-layout", false);
-pref("browser.newtabpage.activity-stream.discoverystream.spocs-endpoint", "");
+pref("browser.newtabpage.activity-stream.discoverystream.hardcoded-basic-layout", false, locked);
+pref("browser.newtabpage.activity-stream.discoverystream.spocs-endpoint", "", locked);
 // List of regions that get stories by default.
 pref("browser.newtabpage.activity-stream.discoverystream.region-stories-config", "", locked);
 // List of regions that get spocs by default.
@@ -1334,7 +1334,7 @@ pref("browser.newtabpage.activity-stream.discoverystream.isCollectionDismissible
 // Switch between different versions of the recommendation provider.
 pref("browser.newtabpage.activity-stream.discoverystream.personalization.version", 1);
 // Configurable keys used by personalization version 2.
-pref("browser.newtabpage.activity-stream.discoverystream.personalization.modelKeys", "nb_model_arts_and_entertainment, nb_model_autos_and_vehicles, nb_model_beauty_and_fitness, nb_model_blogging_resources_and_services, nb_model_books_and_literature, nb_model_business_and_industrial, nb_model_computers_and_electronics, nb_model_finance, nb_model_food_and_drink, nb_model_games, nb_model_health, nb_model_hobbies_and_leisure, nb_model_home_and_garden, nb_model_internet_and_telecom, nb_model_jobs_and_education, nb_model_law_and_government, nb_model_online_communities, nb_model_people_and_society, nb_model_pets_and_animals, nb_model_real_estate, nb_model_reference, nb_model_science, nb_model_shopping, nb_model_sports, nb_model_travel");
+pref("browser.newtabpage.activity-stream.discoverystream.personalization.modelKeys", "", locked);
 // System pref to allow Pocket stories personalization to be turned on/off.
 pref("browser.newtabpage.activity-stream.discoverystream.recs.personalized", false, locked);
 // System pref to allow Pocket sponsored content personalization to be turned on/off.
@@ -1590,10 +1590,8 @@ pref("dom.storage_access.enabled", true);
 
 pref("browser.contentblocking.cryptomining.preferences.ui.enabled", true);
 pref("browser.contentblocking.fingerprinting.preferences.ui.enabled", true);
-#ifdef NIGHTLY_BUILD
-  // Enable cookieBehavior = BEHAVIOR_REJECT_TRACKER_AND_PARTITION_FOREIGN as an option in the custom category ui
-  pref("browser.contentblocking.reject-and-isolate-cookies.preferences.ui.enabled", true);
-#endif
+// Enable cookieBehavior = BEHAVIOR_REJECT_TRACKER_AND_PARTITION_FOREIGN as an option in the custom category ui
+pref("browser.contentblocking.reject-and-isolate-cookies.preferences.ui.enabled", true);
 
 // Possible values for browser.contentblocking.features.strict pref:
 //   Tracking Protection:
@@ -1780,11 +1778,11 @@ pref("signon.management.page.sort", "name");
 // The utm_creative value is appended within the code (specific to the location on
 // where it is clicked). Be sure that if these two prefs are updated, that
 // the utm_creative param be last.
-pref("signon.management.page.mobileAndroidURL", "https://app.adjust.com/6tteyjo?redirect=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dmozilla.lockbox&utm_campaign=Desktop&utm_adgroup=InProduct&utm_creative=");
-pref("signon.management.page.mobileAppleURL", "https://app.adjust.com/6tteyjo?redirect=https%3A%2F%2Fitunes.apple.com%2Fapp%2Fid1314000270%3Fmt%3D8&utm_campaign=Desktop&utm_adgroup=InProduct&utm_creative=");
+pref("signon.management.page.mobileAndroidURL", "", locked);
+pref("signon.management.page.mobileAppleURL", "", locked);
 pref("signon.management.page.breachAlertUrl",
      "https://monitor.firefox.com/breach-details/");
-pref("signon.management.page.hideMobileFooter", false);
+pref("signon.management.page.hideMobileFooter", true);
 pref("signon.management.page.showPasswordSyncNotification", true);
 pref("signon.passwordEditCapture.enabled", true);
 pref("signon.showAutoCompleteFooter", true);
@@ -1918,7 +1916,7 @@ pref("fission.frontend.simulate-messages", false);
 
 // Coverage ping is disabled by default.
 pref("toolkit.coverage.enabled", false, locked);
-pref("toolkit.coverage.endpoint.base", "");
+pref("toolkit.coverage.endpoint.base", "", locked);
 
 // Discovery prefs
 pref("browser.discovery.enabled", false, locked);
