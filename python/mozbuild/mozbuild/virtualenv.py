@@ -438,7 +438,7 @@ class VirtualenvManager(object):
                 handle_package(package)
 
             sitecustomize = os.path.join(
-                os.path.dirname(os.__file__), 'sitecustomize.py')
+                os.path.dirname(python_lib), 'sitecustomize.py')
             with open(sitecustomize, 'w') as f:
                 f.write(
                     '# Importing mach_bootstrap has the side effect of\n'
