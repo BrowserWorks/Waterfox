@@ -976,6 +976,28 @@ const DEFAULT_WELCOME_CONTENT = {
         }
       }
     }
+  },
+  {
+    id: "AW_PRIVACY",
+    order: 3,
+    content: {
+      title: "Automatic Privacy",
+      subtitle: "Waterfox automatically blocks trackers and malware, and keeps companies from secretly following you around. When you see the shield while browsing, Waterfox is protecting you.",
+      tiles: {
+        type: "video",
+        media_type: "privacy",
+        source: {
+          default: "resource://activity-stream/data/content/assets/privacy-onboarding.webm",
+          dark: "resource://activity-stream/data/content/assets/privacy-onboarding-dark.webm"
+        }
+      },
+      primary_button: {
+        label: "Start Browsing",
+        action: {
+          navigate: true
+        }
+      }
+    }
   }]
 };
 

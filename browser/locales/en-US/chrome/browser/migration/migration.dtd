@@ -34,8 +34,8 @@
 <!ENTITY importFromFirefox.accesskey    "X">
 <!ENTITY importFrom360se.label          "360 Secure Browser">
 <!ENTITY importFrom360se.accesskey      "3">
-<!ENTITY importFromLfirefox.label       "Local Firefox">
-<!ENTITY importFromLfirefox.accesskey   "L">
+<!ENTITY importFromLFirefox.label       "Local Firefox">
+<!ENTITY importFromLFirefox.accesskey   "L">
 <!ENTITY importFromWaterfoxClassic.label "Waterfox Classic">
 <!ENTITY importFromWaterfoxClassic.accesskey   "W">
 

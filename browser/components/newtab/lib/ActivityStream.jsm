@@ -109,6 +109,7 @@ ChromeUtils.defineModuleGetter(
   "resource://activity-stream/lib/DiscoveryStreamFeed.jsm"
 );
 
+const GEO_PREF = "browser.search.region";
 const REGION_STORIES_CONFIG =
   "browser.newtabpage.activity-stream.discoverystream.region-stories-config";
 const REGION_SPOCS_CONFIG =

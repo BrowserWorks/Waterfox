@@ -8,39 +8,39 @@ const DEFAULT_SITES_MAP = new Map([
   // This first item is the global list fallback for any unexpected geos
   [
     "",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.wikipedia.org/,https://www.reddit.com/,https://www.amazon.com/,https://twitter.com/",
+    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
   ],
   [
     "US",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.amazon.com/,https://www.reddit.com/,https://www.wikipedia.org/,https://twitter.com/",
+    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
   ],
   [
     "CA",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.reddit.com/,https://www.wikipedia.org/,https://www.amazon.ca/,https://twitter.com/",
+    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
   ],
   [
     "DE",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.amazon.de/,https://www.ebay.de/,https://www.wikipedia.org/,https://www.reddit.com/",
+    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
   ],
   [
     "PL",
-    "https://www.youtube.com/,https://www.facebook.com/,https://allegro.pl/,https://www.wikipedia.org/,https://www.olx.pl/,https://www.wykop.pl/",
+    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
   ],
   [
     "RU",
-    "https://vk.com/,https://www.youtube.com/,https://ok.ru/,https://www.avito.ru/,https://www.aliexpress.com/,https://www.wikipedia.org/",
+    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
   ],
   [
     "GB",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.reddit.com/,https://www.amazon.co.uk/,https://www.bbc.co.uk/,https://www.ebay.co.uk/",
+    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
   ],
   [
     "FR",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.wikipedia.org/,https://www.amazon.fr/,https://www.leboncoin.fr/,https://twitter.com/",
+    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
   ],
   [
     "CN",
-    "https://www.baidu.com/,https://www.zhihu.com/,https://www.ifeng.com/,https://weibo.com/,https://www.ctrip.com/,https://www.iqiyi.com/",
+    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
   ],
 ]);
 
