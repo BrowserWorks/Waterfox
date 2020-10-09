@@ -631,13 +631,13 @@ project_flag('MOZ_PLACES',
 
 project_flag('MOZ_SERVICES_HEALTHREPORT',
              help='Build Firefox Health Reporter Service',
-             set_for_old_configure=True,
-             set_as_define=True)
+             set_for_old_configure=False,
+             set_as_define=False)
 
 project_flag('MOZ_NORMANDY',
              help='Enable Normandy recipe runner',
-             set_for_old_configure=True,
-             set_as_define=True)
+             set_for_old_configure=False,
+             set_as_define=False)
 
 project_flag('MOZ_SERVICES_SYNC',
              help='Build Sync Services if required')
@@ -663,9 +663,9 @@ def check_places_and_android_history(places, android_history):
 option(env='MOZ_TELEMETRY_REPORTING', default=mozilla_official,
        help='Enable telemetry reporting')
 
-set_define('MOZ_TELEMETRY_REPORTING', True, when='MOZ_TELEMETRY_REPORTING')
+set_define('MOZ_TELEMETRY_REPORTING', False)
 add_old_configure_assignment(
-    'MOZ_TELEMETRY_REPORTING', True, when='MOZ_TELEMETRY_REPORTING')
+    'MOZ_TELEMETRY_REPORTING', False)
 
 
 @depends('MOZ_TELEMETRY_REPORTING', milestone.is_nightly, fennec_nightly)
@@ -673,7 +673,7 @@ def telemetry_on_by_default(reporting, is_nightly, fennec_nightly):
     return reporting and (is_nightly or fennec_nightly)
 
 
-set_define('MOZ_TELEMETRY_ON_BY_DEFAULT', True, when=telemetry_on_by_default)
+set_define('MOZ_TELEMETRY_ON_BY_DEFAULT', False)
 
 
 # gpsd support

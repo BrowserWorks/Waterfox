@@ -1918,6 +1918,9 @@ pref("fission.frontend.simulate-messages", false);
 pref("toolkit.coverage.enabled", false, locked);
 pref("toolkit.coverage.endpoint.base", "", locked);
 
+// Coverage ping doesn't seem to respect the preferences above
+pref("toolkit.coverage.opt-out", true, locked);
+
 // Discovery prefs
 pref("browser.discovery.enabled", false, locked);
 pref("browser.discovery.containers.enabled", false, locked);
