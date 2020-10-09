@@ -768,7 +768,7 @@ case "$target" in
     dnl See http://support.microsoft.com/kb/143208 to use STL
     AC_DEFINE(NOMINMAX)
     BIN_SUFFIX='.exe'
-    MOZ_USER_DIR="Mozilla"
+    MOZ_USER_DIR="Waterfox"
 
     case "$host_os" in
     cygwin*|msvc*|mks*)
