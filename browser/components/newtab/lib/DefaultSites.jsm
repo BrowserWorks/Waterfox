@@ -8,39 +8,39 @@ const DEFAULT_SITES_MAP = new Map([
   // This first item is the global list fallback for any unexpected geos
   [
     "",
-    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
+    "https://www.archive.org/,https://www.bing.com/,https://www.startpage.com/,https://www.wikipedia.org/",
   ],
   [
     "US",
-    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
+    "https://www.archive.org/,https://www.bing.com/,https://www.startpage.com/,https://www.wikipedia.org/",
   ],
   [
     "CA",
-    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
+    "https://www.archive.org/,https://www.bing.com/,https://www.startpage.com/,https://www.wikipedia.org/",
   ],
   [
     "DE",
-    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
+    "https://www.archive.org/,https://www.bing.com/,https://www.startpage.com/,https://www.wikipedia.org/",
   ],
   [
     "PL",
-    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
+    "https://www.archive.org/,https://www.bing.com/,https://www.startpage.com/,https://www.wikipedia.org/",
   ],
   [
     "RU",
-    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
+    "https://www.archive.org/,https://www.bing.com/,https://www.startpage.com/,https://www.wikipedia.org/",
   ],
   [
     "GB",
-    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
+    "https://www.archive.org/,https://www.bing.com/,https://www.startpage.com/,https://www.wikipedia.org/",
   ],
   [
     "FR",
-    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
+    "https://www.archive.org/,https://www.bing.com/,https://www.startpage.com/,https://www.wikipedia.org/",
   ],
   [
     "CN",
-    "https://www.waterfox.net/,https://www.wikipedia.org/,https://www.archive.org/",
+    "https://www.archive.org/,https://www.bing.com/,https://www.startpage.com/,https://www.wikipedia.org/",
   ],
 ]);
 

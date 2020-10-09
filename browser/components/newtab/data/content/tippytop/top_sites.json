@@ -1,39 +1,9 @@
 [
   {
-    "title": "aliexpress",
-    "url": "https://www.aliexpress.com/",
-    "image_url": "images/aliexpress-com@2x.png",
-    "favicon_url": "favicons/aliexpress-com.ico"
-  },
-  {
-    "title": "allegro",
-    "url": "https://www.allegro.pl/",
-    "image_url": "images/allegro-pl@2x.png",
-    "favicon_url": "favicons/allegro-pl.ico"
-  },
-  {
-    "title": "amazon",
-    "urls": ["https://www.amazon.ca/", "https://www.amazon.co.uk/", "https://www.amazon.com/", "https://www.amazon.de/", "https://www.amazon.fr/"],
-    "image_url": "images/amazon@2x.png",
-    "favicon_url": "favicons/amazon.ico"
-  },
-  {
-    "title": "avito",
-    "url": "https://www.avito.ru/",
-    "image_url": "images/avito-ru@2x.png",
-    "favicon_url": "favicons/avito-ru.ico"
-  },
-  {
-    "title": "baidu",
-    "url": "https://www.baidu.com/",
-    "image_url": "images/baidu-com@2x.png",
-    "favicon_url": "favicons/baidu-com.ico"
-  },
-  {
-    "title": "bbc",
-    "url": "https://www.bbc.co.uk/",
-    "image_url": "images/bbc-uk@2x.png",
-    "favicon_url": "favicons/bbc-uk.ico"
+    "title": "archive",
+    "url": "https://www.archive.org/",
+    "image_url": "images/archive-org@2x.png",
+    "favicon_url": "favicons/archive-org.ico"
   },
   {
     "title": "bing",
@@ -42,123 +12,15 @@
     "favicon_url": "favicons/bing-com.ico"
   },
   {
-    "title": "ctrip",
-    "url": "https://www.ctrip.com/",
-    "image_url": "images/ctrip-com@2x.png",
-    "favicon_url": "favicons/ctrip-com.ico"
-  },
-  {
-    "title": "duckduckgo",
-    "url": "https://www.duckduckgo.com/",
-    "image_url": "images/duckduckgo-com@2x.png",
-    "favicon_url": "favicons/duckduckgo-com.ico"
-  },
-  {
-    "title": "ebay",
-    "urls": ["https://www.ebay.com", "https://www.ebay.co.uk/", "https://ebay.de"],
-    "image_url": "images/ebay@2x.png",
-    "favicon_url": "favicons/ebay.ico"
-  },
-  {
-    "title": "facebook",
-    "url": "https://www.facebook.com/",
-    "image_url": "images/facebook-com@2x.png",
-    "favicon_url": "favicons/facebook-com.ico"
-  },
-  {
-    "title": "google",
-    "url": "https://www.google.com/",
-    "image_url": "images/google-com@2x.png",
-    "favicon_url": "favicons/google-com.ico"
-  },
-  {
-    "title": "ifeng",
-    "url": "https://www.ifeng.com/",
-    "image_url": "images/ifeng-com@2x.png",
-    "favicon_url": "favicons/ifeng-com.ico"
-  },
-  {
-    "title": "iqiyi",
-    "url": "https://www.iqiyi.com/",
-    "image_url": "images/iqiyi-com@2x.png",
-    "favicon_url": "favicons/iqiyi-com.ico"
-  },
-  {
-    "title": "leboncoin",
-    "url": "http://www.leboncoin.fr/",
-    "image_url": "images/leboncoin-fr@2x.png",
-    "favicon_url": "favicons/leboncoin-fr.png"
-  },
-  {
-    "title": "ok",
-    "url": "https://www.ok.ru/",
-    "image_url": "images/ok-ru@2x.png",
-    "favicon_url": "favicons/ok-ru.ico"
-  },
-  {
-    "title": "olx",
-    "url": "https://www.olx.pl/",
-    "image_url": "images/olx-pl@2x.png",
-    "favicon_url": "favicons/olx-pl.ico"
-  },
-  {
-    "title": "reddit",
-    "url": "https://www.reddit.com/",
-    "image_url": "images/reddit-com@2x.png",
-    "favicon_url": "favicons/reddit-com.png"
-  },
-  {
-    "title": "twitter",
-    "url": "https://twitter.com/",
-    "image_url": "images/twitter-com@2x.png",
-    "favicon_url": "favicons/twitter-com.ico"
-  },
-  {
-    "title": "vk",
-    "url": "https://vk.com/",
-    "image_url": "images/vk-com@2x.png",
-    "favicon_url": "favicons/vk-com.ico"
-  },
-  {
-    "title": "weibo",
-    "url": "https://weibo.com/",
-    "image_url": "images/weibo-com@2x.png",
-    "favicon_url": "favicons/weibo-com.ico"
+    "title": "startpage",
+    "url": "https://www.startpage.com/",
+    "image_url": "images/startpage-com@2x.png",
+    "favicon_url": "favicons/startpage-com.ico"
   },
   {
     "title": "wikipedia",
     "url": "https://www.wikipedia.org/",
     "image_url": "images/wikipedia-org@2x.png",
     "favicon_url": "favicons/wikipedia-org.ico"
-  },
-  {
-    "title": "wykop",
-    "url": "https://www.wykop.pl/",
-    "image_url": "images/wykop-pl@2x.png",
-    "favicon_url": "favicons/wykop-pl.png"
-  },
-  {
-    "title": "yandex",
-    "urls": ["https://www.yandex.com/", "https://www.yandex.com.tr/"],
-    "image_url": "images/yandex-com@2x.png",
-    "favicon_url": "favicons/yandex-com.png"
-  },
-  {
-    "title": "yandex-ru",
-    "urls": ["https://www.yandex.by/", "https://www.yandex.kz/", "https://www.yandex.ru/", "https://www.yandex.ua/", "https://www.yandex.uz/"],
-    "image_url": "images/yandex-ru@2x.png",
-    "favicon_url": "favicons/yandex-ru.png"
-  },
-  {
-    "title": "youtube",
-    "url": "https://www.youtube.com/",
-    "image_url": "images/youtube-com@2x.png",
-    "favicon_url": "favicons/youtube-com.png"
-  },
-  {
-    "title": "zhihu",
-    "url": "https://www.zhihu.com/",
-    "image_url": "images/zhihu-com@2x.png",
-    "favicon_url": "favicons/zhihu-com.ico"
   }
 ]
