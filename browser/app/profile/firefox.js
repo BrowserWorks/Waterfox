@@ -40,16 +40,16 @@ pref("extensions.getAddons.get.url", "https://services.addons.mozilla.org/api/v3
 pref("extensions.getAddons.search.browseURL", "https://addons.mozilla.org/%LOCALE%/firefox/search?q=%TERMS%&platform=%OS%&appver=%VERSION%");
 pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firefox/");
 pref("extensions.getAddons.langpacks.url", "https://services.addons.mozilla.org/api/v3/addons/language-tools/?app=firefox&type=language&appversion=%VERSION%");
-pref("extensions.getAddons.discovery.api_url", "");
+pref("extensions.getAddons.discovery.api_url", "", locked);
 
 // Use bloomfilters for the addons blocklist, instead of JSON only.
 pref("extensions.blocklist.useMLBF", true);
 pref("extensions.blocklist.useMLBF.stashes", true);
 
 // The URL for the privacy policy related to recommended extensions.
-pref("extensions.recommendations.privacyPolicyUrl", "https://www.mozilla.org/privacy/firefox/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_content=privacy-policy-link#addons");
+pref("extensions.recommendations.privacyPolicyUrl", "", locked);
 // The URL for Firefox Color, recommended on the theme page in about:addons.
-pref("extensions.recommendations.themeRecommendationUrl", "");
+pref("extensions.recommendations.themeRecommendationUrl", "", locked);
 
 pref("extensions.update.autoUpdateDefault", true);
 
@@ -75,7 +75,7 @@ pref("extensions.webextensions.background-delayed-startup", true);
 
 // Require signed add-ons by default
 pref("extensions.langpacks.signatures.required", false, locked);
-pref("xpinstall.signatures.required", false, locked);
+pref("xpinstall.signatures.required", false);
 pref("xpinstall.signatures.devInfoURL", "https://wiki.mozilla.org/Addons/Extension_Signing");
 
 // Enable extensionStorage storage actor by default
@@ -162,7 +162,7 @@ pref("app.update.staging.enabled", true);
 #ifdef MOZ_BITS_DOWNLOAD
   // If set to true, the Update Service will attempt to use Windows BITS to
   // download updates and will fallback to downloading internally if that fails.
-  pref("app.update.BITS.enabled", true);
+  pref("app.update.BITS.enabled", false, locked);
 #endif
 
 // Symmetric (can be overridden by individual extensions) update preferences.
@@ -375,7 +375,7 @@ pref("browser.download.panel.shown", false);
 
 // This controls whether the button is automatically shown/hidden depending
 // on whether there are downloads to show.
-pref("browser.download.autohideButton", true);
+pref("browser.download.autohideButton", false);
 
 #ifndef XP_MACOSX
   pref("browser.helperApps.deleteTempFileOnExit", true);
@@ -685,7 +685,7 @@ pref("browser.history_swipe_animation.disabled", false);
 pref("mousewheel.with_control.action",3);
 pref("mousewheel.with_win.action", 1);
 
-pref("browser.xul.error_pages.expert_bad_cert", false);
+pref("browser.xul.error_pages.expert_bad_cert", true);
 pref("browser.xul.error_pages.show_safe_browsing_details_on_load", false);
 
 // Enable captive portal detection.
@@ -737,7 +737,7 @@ pref("plugins.testmode", false);
 pref("plugins.show_infobar", false);
 
 #if defined(_ARM64_) && defined(XP_WIN)
-  pref("plugin.default.state", 0);
+  pref("plugin.default.state", 1);
 #else
   pref("plugin.default.state", 1);
 #endif
@@ -786,7 +786,7 @@ pref("intl.regional_prefs.use_os_locales", false);
 // 2 = check multi/single line controls
 pref("layout.spellcheckDefault", 1);
 
-pref("browser.send_pings", true);
+pref("browser.send_pings", false);
 
 // At startup, if the handler service notices that the version number in the
 // region.properties file is newer than the version number in the handler
@@ -967,7 +967,7 @@ pref("browser.zoom.siteSpecific", true);
 pref("browser.zoom.updateBackgroundTabs", true);
 
 // The breakpad report server to link to in about:crashes
-pref("breakpad.reportURL", "");
+pref("breakpad.reportURL", "", locked);
 
 // URL for "Learn More" for DataCollection
 pref("toolkit.datacollection.infoURL",
@@ -975,16 +975,16 @@ pref("toolkit.datacollection.infoURL",
 
 // URL for "Learn More" for Crash Reporter
 pref("toolkit.crashreporter.infoURL",
-     "https://www.mozilla.org/legal/privacy/firefox.html#crash-reporter");
+     "", locked);
 
 // base URL for web-based support pages
 pref("app.support.baseURL", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/");
 
 // base url for web-based feedback pages
 #ifdef MOZ_DEV_EDITION
-  pref("app.feedback.baseURL", "");
+  pref("app.feedback.baseURL", "", locked);
 #else
-  pref("app.feedback.baseURL", "");
+  pref("app.feedback.baseURL", "", locked);
 #endif
 
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
@@ -1711,11 +1711,11 @@ pref("browser.tabs.remote.warmup.maxTabs", 3);
 pref("browser.tabs.remote.warmup.unloadDelayMs", 2000);
 
 // For the about:tabcrashed page
-pref("browser.tabs.crashReporting.sendReport", false);
-pref("browser.tabs.crashReporting.includeURL", false);
-pref("browser.tabs.crashReporting.requestEmail", false);
-pref("browser.tabs.crashReporting.emailMe", false);
-pref("browser.tabs.crashReporting.email", "");
+pref("browser.tabs.crashReporting.sendReport", false, locked);
+pref("browser.tabs.crashReporting.includeURL", false, locked);
+pref("browser.tabs.crashReporting.requestEmail", false, locked);
+pref("browser.tabs.crashReporting.emailMe", false, locked);
+pref("browser.tabs.crashReporting.email", "", locked);
 
 // If true, unprivileged extensions may use experimental APIs on
 // nightly and developer edition.
@@ -1782,7 +1782,7 @@ pref("signon.management.page.mobileAndroidURL", "", locked);
 pref("signon.management.page.mobileAppleURL", "", locked);
 pref("signon.management.page.breachAlertUrl",
      "https://monitor.firefox.com/breach-details/");
-pref("signon.management.page.hideMobileFooter", true);
+pref("signon.management.page.hideMobileFooter", true, locked);
 pref("signon.management.page.showPasswordSyncNotification", true);
 pref("signon.passwordEditCapture.enabled", true);
 pref("signon.showAutoCompleteFooter", true);
@@ -1799,18 +1799,14 @@ pref("webchannel.allowObject.urlWhitelist", "");
 // Whether or not the browser should scan for unsubmitted
 // crash reports, and then show a notification for submitting
 // those reports.
-#ifdef NIGHTLY_BUILD
-  pref("browser.crashReports.unsubmittedCheck.enabled", true);
-#else
-  pref("browser.crashReports.unsubmittedCheck.enabled", false);
-#endif
+  pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
 
 // chancesUntilSuppress is how many times we'll show the unsubmitted
 // crash report notification across different days and shutdown
 // without a user choice before we suppress the notification for
 // some number of days.
-pref("browser.crashReports.unsubmittedCheck.chancesUntilSuppress", 0);
-pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false);
+pref("browser.crashReports.unsubmittedCheck.chancesUntilSuppress", 0, locked);
+pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
 
 // Preferences for the form autofill system extension
 // The truthy values of "extensions.formautofill.available" are "on" and "detect",
@@ -1880,11 +1876,11 @@ pref("app.normandy.api_url", "", locked);
 pref("app.normandy.dev_mode", false);
 pref("app.normandy.enabled", false, locked);
 pref("app.normandy.first_run", false, locked);
-pref("app.normandy.logging.level", 50); // Warn
-pref("app.normandy.run_interval_seconds", 21600); // 6 hours
-pref("app.normandy.shieldLearnMoreUrl", "");
+pref("app.normandy.logging.level", 50, locked); // Warn
+pref("app.normandy.run_interval_seconds", -1, locked); // 6 hours
+pref("app.normandy.shieldLearnMoreUrl", "", locked);
 pref("app.normandy.last_seen_buildid", "", locked);
-pref("app.normandy.onsync_skew_sec", 600);
+pref("app.normandy.onsync_skew_sec", -1, locked);
 #ifdef MOZ_DATA_REPORTING
   pref("app.shield.optoutstudies.enabled", false, locked);
 #else
