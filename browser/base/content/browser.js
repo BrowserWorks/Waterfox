@@ -5027,8 +5027,7 @@ var CombinedStopReload = {
   },
 
   switchToReload(aRequest, aWebProgress) {
-    if (!this._initialized || !this._shouldSwitch(aRequest) ||
-        !this.reload.hasAttribute("displaystop"))
+    if (!this._initialized || !this.reload.hasAttribute("displaystop"))
       return;
 
     let shouldAnimate = AppConstants.MOZ_PHOTON_ANIMATIONS &&
