@@ -63,6 +63,8 @@ async function init(aEvent) {
     document.getElementById("communityDesc").hidden = true;
   }
 
+  let geckoVersionLabel = document.getElementById("geckoVersion");
+  geckoVersionLabel.value = Services.appinfo.version;
   // Use Fluent arguments for append version and the architecture of the build
   let versionField = document.getElementById("version");
 
@@ -94,7 +96,7 @@ async function init(aEvent) {
     }
   }
 
-  if (AppConstants.MOZ_APP_VERSION_DISPLAY.endsWith("esr")) {
+  if (AppConstants.MOZ_APP_VERSION_DISPLAY.startsWith("G3")) {
     document.getElementById("release").hidden = false;
   }
 
