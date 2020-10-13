@@ -62,10 +62,8 @@ export const DEFAULT_WELCOME_CONTENT = {
       order: 0,
       content: {
         zap: true,
-        title: {
-          string_id: "onboarding-multistage-welcome-header",
-        },
-        subtitle: { string_id: "onboarding-multistage-welcome-subtitle" },
+        title: "Welcome to Waterfox",
+        subtitle: "The fast, safe, and private browser that’s built for YOU.",
         primary_button: {
           label: {
             string_id: "onboarding-multistage-welcome-primary-button-label",
@@ -187,6 +185,52 @@ export const DEFAULT_WELCOME_CONTENT = {
             navigate: true,
           },
         },
+      },
+    },
+    {
+      id: "AW_DEFAULT",
+      order: 3,
+      content: {
+        zap: true,
+		title: "Best as Default",
+        subtitle: "Set Waterfox as your default web browser to get the best user experience.",
+        primary_button: {
+          label: "Make default...",
+          action: {
+			  type: "SET_DEFAULT_BROWSER",
+            navigate: true,
+          },
+        },
+        secondary_button: {
+          label: {
+            string_id: "onboarding-multistage-import-secondary-button-label",
+          },
+          action: {
+            navigate: true,
+          },
+	    },
+      },
+    },
+	{
+	id: "AW_PRIVACY",
+	order: 4,
+	content: {
+	  title: "Automatic Privacy",
+	  subtitle: "Waterfox automatically blocks trackers and malware, and keeps companies from secretly following you around. When you see the shield while browsing, Waterfox is protecting you.",
+	  tiles: {
+	    type: "video",
+	    media_type: "privacy",
+	    source: {
+	      default : "resource://activity-stream/data/content/assets/privacy-onboarding.webm",
+	      dark : "resource://activity-stream/data/content/assets/privacy-onboarding-dark.webm"
+	    }
+	  },
+	  primary_button: {
+	    label: "Start Browsing",
+	    action: {
+	      navigate: true
+	      },
+	    },
       },
     },
   ],
