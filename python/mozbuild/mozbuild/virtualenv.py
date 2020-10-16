@@ -45,6 +45,11 @@ class VirtualenvManager(object):
         Each manager is associated with a source directory, a path where you
         want the virtualenv to be created, and a handle to write output to.
         """
+        # __PYVENV_LAUNCHER__ confuses pip, telling it to use the system
+        # python interpreter rather than the local virtual environment interpreter.
+        # See https://bugzilla.mozilla.org/show_bug.cgi?id=1607470
+        os.environ.pop('__PYVENV_LAUNCHER__', None)
+
         assert os.path.isabs(
             manifest_path), "manifest_path must be an absolute path: %s" % (manifest_path)
         self.topsrcdir = topsrcdir
@@ -178,9 +183,6 @@ class VirtualenvManager(object):
         This should be the main API used from this class as it is the
         highest-level.
         """
-        # __PYVENV_LAUNCHER__ confuses pip about the python interpreter
-        # See https://bugzilla.mozilla.org/show_bug.cgi?id=1607470
-        os.environ.pop('__PYVENV_LAUNCHER__', None)
         if self.up_to_date(python):
             return self.virtualenv_root
         return self.build(python)
@@ -497,9 +499,6 @@ class VirtualenvManager(object):
         else:
             thismodule = __file__
 
-        # __PYVENV_LAUNCHER__ confuses pip about the python interpreter
-        # See https://bugzilla.mozilla.org/show_bug.cgi?id=1635481
-        os.environ.pop('__PYVENV_LAUNCHER__', None)
         args = [self.python_path, thismodule, 'populate', self.topsrcdir,
                 self.topobjdir, self.virtualenv_root, self.manifest_path]
 
