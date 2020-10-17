@@ -16,7 +16,7 @@ namespace dom {
 void
 ResizeObserverNotificationHelper::WillRefresh(TimeStamp aTime)
 {
-  MOZ_ASSERT(mOwner, "Why is mOwner already dead when this RefreshObserver is still registered?");
+  MOZ_DIAGNOSTIC_ASSERT(mOwner, "RefreshObserver should have been de-registered on time, but isn't.");
   if (mOwner) {
     mOwner->Notify();
   }
@@ -70,10 +70,8 @@ ResizeObserverNotificationHelper::Unregister()
   }
 
   nsRefreshDriver* refreshDriver = GetRefreshDriver();
-  if (!refreshDriver) {
-    // We can't access RefreshDriver now. Just abort the Unregister().
-    return;
-  }
+  MOZ_RELEASE_ASSERT(refreshDriver,
+                     "We should not leave a dangling reference to the observer around");
 
   refreshDriver->RemoveRefreshObserver(this, FlushType::Display);
   mRegistered = false;
@@ -82,9 +80,8 @@ ResizeObserverNotificationHelper::Unregister()
 void
 ResizeObserverNotificationHelper::Disconnect()
 {
-  Unregister();
-  // Our owner is dying. Clear our pointer to it, in case we outlive it.
-  mOwner = nullptr;
+  MOZ_RELEASE_ASSERT(!mRegistered, "How can we die when registered?");
+  MOZ_RELEASE_ASSERT(!mOwner, "Forgot to clear weak pointer?");
 }
 
 ResizeObserverNotificationHelper::~ResizeObserverNotificationHelper()
@@ -110,6 +107,10 @@ ResizeObserverController::AddResizeObserver(ResizeObserver* aObserver)
   MOZ_ASSERT(aObserver, "AddResizeObserver() should never be called with "
                         "a null parameter");
   mResizeObservers.AppendElement(aObserver);
+}
+
+void ResizeObserverController::DetachFromDocument() {
+  mResizeObserverNotificationHelper->Unregister();
 }
 
 void
@@ -241,7 +242,10 @@ ResizeObserverController::GetShell() const
 
 ResizeObserverController::~ResizeObserverController()
 {
-  mResizeObserverNotificationHelper->Disconnect();
+  MOZ_RELEASE_ASSERT(
+      !mResizeObserverNotificationHelper->IsRegistered(),
+      "Nothing else should keep a reference to our notification helper when we go away");
+  mResizeObserverNotificationHelper->DetachFromOwner();
 }
 
 } // namespace dom

@@ -3980,6 +3980,12 @@ nsDocument::DeleteShell()
   // objects for @font-face rules that came from the style set.
   RebuildUserFontSet();
 
+  if (mResizeObserverController) {
+    // If the shell is going away, we need to remove any links to this document
+    // from the observer.
+    mResizeObserverController->DetachFromDocument();
+  }
+
   nsIPresShell* oldShell = mPresShell;
   mPresShell = nullptr;
   UpdateFrameRequestCallbackSchedulingState(oldShell);
