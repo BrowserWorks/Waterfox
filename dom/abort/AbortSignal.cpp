@@ -26,14 +26,11 @@ void AbortSignalImpl::Abort() {
 
   mAborted = true;
 
-  // We might be deleted as a result of aborting a follower, so ensure we live
-  // until all followers have been aborted.
-  RefPtr<AbortSignalImpl> pinThis = this;
-
   // Let's inform the followers.
   nsTObserverArray<AbortFollower*>::ForwardIterator iter(mFollowers);
   while (iter.HasMore()) {
-    iter.GetNext()->Abort();
+    RefPtr<AbortFollower> follower = iter.GetNext();
+    follower->Abort();
   }
 }
 
