@@ -147,8 +147,8 @@ class FetchBody : public FetchStreamHolder, public AbortFollower {
  public:
   friend class FetchBodyConsumer<Derived>;
 
-  using BodyStreamHolder::AddRef;
-  using BodyStreamHolder::Release;
+  using FetchStreamHolder::AddRef;
+  using FetchStreamHolder::Release;
 
   bool GetBodyUsed(ErrorResult& aRv) const;
 
