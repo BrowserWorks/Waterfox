@@ -297,11 +297,11 @@ stun_getifaddrs(nr_local_addr addrs[], int maxaddrs, int *count)
             {
                /* For wireless network, we won't get ethtool, it's a wired
                 * connection */
-               addrs[*count].interface.type = NR_INTERFACE_TYPE_WIRED;
+               addrs[*count].Interface.type = NR_INTERFACE_TYPE_WIRED;
 #ifdef DONT_HAVE_ETHTOOL_SPEED_HI
-               addrs[*count].interface.estimated_speed = ecmd.speed;
+               addrs[*count].Interface.estimated_speed = ecmd.speed;
 #else
-               addrs[*count].interface.estimated_speed = ((ecmd.speed_hi << 16) | ecmd.speed) * 1000;
+               addrs[*count].Interface.estimated_speed = ((ecmd.speed_hi << 16) | ecmd.speed) * 1000;
 #endif
             }
 
@@ -309,15 +309,15 @@ stun_getifaddrs(nr_local_addr addrs[], int maxaddrs, int *count)
             e = ioctl(s, SIOCGIWRATE, &wrq);
             if (e == 0)
             {
-               addrs[*count].interface.type = NR_INTERFACE_TYPE_WIFI;
-               addrs[*count].interface.estimated_speed = wrq.u.bitrate.value / 1000;
+               addrs[*count].Interface.type = NR_INTERFACE_TYPE_WIFI;
+               addrs[*count].Interface.estimated_speed = wrq.u.bitrate.value / 1000;
             }
 
             close(s);
 
             if (if_addr->ifa_flags & IFF_POINTOPOINT)
             {
-               addrs[*count].interface.type = NR_INTERFACE_TYPE_UNKNOWN | NR_INTERFACE_TYPE_VPN;
+               addrs[*count].Interface.type = NR_INTERFACE_TYPE_UNKNOWN | NR_INTERFACE_TYPE_VPN;
                /* TODO (Bug 896913): find backend network type of this VPN */
             }
 #else
