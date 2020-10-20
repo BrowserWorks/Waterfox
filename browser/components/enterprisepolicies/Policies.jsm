@@ -1249,6 +1249,8 @@ var Policies = {
     },
   },
 
+  ManagedBookmarks: {},
+
   NetworkPrediction: {
     onBeforeAddons(manager, param) {
       setAndLockPref("network.dns.disablePrefetch", !param);

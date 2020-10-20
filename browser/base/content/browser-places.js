@@ -1090,7 +1090,7 @@ var PlacesMenuDNDHandler = {
 
 /**
  * This object handles the initialization and uninitialization of the bookmarks
- * toolbar.
+ * toolbar. It also has helper functions for the managed bookmarks button.
  */
 var PlacesToolbarHelper = {
   get _viewElt() {
@@ -1217,6 +1217,89 @@ var PlacesToolbarHelper = {
       }
       this.init();
     }
+  },
+
+  async populateManagedBookmarks(popup) {
+    if (popup.hasChildNodes()) {
+      return;
+    }
+    // Show item's uri in the status bar when hovering, and clear on exit
+    popup.addEventListener("DOMMenuItemActive", function(event) {
+      XULBrowserWindow.setOverLink(event.target.link);
+    });
+    popup.addEventListener("DOMMenuItemInactive", function() {
+      XULBrowserWindow.setOverLink("");
+    });
+    let fragment = document.createDocumentFragment();
+    await this.addManagedBookmarks(
+      fragment,
+      Services.policies.getActivePolicies().ManagedBookmarks
+    );
+    popup.appendChild(fragment);
+  },
+
+  async addManagedBookmarks(menu, children) {
+    for (let i = 0; i < children.length; i++) {
+      let entry = children[i];
+      if (entry.children) {
+        // It's a folder.
+        let submenu = document.createXULElement("menu");
+        if (entry.name) {
+          submenu.setAttribute("label", entry.name);
+        } else {
+          submenu.setAttribute("data-l10n-id", "managed-bookmarks-subfolder");
+        }
+        submenu.setAttribute("container", "true");
+        submenu.setAttribute("class", "menu-iconic bookmark-item");
+        let submenupopup = document.createXULElement("menupopup");
+        submenu.appendChild(submenupopup);
+        menu.appendChild(submenu);
+        this.addManagedBookmarks(submenupopup, entry.children);
+      } else if (entry.name && entry.url) {
+        // It's bookmark.
+        let uri = Services.uriFixup.createFixupURI(
+          entry.url,
+          Ci.nsIURIFixup.FIXUP_FLAG_NONE
+        );
+        let menuitem = document.createXULElement("menuitem");
+        menuitem.setAttribute("label", entry.name);
+        menuitem.setAttribute("image", "page-icon:" + uri.spec);
+        menuitem.setAttribute(
+          "class",
+          "menuitem-iconic bookmark-item menuitem-with-favicon"
+        );
+        menuitem.link = uri.spec;
+        menu.appendChild(menuitem);
+      }
+    }
+  },
+
+  openManagedBookmark(event) {
+    openUILink(event.target.link, event, {
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
+  },
+
+  onDragStartManaged(event) {
+    if (!event.target.link) {
+      return;
+    }
+
+    let dt = event.dataTransfer;
+
+    let node = {};
+    node.type = 0;
+    node.title = event.target.label;
+    node.uri = event.target.link;
+
+    function addData(type, index) {
+      let wrapNode = PlacesUtils.wrapNode(node, type);
+      dt.mozSetDataAt(type, wrapNode, index);
+    }
+
+    addData(PlacesUtils.TYPE_X_MOZ_URL, 0);
+    addData(PlacesUtils.TYPE_UNICODE, 0);
+    addData(PlacesUtils.TYPE_HTML, 0);
   },
 };
 
