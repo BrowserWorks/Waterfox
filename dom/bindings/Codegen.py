@@ -2360,16 +2360,9 @@ class PropertyDefiner:
         arrays = fill(
             """
             // We deliberately use brace-elision to make Visual Studio produce better initalization code.
-            #if defined(__clang__)
-            #pragma clang diagnostic push
-            #pragma clang diagnostic ignored "-Wmissing-braces"
-            #endif
             static ${specType} ${name}_specs[] = {
             ${specs}
             };
-            #if defined(__clang__)
-            #pragma clang diagnostic pop
-            #endif
 
             ${disablers}
             static const Prefable<${specType}> ${name}[] = {
@@ -4375,19 +4368,12 @@ class CGCrossOriginProperties(CGThing):
         return fill(
             """
             // We deliberately use brace-elision to make Visual Studio produce better initalization code.
-            #if defined(__clang__)
-            #pragma clang diagnostic push
-            #pragma clang diagnostic ignored "-Wmissing-braces"
-            #endif
             JSPropertySpec sCrossOriginAttributes[] = {
               $*{attributeSpecs}
             };
             JSFunctionSpec sCrossOriginMethods[] = {
               $*{methodSpecs}
             };
-            #if defined(__clang__)
-            #pragma clang diagnostic pop
-            #endif
             """,
             attributeSpecs=",\n".join(self.attributeSpecs),
             methodSpecs=",\n".join(self.methodSpecs))
