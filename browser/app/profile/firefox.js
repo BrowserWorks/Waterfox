@@ -301,7 +301,7 @@ pref("browser.urlbar.restyleSearches", false);
 pref("browser.urlbar.suggest.bookmark",             true);
 pref("browser.urlbar.suggest.history",              true);
 pref("browser.urlbar.suggest.openpage",             true);
-pref("browser.urlbar.suggest.searches",             true);
+pref("browser.urlbar.suggest.searches",             false);
 pref("browser.urlbar.suggest.topsites",             true);
 
 // As a user privacy measure, don't fetch search suggestions if a pasted string
@@ -394,7 +394,7 @@ pref("browser.search.geoSpecificDefaults", true);
 pref("browser.search.geoSpecificDefaults.url", "", locked);
 
 // search bar results always open in a new tab
-pref("browser.search.openintab", false);
+pref("browser.search.openintab", true);
 
 // context menu searches open in the foreground
 pref("browser.search.context.loadInBackground", false);
@@ -403,7 +403,7 @@ pref("browser.search.context.loadInBackground", false);
 pref("browser.search.hiddenOneOffs", "");
 
 // Mirrors whether the search-container widget is in the navigation toolbar.
-pref("browser.search.widget.inNavBar", false);
+pref("browser.search.widget.inNavBar", true);
 
 // Enables display of the options for the user using a separate default search
 // engine in private browsing mode.
