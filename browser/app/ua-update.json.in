@@ -40,5 +40,6 @@
   "codex.wordpress.org": "Mozilla/5.0 (%OS_SLICE% rv:60.0) Gecko/20100101 Firefox/60.0",
   "answers.unrealengine.com": "Mozilla/5.0 (%OS_SLICE% rv:60.0) Gecko/20100101 Firefox/60.0",
   "cdn.polyfill.io": "Mozilla/5.0 (%OS_SLICE% rv:56.0) Gecko/20100101 Firefox/56.0",
-  "swedbank.se": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0"
+  "swedbank.se": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
+  "yahoo.com": "Mozilla/5.0 (%OS_SLICE% rv:99.9) Gecko/20100101 Firefox/99.9"
 }
