@@ -431,6 +431,10 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
     });
   }
 
+  setSearch(ev) {
+    alert("Your file is being uploaded!");
+  }
+
   async handleAction(event) {
     let {
       props
@@ -486,32 +490,55 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
   renderTiles() {
     switch (this.props.content.tiles.type) {
       case "topsites":
-        return this.props.topSites && this.props.topSites.data ? react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          className: `tiles-container ${this.props.content.tiles.info ? "info" : ""}`
+        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "tiles-container info"
         }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          className: "tiles-topsites-section",
+          class: "tiles-topsites-section",
           name: "topsites-section",
           id: "topsites-section",
           "aria-labelledby": "topsites-disclaimer",
           role: "region"
-        }, this.props.topSites.data.slice(0, 5).map(({
-          icon,
-          label,
-          title
-        }) => react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          className: "site",
-          key: icon + label,
-          "aria-label": title ? title : label,
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "site",
+          "aria-label": "chrome",
           role: "img"
         }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          className: "icon",
-          style: icon ? {
+          class: "icon",
+          style: {
             backgroundColor: "transparent",
-            backgroundImage: `url(${icon})`
-          } : {}
-        }, icon ? "" : label && label[0].toUpperCase()), label && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          className: "host"
-        }, label))))) : null;
+            backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/chrome@2x.png')`
+          }
+        })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "site",
+          "aria-label": "edge",
+          role: "img"
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "icon",
+          style: {
+            backgroundColor: "transparent",
+            backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/edge@2x.png')`
+          }
+        })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "site",
+          "aria-label": "firefox",
+          role: "img"
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "icon",
+          style: {
+            backgroundColor: "transparent",
+            backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/firefox@2x.png')`
+          }
+        })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "site",
+          "aria-label": "safari",
+          role: "img"
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "icon",
+          style: {
+            backgroundColor: "transparent",
+            backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/safari@2x.png')`
+          }
+        }))));
 
       case "theme":
         return this.props.content.tiles.data ? react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
@@ -545,6 +572,55 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
         }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
           className: "text"
         })))))))) : null;
+
+      case "search":
+        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "tiles-theme-container"
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("fieldset", {
+          class: "tiles-theme-section"
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("legend", {
+          class: "sr-only",
+          "data-l10n-id": "onboarding-multistage-theme-subtitle"
+        }, "Pick your search provider."), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+          id: "bing",
+          class: "theme",
+          title: "Bing helps you turn information into action, making it faster and easier to go from searching to doing.",
+          "aria-label": "Bing helps you turn information into action, making it faster and easier to go from searching to doing.",
+          onClick: () => {
+            alert('alert');
+          }
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+          type: "radio",
+          name: "theme",
+          class: "sr-only input",
+          value: "automatic"
+        }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "icon",
+          style: {
+            backgroundColor: "transparent",
+            backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/bing-search-welcome.png')`
+          }
+        }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "text"
+        }, "Bing")), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+          id: "startpage",
+          class: "theme",
+          title: "Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy.",
+          "aria-label": "Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy."
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+          type: "radio",
+          name: "theme",
+          class: "sr-only input",
+          value: "light"
+        }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "icon",
+          style: {
+            backgroundColor: "transparent",
+            backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/startpage-search-welcome.png')`
+          }
+        }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          class: "text"
+        }, "Startpage")))));
 
       case "video":
         return this.props.content.tiles.source ? react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {

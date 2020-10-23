@@ -158,6 +158,10 @@ export class WelcomeScreen extends React.PureComponent {
     });
   }
 
+  setSearch(ev){
+	  alert("Your file is being uploaded!")
+  }
+
   async handleAction(event) {
     let { props } = this;
 
@@ -219,47 +223,7 @@ export class WelcomeScreen extends React.PureComponent {
   renderTiles() {
     switch (this.props.content.tiles.type) {
       case "topsites":
-        return this.props.topSites && this.props.topSites.data ? (
-          <div
-            className={`tiles-container ${
-              this.props.content.tiles.info ? "info" : ""
-            }`}
-          >
-            <div
-              className="tiles-topsites-section"
-              name="topsites-section"
-              id="topsites-section"
-              aria-labelledby="topsites-disclaimer"
-              role="region"
-            >
-              {this.props.topSites.data
-                .slice(0, 5)
-                .map(({ icon, label, title }) => (
-                  <div
-                    className="site"
-                    key={icon + label}
-                    aria-label={title ? title : label}
-                    role="img"
-                  >
-                    <div
-                      className="icon"
-                      style={
-                        icon
-                          ? {
-                              backgroundColor: "transparent",
-                              backgroundImage: `url(${icon})`,
-                            }
-                          : {}
-                      }
-                    >
-                      {icon ? "" : label && label[0].toUpperCase()}
-                    </div>
-                    {label && <div className="host">{label}</div>}
-                  </div>
-                ))}
-            </div>
-          </div>
-        ) : null;
+		  return <div class="tiles-container info"><div class="tiles-topsites-section" name="topsites-section" id="topsites-section" aria-labelledby="topsites-disclaimer" role="region"><div class="site" aria-label="chrome" role="img"><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/chrome@2x.png')`}}></div></div><div class="site" aria-label="edge" role="img"><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/edge@2x.png')`}}></div></div><div class="site" aria-label="firefox" role="img"><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/firefox@2x.png')`}}></div></div><div class="site" aria-label="safari" role="img"><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/safari@2x.png')`}}></div></div></div></div>
       case "theme":
         return this.props.content.tiles.data ? (
           <div className="tiles-theme-container">
@@ -296,6 +260,8 @@ export class WelcomeScreen extends React.PureComponent {
             </div>
           </div>
         ) : null;
+	case "search":
+		return <div class="tiles-theme-container"><div><fieldset class="tiles-theme-section"><legend class="sr-only" data-l10n-id="onboarding-multistage-theme-subtitle">Pick your search provider.</legend><label id="bing" class="theme" title="Bing helps you turn information into action, making it faster and easier to go from searching to doing." aria-label="Bing helps you turn information into action, making it faster and easier to go from searching to doing." onClick={()=>{ alert('alert'); }}><input type="radio" name="theme" class="sr-only input" value="automatic"/><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/bing-search-welcome.png')`}}></div><div class="text" >Bing</div></label><label id="startpage" class="theme" title="Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy." aria-label="Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy."><input type="radio" name="theme" class="sr-only input" value="light"/><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/startpage-search-welcome.png')`}}></div><div class="text">Startpage</div></label></fieldset></div></div>
       case "video":
         return this.props.content.tiles.source ? (
           <div
