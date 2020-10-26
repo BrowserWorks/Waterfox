@@ -53,7 +53,7 @@ AppleVTDecoder::AppleVTDecoder(const VideoInfo& aConfig, TaskQueue* aTaskQueue,
                   aOptions.contains(CreateDecoderParams::Option::LowLatency)
               ? 0
               : H264::ComputeMaxRefFrames(aConfig.mExtraData)),
-      mImageContainer(aImageContainer),
+      mImageContainer(aImageContainer)
 #ifdef MOZ_WIDGET_UIKIT
       ,
       mUseSoftwareImages(true)

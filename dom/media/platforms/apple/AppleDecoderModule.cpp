@@ -138,7 +138,7 @@ bool AppleDecoderModule::CanCreateVP9Decoder() {
     VPXDecoder::GetVPCCBox(info.mExtraData, VPXDecoder::VPXStreamInfo());
 
     RefPtr<AppleVTDecoder> decoder =
-        new AppleVTDecoder(info, nullptr, nullptr, {}, nullptr);
+        new AppleVTDecoder(info, nullptr, nullptr, {});
     nsAutoCString reason;
     MediaResult rv = decoder->InitializeSession();
     bool isHardwareAccelerated = decoder->IsHardwareAccelerated(reason);
