@@ -253,6 +253,10 @@ class SandboxPolicyCommon : public SandboxPolicyBase {
 #endif
     }
 
+    if (!broker) {
+      return BlockedSyscallTrap(aArgs, nullptr);
+    }
+
     if (fd != AT_FDCWD && path[0] != '/') {
       SANDBOX_LOG_ERROR("unsupported fd-relative fstatat(%d, \"%s\", %p, %d)",
                         fd, path, buf, flags);
@@ -447,7 +451,7 @@ class SandboxPolicyCommon : public SandboxPolicyBase {
     // If a file broker client was provided, route syscalls to it;
     // otherwise, fall through to the main policy, which will deny
     // them.
-    if (mBroker != nullptr) {
+    if (mBroker) {
       switch (sysno) {
         case __NR_open:
           return Trap(OpenTrap, mBroker);
@@ -485,6 +489,13 @@ class SandboxPolicyCommon : public SandboxPolicyBase {
           return Trap(ReadlinkTrap, mBroker);
         case __NR_readlinkat:
           return Trap(ReadlinkAtTrap, mBroker);
+      }
+    } else {
+      // In the absence of a broker we still need to handle the
+      // fstat-equivalent subset of fstatat; see bug 1673770.
+      switch (sysno) {
+      CASES_FOR_fstatat:
+        return Trap(StatAtTrap, nullptr);
       }
     }
 
