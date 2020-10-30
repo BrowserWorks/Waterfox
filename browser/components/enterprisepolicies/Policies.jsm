@@ -2219,6 +2219,7 @@ function replacePathVariables(path) {
 function installAddonFromURL(url, extensionID, addon) {
   if (
     addon &&
+    addon.sourceURI &&
     addon.sourceURI.spec == url &&
     !addon.sourceURI.schemeIs("file")
   ) {
