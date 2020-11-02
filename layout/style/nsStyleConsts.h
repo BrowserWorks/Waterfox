@@ -951,6 +951,7 @@ enum class StyleWhiteSpace : uint8_t {
 // See nsStyleText
 #define NS_STYLE_OVERFLOWWRAP_NORMAL            0
 #define NS_STYLE_OVERFLOWWRAP_BREAK_WORD        1
+#define NS_STYLE_OVERFLOWWRAP_ANYWHERE          2
 
 // ruby-align, see nsStyleText
 #define NS_STYLE_RUBY_ALIGN_START               0

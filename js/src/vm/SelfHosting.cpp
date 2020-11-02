@@ -839,6 +839,21 @@ js::intrinsic_NewStringIterator(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
+bool
+js::intrinsic_NewRegExpStringIterator(JSContext* cx, unsigned argc, Value* vp) 
+{
+  CallArgs args = CallArgsFromVp(argc, vp);
+  MOZ_ASSERT(args.length() == 0);
+
+  JSObject* obj = NewRegExpStringIteratorObject(cx);
+  if (!obj) {
+    return false;
+  }
+
+  args.rval().setObject(*obj);
+  return true;
+}
+
 static bool
 intrinsic_SetCanonicalName(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -2036,25 +2051,26 @@ intrinsic_HostResolveImportedModule(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     MOZ_ASSERT(args.length() == 2);
-    MOZ_ASSERT(args[0].toObject().is<ModuleObject>());
-    MOZ_ASSERT(args[1].isString());
+    RootedModuleObject module(cx, &args[0].toObject().as<ModuleObject>());
+    RootedString specifier(cx, args[1].toString());
 
-    RootedFunction moduleResolveHook(cx, cx->global()->moduleResolveHook());
+    JS::ModuleResolveHook moduleResolveHook = cx->runtime()->moduleResolveHook;
     if (!moduleResolveHook) {
         JS_ReportErrorASCII(cx, "Module resolve hook not set");
         return false;
     }
 
-    RootedValue result(cx);
-    if (!JS_CallFunction(cx, nullptr, moduleResolveHook, args, &result))
+    RootedObject result(cx);
+    result = moduleResolveHook(cx, module, specifier);
+    if (!result)
         return false;
 
-    if (!result.isObject() || !result.toObject().is<ModuleObject>()) {
+    if (!result->is<ModuleObject>()) {
         JS_ReportErrorASCII(cx, "Module resolve hook did not return Module object");
         return false;
     }
 
-    args.rval().set(result);
+    args.rval().setObject(*result);
     return true;
 }
 
@@ -2343,6 +2359,8 @@ static const JSFunctionSpec intrinsic_functions[] = {
                     intrinsic_IsInstanceOfBuiltin<StringIteratorObject>, 1,0,
                     IntrinsicIsStringIterator),
 
+    JS_FN("GuardToRegExpStringIterator", intrinsic_IsInstanceOfBuiltin<RegExpStringIteratorObject>,  2,0),
+
     JS_FN("_CreateMapIterationResultPair", intrinsic_CreateMapIterationResultPair, 0, 0),
     JS_INLINABLE_FN("_GetNextMapEntryForIterator", intrinsic_GetNextMapEntryForIterator, 2,0,
                     IntrinsicGetNextMapEntryForIterator),
@@ -2360,6 +2378,10 @@ static const JSFunctionSpec intrinsic_functions[] = {
                     IntrinsicNewStringIterator),
     JS_FN("CallStringIteratorMethodIfWrapped",
           CallNonGenericSelfhostedMethod<Is<StringIteratorObject>>,     2,0),
+
+    JS_FN("NewRegExpStringIterator", intrinsic_NewRegExpStringIterator, 0, 0),
+    JS_FN("CallRegExpStringIteratorMethodIfWrapped",
+          CallNonGenericSelfhostedMethod<Is<RegExpStringIteratorObject>>, 2, 0),
 
     JS_FN("IsStarGeneratorObject",
           intrinsic_IsInstanceOfBuiltin<StarGeneratorObject>,           1,0),

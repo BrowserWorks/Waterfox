@@ -180,7 +180,7 @@ CheckPatternSyntax(JSContext* cx, HandleAtom pattern, RegExpFlag flags)
     CompileOptions options(cx);
     frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
     return irregexp::ParsePatternSyntax(dummyTokenStream, cx->tempLifoAlloc(), pattern,
-                                        flags & UnicodeFlag);
+                                        flags & UnicodeFlag, flags & DotAllFlag);
 }
 
 enum RegExpSharedUse {
@@ -679,6 +679,33 @@ regexp_source(JSContext* cx, unsigned argc, JS::Value* vp)
     return CallNonGenericMethod<IsRegExpObject, regexp_source_impl>(cx, args);
 }
 
+// ES 2018 dotAll
+MOZ_ALWAYS_INLINE bool
+regexp_dotAll_impl(JSContext* cx, const CallArgs& args)
+{
+    MOZ_ASSERT(IsRegExpObject(args.thisv()));
+
+    // Steps 4-6.
+    RegExpObject* reObj = &args.thisv().toObject().as<RegExpObject>();
+    args.rval().setBoolean(reObj->dotAll());
+    return true;
+}
+
+bool
+js::regexp_dotAll(JSContext* cx, unsigned argc, JS::Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+
+    // Step 3.a.
+    if (IsRegExpPrototype(args.thisv())) {
+        args.rval().setUndefined();
+        return true;
+    }
+
+    // Steps 1-3.
+    return CallNonGenericMethod<IsRegExpObject, regexp_dotAll_impl>(cx, args);
+}
+
 // ES 2017 draft 21.2.5.12.
 MOZ_ALWAYS_INLINE bool
 regexp_sticky_impl(JSContext* cx, const CallArgs& args)
@@ -741,6 +768,7 @@ const JSPropertySpec js::regexp_properties[] = {
     JS_PSG("source", regexp_source, 0),
     JS_PSG("sticky", regexp_sticky, 0),
     JS_PSG("unicode", regexp_unicode, 0),
+    JS_PSG("dotAll", regexp_dotAll, 0),
     JS_PS_END
 };
 
@@ -753,6 +781,7 @@ const JSFunctionSpec js::regexp_methods[] = {
     JS_SELF_HOSTED_FN("exec", "RegExp_prototype_Exec", 1,0),
     JS_SELF_HOSTED_FN("test", "RegExpTest" ,    1,0),
     JS_SELF_HOSTED_SYM_FN(match, "RegExpMatch", 1,0),
+    JS_SELF_HOSTED_SYM_FN(matchAll, "RegExpMatchAll", 1, 0),
     JS_SELF_HOSTED_SYM_FN(replace, "RegExpReplace", 2,0),
     JS_SELF_HOSTED_SYM_FN(search, "RegExpSearch", 1,0),
     JS_SELF_HOSTED_SYM_FN(split, "RegExpSplit", 2,0),
@@ -1620,6 +1649,13 @@ js::RegExpPrototypeOptimizableRaw(JSContext* cx, JSObject* proto)
         return false;
 
     if (unicodeGetter != regexp_unicode)
+        return false;
+
+    JSNative dotAllGetter;
+    if (!GetOwnNativeGetterPure(cx, proto, NameToId(cx->names().global), &dotAllGetter))
+        return false;
+
+    if (dotAllGetter != regexp_dotAll)
         return false;
 
     // Check if @@match, @@search, and exec are own data properties,

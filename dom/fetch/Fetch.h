@@ -104,6 +104,9 @@ public:
   virtual void
   NullifyStream() = 0;
 
+  virtual void
+  MarkAsRead() = 0;
+
   virtual JSObject*
   ReadableStreamBody() = 0;
 };
@@ -242,8 +245,14 @@ public:
     return mReadableStreamBody;
   }
 
-  virtual AbortSignal*
-  GetSignal() const = 0;
+  void
+  MarkAsRead() override
+  {
+    mBodyUsed = true;
+  }
+
+  virtual AbortSignalImpl*
+  GetSignalImpl() const = 0;
 
   // AbortFollower
   void

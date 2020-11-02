@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "wasm/WasmFrameIterator.h"
+#include "wasm/WasmFrameIter.h"
 
 #include "wasm/WasmInstance.h"
 
@@ -30,21 +30,9 @@ using mozilla::DebugOnly;
 using mozilla::Swap;
 
 /*****************************************************************************/
-// FrameIterator implementation
+// WasmFrameIter implementation
 
-FrameIterator::FrameIterator()
-  : activation_(nullptr),
-    code_(nullptr),
-    callsite_(nullptr),
-    codeRange_(nullptr),
-    fp_(nullptr),
-    unwind_(Unwind::False),
-    unwoundAddressOfReturnAddress_(nullptr)
-{
-    MOZ_ASSERT(done());
-}
-
-FrameIterator::FrameIterator(WasmActivation* activation, Unwind unwind)
+WasmFrameIter::WasmFrameIter(WasmActivation* activation, Unwind unwind)
   : activation_(activation),
     code_(nullptr),
     callsite_(nullptr),
@@ -83,7 +71,7 @@ FrameIterator::FrameIterator(WasmActivation* activation, Unwind unwind)
 }
 
 bool
-FrameIterator::done() const
+WasmFrameIter::done() const
 {
     MOZ_ASSERT(!!fp_ == !!code_);
     MOZ_ASSERT(!!fp_ == !!codeRange_);
@@ -91,11 +79,11 @@ FrameIterator::done() const
 }
 
 void
-FrameIterator::operator++()
+WasmFrameIter::operator++()
 {
     MOZ_ASSERT(!done());
 
-    // When the iterator is set to Unwind::True, each time the iterator pops a
+    // When the iterator is set to unwind, each time the iterator pops a
     // frame, the WasmActivation is updated so that the just-popped frame
     // is no longer visible. This is necessary since Debugger::onLeaveFrame is
     // called before popping each frame and, once onLeaveFrame is called for a
@@ -115,7 +103,7 @@ FrameIterator::operator++()
 }
 
 void
-FrameIterator::popFrame()
+WasmFrameIter::popFrame()
 {
     Frame* prevFP = fp_;
     fp_ = prevFP->callerFP;
@@ -149,28 +137,28 @@ FrameIterator::popFrame()
 }
 
 const char*
-FrameIterator::filename() const
+WasmFrameIter::filename() const
 {
     MOZ_ASSERT(!done());
     return code_->metadata().filename.get();
 }
 
 const char16_t*
-FrameIterator::displayURL() const
+WasmFrameIter::displayURL() const
 {
     MOZ_ASSERT(!done());
     return code_->metadata().displayURL();
 }
 
 bool
-FrameIterator::mutedErrors() const
+WasmFrameIter::mutedErrors() const
 {
     MOZ_ASSERT(!done());
     return code_->metadata().mutedErrors();
 }
 
 JSAtom*
-FrameIterator::functionDisplayAtom() const
+WasmFrameIter::functionDisplayAtom() const
 {
     MOZ_ASSERT(!done());
 
@@ -185,7 +173,7 @@ FrameIterator::functionDisplayAtom() const
 }
 
 unsigned
-FrameIterator::lineOrBytecode() const
+WasmFrameIter::lineOrBytecode() const
 {
     MOZ_ASSERT(!done());
     MOZ_ASSERT_IF(!callsite_, activation_->interrupted());
@@ -193,14 +181,14 @@ FrameIterator::lineOrBytecode() const
 }
 
 Instance*
-FrameIterator::instance() const
+WasmFrameIter::instance() const
 {
     MOZ_ASSERT(!done());
     return fp_->tls->instance;
 }
 
 void**
-FrameIterator::unwoundAddressOfReturnAddress() const
+WasmFrameIter::unwoundAddressOfReturnAddress() const
 {
     MOZ_ASSERT(done());
     MOZ_ASSERT(unwind_ == Unwind::True);
@@ -209,7 +197,7 @@ FrameIterator::unwoundAddressOfReturnAddress() const
 }
 
 bool
-FrameIterator::debugEnabled() const
+WasmFrameIter::debugEnabled() const
 {
     MOZ_ASSERT(!done());
 
@@ -223,7 +211,7 @@ FrameIterator::debugEnabled() const
 }
 
 DebugFrame*
-FrameIterator::debugFrame() const
+WasmFrameIter::debugFrame() const
 {
     MOZ_ASSERT(!done());
     MOZ_ASSERT(debugEnabled());
@@ -231,7 +219,7 @@ FrameIterator::debugFrame() const
 }
 
 const CallSite*
-FrameIterator::debugTrapCallsite() const
+WasmFrameIter::debugTrapCallsite() const
 {
     MOZ_ASSERT(!done());
     MOZ_ASSERT(callsite_);
@@ -1002,17 +990,6 @@ ProfilingFrameIterator::label() const
     }
 
     MOZ_CRASH("bad code range kind");
-}
-
-void
-wasm::TraceActivations(JSContext* cx, const CooperatingContext& target, JSTracer* trc)
-{
-    for (ActivationIterator iter(cx, target); !iter.done(); ++iter) {
-        if (iter.activation()->isWasm()) {
-            for (FrameIterator fi(iter.activation()->asWasm()); !fi.done(); ++fi)
-                fi.instance()->trace(trc);
-        }
-    }
 }
 
 Instance*

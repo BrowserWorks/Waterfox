@@ -3704,7 +3704,7 @@ var gCSSProperties = {
     type: CSS_TYPE_LONGHAND,
     applies_to_placeholder: true,
     initial_values: [ "1", "17", "397.376", "3e1", "3e+1", "3e0", "3e+0", "3e-0" ],
-    other_values: [ "0", "0.4", "0.0000", "-3", "3e-1" ],
+    other_values: [ "0", "0.4", "0.0000", "-3", "3e-1" "-100%", "50%" ],
     invalid_values: [ "0px", "1px" ]
   },
   "-moz-orient": {
@@ -4449,8 +4449,8 @@ var gCSSProperties = {
     domProp: "fillOpacity",
     inherited: true,
     type: CSS_TYPE_LONGHAND,
-    initial_values: [ "1", "2.8", "1.000", "context-fill-opacity", "context-stroke-opacity" ],
-    other_values: [ "0", "0.3", "-7.3" ],
+    initial_values: [ "1", "2.8", "1.000", "300%", "context-fill-opacity", "context-stroke-opacity" ],
+    other_values: [ "0", "0.3", "-7.3", "-100%", "50%" ],
     invalid_values: []
   },
   "fill-rule": {
@@ -4482,8 +4482,8 @@ var gCSSProperties = {
     domProp: "floodOpacity",
     inherited: false,
     type: CSS_TYPE_LONGHAND,
-    initial_values: [ "1", "2.8", "1.000" ],
-    other_values: [ "0", "0.3", "-7.3" ],
+    initial_values: [ "1", "2.8", "1.000", "300%" ],
+    other_values: [ "0", "0.3", "-7.3", "-100%", "50%" ],
     invalid_values: []
   },
   "image-rendering": {
@@ -4557,8 +4557,8 @@ var gCSSProperties = {
     domProp: "stopOpacity",
     inherited: false,
     type: CSS_TYPE_LONGHAND,
-    initial_values: [ "1", "2.8", "1.000" ],
-    other_values: [ "0", "0.3", "-7.3" ],
+    initial_values: [ "1", "2.8", "1.000", "300%" ],
+    other_values: [ "0", "0.3", "-7.3", "-100%", "50%" ],
     invalid_values: []
   },
   "stroke": {
@@ -4613,8 +4613,8 @@ var gCSSProperties = {
     domProp: "strokeOpacity",
     inherited: true,
     type: CSS_TYPE_LONGHAND,
-    initial_values: [ "1", "2.8", "1.000", "context-fill-opacity", "context-stroke-opacity" ],
-    other_values: [ "0", "0.3", "-7.3" ],
+    initial_values: [ "1", "2.8", "1.000", "300%", "context-fill-opacity", "context-stroke-opacity" ],
+    other_values: [ "0", "0.3", "-7.3", "-100%", "50% ],
     invalid_values: []
   },
   "stroke-width": {
@@ -8203,8 +8203,8 @@ if (false) {
     // domProp: "MozWindowOpacity",
     inherited: false,
     type: CSS_TYPE_LONGHAND,
-    initial_values: [ "1", "17", "397.376", "3e1", "3e+1", "3e0", "3e+0", "3e-0" ],
-    other_values: [ "0", "0.4", "0.0000", "-3", "3e-1" ],
+    initial_values: [ "1", "17", "397.376", "3e1", "3e+1", "3e0", "3e+0", "3e-0", "300%" ],
+    other_values: [ "0", "0.4", "0.0000", "-3", "3e-1", "-100%", "50%" ],
     invalid_values: [ "0px", "1px", "20%", "default", "auto" ]
   };
 

@@ -815,14 +815,15 @@ ReadableStream_cancel(JSContext* cx, unsigned argc, Value* vp)
     //         rejected with a TypeError exception.
     if (stream->locked()) {
         JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                                  JSMSG_READABLESTREAM_NOT_LOCKED, "cancel");
+                                  JSMSG_READABLESTREAM_LOCKED_METHOD, "cancel");
         return ReturnPromiseRejectedWithPendingError(cx, args);
     }
 
     // Step 3: Return ! ReadableStreamCancel(this, reason).
     RootedObject cancelPromise(cx, ReadableStream::cancel(cx, stream, args.get(0)));
-    if (!cancelPromise)
+    if (!cancelPromise) {
         return false;
+    }
     args.rval().setObject(*cancelPromise);
     return true;
 }
@@ -3635,7 +3636,7 @@ ReadableStreamBYOBRequest::constructor(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    RootedArrayBufferObject view(cx, &viewVal.toObject().as<ArrayBufferObject>());
+    Rooted<ArrayBufferViewObject*> view(cx, &viewVal.toObject().as<ArrayBufferViewObject>());
 
     RootedObject request(cx, CreateReadableStreamBYOBRequest(cx, controller, view));
     if (!request)

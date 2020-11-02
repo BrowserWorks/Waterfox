@@ -551,7 +551,6 @@ class nsHtml5TreeBuilder : public nsAHtml5TreeBuilderState
   private:
     int32_t findInArray(nsHtml5StackNode* node, jArray<nsHtml5StackNode*,int32_t> arr);
     nsIContentHandle* nodeFromStackWithBlinkCompat(int32_t stackPos);
-
   public:
     nsIContentHandle* getFormPointer();
     nsIContentHandle* getHeadPointer();

@@ -388,7 +388,8 @@ ShellContext::ShellContext(JSContext* cx)
     quitting(false),
     readLineBufPos(0),
     errFilePtr(nullptr),
-    outFilePtr(nullptr)
+    outFilePtr(nullptr),
+    moduleResolveHook(cx)
 {}
 
 ShellContext*
@@ -787,9 +788,6 @@ AddIntlExtras(JSContext* cx, unsigned argc, Value* vp)
     };
 
     if (!JS_DefineFunctions(cx, intl, funcs))
-        return false;
-
-    if (!js::AddPluralRulesConstructor(cx, intl))
         return false;
 
     if (!js::AddMozDateTimeFormatConstructor(cx, intl))
@@ -4213,11 +4211,36 @@ SetModuleResolveHook(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    RootedFunction hook(cx, &args[0].toObject().as<JSFunction>());
-    Rooted<GlobalObject*> global(cx, cx->global());
-    global->setModuleResolveHook(hook);
+    ShellContext* sc = GetShellContext(cx);
+    sc->moduleResolveHook = &args[0].toObject().as<JSFunction>();
+
     args.rval().setUndefined();
     return true;
+}
+
+static JSObject*
+CallModuleResolveHook(JSContext* cx, HandleObject module, HandleString specifier)
+{
+    ShellContext* sc = GetShellContext(cx);
+    if (!sc->moduleResolveHook) {
+        JS_ReportErrorASCII(cx, "Module resolve hook not set");
+        return nullptr;
+    }
+
+    JS::AutoValueArray<2> args(cx);
+    args[0].setObject(*module);
+    args[1].setString(specifier);
+
+    RootedValue result(cx);
+    if (!JS_CallFunction(cx, nullptr, sc->moduleResolveHook, args, &result))
+        return nullptr;
+
+    if (!result.isObject() || !result.toObject().is<ModuleObject>()) {
+         JS_ReportErrorASCII(cx, "Module resolve hook did not return Module object");
+         return nullptr;
+    }
+
+    return &result.toObject();
 }
 
 static bool
@@ -6626,8 +6649,7 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
 "provided object (this should generally be Intl itself).  The added\n"
 "functions and their behavior are experimental: don't depend upon them\n"
 "unless you're willing to update your code if these experimental APIs change\n"
-"underneath you.  Calling this function more than once in a realm/global\n"
-"will throw."),
+"underneath you."),
 #endif // ENABLE_INTL_API
 
     JS_FS_HELP_END
@@ -8540,6 +8562,8 @@ main(int argc, char** argv, char** envp)
 #endif
 
     js::SetPreserveWrapperCallback(cx, DummyPreserveWrapperCallback);
+
+    JS::SetModuleResolveHook(cx->runtime(), CallModuleResolveHook);
 
     cooperationState = js_new<CooperationState>();
     JS::SetSingleThreadedExecutionCallbacks(cx,

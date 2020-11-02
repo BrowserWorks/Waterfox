@@ -4839,21 +4839,18 @@ JS::Evaluate(JSContext* cx, const ReadOnlyCompileOptions& optionsArg,
     return ::Evaluate(cx, optionsArg, filename, rval);
 }
 
-JS_PUBLIC_API(JSFunction*)
-JS::GetModuleResolveHook(JSContext* cx)
+JS_PUBLIC_API(JS::ModuleResolveHook)
+JS::GetModuleResolveHook(JSRuntime* rt)
 {
     AssertHeapIsIdle();
-    CHECK_REQUEST(cx);
-    return cx->global()->moduleResolveHook();
+    return rt->moduleResolveHook;
 }
 
 JS_PUBLIC_API(void)
-JS::SetModuleResolveHook(JSContext* cx, HandleFunction func)
+JS::SetModuleResolveHook(JSRuntime* rt, JS::ModuleResolveHook func)
 {
     AssertHeapIsIdle();
-    CHECK_REQUEST(cx);
-    assertSameCompartment(cx, func);
-    cx->global()->setModuleResolveHook(func);
+    rt->moduleResolveHook = func;
 }
 
 JS_PUBLIC_API(bool)
@@ -7423,8 +7420,8 @@ GetScriptedCallerActivationFast(JSContext* cx, Activation** activation)
     *activation = activationIter.activation();
 
     if (activationIter->isJit()) {
-        for (jit::JitFrameIterator iter(activationIter); !iter.done(); ++iter) {
-            if (iter.isScripted() && !iter.script()->selfHosted())
+        for (OnlyJSJitFrameIter iter(activationIter); !iter.done(); ++iter) {
+            if (iter.frame().isScripted() && !iter.frame().script()->selfHosted())
                 return true;
         }
     } else if (activationIter->isInterpreter()) {

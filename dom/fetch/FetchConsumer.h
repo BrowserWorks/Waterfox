@@ -43,7 +43,7 @@ public:
   Create(nsIGlobalObject* aGlobal,
          nsIEventTarget* aMainThreadEventTarget,
          FetchBody<Derived>* aBody,
-         AbortSignal* aSignal,
+         AbortSignalImpl* aSignalImpl,
          FetchConsumeType aType,
          ErrorResult& aRv);
 

@@ -194,7 +194,7 @@ js::NativeObject::checkShapeConsistency()
 #endif
 
 void
-js::NativeObject::updateShapeAfterMovingGC()
+NativeObject::updateShapeAfterMovingGC()
 {
     Shape* shape = shape_;
     if (IsForwarded(shape))

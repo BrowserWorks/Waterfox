@@ -237,7 +237,7 @@ RegExpBuilder::AddQuantifierToAtom(int min, int max,
 template <typename CharT>
 RegExpParser<CharT>::RegExpParser(frontend::TokenStream& ts, LifoAlloc* alloc,
                                   const CharT* chars, const CharT* end, bool multiline_mode,
-                                  bool unicode, bool ignore_case)
+                                  bool unicode, bool ignore_case, bool dotAll)
   : ts(ts),
     alloc(alloc),
     captures_(nullptr),
@@ -250,6 +250,7 @@ RegExpParser<CharT>::RegExpParser(frontend::TokenStream& ts, LifoAlloc* alloc,
     multiline_(multiline_mode),
     unicode_(unicode),
     ignore_case_(ignore_case),
+    dotAll_(dotAll),
     simple_(false),
     contains_anchor_(false),
     is_scanned_for_captures_(false)
@@ -1422,12 +1423,44 @@ UnicodeEverythingAtom(LifoAlloc* alloc)
 {
     RegExpBuilder* builder = alloc->newInfallible<RegExpBuilder>(alloc);
 
-    // everything except \x0a, \x0d, \u2028 and \u2029
+    // Everything except \x0a, \x0d, \u2028 and \u2029
 
     CharacterRangeVector* ranges = alloc->newInfallible<CharacterRangeVector>(*alloc);
     AddClassNegated(kLineTerminatorAndSurrogateRanges,
                     kLineTerminatorAndSurrogateRangeCount,
                     ranges);
+    builder->AddAtom(alloc->newInfallible<RegExpCharacterClass>(ranges, false));
+
+    builder->NewAlternative();
+
+    builder->AddAtom(RangeAtom(alloc, unicode::LeadSurrogateMin, unicode::LeadSurrogateMax));
+    builder->AddAtom(NegativeLookahead(alloc, unicode::TrailSurrogateMin,
+                                       unicode::TrailSurrogateMax));
+
+    builder->NewAlternative();
+
+    builder->AddAssertion(alloc->newInfallible<RegExpAssertion>(
+        RegExpAssertion::NOT_AFTER_LEAD_SURROGATE));
+    builder->AddAtom(RangeAtom(alloc, unicode::TrailSurrogateMin, unicode::TrailSurrogateMax));
+
+    builder->NewAlternative();
+
+    builder->AddAtom(RangeAtom(alloc, unicode::LeadSurrogateMin, unicode::LeadSurrogateMax));
+    builder->AddAtom(RangeAtom(alloc, unicode::TrailSurrogateMin, unicode::TrailSurrogateMax));
+
+    return builder->ToRegExp();
+}
+
+static inline RegExpTree*
+UnicodeDotAllAtom(LifoAlloc* alloc)
+{
+    RegExpBuilder* builder = alloc->newInfallible<RegExpBuilder>(alloc);
+
+    // Full range excluding surrogates because /s was specified
+
+    CharacterRangeVector* ranges = alloc->newInfallible<CharacterRangeVector>(*alloc);
+    ranges->append(CharacterRange::Range(0x0, unicode::LeadSurrogateMin - 1));
+    ranges->append(CharacterRange::Range(unicode::TrailSurrogateMax + 1, unicode::UTF16Max));
     builder->AddAtom(alloc->newInfallible<RegExpCharacterClass>(ranges, false));
 
     builder->NewAlternative();
@@ -1576,13 +1609,25 @@ RegExpParser<CharT>::ParseDisjunction()
           }
           case '.': {
             Advance();
-            // everything except \x0a, \x0d, \u2028 and \u2029
+
             if (unicode_) {
-                builder->AddAtom(UnicodeEverythingAtom(alloc));
+                if (dotAll_) {
+                    // Everything
+                    builder->AddAtom(UnicodeDotAllAtom(alloc));
+                } else {
+                    // Everything except \x0a, \x0d, \u2028 and \u2029
+                    builder->AddAtom(UnicodeEverythingAtom(alloc));
+                }
                 break;
             }
             CharacterRangeVector* ranges = alloc->newInfallible<CharacterRangeVector>(*alloc);
-            CharacterRange::AddClassEscape(alloc, '.', ranges);
+            if (dotAll_) {
+                // Everything
+                CharacterRange::AddClassEscape(alloc, '*', ranges);
+            } else {
+                // Everything except \x0a, \x0d, \u2028 and \u2029
+                CharacterRange::AddClassEscape(alloc, '.', ranges);
+            }
             RegExpTree* atom = alloc->newInfallible<RegExpCharacterClass>(ranges, false);
             builder->AddAtom(atom);
             break;
@@ -1902,7 +1947,7 @@ template <typename CharT>
 static bool
 ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, size_t length,
              bool multiline, bool match_only, bool unicode, bool ignore_case,
-             bool global, bool sticky, RegExpCompileData* data)
+             bool global, bool sticky, bool dotAll, RegExpCompileData* data)
 {
     // We shouldn't strip pattern for exec, or test with global/sticky,
     // to reflect correct match position and lastIndex.
@@ -1927,7 +1972,7 @@ ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, si
         }
     }
 
-    RegExpParser<CharT> parser(ts, &alloc, chars, chars + length, multiline, unicode, ignore_case);
+    RegExpParser<CharT> parser(ts, &alloc, chars, chars + length, multiline, unicode, ignore_case, dotAll);
     data->tree = parser.ParsePattern();
     if (!data->tree)
         return false;
@@ -1941,40 +1986,40 @@ ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, si
 bool
 irregexp::ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, JSAtom* str,
                        bool multiline, bool match_only, bool unicode, bool ignore_case,
-                       bool global, bool sticky, RegExpCompileData* data)
+                       bool global, bool sticky, bool dotAll, RegExpCompileData* data)
 {
     JS::AutoCheckCannotGC nogc;
     return str->hasLatin1Chars()
            ? ::ParsePattern(ts, alloc, str->latin1Chars(nogc), str->length(),
-                            multiline, match_only, unicode, ignore_case, global, sticky, data)
+                            multiline, match_only, unicode, ignore_case, global, sticky, dotAll, data)
            : ::ParsePattern(ts, alloc, str->twoByteChars(nogc), str->length(),
-                            multiline, match_only, unicode, ignore_case, global, sticky, data);
+                            multiline, match_only, unicode, ignore_case, global, sticky, dotAll, data);
 }
 
 template <typename CharT>
 static bool
 ParsePatternSyntax(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, size_t length,
-                   bool unicode)
+                   bool unicode, bool dotAll)
 {
     LifoAllocScope scope(&alloc);
 
-    RegExpParser<CharT> parser(ts, &alloc, chars, chars + length, false, unicode, false);
+    RegExpParser<CharT> parser(ts, &alloc, chars, chars + length, false, unicode, dotAll, false);
     return parser.ParsePattern() != nullptr;
 }
 
 bool
 irregexp::ParsePatternSyntax(frontend::TokenStream& ts, LifoAlloc& alloc, JSAtom* str,
-                             bool unicode)
+                             bool unicode, bool dotAll)
 {
     JS::AutoCheckCannotGC nogc;
     return str->hasLatin1Chars()
-           ? ::ParsePatternSyntax(ts, alloc, str->latin1Chars(nogc), str->length(), unicode)
-           : ::ParsePatternSyntax(ts, alloc, str->twoByteChars(nogc), str->length(), unicode);
+           ? ::ParsePatternSyntax(ts, alloc, str->latin1Chars(nogc), str->length(), unicode, dotAll)
+           : ::ParsePatternSyntax(ts, alloc, str->twoByteChars(nogc), str->length(), unicode, dotAll);
 }
 
 bool
 irregexp::ParsePatternSyntax(frontend::TokenStream& ts, LifoAlloc& alloc,
-                             const mozilla::Range<const char16_t> chars, bool unicode)
+                             const mozilla::Range<const char16_t> chars, bool unicode, bool dotAll)
 {
-    return ::ParsePatternSyntax(ts, alloc, chars.begin().get(), chars.length(), unicode);
+    return ::ParsePatternSyntax(ts, alloc, chars.begin().get(), chars.length(), unicode, dotAll);
 }

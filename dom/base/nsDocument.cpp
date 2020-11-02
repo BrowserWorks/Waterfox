@@ -1824,6 +1824,10 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(nsDocument)
       cb.NoteXPCOMChild(mql);
     }
   }
+
+  if (tmp->mResizeObserverController) {
+    tmp->mResizeObserverController->Traverse(cb);
+  }
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(nsDocument)
@@ -1936,6 +1940,10 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsDocument)
   }
 
   tmp->mInUnlinkOrDeletion = false;
+
+  if (tmp->mResizeObserverController) {
+    tmp->mResizeObserverController->Unlink();
+  }
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 nsresult
@@ -3972,6 +3980,12 @@ nsDocument::DeleteShell()
   // objects for @font-face rules that came from the style set.
   RebuildUserFontSet();
 
+  if (mResizeObserverController) {
+    // If the shell is going away, we need to remove any links to this document
+    // from the observer.
+    mResizeObserverController->DetachFromDocument();
+  }
+
   nsIPresShell* oldShell = mPresShell;
   mPresShell = nullptr;
   UpdateFrameRequestCallbackSchedulingState(oldShell);
@@ -5888,8 +5902,6 @@ nsDocument::CreateAttribute(const nsAString& aName,
 already_AddRefed<Attr>
 nsIDocument::CreateAttribute(const nsAString& aName, ErrorResult& rv)
 {
-  WarnOnceAbout(eCreateAttribute);
-
   if (!mNodeInfoManager) {
     rv.Throw(NS_ERROR_NOT_INITIALIZED);
     return nullptr;
@@ -5938,8 +5950,6 @@ nsIDocument::CreateAttributeNS(const nsAString& aNamespaceURI,
                                const nsAString& aQualifiedName,
                                ErrorResult& rv)
 {
-  WarnOnceAbout(eCreateAttributeNS);
-
   RefPtr<mozilla::dom::NodeInfo> nodeInfo;
   rv = nsContentUtils::GetNodeInfoFromQName(aNamespaceURI,
                                             aQualifiedName,
@@ -12113,6 +12123,24 @@ nsDocument::DocAddSizeOfExcludingThis(nsWindowSizes* aWindowSizes) const
   // - many!
 }
 
+void
+nsDocument::AddResizeObserver(ResizeObserver* aResizeObserver)
+{
+  if (!mResizeObserverController) {
+    mResizeObserverController = MakeUnique<ResizeObserverController>(this);
+  }
+
+  mResizeObserverController->AddResizeObserver(aResizeObserver);
+}
+
+void
+nsDocument::ScheduleResizeObserversNotification() const
+{
+  if (mResizeObserverController) {
+    mResizeObserverController->ScheduleNotification();
+  }
+}
+
 already_AddRefed<nsIDocument>
 nsIDocument::Constructor(const GlobalObject& aGlobal,
                          ErrorResult& rv)
@@ -13202,4 +13230,17 @@ nsIDocument::ClearStaleServoDataFromDocument()
     ServoRestyleManager::ClearServoDataFromSubtree(root);
   }
   mMightHaveStaleServoData = false;
+}
+
+bool
+nsIDocument::ModuleScriptsEnabled()
+{
+  static bool sEnabledForContent = false;
+  static bool sCachedPref = false;
+  if (!sCachedPref) {
+    sCachedPref = true;
+    Preferences::AddBoolVarCache(&sEnabledForContent, "dom.moduleScripts.enabled", false);
+  }
+
+  return nsContentUtils::IsChromeDoc(this) || sEnabledForContent;
 }

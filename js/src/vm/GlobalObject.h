@@ -77,6 +77,7 @@ class GlobalObject : public NativeObject
         ITERATOR_PROTO,
         ARRAY_ITERATOR_PROTO,
         STRING_ITERATOR_PROTO,
+        REGEXP_STRING_ITERATOR_PROTO,
         LEGACY_GENERATOR_OBJECT_PROTO,
         STAR_GENERATOR_OBJECT_PROTO,
         STAR_GENERATOR_FUNCTION_PROTO,
@@ -105,7 +106,6 @@ class GlobalObject : public NativeObject
         DEBUGGERS,
         INTRINSICS,
         FOR_OF_PIC_CHAIN,
-        MODULE_RESOLVE_HOOK,
         WINDOW_PROXY,
         GLOBAL_THIS_RESOLVED,
 
@@ -571,6 +571,12 @@ class GlobalObject : public NativeObject
     }
 
     static NativeObject*
+    getOrCreateRegExpStringIteratorPrototype(JSContext* cx, Handle<GlobalObject*> global) {
+        return MaybeNativeObject(getOrCreateObject(cx, global, REGEXP_STRING_ITERATOR_PROTO,
+                                               initRegExpStringIteratorProto));
+    }
+
+    static NativeObject*
     getOrCreateLegacyGeneratorObjectPrototype(JSContext* cx, Handle<GlobalObject*> global) {
         return MaybeNativeObject(getOrCreateObject(cx, global, LEGACY_GENERATOR_OBJECT_PROTO,
                                                    initLegacyGeneratorProto));
@@ -762,6 +768,7 @@ class GlobalObject : public NativeObject
     static bool initIteratorProto(JSContext* cx, Handle<GlobalObject*> global);
     static bool initArrayIteratorProto(JSContext* cx, Handle<GlobalObject*> global);
     static bool initStringIteratorProto(JSContext* cx, Handle<GlobalObject*> global);
+    static bool initRegExpStringIteratorProto(JSContext* cx, Handle<GlobalObject*> global);
 
     // Implemented in vm/GeneratorObject.cpp.
     static bool initLegacyGeneratorProto(JSContext* cx, Handle<GlobalObject*> global);
@@ -777,7 +784,6 @@ class GlobalObject : public NativeObject
 
     // Implemented in Intl.cpp.
     static bool initIntlObject(JSContext* cx, Handle<GlobalObject*> global);
-    static bool addPluralRulesConstructor(JSContext* cx, HandleObject intl);
 
     // Implemented in builtin/ModuleObject.cpp
     static bool initModuleProto(JSContext* cx, Handle<GlobalObject*> global);
@@ -828,19 +834,6 @@ class GlobalObject : public NativeObject
     }
     void setWindowProxy(JSObject* windowProxy) {
         setReservedSlot(WINDOW_PROXY, ObjectValue(*windowProxy));
-    }
-
-    void setModuleResolveHook(HandleFunction hook) {
-        MOZ_ASSERT(hook);
-        setSlot(MODULE_RESOLVE_HOOK, ObjectValue(*hook));
-    }
-
-    JSFunction* moduleResolveHook() {
-        Value value = getSlotRef(MODULE_RESOLVE_HOOK);
-        if (value.isUndefined())
-            return nullptr;
-
-        return &value.toObject().as<JSFunction>();
     }
 
     // Returns either this global's star-generator function prototype, or null

@@ -133,6 +133,8 @@ MSG_DEF(JSMSG_NEGATIVE_REPETITION_COUNT, 0, JSEXN_RANGEERR, "repeat count must b
 MSG_DEF(JSMSG_NOT_A_CODEPOINT,         1, JSEXN_RANGEERR, "{0} is not a valid code point")
 MSG_DEF(JSMSG_RESULTING_STRING_TOO_LARGE, 0, JSEXN_RANGEERR, "repeat count must be less than infinity and not overflow maximum string size")
 MSG_DEF(JSMSG_DEPRECATED_STRING_METHOD, 2, JSEXN_WARN, "String.{0} is deprecated; use String.prototype.{1} instead")
+MSG_DEF(JSMSG_FLAGS_UNDEFINED_OR_NULL, 0, JSEXN_TYPEERR, "'flags' property must neither be undefined nor null")
+MSG_DEF(JSMSG_REQUIRES_GLOBAL_REGEXP,  1, JSEXN_TYPEERR, "{0} must be called with a global RegExp")
 
 // Number
 MSG_DEF(JSMSG_BAD_RADIX,               0, JSEXN_RANGEERR, "radix must be an integer at least 2 and no greater than 36")
@@ -606,7 +608,7 @@ MSG_DEF(JSMSG_NUMBER_MUST_BE_FINITE_NON_NEGATIVE, 1, JSEXN_RANGEERR, "'{0}' must
 MSG_DEF(JSMSG_READABLEBYTESTREAMCONTROLLER_INVALID_BYTESWRITTEN, 0, JSEXN_RANGEERR, "'bytesWritten' exceeds remaining length.")
 MSG_DEF(JSMSG_READABLEBYTESTREAMCONTROLLER_INVALID_VIEW_SIZE, 0, JSEXN_RANGEERR, "view size does not match requested data.")
 MSG_DEF(JSMSG_READABLEBYTESTREAMCONTROLLER_INVALID_VIEW_OFFSET, 0, JSEXN_RANGEERR, "view offset does not match requested position.")
-MSG_DEF(JSMSG_READABLESTREAM_NOT_LOCKED,                 1, JSEXN_TYPEERR, "'{0}' may only be called on a locked stream.")
+MSG_DEF(JSMSG_READABLESTREAM_LOCKED_METHOD,              1, JSEXN_TYPEERR, "'{0}' can't be called on a locked stream.")
 MSG_DEF(JSMSG_READABLESTREAM_LOCKED,                     0, JSEXN_TYPEERR, "A Reader may only be created for an unlocked ReadableStream.")
 MSG_DEF(JSMSG_READABLESTREAM_NOT_BYTE_STREAM_CONTROLLER, 1, JSEXN_TYPEERR, "{0} requires a ReadableByteStreamController.")
 MSG_DEF(JSMSG_READABLESTREAM_NOT_DEFAULT_CONTROLLER,     1, JSEXN_TYPEERR, "{0} requires a ReadableStreamDefaultController.")

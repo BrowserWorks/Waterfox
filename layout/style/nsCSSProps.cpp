@@ -2235,6 +2235,7 @@ const KTableEntry nsCSSProps::kWordBreakKTable[] = {
 const KTableEntry nsCSSProps::kOverflowWrapKTable[] = {
   { eCSSKeyword_normal, NS_STYLE_OVERFLOWWRAP_NORMAL },
   { eCSSKeyword_break_word, NS_STYLE_OVERFLOWWRAP_BREAK_WORD },
+  { eCSSKeyword_anywhere, NS_STYLE_OVERFLOWWRAP_ANYWHERE },
   { eCSSKeyword_UNKNOWN, -1 }
 };
 

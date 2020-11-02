@@ -155,6 +155,7 @@ enum class OrientationType : uint8_t;
 class ProcessingInstruction;
 class Promise;
 class ScriptLoader;
+class ResizeObserver;
 class StyleSheetList;
 class SVGDocument;
 class SVGSVGElement;
@@ -3028,6 +3029,12 @@ public:
   {
     return mIsWebComponentsEnabled;
   }
+
+  bool ModuleScriptsEnabled();
+
+  virtual void AddResizeObserver(mozilla::dom::ResizeObserver* aResizeObserver) = 0;
+
+  virtual void ScheduleResizeObserversNotification() const = 0;
 
 protected:
   bool GetUseCounter(mozilla::UseCounter aUseCounter)

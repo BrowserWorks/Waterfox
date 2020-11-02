@@ -874,7 +874,7 @@ inDOMUtils::CssPropertySupportsType(const nsAString& aProperty, uint32_t aType,
     break;
   case TYPE_NUMBER:
     // Include integers under "number"?
-    variant = VARIANT_NUMBER | VARIANT_INTEGER;
+    variant = VARIANT_NUMBER | VARIANT_INTEGER | VARIANT_OPACITY;
     break;
   default:
     // Unknown type

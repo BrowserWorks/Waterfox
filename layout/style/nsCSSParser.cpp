@@ -7497,6 +7497,7 @@ CSSParserImpl::ParseNonNegativeVariant(nsCSSValue& aValue,
                                VARIANT_NUMBER |
                                VARIANT_LENGTH |
                                VARIANT_PERCENT |
+                               VARIANT_OPACITY |
                                VARIANT_INTEGER)) == 0,
              "need to update code below to handle additional variants");
 
@@ -7537,6 +7538,7 @@ CSSParserImpl::ParseOneOrLargerVariant(nsCSSValue& aValue,
   // that we specifically handle.
   MOZ_ASSERT((aVariantMask & ~(VARIANT_ALL_NONNUMERIC |
                                VARIANT_NUMBER |
+                               VARIANT_OPACITY |
                                VARIANT_INTEGER)) == 0,
              "need to update code below to handle additional variants");
 
@@ -7664,9 +7666,9 @@ CSSParserImpl::ParseVariant(nsCSSValue& aValue,
       }
     }
   }
-  // Check VARIANT_NUMBER and VARIANT_INTEGER before VARIANT_LENGTH or
-  // VARIANT_ZERO_ANGLE.
-  if (((aVariantMask & VARIANT_NUMBER) != 0) &&
+  // Check VARIANT_NUMBER, number tokens for VARIANT_OPACITY, and 
+  // VARIANT_INTEGER before VARIANT_LENGTH or VARIANT_ZERO_ANGLE.
+  if (((aVariantMask & (VARIANT_NUMBER | VARIANT_OPACITY)) != 0) &&
       (eCSSToken_Number == tk->mType)) {
     aValue.SetFloatValue(tk->mNumber, eCSSUnit_Number);
     return CSSParseResult::Ok;
@@ -7676,6 +7678,7 @@ CSSParserImpl::ParseVariant(nsCSSValue& aValue,
     aValue.SetIntValue(tk->mInteger, eCSSUnit_Integer);
     return CSSParseResult::Ok;
   }
+
   if (((aVariantMask & (VARIANT_LENGTH | VARIANT_ANGLE |
                         VARIANT_FREQUENCY | VARIANT_TIME)) != 0 &&
        eCSSToken_Dimension == tk->mType) ||
@@ -7699,6 +7702,15 @@ CSSParserImpl::ParseVariant(nsCSSValue& aValue,
   if (((aVariantMask & VARIANT_PERCENT) != 0) &&
       (eCSSToken_Percentage == tk->mType)) {
     aValue.SetPercentValue(tk->mNumber);
+    return CSSParseResult::Ok;
+  }
+  // We need to store eCSSToken_Percentage in eCSSUnit_Number in order to 
+  // serialize opacity according to spec. All percentage tokens are stored 
+  // as floats, so no type conversion is needed to make this possible. 
+  // Percentage tokens have to be evaluated later than number tokens.
+  if (((aVariantMask & VARIANT_OPACITY) != 0) &&
+      (eCSSToken_Percentage == tk->mType)) {
+    aValue.SetFloatValue(tk->mNumber, eCSSUnit_Number);
     return CSSParseResult::Ok;
   }
   if (mUnitlessLengthQuirk) { // NONSTANDARD: Nav interprets unitless numbers as px

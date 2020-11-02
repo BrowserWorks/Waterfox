@@ -10,6 +10,7 @@
 #include "nsIRunnable.h"
 #include "nsITimer.h"
 #include "nsINamed.h"
+#include "TimeoutManager.h"
 
 namespace mozilla {
 namespace dom {

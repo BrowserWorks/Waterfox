@@ -105,6 +105,7 @@
     macro(displayURL, displayURL, "displayURL") \
     macro(do, do_, "do") \
     macro(done, done, "done") \
+    macro(dotAll, dotAll, "dotAll") \
     macro(dotGenerator, dotGenerator, ".generator") \
     macro(dotThis, dotThis, ".this") \
     macro(each, each, "each") \
@@ -284,7 +285,6 @@
     macro(pattern, pattern, "pattern") \
     macro(pending, pending, "pending") \
     macro(PluralRules, PluralRules, "PluralRules") \
-    macro(PluralRulesSelect, PluralRulesSelect, "Intl_PluralRules_Select") \
     macro(percentSign, percentSign, "percentSign") \
     macro(plusSign, plusSign, "plusSign") \
     macro(public, public_, "public") \
@@ -344,6 +344,7 @@
     macro(ReadableStreamTee, ReadableStreamTee, "ReadableStreamTee") \
     macro(reason, reason, "reason") \
     macro(RegExpFlagsGetter, RegExpFlagsGetter, "RegExpFlagsGetter") \
+    macro(RegExpStringIterator, RegExpStringIterator, "RegExp String Iterator") \
     macro(Reify, Reify, "Reify") \
     macro(reject, reject, "reject") \
     macro(rejected, rejected, "rejected") \

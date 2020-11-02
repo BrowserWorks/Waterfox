@@ -53,6 +53,7 @@
 #include "nsFrameSelection.h"
 #include "nsGkAtoms.h"
 #include "nsCSSAnonBoxes.h"
+#include "nsImageFrame.h"
 
 #include "nsFrameTraversal.h"
 #include "nsRange.h"
@@ -4528,7 +4529,12 @@ static FrameTarget GetSelectionClosestFrame(nsIFrame* aFrame, nsPoint aPoint,
       return GetSelectionClosestFrameForChild(closest.mFrame, aPoint, aFlags);
     }
   }
-  return FrameTarget(aFrame, false, false);
+  // Use frame edge for grid, flex, table, and non-editable image frames.
+  const bool useFrameEdge =
+      aFrame->IsFlexOrGridContainer() || aFrame->IsTableFrame() ||
+      (static_cast<nsImageFrame*>(do_QueryFrame(aFrame)) &&
+       !aFrame->GetContent()->IsEditable());
+  return FrameTarget(aFrame, useFrameEdge, false);
 }
 
 nsIFrame::ContentOffsets OffsetsForSingleFrame(nsIFrame* aFrame, nsPoint aPoint)

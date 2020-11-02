@@ -8556,6 +8556,18 @@ nsTextFrame::AddInlineMinISizeForFlow(gfxContext *aRenderingContext,
     return;
   }
 
+  // If overflow-wrap is 'anywhere', we can wrap everywhere.
+  if (textStyle->mOverflowWrap == NS_STYLE_OVERFLOWWRAP_ANYWHERE &&
+      textStyle->WordCanWrap(this)) {
+    aData->OptionallyBreak();
+    aData->mCurrentLine +=
+      textRun->GetMinAdvanceWidth(Range(start, flowEndInTextRun));
+    aData->mTrailingWhitespace = 0;
+    aData->mAtStartOfLine = false;
+    aData->OptionallyBreak();
+    return;
+  }
+
   AutoTArray<gfxTextRun::HyphenType, BIG_TEXT_NODE_SIZE> hyphBuffer;
   if (hyphenating) {
     if (hyphBuffer.AppendElements(flowEndInTextRun - start, fallible)) {

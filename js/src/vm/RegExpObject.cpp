@@ -50,6 +50,7 @@ JS_STATIC_ASSERT(GlobalFlag == JSREG_GLOB);
 JS_STATIC_ASSERT(MultilineFlag == JSREG_MULTILINE);
 JS_STATIC_ASSERT(StickyFlag == JSREG_STICKY);
 JS_STATIC_ASSERT(UnicodeFlag == JSREG_UNICODE);
+JS_STATIC_ASSERT(DotAllFlag == JSREG_DOTALL);
 
 RegExpObject*
 js::RegExpAlloc(JSContext* cx, NewObjectKind newKind, HandleObject proto /* = nullptr */)
@@ -146,6 +147,10 @@ RegExpObject::isOriginalFlagGetter(JSNative native, RegExpFlag* mask)
   }
   if (native == regexp_unicode) {
       *mask = UnicodeFlag;
+      return true;
+  }
+  if (native == regexp_dotAll) {
+      *mask = DotAllFlag;
       return true;
   }
 
@@ -255,7 +260,7 @@ RegExpObject::create(JSContext* cx, HandleAtom source, RegExpFlag flags,
         tokenStream = dummyTokenStream.ptr();
     }
 
-    if (!irregexp::ParsePatternSyntax(*tokenStream, alloc, source, flags & UnicodeFlag))
+    if (!irregexp::ParsePatternSyntax(*tokenStream, alloc, source, flags & UnicodeFlag, flags && DotAllFlag))
         return nullptr;
 
     Rooted<RegExpObject*> regexp(cx, RegExpAlloc(cx, newKind));
@@ -492,6 +497,8 @@ RegExpObject::toString(JSContext* cx) const
     if (unicode() && !sb.append('u'))
         return nullptr;
     if (sticky() && !sb.append('y'))
+        return nullptr;
+    if (dotAll() && !sb.append('s'))
         return nullptr;
 
     return sb.finishString();
@@ -998,7 +1005,7 @@ RegExpShared::compile(JSContext* cx, MutableHandleRegExpShared re, HandleAtom pa
     irregexp::RegExpCompileData data;
     if (!irregexp::ParsePattern(dummyTokenStream, cx->tempLifoAlloc(), pattern,
                                 re->multiline(), mode == MatchOnly, re->unicode(),
-                                re->ignoreCase(), re->global(), re->sticky(), &data))
+                                re->ignoreCase(), re->global(), re->sticky(), re->dotAll(), &data))
     {
         return false;
     }
@@ -1388,6 +1395,10 @@ ParseRegExpFlags(const CharT* chars, size_t length, RegExpFlag* flagsOut, char16
             break;
           case 'u':
             if (!HandleRegExpFlag(UnicodeFlag, flagsOut))
+                return false;
+            break;
+          case 's':
+            if (!HandleRegExpFlag(DotAllFlag, flagsOut))
                 return false;
             break;
           default:

@@ -2630,14 +2630,15 @@ UpdateExecutionObservabilityOfScriptsInZone(JSContext* cx, Zone* zone,
             if (actIter->compartment()->zone() != zone)
                 continue;
 
-            for (JitFrameIterator iter(actIter); !iter.done(); ++iter) {
-                switch (iter.type()) {
+            for (OnlyJSJitFrameIter iter(actIter); !iter.done(); ++iter) {
+                const jit::JSJitFrameIter& frame = iter.frame();
+                switch (frame.type()) {
                   case JitFrame_BaselineJS:
-                    MarkBaselineScriptActiveIfObservable(iter.script(), obs);
+                    MarkBaselineScriptActiveIfObservable(frame.script(), obs);
                     break;
                   case JitFrame_IonJS:
-                    MarkBaselineScriptActiveIfObservable(iter.script(), obs);
-                    for (InlineFrameIterator inlineIter(cx, &iter); inlineIter.more(); ++inlineIter)
+                    MarkBaselineScriptActiveIfObservable(frame.script(), obs);
+                    for (InlineFrameIterator inlineIter(cx, &frame); inlineIter.more(); ++inlineIter)
                         MarkBaselineScriptActiveIfObservable(inlineIter.script(), obs);
                     break;
                   default:;
@@ -7913,11 +7914,11 @@ UpdateFrameIterPc(FrameIter& iter)
         while (activationIter.activation() != activation)
             ++activationIter;
 
-        jit::JitFrameIterator jitIter(activationIter);
-        while (!jitIter.isIonJS() || jitIter.jsFrame() != jsFrame)
+        OnlyJSJitFrameIter jitIter(activationIter);
+        while (!jitIter.frame().isIonJS() || jitIter.frame().jsFrame() != jsFrame)
             ++jitIter;
 
-        jit::InlineFrameIterator ionInlineIter(cx, &jitIter);
+        jit::InlineFrameIterator ionInlineIter(cx, &jitIter.frame());
         while (ionInlineIter.frameNo() != frame->frameNo())
             ++ionInlineIter;
 
@@ -8170,11 +8171,10 @@ DebuggerFrame::getArguments(JSContext *cx, HandleDebuggerFrame frame,
  */
 static bool
 EvaluateInEnv(JSContext* cx, Handle<Env*> env, AbstractFramePtr frame,
-              jsbytecode* pc, mozilla::Range<const char16_t> chars, const char* filename,
+              mozilla::Range<const char16_t> chars, const char* filename,
               unsigned lineno, MutableHandleValue rval)
 {
     assertSameCompartment(cx, env, frame);
-    MOZ_ASSERT_IF(frame, pc);
 
     CompileOptions options(cx);
     options.setIsRunOnce(true)
@@ -8182,8 +8182,8 @@ EvaluateInEnv(JSContext* cx, Handle<Env*> env, AbstractFramePtr frame,
            .setFileAndLine(filename, lineno)
            .setCanLazilyParse(false)
            .setIntroductionType("debugger eval")
-           .maybeMakeStrictMode(frame ? frame.script()->strict() : false);
-    RootedScript callerScript(cx, frame ? frame.script() : nullptr);
+           .maybeMakeStrictMode(frame && frame.hasScript() ? frame.script()->strict() : false);
+    RootedScript callerScript(cx, frame && frame.hasScript() ? frame.script() : nullptr);
     SourceBufferHolder srcBuf(chars.begin().get(), chars.length(), SourceBufferHolder::NoOwnership);
     RootedScript script(cx);
 
@@ -8298,9 +8298,8 @@ DebuggerGenericEval(JSContext* cx, const mozilla::Range<const char16_t> chars,
     LeaveDebuggeeNoExecute nnx(cx);
     RootedValue rval(cx);
     AbstractFramePtr frame = iter ? iter->abstractFramePtr() : NullFramePtr();
-    jsbytecode* pc = iter ? iter->pc() : nullptr;
 
-    bool ok = EvaluateInEnv(cx, env, frame, pc, chars,
+    bool ok = EvaluateInEnv(cx, env, frame, chars,
                             options.filename() ? options.filename() : "debugger eval code",
                             options.lineno(), &rval);
     Debugger::resultToCompletion(cx, ok, rval, &status, value);
@@ -8314,8 +8313,6 @@ DebuggerFrame::eval(JSContext* cx, HandleDebuggerFrame frame, mozilla::Range<con
                     MutableHandleValue value)
 {
     MOZ_ASSERT(frame->isLive());
-    if (!requireScriptReferent(cx, frame))
-        return false;
 
     Debugger* dbg = frame->owner();
 
@@ -8460,10 +8457,10 @@ static void
 DebuggerFrame_trace(JSTracer* trc, JSObject* obj)
 {
     OnStepHandler* onStepHandler = obj->as<DebuggerFrame>().onStepHandler();
-    if (onStepHandler) 
+    if (onStepHandler)
         onStepHandler->trace(trc);
     OnPopHandler* onPopHandler = obj->as<DebuggerFrame>().onPopHandler();
-    if (onPopHandler) 
+    if (onPopHandler)
         onPopHandler->trace(trc);
 }
 

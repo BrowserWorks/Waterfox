@@ -39,21 +39,23 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(ScriptLoadRequest)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 ScriptLoadRequest::ScriptLoadRequest(ScriptKind aKind,
+                                     nsIURI* aURI,
                                      nsIScriptElement* aElement,
                                      uint32_t aVersion,
                                      mozilla::CORSMode aCORSMode,
-                                     const mozilla::dom::SRIMetadata& aIntegrity)
+                                     const SRIMetadata& aIntegrity,
+                                     nsIURI* aReferrer,
+                                     mozilla::net::ReferrerPolicy aReferrerPolicy)
   : mKind(aKind)
   , mElement(aElement)
   , mScriptFromHead(false)
-  , mProgress(Progress::Loading)
-  , mDataType(DataType::Unknown)
+  , mProgress(Progress::eLoading)
+  , mDataType(DataType::eUnknown)
+  , mScriptMode(ScriptMode::eBlocking)
   , mIsInline(true)
   , mHasSourceMapURL(false)
-  , mIsDefer(false)
-  , mIsAsync(false)
-  , mPreloadAsAsync(false)
-  , mPreloadAsDefer(false)
+  , mInDeferList(false)
+  , mInAsyncList(false)
   , mIsNonAsyncScriptInserted(false)
   , mIsXSLT(false)
   , mIsCanceled(false)
@@ -64,10 +66,12 @@ ScriptLoadRequest::ScriptLoadRequest(ScriptKind aKind,
   , mScriptBytecode()
   , mBytecodeOffset(0)
   , mJSVersion(aVersion)
+  , mURI(aURI)
   , mLineNo(1)
   , mCORSMode(aCORSMode)
   , mIntegrity(aIntegrity)
-  , mReferrerPolicy(mozilla::net::RP_Unset)
+  , mReferrer(aReferrer)
+  , mReferrerPolicy(aReferrerPolicy)
 {
 }
 
@@ -88,8 +92,8 @@ ScriptLoadRequest::~ScriptLoadRequest()
 void
 ScriptLoadRequest::SetReady()
 {
-  MOZ_ASSERT(mProgress != Progress::Ready);
-  mProgress = Progress::Ready;
+  MOZ_ASSERT(mProgress != Progress::eReady);
+  mProgress = Progress::eReady;
 }
 
 void
@@ -134,6 +138,18 @@ ScriptLoadRequest::AsModuleRequest()
 {
   MOZ_ASSERT(IsModuleRequest());
   return static_cast<ModuleLoadRequest*>(this);
+}
+
+void
+ScriptLoadRequest::SetScriptMode(bool aDeferAttr, bool aAsyncAttr)
+{
+  if (aAsyncAttr) {
+    mScriptMode = ScriptMode::eAsync;
+  } else if (aDeferAttr || IsModuleRequest()) {
+    mScriptMode = ScriptMode::eDeferred;
+  } else {
+    mScriptMode = ScriptMode::eBlocking;
+  }
 }
 
 //////////////////////////////////////////////////////////////

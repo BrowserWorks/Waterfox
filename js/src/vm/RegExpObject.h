@@ -139,6 +139,7 @@ class RegExpObject : public NativeObject
     bool multiline() const  { return getFlags() & MultilineFlag; }
     bool sticky() const     { return getFlags() & StickyFlag; }
     bool unicode() const    { return getFlags() & UnicodeFlag; }
+    bool dotAll() const     { return getFlags() & DotAllFlag; }
 
     static bool isOriginalFlagGetter(JSNative native, RegExpFlag* mask);
 

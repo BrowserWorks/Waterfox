@@ -1227,15 +1227,7 @@ LoadExtendedValidationInfo(const nsNSSShutDownPreventionLock& /*proofOfLock*/)
 
     UniqueCERTCertificate cert(CERT_FindCertByIssuerAndSN(nullptr, &ias));
 
-    // If an entry is missing in the NSS root database, it may be because the
-    // root database is out of sync with what we expect (e.g. a different
-    // version of system NSS is installed).
-    if (!cert) {
-      // The entries for the debug EV roots are at indices 0 through
-      // NUM_TEST_EV_ROOTS - 1. Since they're not built-in, they probably
-      // haven't been loaded yet.
-      MOZ_ASSERT(i < NUM_TEST_EV_ROOTS, "Could not find built-in EV root");
-    } else {
+    if (cert) {
       unsigned char certFingerprint[SHA256_LENGTH];
       srv = PK11_HashBuf(SEC_OID_SHA256, certFingerprint, cert->derCert.data,
                          AssertedCast<int32_t>(cert->derCert.len));

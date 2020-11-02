@@ -157,6 +157,15 @@ class StringIteratorObject : public JSObject
 StringIteratorObject*
 NewStringIteratorObject(JSContext* cx, NewObjectKind newKind = GenericObject);
 
+class RegExpStringIteratorObject : public NativeObject
+{
+ public:
+  static const Class class_;
+};
+
+RegExpStringIteratorObject*
+NewRegExpStringIteratorObject(JSContext* cx, NewObjectKind newKind = GenericObject);
+
 JSObject*
 GetIterator(JSContext* cx, HandleObject obj, unsigned flags);
 

@@ -94,7 +94,7 @@ AbortSignal*
 AbortController::Signal()
 {
   if (!mSignal) {
-    mSignal = new AbortSignal(this, mAborted);
+    mSignal = new AbortSignal(mGlobal, mAborted);
   }
 
   return mSignal;

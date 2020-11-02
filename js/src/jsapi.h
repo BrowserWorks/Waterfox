@@ -4485,17 +4485,19 @@ extern JS_PUBLIC_API(bool)
 Evaluate(JSContext* cx, const ReadOnlyCompileOptions& options,
          const char* filename, JS::MutableHandleValue rval);
 
-/**
- * Get the HostResolveImportedModule hook for a global.
- */
-extern JS_PUBLIC_API(JSFunction*)
-GetModuleResolveHook(JSContext* cx);
+using ModuleResolveHook = JSObject* (*)(JSContext*, HandleObject, HandleString);
 
 /**
- * Set the HostResolveImportedModule hook for a global to the given function.
+ * Get the HostResolveImportedModule hook for the runtime.
+ */
+extern JS_PUBLIC_API(ModuleResolveHook)
+GetModuleResolveHook(JSRuntime* rt);
+
+/**
+ * Set the HostResolveImportedModule hook for the runtime to the given function.
  */
 extern JS_PUBLIC_API(void)
-SetModuleResolveHook(JSContext* cx, JS::HandleFunction func);
+SetModuleResolveHook(JSRuntime* rt, ModuleResolveHook func);
 
 /**
  * Parse the given source buffer as a module in the scope of the current global
@@ -5266,7 +5268,8 @@ GetSymbolDescription(HandleSymbol symbol);
     macro(toPrimitive) \
     macro(toStringTag) \
     macro(unscopables) \
-    macro(asyncIterator)
+    macro(asyncIterator) \
+    macro(matchAll)
 
 enum class SymbolCode : uint32_t {
     // There is one SymbolCode for each well-known symbol.
@@ -5883,6 +5886,7 @@ JS_ObjectIsDate(JSContext* cx, JS::HandleObject obj, bool* isDate);
 #define JSREG_MULTILINE 0x04u   /* treat ^ and $ as begin and end of line */
 #define JSREG_STICKY    0x08u   /* only match starting at lastIndex */
 #define JSREG_UNICODE   0x10u   /* unicode */
+#define JSREG_DOTALL    0x20u   /* match . to everything including newlines */
 
 extern JS_PUBLIC_API(JSObject*)
 JS_NewRegExpObject(JSContext* cx, const char* bytes, size_t length, unsigned flags);

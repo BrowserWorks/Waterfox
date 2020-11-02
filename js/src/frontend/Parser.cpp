@@ -9480,7 +9480,7 @@ Parser<SyntaxParseHandler, char16_t>::newRegExp()
     RegExpFlag flags = tokenStream.currentToken().regExpFlags();
 
     mozilla::Range<const char16_t> source(chars, length);
-    if (!js::irregexp::ParsePatternSyntax(tokenStream, alloc, source, flags & UnicodeFlag))
+    if (!js::irregexp::ParsePatternSyntax(tokenStream, alloc, source, flags & UnicodeFlag, flags & DotAllFlag))
         return null();
 
     return handler.newRegExp(SyntaxParseHandler::NodeGeneric, pos(), *this);

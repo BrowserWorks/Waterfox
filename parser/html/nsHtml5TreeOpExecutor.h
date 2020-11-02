@@ -262,7 +262,8 @@ class nsHtml5TreeOpExecutor final : public nsHtml5DocumentBuilder,
                        const nsAString& aIntegrity,
                        bool aScriptFromHead,
                        bool aAsync,
-                       bool aDefer);
+                       bool aDefer,
+                       bool aNoModule);
 
     void PreloadStyle(const nsAString& aURL, const nsAString& aCharset,
                       const nsAString& aCrossOrigin,

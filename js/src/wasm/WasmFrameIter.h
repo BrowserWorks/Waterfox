@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_frame_iterator_h
-#define wasm_frame_iterator_h
+#ifndef wasm_frame_iter_h
+#define wasm_frame_iter_h
 
 #include "js/ProfilingFrameIterator.h"
 
@@ -41,15 +41,20 @@ struct Frame;
 struct FuncOffsets;
 struct CallableOffsets;
 
-// Iterates over the frames of a single WasmActivation, called synchronously
-// from C++ in the thread of the asm.js.
+// Iterates over a linear group of wasm frames of a single WasmActivation,
+// called synchronously from C++ in the wasm thread. It will stop at the first
+// frame that is not of the same kind, or at the end of an activation.
+//
+// If you want to handle every kind of frames (including JS jit frames), use
+// JitFrameIter.
 //
 // The one exception is that this iterator may be called from the interrupt
 // callback which may be called asynchronously from asm.js code; in this case,
 // the backtrace may not be correct. That being said, we try our best printing
 // an informative message to the user and at least the name of the innermost
 // function stack frame.
-class FrameIterator
+
+class WasmFrameIter
 {
   public:
     enum class Unwind { True, False };
@@ -66,8 +71,8 @@ class FrameIterator
     void popFrame();
 
   public:
-    explicit FrameIterator();
-    explicit FrameIterator(WasmActivation* activation, Unwind unwind = Unwind::False);
+    // See comment above this class definition.
+    explicit WasmFrameIter(WasmActivation* activation, Unwind unwind = Unwind::False);
     void operator++();
     bool done() const;
     const char* filename() const;
@@ -184,11 +189,6 @@ GenerateFunctionPrologue(jit::MacroAssembler& masm, unsigned framePushed, const 
 void
 GenerateFunctionEpilogue(jit::MacroAssembler& masm, unsigned framePushed, FuncOffsets* offsets);
 
-// Mark all instance objects live on the stack.
-
-void
-TraceActivations(JSContext* cx, const CooperatingContext& target, JSTracer* trc);
-
 // Given a fault at pc with register fp, return the faulting instance if there
 // is such a plausible instance, and otherwise null.
 
@@ -236,4 +236,4 @@ StartUnwinding(const WasmActivation& activation, const RegisterState& registers,
 } // namespace wasm
 } // namespace js
 
-#endif // wasm_frame_iterator_h
+#endif // wasm_frame_iter_h

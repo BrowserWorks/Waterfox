@@ -88,7 +88,7 @@ FetchDriver::~FetchDriver()
 }
 
 nsresult
-FetchDriver::Fetch(AbortSignal* aSignal, FetchDriverObserver* aObserver)
+FetchDriver::Fetch(AbortSignalImpl* aSignalImpl, FetchDriverObserver* aObserver)
 {
   workers::AssertIsOnMainThread();
 #ifdef DEBUG
@@ -117,13 +117,13 @@ FetchDriver::Fetch(AbortSignal* aSignal, FetchDriverObserver* aObserver)
 
   // If the signal is aborted, it's time to inform the observer and terminate
   // the operation.
-  if (aSignal) {
-    if (aSignal->Aborted()) {
+  if (aSignalImpl) {
+    if (aSignalImpl->Aborted()) {
       Abort();
       return NS_OK;
     }
 
-    Follow(aSignal);
+    Follow(aSignalImpl);
   }
 
   if (NS_FAILED(HttpFetch())) {

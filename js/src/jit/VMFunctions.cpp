@@ -364,10 +364,10 @@ ArrayPushDense(JSContext* cx, HandleArrayObject arr, HandleValue v, uint32_t* le
     // possible the setOrExtendDenseElements call already invalidated the
     // IonScript. JSJitFrameIter::ionScript works when the script is invalidated
     // so we use that instead.
-    JitFrameIterator it(cx);
-    MOZ_ASSERT(it.type() == JitFrame_Exit);
-    ++it;
-    IonScript* ionScript = it.ionScript();
+    JSJitFrameIter frame(cx);
+    MOZ_ASSERT(frame.type() == JitFrame_Exit);
+    ++frame;
+    IonScript* ionScript = frame.ionScript();
 
     JS::AutoValueArray<3> argv(cx);
     AutoDetectInvalidation adi(cx, argv[0], ionScript);
@@ -1255,12 +1255,12 @@ RecompileImpl(JSContext* cx, bool force)
 {
     MOZ_ASSERT(cx->currentlyRunningInJit());
     JitActivationIterator activations(cx);
-    JitFrameIterator iter(activations);
+    JSJitFrameIter frame(activations->asJit());
 
-    MOZ_ASSERT(iter.type() == JitFrame_Exit);
-    ++iter;
+    MOZ_ASSERT(frame.type() == JitFrame_Exit);
+    ++frame;
 
-    RootedScript script(cx, iter.script());
+    RootedScript script(cx, frame.script());
     MOZ_ASSERT(script->hasIonScript());
 
     if (!IsIonEnabled(cx))

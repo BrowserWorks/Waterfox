@@ -1963,22 +1963,24 @@ RelocateCell(Zone* zone, TenuredCell* src, AllocKind thingKind, size_t thingSize
 
     // Copy the mark bits.
     dst->copyMarkBitsFrom(src);
-	
-	// Poison the source cell contents except for the forwarding flag and pointer
-	// which will be stored in the first word. We can't do this for native object
-	// with fixed elements because this would overwrite the element flags and
-	// these are needed when updating COW elements referred to by other objects.
-	#ifdef DEBUG
-	JSObject* srcObj = IsObjectAllocKind(thingKind)
-	                     ? static_cast<JSObject*>(static_cast<Cell*>(src))
-	                     : nullptr;
-	if (!srcObj || !srcObj->isNative() ||
-	  !srcObj->as<NativeObject>().hasFixedElements()) {
-	AlwaysPoison(reinterpret_cast<uint8_t*>(src) + sizeof(uintptr_t),
-	             JS_MOVED_TENURED_PATTERN, thingSize - sizeof(uintptr_t),
-	             MemCheckKind::MakeNoAccess);
-	}
-	#endif
+
+    // Poison the source cell contents except for the forwarding flag and pointer
+    // which will be stored in the first word. We can't do this for native object
+    // with fixed elements because this would overwrite the element flags and
+    // these are needed when updating COW elements referred to by other objects.
+#ifdef DEBUG
+    JSObject* srcObj = IsObjectAllocKind(thingKind)
+                           ? static_cast<JSObject*>(static_cast<Cell*>(src))
+                           : nullptr;
+    if (!srcObj || !srcObj->isNative() ||
+        !srcObj->as<NativeObject>().hasFixedElements()) {
+      JS_POISON(reinterpret_cast<uint8_t*>(src) + sizeof(uintptr_t),
+                JS_MOVED_TENURED_PATTERN,  thingSize - sizeof(uintptr_t));
+      // AlwaysPoison(reinterpret_cast<uint8_t*>(src) + sizeof(uintptr_t),
+      //             JS_MOVED_TENURED_PATTERN, thingSize - sizeof(uintptr_t),
+      //             MemCheckKind::MakeNoAccess);
+    }
+#endif
 
     // Mark source cell as forwarded and leave a pointer to the destination.
     RelocationOverlay* overlay = RelocationOverlay::fromCell(src);
@@ -2672,12 +2674,13 @@ GCRuntime::releaseRelocatedArenasWithoutUnlocking(Arena* arenaList, const AutoLo
 
         // Mark arena as empty
         arena->setAsFullyUnused();
-		
+
 #ifdef DEBUG
-	    // The cell contents have been partially marked no access in RelocateCell,
-	    // so we need to mark the region as undefined again so we can poison it.
-	    SetMemCheckKind(reinterpret_cast<void*>(arena->thingsStart()),
-	                    arena->getThingsSpan(), MemCheckKind::MakeUndefined);
+        // The cell contents have been partially marked no access in RelocateCell,
+        // so we need to mark the region as undefined again so we can poison it.
+        // Bug 1448589 needs to be ported here first.
+        // SetMemCheckKind(reinterpret_cast<void*>(arena->thingsStart()),
+        //                 arena->getThingsSpan(), MemCheckKind::MakeUndefined);
 #endif
 
 #if defined(JS_CRASH_DIAGNOSTICS) || defined(JS_GC_ZEAL)

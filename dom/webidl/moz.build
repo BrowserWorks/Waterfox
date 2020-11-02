@@ -761,6 +761,7 @@ WEBIDL_FILES = [
     'Range.webidl',
     'Rect.webidl',
     'Request.webidl',
+    'ResizeObserver.webidl',
     'Response.webidl',
     'RGBColor.webidl',
     'RTCStatsReport.webidl',
