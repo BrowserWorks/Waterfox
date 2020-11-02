@@ -46,7 +46,7 @@
 
 #include <string.h>
 #include <errno.h>
-#ifndef __MINGW32__
+#if !defined(__MINGW32__) && !defined(_MSC_VER)
 #include <strings.h>
 #include <syslog.h>
 #endif
