@@ -399,6 +399,73 @@ body {
       .multistageContainer .tiles-container.info:hover, .multistageContainer .tiles-container.info:focus {
         background-color: rgba(217, 217, 227, 0.3);
         border-radius: 4px; }
+  .multistageContainer .tiles-search-container {
+    margin: 10px auto;
+    border: 0; }
+  .multistageContainer .sr-only {
+    opacity: 0;
+    overflow: hidden;
+    position: absolute; }
+    .multistageContainer .sr-only.input {
+      height: 1px;
+      width: 1px; }
+  .multistageContainer .tiles-search-section {
+    display: grid;
+    grid-gap: 21px;
+    grid-template-columns: repeat(4, auto);
+    /* --newtab-background-color-1 will be invisible, but it's necessary to
+     * keep the content from jumping around when it gets focus-within and
+     * does sprout a dotted border.  This way it keeps a 1 pixel wide border
+     * either way so things don't change position.
+     */
+    border: var(--tiles-search-section-border-width) solid var(--newtab-background-color-1); }
+    @media (max-width: 610px) {
+      .multistageContainer .tiles-search-section {
+        grid-template-columns: repeat(2, auto); } }
+    .multistageContainer .tiles-search-section:focus-within {
+      border: var(--tiles-search-section-border-width) dotted; }
+    .multistageContainer .tiles-search-section .search {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      width: 180px;
+      height: 145px;
+      color: #000;
+      background-color: #FFF;
+      box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1);
+      border-radius: 4px;
+      cursor: pointer; }
+      .multistageContainer .tiles-search-section .search .icon {
+        background-size: cover;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        height: 91px; }
+        .multistageContainer .tiles-search-section .search .icon:dir(rtl) {
+          transform: scaleX(-1); }
+        .multistageContainer .tiles-search-section .search .icon.bing {
+          background-image: url("resource://activity-stream/data/content/tippytop/images/bing-search-welcome.png"); }
+        .multistageContainer .tiles-search-section .search .icon.startpage {
+          background-image: url("resource://activity-stream/data/content/tippytop/images/startpage-search-welcome.png"); }
+      .multistageContainer .tiles-search-section .search .text {
+        display: flex;
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 22px;
+        margin-inline-start: 12px;
+        margin-top: 9px; }
+      .multistageContainer .tiles-search-section .search.selected {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px; }
+      .multistageContainer .tiles-search-section .search:focus, .multistageContainer .tiles-search-section .search:active {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px; }
+  .multistageContainer .tiles-container {
+    margin: 10px auto; }
+    .multistageContainer .tiles-container.info {
+      padding: 6px 12px 12px; }
+      .multistageContainer .tiles-container.info:hover, .multistageContainer .tiles-container.info:focus {
+        background-color: rgba(217, 217, 227, 0.3);
+        border-radius: 4px; }
   .multistageContainer .tiles-topsites-disclaimer {
     display: flex;
     flex-direction: column;

@@ -158,6 +158,16 @@ export class WelcomeScreen extends React.PureComponent {
     });
   }
 
+  highlightSearch(search) {
+    const searches = document.querySelectorAll("label.search");
+    searches.forEach(function(element) {
+      element.classList.remove("selected");
+      if (element.firstElementChild.value === search) {
+        element.classList.add("selected");
+      }
+    });
+  }
+
   setSearch(ev){
 	  alert("Your file is being uploaded!")
   }
@@ -195,6 +205,14 @@ export class WelcomeScreen extends React.PureComponent {
       this.highlightTheme(event.currentTarget.value);
       window.AWSelectTheme(
         action.theme === "<event>" ? event.currentTarget.value : action.theme
+      );
+    }
+
+    // A special tiles.action.search value indicates we should use the event's value vs provided value.
+    if (action.search) {
+      this.highlightSearch(event.currentTarget.value);
+      window.AWSelectSearchEngine(
+        action.search === "<event>" ? event.currentTarget.value : action.search
       );
     }
 
@@ -260,8 +278,42 @@ export class WelcomeScreen extends React.PureComponent {
             </div>
           </div>
         ) : null;
-	case "search":
-		return <div class="tiles-theme-container"><div><fieldset class="tiles-theme-section"><legend class="sr-only" data-l10n-id="onboarding-multistage-theme-subtitle">Pick your search provider.</legend><label id="bing" class="theme" title="Bing helps you turn information into action, making it faster and easier to go from searching to doing." aria-label="Bing helps you turn information into action, making it faster and easier to go from searching to doing." onClick={()=>{ alert('alert'); }}><input type="radio" name="theme" class="sr-only input" value="automatic"/><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/bing-search-welcome.png')`}}></div><div class="text" >Bing</div></label><label id="startpage" class="theme" title="Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy." aria-label="Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy."><input type="radio" name="theme" class="sr-only input" value="light"/><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/startpage-search-welcome.png')`}}></div><div class="text">Startpage</div></label></fieldset></div></div>
+	    case "search":
+		    return this.props.content.tiles.data ? (
+          <div className="tiles-search-container">
+            <div>
+              <fieldset className="tiles-search-section">
+              <Localized text={this.props.content.subtitle}>
+                  <legend className="sr-only" />
+                </Localized>
+                {this.props.content.tiles.data.map(
+                  ({ search, label, tooltip }) => (
+                    <Localized
+                      key={search + label}
+                      text={typeof tooltip === "object" ? tooltip : {}}
+                    >
+                      <label className="search" title={search + label}>
+                        <input
+                          type="radio"
+                          value={search}
+                          name="search"
+                          className="sr-only input"
+                          onClick={this.handleAction}
+                        />
+                        <div className={`icon ${search}`} />
+                        {label && (
+                          <Localized text={label}>
+                            <div className="text" />
+                          </Localized>
+                        )}
+                      </label>
+                    </Localized>
+                  )
+                )}
+              </fieldset>
+            </div>
+          </div>
+        ) : null;
       case "video":
         return this.props.content.tiles.source ? (
           <div

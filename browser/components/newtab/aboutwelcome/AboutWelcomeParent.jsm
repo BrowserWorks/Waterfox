@@ -89,7 +89,22 @@ async function getImportableSites() {
     }
   }
   return sites;
-}
+};
+
+const DEFAULT_SEARCH_ENGINES = {
+  BING: "Bing",
+  STARTPAGE: "Startpage"
+};
+
+async function setDefaultEngine(engine_name) {
+  try {
+    const engine = Services.search.getEngineByName(engine_name);
+    Services.search.setDefault(engine);
+    Services.search.setDefaultPrivate(engine);
+  } catch (e) {
+    Cu.reportError(`Failed to set ${data}. ${ex}`);
+  }
+};
 
 class AboutWelcomeObserver {
   constructor() {
@@ -211,6 +226,8 @@ class AboutWelcomeParent extends JSWindowActorParent {
             }
           })
         );
+      case "AWPage:SELECT_SEARCH_ENGINE":
+        return setDefaultEngine(DEFAULT_SEARCH_ENGINES[data]);
       default:
         log.debug(`Unexpected event ${type} was not handled.`);
     }

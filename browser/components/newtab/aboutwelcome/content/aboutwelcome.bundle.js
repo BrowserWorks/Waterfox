@@ -431,6 +431,17 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
     });
   }
 
+  highlightSearch(search) {
+    const searches = document.querySelectorAll("label.search");
+    searches.forEach(function (element) {
+      element.classList.remove("selected");
+
+      if (element.firstElementChild.value === search) {
+        element.classList.add("selected");
+      }
+    });
+  }
+
   setSearch(ev) {
     alert("Your file is being uploaded!");
   }
@@ -466,6 +477,12 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
     if (action.theme) {
       this.highlightTheme(event.currentTarget.value);
       window.AWSelectTheme(action.theme === "<event>" ? event.currentTarget.value : action.theme);
+    } // A special tiles.action.search value indicates we should use the event's value vs provided value.
+
+
+    if (action.search) {
+      this.highlightSearch(event.currentTarget.value);
+      window.AWSelectSearchEngine(action.search === "<event>" ? event.currentTarget.value : action.search);
     }
 
     if (action.navigate) {
@@ -574,53 +591,38 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
         })))))))) : null;
 
       case "search":
-        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          class: "tiles-theme-container"
+        return this.props.content.tiles.data ? react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          className: "tiles-search-container"
         }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("fieldset", {
-          class: "tiles-theme-section"
+          className: "tiles-search-section"
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
+          text: this.props.content.subtitle
         }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("legend", {
-          class: "sr-only",
-          "data-l10n-id": "onboarding-multistage-theme-subtitle"
-        }, "Pick your search provider."), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
-          id: "bing",
-          class: "theme",
-          title: "Bing helps you turn information into action, making it faster and easier to go from searching to doing.",
-          "aria-label": "Bing helps you turn information into action, making it faster and easier to go from searching to doing.",
-          onClick: () => {
-            alert('alert');
-          }
+          className: "sr-only"
+        })), this.props.content.tiles.data.map(({
+          search,
+          label,
+          tooltip
+        }) => react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
+          key: search + label,
+          text: typeof tooltip === "object" ? tooltip : {}
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+          className: "search",
+          title: search + label
         }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
           type: "radio",
-          name: "theme",
-          class: "sr-only input",
-          value: "automatic"
+          value: search,
+          name: "search",
+          className: "sr-only input",
+          onClick: this.handleAction
         }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          class: "icon",
-          style: {
-            backgroundColor: "transparent",
-            backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/bing-search-welcome.png')`
-          }
-        }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          class: "text"
-        }, "Bing")), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
-          id: "startpage",
-          class: "theme",
-          title: "Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy.",
-          "aria-label": "Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy."
-        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
-          type: "radio",
-          name: "theme",
-          class: "sr-only input",
-          value: "light"
-        }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          class: "icon",
-          style: {
-            backgroundColor: "transparent",
-            backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/startpage-search-welcome.png')`
-          }
-        }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          class: "text"
-        }, "Startpage")))));
+          className: `icon ${search}`
+        }), label && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
+          text: label
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          className: "text"
+        })))))))) : null;
+      //<div class="tiles-theme-container"><div><fieldset class="tiles-theme-section"><legend class="sr-only" data-l10n-id="onboarding-multistage-theme-subtitle">Pick your search provider.</legend><label id="bing" class="theme" title="Bing helps you turn information into action, making it faster and easier to go from searching to doing." aria-label="Bing helps you turn information into action, making it faster and easier to go from searching to doing." onClick={()=>{ alert('alert'); }}><input type="radio" name="theme" class="sr-only input" value="automatic"/><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/bing-search-welcome.png')`}}></div><div class="text" >Bing</div></label><label id="startpage" class="theme" title="Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy." aria-label="Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy."><input type="radio" name="theme" class="sr-only input" value="light"/><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/startpage-search-welcome.png')`}}></div><div class="text">Startpage</div></label></fieldset></div></div>;
 
       case "video":
         return this.props.content.tiles.source ? react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
@@ -1049,22 +1051,49 @@ const DEFAULT_WELCOME_CONTENT = {
       }
     }
   }, {
-    id: "AW_DEFAULT",
+    id: "AW_SEARCH",
     order: 3,
     content: {
       zap: true,
-      title: "Add privacy to your search",
-      subtitle: "For the most private experience, setting your search engine to Startpage is recommended",
-      primary_button: {
-        label: "Set Private Search",
+      title: "Set your Search",
+      subtitle: "Select your default search engine from the options below.",
+      tiles: {
+        type: "search",
         action: {
-          type: "SET_DEFAULT_SEARCH_ENGINE",
+          search: "<event>"
+        },
+        data: [{
+          search: "bing",
+          label: {
+            string_id: "onboarding-multistage-search-label-bing"
+          },
+          tooltip: {
+            string_id: "onboarding-multistage-search-tooltip-bing"
+          }
+        }, {
+          search: "startpage",
+          label: {
+            string_id: "onboarding-multistage-search-label-startpage"
+          },
+          tooltip: {
+            string_id: "onboarding-multistage-search-tooltip-startpage"
+          }
+        }]
+      },
+      primary_button: {
+        label: {
+          string_id: "onboarding-multistage-search-primary-button-label"
+        },
+        action: {
           navigate: true
         }
       },
       secondary_button: {
-        label: "Continue with default",
+        label: {
+          string_id: "onboarding-multistage-search-secondary-button-label"
+        },
         action: {
+          search: "bing",
           navigate: true
         }
       }
