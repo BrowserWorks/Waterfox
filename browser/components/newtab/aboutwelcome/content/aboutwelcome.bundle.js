@@ -1049,8 +1049,29 @@ const DEFAULT_WELCOME_CONTENT = {
       }
     }
   }, {
-    id: "AW_DEFAULT",
+    id: "AW_STARTPAGE",
     order: 3,
+    content: {
+      zap: true,
+      title: "Add privacy to your search",
+      subtitle: "For the most private experience, setting your search engine to Startpage is recommended",
+      primary_button: {
+        label: "Set Private Search",
+        action: {
+          type: "SET_DEFAULT_SEARCH_ENGINE",
+          navigate: true
+        }
+      },
+      secondary_button: {
+        label: "Continue with default",
+        action: {
+          navigate: true
+        }
+      }
+    }
+  }, {
+    id: "AW_DEFAULT",
+    order: 4,
     content: {
       zap: true,
       title: "Best as Default",
@@ -1073,7 +1094,7 @@ const DEFAULT_WELCOME_CONTENT = {
     }
   }, {
     id: "AW_PRIVACY",
-    order: 4,
+    order: 5,
     content: {
       title: "Automatic Privacy",
       subtitle: "Waterfox automatically blocks trackers and malware, and keeps companies from secretly following you around. When you see the shield while browsing, Waterfox is protecting you.",

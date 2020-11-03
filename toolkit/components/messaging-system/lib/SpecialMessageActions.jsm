@@ -6,6 +6,7 @@
 const EXPORTED_SYMBOLS = ["SpecialMessageActions"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
@@ -80,7 +81,7 @@ const SpecialMessageActions = {
       Cu.reportError(e);
     }
   },
-  
+
   setAsDefault() {
     let claimAllTypes = true;
     let setAsDefaultError = false;
@@ -211,7 +212,12 @@ const SpecialMessageActions = {
         ]);
         break;
       case "SET_DEFAULT_BROWSER":
-		this.setAsDefault();
+        this.setAsDefault();
+        break;
+      case "SET_DEFAULT_SEARCH_ENGINE":
+        const sp = Services.search.getEngineByName("Startpage");
+        Services.search.setDefault(sp);
+        Services.search.setDefaultPrivate(sp);
         break;
       case "CANCEL":
         // A no-op used by CFRs that minimizes the notification but does not
