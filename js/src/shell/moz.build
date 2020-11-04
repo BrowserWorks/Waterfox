@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+include('../js-cxxflags.mozbuild')
+
 if CONFIG['JS_SHELL_NAME']:
     GeckoProgram(CONFIG['JS_SHELL_NAME'], linkage=None)
     if CONFIG['JS_BUNDLED_EDITLINE']:
@@ -49,13 +51,6 @@ shellmoduleloader.inputs = [
     '../js.msg',
     'ModuleLoader.js',
 ]
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wno-shadow', '-Werror=format']
-
-# This is intended as a temporary workaround to enable VS2015.
-if CONFIG['_MSC_VER']:
-    CXXFLAGS += ['-wd4312']
 
 # Place a GDB Python auto-load file next to the shell executable, both in
 # the build directory and in the dist/bin directory.
