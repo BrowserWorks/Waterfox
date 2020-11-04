@@ -295,6 +295,8 @@ NetAddrElement::NetAddrElement(const NetAddrElement& netAddr) {
   mAddress = netAddr.mAddress;
 }
 
+NetAddrElement::NetAddrElement(const NetAddr& netAddr) { mAddress = netAddr; }
+
 NetAddrElement::~NetAddrElement() = default;
 
 AddrInfo::AddrInfo(const nsACString& host, const PRAddrInfo* prAddrInfo,
