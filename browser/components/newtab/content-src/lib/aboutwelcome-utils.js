@@ -188,7 +188,7 @@ export const DEFAULT_WELCOME_CONTENT = {
       },
     },
     {
-      id: "AW_STARTPAGE",
+      id: "AW_DEFAULT",
       order: 3,
       content: {
         zap: true,
