@@ -4099,9 +4099,15 @@ nsTextPaintStyle::InitSelectionColorsAndShadow()
     RefPtr<nsStyleContext> sc =
       mPresContext->StyleSet()->
         ProbePseudoElementStyle(selectionElement,
+                                CSSPseudoElementType::selection,
+                                mFrame->StyleContext());
+    if (!sc) {
+      sc = mPresContext->StyleSet()->
+        ProbePseudoElementStyle(selectionElement,
                                 CSSPseudoElementType::mozSelection,
                                 mFrame->StyleContext());
-    // Use -moz-selection pseudo class.
+    }
+    // Use selection pseudo class.
     if (sc) {
       mSelectionBGColor =
         sc->GetVisitedDependentColor(&nsStyleBackground::mBackgroundColor);
