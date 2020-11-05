@@ -125,6 +125,9 @@ if CONFIG['JS_HAS_CTYPES']:
 if CONFIG['JS_BUNDLED_EDITLINE']:
     DIRS += ['editline']
 
+if CONFIG['JS_NEW_REGEXP']:
+    DIRS += ['regexp']
+
 if not CONFIG['JS_DISABLE_SHELL']:
     DIRS += ['shell']
 
