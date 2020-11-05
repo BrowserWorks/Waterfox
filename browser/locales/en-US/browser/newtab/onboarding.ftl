@@ -82,6 +82,7 @@ onboarding-multistage-theme-label-automatic = Automatic
 onboarding-multistage-theme-label-light = Light
 onboarding-multistage-theme-label-dark = Dark
 onboarding-multistage-theme-label-colorful = Colorful
+onboarding-multistage-theme-label-alpenglow = Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -115,6 +116,35 @@ onboarding-multistage-theme-tooltip-colorful =
     Use a colorful appearance for buttons,
     menus, and windows.
   .aria-label = { onboarding-multistage-theme-tooltip-colorful.title }
+
+
+onboarding-multistage-search-header = Choose a default <span data-l10n-name="zap">search engine</span>
+onboarding-multistage-search-subtitle = Set your default.
+onboarding-multistage-search-primary-button-label = Set default search
+onboarding-multistage-search-secondary-button-label = Not now
+
+onboarding-multistage-search-label-bing = Bing
+onboarding-multistage-search-label-startpage = Startpage
+
+## Please make sure to split the content of the title attribute into lines whose
+## width corresponds to about 40 Latin characters, to ensure that the tooltip
+## doesn't become too long. Line breaks will be preserved when displaying the
+## tooltip.
+
+# Tooltip displayed on hover of Bing
+onboarding-multistage-search-tooltip-bing =
+  .title =
+    Use Bing as default search
+    engine.
+  .aria-label = { onboarding-multistage-search-tooltip-bing.title }
+
+# Tooltip displayed on hover of Startpage
+onboarding-multistage-search-tooltip-startpage =
+  .title =
+    Use Startpage as default search
+    engine.
+  .aria-label = { onboarding-multistage-search-tooltip-startpage.title }
+
 
 ## Welcome full page string
 

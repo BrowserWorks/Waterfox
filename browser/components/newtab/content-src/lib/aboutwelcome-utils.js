@@ -188,23 +188,50 @@ export const DEFAULT_WELCOME_CONTENT = {
       },
     },
     {
-      id: "AW_DEFAULT",
+      id: "AW_SEARCH",
       order: 3,
       content: {
         zap: true,
-        title: "Add privacy to your search",
-        subtitle:
-          "For the most private experience, setting your search engine to Startpage is recommended",
-        primary_button: {
-          label: "Set Private Search",
+		    title: "Set your Search",
+        subtitle: "Select your default search engine from the options below.",
+        tiles: {
+          type: "search",
           action: {
-            type: "SET_DEFAULT_SEARCH_ENGINE",
+            search: "<event>",
+          },
+          data: [
+            {
+              search: "bing",
+              label: {
+                string_id: "onboarding-multistage-search-label-bing",
+              },
+              tooltip: {
+                string_id: "onboarding-multistage-search-tooltip-bing",
+              },
+            },
+            {
+              search: "startpage",
+              label: { string_id: "onboarding-multistage-search-label-startpage" },
+              tooltip: {
+                string_id: "onboarding-multistage-search-tooltip-startpage",
+              },
+            },
+          ],
+        },
+        primary_button: {
+          label: {
+            string_id: "onboarding-multistage-search-primary-button-label",
+          },
+          action: {
             navigate: true,
           },
         },
         secondary_button: {
-          label: "Continue with default",
+          label: {
+            string_id: "onboarding-multistage-search-secondary-button-label",
+          },
           action: {
+            search: "bing",
             navigate: true,
           },
         },
@@ -215,13 +242,12 @@ export const DEFAULT_WELCOME_CONTENT = {
       order: 4,
       content: {
         zap: true,
-        title: "Best as Default",
-        subtitle:
-          "Set Waterfox as your default web browser to get the best user experience.",
+		    title: "Best as Default",
+        subtitle: "Set Waterfox as your default web browser to get the best user experience.",
         primary_button: {
           label: "Make default...",
           action: {
-            type: "SET_DEFAULT_BROWSER",
+			      type: "SET_DEFAULT_BROWSER",
             navigate: true,
           },
         },

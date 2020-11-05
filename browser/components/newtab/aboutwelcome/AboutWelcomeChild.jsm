@@ -185,6 +185,10 @@ class AboutWelcomeChild extends JSWindowActorChild {
       defineAs: "AWSelectTheme",
     });
 
+    Cu.exportFunction(this.AWSelectSearchEngine.bind(this), window, {
+      defineAs: "AWSelectSearchEngine",
+    });
+
     Cu.exportFunction(this.AWSendEventTelemetry.bind(this), window, {
       defineAs: "AWSendEventTelemetry",
     });
@@ -220,6 +224,12 @@ class AboutWelcomeChild extends JSWindowActorChild {
   AWSelectTheme(data) {
     return this.wrapPromise(
       this.sendQuery("AWPage:SELECT_THEME", data.toUpperCase())
+    );
+  }
+
+  AWSelectSearchEngine(data) {
+    return this.wrapPromise(
+      this.sendQuery("AWPage:SELECT_SEARCH_ENGINE", data.toUpperCase())
     );
   }
 
