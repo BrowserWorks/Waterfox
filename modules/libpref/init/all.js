@@ -2953,7 +2953,7 @@ pref("layout.css.prefixes.gradients", true);
 pref("layout.css.prefixes.webkit", true);
 
 // Whether -webkit-appearance is aliased to -moz-appearance
-pref("layout.css.webkit-appearance.enabled", false);
+pref("layout.css.webkit-appearance.enabled", true);
 
 // Are "-webkit-{min|max}-device-pixel-ratio" media queries supported?
 // (Note: this pref has no effect if the master 'layout.css.prefixes.webkit'
