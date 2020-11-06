@@ -219,6 +219,10 @@ CSS_PROP_ALIAS(-moz-columns,
                columns,
                MozColumns,
                "")
+CSS_PROP_ALIAS(-moz-tab-size,
+	       tab_size,
+	       MozTabSize,
+	       "")
 
 #define WEBKIT_PREFIX_PREF "layout.css.prefixes.webkit"
 
