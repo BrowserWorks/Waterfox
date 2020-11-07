@@ -4859,28 +4859,18 @@ IonBuilder::createThisScripted(MDefinition* callee, MDefinition* newTarget)
     // This instruction MUST be idempotent: since it does not correspond to an
     // explicit operation in the bytecode, we cannot use resumeAfter().
     // Getters may not override |prototype| fetching, so this operation is indeed idempotent.
-    // - First try an idempotent property cache.
-    // - Upon failing idempotent property cache, we can't use a non-idempotent cache,
-    //   therefore we fallback to CallGetProperty
     //
-    // Note: both CallGetProperty and GetPropertyCache can trigger a GC,
-    //       and thus invalidation.
-    MInstruction* getProto;
-    if (!invalidatedIdempotentCache()) {
-        MConstant* id = constant(StringValue(names().prototype));
-        MGetPropertyCache* getPropCache = MGetPropertyCache::New(alloc(), newTarget, id,
-                                                                 /* monitored = */ false);
-        getPropCache->setIdempotent();
-        getProto = getPropCache;
-    } else {
-        MCallGetProperty* callGetProp = MCallGetProperty::New(alloc(), newTarget, names().prototype);
-        callGetProp->setIdempotent();
-        getProto = callGetProp;
-    }
-    current->add(getProto);
+    // Note: GetPropertyCache can trigger a GC, and thus invalidation.
+    MConstant* id = constant(StringValue(names().prototype));
+    MGetPropertyCache* getPropCache =
+        MGetPropertyCache::New(alloc(), newTarget, id,
+                                /* monitored = */ false);
+    getPropCache->setIdempotent();
+    current->add(getPropCache);
 
     // Create this from prototype
-    MCreateThisWithProto* createThis = MCreateThisWithProto::New(alloc(), callee, newTarget, getProto);
+    MCreateThisWithProto* createThis =
+        MCreateThisWithProto::New(alloc(), callee, newTarget, getPropCache);
     current->add(createThis);
 
     return createThis;
