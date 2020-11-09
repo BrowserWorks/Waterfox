@@ -1,0 +1,55 @@
+/* Additional styling for Floe theme for Waterfox Current
+/* Author: Stefano Rosselli
+*/
+
+/* :::::: ABOUT PLUGINS :::::: */
+
+@-moz-document  url("about:plugins") {
+	
+  body {
+    background-color: var(--wfx-gray-10) !important;
+    color: var(--wfx-content-color) !important;
+  }
+
+  html a {
+    color: var(--wfx-lt-primary-color) !important;
+    text-decoration: none !important;
+  }
+
+  html a:hover {
+    text-decoration: underline !important;
+  }
+
+  html a:active,
+  html a:focus {
+    text-decoration: none !important;
+    outline: none !important;
+  }
+  
+  .notice {
+    background: var(--wfx-gray-60)  !important;
+    border: 1px solid transparent  !important;
+    border-radius: var(--wfx-border-radius) !important;
+  }
+  
+  table {
+    background-color: var(--wfx-table-data-bg-color) !important;
+    color: var(--wfx-content-color) !important;
+    border: 1px solid var(--wfx-border-color) !important;
+  }
+  
+  th {
+    background-color: var(--wfx-lt-primary-color) !important;
+    color: rgb(255,255,255) !important;
+  }
+
+  th + th,
+  td + td {
+    border-inline-start: 1px solid var(--wfx-border-color) !important;
+  }
+
+  td {
+    border-top: 1px solid var(--wfx-border-color) !important;
+  }
+
+}

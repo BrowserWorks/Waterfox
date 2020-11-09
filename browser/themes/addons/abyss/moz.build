@@ -1,0 +1,33 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+
+EXTRA_JS_MODULES.themes['abyss'] += [
+    'icon.png',
+	'icon@2x.png',
+    'img/back.svg',
+    'img/cbox-check.svg',
+    'img/density-compact.svg',
+    'img/density-normal.svg',
+    'img/density-touch.svg',
+    'img/drag-indicator.svg',
+    'img/exit.svg',
+    'img/fast-backward.svg',
+    'img/fast-forward.svg',
+    'img/folder.svg',
+    'img/forward.svg',
+    'img/fullscreen.svg',
+    'img/home.svg',
+    'img/indicator-tab-attention.svg',
+    'img/landscape.svg',
+    'img/menu-badged.svg',
+    'img/menu.svg',
+    'img/open.svg',
+    'img/placeholder.svg',
+    'img/portrait.svg',
+    'img/private-browsing.svg',
+    'img/restart.svg',
+    'img/save.svg',
+    'img/whatsnew.svg',
+    'manifest.json',
+	'style.css',
+]

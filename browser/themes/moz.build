@@ -17,9 +17,8 @@ else:
     DIRS += ['windows']
 
 DIRS += [
-    'addons/alpenglow',
-    'addons/dark',
-    'addons/light',
+    'addons/abyss',
+    'addons/floe',
 ]
 
 with Files('osx/**'):

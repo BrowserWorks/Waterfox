@@ -135,36 +135,19 @@ export const DEFAULT_WELCOME_CONTENT = {
           },
           data: [
             {
+              theme: "floe",
+              label: "Floe",
+              tooltip: "Floe, the light theme for Waterfox",
+            },
+            {
+              theme: "abyss",
+              label: "Abyss",
+              tooltip: "Abyss, the dark theme for Waterfox",
+            },
+            {
               theme: "automatic",
-              label: {
-                string_id: "onboarding-multistage-theme-label-automatic",
-              },
-              tooltip: {
-                string_id: "onboarding-multistage-theme-tooltip-automatic",
-              },
-            },
-            {
-              theme: "light",
-              label: { string_id: "onboarding-multistage-theme-label-light" },
-              tooltip: {
-                string_id: "onboarding-multistage-theme-tooltip-light",
-              },
-            },
-            {
-              theme: "dark",
-              label: { string_id: "onboarding-multistage-theme-label-dark" },
-              tooltip: {
-                string_id: "onboarding-multistage-theme-tooltip-dark",
-              },
-            },
-            {
-              theme: "alpenglow",
-              label: {
-                string_id: "onboarding-multistage-theme-label-alpenglow",
-              },
-              tooltip: {
-                string_id: "onboarding-multistage-theme-tooltip-alpenglow",
-              },
+              label: "Photon Dynamic",
+              tooltip: "The familiar Photon theme",
             },
           ],
         },
@@ -181,7 +164,7 @@ export const DEFAULT_WELCOME_CONTENT = {
             string_id: "onboarding-multistage-theme-secondary-button-label",
           },
           action: {
-            theme: "automatic",
+            theme: "floe",
             navigate: true,
           },
         },

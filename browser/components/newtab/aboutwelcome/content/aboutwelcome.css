@@ -111,7 +111,7 @@ body {
   background-color: var(--newtab-background-color); }
   body[lwt-newtab-brighttext] {
     --newtab-background-color: #2A2A2E;
-    --newtab-background-color-1: #1D1133;
+    --newtab-background-color-1: rgba(4,6,20,.35);
     --newtab-text-primary-color: #F9F9FA;
     --newtab-text-conditional-color: #F9F9FA;
     --grey-subtitle-1: #FFF;
@@ -341,7 +341,7 @@ body {
   .multistageContainer .tiles-theme-section {
     display: grid;
     grid-gap: 21px;
-    grid-template-columns: repeat(4, auto);
+    grid-template-columns: repeat(3, auto);
     /* --newtab-background-color-1 will be invisible, but it's necessary to
      * keep the content from jumping around when it gets focus-within and
      * does sprout a dotted border.  This way it keeps a 1 pixel wide border
@@ -377,8 +377,10 @@ body {
           background-image: url("chrome://mozapps/content/extensions/firefox-compact-dark.svg"); }
         .multistageContainer .tiles-theme-section .theme .icon.automatic {
           background-image: url("chrome://mozapps/content/extensions/default-theme.svg"); }
-        .multistageContainer .tiles-theme-section .theme .icon.alpenglow {
-          background-image: url("chrome://mozapps/content/extensions/firefox-alpenglow.svg"); }
+        .multistageContainer .tiles-theme-section .theme .icon.abyss {
+          background-image: url("chrome://browser/skin/abyss/img/waterfox-abyss-preview.svg"); }
+        .multistageContainer .tiles-theme-section .theme .icon.floe {
+          background-image: url("chrome://browser/skin/floe/img/waterfox-floe-preview.svg"); }
       .multistageContainer .tiles-theme-section .theme .text {
         display: flex;
         font-size: 14px;

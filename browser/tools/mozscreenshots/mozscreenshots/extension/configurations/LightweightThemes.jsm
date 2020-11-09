@@ -24,34 +24,25 @@ var LightweightThemes = {
       },
     },
 
-    compactLight: {
+    abyss: {
       selectors: [],
       async applyConfig() {
         let addon = await AddonManager.getAddonByID(
-          "firefox-compact-light@mozilla.org"
+          "abyss@waterfox.net"
         );
         await addon.enable();
       },
     },
 
-    compactDark: {
+    floe: {
       selectors: [],
       async applyConfig() {
         let addon = await AddonManager.getAddonByID(
-          "firefox-compact-dark@mozilla.org"
+          "floe@waterfox.net"
         );
         await addon.enable();
       },
     },
 
-    alpenGlow: {
-      selectors: [],
-      async applyConfig() {
-        let addon = await AddonManager.getAddonByID(
-          "firefox-alpenglow@mozilla.org"
-        );
-        await addon.enable();
-      },
-    },
   },
 };

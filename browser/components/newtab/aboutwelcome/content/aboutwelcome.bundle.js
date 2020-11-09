@@ -622,7 +622,6 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
         }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
           className: "text"
         })))))))) : null;
-      //<div class="tiles-theme-container"><div><fieldset class="tiles-theme-section"><legend class="sr-only" data-l10n-id="onboarding-multistage-theme-subtitle">Pick your search provider.</legend><label id="bing" class="theme" title="Bing helps you turn information into action, making it faster and easier to go from searching to doing." aria-label="Bing helps you turn information into action, making it faster and easier to go from searching to doing." onClick={()=>{ alert('alert'); }}><input type="radio" name="theme" class="sr-only input" value="automatic"/><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/bing-search-welcome.png')`}}></div><div class="text" >Bing</div></label><label id="startpage" class="theme" title="Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy." aria-label="Startpage.com delivers online tools that help you to stay in control of your personal information and protect your online privacy."><input type="radio" name="theme" class="sr-only input" value="light"/><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/startpage-search-welcome.png')`}}></div><div class="text">Startpage</div></label></fieldset></div></div>;
 
       case "video":
         return this.props.content.tiles.source ? react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
@@ -999,37 +998,17 @@ const DEFAULT_WELCOME_CONTENT = {
           theme: "<event>"
         },
         data: [{
+          theme: "floe",
+          label: "Floe",
+          tooltip: "Floe, the light theme for Waterfox"
+        }, {
+          theme: "abyss",
+          label: "Abyss",
+          tooltip: "Abyss, the dark theme for Waterfox"
+        }, {
           theme: "automatic",
-          label: {
-            string_id: "onboarding-multistage-theme-label-automatic"
-          },
-          tooltip: {
-            string_id: "onboarding-multistage-theme-tooltip-automatic"
-          }
-        }, {
-          theme: "light",
-          label: {
-            string_id: "onboarding-multistage-theme-label-light"
-          },
-          tooltip: {
-            string_id: "onboarding-multistage-theme-tooltip-light"
-          }
-        }, {
-          theme: "dark",
-          label: {
-            string_id: "onboarding-multistage-theme-label-dark"
-          },
-          tooltip: {
-            string_id: "onboarding-multistage-theme-tooltip-dark"
-          }
-        }, {
-          theme: "alpenglow",
-          label: {
-            string_id: "onboarding-multistage-theme-label-alpenglow"
-          },
-          tooltip: {
-            string_id: "onboarding-multistage-theme-tooltip-alpenglow"
-          }
+          label: "Photon Dynamic",
+          tooltip: "The familiar Photon theme"
         }]
       },
       primary_button: {
