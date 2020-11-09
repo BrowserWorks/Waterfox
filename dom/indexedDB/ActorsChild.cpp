@@ -1357,20 +1357,26 @@ bool BackgroundFactoryRequestChild::HandleResponse(
       static_cast<BackgroundDatabaseChild*>(aResponse.databaseChild());
   MOZ_ASSERT(databaseActor);
 
-  IDBDatabase* database = databaseActor->GetDOMObject();
-  if (!database) {
-    databaseActor->EnsureDOMObject();
-    MOZ_ASSERT(mDatabaseActor);
+  IDBDatabase* const database = [this, databaseActor]() -> IDBDatabase* {
+    IDBDatabase* database = databaseActor->GetDOMObject();
+    if (!database) {
+      Unused << this;
 
-    database = databaseActor->GetDOMObject();
-    MOZ_ASSERT(database);
+      if (NS_WARN_IF(!databaseActor->EnsureDOMObject())) {
+        return nullptr;
+      }
+      MOZ_ASSERT(mDatabaseActor);
 
-    MOZ_ASSERT(!database->IsClosed());
-  }
+      database = databaseActor->GetDOMObject();
+      MOZ_ASSERT(database);
 
-  MOZ_ASSERT(mDatabaseActor == databaseActor);
+      MOZ_ASSERT(!database->IsClosed());
+    }
 
-  if (database->IsClosed()) {
+    return database;
+  }();
+
+  if (!database || database->IsClosed()) {
     // If the database was closed already, which is only possible if we fired an
     // "upgradeneeded" event, then we shouldn't fire a "success" event here.
     // Instead we fire an error event with AbortErr.
@@ -1379,7 +1385,13 @@ bool BackgroundFactoryRequestChild::HandleResponse(
     SetResultAndDispatchSuccessEvent(mRequest, nullptr, database);
   }
 
-  databaseActor->ReleaseDOMObject();
+  if (database) {
+    MOZ_ASSERT(mDatabaseActor == databaseActor);
+
+    databaseActor->ReleaseDOMObject();
+  } else {
+    databaseActor->SendDeleteMeInternal();
+  }
   MOZ_ASSERT(!mDatabaseActor);
 
   return true;
@@ -1602,13 +1614,14 @@ void BackgroundDatabaseChild::SendDeleteMeInternal() {
   }
 }
 
-void BackgroundDatabaseChild::EnsureDOMObject() {
+bool BackgroundDatabaseChild::EnsureDOMObject() {
   AssertIsOnOwningThread();
   MOZ_ASSERT(mOpenRequestActor);
 
   if (mTemporaryStrongDatabase) {
     MOZ_ASSERT(!mSpec);
-    return;
+    MOZ_ASSERT(mDatabase == mTemporaryStrongDatabase);
+    return true;
   }
 
   MOZ_ASSERT(mSpec);
@@ -1618,6 +1631,17 @@ void BackgroundDatabaseChild::EnsureDOMObject() {
 
   auto& factory =
       static_cast<BackgroundFactoryChild*>(Manager())->GetDOMObject();
+
+  if (!factory.GetParentObject()) {
+    // Already disconnected from global.
+
+    // We need to clear mOpenRequestActor here, since that would otherwise be
+    // done by ReleaseDOMObject, which cannot be called if EnsureDOMObject
+    // failed.
+    mOpenRequestActor = nullptr;
+
+    return false;
+  }
 
   // TODO: This AcquireStrongRefFromRawPtr looks suspicious. This should be
   // changed or at least well explained, see also comment on
@@ -1632,6 +1656,8 @@ void BackgroundDatabaseChild::EnsureDOMObject() {
   mDatabase = mTemporaryStrongDatabase;
 
   mOpenRequestActor->SetDatabaseActor(this);
+
+  return true;
 }
 
 void BackgroundDatabaseChild::ReleaseDOMObject() {
@@ -1720,9 +1746,28 @@ BackgroundDatabaseChild::RecvPBackgroundIDBVersionChangeTransactionConstructor(
 
   MaybeCollectGarbageOnIPCMessage();
 
-  EnsureDOMObject();
+  auto* const actor =
+      static_cast<BackgroundVersionChangeTransactionChild*>(aActor);
 
-  auto* actor = static_cast<BackgroundVersionChangeTransactionChild*>(aActor);
+  if (!EnsureDOMObject()) {
+    NS_WARNING("Factory is already disconnected from global");
+
+    actor->SendDeleteMeInternal(true);
+
+    // XXX This is a hack to ensure that transaction/request serial numbers stay
+    // in sync between parent and child. Actually, it might be better to create
+    // an IDBTransaction in the child and abort that.
+    Unused
+        << mozilla::ipc::BackgroundChildImpl::GetThreadLocalForCurrentThread()
+               ->mIndexedDBThreadLocal->NextTransactionSN(
+                   IDBTransaction::Mode::VersionChange);
+    Unused << IDBRequest::NextSerialNumber();
+
+    // If we return IPC_FAIL_NO_REASON(this) here, we crash...
+    return IPC_OK();
+  }
+
+  MOZ_ASSERT(!mDatabase->IsInvalidated());
 
   RefPtr<IDBOpenDBRequest> request = mOpenRequestActor->GetOpenDBRequest();
   MOZ_ASSERT(request);

@@ -1046,6 +1046,12 @@ InterceptedHttpChannel::OnStartRequest(nsIRequest* aRequest) {
     Cancel(mStatus);
   }
 
+  rv = ValidateMIMEType();
+  if (NS_FAILED(rv)) {
+    mStatus = rv;
+    Cancel(mStatus);
+  }
+
   mOnStartRequestCalled = true;
   if (mListener) {
     return mListener->OnStartRequest(this);

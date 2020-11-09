@@ -666,7 +666,7 @@
     },
 
     "OverrideFirstRunPage": {
-      "type": "URLorEmpty"
+      "type": "string",
     },
 
     "OverridePostUpdatePage": {
