@@ -7,6 +7,7 @@
 
 #ifdef V8_INTL_SUPPORT
 
+#include "regexp/regexp-shim.h"
 
 namespace v8 {
 namespace internal {

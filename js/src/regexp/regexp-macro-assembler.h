@@ -6,6 +6,7 @@
 #define V8_REGEXP_REGEXP_MACRO_ASSEMBLER_H_
 
 #include "regexp/regexp-ast.h"
+#include "regexp/regexp-shim.h"
 #include "regexp/regexp.h"
 
 namespace v8 {
