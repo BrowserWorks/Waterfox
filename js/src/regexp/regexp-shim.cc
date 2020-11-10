@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "regexp/regexp-shim.h"
+#include "regexp/regexp-stack.h"
 
 namespace v8 {
 namespace internal {
@@ -73,6 +74,8 @@ Handle<T>::Handle(T object, Isolate* isolate)
     : location_(isolate->getHandleLocation(JS::Value(object))) {}
 
 template Handle<ByteArray>::Handle(ByteArray b, Isolate* isolate);
+template Handle<HeapObject>::Handle(JS::Value v, Isolate* isolate);
+template Handle<JSRegExp>::Handle(JSRegExp re, Isolate* isolate);
 template Handle<String>::Handle(String s, Isolate* isolate);
 
 template <typename T>
@@ -148,6 +151,10 @@ void Isolate::trace(JSTracer* trc) {
 // empty string and don't print anything.
 std::unique_ptr<char[]> String::ToCString() {
   return std::unique_ptr<char[]>();
+}
+
+byte* Isolate::top_of_regexp_stack() const {
+  return reinterpret_cast<byte*>(regexpStack_->memory_top_address_address());
 }
 
 Handle<ByteArray> Isolate::NewByteArray(int length, AllocationType alloc) {

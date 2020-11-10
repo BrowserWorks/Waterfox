@@ -22,7 +22,9 @@
 #include <cctype>
 
 #include "jit/Label.h"
+#include "jit/shared/Assembler-shared.h"
 #include "js/Value.h"
+#include "regexp/RegExpTypes.h"
 #include "regexp/util/flags.h"
 #include "regexp/util/vector.h"
 #include "regexp/util/zone.h"
@@ -571,10 +573,8 @@ class ByteArray : public HeapObject {
   ByteArrayData* inner() const {
     return static_cast<ByteArrayData*>(value_.toPrivate());
   }
-  PseudoHandle<ByteArrayData> takeOwnership(Isolate* isolate);
-
-  friend class SMRegExpMacroAssembler;
 public:
+  PseudoHandle<ByteArrayData> takeOwnership(Isolate* isolate);
   byte get(uint32_t index) {
     MOZ_ASSERT(index < length());
     return inner()->data()[index];
@@ -674,15 +674,19 @@ class MOZ_NONHEAP_CLASS Handle {
   };
   inline ObjectRef operator->() const { return ObjectRef{**this}; }
 
+  static Handle<T> fromHandleValue(JS::HandleValue handle) {
+    return Handle(handle.address());
+  }
+
  private:
-  Handle(JS::Value* location) : location_(location) {}
+  Handle(const JS::Value* location) : location_(location) {}
 
   template <typename>
   friend class Handle;
   template <typename>
   friend class MaybeHandle;
 
-  JS::Value* location_;
+  const JS::Value* location_;
 };
 
 // A Handle can be converted into a MaybeHandle. Converting a MaybeHandle
@@ -985,9 +989,13 @@ using Factory = Isolate;
 class Isolate {
  public:
   //********** Isolate code **********//
-  RegExpStack* regexp_stack() const { return regexp_stack_; }
-  bool has_pending_exception() { return cx()->isExceptionPending(); }
-  void StackOverflow() { js::ReportOverRecursed(cx()); }
+  RegExpStack* regexp_stack() const { return regexpStack_; }
+  byte* top_of_regexp_stack() const;
+
+  // This is called from inside no-GC code. Instead of suppressing GC
+  // to allocate the error, we return false from Execute and call
+  // ReportOverRecursed in the caller.
+  void StackOverflow() {}
 
 #ifndef V8_INTL_SUPPORT
   unibrow::Mapping<unibrow::Ecma262UnCanonicalize>* jsregexp_uncanonicalize() {
@@ -1066,7 +1074,7 @@ private:
   friend class HandleScope;
 
   JSContext* cx_;
-  RegExpStack* regexp_stack_;
+  RegExpStack* regexpStack_;
   Counters counters_;
 };
 
@@ -1101,7 +1109,6 @@ class Code : public HeapObject {
     c.value_ = JS::PrivateGCThingValue(JS::Value(object).toGCThing());
     return c;
   }
-private:
   js::jit::JitCode* inner() {
     return value_.toGCThing()->as<js::jit::JitCode>();
   }
@@ -1124,7 +1131,7 @@ class Label {
  public:
   Label() : inner_(js::jit::Label()) {}
 
-  operator js::jit::Label*() { return &inner_; }
+  js::jit::Label* inner() { return &inner_; }
 
   void Unuse() { inner_.reset(); }
 
@@ -1138,6 +1145,9 @@ class Label {
 
  private:
   js::jit::Label inner_;
+  js::jit::CodeOffset patchOffset_;
+
+  friend class SMRegExpMacroAssembler;
 };
 
 // TODO: Map flags to jitoptions
