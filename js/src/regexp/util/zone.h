@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "ds/LifoAlloc.h"
+#include "ds/Sort.h"
 #include "regexp/util/vector.h"
 
 namespace v8 {
@@ -24,14 +25,22 @@ class Zone {
     lifoAlloc_.setAsInfallibleByDefault();
   }
 
-  void* New(size_t size) { return lifoAlloc_.alloc(size); }
+  void* New(size_t size) {
+    js::LifoAlloc::AutoFallibleScope fallible(&lifoAlloc_);
+    js::AutoEnterOOMUnsafeRegion oomUnsafe;
+    void* result = lifoAlloc_.alloc(size);
+    if (!result) {
+      oomUnsafe.crash("Irregexp Zone::new");
+    }
+    return result;
+  }
 
   void DeleteAll() { lifoAlloc_.freeAll(); }
 
   // Returns true if the total memory allocated exceeds a threshold.
   static const size_t kExcessLimit = 256 * 1024 * 1024;
   bool excess_allocation() const {
-    return lifoAlloc_.peakSizeOfExcludingThis() > kExcessLimit;
+    return lifoAlloc_.computedSizeOfExcludingThis() > kExcessLimit;
   }
 private:
   js::LifoAlloc lifoAlloc_;
@@ -194,9 +203,19 @@ class ZoneList final {
   }
 
   template <typename CompareFunction>
-  void StableSort(CompareFunction cmp, size_t s, size_t l) {
-    std::stable_sort(begin() + s, begin() + s + l,
-		     [cmp](const T& a, const T& b) { return cmp(&a, &b) < 0; });
+  void StableSort(CompareFunction cmp, size_t start, size_t length) {
+    js::AutoEnterOOMUnsafeRegion oomUnsafe;
+    T* scratch = static_cast<T*>(js_malloc(length * sizeof(T)));
+    if (!scratch) {
+      oomUnsafe.crash("Irregexp stable sort scratch space");
+    }
+    auto comparator = [cmp](const T& a, const T& b, bool* lessOrEqual) {
+			*lessOrEqual = cmp(&a, &b) <= 0;
+			return true;
+		      };
+    MOZ_ALWAYS_TRUE(js::MergeSort(begin() + start, length, scratch,
+				  comparator));
+    js_free(scratch);
   }
 
   void operator delete(void* pointer) { MOZ_CRASH("unreachable"); }

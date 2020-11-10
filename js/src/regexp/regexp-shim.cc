@@ -8,6 +8,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <iostream>
+
 #include "regexp/regexp-shim.h"
 
 namespace v8 {
@@ -27,17 +29,24 @@ void PrintF(FILE* out, const char* format, ...) {
   va_end(arguments);
 }
 
+StdoutStream::operator std::ostream&() const { return std::cerr; }
+
+template <typename T>
+std::ostream& StdoutStream::operator<<(T t) { return std::cerr << t; }
+
+template std::ostream& StdoutStream::operator<<(char const* c);
+
 // Origin:
 // https://github.com/v8/v8/blob/855591a54d160303349a5f0a32fab15825c708d1/src/utils/ostreams.cc#L120-L169
 // (This is a hand-simplified version.)
 // Writes the given character to the output escaping everything outside
 // of printable ASCII range.
 std::ostream& operator<<(std::ostream& os, const AsUC16& c) {
-  uint16_t v = c.value;
+  uc16 v = c.value;
   bool isPrint = 0x20 < v && v <= 0x7e;
   char buf[10];
   const char* format = isPrint ? "%c" : (v <= 0xFF) ? "\\x%02x" : "\\u%04x";
-  snprintf(buf, sizeof(buf), format, v);
+  SprintfLiteral(buf, format, v);
   return os << buf;
 }
 std::ostream& operator<<(std::ostream& os, const AsUC32& c) {
@@ -46,12 +55,136 @@ std::ostream& operator<<(std::ostream& os, const AsUC32& c) {
     return os << AsUC16(v);
   }
   char buf[13];
-  snprintf(buf, sizeof(buf), "\\u{%06x}", v);
+  SprintfLiteral(buf, "\\u{%06x}", v);
   return os << buf;
 }
 
-DisallowJavascriptExecution::DisallowJavascriptExecution(Isolate* isolate)
-    : nojs_(isolate->cx()) {}
+HandleScope::HandleScope(Isolate* isolate)
+  : isolate_(isolate) {
+  isolate->openHandleScope(*this);
+}
+
+HandleScope::~HandleScope() {
+  isolate_->closeHandleScope(level_, non_gc_level_);
+}
+
+template <typename T>
+Handle<T>::Handle(T object, Isolate* isolate)
+    : location_(isolate->getHandleLocation(JS::Value(object))) {}
+
+template Handle<ByteArray>::Handle(ByteArray b, Isolate* isolate);
+template Handle<String>::Handle(String s, Isolate* isolate);
+
+template <typename T>
+Handle<T>::Handle(JS::Value value, Isolate* isolate)
+  : location_(isolate->getHandleLocation(value)) {
+  T::cast(Object(value)); // Assert that value has the correct type.
+}
+
+JS::Value* Isolate::getHandleLocation(JS::Value value) {
+  js::AutoEnterOOMUnsafeRegion oomUnsafe;
+  if (!handleArena_.Append(value)) {
+    oomUnsafe.crash("Irregexp handle allocation");
+  }
+  return &handleArena_.GetLast();
+}
+
+void* Isolate::allocatePseudoHandle(size_t bytes) {
+  PseudoHandle<void> ptr;
+  ptr.reset(js_malloc(bytes));
+  if (!ptr) {
+    return nullptr;
+  }
+  if (!uniquePtrArena_.Append(std::move(ptr))) {
+    return nullptr;
+  }
+  return uniquePtrArena_.GetLast().get();
+}
+
+template <typename T>
+PseudoHandle<T> Isolate::takeOwnership(void* ptr) {
+  for (auto iter = uniquePtrArena_.IterFromLast(); !iter.Done(); iter.Prev()) {
+    auto& entry = iter.Get();
+    if (entry.get() == ptr) {
+      PseudoHandle<T> result;
+      result.reset(static_cast<T*>(entry.release()));
+      return result;
+    }
+  }
+  MOZ_CRASH("Tried to take ownership of pseudohandle that is not in the arena");
+}
+
+PseudoHandle<ByteArrayData> ByteArray::takeOwnership(Isolate* isolate) {
+  PseudoHandle<ByteArrayData> result =
+    isolate->takeOwnership<ByteArrayData>(value_.toPrivate());
+  value_ = JS::PrivateValue(nullptr);
+  return result;
+}
+
+void Isolate::trace(JSTracer* trc) {
+  js::gc::AssertRootMarkingPhase(trc);
+
+  for (auto iter = handleArena_.Iter(); !iter.Done(); iter.Next()) {
+    auto& elem = iter.Get();
+    JS::GCPolicy<JS::Value>::trace(trc, &elem, "Isolate handle arena");
+  }
+}
+
+/*static*/ Handle<String> String::Flatten(Isolate* isolate,
+                                          Handle<String> string) {
+  if (string->IsFlat()) {
+    return string;
+  }
+  js::AutoEnterOOMUnsafeRegion oomUnsafe;
+  JSLinearString* linear = string->str()->ensureLinear(isolate->cx());
+  if (!linear) {
+    oomUnsafe.crash("Irregexp String::Flatten");
+  }
+  return Handle<String>(JS::StringValue(linear), isolate);
+}
+
+// This is only used for trace messages printing the source of a
+// regular expression. To keep things simple, we just return an
+// empty string and don't print anything.
+std::unique_ptr<char[]> String::ToCString() {
+  return std::unique_ptr<char[]>();
+}
+
+Handle<ByteArray> Isolate::NewByteArray(int length, AllocationType alloc) {
+  MOZ_RELEASE_ASSERT(length >= 0);
+
+  js::AutoEnterOOMUnsafeRegion oomUnsafe;
+
+  size_t alloc_size = sizeof(uint32_t) + length;
+  ByteArrayData* data =
+    static_cast<ByteArrayData*>(allocatePseudoHandle(alloc_size));
+  if (!data) {
+    oomUnsafe.crash("Irregexp NewByteArray");
+  }
+  data->length = length;
+
+  return Handle<ByteArray>(JS::PrivateValue(data), this);
+}
+
+Handle<FixedArray> Isolate::NewFixedArray(int length) {
+  MOZ_RELEASE_ASSERT(length >= 0);
+  MOZ_CRASH("TODO");
+}
+
+template <typename CharT>
+Handle<String> Isolate::InternalizeString(const Vector<const CharT>& str) {
+  js::AutoEnterOOMUnsafeRegion oomUnsafe;
+  JSAtom* atom = js::AtomizeChars(cx(), str.begin(), str.length());
+  if (!atom) {
+    oomUnsafe.crash("Irregexp InternalizeString");
+  }
+  return Handle<String>(JS::StringValue(atom), this);
+}
+
+template Handle<String>
+Isolate::InternalizeString(const Vector<const uint8_t>& str);
+template Handle<String>
+Isolate::InternalizeString(const Vector<const char16_t>& str);
 
 // TODO: Map flags to jitoptions
 bool FLAG_correctness_fuzzer_suppressions = false;
@@ -59,8 +192,8 @@ bool FLAG_enable_regexp_unaligned_accesses = false;
 bool FLAG_harmony_regexp_sequence = false;
 bool FLAG_regexp_interpret_all = false;
 bool FLAG_regexp_mode_modifiers = false;
-bool FLAG_regexp_optimization = false;
-bool FLAG_regexp_peephole_optimization = false;
+bool FLAG_regexp_optimization = true;
+bool FLAG_regexp_peephole_optimization = true;
 bool FLAG_regexp_possessive_quantifier = false;
 bool FLAG_regexp_tier_up = false;
 bool FLAG_trace_regexp_assembler = false;

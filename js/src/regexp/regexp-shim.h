@@ -15,9 +15,11 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/SegmentedVector.h"
 #include "mozilla/Types.h"
 
 #include <algorithm>
+#include <cctype>
 
 #include "jit/Label.h"
 #include "js/Value.h"
@@ -127,6 +129,12 @@ using byte = uint8_t;
 using Address = uintptr_t;
 static const Address kNullAddress = 0;
 
+// Latin1/UTF-16 constants
+// Code-point values in Unicode 4.0 are 21 bits wide.
+// Code units in UTF-16 are 16 bits wide.
+using uc16 = char16_t;
+using uc32 = int32_t;
+
 namespace base {
 
 // Origin:
@@ -161,10 +169,34 @@ inline uint8_t saturated_cast<uint8_t, int>(int x) {
   return (x >= 0) ? ((x < 255) ? uint8_t(x) : 255) : 0;
 }
 
+#define LAZY_INSTANCE_INITIALIZER { mozilla::Nothing() }
+
+template <typename T>
+struct LazyInstanceImpl {
+  mozilla::Maybe<T> value_;
+  T* Pointer() {
+    if (value_.isNothing()) {
+      value_.emplace();
+    }
+    return value_.ptr();
+  }
+};
+
+template <typename T>
+class LazyInstance {
+public:
+  using type = LazyInstanceImpl<T>;
+};
+
+
 namespace bits {
 
 inline uint64_t CountTrailingZeros(uint64_t value) {
   return mozilla::CountTrailingZeroes64(value);
+}
+
+inline size_t RoundUpToPowerOfTwo32(size_t value) {
+  return mozilla::RoundUpPow2(value);
 }
 
 }  // namespace bits
@@ -178,10 +210,10 @@ using uchar = unsigned int;
 // https://github.com/v8/v8/blob/1f1e4cdb04c75eab77adbecd5f5514ddc3eb56cf/src/strings/unicode.h#L133-L150
 class Latin1 {
  public:
-  static const uint16_t kMaxChar = 0xff;
+  static const uc16 kMaxChar = 0xff;
 
   // Convert the character to Latin-1 case equivalent if possible.
-  static inline uint16_t TryConvertToLatin1(uint16_t c) {
+  static inline uc16 TryConvertToLatin1(uc16 c) {
     // "GREEK CAPITAL LETTER MU" case maps to "MICRO SIGN".
     // "GREEK SMALL LETTER MU" case maps to "MICRO SIGN".
     if (c == 0x039C || c == 0x03BC) {
@@ -206,10 +238,10 @@ class Utf16 {
   static inline bool IsTrailSurrogate(int code) {
     return js::unicode::IsTrailSurrogate(code);
   }
-  static inline uint16_t LeadSurrogate(uint32_t char_code) {
+  static inline uc16 LeadSurrogate(uint32_t char_code) {
     return js::unicode::LeadSurrogate(char_code);
   }
-  static inline uint16_t TrailSurrogate(uint32_t char_code) {
+  static inline uc16 TrailSurrogate(uint32_t char_code) {
     return js::unicode::TrailSurrogate(char_code);
   }
   static inline uint32_t CombineSurrogatePair(char16_t lead, char16_t trail) {
@@ -217,6 +249,8 @@ class Utf16 {
   }
   static const uchar kMaxNonSurrogateCharCode = 0xffff;
 };
+
+#ifndef V8_INTL_SUPPORT
 
 // A cache used in case conversion.  It caches the value for characters
 // that either have no mapping or map to a single character independent
@@ -228,11 +262,37 @@ template <class T, int size = 256>
 class Mapping {
  public:
   inline Mapping() = default;
-  int get(uchar c, uchar n, uchar* result);
+  inline int get(uchar c, uchar n, uchar* result) {
+    CacheEntry entry = entries_[c & kMask];
+    if (entry.code_point_ == c) {
+      if (entry.offset_ == 0) {
+        return 0;
+      } else {
+        result[0] = c + entry.offset_;
+        return 1;
+      }
+    } else {
+      return CalculateValue(c, n, result);
+    }
+  }
 
  private:
-  friend class Test;
-  int CalculateValue(uchar c, uchar n, uchar* result);
+  int CalculateValue(uchar c, uchar n, uchar* result) {
+    bool allow_caching = true;
+    int length = T::Convert(c, n, result, &allow_caching);
+    if (allow_caching) {
+      if (length == 1) {
+        entries_[c & kMask] = CacheEntry(c, result[0] - c);
+        return 1;
+      } else {
+        entries_[c & kMask] = CacheEntry(c, 0);
+        return 0;
+      }
+    } else {
+      return length;
+    }
+  }
+
   struct CacheEntry {
     inline CacheEntry() : code_point_(kNoChar), offset_(0) {}
     inline CacheEntry(uchar code_point, signed offset)
@@ -253,12 +313,18 @@ struct Ecma262Canonicalize {
   static int Convert(uchar c, uchar n, uchar* result, bool* allow_caching_ptr);
 };
 struct Ecma262UnCanonicalize {
-  static const int kMaxWidth = 1;
+  static const int kMaxWidth = 4;
   static int Convert(uchar c, uchar n, uchar* result, bool* allow_caching_ptr);
 };
 struct CanonicalizationRange {
   static const int kMaxWidth = 1;
   static int Convert(uchar c, uchar n, uchar* result, bool* allow_caching_ptr);
+};
+
+#endif  // !V8_INTL_SUPPORT
+
+struct Letter {
+  static bool Is(uchar c);
 };
 
 }  // namespace unibrow
@@ -306,12 +372,6 @@ constexpr int kSystemPointerSize = sizeof(void*);
 // representable as a Number value.  ES6 section 20.1.2.6
 constexpr double kMaxSafeInteger = 9007199254740991.0;  // 2^53-1
 
-// Latin1/UTF-16 constants
-// Code-point values in Unicode 4.0 are 21 bits wide.
-// Code units in UTF-16 are 16 bits wide.
-using uc16 = uint16_t;
-using uc32 = int32_t;
-
 constexpr int kBitsPerByte = 8;
 constexpr int kBitsPerByteLog2 = 3;
 constexpr int kUInt32Size = sizeof(uint32_t);
@@ -328,10 +388,10 @@ inline bool IsIdentifierPart(uc32 c) {
   return js::unicode::IsIdentifierPart(uint32_t(c));
 }
 
-// Wrappers to disambiguate uint16_t and uc16.
+// Wrappers to disambiguate char16_t and uc16.
 struct AsUC16 {
-  explicit AsUC16(uint16_t v) : value(v) {}
-  uint16_t value;
+  explicit AsUC16(char16_t v) : value(v) {}
+  char16_t value;
 };
 
 struct AsUC32 {
@@ -339,10 +399,20 @@ struct AsUC32 {
   int32_t value;
 };
 
-class StdoutStream : public std::ostream {};
-
 std::ostream& operator<<(std::ostream& os, const AsUC16& c);
 std::ostream& operator<<(std::ostream& os, const AsUC32& c);
+
+// This class is used for the output of trace-regexp-parser.  V8 has
+// an elaborate implementation to ensure that the output gets to the
+// right place, even on Android. We just need something that will
+// print output (ideally to stderr, to match the rest of our tracing
+// code). This is an empty wrapper that will convert itself to
+// std::cerr when used.
+class StdoutStream {
+public:
+  operator std::ostream&() const;
+  template <typename T> std::ostream& operator<<(T t);
+};
 
 // Reuse existing Maybe implementation
 using mozilla::Maybe;
@@ -356,6 +426,10 @@ template <typename T>
 mozilla::Nothing Nothing() {
   return mozilla::Nothing();
 }
+
+
+template <typename T>
+using PseudoHandle = mozilla::UniquePtr<T, JS::FreePolicy>;
 
 // Origin:
 // https://github.com/v8/v8/blob/855591a54d160303349a5f0a32fab15825c708d1/src/utils/utils.h#L600-L642
@@ -388,16 +462,16 @@ inline int CompareChars(const lchar* lhs, const rchar* rhs, size_t chars) {
                                   reinterpret_cast<const uint8_t*>(rhs), chars);
     } else {
       return CompareCharsUnsigned(reinterpret_cast<const uint8_t*>(lhs),
-                                  reinterpret_cast<const uint16_t*>(rhs),
+                                  reinterpret_cast<const char16_t*>(rhs),
                                   chars);
     }
   } else {
     if (sizeof(rchar) == 1) {
-      return CompareCharsUnsigned(reinterpret_cast<const uint16_t*>(lhs),
+      return CompareCharsUnsigned(reinterpret_cast<const char16_t*>(lhs),
                                   reinterpret_cast<const uint8_t*>(rhs), chars);
     } else {
-      return CompareCharsUnsigned(reinterpret_cast<const uint16_t*>(lhs),
-                                  reinterpret_cast<const uint16_t*>(rhs),
+      return CompareCharsUnsigned(reinterpret_cast<const char16_t*>(lhs),
+                                  reinterpret_cast<const char16_t*>(rhs),
                                   chars);
     }
   }
@@ -434,14 +508,6 @@ class Object {
   // idiom: return false iff we are throwing an exception.
   inline bool IsException(Isolate*) const { return !value_.toBoolean(); }
 
-  // SpiderMonkey tries to avoid leaking the internal representation of its
-  // objects. V8 is not so strict. These functions are used when calling /
-  // being called by native code: objects are converted to Addresses for the
-  // call, then cast back to objects on the other side.
-  // We might be able to upstream a patch that eliminates the need for these.
-  Object(Address bits);
-  Address ptr() const;
-
  protected:
   JS::Value value_;
 };
@@ -460,77 +526,162 @@ class Smi : public Object {
 
 // V8::HeapObject ~= JSObject
 class HeapObject : public Object {
-public:
-  // Only used for bookkeeping of total code generated in regexp-compiler.
-  // We may be able to refactor this away.
-  int Size() const;
-};
-
-// A fixed-size array with Objects (aka Values) as element types
-// Implemented as a wrapper around a regular native object with dense elements.
-class FixedArray : public HeapObject {
  public:
-  inline void set(uint32_t index, Object value) {
-    JS::Value(*this).toObject().as<js::NativeObject>().setDenseElement(index,
-                                                                       value);
+  inline static HeapObject cast(Object object) {
+    HeapObject h;
+    h.value_ = JS::Value(object);
+    return h;
   }
 };
 
-// A fixed-size array of bytes.
-// TODO: figure out the best implementation for this. Uint8Array might work,
-// but it's not currently visible outside of TypedArrayObject.cpp.
-class ByteArray : public HeapObject {
+// A fixed-size array with Objects (aka Values) as element types
+// Only used for named captures. Allocated during parsing, so
+// can't be a GC thing.
+// TODO: implement.
+class FixedArray : public HeapObject {
  public:
-  uint8_t get(uint32_t index);
-  void set(uint32_t index, uint8_t val);
-  uint32_t length();
-  byte* GetDataStartAddress();
-  byte* GetDataEndAddress();
+  inline void set(uint32_t index, Object value) {}
+  inline static FixedArray cast(Object object) { MOZ_CRASH("TODO"); }
+};
 
-  static ByteArray cast(Object object);
+class ByteArrayData {
+public:
+  uint32_t length;
+  uint8_t* data();
+};
+
+/*
+ * Conceptually, ByteArrayData is a variable-size structure. To
+ * implement this in a C++-approved way, we allocate a struct
+ * containing the 32-bit length field, followed by additional memory
+ * for the data. To access the data, we get a pointer to the next byte
+ * after the length field and cast it to the correct type.
+ */
+inline uint8_t* ByteArrayData::data() {
+  static_assert(alignof(uint8_t) <= alignof(ByteArrayData),
+                "The trailing data must be aligned to start immediately "
+                "after the header with no padding.");
+  ByteArrayData* immediatelyAfter = this + 1;
+  return reinterpret_cast<uint8_t*>(immediatelyAfter);
+}
+
+// A fixed-size array of bytes.
+class ByteArray : public HeapObject {
+  ByteArrayData* inner() const {
+    return static_cast<ByteArrayData*>(value_.toPrivate());
+  }
+  PseudoHandle<ByteArrayData> takeOwnership(Isolate* isolate);
+
+  friend class SMRegExpMacroAssembler;
+public:
+  byte get(uint32_t index) {
+    MOZ_ASSERT(index < length());
+    return inner()->data()[index];
+  }
+  void set(uint32_t index, byte val) {
+    MOZ_ASSERT(index < length());
+    inner()->data()[index] = val;
+  }
+  uint32_t length() const { return inner()->length; }
+  byte* GetDataStartAddress() { return inner()->data(); }
+
+  static ByteArray cast(Object object) {
+    ByteArray b;
+    b.value_ = JS::Value(object);
+    return b;
+  }
 };
 
 // Like Handles in SM, V8 handles are references to marked pointers.
 // Unlike SM, where Rooted pointers are created individually on the
-// stack, the target of a V8 handle lives in a HandleScope.
-// HandleScopes are created on the stack and register themselves with
-// the isolate (~= JSContext). Whenever a Handle is created, the
-// outermost HandleScope is retrieved from the isolate, and a new root
-// is created in that HandleScope. The Handle remains valid for the
-// lifetime of the HandleScope.
-class HandleScope {
- public:
+// stack, the target of a V8 handle lives in an arena on the isolate
+// (~= JSContext). Whenever a Handle is created, a new "root" is
+// created at the end of the arena.
+//
+// HandleScopes are used to manage the lifetimes of these handles.  A
+// HandleScope lives on the stack and stores the size of the arena at
+// the time of its creation. When the function returns and the
+// HandleScope is destroyed, the arena is truncated to its previous
+// size, clearing all roots that were created since the creation of
+// the HandleScope.
+//
+// In some cases, objects that are GC-allocated in V8 are not in SM.
+// In particular, irregexp allocates ByteArrays during code generation
+// to store lookup tables. This does not play nicely with the SM
+// macroassembler's requirement that no GC allocations take place
+// while it is on the stack. To work around this, this shim layer also
+// provides the ability to create pseudo-handles, which are not
+// managed by the GC but provide the same API to irregexp. The "root"
+// of a pseudohandle is a unique pointer living in a second arena. If
+// the allocated object should outlive the HandleScope, it must be
+// manually moved out of the arena using takeOwnership.
+
+class MOZ_STACK_CLASS HandleScope {
+public:
   HandleScope(Isolate* isolate);
+ ~HandleScope();
+
+ private:
+  size_t level_;
+  size_t non_gc_level_;
+  Isolate* isolate_;
+
+  friend class Isolate;
 };
 
 // Origin:
 // https://github.com/v8/v8/blob/5792f3587116503fc047d2f68c951c72dced08a5/src/handles/handles.h#L88-L171
 template <typename T>
-class Handle {
+class MOZ_NONHEAP_CLASS Handle {
  public:
-  Handle();
+  Handle() : location_(nullptr) {}
   Handle(T object, Isolate* isolate);
+  Handle(JS::Value value, Isolate* isolate);
 
   // Constructor for handling automatic up casting.
   template <typename S, typename = typename std::enable_if<
                             std::is_convertible<S*, T*>::value>::type>
-  /*inline*/ Handle(Handle<S> handle);
+  inline Handle(Handle<S> handle) : location_(handle.location_) {}
 
   template <typename S>
-  /*inline*/ static const Handle<T> cast(Handle<S> that);
+  inline static const Handle<T> cast(Handle<S> that) {
+    return Handle<T>(that.location_);
+  }
 
-  T* operator->() const;
-  T operator*() const;
+  inline bool is_null() const { return location_ == nullptr; }
 
-  bool is_null() const;
+  inline T operator*() const {
+    return T::cast(Object(*location_));
+  };
 
-  Address address();
+  // {ObjectRef} is returned by {Handle::operator->}. It should never be stored
+  // anywhere or used in any other code; no one should ever have to spell out
+  // {ObjectRef} in code. Its only purpose is to be dereferenced immediately by
+  // "operator-> chaining". Returning the address of the field is valid because
+  // this object's lifetime only ends at the end of the full statement.
+  // Origin:
+  // https://github.com/v8/v8/blob/03aaa4b3bf4cb01eee1f223b252e6869b04ab08c/src/handles/handles.h#L91-L105
+  class MOZ_TEMPORARY_CLASS ObjectRef {
+   public:
+    T* operator->() { return &object_; }
+
+   private:
+    friend class Handle;
+    explicit ObjectRef(T object) : object_(object) {}
+
+    T object_;
+  };
+  inline ObjectRef operator->() const { return ObjectRef{**this}; }
 
  private:
+  Handle(JS::Value* location) : location_(location) {}
+
   template <typename>
   friend class Handle;
   template <typename>
   friend class MaybeHandle;
+
+  JS::Value* location_;
 };
 
 // A Handle can be converted into a MaybeHandle. Converting a MaybeHandle
@@ -543,21 +694,35 @@ class Handle {
 // Origin:
 // https://github.com/v8/v8/blob/5792f3587116503fc047d2f68c951c72dced08a5/src/handles/maybe-handles.h#L15-L78
 template <typename T>
-class MaybeHandle final {
+class MOZ_NONHEAP_CLASS MaybeHandle final {
  public:
-  MaybeHandle() = default;
+  MaybeHandle() : location_(nullptr) {}
 
   // Constructor for handling automatic up casting from Handle.
   // Ex. Handle<JSArray> can be passed when MaybeHandle<Object> is expected.
   template <typename S, typename = typename std::enable_if<
                             std::is_convertible<S*, T*>::value>::type>
-  MaybeHandle(Handle<S> handle);
+  MaybeHandle(Handle<S> handle) : location_(handle.location_) {}
 
-  /*inline*/ Handle<T> ToHandleChecked() const;
+  inline Handle<T> ToHandleChecked() const {
+    MOZ_RELEASE_ASSERT(location_);
+    return Handle<T>(location_);
+  }
 
   // Convert to a Handle with a type that can be upcasted to.
   template <typename S>
-  /*inline*/ bool ToHandle(Handle<S>* out) const;
+  inline bool ToHandle(Handle<S>* out) const {
+    if (location_) {
+      *out = Handle<T>(location_);
+      return true;
+    } else {
+      *out = Handle<T>();
+      return false;
+    }
+  }
+
+private:
+  JS::Value* location_;
 };
 
 // From v8/src/handles/handles-inl.h
@@ -590,14 +755,6 @@ class AllowHeapAllocation {
   AllowHeapAllocation() {}
 };
 
-class DisallowJavascriptExecution {
- public:
-  DisallowJavascriptExecution(Isolate* isolate);
-
- private:
-  js::AutoAssertNoContentJS nojs_;
-};
-
 // Origin:
 // https://github.com/v8/v8/blob/84f3877c15bc7f8956d21614da4311337525a3c8/src/objects/string.h#L83-L474
 class String : public HeapObject {
@@ -605,6 +762,9 @@ class String : public HeapObject {
   JSString* str() const { return value_.toString(); }
 
  public:
+  String() : HeapObject() {}
+  String(JSString* str) { value_ = JS::StringValue(str); }
+
   operator JSString*() const { return str(); }
 
   // Max char codes.
@@ -614,20 +774,7 @@ class String : public HeapObject {
   static const uc32 kMaxCodePoint = 0x10ffff;
 
   MOZ_ALWAYS_INLINE int length() const { return str()->length(); }
-  uint16_t Get(uint32_t index);
   bool IsFlat() { return str()->isLinear(); };
-
-  // These are only used in V8 functions that I want to rewrite.
-  // TODO: Rewrite those functions and delete this
-  bool IsConsString();
-  bool IsExternalString();
-  bool IsExternalOneByteString();
-  bool IsExternalTwoByteString();
-  bool IsSeqString();
-  bool IsSeqOneByteString();
-  bool IsSeqTwoByteString();
-  bool IsSlicedString();
-  bool IsThinString();
 
   // Origin:
   // https://github.com/v8/v8/blob/84f3877c15bc7f8956d21614da4311337525a3c8/src/objects/string.h#L95-L152
@@ -643,14 +790,11 @@ class String : public HeapObject {
       return Vector<const uint8_t>(string_->latin1Chars(no_gc_),
                                    string_->length());
     }
-    Vector<const uc16> ToUC16Vector() const;
-    // TODO: twoByteChars returns char16_t*, but uc16 is uint16_t, which is
-    // not compatible :( :( :(
-    // {
-    //   MOZ_ASSERT(IsTwoByte());
-    //   return Vector<const uc16>(string_->twoByteChars(no_gc_),
-    //   string_->length());
-    // }
+    Vector<const uc16> ToUC16Vector() const {
+      MOZ_ASSERT(IsTwoByte());
+      return Vector<const uc16>(string_->twoByteChars(no_gc_),
+                                string_->length());
+    }
    private:
     const JSLinearString* string_;
     const JS::AutoAssertNoGC& no_gc_;
@@ -681,6 +825,22 @@ class String : public HeapObject {
   Vector<const Char> GetCharVector(const DisallowHeapAllocation& no_gc);
 };
 
+template <>
+inline Vector<const uint8_t> String::GetCharVector(
+    const DisallowHeapAllocation& no_gc) {
+  String::FlatContent flat = GetFlatContent(no_gc);
+  MOZ_ASSERT(flat.IsOneByte());
+  return flat.ToOneByteVector();
+}
+
+template <>
+inline Vector<const uc16> String::GetCharVector(
+    const DisallowHeapAllocation& no_gc) {
+  String::FlatContent flat = GetFlatContent(no_gc);
+  MOZ_ASSERT(flat.IsTwoByte());
+  return flat.ToUC16Vector();
+}
+
 // A flat string reader provides random access to the contents of a
 // string independent of the character width of the string.  The handle
 // must be valid as long as the reader is being used.
@@ -688,84 +848,66 @@ class String : public HeapObject {
 // https://github.com/v8/v8/blob/84f3877c15bc7f8956d21614da4311337525a3c8/src/objects/string.h#L807-L825
 class MOZ_STACK_CLASS FlatStringReader {
  public:
-  FlatStringReader(JSAtom* string) : string_(string) {}
-  int length() { return string_->length(); }
+  FlatStringReader(JSLinearString* string)
+    : length_(string->length()),
+      is_latin1_(string->hasLatin1Chars()) {
+
+    if (is_latin1_) {
+      latin1_chars_ = string->latin1Chars(nogc_);
+    } else {
+      two_byte_chars_ = string->twoByteChars(nogc_);
+    }
+  }
+  FlatStringReader(const char16_t* chars, size_t length)
+    : two_byte_chars_(chars),
+      length_(length),
+      is_latin1_(false) {}
+
+  int length() { return length_; }
 
   inline char16_t Get(size_t index) {
-    return string_->latin1OrTwoByteChar(index);
+    MOZ_ASSERT(index < length_);
+    if (is_latin1_) {
+      return latin1_chars_[index];
+    } else {
+      return two_byte_chars_[index];
+    }
   }
 
  private:
-  JSAtom* string_;
-  JS::AutoCheckCannotGC nogc;
+  union {
+    const JS::Latin1Char *latin1_chars_;
+    const char16_t* two_byte_chars_;
+  };
+  size_t length_;
+  bool is_latin1_;
+  JS::AutoCheckCannotGC nogc_;
 };
-
-//////////////////////////////////////////////////
-// TODO: Refactor NativeRegExpMacroAssembler and delete all of these:
-class ConsString : public String {
- public:
-  String first();
-  String second();
-
-  static ConsString cast(Object object);
-};
-class ExternalOneByteString : public String {
- public:
-  const uint8_t* GetChars();
-  static ExternalOneByteString cast(Object object);
-};
-class ExternalTwoByteString : public String {
- public:
-  const uc16* GetChars();
-  static ExternalTwoByteString cast(Object object);
-};
-class SeqOneByteString : public String {
- public:
-  uint8_t* GetChars(const DisallowHeapAllocation& no_gc);
-  static SeqOneByteString cast(Object object);
-};
-class SeqTwoByteString : public String {
- public:
-  uc16* GetChars(const DisallowHeapAllocation& no_gc);
-  static SeqTwoByteString cast(Object object);
-
-  static constexpr size_t kMaxCharsSize = JSString::MAX_LENGTH * 2;
-};
-class SlicedString : public String {
- public:
-  String parent();
-  int offset();
-  static SlicedString cast(Object object);
-};
-class ThinString : public String {
- public:
-  String actual();
-  static ThinString cast(Object object);
-};
-class StringShape {
- public:
-  explicit StringShape(const String s);
-  bool IsCons();
-  bool IsSliced();
-  bool IsThin();
-};
-// End of "TODO: Delete all of these"
-//////////////////////////////////////////////////
 
 class JSRegExp : public HeapObject {
  public:
   // ******************************************************
   // Methods that are called from inside the implementation
   // ******************************************************
-  void TierUpTick();
-  bool MarkedForTierUp() const;
+  void TierUpTick() { /*inner()->tierUpTick();*/ }
+  bool MarkedForTierUp() const {
+    return false; /*inner()->markedForTierUp();*/
+  }
 
-  Object Code(bool is_latin1) const;
-  Object Bytecode(bool is_latin1) const;
+  // TODO: hook these up
+  Object Code(bool is_latin1) const { return Object(JS::UndefinedValue()); }
+  Object Bytecode(bool is_latin1) const { return Object(JS::UndefinedValue()); }
 
-  uint32_t BacktrackLimit() const;
+  uint32_t BacktrackLimit() const {
+    return 0; /*inner()->backtrackLimit();*/
+  }
 
-  static JSRegExp cast(Object object);
+  static JSRegExp cast(Object object) {
+    JSRegExp regexp;
+    MOZ_ASSERT(JS::Value(object).toGCThing()->is<js::RegExpShared>());
+    regexp.value_ = JS::PrivateGCThingValue(JS::Value(object).toGCThing());
+    return regexp;
+  }
 
   // ******************************
   // Static constants
@@ -807,6 +949,11 @@ class JSRegExp : public HeapObject {
   static constexpr int kFlagCount = 6;
 
   static constexpr int kNoBacktrackLimit = 0;
+
+private:
+  js::RegExpShared* inner() {
+    return value_.toGCThing()->as<js::RegExpShared>();
+  }
 };
 
 class Histogram {
@@ -841,11 +988,26 @@ class Isolate {
   bool has_pending_exception() { return cx()->isExceptionPending(); }
   void StackOverflow() { js::ReportOverRecursed(cx()); }
 
-  unibrow::Mapping<unibrow::Ecma262UnCanonicalize>* jsregexp_uncanonicalize();
+#ifndef V8_INTL_SUPPORT
+  unibrow::Mapping<unibrow::Ecma262UnCanonicalize>* jsregexp_uncanonicalize() {
+    return &jsregexp_uncanonicalize_;
+  }
   unibrow::Mapping<unibrow::Ecma262Canonicalize>*
-  regexp_macro_assembler_canonicalize();
-  unibrow::Mapping<unibrow::CanonicalizationRange>* jsregexp_canonrange();
+  regexp_macro_assembler_canonicalize() {
+    return &regexp_macro_assembler_canonicalize_;
+  }
+  unibrow::Mapping<unibrow::CanonicalizationRange>* jsregexp_canonrange() {
+    return &jsregexp_canonrange_;
+  }
 
+private:
+  unibrow::Mapping<unibrow::Ecma262UnCanonicalize> jsregexp_uncanonicalize_;
+  unibrow::Mapping<unibrow::Ecma262Canonicalize>
+  regexp_macro_assembler_canonicalize_;
+  unibrow::Mapping<unibrow::CanonicalizationRange> jsregexp_canonrange_;
+#endif // !V8_INTL_SUPPORT
+
+public:
   // An empty stub for telemetry we don't support
   void IncreaseTotalRegexpCodeGenerated(int size) {}
 
@@ -856,13 +1018,9 @@ class Isolate {
 
   Handle<ByteArray> NewByteArray(
       int length, AllocationType allocation = AllocationType::kYoung);
-  MOZ_MUST_USE MaybeHandle<String> NewStringFromOneByte(
-      const Vector<const uint8_t>& str,
-      AllocationType allocation = AllocationType::kYoung);
 
   // Allocates a fixed array initialized with undefined values.
-  Handle<FixedArray> NewFixedArray(
-      int length, AllocationType allocation = AllocationType::kYoung);
+  Handle<FixedArray> NewFixedArray(int length);
 
   template <typename Char>
   Handle<String> InternalizeString(const Vector<const Char>& str);
@@ -875,7 +1033,37 @@ class Isolate {
 
   JSContext* cx() const { return cx_; }
 
+  void trace(JSTracer* trc);
+
+  //********** Handle code **********//
+
+  JS::Value* getHandleLocation(JS::Value value);
+
  private:
+
+  mozilla::SegmentedVector<JS::Value> handleArena_;
+  mozilla::SegmentedVector<PseudoHandle<void>> uniquePtrArena_;
+
+  void* allocatePseudoHandle(size_t bytes);
+
+public:
+  template <typename T>
+  PseudoHandle<T> takeOwnership(void* ptr);
+
+private:
+  void openHandleScope(HandleScope& scope) {
+    scope.level_ = handleArena_.Length();
+    scope.non_gc_level_ = uniquePtrArena_.Length();
+  }
+  void closeHandleScope(size_t prevLevel, size_t prevUniqueLevel) {
+    size_t currLevel = handleArena_.Length();
+    handleArena_.PopLastN(currLevel - prevLevel);
+
+    size_t currUniqueLevel = uniquePtrArena_.Length();
+    uniquePtrArena_.PopLastN(currUniqueLevel - prevUniqueLevel);
+  }
+  friend class HandleScope;
+
   JSContext* cx_;
   RegExpStack* regexp_stack_;
   Counters counters_;
@@ -902,47 +1090,20 @@ class StackLimitCheck {
   JSContext* cx_;
 };
 
-class Code {
+class Code : public HeapObject {
  public:
-  bool operator!=(Code& other) const;
+  uint8_t* raw_instruction_start() { return inner()->raw(); }
 
-  Address raw_instruction_start();
-  Address raw_instruction_end();
-  Address address();
-
-  static Code cast(Object object);
-};
-
-// GeneratedCode provides an interface for calling into jit code.
-// It will probably require additional work to hook this up to the
-// arm simulator.
-// Origin:
-// https://github.com/v8/v8/blob/abfbe7687edb5b2dffe0b33b24e0a41bb86a8214/src/execution/simulator.h#L96-L164
-template <typename Return, typename... Args>
-class GeneratedCode {
- public:
-  using Signature = Return(Args...);
-
-  static GeneratedCode FromCode(Code code);  // TODO: implement
-  Return Call(Args... args) { return fn_ptr_(args...); }
-
- private:
-  friend class GeneratedCode<Return(Args...)>;
-  Isolate* isolate_;
-  Signature* fn_ptr_;
-  GeneratedCode(Isolate* isolate, Signature* fn_ptr)
-      : isolate_(isolate), fn_ptr_(fn_ptr) {}
-};
-
-// Allow to use {GeneratedCode<ret(arg1, arg2)>} instead of
-// {GeneratedCode<ret, arg1, arg2>}.
-template <typename Return, typename... Args>
-class GeneratedCode<Return(Args...)> : public GeneratedCode<Return, Args...> {
- public:
-  // Automatically convert from {GeneratedCode<ret, arg1, arg2>} to
-  // {GeneratedCode<ret(arg1, arg2)>}.
-  GeneratedCode(GeneratedCode<Return, Args...> other)
-      : GeneratedCode<Return, Args...>(other.isolate_, other.fn_ptr_) {}
+  static Code cast(Object object) {
+    Code c;
+    MOZ_ASSERT(JS::Value(object).toGCThing()->is<js::jit::JitCode>());
+    c.value_ = JS::PrivateGCThingValue(JS::Value(object).toGCThing());
+    return c;
+  }
+private:
+  js::jit::JitCode* inner() {
+    return value_.toGCThing()->as<js::jit::JitCode>();
+  }
 };
 
 enum class MessageTemplate { kStackOverflow };
@@ -992,6 +1153,8 @@ extern bool FLAG_trace_regexp_assembler;
 extern bool FLAG_trace_regexp_bytecodes;
 extern bool FLAG_trace_regexp_parser;
 extern bool FLAG_trace_regexp_peephole_optimization;
+
+#define V8_USE_COMPUTED_GOTO 1
 
 }  // namespace internal
 }  // namespace v8
