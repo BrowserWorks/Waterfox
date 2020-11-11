@@ -4801,7 +4801,7 @@ pref("devtools.jsonview.enabled", true);
 
 // Default theme ("dark" or "light").
 #ifdef MOZ_DEV_EDITION
-  pref("devtools.theme", "dark", sticky);
+  pref("devtools.theme", "light", sticky);
 #else
   pref("devtools.theme", "light", sticky);
 #endif
