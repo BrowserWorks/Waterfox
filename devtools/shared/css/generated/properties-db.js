@@ -1246,7 +1246,7 @@ exports.CSS_PROPERTIES = {
   "-moz-tab-size": {
     "isInherited": true,
     "subproperties": [
-      "-moz-tab-size"
+      "tab-size"
     ],
     "supports": [
       6,
@@ -3150,7 +3150,7 @@ exports.CSS_PROPERTIES = {
       "stroke-opacity",
       "stroke-width",
       "-x-system-font",
-      "-moz-tab-size",
+      "tab-size",
       "table-layout",
       "text-align",
       "text-align-last",
@@ -9054,6 +9054,23 @@ exports.CSS_PROPERTIES = {
       "unset"
     ]
   },
+  "tab-size": {
+    "isInherited": true,
+    "subproperties": [
+      "tab-size"
+    ],
+    "supports": [
+      6,
+      7
+    ],
+    "values": [
+      "-moz-calc",
+      "calc",
+      "inherit",
+      "initial",
+      "unset"
+    ]
+  },
   "table-layout": {
     "isInherited": false,
     "subproperties": [
@@ -9819,6 +9836,7 @@ exports.PSEUDO_ELEMENTS = [
   ":cue",
   ":first-letter",
   ":first-line",
+  ":selection",
   ":-moz-selection",
   ":-moz-focus-inner",
   ":-moz-focus-outer",

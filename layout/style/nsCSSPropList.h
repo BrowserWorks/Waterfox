@@ -3921,9 +3921,9 @@ CSS_PROP_FONT(
     eStyleAnimType_None)
 #endif // CSS_PROP_LIST_EXCLUDE_INTERNAL
 CSS_PROP_TEXT(
-    -moz-tab-size,
-    _moz_tab_size,
-    CSS_PROP_DOMPROP_PREFIXED(TabSize),
+    tab-size,
+    tab_size,
+    TabSize,
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_VALUE_NONNEGATIVE,
     "",
