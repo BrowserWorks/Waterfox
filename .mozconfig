@@ -38,8 +38,8 @@ if test `uname -s` = MINGW32_NT-6.2; then
 	X=$(wmic cpu get NumberOfLogicalProcessors /Format:List | cut -d'=' -f2 | xargs)
 	mk_add_options MOZ_MAKE_FLAGS=-j${X}
 else
-	X=$(getconf NPROCESSORS_ONLN 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null)
-	mk_add_options MOZ_MAKE_FLAGS=-j${X}
+	 X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)*3/2))
+	mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 fi
 
 ac_add_options --disable-debug
@@ -50,6 +50,7 @@ ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
 ac_add_options --enable-application=browser
+ac_add_options --enable-optimize="-O1 -w"
 ac_add_options --enable-rust-simd
 ac_add_options --enable-updater
 
