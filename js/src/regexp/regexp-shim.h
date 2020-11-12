@@ -957,7 +957,7 @@ class JSRegExp : public HeapObject {
 
 private:
   js::RegExpShared* inner() {
-    return value_.toGCThing()->as<js::RegExpShared>();
+    return reinterpret_cast<js::RegExpShared*>(value_.toGCThing());
   }
 };
 
