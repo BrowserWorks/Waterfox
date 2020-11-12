@@ -2507,8 +2507,8 @@ panel#editBookmarkPanel button.expander-up {
   }
   
   /* Add drag space before the first tab when the tabs bar is in 'overflow' mode */
-  #main-window[tabsintitlebar] #tabbrowser-arrowscrollbox[overflowing="true"] {
-    -moz-margin-start: 15px !important ;
+  #tabbrowser-arrowscrollbox[overflowing="true"] {
+    -moz-margin-start: 0 !important ;
   }
   
   /* Handle space before the first pinned tab when the tabs bar is in 'overflow' mode */  

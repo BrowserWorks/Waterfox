@@ -141,8 +141,8 @@ toolbox:hover .tabbrowser-tab:not(:hover) > .tab-stack > .tab-content > .tab-ico
   padding-inline-start: 0 !important;
 }
 
-#tabbrowser-tabs{
-  margin-left: -15px;
+#tabbrowser-tabs:not([overflow="true"]) {
+  -moz-margin-start: -15px;
 }
 
 #tabbrowser-arrowscrollbox:not([overflowing="true"]) .tabbrowser-tab[first-visible-tab="true"] {
@@ -1118,6 +1118,10 @@ menupopup::part(drop-indicator) {
 
 #urlbar-search-mode-indicator-title {
   color: var(--wfx-lt-primary-color);
+}
+
+:root[uidensity="compact"] #urlbar {
+  --urlbar-height: 26px !important;
 }
 
 #urlbar[breakout] > #urlbar-input-container {
