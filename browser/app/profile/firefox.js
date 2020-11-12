@@ -39,7 +39,7 @@ pref("extensions.getAddons.cache.enabled", true);
 pref("extensions.getAddons.get.url", "https://services.addons.mozilla.org/api/v3/addons/search/?guid=%IDS%&lang=%LOCALE%");
 pref("extensions.getAddons.search.browseURL", "https://addons.mozilla.org/%LOCALE%/firefox/search?q=%TERMS%&platform=%OS%&appver=%VERSION%");
 pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firefox/");
-pref("extensions.getAddons.langpacks.url", "https://services.addons.mozilla.org/api/v3/addons/language-tools/?app=firefox&type=language&appversion=%VERSION%");
+pref("extensions.getAddons.langpacks.url", "", locked);
 pref("extensions.getAddons.discovery.api_url", "", locked);
 
 // Use bloomfilters for the addons blocklist, instead of JSON only.
@@ -390,7 +390,7 @@ pref("browser.helperApps.showOpenOptionForPdfJS", true);
 pref("browser.search.searchEnginesURL",      "https://addons.mozilla.org/%LOCALE%/firefox/search-engines/");
 
 // Market-specific search defaults
-pref("browser.search.geoSpecificDefaults", true);
+pref("browser.search.geoSpecificDefaults", false, locked);
 pref("browser.search.geoSpecificDefaults.url", "", locked);
 
 // search bar results always open in a new tab
@@ -1342,6 +1342,10 @@ pref("browser.newtabpage.activity-stream.discoverystream.spocs.personalized", fa
 
 // User pref to show stories on newtab (feeds.system.topstories has to be set to true as well)
 pref("browser.newtabpage.activity-stream.feeds.section.topstories", false, locked);
+pref("feeds.system.topstories", false, locked);
+
+// No sponsored content on the New Tab Page.
+pref("browser.newtabpage.activity-stream.showSponsored", false, locked);
 
 // The pref controls if search hand-off is enabled for Activity Stream.
 #ifdef NIGHTLY_BUILD
@@ -1572,6 +1576,24 @@ pref("toolkit.telemetry.ecosystemtelemetry.enabled", false, locked);
 pref("browser.ping-centre.telemetry", false, locked);
 pref("browser.ping-centre.log", false, locked);
 
+// No New Tab Page Telemetry.
+pref("browser.newtabpage.activity-stream.feeds.telemetry", false, locked);
+pref("browser.newtabpage.activity-stream.telemetry", false, locked);
+pref("browser.newtabpage.activity-stream.telemetry.structuredIngestion", false, locked);
+pref("browser.newtabpage.activity-stream.telemetry.structuredIngestion.endpoint", "", locked);
+pref("browser.newtabpage.activity-stream.telemetry.ut.events", false, locked);
+
+// Disable various other forms of telemetry.
+pref("privacy.trackingprotection.origin_telemetry.enabled", false, locked);
+pref("telemetry.number_of_site_origin.min_interval", -1, locked);
+pref("telemetry.origin_telemetry_test_mode.enabled", false, locked);
+pref("toolkit.telemetry.geckoview.batchDurationMS", -1, locked);
+pref("toolkit.telemetry.geckoview.maxBatchStalenessMS", -1, locked);
+pref("toolkit.telemetry.geckoview.streaming", false, locked);
+pref("toolkit.telemetry.ipcBatchTimeout", -1, locked);
+pref("toolkit.telemetry.isGeckoViewMode", false, locked)"
+pref("toolkit.telemetry.testing.override.Products.Check", false, locked);
+
 // Enable GMP support in the addon manager.
 pref("media.gmp-provider.enabled", true);
 
@@ -1647,10 +1669,10 @@ pref("browser.contentblocking.report.monitor.home_page_url", "https://monitor.fi
 pref("browser.contentblocking.report.manage_devices.url", "https://accounts.firefox.com/settings/clients");
 pref("browser.contentblocking.report.endpoint_url", "https://monitor.firefox.com/user/breach-stats?includeResolved=true");
 pref("browser.contentblocking.report.proxy_extension.url", "https://fpn.firefox.com/browser?utm_source=firefox-desktop&utm_medium=referral&utm_campaign=about-protections&utm_content=about-protections");
-pref("browser.contentblocking.report.lockwise.mobile-ios.url", "https://apps.apple.com/app/id1314000270");
-pref("browser.contentblocking.report.lockwise.mobile-android.url", "https://play.google.com/store/apps/details?id=mozilla.lockbox&referrer=utm_source%3Dprotection_report%26utm_content%3Dmobile_promotion");
-pref("browser.contentblocking.report.mobile-ios.url", "https://apps.apple.com/app/firefox-private-safe-browser/id989804926");
-pref("browser.contentblocking.report.mobile-android.url", "https://play.google.com/store/apps/details?id=org.mozilla.firefox&referrer=utm_source%3Dprotection_report%26utm_content%3Dmobile_promotion");
+pref("browser.contentblocking.report.lockwise.mobile-ios.url", "", locked);
+pref("browser.contentblocking.report.lockwise.mobile-android.url", "", locked);
+pref("browser.contentblocking.report.mobile-ios.url", "", locked);
+pref("browser.contentblocking.report.mobile-android.url", "", locked);
 
 // Protection Report's SUMO urls
 pref("browser.contentblocking.report.lockwise.how_it_works.url", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/password-manager-report");
@@ -1763,6 +1785,7 @@ pref("extensions.pocket.api", "", locked);
 pref("extensions.pocket.enabled", false, locked);
 pref("extensions.pocket.oAuthConsumerKey", "", locked);
 pref("extensions.pocket.site", "", locked);
+pref("browser.newtabpage.activity-stream.section.highlights.includePocket", false, locked);
 
 // Can be removed once Bug 1618058 is resolved.
 pref("signon.generation.confidenceThreshold", "0.75");
@@ -1799,7 +1822,7 @@ pref("webchannel.allowObject.urlWhitelist", "");
 // Whether or not the browser should scan for unsubmitted
 // crash reports, and then show a notification for submitting
 // those reports.
-  pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
+pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
 
 // chancesUntilSuppress is how many times we'll show the unsubmitted
 // crash report notification across different days and shutdown
@@ -1873,7 +1896,7 @@ pref("browser.chrome.errorReporter.infoURL",
 
 // Normandy client preferences
 pref("app.normandy.api_url", "", locked);
-pref("app.normandy.dev_mode", false);
+pref("app.normandy.dev_mode", false, locked);
 pref("app.normandy.enabled", false, locked);
 pref("app.normandy.first_run", false, locked);
 pref("app.normandy.logging.level", 50, locked); // Warn
@@ -2394,3 +2417,6 @@ pref("first-startup.timeout", 30000);
 #ifdef XP_WIN
   pref("default-browser-agent.enabled", false, locked);
 #endif
+
+// Disable extensions recommendations
+pref("extensions.getAddons.showPane", false);
