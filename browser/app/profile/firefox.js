@@ -1592,7 +1592,7 @@ pref("toolkit.telemetry.geckoview.maxBatchStalenessMS", -1, locked);
 pref("toolkit.telemetry.geckoview.streaming", false, locked);
 pref("toolkit.telemetry.ipcBatchTimeout", -1, locked);
 pref("toolkit.telemetry.isGeckoViewMode", false, locked)"
-pref("toolkit.telemetry.testing.override.Products.Check", false, locked);
+pref("toolkit.telemetry.testing.overrideProductsCheck", false, locked);
 
 // Enable GMP support in the addon manager.
 pref("media.gmp-provider.enabled", true);
