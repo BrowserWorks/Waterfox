@@ -139,6 +139,7 @@ int16_t gBadPortList[] = {
   531,  // Chat
   532,  // netnews
   540,  // uucp
+  554,  // rtsp
   556,  // remotefs
   563,  // nntp+ssl
   587,  //
@@ -146,6 +147,8 @@ int16_t gBadPortList[] = {
   636,  // ldap+ssl
   993,  // imap+ssl
   995,  // pop3+ssl
+  1720, // h323hostcall
+  1723, // pptp
   2049, // nfs
   3659,    // apple-sasl / PasswordServer
   4045, // lockd
