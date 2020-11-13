@@ -90,16 +90,12 @@ const BUILTIN_THEME_PREVIEWS = new Map([
     "chrome://mozapps/content/extensions/default-theme.svg",
   ],
   [
-    "firefox-compact-light@mozilla.org",
-    "chrome://mozapps/content/extensions/firefox-compact-light.svg",
+    "abyss@waterfox.net",
+    "chrome://mozapps/content/extensions/waterfox-abyss-preview.svg",
   ],
   [
-    "firefox-compact-dark@mozilla.org",
-    "chrome://mozapps/content/extensions/firefox-compact-dark.svg",
-  ],
-  [
-    "firefox-alpenglow@mozilla.org",
-    "chrome://mozapps/content/extensions/firefox-alpenglow.svg",
+    "floe@waterfox.net",
+    "chrome://mozapps/content/extensions/waterfox-floe-preview.svg",
   ],
 ]);
 

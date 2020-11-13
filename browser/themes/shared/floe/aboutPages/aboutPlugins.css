@@ -27,7 +27,7 @@
   }
   
   .notice {
-    background: var(--wfx-gray-60)  !important;
+    background: var(--wfx-gray-40)  !important;
     border: 1px solid transparent  !important;
     border-radius: var(--wfx-border-radius) !important;
   }

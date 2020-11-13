@@ -493,6 +493,7 @@ panel#editBookmarkPanel button.expander-up {
 				url("chrome://mozapps/content/downloads/unknownContentType.xhtml"),
 				url("chrome://pippki/content/changepassword.xhtml"),
 				url("chrome://pippki/content/editcacert.xhtml"),
+				url("chrome://pippki/content/exceptionDialog.xhtml"),
 				url("chrome://pippki/content/load_device.xhtml") {
 
   /* Buttons */
@@ -805,7 +806,8 @@ panel#editBookmarkPanel button.expander-up {
 				url("chrome://global/content/commonDialog.xhtml"),
 				url("chrome://global/content/printPageSetup.xhtml"),
 				url("chrome://mozapps/content/downloads/unknownContentType.xhtml"),
-				url("chrome://pippki/content/editcacert.xhtml") {
+				url("chrome://pippki/content/editcacert.xhtml"),
+				url("chrome://pippki/content/exceptionDialog.xhtml") {
 
   #editBMPanel_tagsSelectorRow > richlistbox richlistitem image,
   #editBMPanel_tagsSelector > richlistitem checkbox,
@@ -1275,7 +1277,8 @@ panel#editBookmarkPanel button.expander-up {
 
 
 @-moz-document url("chrome://pippki/content/load_device.xhtml"),
-			   url("chrome://pippki/content/changepassword.xhtml") {
+			   url("chrome://pippki/content/changepassword.xhtml"),
+			   url("chrome://pippki/content/exceptionDialog.xhtml") {
 				   
   dialog {
     -moz-appearance: none !important;

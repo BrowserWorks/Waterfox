@@ -146,7 +146,7 @@ toolbox:hover .tabbrowser-tab:not(:hover) > .tab-stack > .tab-content > .tab-ico
 }
 
 #tabbrowser-arrowscrollbox:not([overflowing="true"]) .tabbrowser-tab[first-visible-tab="true"] {
-  margin-left: 30px !important;
+  -moz-margin-start: 30px !important;
 }
 
 :root[uidensity="compact"] .tabbrowser-tab {
