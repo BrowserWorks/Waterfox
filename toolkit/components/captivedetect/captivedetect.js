@@ -37,6 +37,15 @@ function URLFetcher(url, timeout) {
   xhr.channel.loadFlags |= Ci.nsIRequest.INHIBIT_CACHING;
   // Prevent privacy leaks
   xhr.channel.loadFlags |= Ci.nsIRequest.LOAD_ANONYMOUS;
+
+  // We don't want to follow _any_ redirects
+  xhr.channel.QueryInterface(Ci.nsIHttpChannel).redirectionLimit = 0;
+
+  // bug 1666072 - firefox.com returns a HSTS header triggering a https upgrade
+  // but the upgrade triggers an internal redirect causing an incorrect locked
+  // portal notification. We exclude CP detection from STS.
+  xhr.channel.QueryInterface(Ci.nsIHttpChannel).allowSTS = false;
+
   // The Cache-Control header is only interpreted by proxies and the
   // final destination. It does not help if a resource is already
   // cached locally.
@@ -57,6 +66,12 @@ function URLFetcher(url, timeout) {
         self.onsuccess(xhr.responseText);
       } else if (xhr.status) {
         self.onredirectorerror(xhr.status);
+      } else if (xhr.channel && xhr.channel.status == Cr.NS_ERROR_REDIRECT_LOOP) {
+        // For some redirects we don't get a status, so we need to check it
+        // this way. This only works because we set the redirectionLimit to 0.
+        self.onredirectorerror(300);
+        // No need to invoke the onerror callback, we handled it here.
+        xhr.onerror = null;
       }
     }
   };
