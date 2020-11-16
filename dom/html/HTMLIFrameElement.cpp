@@ -154,6 +154,20 @@ nsMapRuleToAttributesFunc HTMLIFrameElement::GetAttributeMappingFunction()
   return &MapAttributesIntoRule;
 }
 
+bool HTMLIFrameElement::HasAllowFullscreenAttribute() const {
+  return GetBoolAttr(nsGkAtoms::allowfullscreen) ||
+         GetBoolAttr(nsGkAtoms::mozallowfullscreen);
+}
+
+bool HTMLIFrameElement::AllowFullscreen() const {
+  if (StaticPrefs::dom_security_featurePolicy_enabled()) {
+    // The feature policy check in Document::GetFullscreenError already accounts
+    // for the allow* attributes, so we're done.
+    return true;
+  }
+  return HasAllowFullscreenAttribute();
+}
+
 nsresult HTMLIFrameElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
                                          const nsAttrValue* aValue,
                                          const nsAttrValue* aOldValue,
@@ -176,6 +190,7 @@ nsresult HTMLIFrameElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
           aName == nsGkAtoms::srcdoc || aName == nsGkAtoms::sandbox) {
         RefreshFeaturePolicy(true /* parse the feature policy attribute */);
       } else if (aName == nsGkAtoms::allowfullscreen ||
+                 aName == nsGkAtoms::mozallowfullscreen ||
                  aName == nsGkAtoms::allowpaymentrequest) {
         RefreshFeaturePolicy(false /* parse the feature policy attribute */);
       }
@@ -306,8 +321,8 @@ void HTMLIFrameElement::RefreshFeaturePolicy(bool aParseAllowAttribute) {
     mFeaturePolicy->MaybeSetAllowedPolicy(NS_LITERAL_STRING("payment"));
   }
 
-  if (AllowFullscreen()) {
-    mFeaturePolicy->MaybeSetAllowedPolicy(NS_LITERAL_STRING("fullscreen"));
+  if (HasAllowFullscreenAttribute()) {
+    mFeaturePolicy->MaybeSetAllowedPolicy(u"fullscreen"_ns);
   }
 
   mFeaturePolicy->InheritPolicy(OwnerDoc()->FeaturePolicy());
