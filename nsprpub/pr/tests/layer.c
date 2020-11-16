@@ -67,7 +67,7 @@ static PRFileDesc *PushNewLayers(PRFileDesc *stack)
 															stack);
     PR_ASSERT(PR_SUCCESS == rv);
 
-	/* push a data processing layer */
+	/* push a data procesing layer */
     layer = PR_CreateIOLayerStub(identity, &myMethods);
     rv = PR_PushIOLayer(stack, PR_GetLayersIdentity(stack), layer);
     if (verbosity > quiet)

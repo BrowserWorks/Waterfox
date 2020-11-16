@@ -71,7 +71,6 @@ LOGFILE=${NSPR_TEST_LOGFILE:-$NULL_DEVICE}
 #
 
 TESTS="
-abstract
 accept
 acceptread
 acceptreademu
