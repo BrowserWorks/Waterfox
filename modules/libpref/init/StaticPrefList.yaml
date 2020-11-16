@@ -6668,7 +6668,7 @@
 #if defined(XP_LINUX) && !defined(ANDROID)
   value: true
 #elif defined(XP_WIN) && !defined(_ARM64_)
-  value: true
+  value: false
 #elif defined(XP_MACOSX)
   value: true
 #else

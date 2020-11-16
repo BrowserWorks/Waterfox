@@ -2245,7 +2245,7 @@ pref("security.sri.enable", true);
 pref("security.ssl.enable_ocsp_must_staple", true);
 
 // Insecure Form Field Warning
-pref("security.insecure_field_warning.contextual.enabled", false);
+pref("security.insecure_field_warning.contextual.enabled", true);
 pref("security.insecure_field_warning.ignore_local_ip_address", true);
 
 // Disable pinning checks by default.
@@ -2266,7 +2266,7 @@ pref("security.cert_pinning.hpkp.enabled", false);
 
 // Remote settings preferences
 // Note: if you change this, make sure to also review security.onecrl.maximum_staleness_in_seconds
-pref("services.settings.poll_interval", -1); // 24H
+pref("services.settings.poll_interval", -1, locked); // 24H
 pref("services.settings.server", "", locked);
 pref("services.settings.default_bucket", "main");
 
@@ -4001,7 +4001,7 @@ pref("extensions.webextensions.keepStorageOnUninstall", false);
 pref("extensions.webextensions.keepUuidOnUninstall", false);
 // Redirect basedomain used by identity api
 pref("extensions.webextensions.identity.redirectDomain", "extensions.allizom.org");
-pref("extensions.webextensions.restrictedDomains", "accounts-static.cdn.mozilla.net,accounts.firefox.com,addons.cdn.mozilla.net,api.accounts.firefox.com,content.cdn.mozilla.net,discovery.addons.mozilla.org,install.mozilla.org,oauth.accounts.firefox.com,profile.accounts.firefox.com,support.mozilla.org,sync.services.mozilla.com");
+pref("extensions.webextensions.restrictedDomains", "accounts-static.cdn.mozilla.net,accounts.firefox.com,api.accounts.firefox.com,content.cdn.mozilla.net,discovery.addons.mozilla.org,install.mozilla.org,oauth.accounts.firefox.com,profile.accounts.firefox.com,support.mozilla.org,sync.services.mozilla.com");
 
 // Whether or not the moz-extension resource loads are remoted. For debugging
 // purposes only. Setting this to false will break moz-extension URI loading
