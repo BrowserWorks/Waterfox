@@ -124,6 +124,16 @@ class PointConduit extends BaseConduit {
         actor.sendAsyncMessage("ConduitClosed", { sender: this.id });
       }
     }
+    this.closeCallback?.();
+    this.closeCallback = null;
+  }
+
+  /**
+   * Set the callback to be called when the conduit is closed.
+   * @param {function} callback
+   */
+  setCloseCallback(callback) {
+    this.closeCallback = callback;
   }
 }
 
