@@ -146,6 +146,7 @@ pref("app.update.elevation.promptMaxAttempts", 2);
 pref("app.update.staging.enabled", true);
 
 // Update service URL:
+pref("app.update.url.override", "", sticky);
 // app.update.url was removed in Bug 1568994
 // app.update.url.manual is in branding section
 // app.update.url.details is in branding section
