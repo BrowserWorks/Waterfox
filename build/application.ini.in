@@ -23,6 +23,7 @@ RemotingName=@MOZ_APP_REMOTINGNAME@
 CodeName=@MOZ_APP_DISPLAYNAME@
 #endif
 Version=@MOZ_APP_VERSION@
+DisplayVersion=@MOZ_APP_VERSION_DISPLAY@
 #ifdef MOZ_APP_PROFILE
 Profile=@MOZ_APP_PROFILE@
 #endif
