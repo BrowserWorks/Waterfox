@@ -1463,8 +1463,8 @@ CustomizeMode.prototype = {
 
   async onThemesMenuShowing(aEvent) {
     const DEFAULT_THEME_ID = "default-theme@mozilla.org";
-    const LIGHT_THEME_ID = "firefox-compact-light@mozilla.org";
-    const DARK_THEME_ID = "firefox-compact-dark@mozilla.org";
+	const ABYSS_THEME_ID = "abyss@waterfox.net";
+	const FLOE_THEME_ID = "floe@waterfox.net";
     const MAX_THEME_COUNT = 6;
 
     this._clearThemesMenu(aEvent.target);
@@ -1507,8 +1507,8 @@ CustomizeMode.prototype = {
     // Move the current theme (if any) and the light/dark themes to the start:
     let importantThemes = new Set([
       DEFAULT_THEME_ID,
-      LIGHT_THEME_ID,
-      DARK_THEME_ID,
+      ABYSS_THEME_ID,
+	  FLOE_THEME_ID,
     ]);
     if (currentTheme) {
       importantThemes.add(currentTheme.id);

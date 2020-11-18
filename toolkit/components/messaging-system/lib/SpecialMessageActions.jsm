@@ -6,8 +6,12 @@
 const EXPORTED_SYMBOLS = ["SpecialMessageActions"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
+);
+const { AppConstants } = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm"
 );
 
 XPCOMUtils.defineLazyModuleGetters(this, {
@@ -15,6 +19,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   UITour: "resource:///modules/UITour.jsm",
   FxAccounts: "resource://gre/modules/FxAccounts.jsm",
   MigrationUtils: "resource:///modules/MigrationUtils.jsm",
+  ShellService: "resource:///modules/ShellService.jsm",
 });
 
 const SpecialMessageActions = {
@@ -74,6 +79,27 @@ const SpecialMessageActions = {
       );
     } catch (e) {
       Cu.reportError(e);
+    }
+  },
+
+  setAsDefault() {
+    let claimAllTypes = true;
+    let setAsDefaultError = false;
+    if (AppConstants.platform == "win") {
+      try {
+        // In Windows 8+, the UI for selecting default protocol is much
+        // nicer than the UI for setting file type associations. So we
+        // only show the protocol association screen on Windows 8+.
+        // Windows 8 is version 6.2.
+        let version = Services.sysinfo.getProperty("version");
+        claimAllTypes = parseFloat(version) < 6.2;
+      } catch (ex) {}
+    }
+    try {
+      ShellService.setDefaultBrowser(claimAllTypes, true);
+    } catch (ex) {
+      setAsDefaultError = true;
+      Cu.reportError(ex);
     }
   },
 
@@ -154,8 +180,10 @@ const SpecialMessageActions = {
         });
         break;
       case "SHOW_FIREFOX_ACCOUNTS":
+        const data = action.data;
         const url = await FxAccounts.config.promiseConnectAccountURI(
-          (action.data && action.data.entrypoint) || "snippets"
+          (data && data.entrypoint) || "snippets",
+          (data && data.extraParams) || {}
         );
         // We want to replace the current tab.
         window.openLinkIn(url, "current", {
@@ -182,6 +210,14 @@ const SpecialMessageActions = {
           "FINGERPRINTERS_PROTECTION",
           "CRYPTOMINERS_PROTECTION",
         ]);
+        break;
+      case "SET_DEFAULT_BROWSER":
+        this.setAsDefault();
+        break;
+      case "SET_DEFAULT_SEARCH_ENGINE":
+        const sp = Services.search.getEngineByName("Startpage");
+        Services.search.setDefault(sp);
+        Services.search.setDefaultPrivate(sp);
         break;
       case "CANCEL":
         // A no-op used by CFRs that minimizes the notification but does not

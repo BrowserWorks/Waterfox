@@ -10,12 +10,16 @@ const OLD_PREFERENCES_TESTS = [
         "network.IDN_show_punycode": true,
         "accessibility.force_disabled": 1,
         "security.default_personal_cert": "Select Automatically",
+        "geo.enabled": 1,
+        "extensions.getAddons.showPane": 0,
       },
     },
     lockedPrefs: {
       "network.IDN_show_punycode": true,
       "accessibility.force_disabled": 1,
       "security.default_personal_cert": "Select Automatically",
+      "geo.enabled": true,
+      "extensions.getAddons.showPane": false,
     },
   },
 ];
@@ -214,9 +218,28 @@ add_task(async function test_JSON_preferences() {
   await setupPolicyEngineWithJson({
     policies: {
       Preferences:
-        '"browser.policies.test.default.boolean": {"Value": true,"Status": "default"}}',
+        '{"browser.policies.test.default.boolean.json": {"Value": true,"Status": "default"}}',
     },
   });
 
-  checkDefaultPref("browser.policies.test.default.boolean", true);
+  checkDefaultPref("browser.policies.test.default.boolean.json", true);
+});
+
+add_task(async function test_bug_1666836() {
+  await setupPolicyEngineWithJson({
+    policies: {
+      Preferences: {
+        "browser.tabs.warnOnClose": {
+          Value: 0,
+          Status: "default",
+        },
+      },
+    },
+  });
+
+  equal(
+    Preferences.get("browser.tabs.warnOnClose"),
+    false,
+    `browser.tabs.warnOnClose should be false`
+  );
 });

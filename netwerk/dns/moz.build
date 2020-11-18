@@ -52,6 +52,7 @@ EXPORTS.mozilla.net += [
 ]
 
 SOURCES += [
+    "GetAddrInfo.cpp", # Undefines UNICODE
     'nsEffectiveTLDService.cpp', # Excluded from UNIFIED_SOURCES due to special build flags.
     'nsHostResolver.cpp', # Redefines LOG
 ]
@@ -62,7 +63,6 @@ UNIFIED_SOURCES += [
     'DNSListenerProxy.cpp',
     'DNSRequestChild.cpp',
     'DNSRequestParent.cpp',
-    'GetAddrInfo.cpp',
     'HTTPSSVC.cpp',
     'IDNBlocklistUtils.cpp',
     'nsDNSService2.cpp',

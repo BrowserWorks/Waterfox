@@ -4,19 +4,12 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { Localized } from "./MSLocalized";
+import { Zap } from "./Zap";
 import { AboutWelcomeUtils } from "../../lib/aboutwelcome-utils";
-import { addUtmParams } from "../../asrouter/templates/FirstRun/addUtmParams";
-
-const DEFAULT_SITES = [
-  "youtube-com",
-  "facebook-com",
-  "amazon",
-  "reddit-com",
-  "wikipedia-org",
-  "twitter-com",
-].map(site => ({
-  icon: `resource://activity-stream/data/content/tippytop/images/${site}@2x.png`,
-}));
+import {
+  BASE_PARAMS,
+  addUtmParams,
+} from "../../asrouter/templates/FirstRun/addUtmParams";
 
 export const MultiStageAboutWelcome = props => {
   const [index, setScreenIndex] = useState(0);
@@ -29,7 +22,24 @@ export const MultiStageAboutWelcome = props => {
         );
       }
     });
+
+    // Remember that a new screen has loaded for browser navigation
+    if (index > window.history.state) {
+      window.history.pushState(index, "");
+    }
   }, [index]);
+
+  useEffect(() => {
+    // Switch to the screen tracked in state (null for initial state)
+    const handler = ({ state }) => setScreenIndex(Number(state));
+
+    // Handle page load, e.g., going back to about:welcome from about:home
+    handler(window.history);
+
+    // Watch for browser back/forward button navigation events
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, []);
 
   const [flowParams, setFlowParams] = useState(null);
   const { metricsFlowUri } = props;
@@ -50,23 +60,41 @@ export const MultiStageAboutWelcome = props => {
           data: { args: "home", where: "current" },
         });
 
-  const useImportable = props.message_id.includes("IMPORTABLE");
-  const [topSites, setTopSites] = useState(DEFAULT_SITES);
+  // Update top sites with default sites by region when region is available
+  const [region, setRegion] = useState(null);
   useEffect(() => {
     (async () => {
+      setRegion(await window.AWWaitForRegionChange());
+    })();
+  }, []);
+
+  const useImportable = props.message_id.includes("IMPORTABLE");
+  // Track whether we have already sent the importable sites impression telemetry
+  const [importTelemetrySent, setImportTelemetrySent] = useState(null);
+  const [topSites, setTopSites] = useState([]);
+  useEffect(() => {
+    (async () => {
+      let DEFAULT_SITES = await window.AWGetDefaultSites();
       const importable = JSON.parse(await window.AWGetImportableSites());
       const showImportable = useImportable && importable.length >= 5;
-      AboutWelcomeUtils.sendImpressionTelemetry(`${props.message_id}_SITES`, {
-        display: showImportable ? "importable" : "static",
-        importable: importable.length,
-      });
-      setTopSites(showImportable ? importable : DEFAULT_SITES);
+      if (!importTelemetrySent) {
+        AboutWelcomeUtils.sendImpressionTelemetry(`${props.message_id}_SITES`, {
+          display: showImportable ? "importable" : "static",
+          importable: importable.length,
+        });
+        setImportTelemetrySent(true);
+      }
+      setTopSites(
+        showImportable
+          ? { data: importable, showImportable }
+          : { data: DEFAULT_SITES, showImportable }
+      );
     })();
-  }, [useImportable]);
+  }, [useImportable, region]);
 
   return (
     <React.Fragment>
-      <div className={`multistageContainer`}>
+      <div className={`outer-wrapper multistageContainer`}>
         {props.screens.map(screen => {
           return index === screen.order ? (
             <WelcomeScreen
@@ -95,31 +123,73 @@ export class WelcomeScreen extends React.PureComponent {
 
   handleOpenURL(action, flowParams, UTMTerm) {
     let { type, data } = action;
-    let url = new URL(data.args);
-    addUtmParams(url, `aboutwelcome-${UTMTerm}-screen`);
-
-    if (action.addFlowParams && flowParams) {
-      url.searchParams.append("device_id", flowParams.deviceId);
-      url.searchParams.append("flow_id", flowParams.flowId);
-      url.searchParams.append("flow_begin_time", flowParams.flowBeginTime);
+    if (type === "SHOW_FIREFOX_ACCOUNTS") {
+      let params = {
+        ...BASE_PARAMS,
+        utm_term: `aboutwelcome-${UTMTerm}-screen`,
+      };
+      if (action.addFlowParams && flowParams) {
+        params = {
+          ...params,
+          ...flowParams,
+        };
+      }
+      data = { ...data, extraParams: params };
+    } else if (type === "OPEN_URL") {
+      let url = new URL(data.args);
+      addUtmParams(url, `aboutwelcome-${UTMTerm}-screen`);
+      if (action.addFlowParams && flowParams) {
+        url.searchParams.append("device_id", flowParams.deviceId);
+        url.searchParams.append("flow_id", flowParams.flowId);
+        url.searchParams.append("flow_begin_time", flowParams.flowBeginTime);
+      }
+      data = { ...data, args: url.toString() };
     }
-
-    data = { ...data, args: url.toString() };
     AboutWelcomeUtils.handleUserAction({ type, data });
+  }
+
+  highlightTheme(theme) {
+    const themes = document.querySelectorAll("label.theme");
+    themes.forEach(function(element) {
+      element.classList.remove("selected");
+      if (element.firstElementChild.value === theme) {
+        element.classList.add("selected");
+      }
+    });
+  }
+
+  highlightSearch(search) {
+    const searches = document.querySelectorAll("label.search");
+    searches.forEach(function(element) {
+      element.classList.remove("selected");
+      if (element.firstElementChild.value === search) {
+        element.classList.add("selected");
+      }
+    });
+  }
+
+  setSearch(ev){
+	  alert("Your file is being uploaded!")
   }
 
   async handleAction(event) {
     let { props } = this;
-    let targetContent = props.content[event.target.value];
+
+    let targetContent =
+      props.content[event.currentTarget.value] || props.content.tiles;
     if (!(targetContent && targetContent.action)) {
       return;
     }
 
     // Send telemetry before waiting on actions
-    AboutWelcomeUtils.sendActionTelemetry(props.messageId, event.target.value);
+    AboutWelcomeUtils.sendActionTelemetry(
+      props.messageId,
+      event.currentTarget.value
+    );
 
     let { action } = targetContent;
-    if (action.type === "OPEN_URL") {
+
+    if (["OPEN_URL", "SHOW_FIREFOX_ACCOUNTS"].includes(action.type)) {
       this.handleOpenURL(action, props.flowParams, props.UTMTerm);
     } else if (action.type) {
       AboutWelcomeUtils.handleUserAction(action);
@@ -128,6 +198,22 @@ export class WelcomeScreen extends React.PureComponent {
         await window.AWWaitForMigrationClose();
         AboutWelcomeUtils.sendActionTelemetry(props.messageId, "migrate_close");
       }
+    }
+
+    // A special tiles.action.theme value indicates we should use the event's value vs provided value.
+    if (action.theme) {
+      this.highlightTheme(event.currentTarget.value);
+      window.AWSelectTheme(
+        action.theme === "<event>" ? event.currentTarget.value : action.theme
+      );
+    }
+
+    // A special tiles.action.search value indicates we should use the event's value vs provided value.
+    if (action.search) {
+      this.highlightSearch(event.currentTarget.value);
+      window.AWSelectSearchEngine(
+        action.search === "<event>" ? event.currentTarget.value : action.search
+      );
     }
 
     if (action.navigate) {
@@ -153,28 +239,102 @@ export class WelcomeScreen extends React.PureComponent {
   }
 
   renderTiles() {
-    return this.props.content.tiles && this.props.topSites ? (
-      <div className="tiles-section">
-        {this.props.topSites.slice(0, 5).map(({ icon, label }) => (
-          <div className="site" key={icon + label}>
-            <div
-              className="icon"
-              style={
-                icon
-                  ? {
-                      backgroundColor: "transparent",
-                      backgroundImage: `url(${icon})`,
-                    }
-                  : {}
-              }
-            >
-              {icon ? "" : label[0].toUpperCase()}
+    switch (this.props.content.tiles.type) {
+      case "topsites":
+		  return <div class="tiles-container info"><div class="tiles-topsites-section" name="topsites-section" id="topsites-section" aria-labelledby="topsites-disclaimer" role="region"><div class="site" aria-label="chrome" role="img"><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/chrome@2x.png')`}}></div></div><div class="site" aria-label="edge" role="img"><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/edge@2x.png')`}}></div></div><div class="site" aria-label="firefox" role="img"><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/firefox@2x.png')`}}></div></div><div class="site" aria-label="safari" role="img"><div class="icon" style={{backgroundColor: "transparent", backgroundImage: `url('resource://activity-stream/data/content/tippytop/images/safari@2x.png')`}}></div></div></div></div>
+      case "theme":
+        return this.props.content.tiles.data ? (
+          <div className="tiles-theme-container">
+            <div>
+              <fieldset className="tiles-theme-section">
+                <Localized text={this.props.content.subtitle}>
+                  <legend className="sr-only" />
+                </Localized>
+                {this.props.content.tiles.data.map(
+                  ({ theme, label, tooltip }) => (
+                    <Localized
+                      key={theme + label}
+                      text={typeof tooltip === "object" ? tooltip : {}}
+                    >
+                      <label className="theme" title={theme + label}>
+                        <input
+                          type="radio"
+                          value={theme}
+                          name="theme"
+                          className="sr-only input"
+                          onClick={this.handleAction}
+                        />
+                        <div className={`icon ${theme}`} />
+                        {label && (
+                          <Localized text={label}>
+                            <div className="text" />
+                          </Localized>
+                        )}
+                      </label>
+                    </Localized>
+                  )
+                )}
+              </fieldset>
             </div>
-            {label && <div className="host">{label}</div>}
           </div>
-        ))}
-      </div>
-    ) : null;
+        ) : null;
+	    case "search":
+		    return this.props.content.tiles.data ? (
+          <div className="tiles-search-container">
+            <div>
+              <fieldset className="tiles-search-section">
+              <Localized text={this.props.content.subtitle}>
+                  <legend className="sr-only" />
+                </Localized>
+                {this.props.content.tiles.data.map(
+                  ({ search, label, tooltip }) => (
+                    <Localized
+                      key={search + label}
+                      text={typeof tooltip === "object" ? tooltip : {}}
+                    >
+                      <label className="search" title={search + label}>
+                        <input
+                          type="radio"
+                          value={search}
+                          name="search"
+                          className="sr-only input"
+                          onClick={this.handleAction}
+                        />
+                        <div className={`icon ${search}`} />
+                        {label && (
+                          <Localized text={label}>
+                            <div className="text" />
+                          </Localized>
+                        )}
+                      </label>
+                    </Localized>
+                  )
+                )}
+              </fieldset>
+            </div>
+          </div>
+        ) : null;
+      case "video":
+        return this.props.content.tiles.source ? (
+          <div
+            className={`tiles-media-section ${this.props.content.tiles.media_type}`}
+          >
+            <div className="fade" />
+            <video
+              className="media"
+              autoPlay="true"
+              loop="true"
+              muted="true"
+              src={
+                AboutWelcomeUtils.hasDarkMode()
+                  ? this.props.content.tiles.source.dark
+                  : this.props.content.tiles.source.default
+              }
+            />
+          </div>
+        ) : null;
+    }
+    return null;
   }
 
   renderStepsIndicator() {
@@ -186,8 +346,24 @@ export class WelcomeScreen extends React.PureComponent {
     return steps;
   }
 
+  renderDisclaimer() {
+    if (
+      this.props.content.tiles &&
+      this.props.content.tiles.type === "topsites" &&
+      this.props.topSites &&
+      this.props.topSites.showImportable
+    ) {
+      return (
+        <Localized text={this.props.content.disclaimer}>
+          <p id="topsites-disclaimer" className="tiles-topsites-disclaimer" />
+        </Localized>
+      );
+    }
+    return null;
+  }
+
   render() {
-    const { content } = this.props;
+    const { content, topSites } = this.props;
     const hasSecondaryTopCTA =
       content.secondary_button && content.secondary_button.position === "top";
     return (
@@ -195,9 +371,7 @@ export class WelcomeScreen extends React.PureComponent {
         {hasSecondaryTopCTA ? this.renderSecondaryCTA("top") : null}
         <div className={`brand-logo ${hasSecondaryTopCTA ? "cta-top" : ""}`} />
         <div className="welcome-text">
-          <Localized text={content.title}>
-            <h1 />
-          </Localized>
+          <Zap hasZap={content.zap} text={content.title} />
           <Localized text={content.subtitle}>
             <h2 />
           </Localized>
@@ -217,7 +391,22 @@ export class WelcomeScreen extends React.PureComponent {
         {content.secondary_button && content.secondary_button.position !== "top"
           ? this.renderSecondaryCTA()
           : null}
-        <div className="steps">{this.renderStepsIndicator()}</div>
+        <nav
+          className={
+            content.tiles &&
+            content.tiles.type === "topsites" &&
+            topSites &&
+            topSites.showImportable
+              ? "steps has-disclaimer"
+              : "steps"
+          }
+          data-l10n-id={"onboarding-welcome-steps-indicator"}
+          data-l10n-args={`{"current": ${parseInt(this.props.order, 10) +
+            1}, "total": ${this.props.totalNumberOfScreens}}`}
+        >
+          {this.renderStepsIndicator()}
+        </nav>
+        {this.renderDisclaimer()}
       </main>
     );
   }

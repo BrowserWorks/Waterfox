@@ -1,0 +1,85 @@
+/* Additional styling for Floe theme for Waterfox Current
+/* Author: Stefano Rosselli
+*/
+
+/* :::::: ABOUT MEMORY :::::: */
+
+@-moz-document  url("about:memory") {
+	
+  html a {
+    color: var(--wfx-lt-primary-color) !important;
+    text-decoration: none !important;
+  }
+
+  html a:hover {
+    text-decoration: underline !important;
+  }
+
+  html a:active,
+  html a:focus {
+    text-decoration: none !important;
+    outline:none !important;
+  }
+  
+  div.sidebarItem,
+  div.section,
+  div.opsRow {
+    background: var(--wfx-table-data-bg-color) !important;
+	  color: var(--wfx-content-color) !important;
+    border: 1px solid transparent !important;
+  }
+  
+  div.opsRow button {
+    margin-top: 5px !important;
+    -moz-margin-end: 5px !important;
+  }
+  
+  div.opsRow button:last-of-type {
+    -moz-margin-end: 0px !important;
+  }
+
+  h2 {
+    color: var(--wfx-content-color) !important;
+    background: transparent !important;
+  }
+
+  a.upDownArrow {
+    color: var(--wfx-lt-primary-color) !important;
+  }
+
+  .treeline {
+    color: var(--wfx-content-color) !important;
+  }
+
+  .mrValue {
+    color: var(--wfx-purple-navy-90) !important;
+  }
+
+  .mrName {
+    color: var(--wfx-lt-primary-color) !important;
+  }
+
+  .mrNote {
+    color: var(--wfx-purple-navy-60) !important;
+  }
+  
+  input.filterInput {
+	-moz-appearance: none !important;
+    width: 86% !important;
+    background-color: var(--wfx-gray-40) !important;
+    border: 1px solid transparent !important;
+    border-radius: var(--wfx-large-radius) !important;
+    color: var(--wfx-content-color) !important;
+    padding: 4px 8px 4px 12px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  input.filterInput:focus {
+    background-color: var(--wfx-gray-05) !important;
+    border-color: var(--wfx-lt-primary-color) !important;
+    box-shadow: 0 0 0 1px var(--wfx-lt-primary-color) !important;
+    outline: 0px !important;
+  }
+
+
+}

@@ -1388,6 +1388,9 @@ void CodeGenerator::visitBitAndAndBranch(LBitAndAndBranch* lir) {
              lir->ifFalse());
 }
 
+// See ../CodeGenerator.cpp for more information.
+void CodeGenerator::visitWasmRegisterResult(LWasmRegisterResult* lir) {}
+
 void CodeGenerator::visitWasmUint32ToDouble(LWasmUint32ToDouble* lir) {
   masm.convertUInt32ToDouble(ToRegister(lir->input()),
                              ToFloatRegister(lir->output()));
@@ -1916,7 +1919,11 @@ void CodeGenerator::visitWasmSelect(LWasmSelect* ins) {
     Register out = ToRegister(ins->output());
     MOZ_ASSERT(ToRegister(ins->trueExpr()) == out,
                "true expr input is reused for output");
-    masm.as_movz(out, ToRegister(falseExpr), cond);
+    if (falseExpr->isRegister()) {
+      masm.as_movz(out, ToRegister(falseExpr), cond);
+    } else {
+      masm.cmp32Load32(Assembler::Zero, cond, cond, ToAddress(falseExpr), out);
+    }
     return;
   }
 

@@ -1,0 +1,44 @@
+/* Additional styling for Abyss theme for Waterfox Current
+/* Author: Stefano Rosselli
+*/
+
+/* :::::: ABOUT CHECKERBOARD :::::: */
+
+@-moz-document  url("about:checkerboard") {
+  
+  table.listing {
+    border-collapse: collapse !important;
+    background: var(--wfx-table-data-bg-color) !important; 
+  }
+  
+  table th, table td {
+    border: 1px solid var(--wfx-border-color) !important;
+    background: transparent !important;
+    color: var(--wfx-content-color) !important;
+  }
+  
+  #trace[id],
+  #canvas {
+	  -moz-appearance: none !important;
+	  background: var(--wfx-table-data-bg-color) !important;
+	  color: var(--wfx-content-color) !important;
+	  border-radius: var(--wfx-border-radius) !important;
+    border: 1px solid var(--wfx-border-color) !important;
+	  padding: 10px !important;
+  }
+  
+  hr {
+    clear: both;
+    margin: 10px;
+    border: 0 !important;
+    background-color: var(--wfx-separator-color) !important;
+	  color: var(--wfx-separator-color) !important;
+    box-shadow: none !important;
+    height: 1px !important;
+  }
+  
+  #active {
+    border: 0 !important;
+  }
+
+}

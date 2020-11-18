@@ -40,16 +40,16 @@ pref("extensions.getAddons.get.url", "https://services.addons.mozilla.org/api/v3
 pref("extensions.getAddons.search.browseURL", "https://addons.mozilla.org/%LOCALE%/firefox/search?q=%TERMS%&platform=%OS%&appver=%VERSION%");
 pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firefox/");
 pref("extensions.getAddons.langpacks.url", "https://services.addons.mozilla.org/api/v3/addons/language-tools/?app=firefox&type=language&appversion=%VERSION%");
-pref("extensions.getAddons.discovery.api_url", "");
+pref("extensions.getAddons.discovery.api_url", "", locked);
 
 // Use bloomfilters for the addons blocklist, instead of JSON only.
 pref("extensions.blocklist.useMLBF", true);
 pref("extensions.blocklist.useMLBF.stashes", true);
 
 // The URL for the privacy policy related to recommended extensions.
-pref("extensions.recommendations.privacyPolicyUrl", "https://www.mozilla.org/privacy/firefox/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_content=privacy-policy-link#addons");
+pref("extensions.recommendations.privacyPolicyUrl", "", locked);
 // The URL for Firefox Color, recommended on the theme page in about:addons.
-pref("extensions.recommendations.themeRecommendationUrl", "");
+pref("extensions.recommendations.themeRecommendationUrl", "", locked);
 
 pref("extensions.update.autoUpdateDefault", true);
 
@@ -75,7 +75,7 @@ pref("extensions.webextensions.background-delayed-startup", true);
 
 // Require signed add-ons by default
 pref("extensions.langpacks.signatures.required", false, locked);
-pref("xpinstall.signatures.required", false, locked);
+pref("xpinstall.signatures.required", false);
 pref("xpinstall.signatures.devInfoURL", "https://wiki.mozilla.org/Addons/Extension_Signing");
 
 // Enable extensionStorage storage actor by default
@@ -146,6 +146,7 @@ pref("app.update.elevation.promptMaxAttempts", 2);
 pref("app.update.staging.enabled", true);
 
 // Update service URL:
+pref("app.update.url.override", "", sticky);
 // app.update.url was removed in Bug 1568994
 // app.update.url.manual is in branding section
 // app.update.url.details is in branding section
@@ -162,7 +163,7 @@ pref("app.update.staging.enabled", true);
 #ifdef MOZ_BITS_DOWNLOAD
   // If set to true, the Update Service will attempt to use Windows BITS to
   // download updates and will fallback to downloading internally if that fails.
-  pref("app.update.BITS.enabled", true);
+  pref("app.update.BITS.enabled", false, locked);
 #endif
 
 // Symmetric (can be overridden by individual extensions) update preferences.
@@ -301,7 +302,7 @@ pref("browser.urlbar.restyleSearches", false);
 pref("browser.urlbar.suggest.bookmark",             true);
 pref("browser.urlbar.suggest.history",              true);
 pref("browser.urlbar.suggest.openpage",             true);
-pref("browser.urlbar.suggest.searches",             true);
+pref("browser.urlbar.suggest.searches",             false);
 pref("browser.urlbar.suggest.topsites",             true);
 
 // As a user privacy measure, don't fetch search suggestions if a pasted string
@@ -375,7 +376,7 @@ pref("browser.download.panel.shown", false);
 
 // This controls whether the button is automatically shown/hidden depending
 // on whether there are downloads to show.
-pref("browser.download.autohideButton", true);
+pref("browser.download.autohideButton", false);
 
 #ifndef XP_MACOSX
   pref("browser.helperApps.deleteTempFileOnExit", true);
@@ -390,11 +391,11 @@ pref("browser.helperApps.showOpenOptionForPdfJS", true);
 pref("browser.search.searchEnginesURL",      "https://addons.mozilla.org/%LOCALE%/firefox/search-engines/");
 
 // Market-specific search defaults
-pref("browser.search.geoSpecificDefaults", false);
-pref("browser.search.geoSpecificDefaults.url", "");
+pref("browser.search.geoSpecificDefaults", true);
+pref("browser.search.geoSpecificDefaults.url", "", locked);
 
 // search bar results always open in a new tab
-pref("browser.search.openintab", false);
+pref("browser.search.openintab", true);
 
 // context menu searches open in the foreground
 pref("browser.search.context.loadInBackground", false);
@@ -403,7 +404,7 @@ pref("browser.search.context.loadInBackground", false);
 pref("browser.search.hiddenOneOffs", "");
 
 // Mirrors whether the search-container widget is in the navigation toolbar.
-pref("browser.search.widget.inNavBar", false);
+pref("browser.search.widget.inNavBar", true);
 
 // Enables display of the options for the user using a separate default search
 // engine in private browsing mode.
@@ -685,7 +686,7 @@ pref("browser.history_swipe_animation.disabled", false);
 pref("mousewheel.with_control.action",3);
 pref("mousewheel.with_win.action", 1);
 
-pref("browser.xul.error_pages.expert_bad_cert", false);
+pref("browser.xul.error_pages.expert_bad_cert", true);
 pref("browser.xul.error_pages.show_safe_browsing_details_on_load", false);
 
 // Enable captive portal detection.
@@ -737,7 +738,7 @@ pref("plugins.testmode", false);
 pref("plugins.show_infobar", false);
 
 #if defined(_ARM64_) && defined(XP_WIN)
-  pref("plugin.default.state", 0);
+  pref("plugin.default.state", 1);
 #else
   pref("plugin.default.state", 1);
 #endif
@@ -786,7 +787,7 @@ pref("intl.regional_prefs.use_os_locales", false);
 // 2 = check multi/single line controls
 pref("layout.spellcheckDefault", 1);
 
-pref("browser.send_pings", true);
+pref("browser.send_pings", false);
 
 // At startup, if the handler service notices that the version number in the
 // region.properties file is newer than the version number in the handler
@@ -967,7 +968,7 @@ pref("browser.zoom.siteSpecific", true);
 pref("browser.zoom.updateBackgroundTabs", true);
 
 // The breakpad report server to link to in about:crashes
-pref("breakpad.reportURL", "");
+pref("breakpad.reportURL", "", locked);
 
 // URL for "Learn More" for DataCollection
 pref("toolkit.datacollection.infoURL",
@@ -975,16 +976,16 @@ pref("toolkit.datacollection.infoURL",
 
 // URL for "Learn More" for Crash Reporter
 pref("toolkit.crashreporter.infoURL",
-     "https://www.mozilla.org/legal/privacy/firefox.html#crash-reporter");
+     "", locked);
 
 // base URL for web-based support pages
 pref("app.support.baseURL", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/");
 
 // base url for web-based feedback pages
 #ifdef MOZ_DEV_EDITION
-  pref("app.feedback.baseURL", "");
+  pref("app.feedback.baseURL", "", locked);
 #else
-  pref("app.feedback.baseURL", "");
+  pref("app.feedback.baseURL", "", locked);
 #endif
 
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
@@ -1184,7 +1185,7 @@ pref("services.sync.prefs.sync.browser.contentblocking.category", true);
 pref("services.sync.prefs.sync.browser.contentblocking.features.strict", true);
 pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
 pref("services.sync.prefs.sync.browser.ctrlTab.recentlyUsedOrder", true);
-pref("services.sync.prefs.sync.browser.discovery.enabled", true);
+pref("services.sync.prefs.sync.browser.discovery.enabled", false, locked);
 pref("services.sync.prefs.sync.browser.download.useDownloadDir", true);
 pref("services.sync.prefs.sync.browser.formfill.enable", true);
 pref("services.sync.prefs.sync.browser.link.open_newwindow", true);
@@ -1321,8 +1322,8 @@ pref("browser.newtabpage.activity-stream.asrouter.useRemoteL10n", false, locked)
 
 // These prefs control if Discovery Stream is enabled.
 pref("browser.newtabpage.activity-stream.discoverystream.enabled", false, locked);
-pref("browser.newtabpage.activity-stream.discoverystream.hardcoded-basic-layout", false);
-pref("browser.newtabpage.activity-stream.discoverystream.spocs-endpoint", "");
+pref("browser.newtabpage.activity-stream.discoverystream.hardcoded-basic-layout", false, locked);
+pref("browser.newtabpage.activity-stream.discoverystream.spocs-endpoint", "", locked);
 // List of regions that get stories by default.
 pref("browser.newtabpage.activity-stream.discoverystream.region-stories-config", "", locked);
 // List of regions that get spocs by default.
@@ -1334,7 +1335,7 @@ pref("browser.newtabpage.activity-stream.discoverystream.isCollectionDismissible
 // Switch between different versions of the recommendation provider.
 pref("browser.newtabpage.activity-stream.discoverystream.personalization.version", 1);
 // Configurable keys used by personalization version 2.
-pref("browser.newtabpage.activity-stream.discoverystream.personalization.modelKeys", "nb_model_arts_and_entertainment, nb_model_autos_and_vehicles, nb_model_beauty_and_fitness, nb_model_blogging_resources_and_services, nb_model_books_and_literature, nb_model_business_and_industrial, nb_model_computers_and_electronics, nb_model_finance, nb_model_food_and_drink, nb_model_games, nb_model_health, nb_model_hobbies_and_leisure, nb_model_home_and_garden, nb_model_internet_and_telecom, nb_model_jobs_and_education, nb_model_law_and_government, nb_model_online_communities, nb_model_people_and_society, nb_model_pets_and_animals, nb_model_real_estate, nb_model_reference, nb_model_science, nb_model_shopping, nb_model_sports, nb_model_travel");
+pref("browser.newtabpage.activity-stream.discoverystream.personalization.modelKeys", "", locked);
 // System pref to allow Pocket stories personalization to be turned on/off.
 pref("browser.newtabpage.activity-stream.discoverystream.recs.personalized", false, locked);
 // System pref to allow Pocket sponsored content personalization to be turned on/off.
@@ -1354,7 +1355,7 @@ pref("trailhead.firstrun.branches", "join-dynamic");
 
 // Separate about welcome
 pref("browser.aboutwelcome.enabled", true);
-// Used for switching simplified 3 cards welcome to multistage welcome
+// Used to set multistage welcome UX
 pref("browser.aboutwelcome.overrideContent", "");
 
 // The pref that controls if the What's New panel is enabled.
@@ -1366,7 +1367,7 @@ pref("browser.messaging-system.personalized-cfr.score-threshold", 5000);
 // Experiment Manager
 // See Console.jsm LOG_LEVELS for all possible values
 pref("messaging-system.log", "warn");
-pref("messaging-system.rsexperimentloader.enabled", true);
+pref("messaging-system.rsexperimentloader.enabled", false, locked);
 
 // Enable the DOM fullscreen API.
 pref("full-screen-api.enabled", true);
@@ -1590,10 +1591,8 @@ pref("dom.storage_access.enabled", true);
 
 pref("browser.contentblocking.cryptomining.preferences.ui.enabled", true);
 pref("browser.contentblocking.fingerprinting.preferences.ui.enabled", true);
-#ifdef NIGHTLY_BUILD
-  // Enable cookieBehavior = BEHAVIOR_REJECT_TRACKER_AND_PARTITION_FOREIGN as an option in the custom category ui
-  pref("browser.contentblocking.reject-and-isolate-cookies.preferences.ui.enabled", true);
-#endif
+// Enable cookieBehavior = BEHAVIOR_REJECT_TRACKER_AND_PARTITION_FOREIGN as an option in the custom category ui
+pref("browser.contentblocking.reject-and-isolate-cookies.preferences.ui.enabled", true);
 
 // Possible values for browser.contentblocking.features.strict pref:
 //   Tracking Protection:
@@ -1713,11 +1712,11 @@ pref("browser.tabs.remote.warmup.maxTabs", 3);
 pref("browser.tabs.remote.warmup.unloadDelayMs", 2000);
 
 // For the about:tabcrashed page
-pref("browser.tabs.crashReporting.sendReport", false);
-pref("browser.tabs.crashReporting.includeURL", false);
-pref("browser.tabs.crashReporting.requestEmail", false);
-pref("browser.tabs.crashReporting.emailMe", false);
-pref("browser.tabs.crashReporting.email", "");
+pref("browser.tabs.crashReporting.sendReport", false, locked);
+pref("browser.tabs.crashReporting.includeURL", false, locked);
+pref("browser.tabs.crashReporting.requestEmail", false, locked);
+pref("browser.tabs.crashReporting.emailMe", false, locked);
+pref("browser.tabs.crashReporting.email", "", locked);
 
 // If true, unprivileged extensions may use experimental APIs on
 // nightly and developer edition.
@@ -1780,11 +1779,11 @@ pref("signon.management.page.sort", "name");
 // The utm_creative value is appended within the code (specific to the location on
 // where it is clicked). Be sure that if these two prefs are updated, that
 // the utm_creative param be last.
-pref("signon.management.page.mobileAndroidURL", "https://app.adjust.com/6tteyjo?redirect=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dmozilla.lockbox&utm_campaign=Desktop&utm_adgroup=InProduct&utm_creative=");
-pref("signon.management.page.mobileAppleURL", "https://app.adjust.com/6tteyjo?redirect=https%3A%2F%2Fitunes.apple.com%2Fapp%2Fid1314000270%3Fmt%3D8&utm_campaign=Desktop&utm_adgroup=InProduct&utm_creative=");
+pref("signon.management.page.mobileAndroidURL", "", locked);
+pref("signon.management.page.mobileAppleURL", "", locked);
 pref("signon.management.page.breachAlertUrl",
      "https://monitor.firefox.com/breach-details/");
-pref("signon.management.page.hideMobileFooter", false);
+pref("signon.management.page.hideMobileFooter", true, locked);
 pref("signon.management.page.showPasswordSyncNotification", true);
 pref("signon.passwordEditCapture.enabled", true);
 pref("signon.showAutoCompleteFooter", true);
@@ -1801,18 +1800,14 @@ pref("webchannel.allowObject.urlWhitelist", "");
 // Whether or not the browser should scan for unsubmitted
 // crash reports, and then show a notification for submitting
 // those reports.
-#ifdef NIGHTLY_BUILD
-  pref("browser.crashReports.unsubmittedCheck.enabled", true);
-#else
-  pref("browser.crashReports.unsubmittedCheck.enabled", false);
-#endif
+  pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
 
 // chancesUntilSuppress is how many times we'll show the unsubmitted
 // crash report notification across different days and shutdown
 // without a user choice before we suppress the notification for
 // some number of days.
-pref("browser.crashReports.unsubmittedCheck.chancesUntilSuppress", 0);
-pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false);
+pref("browser.crashReports.unsubmittedCheck.chancesUntilSuppress", 0, locked);
+pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
 
 // Preferences for the form autofill system extension
 // The truthy values of "extensions.formautofill.available" are "on" and "detect",
@@ -1882,11 +1877,11 @@ pref("app.normandy.api_url", "", locked);
 pref("app.normandy.dev_mode", false);
 pref("app.normandy.enabled", false, locked);
 pref("app.normandy.first_run", false, locked);
-pref("app.normandy.logging.level", 50); // Warn
-pref("app.normandy.run_interval_seconds", 21600); // 6 hours
-pref("app.normandy.shieldLearnMoreUrl", "");
+pref("app.normandy.logging.level", 50, locked); // Warn
+pref("app.normandy.run_interval_seconds", -1, locked); // 6 hours
+pref("app.normandy.shieldLearnMoreUrl", "", locked);
 pref("app.normandy.last_seen_buildid", "", locked);
-pref("app.normandy.onsync_skew_sec", 600);
+pref("app.normandy.onsync_skew_sec", -1, locked);
 #ifdef MOZ_DATA_REPORTING
   pref("app.shield.optoutstudies.enabled", false, locked);
 #else
@@ -1918,7 +1913,10 @@ pref("fission.frontend.simulate-messages", false);
 
 // Coverage ping is disabled by default.
 pref("toolkit.coverage.enabled", false, locked);
-pref("toolkit.coverage.endpoint.base", "");
+pref("toolkit.coverage.endpoint.base", "", locked);
+
+// Coverage ping doesn't seem to respect the preferences above
+pref("toolkit.coverage.opt-out", true, locked);
 
 // Discovery prefs
 pref("browser.discovery.enabled", false, locked);

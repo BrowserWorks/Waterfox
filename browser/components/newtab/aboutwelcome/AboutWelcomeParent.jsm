@@ -12,6 +12,7 @@ const { XPCOMUtils } = ChromeUtils.import(
 );
 
 XPCOMUtils.defineLazyModuleGetters(this, {
+  AddonManager: "resource://gre/modules/AddonManager.jsm",
   FxAccounts: "resource://gre/modules/FxAccounts.jsm",
   MigrationUtils: "resource:///modules/MigrationUtils.jsm",
   OS: "resource://gre/modules/osfile.jsm",
@@ -41,6 +42,11 @@ const AWTerminate = {
   TAB_CLOSED: "welcome-tab-closed",
   APP_SHUT_DOWN: "app-shut-down",
   ADDRESS_BAR_NAVIGATED: "address-bar-navigated",
+};
+const LIGHT_WEIGHT_THEMES = {
+  AUTOMATIC: "default-theme@mozilla.org",
+  ABYSS: "abyss@waterfox.net",
+  FLOE: "floe@waterfox.net",
 };
 
 async function getImportableSites() {
@@ -82,7 +88,22 @@ async function getImportableSites() {
     }
   }
   return sites;
-}
+};
+
+const DEFAULT_SEARCH_ENGINES = {
+  BING: "Bing",
+  STARTPAGE: "Startpage"
+};
+
+async function setDefaultEngine(engine_name) {
+  try {
+    const engine = Services.search.getEngineByName(engine_name);
+    Services.search.setDefault(engine);
+    Services.search.setDefaultPrivate(engine);
+  } catch (e) {
+    Cu.reportError(`Failed to set ${data}. ${ex}`);
+  }
+};
 
 class AboutWelcomeObserver {
   constructor() {
@@ -187,6 +208,10 @@ class AboutWelcomeParent extends JSWindowActorParent {
         this.AboutWelcomeObserver.terminateReason =
           AWTerminate.ADDRESS_BAR_NAVIGATED;
         break;
+      case "AWPage:SELECT_THEME":
+        return AddonManager.getAddonByID(
+          LIGHT_WEIGHT_THEMES[data]
+        ).then(addon => addon.enable());
       case "AWPage:WAIT_FOR_MIGRATION_CLOSE":
         return new Promise(resolve =>
           Services.ww.registerNotification(function observer(subject, topic) {
@@ -200,6 +225,8 @@ class AboutWelcomeParent extends JSWindowActorParent {
             }
           })
         );
+      case "AWPage:SELECT_SEARCH_ENGINE":
+        return setDefaultEngine(DEFAULT_SEARCH_ENGINES[data]);
       default:
         log.debug(`Unexpected event ${type} was not handled.`);
     }

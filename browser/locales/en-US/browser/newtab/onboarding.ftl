@@ -41,6 +41,111 @@ onboarding-cards-dismiss =
     .title = Dismiss
     .aria-label = Dismiss
 
+## Multistage 3-screen onboarding flow strings (about:welcome pages)
+
+# The <span data-l10n-name="zap"></span> in this string allows a "zap" underline style to be
+# automatically added to the text inside it. { -brand-short-name } should stay inside the span.
+onboarding-multistage-welcome-header = Welcome to <span data-l10n-name="zap">{ -brand-short-name }</span>
+onboarding-multistage-welcome-subtitle = The fast, safe, and private browser that’s backed by a non-profit.
+onboarding-multistage-welcome-primary-button-label = Start Setup
+onboarding-multistage-welcome-secondary-button-label = Sign in
+onboarding-multistage-welcome-secondary-button-text = Have an account?
+
+# The <span data-l10n-name="zap"></span> in this string allows a "zap" underline style to be
+# automatically added to the text inside it. "more" should stay inside the span.
+onboarding-multistage-import-header = Import your passwords, bookmarks, and <span data-l10n-name="zap">more</span>
+onboarding-multistage-import-subtitle = Coming from another browser? It’s easy to bring everything to { -brand-short-name }.
+onboarding-multistage-import-primary-button-label = Start Import
+onboarding-multistage-import-secondary-button-label = Not now
+
+# Info displayed in the footer of import settings screen during onboarding flow.
+# This supports welcome screen showing top sites imported from the user's default browser.
+onboarding-import-sites-disclaimer = The sites listed here were found on this device. { -brand-short-name } does not save or sync data from another browser unless you choose to import it.
+
+# Aria-label to make the "steps" of multistage onboarding visible to screen readers.
+# Variables:
+#   $current (Int) - Number of the current page
+#   $total (Int) - Total number of pages
+onboarding-welcome-steps-indicator =
+  .aria-label = Getting started: screen { $current } of { $total }
+
+# The <span data-l10n-name="zap"></span> in this string allows a "zap" underline style to be
+# automatically added to the text inside it. "look" should stay inside the span.
+onboarding-multistage-theme-header = Choose a <span data-l10n-name="zap">look</span>
+onboarding-multistage-theme-subtitle = Personalize { -brand-short-name } with a theme.
+onboarding-multistage-theme-primary-button-label = Save Theme
+onboarding-multistage-theme-secondary-button-label = Not now
+
+# Automatic theme uses operating system color settings
+onboarding-multistage-theme-label-automatic = Automatic
+
+onboarding-multistage-theme-label-light = Light
+onboarding-multistage-theme-label-dark = Dark
+onboarding-multistage-theme-label-colorful = Colorful
+onboarding-multistage-theme-label-alpenglow = Alpenglow
+
+## Please make sure to split the content of the title attribute into lines whose
+## width corresponds to about 40 Latin characters, to ensure that the tooltip
+## doesn't become too long. Line breaks will be preserved when displaying the
+## tooltip.
+
+# Tooltip displayed on hover of automatic theme
+onboarding-multistage-theme-tooltip-automatic =
+  .title =
+    Inherit the appearance of your operating
+    system for buttons, menus, and windows.
+  .aria-label = { onboarding-multistage-theme-tooltip-automatic.title }
+
+# Tooltip displayed on hover of light theme
+onboarding-multistage-theme-tooltip-light =
+  .title =
+    Use a light appearance for buttons,
+    menus, and windows.
+  .aria-label = { onboarding-multistage-theme-tooltip-light.title }
+
+# Tooltip displayed on hover of dark theme
+onboarding-multistage-theme-tooltip-dark =
+  .title =
+    Use a dark appearance for buttons,
+    menus, and windows.
+  .aria-label = { onboarding-multistage-theme-tooltip-dark.title }
+
+# Tooltip displayed on hover of colorful theme
+onboarding-multistage-theme-tooltip-colorful =
+  .title =
+    Use a colorful appearance for buttons,
+    menus, and windows.
+  .aria-label = { onboarding-multistage-theme-tooltip-colorful.title }
+
+
+onboarding-multistage-search-header = Choose a default <span data-l10n-name="zap">search engine</span>
+onboarding-multistage-search-subtitle = Set your default.
+onboarding-multistage-search-primary-button-label = Set default search
+onboarding-multistage-search-secondary-button-label = Not now
+
+onboarding-multistage-search-label-bing = Bing
+onboarding-multistage-search-label-startpage = Startpage
+
+## Please make sure to split the content of the title attribute into lines whose
+## width corresponds to about 40 Latin characters, to ensure that the tooltip
+## doesn't become too long. Line breaks will be preserved when displaying the
+## tooltip.
+
+# Tooltip displayed on hover of Bing
+onboarding-multistage-search-tooltip-bing =
+  .title =
+    Use Bing as default search
+    engine.
+  .aria-label = { onboarding-multistage-search-tooltip-bing.title }
+
+# Tooltip displayed on hover of Startpage
+onboarding-multistage-search-tooltip-startpage =
+  .title =
+    Use Startpage as default search
+    engine.
+  .aria-label = { onboarding-multistage-search-tooltip-startpage.title }
+
+
 ## Welcome full page string
 
 onboarding-fullpage-welcome-subheader = Let’s start exploring everything you can do.

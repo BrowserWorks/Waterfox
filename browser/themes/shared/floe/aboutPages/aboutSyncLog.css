@@ -1,0 +1,47 @@
+/* Additional styling for Floe theme for Waterfox Current
+/* Author: Stefano Rosselli
+*/
+
+/* :::::: ABOUT SYNC-LOG :::::: */
+
+@-moz-document  url-prefix("about:sync-log"),
+				url-prefix("file:///") {
+	
+  html {
+    background: var(--wfx-in-content-page-bg-color) !important;
+    color: var(--wfx-content-color) !important;
+  }
+
+  body {
+    background: inherit !important;
+    border: 0 !important;
+    color: var(--wfx-content-color) !important;
+  }
+
+  h1 {
+    color: var(--wfx-lt-primary-color) !important;
+    border-bottom: 0 !important;
+  }
+
+  a {
+    color: var(--wfx-lt-primary-color) !important;
+  }
+
+  body > table > tbody > tr:hover {
+    outline: 1px dashed var(--wfx-dimmed-content-color) !important;
+    -moz-outline-radius: var(--wfx-border-radius) !important;
+  }
+
+  .up::before {
+    -moz-context-properties: fill;
+    fill: currentColor;
+    content: url("chrome://browser/skin/floe/img/up.svg") !important;
+  }
+
+  .dir::before {
+    -moz-context-properties: fill;
+    fill: currentColor;
+    content: url("chrome://browser/skin/floe/img/folder.svg") !important;
+  }
+
+}

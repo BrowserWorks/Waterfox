@@ -5,9 +5,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { MultiStageAboutWelcome } from "./components/MultiStageAboutWelcome";
-import { HeroText } from "./components/HeroText";
-import { FxCards } from "./components/FxCards";
-import { Localized } from "./components/MSLocalized";
+import { SimpleAboutWelcome } from "./components/SimpleAboutWelcome";
 
 import {
   AboutWelcomeUtils,
@@ -28,14 +26,29 @@ class AboutWelcome extends React.PureComponent {
 
   componentDidMount() {
     this.fetchFxAFlowUri();
-    window.AWSendEventTelemetry({
-      event: "IMPRESSION",
-      event_context: {
-        source: this.props.UTMTerm,
-        page: "about:welcome",
+
+    // Record impression with performance data after allowing the page to load
+    window.addEventListener(
+      "load",
+      () => {
+        const { domComplete, domInteractive } = performance
+          .getEntriesByType("navigation")
+          .pop();
+        window.AWSendEventTelemetry({
+          event: "IMPRESSION",
+          event_context: {
+            domComplete,
+            domInteractive,
+            mountStart: performance.getEntriesByName("mount").pop().startTime,
+            source: this.props.UTMTerm,
+            page: "about:welcome",
+          },
+          message_id: this.props.messageId,
+        });
       },
-      message_id: this.props.messageId,
-    });
+      { once: true }
+    );
+
     // Captures user has seen about:welcome by setting
     // firstrun.didSeeAboutWelcome pref to true and capturing welcome UI unique messageId
     window.AWSendToParent("SET_WELCOME_MESSAGE_SEEN", this.props.messageId);
@@ -57,41 +70,28 @@ class AboutWelcome extends React.PureComponent {
 
   render() {
     const { props } = this;
-    // TBD: Refactor to redirect based off template value
-    // inside props.template
-    // Create SimpleAboutWelcome that renders default about welcome
-    // See Bug 1638087
-    if (props.screens) {
+    if (props.template === "simplified") {
       return (
-        <MultiStageAboutWelcome
-          screens={props.screens}
+        <SimpleAboutWelcome
           metricsFlowUri={this.state.metricsFlowUri}
           message_id={props.messageId}
           utm_term={props.UTMTerm}
+          title={props.title}
+          subtitle={props.subtitle}
+          cards={props.cards}
+          startButton={props.startButton}
+          handleStartBtnClick={this.handleStartBtnClick}
         />
       );
     }
 
     return (
-      <div className="outer-wrapper welcomeContainer">
-        <div className="welcomeContainerInner">
-          <main>
-            <HeroText title={props.title} subtitle={props.subtitle} />
-            <FxCards
-              cards={props.cards}
-              metricsFlowUri={this.state.metricsFlowUri}
-              sendTelemetry={window.AWSendEventTelemetry}
-              utm_term={props.UTMTerm}
-            />
-            <Localized text={props.startButton.label}>
-              <button
-                className="start-button"
-                onClick={this.handleStartBtnClick}
-              />
-            </Localized>
-          </main>
-        </div>
-      </div>
+      <MultiStageAboutWelcome
+        screens={props.screens}
+        metricsFlowUri={this.state.metricsFlowUri}
+        message_id={props.messageId}
+        utm_term={props.UTMTerm}
+      />
     );
   }
 }
@@ -99,7 +99,7 @@ class AboutWelcome extends React.PureComponent {
 AboutWelcome.defaultProps = DEFAULT_WELCOME_CONTENT;
 
 function ComputeMessageId(experimentId, branchId, settings) {
-  let messageId = "ABOUT_WELCOME";
+  let messageId = "DEFAULT_ABOUTWELCOME";
   let UTMTerm = "default";
 
   if (settings.id && settings.screens) {
@@ -136,4 +136,5 @@ async function mount() {
   );
 }
 
+performance.mark("mount");
 mount();

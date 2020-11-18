@@ -18,7 +18,10 @@ EXTRA_JS_MODULES += [
     'ExtensionPopups.jsm',
 ]
 
-DIRS += ['schemas']
+DIRS += [
+    'common',
+    'schemas',
+]
 
 BROWSER_CHROME_MANIFESTS += [
     'test/browser/browser-private.ini',

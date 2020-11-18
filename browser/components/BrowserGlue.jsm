@@ -16,6 +16,9 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
+const { ExtensionSupport } = ChromeUtils.import(
+  "resource:///modules/ExtensionSupport.jsm"
+);
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -953,6 +956,11 @@ BrowserGlue.prototype = {
   // nsIObserver implementation
   observe: async function BG_observe(subject, topic, data) {
     switch (topic) {
+	  case "app-startup":
+		const { BootstrapLoader } = ChromeUtils.import("resource:///modules/BootstrapLoader.jsm");
+		AddonManager.addExternalExtensionLoader(BootstrapLoader);
+		console.log("Loaded BootstrapLoader");
+		break;
       case "notifications-open-settings":
         this._openPreferences("privacy-permissions");
         break;
@@ -1306,16 +1314,16 @@ BrowserGlue.prototype = {
     listeners.init();
 
     SessionStore.init();
-
+	
     AddonManager.maybeInstallBuiltinAddon(
-      "firefox-compact-light@mozilla.org",
+      "abyss@waterfox.net",
       "1.0",
-      "resource:///modules/themes/light/"
+      "resource:///modules/themes/abyss/"
     );
     AddonManager.maybeInstallBuiltinAddon(
-      "firefox-compact-dark@mozilla.org",
+      "floe@waterfox.net",
       "1.0",
-      "resource:///modules/themes/dark/"
+      "resource:///modules/themes/floe/"
     );
 
     if (AppConstants.MOZ_NORMANDY) {
@@ -1836,6 +1844,45 @@ BrowserGlue.prototype = {
       this._setPrefExpectationsAndUpdate
     );
   },
+  
+  // Set up a listener to add/remove userStyles
+  // based on if the theme is active
+  _monitorTheme() {
+  	const PREF = "extensions.activeThemeID";
+  	const ID1 = "abyss@waterfox.net";
+  	const ID2 = "floe@waterfox.net";
+  	const sss = Components.classes["@mozilla.org/content/style-sheet-service;1"]
+  		.getService(Components.interfaces.nsIStyleSheetService);
+  	const ios = Components.classes["@mozilla.org/network/io-service;1"]
+  		.getService(Components.interfaces.nsIIOService);
+  	const abyssChrome = ios.newURI("chrome://browser/skin/abyss/userChrome.css", null, null);
+  	const abyssContent = ios.newURI("chrome://browser/skin/abyss/userContent.css", null, null);
+  	const floeChrome = ios.newURI("chrome://browser/skin/floe/userChrome.css", null, null);
+  	const floeContent = ios.newURI("chrome://browser/skin/floe/userContent.css", null, null);
+  	const _checkThemePref = async() => {
+  		if (Services.prefs.getCharPref(PREF) == ID1) {
+  			sss.unregisterSheet(floeChrome, sss.USER_SHEET);
+  			sss.unregisterSheet(floeContent, sss.USER_SHEET);
+  			sss.loadAndRegisterSheet(abyssChrome, sss.USER_SHEET);
+  			sss.loadAndRegisterSheet(abyssContent, sss.USER_SHEET);
+			Services.prefs.setCharPref("devtools.theme", "dark");
+  		} else if (Services.prefs.getCharPref(PREF) == ID2) {
+  			sss.unregisterSheet(abyssChrome, sss.USER_SHEET);
+  			sss.unregisterSheet(abyssContent, sss.USER_SHEET);
+  			sss.loadAndRegisterSheet(floeChrome, sss.USER_SHEET);
+  			sss.loadAndRegisterSheet(floeContent, sss.USER_SHEET);
+			Services.prefs.setCharPref("devtools.theme", "light");
+  		} else {
+  			sss.unregisterSheet(abyssChrome, sss.USER_SHEET);
+  			sss.unregisterSheet(abyssContent, sss.USER_SHEET);
+  			sss.unregisterSheet(floeChrome, sss.USER_SHEET);
+  			sss.unregisterSheet(floeContent, sss.USER_SHEET);
+  		}
+  	};
+  	Services.prefs.addObserver(PREF, _checkThemePref);
+  	_checkThemePref();
+  },
+
 
   _updateAutoplayPref() {
     const blocked = Services.prefs.getIntPref("media.autoplay.default", 1);
@@ -2216,6 +2263,7 @@ BrowserGlue.prototype = {
       LATE_TASKS_IDLE_TIME_SEC
     );
 
+	this._monitorTheme();
     this._monitorScreenshotsPref();
     this._monitorWebcompatReporterPref();
     this._monitorHTTPSOnlyPref();

@@ -11,6 +11,18 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/AppConstants.jsm"
 );
 
+ChromeUtils.defineModuleGetter(
+  this,
+  "DEFAULT_SITES",
+  "resource://activity-stream/lib/DefaultSites.jsm"
+);
+
+ChromeUtils.defineModuleGetter(
+  this,
+  "Region",
+  "resource://gre/modules/Region.jsm"
+);
+
 // NB: Eagerly load modules that will be loaded/constructed/initialized in the
 // common case to avoid the overhead of wrapping and detecting lazy loading.
 const { actionCreators: ac, actionTypes: at } = ChromeUtils.import(
@@ -97,45 +109,6 @@ ChromeUtils.defineModuleGetter(
   "resource://activity-stream/lib/DiscoveryStreamFeed.jsm"
 );
 
-const DEFAULT_SITES = new Map([
-  // This first item is the global list fallback for any unexpected geos
-  [
-    "",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "US",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "CA",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "DE",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "PL",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "RU",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "GB",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "FR",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "CN",
-    "https://www.waterfox.net/",
-  ],
-]);
 const GEO_PREF = "browser.search.region";
 const REGION_STORIES_CONFIG =
   "browser.newtabpage.activity-stream.discoverystream.region-stories-config";
@@ -177,74 +150,15 @@ const PREFS_CONFIG = new Map([
           provider_icon: "pocket",
           provider_name: "Pocket",
           read_more_endpoint:
-            "https://getpocket.com/explore/trending?src=fx_new_tab",
-          stories_endpoint: `https://getpocket.cdn.mozilla.net/v3/firefox/global-recs?version=3&consumer_key=$apiKey&locale_lang=${
-            args.locale
-          }&feed_variant=${
-            showSpocs(args) ? "default_spocs_on" : "default_spocs_off"
-          }`,
-          stories_referrer: "https://getpocket.com/recommendations",
-          topics_endpoint: `https://getpocket.cdn.mozilla.net/v3/firefox/trending-topics?version=2&consumer_key=$apiKey&locale_lang=${args.locale}`,
+            "",
+          stories_endpoint: "",
+          stories_referrer: "",
+          topics_endpoint: "",
           model_keys: [
-            "nmf_model_animals",
-            "nmf_model_business",
-            "nmf_model_career",
-            "nmf_model_datascience",
-            "nmf_model_design",
-            "nmf_model_education",
-            "nmf_model_entertainment",
-            "nmf_model_environment",
-            "nmf_model_fashion",
-            "nmf_model_finance",
-            "nmf_model_food",
-            "nmf_model_health",
-            "nmf_model_home",
-            "nmf_model_life",
-            "nmf_model_marketing",
-            "nmf_model_politics",
-            "nmf_model_programming",
-            "nmf_model_science",
-            "nmf_model_shopping",
-            "nmf_model_sports",
-            "nmf_model_tech",
-            "nmf_model_travel",
-            "nb_model_animals",
-            "nb_model_books",
-            "nb_model_business",
-            "nb_model_career",
-            "nb_model_datascience",
-            "nb_model_design",
-            "nb_model_economics",
-            "nb_model_education",
-            "nb_model_entertainment",
-            "nb_model_environment",
-            "nb_model_fashion",
-            "nb_model_finance",
-            "nb_model_food",
-            "nb_model_game",
-            "nb_model_health",
-            "nb_model_history",
-            "nb_model_home",
-            "nb_model_life",
-            "nb_model_marketing",
-            "nb_model_military",
-            "nb_model_philosophy",
-            "nb_model_photography",
-            "nb_model_politics",
-            "nb_model_productivity",
-            "nb_model_programming",
-            "nb_model_psychology",
-            "nb_model_science",
-            "nb_model_shopping",
-            "nb_model_society",
-            "nb_model_space",
-            "nb_model_sports",
-            "nb_model_tech",
-            "nb_model_travel",
-            "nb_model_writing",
+            "",
           ],
           show_spocs: showSpocs(args),
-          personalized: true,
+          personalized: false,
           version: 1,
         }),
     },
@@ -261,7 +175,7 @@ const PREFS_CONFIG = new Map([
     {
       title:
         "Show sponsored cards in spoc experiment (show_spocs in topstories.options has to be set to true as well)",
-      value: true,
+      value: false,
     },
   ],
   [
@@ -308,7 +222,7 @@ const PREFS_CONFIG = new Map([
     "telemetry",
     {
       title: "Enable system error and usage data collection",
-      value: true,
+      value: false,
       value_local_dev: false,
     },
   ],
@@ -324,7 +238,7 @@ const PREFS_CONFIG = new Map([
     "telemetry.structuredIngestion",
     {
       title: "Enable Structured Ingestion Telemetry data collection",
-      value: true,
+      value: false,
       value_local_dev: false,
     },
   ],
@@ -332,7 +246,7 @@ const PREFS_CONFIG = new Map([
     "telemetry.structuredIngestion.endpoint",
     {
       title: "Structured Ingestion telemetry server endpoint",
-      value: "https://incoming.telemetry.mozilla.org/submit",
+      value: "",
     },
   ],
   [
@@ -356,7 +270,7 @@ const PREFS_CONFIG = new Map([
     {
       title:
         "Boolean flag that decides whether or not to show saved Pocket stories in highlights.",
-      value: true,
+      value: false,
     },
   ],
   [
@@ -411,10 +325,10 @@ const PREFS_CONFIG = new Map([
         } else if (["BY", "KZ", "RU", "TR"].includes(geo)) {
           searchShortcuts.push("yandex");
         } else {
-          searchShortcuts.push("google");
+          searchShortcuts.push("bing");
         }
         if (["DE", "FR", "GB", "IT", "JP", "US"].includes(geo)) {
-          searchShortcuts.push("amazon");
+          searchShortcuts.push("bing");
         }
         return searchShortcuts.join(",");
       },
@@ -439,14 +353,14 @@ const PREFS_CONFIG = new Map([
     "asrouter.userprefs.cfr.addons",
     {
       title: "Does the user allow CFR addon recommendations?",
-      value: true,
+      value: false,
     },
   ],
   [
     "asrouter.userprefs.cfr.features",
     {
       title: "Does the user allow CFR feature recommendations?",
-      value: true,
+      value: false,
     },
   ],
   [
@@ -482,7 +396,7 @@ const PREFS_CONFIG = new Map([
     "discoverystream.flight.blocks",
     {
       title: "Track flight blocks",
-      skipBroadcast: true,
+      skipBroadcast: false,
       value: "{}",
     },
   ],
@@ -494,13 +408,13 @@ const PREFS_CONFIG = new Map([
         return JSON.stringify({
           api_key_pref: "extensions.pocket.oAuthConsumerKey",
           collapsible: true,
-          enabled: true,
+          enabled: false,
           show_spocs: showSpocs({ geo }),
           hardcoded_layout: true,
-          personalized: true,
+          personalized: false,
           // This is currently an exmple layout used for dev purposes.
           layout_endpoint:
-            "https://getpocket.cdn.mozilla.net/v3/newtab/layout?version=1&consumer_key=$apiKey&layout_variant=basic",
+            "",
         });
       },
     },
@@ -510,7 +424,7 @@ const PREFS_CONFIG = new Map([
     {
       title:
         "Endpoint prefixes (comma-separated) that are allowed to be requested",
-      value: "https://getpocket.cdn.mozilla.net/,https://spocs.getpocket.com/",
+      value: "",
     },
   ],
   [
@@ -556,7 +470,7 @@ const PREFS_CONFIG = new Map([
     {
       title:
         "Endpoint for when a user opts-out of sponsored content to delete the user's data from the ad server.",
-      value: "https://spocs.getpocket.com/user",
+      value: "",
     },
   ],
   [
@@ -653,19 +567,19 @@ const FEEDS_DATA = [
     name: "systemtick",
     factory: () => new SystemTickFeed(),
     title: "Produces system tick events to periodically check for data expiry",
-    value: true,
+    value: false,
   },
   {
     name: "telemetry",
     factory: () => new TelemetryFeed(),
     title: "Relays telemetry-related actions to PingCentre",
-    value: true,
+    value: false,
   },
   {
     name: "favicon",
     factory: () => new FaviconFeed(),
     title: "Fetches tippy top manifests from remote service",
-    value: true,
+    value: false,
   },
   {
     name: "system.topsites",
@@ -677,19 +591,19 @@ const FEEDS_DATA = [
     name: "asrouterfeed",
     factory: () => new ASRouterFeed(),
     title: "Handles AS Router messages, such as snippets and onboaridng",
-    value: true,
+    value: false,
   },
   {
     name: "recommendationproviderswitcher",
     factory: () => new RecommendationProviderSwitcher(),
     title: "Handles switching between two types of personality providers",
-    value: true,
+    value: false,
   },
   {
     name: "discoverystreamfeed",
     factory: () => new DiscoveryStreamFeed(),
     title: "Handles new pocket ui for the new tab page",
-    value: true,
+    value: false,
   },
 ];
 

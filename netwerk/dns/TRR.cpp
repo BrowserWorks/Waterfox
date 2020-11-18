@@ -1227,6 +1227,7 @@ nsresult TRR::ReturnData(nsIChannel* aChannel) {
       }
     }
     ai->ttl = ttl;
+    ai->mCanonicalName = mCname;
 
     // Set timings.
     nsCOMPtr<nsITimedChannel> timedChan = do_QueryInterface(aChannel);

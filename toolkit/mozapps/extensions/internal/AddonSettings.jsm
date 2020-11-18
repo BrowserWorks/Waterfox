@@ -102,7 +102,7 @@ if (
 }
 
 if (AppConstants.MOZ_DEV_EDITION) {
-  makeConstant("DEFAULT_THEME_ID", "firefox-compact-dark@mozilla.org");
+  makeConstant("DEFAULT_THEME_ID", "floe@waterfox.net");
 } else {
   makeConstant("DEFAULT_THEME_ID", "default-theme@mozilla.org");
 }

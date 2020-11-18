@@ -23,6 +23,7 @@ RemotingName=@MOZ_APP_REMOTINGNAME@
 CodeName=@MOZ_APP_DISPLAYNAME@
 #endif
 Version=@MOZ_APP_VERSION@
+DisplayVersion=@MOZ_APP_VERSION_DISPLAY@
 #ifdef MOZ_APP_PROFILE
 Profile=@MOZ_APP_PROFILE@
 #endif
@@ -47,10 +48,10 @@ EnableProfileMigrator=1
 #if MOZ_CRASHREPORTER
 [Crash Reporter]
 Enabled=1
-ServerURL=https://crash-reports.mozilla.com/submit?id=@MOZ_APP_ID@&version=@MOZ_APP_VERSION@&buildid=@MOZ_BUILDID@
+ServerURL=
 #endif
 
 #if MOZ_UPDATER
 [AppUpdate]
-URL=https://@MOZ_APPUPDATE_HOST@/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml
+URL=https://@MOZ_APPUPDATE_HOST@/update/%PRODUCT%/%DISPLAY_VERSION%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml
 #endif

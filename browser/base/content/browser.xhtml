@@ -882,7 +882,6 @@
                        onclick="BrowserHome(event);"
                        cui-areatype="toolbar"
                        tooltiptext="&homeButton.defaultPage.tooltip;"/>
-        <toolbarspring cui-areatype="toolbar" class="chromeclass-toolbar-additional"/>
         <toolbaritem id="urlbar-container" flex="400" persist="width"
                      removable="false"
                      class="chromeclass-location" overflows="false">
@@ -1093,8 +1092,12 @@
           <toolbartabstop/>
         </toolbaritem>
 
-        <toolbarspring cui-areatype="toolbar" class="chromeclass-toolbar-additional"/>
-
+        <toolbaritem id="search-container" title="&searchItem.title;"
+                     align="center" class="chromeclass-toolbar-additional panel-wide-item"
+                     cui-areatype="toolbar"
+                    flex="100" persist="width" removable="true">
+          <searchbar id="searchbar" flex="1"/>
+        </toolbaritem>
         <!-- This is a placeholder for the Downloads Indicator.  It is visible
              during the customization of the toolbar, in the palette, and before
              the Downloads Indicator overlay is loaded. -->
@@ -1380,16 +1383,6 @@
         </menupopup>
       </toolbarbutton>
 
-      <toolbaritem id="search-container"
-                   class="chromeclass-toolbar-additional"
-                   title="&searchItem.title;"
-                   align="center"
-                   flex="175"
-                   persist="width">
-        <toolbartabstop/>
-        <searchbar id="searchbar" flex="1"/>
-        <toolbartabstop/>
-      </toolbaritem>
     </html:template>
   </toolbox>
   </box>

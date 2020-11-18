@@ -81,7 +81,7 @@ html {
 
 body {
   --grey-subtitle: #4A4A4F;
-  --grey-subtitle-1: #80808F;
+  --grey-subtitle-1: #696977;
   --newtab-background-color: #EDEDF0;
   --newtab-background-color-1: #F9F9FA;
   --newtab-text-primary-color: #0C0C0D;
@@ -90,6 +90,7 @@ body {
   --newtab-button-secondary-color: #0060DF;
   --newtab-card-background-color: #FFF;
   --newtab-card-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.1);
+  --tiles-theme-section-border-width: 1px;
   --welcome-header-text-color: #2B2156;
   --welcome-header-text-color-1: #20133A;
   --welcome-card-button-background-color: rgba(12, 12, 13, 0.1);
@@ -100,16 +101,17 @@ body {
   --welcome-button-text-color: #FFF;
   --welcome-button-background-hover-color: #003EAA;
   --welcome-button-background-active-color: #002275;
+  --about-welcome-media-fade: linear-gradient(transparent, transparent 35%, #F9F9FA, #F9F9FA);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Ubuntu', 'Helvetica Neue', sans-serif;
   font-size: 16px;
   position: relative;
-  /* these two rules fix test failures in 
+  /* these two rules fix test failures in
   "browser_ext_themes_ntp_colors" & "browser_ext_themes_ntp_colors_perwindow".*/
   color: var(--newtab-text-primary-color);
   background-color: var(--newtab-background-color); }
   body[lwt-newtab-brighttext] {
     --newtab-background-color: #2A2A2E;
-    --newtab-background-color-1: #1D1133;
+    --newtab-background-color-1: rgba(4,6,20,.35);
     --newtab-text-primary-color: #F9F9FA;
     --newtab-text-conditional-color: #F9F9FA;
     --grey-subtitle-1: #FFF;
@@ -122,7 +124,8 @@ body {
     --welcome-card-button-background-color: rgba(12, 12, 13, 0.3);
     --welcome-card-button-background-hover-color: rgba(12, 12, 13, 0.5);
     --welcome-card-button-background-active-color: rgba(12, 12, 13, 0.7);
-    --welcome-button-box-shadow-color: rgba(249, 249, 250, 0.2); }
+    --welcome-button-box-shadow-color: rgba(249, 249, 250, 0.2);
+    --about-welcome-media-fade: linear-gradient(transparent, transparent 35%, #1D1133, #1D1133); }
 
 .welcomeCardGrid {
   margin: 0;
@@ -263,7 +266,6 @@ body {
 .multistageContainer {
   text-align: center;
   overflow-x: auto;
-  width: 100vw;
   height: 100vh;
   background-color: var(--newtab-background-color-1); }
   .multistageContainer .screen {
@@ -271,11 +273,30 @@ body {
     flex-flow: column nowrap;
     height: 100%; }
   .multistageContainer .brand-logo {
-    background: url("chrome://branding/content/about-logo.png") top center/112px no-repeat;
+    background: url("chrome://branding/content/about-logo.svg") top center/112px no-repeat;
     padding: 112px 0 20px;
     margin-top: 60px; }
     .multistageContainer .brand-logo.cta-top {
       margin-top: 25px; }
+  .multistageContainer .welcomeZap span {
+    position: relative;
+    z-index: 1;
+    white-space: nowrap; }
+  .multistageContainer .welcomeZap .zap::after {
+    display: block;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    content: '';
+    position: absolute;
+    top: calc(100% - 0.15em);
+    width: 100%;
+    height: 0.3em;
+    left: 0;
+    z-index: -1; }
+  .multistageContainer .welcomeZap .zap.short::after {
+    background-image: url("../data/content/assets/short-zap.svg"); }
+  .multistageContainer .welcomeZap .zap.long::after {
+    background-image: url("../data/content/assets/long-zap.svg"); }
   .multistageContainer .welcome-text {
     display: flex;
     flex-direction: column;
@@ -302,20 +323,169 @@ body {
     .multistageContainer .welcome-text h2 {
       font-size: 18px;
       font-weight: normal;
-      margin: 0 6px;
+      margin: 10px 6px 0;
       color: var(--grey-subtitle-1);
-      line-height: 28px; }
-  .multistageContainer .tiles-section {
+      line-height: 28px;
+      max-width: 750px;
+      letter-spacing: -0.01em; }
+  .multistageContainer .tiles-theme-container {
+    margin: 10px auto;
+    border: 0; }
+  .multistageContainer .sr-only {
+    opacity: 0;
+    overflow: hidden;
+    position: absolute; }
+    .multistageContainer .sr-only.input {
+      height: 1px;
+      width: 1px; }
+  .multistageContainer .tiles-theme-section {
+    display: grid;
+    grid-gap: 21px;
+    grid-template-columns: repeat(3, auto);
+    /* --newtab-background-color-1 will be invisible, but it's necessary to
+     * keep the content from jumping around when it gets focus-within and
+     * does sprout a dotted border.  This way it keeps a 1 pixel wide border
+     * either way so things don't change position.
+     */
+    border: var(--tiles-theme-section-border-width) solid var(--newtab-background-color-1); }
+    @media (max-width: 610px) {
+      .multistageContainer .tiles-theme-section {
+        grid-template-columns: repeat(2, auto); } }
+    .multistageContainer .tiles-theme-section:focus-within {
+      border: var(--tiles-theme-section-border-width) dotted; }
+    .multistageContainer .tiles-theme-section .theme {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      width: 180px;
+      height: 145px;
+      color: #000;
+      background-color: #FFF;
+      box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1);
+      border-radius: 4px;
+      cursor: pointer; }
+      .multistageContainer .tiles-theme-section .theme .icon {
+        background-size: cover;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        height: 91px; }
+        .multistageContainer .tiles-theme-section .theme .icon:dir(rtl) {
+          transform: scaleX(-1); }
+        .multistageContainer .tiles-theme-section .theme .icon.light {
+          background-image: url("chrome://mozapps/content/extensions/firefox-compact-light.svg"); }
+        .multistageContainer .tiles-theme-section .theme .icon.dark {
+          background-image: url("chrome://mozapps/content/extensions/firefox-compact-dark.svg"); }
+        .multistageContainer .tiles-theme-section .theme .icon.automatic {
+          background-image: url("chrome://mozapps/content/extensions/default-theme.svg"); }
+        .multistageContainer .tiles-theme-section .theme .icon.abyss {
+          background-image: url("chrome://browser/skin/abyss/img/waterfox-abyss-preview.svg"); }
+        .multistageContainer .tiles-theme-section .theme .icon.floe {
+          background-image: url("chrome://browser/skin/floe/img/waterfox-floe-preview.svg"); }
+      .multistageContainer .tiles-theme-section .theme .text {
+        display: flex;
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 22px;
+        margin-inline-start: 12px;
+        margin-top: 9px; }
+      .multistageContainer .tiles-theme-section .theme.selected {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px; }
+      .multistageContainer .tiles-theme-section .theme:focus, .multistageContainer .tiles-theme-section .theme:active {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px; }
+  .multistageContainer .tiles-container {
+    margin: 10px auto; }
+    .multistageContainer .tiles-container.info {
+      padding: 6px 12px 12px; }
+      .multistageContainer .tiles-container.info:hover, .multistageContainer .tiles-container.info:focus {
+        background-color: rgba(217, 217, 227, 0.3);
+        border-radius: 4px; }
+  .multistageContainer .tiles-search-container {
+    margin: 10px auto;
+    border: 0; }
+  .multistageContainer .sr-only {
+    opacity: 0;
+    overflow: hidden;
+    position: absolute; }
+    .multistageContainer .sr-only.input {
+      height: 1px;
+      width: 1px; }
+  .multistageContainer .tiles-search-section {
+    display: grid;
+    grid-gap: 21px;
+    grid-template-columns: repeat(4, auto);
+    /* --newtab-background-color-1 will be invisible, but it's necessary to
+     * keep the content from jumping around when it gets focus-within and
+     * does sprout a dotted border.  This way it keeps a 1 pixel wide border
+     * either way so things don't change position.
+     */
+    border: var(--tiles-search-section-border-width) solid var(--newtab-background-color-1); }
+    @media (max-width: 610px) {
+      .multistageContainer .tiles-search-section {
+        grid-template-columns: repeat(2, auto); } }
+    .multistageContainer .tiles-search-section:focus-within {
+      border: var(--tiles-search-section-border-width) dotted; }
+    .multistageContainer .tiles-search-section .search {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      width: 180px;
+      height: 145px;
+      color: #000;
+      background-color: #FFF;
+      box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1);
+      border-radius: 4px;
+      cursor: pointer; }
+      .multistageContainer .tiles-search-section .search .icon {
+        background-size: cover;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        height: 91px; }
+        .multistageContainer .tiles-search-section .search .icon:dir(rtl) {
+          transform: scaleX(-1); }
+        .multistageContainer .tiles-search-section .search .icon.bing {
+          background-image: url("resource://activity-stream/data/content/tippytop/images/bing-search-welcome.png"); }
+        .multistageContainer .tiles-search-section .search .icon.startpage {
+          background-image: url("resource://activity-stream/data/content/tippytop/images/startpage-search-welcome.png"); }
+      .multistageContainer .tiles-search-section .search .text {
+        display: flex;
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 22px;
+        margin-inline-start: 12px;
+        margin-top: 9px; }
+      .multistageContainer .tiles-search-section .search.selected {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px; }
+      .multistageContainer .tiles-search-section .search:focus, .multistageContainer .tiles-search-section .search:active {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px; }
+  .multistageContainer .tiles-container {
+    margin: 10px auto; }
+    .multistageContainer .tiles-container.info {
+      padding: 6px 12px 12px; }
+      .multistageContainer .tiles-container.info:hover, .multistageContainer .tiles-container.info:focus {
+        background-color: rgba(217, 217, 227, 0.3);
+        border-radius: 4px; }
+  .multistageContainer .tiles-topsites-disclaimer {
+    display: flex;
+    flex-direction: column;
+    padding: 1em;
+    text-align: center;
+    color: var(--grey-subtitle-1);
+    font-size: 12px;
+    line-height: 18px; }
+  .multistageContainer .tiles-topsites-section {
     display: grid;
     grid-gap: 24px;
-    grid-template-columns: repeat(5, auto);
-    margin: 0 auto; }
+    grid-template-columns: repeat(5, auto); }
     @media (max-width: 610px) {
-      .multistageContainer .tiles-section {
+      .multistageContainer .tiles-topsites-section {
         grid-template-columns: repeat(3, auto); } }
-    .multistageContainer .tiles-section .site {
+    .multistageContainer .tiles-topsites-section .site {
       width: 96px; }
-    .multistageContainer .tiles-section .icon {
+    .multistageContainer .tiles-topsites-section .icon {
       background-size: cover;
       border-radius: 4px;
       box-shadow: var(--newtab-card-shadow);
@@ -324,22 +494,44 @@ body {
       font-weight: bold;
       height: 96px;
       line-height: 96px; }
-    .multistageContainer .tiles-section .host {
+    .multistageContainer .tiles-topsites-section .host {
       font-size: 12px;
       line-height: 36px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap; }
-    .multistageContainer .tiles-section .site:nth-child(1) .icon {
+    .multistageContainer .tiles-topsites-section .site:nth-child(1) .icon {
       background-color: #7542E5; }
-    .multistageContainer .tiles-section .site:nth-child(2) .icon {
+    .multistageContainer .tiles-topsites-section .site:nth-child(2) .icon {
       background-color: #952BB9; }
-    .multistageContainer .tiles-section .site:nth-child(3) .icon {
+    .multistageContainer .tiles-topsites-section .site:nth-child(3) .icon {
       background-color: #E31587; }
-    .multistageContainer .tiles-section .site:nth-child(4) .icon {
+    .multistageContainer .tiles-topsites-section .site:nth-child(4) .icon {
       background-color: #E25920; }
-    .multistageContainer .tiles-section .site:nth-child(5) .icon {
+    .multistageContainer .tiles-topsites-section .site:nth-child(5) .icon {
       background-color: #0250BB; }
+  .multistageContainer .tiles-media-section {
+    align-self: center;
+    position: relative;
+    margin-top: -12px;
+    margin-bottom: -155px; }
+    .multistageContainer .tiles-media-section .fade {
+      height: 390px;
+      width: 800px;
+      position: absolute;
+      background-image: var(--about-welcome-media-fade); }
+    .multistageContainer .tiles-media-section .media {
+      height: 390px;
+      width: 800px; }
+    @media (prefers-reduced-motion) {
+      .multistageContainer .tiles-media-section {
+        height: 200px;
+        width: 800px;
+        margin: 0; }
+        .multistageContainer .tiles-media-section.privacy {
+          background: top no-repeat url("../data/content/assets/firefox-protections.svg"); }
+        .multistageContainer .tiles-media-section .media {
+          opacity: 0; } }
   .multistageContainer button {
     font-family: inherit;
     cursor: pointer;
@@ -347,12 +539,14 @@ body {
     .multistageContainer button.primary {
       font-size: 16px;
       margin-inline-start: 12px;
-      margin: 26px 0 0;
+      margin: 20px 0 0;
       padding: 12px 20px;
       white-space: nowrap;
       background-color: var(--newtab-button-primary-color);
       color: var(--welcome-button-text-color);
-      border-radius: 4px; }
+      border-radius: 4px;
+      position: relative;
+      z-index: 1; }
       .multistageContainer button.primary:focus {
         background: var(--welcome-button-background-hover-color);
         box-shadow: 0 0 0 1px var(--welcome-button-box-shadow-inset-color) inset, 0 0 0 1px var(--welcome-button-box-shadow-inset-color), 0 0 0 4px var(--welcome-button-box-shadow-color); }
@@ -391,7 +585,10 @@ body {
     flex-direction: row;
     justify-content: center;
     margin-top: auto;
-    padding: 32px 0; }
+    padding: 32px 0 66px;
+    z-index: 1; }
+    .multistageContainer .steps.has-disclaimer {
+      padding-bottom: 0; }
     .multistageContainer .steps .indicator {
       width: 60px;
       height: 4px;

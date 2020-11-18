@@ -17,7 +17,7 @@ html {
 body {
   // sass-lint:disable no-color-literals
   --grey-subtitle: #4A4A4F;
-  --grey-subtitle-1: #80808F;
+  --grey-subtitle-1: #696977;
   --newtab-background-color: #EDEDF0;
   --newtab-background-color-1: #F9F9FA;
   --newtab-text-primary-color: #0C0C0D;
@@ -26,6 +26,7 @@ body {
   --newtab-button-secondary-color: #0060DF;
   --newtab-card-background-color: #FFF;
   --newtab-card-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.1);
+  --tiles-theme-section-border-width: 1px;
   --welcome-header-text-color: #2B2156;
   --welcome-header-text-color-1: #20133A;
   --welcome-card-button-background-color: rgba(12, 12, 13, 0.1);
@@ -36,19 +37,20 @@ body {
   --welcome-button-text-color: #FFF;
   --welcome-button-background-hover-color: #003EAA;
   --welcome-button-background-active-color: #002275;
+  --about-welcome-media-fade: linear-gradient(transparent, transparent 35%, #F9F9FA, #F9F9FA);
 
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Ubuntu',
   'Helvetica Neue', sans-serif;
   font-size: 16px;
   position: relative;
-  /* these two rules fix test failures in 
+  /* these two rules fix test failures in
   "browser_ext_themes_ntp_colors" & "browser_ext_themes_ntp_colors_perwindow".*/
   color: var(--newtab-text-primary-color);
   background-color: var(--newtab-background-color);
 
   &[lwt-newtab-brighttext] {
     --newtab-background-color: #2A2A2E;
-    --newtab-background-color-1: #1D1133;
+    --newtab-background-color-1: rgba(4,6,20,.35);
     --newtab-text-primary-color: #F9F9FA;
     --newtab-text-conditional-color: #F9F9FA;
     --grey-subtitle-1: #FFF;
@@ -62,6 +64,7 @@ body {
     --welcome-card-button-background-hover-color: rgba(12, 12, 13, 0.5);
     --welcome-card-button-background-active-color: rgba(12, 12, 13, 0.7);
     --welcome-button-box-shadow-color: rgba(249, 249, 250, 0.2);
+    --about-welcome-media-fade: linear-gradient(transparent, transparent 35%, #1D1133, #1D1133);
   }
 }
 
@@ -246,7 +249,6 @@ body {
 .multistageContainer {
   text-align: center;
   overflow-x: auto;
-  width: 100vw;
   height: 100vh;
   background-color: var(--newtab-background-color-1);
 
@@ -257,7 +259,7 @@ body {
   }
 
   .brand-logo {
-    background: url('chrome://branding/content/about-logo.png') top
+    background: url('chrome://branding/content/about-logo.svg') top
     center / $logo-size no-repeat;
     padding: $logo-size 0 20px;
     margin-top: 60px;
@@ -265,6 +267,39 @@ body {
     &.cta-top {
       margin-top: 25px;
     }
+  }
+
+  .welcomeZap {
+    span {
+      position: relative;
+      z-index: 1;
+      white-space: nowrap;
+    }
+
+    .zap {
+      &::after {
+        display: block;
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        content: '';
+        position: absolute;
+        top: calc(100% - 0.15em);
+        width: 100%;
+        height: 0.3em;
+        left: 0;
+        z-index: -1;
+      }
+
+      &.short::after {
+        background-image:  url('../data/content/assets/short-zap.svg');
+      }
+
+      &.long::after {
+        background-image:  url('../data/content/assets/long-zap.svg');
+      }
+    }
+
+
   }
 
   .welcome-text {
@@ -297,20 +332,252 @@ body {
     h2 {
       font-size: 18px;
       font-weight: normal;
-      margin: 0 6px;
+      margin: 10px 6px 0;
       color: var(--grey-subtitle-1);
       line-height: 28px;
+      max-width: 750px;
+      letter-spacing: -0.01em;
     }
   }
 
-  .tiles-section {
+  .tiles-theme-container {
+    margin: 10px auto;
+    border: 0;
+  }
+
+  .sr-only {
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+
+    &.input {
+      height: 1px;
+      width: 1px;
+    }
+  }
+
+  .tiles-theme-section {
+    display: grid;
+    grid-gap: 21px;
+    grid-template-columns: repeat(3, auto);
+
+    /* --newtab-background-color-1 will be invisible, but it's necessary to
+     * keep the content from jumping around when it gets focus-within and
+     * does sprout a dotted border.  This way it keeps a 1 pixel wide border
+     * either way so things don't change position.
+     */
+    border: var(--tiles-theme-section-border-width)
+    solid
+    var(--newtab-background-color-1);
+
+    @media (max-width: $break-point-medium) {
+      grid-template-columns: repeat(2, auto);
+    }
+
+    &:focus-within {
+      border: var(--tiles-theme-section-border-width) dotted;
+    }
+
+    .theme {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      width: 180px;
+      height: 145px;
+      color: #000;
+      background-color: #FFF;
+      box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1);
+      border-radius: 4px;
+      cursor: pointer;
+
+      .icon {
+        background-size: cover;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        height: 91px;
+
+        &:dir(rtl) {
+          transform: scaleX(-1);
+        }
+
+        &.light {
+          background-image: url('chrome://mozapps/content/extensions/firefox-compact-light.svg');
+        }
+
+        &.dark {
+          background-image: url('chrome://mozapps/content/extensions/firefox-compact-dark.svg');
+        }
+
+        &.automatic {
+          background-image: url('chrome://mozapps/content/extensions/default-theme.svg');
+        }
+
+        &.abyss {
+          background-image: url('chrome://browser/skin/abyss/img/waterfox-abyss-preview.svg');
+        }
+		
+        &.floe {
+          background-image: url('chrome://browser/skin/floe/img/waterfox-floe-preview.svg');
+        }
+      }
+
+      .text {
+        display: flex;
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 22px;
+        margin-inline-start: 12px;
+        margin-top: 9px;
+      }
+
+      &.selected {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px;
+      }
+
+      &:focus,
+      &:active {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px;
+      }
+    }
+  }
+
+  .tiles-container {
+    margin: 10px auto;
+
+    &.info {
+      padding: 6px 12px 12px;
+
+      &:hover,
+      &:focus {
+        background-color: rgba(217, 217, 227, 0.3);
+        border-radius: 4px;
+      }
+    }
+  }
+  .tiles-search-container {
+    margin: 10px auto;
+    border: 0;
+  }
+
+  .sr-only {
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+
+    &.input {
+      height: 1px;
+      width: 1px;
+    }
+  }
+
+  .tiles-search-section {
+    display: grid;
+    grid-gap: 21px;
+    grid-template-columns: repeat(4, auto);
+
+    /* --newtab-background-color-1 will be invisible, but it's necessary to
+     * keep the content from jumping around when it gets focus-within and
+     * does sprout a dotted border.  This way it keeps a 1 pixel wide border
+     * either way so things don't change position.
+     */
+    border: var(--tiles-search-section-border-width)
+    solid
+    var(--newtab-background-color-1);
+
+    @media (max-width: $break-point-medium) {
+      grid-template-columns: repeat(2, auto);
+    }
+
+    &:focus-within {
+      border: var(--tiles-search-section-border-width) dotted;
+    }
+
+    .search {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      width: 180px;
+      height: 145px;
+      color: #000;
+      background-color: #FFF;
+      box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1);
+      border-radius: 4px;
+      cursor: pointer;
+
+      .icon {
+        background-size: cover;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        height: 91px;
+
+        &:dir(rtl) {
+          transform: scaleX(-1);
+        }
+
+        &.bing {
+          background-image: url('resource://activity-stream/data/content/tippytop/images/bing-search-welcome.png');
+        }
+
+        &.startpage {
+          background-image: url('resource://activity-stream/data/content/tippytop/images/startpage-search-welcome.png');
+        }
+      }
+
+      .text {
+        display: flex;
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 22px;
+        margin-inline-start: 12px;
+        margin-top: 9px;
+      }
+
+      &.selected {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px;
+      }
+
+      &:focus,
+      &:active {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px;
+      }
+    }
+  }
+
+  .tiles-container {
+    margin: 10px auto;
+
+    &.info {
+      padding: 6px 12px 12px;
+
+      &:hover,
+      &:focus {
+        background-color: rgba(217, 217, 227, 0.3);
+        border-radius: 4px;
+      }
+    }
+  }
+
+  .tiles-topsites-disclaimer {
+    display: flex;
+    flex-direction: column;
+    padding: 1em;
+    text-align: center;
+    color: var(--grey-subtitle-1);
+    font-size: 12px;
+    line-height: 18px;
+  }
+
+  .tiles-topsites-section {
     $host-size: 12px;
     $tile-size: 96px;
 
     display: grid;
     grid-gap: $tile-size / 4;
     grid-template-columns: repeat(5, auto);
-    margin: 0 auto;
 
     @media (max-width: $break-point-medium) {
       grid-template-columns: repeat(3, auto);
@@ -360,6 +627,39 @@ body {
     }
   }
 
+  .tiles-media-section {
+    align-self: center;
+    position: relative;
+    margin-top: -12px;
+    margin-bottom: -155px;
+
+    .fade {
+      height: 390px;
+      width: 800px;
+      position: absolute;
+      background-image: var(--about-welcome-media-fade);
+    }
+
+    .media {
+      height: 390px;
+      width: 800px;
+    }
+
+    @media (prefers-reduced-motion) {
+      height: 200px;
+      width: 800px;
+      margin: 0;
+
+      &.privacy {
+        background: top no-repeat url('../data/content/assets/firefox-protections.svg');
+      }
+
+      .media {
+        opacity: 0;
+      }
+    }
+  }
+
   button {
     font-family: inherit;
     cursor: pointer;
@@ -368,12 +668,14 @@ body {
     &.primary {
       font-size: 16px;
       margin-inline-start: 12px;
-      margin: 26px 0 0;
+      margin: 20px 0 0;
       padding: 12px 20px;
       white-space: nowrap;
       background-color: var(--newtab-button-primary-color);
       color: var(--welcome-button-text-color);
       border-radius: 4px;
+      position: relative;
+      z-index: 1;
 
       &:focus {
         background: var(--welcome-button-background-hover-color);
@@ -436,7 +738,12 @@ body {
     flex-direction: row;
     justify-content: center;
     margin-top: auto;
-    padding: 32px 0;
+    padding: 32px 0 66px;
+    z-index: 1;
+
+    &.has-disclaimer {
+      padding-bottom: 0;
+    }
 
     .indicator {
       width: 60px;

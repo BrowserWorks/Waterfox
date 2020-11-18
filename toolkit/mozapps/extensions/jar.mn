@@ -32,4 +32,6 @@ toolkit.jar:
   content/mozapps/extensions/rating-star.css                    (content/rating-star.css)
   content/mozapps/extensions/shortcuts.css                      (content/shortcuts.css)
   content/mozapps/extensions/shortcuts.js                       (content/shortcuts.js)
+  content/mozapps/extensions/waterfox-abyss-preview.svg         (content/waterfox-abyss-preview.svg)
+  content/mozapps/extensions/waterfox-floe-preview.svg          (content/waterfox-floe-preview.svg)
 #endif

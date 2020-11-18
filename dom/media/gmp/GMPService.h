@@ -8,7 +8,7 @@
 
 #include "nsString.h"
 #include "mozIGeckoMediaPluginService.h"
-#include "nsIObserver.h"
+#include "nsIAsyncShutdown.h"
 #include "nsTArray.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
@@ -120,9 +120,14 @@ class GeckoMediaPluginService : public mozIGeckoMediaPluginService,
                        uint32_t flags = NS_DISPATCH_NORMAL);
   void ShutdownGMPThread();
 
+  static nsCOMPtr<nsIAsyncShutdownClient> GetShutdownBarrier();
+
   Mutex
       mMutex;  // Protects mGMPThread, mAbstractGMPThread, mPluginCrashHelpers,
                // mGMPThreadShutdown and some members in derived classes.
+
+  const RefPtr<AbstractThread> mMainThread;
+
   nsCOMPtr<nsIThread> mGMPThread;
   RefPtr<AbstractThread> mAbstractGMPThread;
   bool mGMPThreadShutdown;

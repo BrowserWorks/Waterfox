@@ -114,6 +114,8 @@ var UpdateUtils = {
             return locale;
           case "CHANNEL":
             return this.UpdateChannel;
+          case "DISPLAY_VERSION":
+            return AppConstants.MOZ_APP_VERSION_DISPLAY;
           case "PLATFORM_VERSION":
             return Services.appinfo.platformVersion;
           case "SYSTEM_CAPABILITIES":

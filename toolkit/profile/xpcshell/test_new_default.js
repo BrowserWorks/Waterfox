@@ -26,7 +26,7 @@ add_task(async () => {
         path: defaultProfile.leafName,
       },
       {
-        name: "dev-edition-default",
+        name: "68-edition-default",
         path: devDefaultProfile.leafName,
       },
     ],
@@ -61,7 +61,7 @@ add_task(async () => {
   profile = profileData.profiles[1];
   Assert.equal(
     profile.name,
-    "dev-edition-default",
+    "68-edition-default",
     "Should have the right name."
   );
   Assert.equal(
@@ -112,7 +112,7 @@ add_task(async () => {
       selectedProfile.rootDir.equals(devDefaultProfile),
       "Should be using the right directory."
     );
-    Assert.equal(selectedProfile.name, "dev-edition-default");
+    Assert.equal(selectedProfile.name, "68-edition-default");
   } else {
     Assert.ok(
       selectedProfile.rootDir.equals(mydefaultProfile),

@@ -1,0 +1,68 @@
+# One config to rule them all, for local builds
+
+if test `uname -s` = Darwin; then
+	ac_add_options --target=x86_64-apple-darwin
+	export STRIP=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/strip
+elif test `uname -s` = MINGW32_NT-6.2; then
+	ac_add_options --disable-bits-download
+	ac_add_options --disable-default-browser-agent
+	ac_add_options --disable-geckodriver
+	ac_add_options --disable-maintenance-service
+	ac_add_options --disable-parental-controls
+	ac_add_options --target=x86_64-pc-mingw32
+	ac_add_options --with-clang-path="C:\Program Files\LLVM\bin\clang.exe"
+	ac_add_options --with-libclang-path="C:\Program Files\LLVM\bin"
+elif test `uname -s` = Linux; then
+	if test `uname -m` = x86_64; then
+		if test -d "$HOME/.mozbuild/clang/bin"; then
+			export CC=$HOME/.mozbuild/clang/bin/clang
+			export CXX=$HOME/.mozbuild/clang/bin/clang++
+		else
+			export CC=clang
+			export CXX=clang++
+		fi
+		if test -f "$HOME/.mozbuild/nasm/nasm"; then
+			export NASM=$HOME/.mozbuild/nasm/nasm
+		fi
+		ac_add_options --target=x86_64-pc-linux-gnu
+	elif test `uname -m` = ppc64le; then
+		export CC=gcc
+		export CXX=g++
+		ac_add_options --enable-optimize="-O2 -mcpu=power9"
+		ac_add_options --target=powerpc64le-unknown-linux-gnu
+	fi
+	ac_add_options --enable-pulseaudio
+	ac_add_options --enable-alsa
+fi
+
+if test `uname -s` = MINGW32_NT-6.2; then
+	X=$(wmic cpu get NumberOfLogicalProcessors /Format:List | cut -d'=' -f2 | xargs)
+	mk_add_options MOZ_MAKE_FLAGS=-j${X}
+else
+	 X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)*3/2))
+	mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
+fi
+
+ac_add_options --disable-debug
+ac_add_options --disable-dmd
+ac_add_options --disable-geckodriver
+ac_add_options --disable-profiling
+ac_add_options --disable-tests
+ac_add_options --disable-verify-mar
+
+ac_add_options --enable-application=browser
+ac_add_options --enable-optimize="-O3 -msse3 -mssse3 -w"
+ac_add_options --enable-lto
+ac_add_options --enable-rust-simd
+ac_add_options --enable-updater
+
+ac_add_options --with-branding=browser/branding/waterfox
+
+if test -f "$HOME/.mozbuild/sccache/sccache"; then
+	ac_add_options --with-ccache=$HOME/.mozbuild/sccache/sccache
+fi
+
+export MOZ_INCLUDE_SOURCE_INFO=1
+export MOZ_REQUIRE_SIGNING=0
+
+mk_add_options AUTOCLOBBER=1

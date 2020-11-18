@@ -118,6 +118,7 @@ class NetAddrElement : public LinkedListElement<NetAddrElement> {
  public:
   explicit NetAddrElement(const PRNetAddr* prNetAddr);
   NetAddrElement(const NetAddrElement& netAddr);
+  explicit NetAddrElement(const NetAddr& netAddr);
   ~NetAddrElement();
 
   NetAddr mAddress;

@@ -35,6 +35,18 @@ const AVAILABLE_UA_OVERRIDES = [
     },
   },
   {
+    id: "addons",
+    platform: "all",
+    domain: "addons.mozilla.org",
+    bug: "0000000",
+      config: {
+        matches: ["*://addons.mozilla.org/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
     /*
      * Bug 1577519 - att.tv - Create a UA override for att.tv for playback on desktop
      * WebCompat issue #3846 - https://webcompat.com/issues/3846

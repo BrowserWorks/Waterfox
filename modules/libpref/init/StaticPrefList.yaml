@@ -6668,7 +6668,7 @@
 #if defined(XP_LINUX) && !defined(ANDROID)
   value: true
 #elif defined(XP_WIN) && !defined(_ARM64_)
-  value: true
+  value: false
 #elif defined(XP_MACOSX)
   value: true
 #else
@@ -7795,6 +7795,14 @@
 - name: network.dns.resolver_shutdown_timeout_ms
   type: uint32_t
   value: 2000
+  mirror: always
+
+# When true on Windows DNS resolutions for single label domains
+# (domains that don't contain a dot) will be resolved using the DnsQuery
+# API instead of PR_GetAddrInfoByName
+- name: network.dns.dns_query_single_label
+  type: RelaxedAtomicBool
+  value: true
   mirror: always
 
 # Whether the SOCKS proxy should be in charge of DNS resolution.

@@ -218,7 +218,7 @@ pref("security.osreauthenticator.blank_password", false);
 pref("security.osreauthenticator.password_last_changed_lo", 0);
 pref("security.osreauthenticator.password_last_changed_hi", 0);
 
-pref("general.useragent.compatMode.firefox", false);
+pref("general.useragent.compatMode.firefox", true);
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
 
@@ -801,7 +801,7 @@ pref("toolkit.telemetry.server", "", locked);
 pref("toolkit.telemetry.server_owner", "", locked);
 // Determines whether full SQL strings are returned when they might contain sensitive info
 // i.e. dynamically constructed SQL strings or SQL executed by addons against addon DBs
-pref("toolkit.telemetry.debugSlowSql", false);
+pref("toolkit.telemetry.debugSlowSql", false, locked);
 // Whether to use the unified telemetry behavior, requires a restart.
 pref("toolkit.telemetry.unified", false, locked);
 // AsyncShutdown delay before crashing in case of shutdown freeze
@@ -1428,7 +1428,7 @@ pref("network.http.network-changed.timeout", 5);
 
 // The maximum number of current global half open sockets allowable
 // when starting a new speculative connection.
-pref("network.http.speculative-parallel-limit", 6);
+pref("network.http.speculative-parallel-limit", 0);
 
 // Whether or not to block requests for non head js/css items (e.g. media)
 // while those elements load.
@@ -1473,7 +1473,7 @@ pref("network.http.altsvc.enabled", true);
 pref("network.http.altsvc.oe", true);
 
 // Turn on 0RTT data for TLS 1.3
-pref("security.tls.enable_0rtt_data", true);
+pref("security.tls.enable_0rtt_data", false);
 
 // the origin extension impacts h2 coalescing
 pref("network.http.originextension", true);
@@ -1774,7 +1774,7 @@ pref("network.dns.native-is-localhost", false);
 pref("network.dnsCacheExpirationGracePeriod", 60);
 
 // This preference can be used to turn off DNS prefetch.
-pref("network.dns.disablePrefetch", false);
+pref("network.dns.disablePrefetch", true);
 
 // This preference controls whether .onion hostnames are
 // rejected before being given to DNS. RFC 7686
@@ -2245,7 +2245,7 @@ pref("security.sri.enable", true);
 pref("security.ssl.enable_ocsp_must_staple", true);
 
 // Insecure Form Field Warning
-pref("security.insecure_field_warning.contextual.enabled", false);
+pref("security.insecure_field_warning.contextual.enabled", true);
 pref("security.insecure_field_warning.ignore_local_ip_address", true);
 
 // Disable pinning checks by default.
@@ -2266,7 +2266,7 @@ pref("security.cert_pinning.hpkp.enabled", false);
 
 // Remote settings preferences
 // Note: if you change this, make sure to also review security.onecrl.maximum_staleness_in_seconds
-pref("services.settings.poll_interval", -1); // 24H
+pref("services.settings.poll_interval", -1, locked); // 24H
 pref("services.settings.server", "", locked);
 pref("services.settings.default_bucket", "main");
 
@@ -2597,8 +2597,8 @@ pref("plugins.favorfallback.rules", "");
 
 pref("dom.ipc.plugins.flash.disable-protected-mode", false);
 
-pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", true);
-pref("dom.ipc.plugins.reportCrashURL", true);
+pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", false, locked);
+pref("dom.ipc.plugins.reportCrashURL", false, locked);
 
 // Force the accelerated direct path for a subset of Flash wmode values
 pref("dom.ipc.plugins.forcedirect.enabled", true);
@@ -3992,7 +3992,7 @@ pref("browser.meta_refresh_when_inactive.disabled", false);
 pref("xpinstall.whitelist.required", true);
 // Only Firefox requires add-on signatures
 pref("xpinstall.signatures.required", false);
-pref("extensions.langpacks.signatures.required", false);
+pref("extensions.langpacks.signatures.required", false, locked);
 pref("extensions.webExtensionsMinPlatformVersion", "42.0a1");
 pref("extensions.experiments.enabled", true);
 
@@ -4001,7 +4001,7 @@ pref("extensions.webextensions.keepStorageOnUninstall", false);
 pref("extensions.webextensions.keepUuidOnUninstall", false);
 // Redirect basedomain used by identity api
 pref("extensions.webextensions.identity.redirectDomain", "extensions.allizom.org");
-pref("extensions.webextensions.restrictedDomains", "accounts-static.cdn.mozilla.net,accounts.firefox.com,addons.cdn.mozilla.net,addons.mozilla.org,api.accounts.firefox.com,content.cdn.mozilla.net,discovery.addons.mozilla.org,install.mozilla.org,oauth.accounts.firefox.com,profile.accounts.firefox.com,support.mozilla.org,sync.services.mozilla.com");
+pref("extensions.webextensions.restrictedDomains", "accounts-static.cdn.mozilla.net,accounts.firefox.com,api.accounts.firefox.com,content.cdn.mozilla.net,discovery.addons.mozilla.org,install.mozilla.org,oauth.accounts.firefox.com,profile.accounts.firefox.com,support.mozilla.org,sync.services.mozilla.com");
 
 // Whether or not the moz-extension resource loads are remoted. For debugging
 // purposes only. Setting this to false will break moz-extension URI loading
@@ -4033,20 +4033,15 @@ pref("extensions.htmlaboutaddons.inline-options.enabled", true);
 pref("extensions.htmlaboutaddons.recommendations.enabled", false, locked);
 
 // The URL for the privacy policy related to recommended add-ons.
-pref("extensions.recommendations.privacyPolicyUrl", "");
+pref("extensions.recommendations.privacyPolicyUrl", "", locked);
 // The URL for a recommended theme, shown on the theme page in about:addons.
-pref("extensions.recommendations.themeRecommendationUrl", "");
+pref("extensions.recommendations.themeRecommendationUrl", "", locked);
 
 // Report Site Issue button
 // Note that on enabling the button in other release channels, make sure to
 // disable it in problematic tests, see disableNonReleaseActions() inside
 // browser/modules/test/browser/head.js
-pref("extensions.webcompat-reporter.newIssueEndpoint", "https://webcompat.com/issues/new");
-#if MOZ_UPDATE_CHANNEL != release && MOZ_UPDATE_CHANNEL != esr
-  pref("extensions.webcompat-reporter.enabled", true);
-#else
-  pref("extensions.webcompat-reporter.enabled", false);
-#endif
+pref("extensions.webcompat-reporter.newIssueEndpoint", "https://webcompat.com/issues/new");  pref("extensions.webcompat-reporter.enabled", true);
 
 pref("network.buffer.cache.count", 24);
 pref("network.buffer.cache.size",  32768);
@@ -4616,19 +4611,19 @@ pref("fission.rebuild_frameloaders_on_remoteness_change", true);
 pref("toolkit.legacyUserProfileCustomizations.stylesheets", true, locked);
 
 #ifdef MOZ_DATA_REPORTING
-  pref("datareporting.policy.dataSubmissionEnabled", true);
+  pref("datareporting.policy.dataSubmissionEnabled", false, locked);
   pref("datareporting.policy.dataSubmissionPolicyNotifiedTime", "0");
   pref("datareporting.policy.dataSubmissionPolicyAcceptedVersion", 0);
   pref("datareporting.policy.dataSubmissionPolicyBypassNotification", false);
   pref("datareporting.policy.currentPolicyVersion", 2);
   pref("datareporting.policy.minimumPolicyVersion", 1);
   pref("datareporting.policy.minimumPolicyVersion.channel-beta", 2);
-  pref("datareporting.policy.firstRunURL", "https://www.mozilla.org/privacy/firefox/");
+  pref("datareporting.policy.firstRunURL", "", locked);
 #endif
 
 #ifdef MOZ_SERVICES_HEALTHREPORT
   #if !defined(ANDROID)
-    pref("datareporting.healthreport.infoURL", "https://www.mozilla.org/legal/privacy/firefox.html#health-report");
+    pref("datareporting.healthreport.infoURL", "", locked);
 
     // Health Report is enabled by default on all channels.
     pref("datareporting.healthreport.uploadEnabled", false, locked);
@@ -4806,7 +4801,7 @@ pref("devtools.jsonview.enabled", true);
 
 // Default theme ("dark" or "light").
 #ifdef MOZ_DEV_EDITION
-  pref("devtools.theme", "dark", sticky);
+  pref("devtools.theme", "light", sticky);
 #else
   pref("devtools.theme", "light", sticky);
 #endif
