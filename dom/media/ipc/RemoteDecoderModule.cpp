@@ -177,8 +177,8 @@ already_AddRefed<MediaDataDecoder> RemoteDecoderModule::CreateVideoDecoder(
         result = child->InitIPDL(
             aParams.VideoConfig(), aParams.mRate.mValue, aParams.mOptions,
             aParams.mKnowsCompositor
-                ? &aParams.mKnowsCompositor->GetTextureFactoryIdentifier()
-                : nullptr);
+                ? Some(aParams.mKnowsCompositor->GetTextureFactoryIdentifier())
+                : Nothing());
         if (NS_FAILED(result)) {
           // Release RemoteVideoDecoderChild here, while we're on
           // manager thread.  Don't just let the RefPtr go out of scope.

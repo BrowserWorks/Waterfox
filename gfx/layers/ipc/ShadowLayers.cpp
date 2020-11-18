@@ -144,23 +144,25 @@ struct AutoTxnEnd final {
 
 void KnowsCompositor::IdentifyTextureHost(
     const TextureFactoryIdentifier& aIdentifier) {
-  mTextureFactoryIdentifier = aIdentifier;
-
-  mSyncObject =
+  auto lock = mData.Lock();
+  lock.ref().mTextureFactoryIdentifier = aIdentifier;
+  lock.ref().mSyncObject =
       SyncObjectClient::CreateSyncObjectClient(aIdentifier.mSyncHandle);
 }
 
-KnowsCompositor::KnowsCompositor() : mSerial(++sSerialCounter) {}
+KnowsCompositor::KnowsCompositor()
+    : mData("KnowsCompositorMutex"), mSerial(++sSerialCounter) {}
 
 KnowsCompositor::~KnowsCompositor() = default;
 
 KnowsCompositorMediaProxy::KnowsCompositorMediaProxy(
     const TextureFactoryIdentifier& aIdentifier) {
-  mTextureFactoryIdentifier = aIdentifier;
+  auto lock = mData.Lock();
+  lock.ref().mTextureFactoryIdentifier = aIdentifier;
   // overwrite mSerial's value set by the parent class because we use the same
   // serial as the KnowsCompositor we are proxying.
   mThreadSafeAllocator = ImageBridgeChild::GetSingleton();
-  mSyncObject = mThreadSafeAllocator->GetSyncObject();
+  lock.ref().mSyncObject = mThreadSafeAllocator->GetSyncObject();
 }
 
 KnowsCompositorMediaProxy::~KnowsCompositorMediaProxy() = default;

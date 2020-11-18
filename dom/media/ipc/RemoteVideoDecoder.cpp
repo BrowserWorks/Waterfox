@@ -178,7 +178,7 @@ MediaResult RemoteVideoDecoderChild::ProcessOutput(
 MediaResult RemoteVideoDecoderChild::InitIPDL(
     const VideoInfo& aVideoInfo, float aFramerate,
     const CreateDecoderParams::OptionSet& aOptions,
-    const layers::TextureFactoryIdentifier* aIdentifier) {
+    Maybe<layers::TextureFactoryIdentifier> aIdentifier) {
   RefPtr<RemoteDecoderManagerChild> manager =
       RemoteDecoderManagerChild::GetRDDProcessSingleton();
 
@@ -199,9 +199,8 @@ MediaResult RemoteVideoDecoderChild::InitIPDL(
   bool success = false;
   nsCString errorDescription;
   VideoDecoderInfoIPDL decoderInfo(aVideoInfo, aFramerate);
-  Unused << manager->SendPRemoteDecoderConstructor(this, decoderInfo, aOptions,
-                                                   ToMaybe(aIdentifier),
-                                                   &success, &errorDescription);
+  Unused << manager->SendPRemoteDecoderConstructor(
+      this, decoderInfo, aOptions, aIdentifier, &success, &errorDescription);
 
   return success ? MediaResult(NS_OK)
                  : MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR, errorDescription);
@@ -213,7 +212,7 @@ GpuRemoteVideoDecoderChild::GpuRemoteVideoDecoderChild()
 MediaResult GpuRemoteVideoDecoderChild::InitIPDL(
     const VideoInfo& aVideoInfo, float aFramerate,
     const CreateDecoderParams::OptionSet& aOptions,
-    const layers::TextureFactoryIdentifier& aIdentifier) {
+    Maybe<layers::TextureFactoryIdentifier> aIdentifier) {
   RefPtr<RemoteDecoderManagerChild> manager =
       RemoteDecoderManagerChild::GetGPUProcessSingleton();
 
@@ -239,9 +238,8 @@ MediaResult GpuRemoteVideoDecoderChild::InitIPDL(
   bool success = false;
   nsCString errorDescription;
   VideoDecoderInfoIPDL decoderInfo(aVideoInfo, aFramerate);
-  Unused << manager->SendPRemoteDecoderConstructor(this, decoderInfo, aOptions,
-                                                   Some(aIdentifier), &success,
-                                                   &errorDescription);
+  Unused << manager->SendPRemoteDecoderConstructor(
+      this, decoderInfo, aOptions, aIdentifier, &success, &errorDescription);
 
   return success ? MediaResult(NS_OK)
                  : MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR, errorDescription);
