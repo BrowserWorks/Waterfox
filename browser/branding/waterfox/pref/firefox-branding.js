@@ -4,9 +4,9 @@
 
 // This file contains branding-specific prefs.
 
-pref("startup.homepage_override_url", "");
+pref("startup.homepage_override_url", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%");
 pref("startup.homepage_welcome_url", "about:welcome");
-pref("startup.homepage_welcome_url.additional", "");
+pref("startup.homepage_welcome_url.additional", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%");
 // Interval: Time between checks for a new version (in seconds)
 pref("app.update.interval", 43200); // 12 hours
 // Give the user x seconds to react before showing the big UI. default=192 hours
@@ -18,7 +18,7 @@ pref("app.update.promptWaitTime", 691200);
 // wizard.
   pref("app.update.url.manual", "https://www.waterfox.net/downloads/");
   pref("app.update.url.details", "https://www.waterfox.net/downloads/");
-  pref("app.releaseNotesURL", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%-release-download/");
+  pref("app.releaseNotesURL", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%");
 
 // The number of days a binary is permitted to be old
 // without checking for an update.  This assumes that
