@@ -24,7 +24,7 @@
 !define URLStubDownloadAArch64 ""
 !define URLManualDownload "https://www.waterfox.net/download/"
 !define URLSystemRequirements "https://www.waterfox.net/download/"
-!define Channel "current"
+!define Channel "aurora"
 
 # The installer's certificate name and issuer expected by the stub installer
 !define CertNameDownload   "Mozilla Corporation"
@@ -74,3 +74,6 @@
 !define INSTALL_INSTALLING_TEXT_COLOR 0xFFFFFF
 # This color is written as 0x00BBGGRR because it's actually a COLORREF value.
 !define PROGRESS_BAR_BACKGROUND_COLOR 0xFFAA00
+
+# Enable DeveloperEdition-specific behavior
+!define DEV_EDITION
