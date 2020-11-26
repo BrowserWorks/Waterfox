@@ -7805,7 +7805,7 @@
 # API instead of PR_GetAddrInfoByName
 - name: network.dns.dns_query_single_label
   type: RelaxedAtomicBool
-  value: true
+  value: false
   mirror: always
 
 # Whether the SOCKS proxy should be in charge of DNS resolution.
