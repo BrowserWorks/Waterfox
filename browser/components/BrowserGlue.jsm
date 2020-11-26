@@ -1316,6 +1316,19 @@ BrowserGlue.prototype = {
     SessionStore.init();
 	
     AddonManager.maybeInstallBuiltinAddon(
+      "firefox-compact-dark@mozilla.org",
+      "1.0",
+      "resource:///modules/themes/dark/"
+    );
+
+    AddonManager.maybeInstallBuiltinAddon(
+      "firefox-compact-light@mozilla.org",
+      "1.0",
+      "resource:///modules/themes/light/"
+    );
+
+
+    AddonManager.maybeInstallBuiltinAddon(
       "abyss@waterfox.net",
       "1.0",
       "resource:///modules/themes/abyss/"

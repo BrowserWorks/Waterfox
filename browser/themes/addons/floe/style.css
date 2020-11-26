@@ -1171,7 +1171,7 @@ menupopup::part(drop-indicator) {
 
 #identity-box[pageproxystate="valid"].chromeUI > #identity-icon,
 #urlbar[pageproxystate="valid"] > #identity-box.chromeUI > #identity-icon {
-  list-style-image: url(img/placeholder.svg);
+  list-style-image: url(placeholder.svg);
   -moz-context-properties: fill, fill-opacity;
   fill: currentColor;
 }

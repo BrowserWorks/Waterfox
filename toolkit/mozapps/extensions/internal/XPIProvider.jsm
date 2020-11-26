@@ -498,7 +498,10 @@ class XPIState {
       saved.currentModifiedTime != this.lastModifiedTime
     ) {
       this.lastModifiedTime = saved.currentModifiedTime;
-    } else if (saved.currentModifiedTime === null) {
+    } else if (
+      saved.currentModifiedTime === null &&
+      (!location.changed || !this.file?.exists())
+    ) {
       this.missing = true;
     }
   }
@@ -725,8 +728,15 @@ class XPIStateLocation extends Map {
       this.path = saved.path;
       this.dir = new nsIFile(this.path);
     }
+    const changedPath = this.path !== saved.path;
     this.staged = saved.staged || {};
-    this.changed = saved.changed || false;
+    this.changed = saved.changed || changedPath || false;
+
+    // Recompute rootURI for non-builtin addons if profile
+    // folder was relocated, see bug 1429838.
+    if (changedPath && this.file) {
+      this.rootURI = getURIForResourceInFile(this.file, "").spec;
+    }
 
     for (let [id, data] of Object.entries(saved.addons || {})) {
       let xpiState = this._addState(id, data);
@@ -734,7 +744,7 @@ class XPIStateLocation extends Map {
       // Make a note that this state was restored from saved data. But
       // only if this location hasn't moved since the last startup,
       // since that causes problems for new system add-on bundles.
-      if (!this.path || this.path == saved.path) {
+      if (!this.path || !changedPath) {
         xpiState.wasRestored = true;
       }
     }
