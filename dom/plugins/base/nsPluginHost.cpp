@@ -2898,21 +2898,7 @@ void nsPluginHost::DestroyRunningInstances(nsPluginTag* aPluginTag) {
 
 /* static */
 bool nsPluginHost::CanUsePluginForMIMEType(const nsACString& aMIMEType) {
-  // We only support flash as a plugin, so if the mime types don't match for
-  // those, exit before we start loading plugins.
-  //
-  // XXX: Remove test/java cases when bug 1351885 lands.
-  if (nsPluginHost::GetSpecialType(aMIMEType) ==
-          nsPluginHost::eSpecialType_Flash ||
-      MimeTypeIsAllowedForFakePlugin(NS_ConvertUTF8toUTF16(aMIMEType)) ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-java-vm") ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-test") ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-second-test") ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-third-test")) {
-    return true;
-  }
-
-  return false;
+  return true;
 }
 
 // Runnable that does an async destroy of a plugin.
