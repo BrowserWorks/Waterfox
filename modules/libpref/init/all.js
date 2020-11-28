@@ -309,6 +309,9 @@ pref("dom.mouseevent.click.hack.use_legacy_non-primary_dispatch", "");
 // of content viewers to cache based on the amount of available memory.
 pref("browser.sessionhistory.max_total_viewers", -1);
 
+#ifdef MOZ_WIDGET_GTK
+pref("ui.use_unity_menubar", true);
+#endif
 pref("ui.click_hold_context_menus", false);
 // 0 = false, 1 = true, 2 = autodetect.
 pref("ui.android.mouse_as_touch", 1);
