@@ -135,6 +135,10 @@ nsViewSourceChannel::InitSrcdoc(nsIURI* aURI,
     return NS_OK;
 }
 
+void nsViewSourceChannel::ReleaseListeners() {
+  mListener = nullptr;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // nsIRequest methods:
 
@@ -321,6 +325,8 @@ nsViewSourceChannel::AsyncOpen(nsIStreamListener *aListener, nsISupports *ctxt)
 
     if (NS_SUCCEEDED(rv)) {
         mOpened = true;
+    } else {
+        ReleaseListeners();
     }
 
     return rv;
@@ -693,9 +699,11 @@ nsViewSourceChannel::OnStopRequest(nsIRequest *aRequest, nsISupports* aContext,
                                      nullptr, aStatus);
         }
     }
-    return mListener->OnStopRequest(static_cast<nsIViewSourceChannel*>
-                                               (this),
-                                    aContext, aStatus);
+    nsresult rv;
+    rv = mListener->OnStopRequest(static_cast<nsIViewSourceChannel*>(this),
+                                  aContext, aStatus);
+    ReleaseListeners();
+    return rv;
 }
 
 

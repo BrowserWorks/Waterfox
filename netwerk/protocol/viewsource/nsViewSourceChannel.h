@@ -57,6 +57,7 @@ public:
 
 protected:
     ~nsViewSourceChannel() {}
+    void ReleaseListeners();
 
     nsCOMPtr<nsIChannel>        mChannel;
     nsCOMPtr<nsIHttpChannel>    mHttpChannel;
