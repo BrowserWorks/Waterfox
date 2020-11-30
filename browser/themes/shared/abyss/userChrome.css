@@ -552,7 +552,6 @@ panel#editBookmarkPanel button.expander-up {
   notification > hbox > button {
     border-radius: var(--wfx-border-radius) !important;
     border: 1px solid rgba(0,0,0,.3) !important;
-    color: black !important;
     background: rgba(255,255,255,1) !important;
     box-shadow: none !important;
   }
