@@ -12,6 +12,7 @@ interface nsINode;
 interface nsIPrincipal;
 interface nsIRedirectHistoryEntry;
 interface nsIURI;
+native LoadContextRef(already_AddRefed<nsISupports>);
 %{C++
 #include "nsTArray.h"
 #include "mozilla/BasePrincipal.h"
@@ -331,6 +332,31 @@ interface nsILoadInfo : nsISupports
    */
   [noscript, notxpcom, nostdcall, binaryname(LoadingNode)]
   nsINode binaryLoadingNode();
+
+  /**
+   * A C++ friendly version of the loadingContext for toplevel loads.
+   * Most likely you want to query the ownerDocument or LoadingNode
+   * and not this context only available for TYPE_DOCUMENT loads.
+   * Please note that except for loads of TYPE_DOCUMENT, this
+   * ContextForTopLevelLoad will always return null.
+   */
+  [noscript, notxpcom, nostdcall, binaryname(ContextForTopLevelLoad)]
+  nsISupports binaryContextForTopLevelLoad();
+
+  /**
+   * For all loads except loads of TYPE_DOCUMENT, the loadingContext
+   * simply returns the loadingNode. For loads of TYPE_DOCUMENT this
+   * will return the context available for top-level loads which
+   * do not have a loadingNode.
+   */
+  [binaryname(LoadingContextXPCOM)]
+  readonly attribute nsISupports loadingContext;
+  
+  /**
+   * A C++ friendly version of the loadingContext.
+   */
+  [noscript, notxpcom, nostdcall, binaryname(GetLoadingContext)]
+  LoadContextRef binaryGetLoadingContext();
 
   /**
    * The securityFlags of that channel.
