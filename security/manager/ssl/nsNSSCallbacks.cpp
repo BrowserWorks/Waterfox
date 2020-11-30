@@ -574,8 +574,12 @@ void PK11PasswordPromptRunnable::RunOnTargetThread() {
   } else {
     AutoTArray<nsString, 1> formatStrings = {
         NS_ConvertUTF8toUTF16(PK11_GetTokenName(mSlot))};
-    rv = PIPBundleFormatStringFromName("CertPassPrompt", formatStrings,
+    rv = PIPBundleFormatStringFromName("CertPasswordPrompt", formatStrings,
                                        promptString);
+    if (NS_FAILED(rv)) {
+      rv = PIPBundleFormatStringFromName("CertPassPrompt", formatStrings,
+                                         promptString);
+    }
   }
   if (NS_FAILED(rv)) {
     return;
