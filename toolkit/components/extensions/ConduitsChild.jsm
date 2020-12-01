@@ -124,6 +124,8 @@ class PointConduit extends BaseConduit {
         actor.sendAsyncMessage("ConduitClosed", { sender: this.id });
       }
     }
+    // See https://bugzilla.mozilla.org/show_bug.cgi?id=1652925#c43
+    // eslint-disable-next-line no-unused-expressions
     this.closeCallback?.();
     this.closeCallback = null;
   }
