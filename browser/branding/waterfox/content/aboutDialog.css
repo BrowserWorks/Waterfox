@@ -3,22 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #aboutDialogContainer {
-  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-  background-size: 400% 400%;
-  animation: gradient 15s ease infinite;
+  background-color: #20123a;
   color: #fff;
-}
-
-@keyframes gradient {
-	0% {
-		background-position: 0% 50%;
-	}
-	50% {
-		background-position: 100% 50%;
-	}
-	100% {
-		background-position: 0% 50%;
-	}
 }
 
 #clientBox {
@@ -54,16 +40,14 @@
 
 #rightBox {
   margin-inline: 30px;
+  padding-top: 48px;
 }
 
 #bottomBox {
-  background-color: hsla(235, 43%, 10%, .5);
+  background-color: #1d1133;
   padding: 15px 10px 15px;
 }
 
-#trademark {
-  font-size: xx-small;
-  text-align: center;
-  color: #999999;
-  margin-block: 10px;
+#version {
+  margin-top: 30px;
 }
