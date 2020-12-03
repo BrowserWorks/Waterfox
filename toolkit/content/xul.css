@@ -200,6 +200,13 @@ toolbar[type="menubar"] {
 }
 %endif
 
+%ifdef MOZ_WIDGET_GTK
+*|*:root[shellshowingmenubar="true"]
+toolbar[type="menubar"]:not([customizing="true"]) {
+  display: none !important;
+}
+%endif
+
 toolbarspring {
   -moz-box-flex: 1000;
 }

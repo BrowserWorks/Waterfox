@@ -6307,8 +6307,14 @@ function onViewToolbarsPopupShowing(aEvent, aInsertPoint) {
 
   let toolbarNodes = gNavToolbox.querySelectorAll("toolbar");
 
+  let shellShowingMenubar = document.documentElement.getAttribute("shellshowingmenubar") == "true";
+
   for (let toolbar of toolbarNodes) {
     if (!toolbar.hasAttribute("toolbarname")) {
+      continue;
+    }
+
+    if (shellShowingMenubar && toolbar.id == "toolbar-menubar") {
       continue;
     }
 

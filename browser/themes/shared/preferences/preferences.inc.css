@@ -796,6 +796,7 @@ dialog > .sync-engines-list + hbox {
 
 .fxaMobilePromo {
   margin-top: 2px !important;
+  display: none !important;
 }
 
 .androidIcon,

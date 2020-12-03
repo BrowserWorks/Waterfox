@@ -55,6 +55,15 @@ UNIFIED_SOURCES += [
 
 SOURCES += [
     'MediaKeysEventSourceFactory.cpp',
+    'nsDbusmenu.cpp',
+    'nsMenu.cpp', # conflicts with X11 headers
+    'nsMenuBar.cpp',
+    'nsMenuContainer.cpp',
+    'nsMenuItem.cpp',
+    'nsMenuObject.cpp',
+    'nsMenuSeparator.cpp',
+    'nsNativeMenuDocListener.cpp',
+    'nsNativeMenuService.cpp',
     'nsWindow.cpp', # conflicts with X11 headers
     'WaylandVsyncSource.cpp', # conflicts with X11 headers
 ]
@@ -134,6 +143,7 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/layout/base',
     '/layout/generic',
+    '/layout/style',
     '/layout/xul',
     '/other-licenses/atk-1.0',
     '/widget',
