@@ -4798,6 +4798,12 @@ class BaseCompiler final : public BaseCompilerInterface {
       return;
     }
 
+    if (type.length() > 1) {
+      if (!stk_.reserve(stk_.length() + type.length() + 10)) {
+        MOZ_CRASH("Failed to extend value stack");
+      }
+    }
+
     // We need to push the results in reverse order, so first iterate through
     // all results to determine the locations of stack result types.
     ABIResultIter iter(type);
@@ -13489,8 +13495,6 @@ bool BaseCompiler::emitBody() {
 
   initControl(controlItem(), ResultType::Empty());
 
-  uint32_t overhead = 0;
-
   for (;;) {
     Nothing unused_a, unused_b;
 
@@ -13592,25 +13596,13 @@ bool BaseCompiler::emitBody() {
     continue;             \
   }
 
-    // TODO / EVALUATE (bug 1316845): Not obvious that this attempt at
-    // reducing overhead is really paying off relative to making the check
-    // every iteration.
+    // The baseline JIT does very little allocation per expression and checking
+    // ballast here is sufficient.
+    CHECK(alloc_.ensureBallast());
 
-    if (overhead == 0) {
-      // Check every 50 expressions -- a happy medium between
-      // memory usage and checking overhead.
-      overhead = 50;
-
-      // Checking every 50 expressions should be safe, as the
-      // baseline JIT does very little allocation per expression.
-      CHECK(alloc_.ensureBallast());
-
-      // The pushiest opcode is LOOP, which pushes two values
-      // per instance.
-      CHECK(stk_.reserve(stk_.length() + overhead * 2));
-    }
-
-    overhead--;
+    // Create headroom so that we don't need to check every time we push(),
+    // emitters that may push more must themselves check.
+    CHECK(stk_.reserve(stk_.length() + 10));
 
     OpBytes op;
     CHECK(iter_.readOp(&op));
