@@ -517,6 +517,11 @@ nsBrowserContentHandler.prototype = {
 
             overridePage = overridePage.replace("%OLD_VERSION%", old_mstone);
             break;
+          case OVERRIDE_NEW_BUILD_ID:
+            Services.urlFormatter.formatURLPref("startup.homepage_override_url");
+            if (prefb.prefHasUserValue("app.update.postupdate"))
+              overridePage = getPostUpdateOverridePage(overridePage);
+            break;
         }
       }
     } catch (ex) {}
