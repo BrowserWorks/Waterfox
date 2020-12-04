@@ -57,6 +57,8 @@ class WidgetRenderingContext;
 } // namespace widget
 } // namespace mozilla
 
+@class PixelHostingView;
+
 @interface NSEvent (Undocumented)
 
 // Return Cocoa event's corresponding Carbon event.  Not initialized (on
@@ -144,11 +146,6 @@ class WidgetRenderingContext;
   // when acceptsFirstMouse: is called, we store the event here (strong)
   NSEvent* mClickThroughMouseDownEvent;
 
-  // rects that were invalidated during a draw, so have pending drawing
-  NSMutableArray* mPendingDirtyRects;
-  BOOL mPendingFullDisplay;
-  BOOL mPendingDisplay;
-
   // WheelStart/Stop events should always come in pairs. This BOOL records the
   // last received event so that, when we receive one of the events, we make sure
   // to send its pair event first, in case we didn't yet for any reason.
@@ -191,7 +188,6 @@ class WidgetRenderingContext;
   float mCumulativeRotation;
 
   BOOL mDidForceRefreshOpenGL;
-  BOOL mWaitingForPaint;
 
 #ifdef __LP64__
   // Support for fluid swipe tracking.
@@ -204,6 +200,16 @@ class WidgetRenderingContext;
   // The mask image that's used when painting into the titlebar using basic
   // CGContext painting (i.e. non-accelerated).
   CGImageRef mTopLeftCornerMask;
+  
+  // Subviews of self, which act as container views for vibrancy views and
+  // non-draggable views.
+  NSView* mVibrancyViewsContainer;      // [STRONG]
+  NSView* mNonDraggableViewsContainer;  // [STRONG]
+  
+  // The view that does our drawing. This is a subview of self so that it can
+  // be ordered on top of mVibrancyViewsContainer.
+  PixelHostingView* mPixelHostingView;  
+  
 }
 
 // class initialization
@@ -232,6 +238,10 @@ class WidgetRenderingContext;
 - (bool)preRender:(NSOpenGLContext *)aGLContext;
 - (void)postRender:(NSOpenGLContext *)aGLContext;
 
+- (NSView*)vibrancyViewsContainer;
+- (NSView*)nonDraggableViewsContainer;
+- (NSView*)pixelHostingView;
+
 - (BOOL)isCoveringTitlebar;
 
 - (void)viewWillStartLiveResize;
@@ -258,7 +268,6 @@ class WidgetRenderingContext;
 - (void)endGestureWithEvent:(NSEvent *)anEvent;
 
 - (void)scrollWheel:(NSEvent *)anEvent;
-- (void)handleAsyncScrollEvent:(CGEventRef)cgEvent ofType:(CGEventType)type;
 
 - (void)setUsingOMTCompositor:(BOOL)aUseOMTC;
 
@@ -524,7 +533,6 @@ public:
   void CleanupRemoteDrawing() override;
   bool InitCompositor(mozilla::layers::Compositor* aCompositor) override;
 
-  IAPZCTreeManager* APZCTM() { return mAPZC ; }
 
   virtual MOZ_MUST_USE nsresult
   StartPluginIME(const mozilla::WidgetKeyboardEvent& aKeyboardEvent,
@@ -547,9 +555,6 @@ protected:
   void              ReportMoveEvent();
   void              ReportSizeEvent();
 
-  // override to create different kinds of child views. Autoreleases, so
-  // caller must retain.
-  virtual NSView*   CreateCocoaView(NSRect inFrame);
   void              TearDownView();
 
   virtual already_AddRefed<nsIWidget>
@@ -592,7 +597,7 @@ protected:
 
 protected:
 
-  NSView<mozView>*      mView;      // my parallel cocoa view (ChildView or NativeScrollbarView), [STRONG]
+  ChildView<mozView>* mView;  // my parallel cocoa view, [STRONG]
   RefPtr<mozilla::widget::TextInputHandler> mTextInputHandler;
   InputContext          mInputContext;
 
