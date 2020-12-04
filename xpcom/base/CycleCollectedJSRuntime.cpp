@@ -575,6 +575,7 @@ CycleCollectedJSRuntime::~CycleCollectedJSRuntime()
 {
   MOZ_COUNT_DTOR(CycleCollectedJSRuntime);
   MOZ_ASSERT(!mDeferredFinalizerTable.Count());
+  MOZ_ASSERT(!mFinalizeRunnable);
 }
 
 void
@@ -1289,11 +1290,12 @@ IncrementalFinalizeRunnable::IncrementalFinalizeRunnable(CycleCollectedJSRuntime
 
     iter.Remove();
   }
+  MOZ_ASSERT(mDeferredFinalizeFunctions.Length());
 }
 
-IncrementalFinalizeRunnable::~IncrementalFinalizeRunnable()
-{
-  MOZ_ASSERT(this != mRuntime->mFinalizeRunnable);
+IncrementalFinalizeRunnable::~IncrementalFinalizeRunnable() {
+  MOZ_ASSERT(!mDeferredFinalizeFunctions.Length());
+  MOZ_ASSERT(!mRuntime);
 }
 
 void
@@ -1343,20 +1345,23 @@ IncrementalFinalizeRunnable::ReleaseNow(bool aLimited)
   if (mFinalizeFunctionToRun == mDeferredFinalizeFunctions.Length()) {
     MOZ_ASSERT(mRuntime->mFinalizeRunnable == this);
     mDeferredFinalizeFunctions.Clear();
+    CycleCollectedJSRuntime* runtime = mRuntime;
+    mRuntime = nullptr;
     // NB: This may delete this!
-    mRuntime->mFinalizeRunnable = nullptr;
+    runtime->mFinalizeRunnable = nullptr;
   }
 }
 
 NS_IMETHODIMP
-IncrementalFinalizeRunnable::Run()
-{
-  if (mRuntime->mFinalizeRunnable != this) {
+IncrementalFinalizeRunnable::Run() {
+
+  if (!mDeferredFinalizeFunctions.Length()) {
     /* These items were already processed synchronously in JSGC_END. */
-    MOZ_ASSERT(!mDeferredFinalizeFunctions.Length());
+    MOZ_ASSERT(!mRuntime);
     return NS_OK;
   }
 
+  MOZ_ASSERT(mRuntime->mFinalizeRunnable == this);
   TimeStamp start = TimeStamp::Now();
   ReleaseNow(true);
 
@@ -1365,6 +1370,8 @@ IncrementalFinalizeRunnable::Run()
     if (NS_FAILED(rv)) {
       ReleaseNow(false);
     }
+  } else {
+    MOZ_ASSERT(!mRuntime);
   }
 
   uint32_t duration = (uint32_t)((TimeStamp::Now() - start).ToMilliseconds());
