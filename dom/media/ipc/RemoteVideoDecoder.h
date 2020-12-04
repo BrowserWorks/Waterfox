@@ -26,7 +26,7 @@ class RemoteVideoDecoderChild : public RemoteDecoderChild {
   MOZ_IS_CLASS_INIT
   MediaResult InitIPDL(const VideoInfo& aVideoInfo, float aFramerate,
                        const CreateDecoderParams::OptionSet& aOptions,
-                       const layers::TextureFactoryIdentifier* aIdentifier);
+                       Maybe<layers::TextureFactoryIdentifier> aIdentifier);
 
   MediaResult ProcessOutput(const DecodedOutputIPDL& aDecodedData) override;
 
@@ -44,7 +44,7 @@ class GpuRemoteVideoDecoderChild final : public RemoteVideoDecoderChild {
   MOZ_IS_CLASS_INIT
   MediaResult InitIPDL(const VideoInfo& aVideoInfo, float aFramerate,
                        const CreateDecoderParams::OptionSet& aOptions,
-                       const layers::TextureFactoryIdentifier& aIdentifier);
+                       Maybe<layers::TextureFactoryIdentifier> aIdentifier);
 };
 
 class RemoteVideoDecoderParent final : public RemoteDecoderParent {

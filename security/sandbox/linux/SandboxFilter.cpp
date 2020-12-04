@@ -246,7 +246,15 @@ class SandboxPolicyCommon : public SandboxPolicyBase {
 
     if (fd != AT_FDCWD && (flags & AT_EMPTY_PATH) != 0 &&
         strcmp(path, "") == 0) {
-      return ConvertError(fstatsyscall(fd, buf));
+#ifdef __NR_fstat64
+      return DoSyscall(__NR_fstat64, fd, buf);
+#else
+      return DoSyscall(__NR_fstat, fd, buf);
+#endif
+    }
+
+    if (!broker) {
+      return BlockedSyscallTrap(aArgs, nullptr);
     }
 
     if (fd != AT_FDCWD && path[0] != '/') {
@@ -443,7 +451,7 @@ class SandboxPolicyCommon : public SandboxPolicyBase {
     // If a file broker client was provided, route syscalls to it;
     // otherwise, fall through to the main policy, which will deny
     // them.
-    if (mBroker != nullptr) {
+    if (mBroker) {
       switch (sysno) {
         case __NR_open:
           return Trap(OpenTrap, mBroker);
@@ -481,6 +489,13 @@ class SandboxPolicyCommon : public SandboxPolicyBase {
           return Trap(ReadlinkTrap, mBroker);
         case __NR_readlinkat:
           return Trap(ReadlinkAtTrap, mBroker);
+      }
+    } else {
+      // In the absence of a broker we still need to handle the
+      // fstat-equivalent subset of fstatat; see bug 1673770.
+      switch (sysno) {
+      CASES_FOR_fstatat:
+        return Trap(StatAtTrap, nullptr);
       }
     }
 
