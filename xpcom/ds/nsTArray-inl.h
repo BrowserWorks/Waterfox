@@ -235,14 +235,14 @@ nsTArray_base<Alloc, Copy>::ShrinkCapacity(size_type aElemSize,
   size_type size = sizeof(Header) + length * aElemSize;
   void* ptr;
 
-  if (!RelocationStrategy::allowRealloc) {
+  if (!Copy::allowRealloc) {
     // Malloc() and copy.
     ptr = static_cast<Header*>(nsTArrayFallibleAllocator::Malloc(size));
     if (!ptr) {
       return;
     }
 
-    RelocationStrategy::RelocateNonOverlappingRegionWithHeader(
+    Copy::MoveNonOverlappingRegionWithHeader(
         ptr, mHdr, Length(), aElemSize);
 
     nsTArrayFallibleAllocator::Free(mHdr);
