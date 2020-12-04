@@ -1,0 +1,902 @@
+
+# HG changeset patch
+# User Mike Hommey <mh+mozilla@glandium.org>
+# Date 1596579661 0
+# Node ID 7823460f52391897b5be919ac96e7527410be51f
+# Parent  5bb2ecb2e12ba5d1ba89981c0b2d6638cc23a65b
+Bug 1116553 - Rewrite version_win.pl in Python. r=firefox-build-system-reviewers,rstewart
+
+This is not a feature-for-feature rewrite. The python version removes
+unused things, and simplifies some others:
+
+- Only two command line arguments are taken in, and all the others are
+  dropped and the corresponding values are gotten from the buildconfig
+  module instead. The command line arguments are also taken as
+  positional arguments rather than going with a full argument parser.
+
+- Variable expansion in module.ver used to be limited to one specific
+  variable to expand for a given value, which is now replaced with the
+  possibility to expand any of the variables that are allowed in
+  module.ver.
+
+- The perl version was adding a RT_MANIFEST entry on its own if a
+  manifest file existed in the objdir for the given binary, but if such
+  a file existed, the build would fail after linking from the changes in
+  bug 1613799.
+
+- The perl version was defaulting the module name to the binary name in
+  a branch that was never taken because the module name was assigned to
+  an empty string before that.
+
+The output from the new script has been validated to being identical to
+the output from the perl script, except for one extra whitespace at the
+end of a comment.
+
+Differential Revision: https://phabricator.services.mozilla.com/D85817
+
+diff --git a/config/Moz/Milestone.pm b/config/Moz/Milestone.pm
+deleted file mode 100644
+--- a/config/Moz/Milestone.pm
++++ /dev/null
+@@ -1,220 +0,0 @@
+-#!/usr/bin/perl -w
+-# This Source Code Form is subject to the terms of the Mozilla Public
+-# License, v. 2.0. If a copy of the MPL was not distributed with this
+-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-
+-package Moz::Milestone;
+-use strict;
+-
+-use vars qw($officialMilestone
+-            $milestone);
+-
+-local $Moz::Milestone::milestone;
+-local $Moz::Milestone::officialMilestone;
+-
+-#
+-# Usage:  getOfficialMilestone($milestoneFile)
+-# Returns full milestone (x.x.x.x[ab12pre+])
+-#
+-sub getOfficialMilestone($) {
+-  my $mfile = $_[0];
+-  open(FILE,"$mfile") ||
+-    die ("Can't open $mfile for reading!");
+-
+-  my $num = <FILE>;
+-  while($num =~ /^\s*#/ || $num !~ /^\d/) {
+-      $num = <FILE>;
+-  }
+-
+-  close(FILE);
+-  if ($num !~ /^\d/) { return; }
+-  chomp($num);
+-  # Remove extra ^M caused by using dos-mode line-endings
+-  chop $num if (substr($num, -1, 1) eq "\r");
+-  $Moz::Milestone::officialMilestone = $num;
+-  $Moz::Milestone::milestone = &getMilestoneNum;
+-  return $num;
+-}
+-
+-#
+-# Usage: getMilestoneNum($num)
+-# Returns: milestone without a + if it exists.
+-#
+-sub getMilestoneNum {
+-  if (defined($Moz::Milestone::milestone)) {
+-    return $Moz::Milestone::milestone;
+-  }
+-
+-  if (defined($Moz::Milestone::officialMilestone)) {
+-    $Moz::Milestone::milestone = $Moz::Milestone::officialMilestone;
+-  } else {
+-    $Moz::Milestone::milestone = $_[0];
+-  }
+-
+-  if ($Moz::Milestone::milestone =~ /\+$/) {    # for x.x.x+, strip off the +
+-    $Moz::Milestone::milestone =~ s/\+$//;
+-  }
+-
+-  return $Moz::Milestone::milestone;
+-}
+-
+-#
+-# Usage: getMilestoneQualifier($num)
+-# Returns: + if it exists.
+-#
+-sub getMilestoneQualifier {
+-  my $milestoneQualifier;
+-  if (defined($Moz::Milestone::officialMilestone)) {
+-    $milestoneQualifier = $Moz::Milestone::officialMilestone;
+-  } else {
+-    $milestoneQualifier = $_[0];
+-  }
+-
+-  if ($milestoneQualifier =~ /\+$/) {
+-    return "+";
+-  }
+-}
+-
+-sub getMilestoneMajor {
+-  my $milestoneMajor;
+-  if (defined($Moz::Milestone::milestone)) {
+-    $milestoneMajor = $Moz::Milestone::milestone;
+-  } else {
+-    $milestoneMajor = $_[0];
+-  }
+-  my @parts = split(/\./,$milestoneMajor);
+-  return $parts[0];
+-}
+-
+-sub getMilestoneMinor {
+-  my $milestoneMinor;
+-  if (defined($Moz::Milestone::milestone)) {
+-    $milestoneMinor = $Moz::Milestone::milestone;
+-  } else {
+-    $milestoneMinor = $_[0];
+-  }
+-  my @parts = split(/\./,$milestoneMinor);
+-
+-  if ($#parts < 1 ) { return 0; }
+-  return $parts[1];
+-}
+-
+-sub getMilestoneMini {
+-  my $milestoneMini;
+-  if (defined($Moz::Milestone::milestone)) {
+-    $milestoneMini = $Moz::Milestone::milestone;
+-  } else {
+-    $milestoneMini = $_[0];
+-  }
+-  my @parts = split(/\./,$milestoneMini);
+-
+-  if ($#parts < 2 ) { return 0; }
+-  return $parts[2];
+-}
+-
+-sub getMilestoneMicro {
+-  my $milestoneMicro;
+-  if (defined($Moz::Milestone::milestone)) {
+-    $milestoneMicro = $Moz::Milestone::milestone;
+-  } else {
+-    $milestoneMicro = $_[0];
+-  }
+-  my @parts = split(/\./,$milestoneMicro);
+-
+-  if ($#parts < 3 ) { return 0; }
+-  return $parts[3];
+-}
+-
+-sub getMilestoneAB {
+-  my $milestoneAB;
+-  if (defined($Moz::Milestone::milestone)) {
+-    $milestoneAB = $Moz::Milestone::milestone;
+-  } else {
+-    $milestoneAB = $_[0];
+-  }
+-  
+-  if ($milestoneAB =~ /a/) { return "alpha"; }
+-  if ($milestoneAB =~ /b/) { return "beta"; }
+-  return "final";
+-}
+-
+-#
+-# Usage:  getMilestoneABWithNum($milestoneFile)
+-# Returns the alpha and beta tag with its number (a1, a2, b3, ...)
+-#
+-sub getMilestoneABWithNum {
+-  my $milestoneABNum;
+-  if (defined($Moz::Milestone::milestone)) {
+-    $milestoneABNum = $Moz::Milestone::milestone;
+-  } else {
+-    $milestoneABNum = $_[0];
+-  }
+-
+-  if ($milestoneABNum =~ /([ab]\d+)/) {
+-    return $1;
+-  } else {
+-    return "";
+-  }
+-}
+-
+-#
+-# build_file($template_file,$output_file)
+-#
+-sub build_file($$) {
+-  my @FILE;
+-  my @MILESTONE_PARTS;
+-  my $MINI_VERSION = 0;
+-  my $MICRO_VERSION = 0;
+-  my $OFFICIAL = 0;
+-  my $QUALIFIER = "";
+-
+-  if (!defined($Moz::Milestone::milestone)) { die("$0: no milestone file set!\n"); }
+-  @MILESTONE_PARTS = split(/\./, &getMilestoneNum);
+-  if ($#MILESTONE_PARTS >= 2) {
+-    $MINI_VERSION = 1;
+-  } else {
+-    $MILESTONE_PARTS[2] = 0;
+-  }
+-  if ($#MILESTONE_PARTS >= 3) {
+-    $MICRO_VERSION = 1;
+-  } else {
+-    $MILESTONE_PARTS[3] = 0;
+-  }
+-  if (! &getMilestoneQualifier) {
+-    $OFFICIAL = 1;
+-  } else {
+-    $QUALIFIER = "+";
+-  }
+-
+-  if (-e $_[0]) {
+-    open(FILE, "$_[0]") || die("$0: Can't open $_[0] for reading!\n");
+-    @FILE = <FILE>;
+-    close(FILE);
+-
+-    open(FILE, ">$_[1]") || die("$0: Can't open $_[1] for writing!\n");
+-
+-    #
+-    # There will be more of these based on what we need for files.
+-    #
+-    foreach(@FILE) {
+-      s/__MOZ_MAJOR_VERSION__/$MILESTONE_PARTS[0]/g;
+-      s/__MOZ_MINOR_VERSION__/$MILESTONE_PARTS[1]/g;
+-      s/__MOZ_MINI_VERSION__/$MILESTONE_PARTS[2]/g;
+-      s/__MOZ_MICRO_VERSION__/$MILESTONE_PARTS[3]/g;
+-      if ($MINI_VERSION) {
+-        s/__MOZ_OPTIONAL_MINI_VERSION__/.$MILESTONE_PARTS[2]/g;
+-      }
+-      if ($MICRO_VERSION) {
+-        s/__MOZ_OPTIONAL_MICRO_VERSION__/.$MILESTONE_PARTS[3]/g;
+-      }
+-
+-      print FILE $_;
+-    }
+-    close(FILE);
+-  } else {
+-    die("$0: $_[0] doesn't exist for autoversioning!\n");
+-  }
+-
+-}
+-
+-1;
+diff --git a/config/version.mk b/config/version.mk
+--- a/config/version.mk
++++ b/config/version.mk
+@@ -10,42 +10,32 @@ INCLUDED_VERSION_MK=1
+ # TODO:
+ # PBI      : Private build info.  Not used currently.
+ #            Guessing the best way would be to set an env var.
+ # BINARY   : Binary name.  Not used currently.
+ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
+ ifndef RESFILE
+ RCFILE=./module.rc
+ RESFILE=./module.res
+-_RC_STRING = -QUIET 1 -DEPTH $(DEPTH) -TOPSRCDIR $(MOZILLA_DIR) -OBJDIR . -SRCDIR $(srcdir) -DISPNAME "$(MOZ_APP_DISPLAYNAME)" -APPVERSION $(MOZ_APP_VERSION)
+-ifdef MOZILLA_OFFICIAL
+-_RC_STRING += -OFFICIAL 1
+-endif
+-ifdef MOZ_DEBUG
+-_RC_STRING += -DEBUG 1
+-endif
+ ifdef PROGRAM
+-_RC_STRING += -BINARY $(notdir $(PROGRAM))
++_RC_BINARY = $(notdir $(PROGRAM))
+ else
+ ifdef _PROGRAM
+-_RC_STRING += -BINARY $(notdir $(_PROGRAM))
++_RC_BINARY = $(notdir $(_PROGRAM))
+ else
+ ifdef SHARED_LIBRARY
+-_RC_STRING += -BINARY $(notdir $(SHARED_LIBRARY))
++_RC_BINARY = $(notdir $(SHARED_LIBRARY))
+ endif
+ endif
+ endif
+-ifdef RCINCLUDE
+-_RC_STRING += -RCINCLUDE $(RCINCLUDE)
+-endif
+ 
+ GARBAGE += $(RESFILE) $(RCFILE)
+ 
+ #dummy target so $(RCFILE) doesn't become the default =P
+ all::
+ 
+-$(RCFILE): $(RCINCLUDE) $(MOZILLA_DIR)/config/version_win.pl
+-	$(PERL) $(MOZILLA_DIR)/config/version_win.pl $(_RC_STRING)
++$(RCFILE): $(RCINCLUDE) $(MOZILLA_DIR)/config/version_win.py
++	$(PYTHON3) $(MOZILLA_DIR)/config/version_win.py "$(_RC_BINARY)" "$(RCINCLUDE)"
+ 
+ endif  # RESFILE
+ endif  # Windows
+ 
+ endif
+diff --git a/config/version_win.pl b/config/version_win.pl
+deleted file mode 100755
+--- a/config/version_win.pl
++++ /dev/null
+@@ -1,380 +0,0 @@
+-#!/usr/bin/perl -w
+-
+-# This Source Code Form is subject to the terms of the Mozilla Public
+-# License, v. 2.0. If a copy of the MPL was not distributed with this
+-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-
+-#use diagnostics;
+-require strict;
+-my $dir = $0;
+-$dir =~ s/[^\/]*$//;
+-push(@INC, "$dir");
+-require "Moz/Milestone.pm";
+-use Getopt::Long;
+-use Getopt::Std;
+-use POSIX;
+-
+-# Calculate the number of days since Jan. 1, 2000 from a buildid string
+-sub daysFromBuildID
+-{
+-    my ($buildid,) = @_;
+-
+-    my ($y, $m, $d, $h) = ($buildid =~ /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/);
+-    $d || die("Unrecognized buildid string.");
+-
+-    my $secondstodays = 60 * 60 * 24;
+-    return sprintf("%d",
+-		   (POSIX::mktime(00, 00, 00, $d, $m - 1, $y - 1900) -
+-		    POSIX::mktime(00, 00, 00, 01, 00, 100)) / $secondstodays);
+-}
+-
+-#Creates version resource file
+-
+-#Paramaters are passed on the command line:
+-
+-#Example: -MODNAME nsToolkitCompsModule -DEBUG=1
+-
+-# DEBUG - Mozilla's global debug variable - tells if its debug version
+-# OFFICIAL - tells Mozilla is building a milestone or nightly
+-# MSTONE - tells which milestone is being built;
+-# OBJDIR - Holds the object directory;
+-# MODNAME - tells what the name of the module is like nsBMPModule
+-# DEPTH - Holds the path to the root obj dir
+-# TOPSRCDIR - Holds the path to the root mozilla dir
+-# SRCDIR - Holds module.ver and source
+-# BINARY - Holds the name of the binary file
+-# DISPNAME - Holds the display name of the built application
+-# APPVERSION - Holds the version string of the built application
+-# RCINCLUDE - Holds the name of the RC File to include or ""
+-# QUIET - Turns off output
+-
+-#Description and Comment come from module.ver
+-#Bug 23560
+-#http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/rc_7x2d.asp
+-
+-#Get next .ver file entry
+-sub getNextEntry
+-{
+-	while (<VERFILE>) 
+-	{ 
+-		my $mline = $_;
+-		($mline) = split(/#/,$mline);
+-		my ($entry, $value)=split(/=/,$mline,2);
+-		if (defined($entry))
+-		{
+-			if (defined($value))
+-			{
+-				$entry =~ s/^\s*(.*?)\s*$/$1/;
+-				$value =~ s/^\s*(.*?)\s*$/$1/;
+-				return ($entry,$value);
+-			}
+-		}
+-	}
+-	return undef;
+-}
+-
+-my ($quiet,$objdir,$debug,$official,$milestone,$buildid,$module,$binary,$depth,$rcinclude,$srcdir,$fileversion,$productversion);
+-
+-GetOptions( "QUIET" => \$quiet,
+-		"DEBUG=s" => \$debug,
+-		"OFFICIAL=s" => \$official,
+-		"MSTONE=s" => \$milestone,
+-		"MODNAME=s" => \$module,
+-		"BINARY=s" => \$binary,
+-		"DISPNAME=s" => \$displayname,
+-		"APPVERSION=s" => \$appversion,
+-		"SRCDIR=s" => \$srcdir,
+-		"TOPSRCDIR=s" => \$topsrcdir,
+-		"DEPTH=s" => \$depth,
+-		"RCINCLUDE=s" => \$rcinclude,
+-		"OBJDIR=s" => \$objdir);
+-if (!defined($debug)) {$debug="";}
+-if (!defined($official)) {$official="";}
+-if (!defined($milestone)) {$milestone="";}
+-if (!defined($module)) {$module="";}
+-if (!defined($binary)) {$binary="";}
+-if (!defined($displayname)) {$displayname="Mozilla";}
+-if (!defined($appversion)) {$appversion=$milestone;}
+-if (!defined($depth)) {$depth=".";}
+-if (!defined($rcinclude)) {$rcinclude="";}
+-if (!defined($objdir)) {$objdir=".";}
+-if (!defined($srcdir)) {$srcdir=".";}
+-if (!defined($topsrcdir)) {$topsrcdir=".";}
+-my $mfversion = "Personal";
+-my $mpversion = "Personal";
+-my @fileflags = ("0");
+-my $comment="";
+-my $description="";
+-if (!defined($module))
+-{
+-	$module = $binary;
+-	($module) = split(/\./,$module);
+-}
+-
+-my $bufferstr="    ";
+-
+-my $MILESTONE_FILE = "$topsrcdir/config/milestone.txt";
+-my $BUILDID_FILE = "$depth/buildid.h";
+-
+-#Read module.ver file
+-#Version file overrides for WIN32:
+-#WIN32_MODULE_COMMENT
+-#WIN32_MODULE_DESCRIPTION
+-#WIN32_MODULE_FILEVERSION
+-#WIN32_MODULE_COMPANYNAME
+-#WIN32_MODULE_FILEVERSION_STRING
+-#WIN32_MODULE_NAME
+-#WIN32_MODULE_COPYRIGHT
+-#WIN32_MODULE_TRADEMARKS
+-#WIN32_MODULE_ORIGINAL_FILENAME
+-#WIN32_MODULE_PRODUCTNAME
+-#WIN32_MODULE_PRODUCTVERSION
+-#WIN32_MODULE_PRODUCTVERSION_STRING
+-
+-#Override values obtained from the .ver file
+-my $override_comment;
+-my $override_description;
+-my $override_fileversion;
+-my $override_company;
+-my $override_mfversion;
+-my $override_module;
+-my $override_copyright;
+-my $override_trademarks;
+-my $override_filename;
+-my $override_productname;
+-my $override_productversion;
+-my $override_mpversion;
+-if (open(VERFILE, "<$srcdir/module.ver")) 
+-{
+-
+-	my ($a,$b) = getNextEntry();
+-	while (defined($a))
+-	{
+-		if ($a eq "WIN32_MODULE_COMMENT") { $override_comment = $b; }
+-		if ($a eq "WIN32_MODULE_DESCRIPTION") { $override_description = $b; }
+-		if ($a eq "WIN32_MODULE_FILEVERSION") { $override_fileversion = $b; }
+-		if ($a eq "WIN32_MODULE_COMPANYNAME") { $override_company = $b; }
+-		if ($a eq "WIN32_MODULE_FILEVERSION_STRING") { $override_mfversion = $b; }
+-		if ($a eq "WIN32_MODULE_NAME") { $override_module = $b; }
+-		if ($a eq "WIN32_MODULE_COPYRIGHT") { $override_copyright = $b; }
+-		if ($a eq "WIN32_MODULE_TRADEMARKS") { $override_trademarks = $b; }
+-		if ($a eq "WIN32_MODULE_ORIGINAL_FILENAME") { $override_filename = $b; }
+-		if ($a eq "WIN32_MODULE_PRODUCTNAME") { $override_productname = $b; }
+-		if ($a eq "WIN32_MODULE_PRODUCTVERSION") { $override_productversion = $b; }
+-		if ($a eq "WIN32_MODULE_PRODUCTVERSION_STRING") { $override_mpversion = $b; }
+-		($a,$b) = getNextEntry();
+-	}
+-	close(VERFILE)
+-}
+-else
+-{
+-	if (!$quiet || $quiet ne "1") { print "$bufferstr" . "WARNING: No module.ver file included ($module, $binary). Default values used\n"; }
+-}
+-#Get rid of trailing and leading whitespace
+-$debug =~ s/^\s*(.*)\s*$/$1/;
+-$comment =~ s/^\s*(.*)\s*$/$1/;
+-$official =~ s/^\s*(.*)\s*$/$1/;
+-$milestone =~ s/^\s*(.*)\s*$/$1/;
+-$description =~ s/^\s*(.*)\s*$/$1/;
+-$module =~ s/^\s*(.*)\s*$/$1/;
+-$depth =~ s/^\s*(.*)\s*$/$1/;
+-$binary =~ s/^\s*(.*)\s*$/$1/;
+-$displayname =~ s/^\s*(.*)\s*$/$1/;
+-
+-open(BUILDID, "<", $BUILDID_FILE) || die("Couldn't open buildid file: $BUILDID_FILE");
+-$buildid = <BUILDID>;
+-$buildid =~ s/^#define MOZ_BUILDID\s+(\S+)\s*$/$1/;
+-close BUILDID;
+-
+-my $daycount = daysFromBuildID($buildid);
+-
+-if ($milestone eq "") {
+-    $milestone = Moz::Milestone::getOfficialMilestone($MILESTONE_FILE);
+-}
+-
+-$mfversion = $mpversion = $milestone;
+-if ($appversion eq "") {
+-  $appversion = $milestone;
+-}
+-
+-if ($debug eq "1")
+-{
+-	push @fileflags, "VS_FF_DEBUG";
+-	$mpversion .= " Debug";
+-	$mfversion .= " Debug";
+-}
+-
+-if ($official ne "1") {
+-    push @fileflags, "VS_FF_PRIVATEBUILD";
+-}
+-
+-if ($milestone =~ /[a-z]/) {
+-    push @fileflags, "VS_FF_PRERELEASE";
+-}
+-
+-my @mstone = split(/\./,$milestone);
+-$mstone[1] =~s/\D.*$//;
+-if (!$mstone[2]) {
+-    $mstone[2] = "0";
+-}
+-else {
+-    $mstone[2] =~s/\D.*$//;
+-}
+-$fileversion = $productversion="$mstone[0],$mstone[1],$mstone[2],$daycount";
+-
+-my @appver = split(/\./,$appversion);
+-for ($j = 1; $j < 4; $j++)
+-{
+-    if (!$appver[$j]) {
+-        $appver[$j] = "0";
+-    }
+-    else {
+-        $appver[$j] =~s/\D.*$//;
+-    }
+-}
+-my $winappversion = "$appver[0],$appver[1],$appver[2],$appver[3]";
+-
+-my $copyright = "License: MPL 2";
+-my $company = "Mozilla Foundation";
+-my $trademarks = "Mozilla";
+-my $productname = $displayname;
+-
+-
+-if (defined($override_comment)){$override_comment =~ s/\@MOZ_APP_DISPLAYNAME\@/$displayname/g; $comment=$override_comment;}
+-if (defined($override_description)){$override_description =~ s/\@MOZ_APP_DISPLAYNAME\@/$displayname/g; $description=$override_description;}
+-if (defined($override_fileversion)){$override_fileversion =~ s/\@MOZ_APP_WINVERSION\@/$winappversion/g; $fileversion=$override_fileversion;}
+-if (defined($override_mfversion)){$override_mfversion =~ s/\@MOZ_APP_VERSION\@/$appversion/g; $mfversion=$override_mfversion;}
+-if (defined($override_company)){$company=$override_company;}
+-if (defined($override_module)){$override_module =~ s/\@MOZ_APP_DISPLAYNAME\@/$displayname/g; $module=$override_module;}
+-if (defined($override_copyright)){$override_copyright =~ s/\@MOZ_APP_DISPLAYNAME\@/$displayname/g; $copyright=$override_copyright;}
+-if (defined($override_trademarks)){$override_trademarks =~ s/\@MOZ_APP_DISPLAYNAME\@/$displayname/g; $trademarks=$override_trademarks;}
+-if (defined($override_filename)){$binary=$override_filename;}
+-if (defined($override_productname)){$override_productname =~ s/\@MOZ_APP_DISPLAYNAME\@/$displayname/g; $productname=$override_productname;}
+-if (defined($override_productversion)){$override_productversion =~ s/\@MOZ_APP_WINVERSION\@/$winappversion/g; $productversion=$override_productversion;}
+-if (defined($override_mpversion)){$override_mpversion =~ s/\@MOZ_APP_VERSION\@/$appversion/g; $mpversion=$override_mpversion;}
+-
+-
+-#Override section
+-
+-open(RCFILE, ">$objdir/module.rc") || die("Can't edit module.rc - It must be locked.\n");
+-print RCFILE qq{
+-// This Source Code Form is subject to the terms of the Mozilla Public
+-// License, v. 2.0. If a copy of the MPL was not distributed with this
+-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-
+-#include<winver.h>
+-
+-// Note: if you contain versioning information in an included 
+-// RC script, it will be discarded
+-// Use module.ver to explicitly set these values
+-
+-// Do not edit this file. Changes won't affect the build.
+-
+-};
+-
+-my $versionlevel=0;
+-my $insideversion=0;
+-my $has_manifest=0;
+-if (open(RCINCLUDE, "<$rcinclude")) 
+-{
+-	print RCFILE "// From included resource $rcinclude\n";
+-#	my $mstring="";
+-	while (<RCINCLUDE>) 
+-	{
+-		$has_manifest = 1 if /^1 (24|RT_MANIFEST) "$binary.manifest"/;
+-		$_ =~ s/\@MOZ_APP_DISPLAYNAME\@/$displayname/g;
+-		print RCFILE $_;
+-#		my $instr=$_;
+-#		chomp($instr);
+-#		$mstring .= "$instr\;";
+-	}
+-	close(RCINCLUDE);
+-#	$mstring =~ s/\/\*.*\*\///g;
+-#	my @mlines = split(/\;/,$mstring);
+-#	for(@mlines)
+-#	{
+-#		my ($nocomment)=split(/\/\//,$_);
+-#		if (defined($nocomment) && $nocomment ne "")
+-#		{
+-#			my ($firststring,$secondstring) = split(/\s+/,$nocomment);
+-#			if (!defined($firststring)) {$firststring="";}
+-#			if (!defined($secondstring)) {$secondstring="";}
+-#			if ($secondstring eq "VERSIONINFO") 
+-#			{
+-#if (!$quiet || $quiet ne "1") { 
+-#				print "$bufferstr" . "WARNING: Included RC file ($rcinclude, $module, $binary)\n";
+-#				print "$bufferstr" . "WARNING: contains versioning information that will be discarded\n";
+-#				print "$bufferstr" . "WARNING: Remove it and use relevant overrides (in module.ver)\n";
+-#}
+-#				$versionlevel = 0;
+-#				$insideversion = 1; 
+-#			}
+-#			if ($firststring eq "BEGIN") { $versionlevel++; }
+-#			if ($secondstring eq "END") 
+-#			{ 
+-#				$versionlevel--; 
+-#				if ($insideversion==1 && $versionlevel==0) {$versionlevel=0;}
+-#			}
+-#			my $includecheck = $firststring . $secondstring;
+-#			$includecheck =~ s/<|>/"/g;
+-#			$includecheck = lc($includecheck);
+-#			if ($includecheck ne "#include\"winver.h\"")
+-#			{
+-#				if ($insideversion == 0 && $versionlevel == 0)
+-#				{
+-#					print RCFILE "$nocomment\n";	
+-#				}
+-#			}
+-#		}
+-#	}
+-	
+-}
+-
+-my $fileflags = join(' | ', @fileflags);
+-
+-print RCFILE qq{
+-1 RT_MANIFEST "$binary.manifest"
+-} if !$has_manifest && $binary =~ /\.exe$/ && -e "$objdir/$binary.manifest";
+-
+-print RCFILE qq{
+-
+-
+-/////////////////////////////////////////////////////////////////////////////
+-//
+-// Version
+-//
+-
+-1 VERSIONINFO
+- FILEVERSION    $fileversion
+- PRODUCTVERSION $productversion
+- FILEFLAGSMASK 0x3fL
+- FILEFLAGS $fileflags
+- FILEOS VOS__WINDOWS32
+- FILETYPE VFT_DLL
+- FILESUBTYPE 0x0L
+-BEGIN
+-    BLOCK "StringFileInfo"
+-    BEGIN
+-        BLOCK "000004b0"
+-        BEGIN
+-            VALUE "Comments", "$comment"
+-            VALUE "LegalCopyright", "$copyright"
+-            VALUE "CompanyName", "$company"
+-            VALUE "FileDescription", "$description"
+-            VALUE "FileVersion", "$mfversion"
+-            VALUE "ProductVersion", "$mpversion"
+-            VALUE "InternalName", "$module"
+-            VALUE "LegalTrademarks", "$trademarks"
+-            VALUE "OriginalFilename", "$binary"
+-            VALUE "ProductName", "$productname"
+-            VALUE "BuildID", "$buildid"
+-        END
+-    END
+-    BLOCK "VarFileInfo"
+-    BEGIN
+-        VALUE "Translation", 0x0, 1200
+-    END
+-END
+-
+-};
+-close(RCFILE);
+diff --git a/config/version_win.py b/config/version_win.py
+new file mode 100644
+--- /dev/null
++++ b/config/version_win.py
+@@ -0,0 +1,178 @@
++# This Source Code Form is subject to the terms of the Mozilla Public
++# License, v. 2.0. If a copy of the MPL was not distributed with this
++# file, You can obtain one at http://mozilla.org/MPL/2.0/.
++
++from datetime import datetime
++import io
++import os
++import sys
++
++from mozbuild.preprocessor import Preprocessor
++import buildconfig
++
++
++TEMPLATE = '''
++// This Source Code Form is subject to the terms of the Mozilla Public
++// License, v. 2.0. If a copy of the MPL was not distributed with this
++// file, You can obtain one at http://mozilla.org/MPL/2.0/.
++
++#include<winver.h>
++
++// Note: if you contain versioning information in an included
++// RC script, it will be discarded
++// Use module.ver to explicitly set these values
++
++// Do not edit this file. Changes won't affect the build.
++
++{include}
++
++
++/////////////////////////////////////////////////////////////////////////////
++//
++// Version
++//
++
++1 VERSIONINFO
++ FILEVERSION    {fileversion}
++ PRODUCTVERSION {productversion}
++ FILEFLAGSMASK 0x3fL
++ FILEFLAGS {fileflags}
++ FILEOS VOS__WINDOWS32
++ FILETYPE VFT_DLL
++ FILESUBTYPE 0x0L
++BEGIN
++    BLOCK "StringFileInfo"
++    BEGIN
++        BLOCK "000004b0"
++        BEGIN
++            VALUE "Comments", "{comment}"
++            VALUE "LegalCopyright", "{copyright}"
++            VALUE "CompanyName", "{company}"
++            VALUE "FileDescription", "{description}"
++            VALUE "FileVersion", "{mfversion}"
++            VALUE "ProductVersion", "{mpversion}"
++            VALUE "InternalName", "{module}"
++            VALUE "LegalTrademarks", "{trademarks}"
++            VALUE "OriginalFilename", "{binary}"
++            VALUE "ProductName", "{productname}"
++            VALUE "BuildID", "{buildid}"
++        END
++    END
++    BLOCK "VarFileInfo"
++    BEGIN
++        VALUE "Translation", 0x0, 1200
++    END
++END
++
++'''
++
++
++def preprocess(path, defines):
++    pp = Preprocessor(defines=defines, marker='%')
++    pp.context.update(defines)
++    pp.out = io.StringIO()
++    pp.do_filter('substitution')
++    pp.do_include(io.open(path, 'r', encoding='latin1'))
++    pp.out.seek(0)
++    return pp.out
++
++
++def parse_module_ver(path, defines):
++    result = {}
++    for line in preprocess(path, defines):
++        content, *comment = line.split('#', 1)
++        if not content.strip():
++            continue
++        entry, value = content.split('=', 1)
++        result[entry.strip()] = value.strip()
++    return result
++
++
++def get_buildid():
++    path = os.path.join(buildconfig.topobjdir, 'buildid.h')
++    define, MOZ_BUILDID, buildid = io.open(path, 'r', encoding='utf-8').read().split()
++    return buildid
++
++
++def days_from_2000_to_buildid(buildid):
++    start = datetime(2000, 1, 1, 0, 0, 0)
++    buildid_time = datetime.strptime(buildid, '%Y%m%d%H%M%S')
++    return (buildid_time - start).days
++
++
++def digits_only(s):
++    for l in range(len(s), 0, -1):
++        if s[:l].isdigit():
++            return s[:l]
++    return '0'
++
++
++def split_and_normalize_version(version, len):
++    return ([digits_only(x) for x in version.split('.')] + ['0'] * len)[:len]
++
++
++def generate_module_rc(binary='', rcinclude=None):
++    deps = set()
++    buildid = get_buildid()
++    milestone = buildconfig.substs['GRE_MILESTONE']
++    app_version = buildconfig.substs.get('MOZ_APP_VERSION') or milestone
++    app_winversion = ','.join(split_and_normalize_version(app_version, 4))
++    milestone_winversion = ','.join(split_and_normalize_version(milestone, 3) +
++                                    [str(days_from_2000_to_buildid(buildid))])
++    display_name = buildconfig.substs.get('MOZ_APP_DISPLAYNAME', 'Mozilla')
++
++    milestone_string = milestone
++
++    flags = ['0']
++    if buildconfig.substs.get('MOZ_DEBUG'):
++        flags.append('VS_FF_DEBUG')
++        milestone_string += ' Debug'
++    if not buildconfig.substs.get('MOZILLA_OFFICIAL'):
++        flags.append('VS_FF_PRIVATEBUILD')
++    if buildconfig.substs.get('NIGHTLY_BUILD'):
++        flags.append('VS_FF_PRERELEASE')
++
++    defines = {
++        'MOZ_APP_DISPLAYNAME': display_name,
++        'MOZ_APP_VERSION': app_version,
++        'MOZ_APP_WINVERSION': app_winversion,
++    }
++
++    relobjdir = os.path.relpath('.', buildconfig.topobjdir)
++    srcdir = os.path.join(buildconfig.topsrcdir, relobjdir)
++    module_ver = os.path.join(srcdir, 'module.ver')
++    if os.path.exists(module_ver):
++        deps.add(module_ver)
++        overrides = parse_module_ver(module_ver, defines)
++    else:
++        overrides = {}
++
++    if rcinclude:
++        include = '// From included resource {}\n{}'.format(
++            rcinclude, preprocess(rcinclude, defines).read())
++    else:
++        include = ''
++
++    data = TEMPLATE.format(
++        include=include,
++        fileversion=overrides.get('WIN32_MODULE_FILEVERSION', milestone_winversion),
++        productversion=overrides.get('WIN32_MODULE_PRODUCTVERSION', milestone_winversion),
++        fileflags=' | '.join(flags),
++        comment=overrides.get('WIN32_MODULE_COMMENT', ''),
++        copyright=overrides.get('WIN32_MODULE_COPYRIGHT', 'License: MPL 2'),
++        company=overrides.get('WIN32_MODULE_COMPANYNAME', 'Mozilla Foundation'),
++        description=overrides.get('WIN32_MODULE_DESCRIPTION', ''),
++        mfversion=overrides.get('WIN32_MODULE_FILEVERSION_STRING', milestone_string),
++        mpversion=overrides.get('WIN32_MODULE_PRODUCTVERSION_STRING', milestone_string),
++        module=overrides.get('WIN32_MODULE_NAME', ''),
++        trademarks=overrides.get('WIN32_MODULE_TRADEMARKS', 'Mozilla'),
++        binary=overrides.get('WIN32_MODULE_ORIGINAL_FILENAME', binary),
++        productname=overrides.get('WIN32_MODULE_PRODUCTNAME', display_name),
++        buildid=buildid,
++    )
++    with io.open('module.rc', 'w', encoding='latin1') as fh:
++        fh.write(data)
++
++
++if __name__ == '__main__':
++    generate_module_rc(*sys.argv[1:])
+diff --git a/tools/lint/py2.yml b/tools/lint/py2.yml
+--- a/tools/lint/py2.yml
++++ b/tools/lint/py2.yml
+@@ -27,16 +27,17 @@ py2:
+         - testing/tools
+         - testing/web-platform
+         - toolkit
+         - tools/update-packaging
+         - xpcom
+ 
+         # These paths are intentionally excluded (Python 3 only)
+         - config/printconfigsetting.py
++        - config/version_win.py
+         - python/mozbuild/mozbuild/html_build_viewer.py
+         - python/mozlint
+         - python/mozperftest
+         - tools/crashreporter/system-symbols/win/symsrv-fetch.py
+         - tools/github-sync
+         - tools/lint
+         - tools/tryselect
+         - testing/performance
+
