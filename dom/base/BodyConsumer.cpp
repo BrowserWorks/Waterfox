@@ -291,9 +291,14 @@ NS_IMPL_ISUPPORTS(ConsumeBodyDoneObserver, nsIStreamLoaderObserver)
     WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
     MOZ_ASSERT(workerPrivate);
 
-    RefPtr<StrongWorkerRef> strongWorkerRef = StrongWorkerRef::Create(
-        workerPrivate, "BodyConsumer",
-        [consumer]() { consumer->ShutDownMainThreadConsuming(); });
+    RefPtr<StrongWorkerRef> strongWorkerRef =
+        StrongWorkerRef::Create(workerPrivate, "BodyConsumer", [consumer]() {
+          consumer->mConsumePromise = nullptr;
+          consumer->mBodyConsumed = true;
+          consumer->mShuttingDown = true;
+          consumer->ReleaseObject();
+          consumer->ShutDownMainThreadConsuming();
+        });
     if (NS_WARN_IF(!strongWorkerRef)) {
       aRv.Throw(NS_ERROR_FAILURE);
       return nullptr;
@@ -502,7 +507,7 @@ void BodyConsumer::BeginConsumeBodyMainThread(ThreadSafeWorkerRef* aWorkerRef) {
     // file, then generate and return a File blob.
     nsCOMPtr<nsIFile> file;
     rv = GetBodyLocalFile(getter_AddRefs(file));
-    if (!NS_WARN_IF(NS_FAILED(rv)) && file) {
+    if (!NS_WARN_IF(NS_FAILED(rv)) && file && !aWorkerRef) {
       ChromeFilePropertyBag bag;
       bag.mType = NS_ConvertUTF8toUTF16(mBodyMimeType);
 
