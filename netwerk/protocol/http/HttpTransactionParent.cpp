@@ -293,7 +293,9 @@ int64_t HttpTransactionParent::GetRequestSize() { return mRequestSize; }
 
 bool HttpTransactionParent::DataAlreadySent() { return mDataAlreadySent; }
 
-nsISupports* HttpTransactionParent::SecurityInfo() { return mSecurityInfo; }
+already_AddRefed<nsISupports> HttpTransactionParent::SecurityInfo() {
+  return do_AddRef(mSecurityInfo);
+}
 
 bool HttpTransactionParent::ProxyConnectFailed() { return mProxyConnectFailed; }
 
