@@ -232,6 +232,10 @@ public:
     case __NR_munmap:
       return Allow();
 
+      // musl libc will set this up in pthreads support.
+    case __NR_membarrier:
+      return Allow();
+
       // Signal handling
 #if defined(ANDROID) || defined(MOZ_ASAN)
     case __NR_sigaltstack:
@@ -624,6 +628,10 @@ public:
         return Trap(LStatTrap, mBroker);
       CASES_FOR_fstatat:
         return Trap(StatAtTrap, mBroker);
+      // Used by new libc and Rust's stdlib, if available.
+      // We don't have broker support yet so claim it does not exist.
+      case __NR_statx:
+        return Error(ENOSYS);
       case __NR_chmod:
         return Trap(ChmodTrap, mBroker);
       case __NR_link:
@@ -651,6 +659,7 @@ public:
       CASES_FOR_stat:
       CASES_FOR_lstat:
       CASES_FOR_fstatat:
+      case __NR_statx:
       case __NR_chmod:
       case __NR_link:
       case __NR_mkdir:
