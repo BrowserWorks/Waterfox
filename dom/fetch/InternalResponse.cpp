@@ -17,12 +17,15 @@
 namespace mozilla {
 namespace dom {
 
-InternalResponse::InternalResponse(uint16_t aStatus, const nsACString& aStatusText)
+InternalResponse::InternalResponse(uint16_t aStatus,
+                                   const nsACString& aStatusText,
+                                   RequestCredentials aCredentialsMode)
   : mType(ResponseType::Default)
   , mStatus(aStatus)
   , mStatusText(aStatusText)
   , mHeaders(new InternalHeaders(HeadersGuardEnum::Response))
   , mBodySize(UNKNOWN_BODY_SIZE)
+  , mCredentialsMode(aCredentialsMode)
 {
 }
 
@@ -184,7 +187,7 @@ InternalResponse::CORSResponse()
   MOZ_ASSERT(!mWrappedResponse, "Can't CORSResponse a already wrapped response");
   RefPtr<InternalResponse> cors = CreateIncompleteCopy();
   cors->mType = ResponseType::Cors;
-  cors->mHeaders = InternalHeaders::CORSHeaders(Headers());
+  cors->mHeaders = InternalHeaders::CORSHeaders(Headers(), mCredentialsMode);
   cors->mWrappedResponse = this;
   return cors.forget();
 }
