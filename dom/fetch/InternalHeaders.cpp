@@ -406,7 +406,7 @@ InternalHeaders::BasicHeaders(InternalHeaders* aHeaders)
 
 // static
 already_AddRefed<InternalHeaders>
-InternalHeaders::CORSHeaders(InternalHeaders* aHeaders)
+InternalHeaders::CORSHeaders(InternalHeaders* aHeaders, RequestCredentials aCredentialsMode)
 {
   RefPtr<InternalHeaders> cors = new InternalHeaders(aHeaders->mGuard);
   ErrorResult result;
@@ -415,6 +415,7 @@ InternalHeaders::CORSHeaders(InternalHeaders* aHeaders)
   aHeaders->GetFirst(NS_LITERAL_CSTRING("Access-Control-Expose-Headers"), acExposedNames, result);
   MOZ_ASSERT(!result.Failed());
 
+  bool allowAllHeaders = false;
   AutoTArray<nsCString, 5> exposeNamesArray;
   nsCCharSeparatedTokenizer exposeTokens(acExposedNames, ',');
   while (exposeTokens.hasMoreTokens()) {
@@ -430,13 +431,21 @@ InternalHeaders::CORSHeaders(InternalHeaders* aHeaders)
       break;
     }
 
+    if (token.EqualsLiteral("*") &&
+        aCredentialsMode != RequestCredentials::Include) {
+      allowAllHeaders = true;
+    }
+
     exposeNamesArray.AppendElement(token);
   }
 
   nsCaseInsensitiveCStringArrayComparator comp;
   for (uint32_t i = 0; i < aHeaders->mList.Length(); ++i) {
     const Entry& entry = aHeaders->mList[i];
-    if (entry.mName.EqualsASCII("cache-control") ||
+    if (allowAllHeaders) {
+      cors->Append(entry.mName, entry.mValue, result);
+      MOZ_ASSERT(!result.Failed());
+    } else if (entry.mName.EqualsASCII("cache-control") ||
         entry.mName.EqualsASCII("content-language") ||
         entry.mName.EqualsASCII("content-type") ||
         entry.mName.EqualsASCII("expires") ||

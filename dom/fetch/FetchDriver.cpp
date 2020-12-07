@@ -528,7 +528,8 @@ FetchDriver::OnStartRequest(nsIRequest* aRequest,
     rv = httpChannel->GetResponseStatusText(statusText);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
 
-    response = new InternalResponse(responseStatus, statusText);
+    response = new InternalResponse(responseStatus, statusText,
+                                    mRequest->GetCredentialsMode());
 
     response->Headers()->FillResponseHeaders(httpChannel);
 
@@ -543,7 +544,8 @@ FetchDriver::OnStartRequest(nsIRequest* aRequest,
     }
     MOZ_ASSERT(!result.Failed());
   } else {
-    response = new InternalResponse(200, NS_LITERAL_CSTRING("OK"));
+    response = new InternalResponse(200, NS_LITERAL_CSTRING("OK"),
+                                    mRequest->GetCredentialsMode());
 
     ErrorResult result;
     nsAutoCString contentType;
