@@ -57,7 +57,7 @@ WORKDIR /home/ubuntu
 RUN chown -R ubuntu /home/ubuntu
 USER ubuntu
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-RUN rustup default 1.37.0
+RUN rustup default 1.38.0
 
 #RUN python /root/bootstrap.py --application-choice=browser --vcs git --no-interactive
 RUN ./mach bootstrap --application-choice=browser --no-interactive
