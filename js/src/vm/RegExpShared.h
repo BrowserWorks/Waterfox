@@ -146,16 +146,6 @@ class RegExpShared : public gc::TenuredCell
     /* Internal functions. */
     RegExpShared(JSAtom* source, JS::RegExpFlags flags);
 
-    static bool compile(JSContext* cx,
-                        MutableHandleRegExpShared res,
-                        HandleLinearString input,
-                        CodeKind code);
-    static bool compile(JSContext* cx,
-                        MutableHandleRegExpShared res,
-                        HandleAtom pattern,
-                        HandleLinearString input,
-                        CodeKind code);
-
     static bool compileIfNecessary(JSContext* cx,
                                    MutableHandleRegExpShared res,
                                    HandleLinearString input,
