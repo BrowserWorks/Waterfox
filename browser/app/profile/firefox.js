@@ -39,7 +39,7 @@ pref("extensions.getAddons.cache.enabled", true);
 pref("extensions.getAddons.get.url", "https://services.addons.mozilla.org/api/v3/addons/search/?guid=%IDS%&lang=%LOCALE%");
 pref("extensions.getAddons.search.browseURL", "https://addons.mozilla.org/%LOCALE%/firefox/search?q=%TERMS%&platform=%OS%&appver=%VERSION%");
 pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firefox/");
-pref("extensions.getAddons.langpacks.url", "https://services.addons.mozilla.org/api/v3/addons/language-tools/?app=firefox&type=language&appversion=%VERSION%");
+pref("extensions.getAddons.langpacks.url", "", locked);
 pref("extensions.getAddons.discovery.api_url", "", locked);
 
 // Use bloomfilters for the addons blocklist, instead of JSON only.
@@ -1650,10 +1650,10 @@ pref("browser.contentblocking.report.monitor.home_page_url", "https://monitor.fi
 pref("browser.contentblocking.report.manage_devices.url", "https://accounts.firefox.com/settings/clients");
 pref("browser.contentblocking.report.endpoint_url", "https://monitor.firefox.com/user/breach-stats?includeResolved=true");
 pref("browser.contentblocking.report.proxy_extension.url", "https://fpn.firefox.com/browser?utm_source=firefox-desktop&utm_medium=referral&utm_campaign=about-protections&utm_content=about-protections");
-pref("browser.contentblocking.report.lockwise.mobile-ios.url", "https://apps.apple.com/app/id1314000270");
-pref("browser.contentblocking.report.lockwise.mobile-android.url", "https://play.google.com/store/apps/details?id=mozilla.lockbox&referrer=utm_source%3Dprotection_report%26utm_content%3Dmobile_promotion");
-pref("browser.contentblocking.report.mobile-ios.url", "https://apps.apple.com/app/firefox-private-safe-browser/id989804926");
-pref("browser.contentblocking.report.mobile-android.url", "https://play.google.com/store/apps/details?id=org.mozilla.firefox&referrer=utm_source%3Dprotection_report%26utm_content%3Dmobile_promotion");
+pref("browser.contentblocking.report.lockwise.mobile-ios.url", "", locked);
+pref("browser.contentblocking.report.lockwise.mobile-android.url", "", locked);
+pref("browser.contentblocking.report.mobile-ios.url", "", locked);
+pref("browser.contentblocking.report.mobile-android.url", "", locked);
 
 // Protection Report's SUMO urls
 pref("browser.contentblocking.report.lockwise.how_it_works.url", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/password-manager-report");
@@ -1802,7 +1802,7 @@ pref("webchannel.allowObject.urlWhitelist", "");
 // Whether or not the browser should scan for unsubmitted
 // crash reports, and then show a notification for submitting
 // those reports.
-  pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
+pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
 
 // chancesUntilSuppress is how many times we'll show the unsubmitted
 // crash report notification across different days and shutdown
@@ -1876,7 +1876,7 @@ pref("browser.chrome.errorReporter.infoURL",
 
 // Normandy client preferences
 pref("app.normandy.api_url", "", locked);
-pref("app.normandy.dev_mode", false);
+pref("app.normandy.dev_mode", false, locked);
 pref("app.normandy.enabled", false, locked);
 pref("app.normandy.first_run", false, locked);
 pref("app.normandy.logging.level", 50, locked); // Warn
