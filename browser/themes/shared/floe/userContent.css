@@ -174,10 +174,6 @@
   --preference-unselected-color: var(--wfx-dimmed-content-color) !important;
   --gear-icon-fill: var(--wfx-content-color) !important;
   
-  /*--themeLight: rgb(60,60,60) !important;
-  --themeDark: var(--wfx-content-color) !important;
-  --themeDarkAlt: var(--wfx-lt-primary-color) !important;
-  --themePrimary: var(--wfx-lt-primary-color) !important;*/
   --theme-tab-toolbar-background: var(--wfx-tree-bg-color) !important;
   --theme-selection-background: var(--wfx-lt-primary-color) !important;
   --theme-toolbar-icon-color: currentColor !important;
