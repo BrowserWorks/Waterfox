@@ -349,7 +349,7 @@ pref("browser.triple_click_selects_paragraph", true);
 pref("print.shrink-to-fit.scale-limit-percent", 20);
 
 // Whether we should display simplify page checkbox on print preview UI
-pref("print.use_simplify_page", false);
+pref("print.use_simplify_page", true);
 
 // Disable support for MathML
 pref("mathml.disabled",    false);
@@ -1779,6 +1779,9 @@ pref("network.dnsCacheExpirationGracePeriod", 60);
 // This preference can be used to turn off DNS prefetch.
 pref("network.dns.disablePrefetch", true);
 
+// This preference can be used to turn off DNS prefetch from HTTPS.
+pref("network.dns.disablePrefetchFromHTTPS", true);
+
 // This preference controls whether .onion hostnames are
 // rejected before being given to DNS. RFC 7686
 pref("network.dns.blockDotOnion", true);
@@ -2541,7 +2544,7 @@ pref("input_event_queue.count_for_prediction", 9);
 pref("plugins.navigator.hidden_ctp_plugin", "");
 
 // The default value for nsIPluginTag.enabledState (STATE_ENABLED = 2)
-pref("plugin.default.state", 2);
+pref("plugin.default.state", 1);
 
 // The MIME type that should bind to legacy java-specific invocations like
 // <applet> and <object data="java:foo">. Setting this to a non-java MIME type
@@ -4586,9 +4589,9 @@ pref("dom.clients.openwindow_favors_same_process", true);
 // When a crash happens, whether to include heap regions of the crash context
 // in the minidump. Enabled by default on nightly and aurora.
 #ifdef RELEASE_OR_BETA
-  pref("toolkit.crashreporter.include_context_heap", false);
+  pref("toolkit.crashreporter.include_context_heap", false, locked);
 #else
-  pref("toolkit.crashreporter.include_context_heap", true);
+  pref("toolkit.crashreporter.include_context_heap", false, locked);
 #endif
 
 // Open noopener links in a new process
@@ -4615,12 +4618,12 @@ pref("toolkit.legacyUserProfileCustomizations.stylesheets", true, locked);
 
 #ifdef MOZ_DATA_REPORTING
   pref("datareporting.policy.dataSubmissionEnabled", false, locked);
-  pref("datareporting.policy.dataSubmissionPolicyNotifiedTime", "0");
-  pref("datareporting.policy.dataSubmissionPolicyAcceptedVersion", 0);
-  pref("datareporting.policy.dataSubmissionPolicyBypassNotification", false);
-  pref("datareporting.policy.currentPolicyVersion", 2);
-  pref("datareporting.policy.minimumPolicyVersion", 1);
-  pref("datareporting.policy.minimumPolicyVersion.channel-beta", 2);
+  pref("datareporting.policy.dataSubmissionPolicyNotifiedTime", "0", locked);
+  pref("datareporting.policy.dataSubmissionPolicyAcceptedVersion", 1, locked);
+  pref("datareporting.policy.dataSubmissionPolicyBypassNotification", true, locked);
+  pref("datareporting.policy.currentPolicyVersion", 1, locked);
+  pref("datareporting.policy.minimumPolicyVersion", 1, locked);
+  pref("datareporting.policy.minimumPolicyVersion.channel-beta", 1, locked);
   pref("datareporting.policy.firstRunURL", "", locked);
 #endif
 
