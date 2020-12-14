@@ -2603,10 +2603,11 @@ BrowserGlue.prototype = {
         this._gmpInstallManager.simpleCheckAndInstall().catch(() => {});
       },
 
-      () => {
-        RemoteSettings.init();
-        this._addBreachesSyncHandler();
-      },
+      // Disable Firefox Remote Settings. May re-enable if things break.
+      // () => {
+      //   RemoteSettings.init();
+      //   this._addBreachesSyncHandler();
+      // },
 
       () => {
         PublicSuffixList.init();
