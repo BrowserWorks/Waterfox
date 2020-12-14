@@ -194,3 +194,7 @@ menuseparator {
 .menupopup-arrowscrollbox:not(:-moz-lwtheme)[scrolledtoend="true"]::part(scrollbutton-down) {
   visibility: collapse;
 }
+
+#menu_FileRestartItem {
+  display: none !important;
+}

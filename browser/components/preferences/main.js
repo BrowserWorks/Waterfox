@@ -101,6 +101,28 @@ Preferences.addAll([
   { id: "browser.privatebrowsing.autostart", type: "bool" },
   { id: "browser.sessionstore.warnOnQuit", type: "bool" },
 
+  // Restart Menu Item
+  { id: "browser.restart_menu.purgecache", type: "bool" },
+  { id: "browser.restart_menu.requireconfirm", type: "bool" },
+  { id: "browser.restart_menu.showpanelmenubtn", type: "bool" },
+  
+  // Tab Context Menu
+  { id: "browser.tabs.duplicateTab", type: "bool" },
+  { id: "browser.tabs.copyurl", type: "bool" },
+  { id: "browser.tabs.copyurl.activetab", type: "bool" },
+  { id: "browser.tabs.copyallurls", type: "bool" },
+  
+  // Status Bar
+  { id: "browser.statusbar.mode", type: "int" },
+  { id: "browser.statusbar.showbtn", type: "bool" },
+  { id: "browser.statusbar.showlinks", type: "bool" },
+  
+  // Window Controls Position
+  { id: "browser.windowControls.position", type: "wstring" },
+  
+  // Bookmarks Toolbar Position
+  { id: "browser.bookmarksBar.position", type: "wstring" },
+
   // Downloads
   { id: "browser.download.useDownloadDir", type: "bool" },
   { id: "browser.download.folderList", type: "int" },
@@ -131,6 +153,7 @@ Preferences.addAll([
   { id: "browser.tabs.warnOnClose", type: "bool" },
   { id: "browser.tabs.warnOnOpen", type: "bool" },
   { id: "browser.ctrlTab.recentlyUsedOrder", type: "bool" },
+  { id: "browser.tabBar.position", type: "wstring" },
 
   // CFR
   // {
@@ -3093,6 +3116,17 @@ var gMainPane = {
     }
     var currentDirPref = Preferences.get("browser.download.dir");
     return currentDirPref.value;
+  },
+  
+  toggleMoveWindowControls() {
+    if(Services.prefs.getBoolPref("browser.tabs.drawInTitlebar", window.matchMedia("(-moz-gtk-csd-hide-titlebar-by-default)").matches) && window.matchMedia("(-moz-gtk-csd-reversed-placement)").matches == false)
+    {
+      document.getElementById("windowControlsRadioGroup").disabled = "";
+    }
+    else
+    {
+      document.getElementById("windowControlsRadioGroup").disabled = "true";
+    }
   },
 };
 

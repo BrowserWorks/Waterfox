@@ -407,12 +407,16 @@ menuitem.bookmark-item {
 }
 
 #TabsToolbar[brighttext] > #window-controls > #minimize-button:hover,
-#TabsToolbar[brighttext] > #window-controls > #restore-button:hover {
+#TabsToolbar[brighttext] > #window-controls > #restore-button:hover,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #minimize-button:hover,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #restore-button:hover {
   background-color: hsla(0,0%,100%,.12);
 }
 
 #TabsToolbar[brighttext] > #window-controls > #minimize-button:hover:active,
-#TabsToolbar[brighttext] > #window-controls > #restore-button:hover:active {
+#TabsToolbar[brighttext] > #window-controls > #restore-button:hover:active,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #minimize-button:hover,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #restore-button:hover {
   background-color: hsla(0,0%,100%,.22);
 }
 
