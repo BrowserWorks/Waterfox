@@ -96,11 +96,9 @@ var FullZoom = {
     switch (event.type) {
       case "DoZoomEnlargeBy10":
         this.changeZoomBy(this._getTargetedBrowser(event), 0.1);
-        updateZoomStatus();
         break;
       case "DoZoomReduceBy10":
         this.changeZoomBy(this._getTargetedBrowser(event), -0.1);
-        updateZoomStatus();
         break;
     }
   },

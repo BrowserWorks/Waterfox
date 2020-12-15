@@ -58,6 +58,7 @@
     </deck>
   </vbox>
 #endif
+
 </groupbox>
 
 <!-- Tab preferences -->
@@ -113,34 +114,6 @@
                   />
         </hbox>
       </hbox>
-    </vbox>
-    <label><html:h2 data-l10n-id="tab-bar-position"/></label>
-    <description xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" flex="1">Restart to view changes.</description>
-    <vbox id="tabBarPositionSettingsContainer">
-    <radiogroup id="tabBarPositionGroup" preference="browser.tabBar.position" onsyncfrompreference="moveTabBar();">
-      <radio value="topAboveAB"
-             data-l10n-id="tab-top-above-ab"/>
-      <radio value="topUnderAB"
-             data-l10n-id="tab-top-under-ab"/>
-      <radio value="bottom"
-             data-l10n-id="tab-bottom"/>
-    </radiogroup>
-    </vbox>
-    
-    <!-- Tab Context Menu preferences -->
-    <label><html:h2 data-l10n-id="tabContextMenu-header"/></label>
-    <vbox id="tabContextMenuSettingsContainer">
-      <checkbox id="browser.tabs.duplicateTab" data-l10n-id="duplicate-tab-options"
-                preference="browser.tabs.duplicateTab"/>
-
-      <checkbox id="browser.tabs.copyurl" data-l10n-id="copy-tab-url-options"
-                preference="browser.tabs.copyurl"/>
-
-      <checkbox id="browser.tabs.copyurl.activetab" data-l10n-id="copy-active-tab-url-options"
-                preference="browser.tabs.copyurl.activetab"/>
-
-      <checkbox id="browser.tabs.copyallurls" data-l10n-id="copy-all-tab-urls-options"
-                preference="browser.tabs.copyallurls"/>
     </vbox>
 </groupbox>
 
@@ -291,76 +264,6 @@
               "/>
     </hbox>
   </hbox>
-</groupbox>
-
-<!-- Restart Menu Item preferences -->
-<groupbox id="restartGroup"
-          data-category="paneGeneral"
-          hidden="true">
-  <label><html:h2 data-l10n-id="restart-header"/></label>
-#ifndef XP_MACOSX
-  <checkbox id="browser.restart_menu.showpanelmenubtn" data-l10n-id="restart-paneluibtn"
-              preference="browser.restart_menu.showpanelmenubtn"/>
-#endif
-  <checkbox id="browser.restart_menu.purgecache" data-l10n-id="clean-fast-restart-cache"
-            preference="browser.restart_menu.purgecache"/>
-  <checkbox id="browser.restart_menu.requireconfirm" data-l10n-id="restart-reqconfirmation"
-            preference="browser.restart_menu.requireconfirm"/>
- </groupbox>
-
-<!-- Status Bar preferences -->
-<groupbox id="statusBarGroup"
-data-category="paneGeneral"
-hidden="true">
-<label><html:h2 data-l10n-id="statusBar-header"/></label>
-<description xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" flex="1">Restart to view changes.</description>
-<vbox id="statusBarContainer">
-<radiogroup id="statusBarRadioGroup" preference="browser.statusbar.mode" onsyncfrompreference="toggleStatusBar();">
-<radio id="showStatusBar"
-   value="2"
-   data-l10n-id="show-status-bar"/>
-<radio id="showStatusOverlay"
-   value="1"
-   data-l10n-id="show-status-overlay"/>
-<radio id="hideStatusBar"
-   value="0"
-   data-l10n-id="hide-status-bar"/>
-</radiogroup>
-<checkbox id="showButtonsRange" preference="browser.statusbar.showbtn"
-      data-l10n-id="show-btn-range"
-      onsyncfrompreference="showBtnRange();"/>
-<checkbox id="showLinks" preference="browser.statusbar.showlinks"
-data-l10n-id="show-links"/>
-</vbox>
-</groupbox>
-
-<!-- Window Controls Position preferences -->
-#ifdef XP_LINUX
-<groupbox id="windowControlsGroup"
-          data-category="paneGeneral"
-          hidden="true">
-  <label><html:h2 data-l10n-id="window-controls-position-header"/></label>
-    <radiogroup id="windowControlsRadioGroup" preference="browser.windowControls.position" onsyncfrompreference="gMainPane.toggleMoveWindowControls(); moveWindowControls();">
-      <radio value="right"
-             data-l10n-id="right-side"/>
-      <radio value="left"
-             data-l10n-id="left-side"/>
-    </radiogroup>
-</groupbox>
-#endif
-
-<!-- Bookmarks Toolbar Position preferences -->
-<groupbox id="bookmarksBarPositionGroup"
-          data-category="paneGeneral"
-          hidden="true">
-  <label><html:h2 data-l10n-id="bookmarks-bar-position-header"/></label>
-  <description xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" flex="1">Restart to view changes.</description>
-    <radiogroup id="bookmarksBarPositionRadioGroup" preference="browser.bookmarksBar.position" onsyncfrompreference="moveBookmarksBar();">
-      <radio value="top"
-             data-l10n-id="top-bookmarks"/>
-      <radio value="bottom"
-             data-l10n-id="tab-bottom"/>
-    </radiogroup>
 </groupbox>
 
 <!-- Zoom -->
