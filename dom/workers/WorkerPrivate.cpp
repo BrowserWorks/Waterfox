@@ -6793,7 +6793,7 @@ WorkerPrivate::GarbageCollectInternal(JSContext* aCx, bool aShrinking,
   if (aShrinking || aCollectChildren) {
     JS::PrepareForFullGC(aCx);
 
-    if (aShrinking) {
+    if (aShrinking && mSyncLoopStack.IsEmpty()) {
       JS::GCForReason(aCx, GC_SHRINK, JS::gcreason::DOM_WORKER);
 
       if (!aCollectChildren) {
