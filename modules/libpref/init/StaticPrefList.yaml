@@ -7637,7 +7637,7 @@
 # Enables the predictive service.
 - name: network.predictor.enabled
   type: bool
-  value: true
+  value: false
   mirror: always
 
 # Allow CookieJarSettings to be unblocked for channels without a document.

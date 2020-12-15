@@ -349,7 +349,7 @@ pref("browser.triple_click_selects_paragraph", true);
 pref("print.shrink-to-fit.scale-limit-percent", 20);
 
 // Whether we should display simplify page checkbox on print preview UI
-pref("print.use_simplify_page", false);
+pref("print.use_simplify_page", true);
 
 // Disable support for MathML
 pref("mathml.disabled",    false);
