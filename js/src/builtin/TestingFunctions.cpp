@@ -494,7 +494,7 @@ static bool GC(JSContext* cx, unsigned argc, Value* vp) {
         return false;
       }
     } else if (arg.isObject()) {
-      PrepareZoneForGC(UncheckedUnwrap(&arg.toObject())->zone());
+      PrepareZoneForGC(cx, UncheckedUnwrap(&arg.toObject())->zone());
       zone = true;
     }
   }
@@ -1445,7 +1445,7 @@ static bool ScheduleZoneForGC(JSContext* cx, unsigned argc, Value* vp) {
   if (args[0].isObject()) {
     // Ensure that |zone| is collected during the next GC.
     Zone* zone = UncheckedUnwrap(&args[0].toObject())->zone();
-    PrepareZoneForGC(zone);
+    PrepareZoneForGC(cx, zone);
   } else if (args[0].isString()) {
     // This allows us to schedule the atoms zone for GC.
     Zone* zone = args[0].toString()->zoneFromAnyThread();
@@ -1454,7 +1454,7 @@ static bool ScheduleZoneForGC(JSContext* cx, unsigned argc, Value* vp) {
       ReportUsageErrorASCII(cx, callee, "Specified zone not accessible for GC");
       return false;
     }
-    PrepareZoneForGC(zone);
+    PrepareZoneForGC(cx, zone);
   } else {
     RootedObject callee(cx, &args.callee());
     ReportUsageErrorASCII(cx, callee,

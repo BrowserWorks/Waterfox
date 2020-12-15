@@ -131,6 +131,8 @@ struct JSWrapObjectCallbacks {
   JSPreWrapCallback preWrap;
 };
 
+using JSDestroyZoneCallback = void (*)(JSFreeOp*, JS::Zone*);
+
 using JSDestroyCompartmentCallback = void (*)(JSFreeOp*, JS::Compartment*);
 
 using JSSizeOfIncludingThisCompartmentCallback =
@@ -316,6 +318,9 @@ JS_PUBLIC_API void SetHelperThreadTaskCallback(
     void (*callback)(js::UniquePtr<js::RunnableTask>));
 
 extern JS_PUBLIC_API const char* JS_GetImplementationVersion(void);
+
+extern JS_PUBLIC_API void JS_SetDestroyZoneCallback(
+    JSContext* cx, JSDestroyZoneCallback callback);
 
 extern JS_PUBLIC_API void JS_SetDestroyCompartmentCallback(
     JSContext* cx, JSDestroyCompartmentCallback callback);
