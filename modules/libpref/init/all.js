@@ -309,6 +309,9 @@ pref("dom.mouseevent.click.hack.use_legacy_non-primary_dispatch", "");
 // of content viewers to cache based on the amount of available memory.
 pref("browser.sessionhistory.max_total_viewers", -1);
 
+#ifdef MOZ_WIDGET_GTK
+pref("ui.use_unity_menubar", true);
+#endif
 pref("ui.click_hold_context_menus", false);
 // 0 = false, 1 = true, 2 = autodetect.
 pref("ui.android.mouse_as_touch", 1);
@@ -346,7 +349,7 @@ pref("browser.triple_click_selects_paragraph", true);
 pref("print.shrink-to-fit.scale-limit-percent", 20);
 
 // Whether we should display simplify page checkbox on print preview UI
-pref("print.use_simplify_page", false);
+pref("print.use_simplify_page", true);
 
 // Disable support for MathML
 pref("mathml.disabled",    false);

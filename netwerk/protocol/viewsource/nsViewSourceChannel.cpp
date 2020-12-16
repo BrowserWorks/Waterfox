@@ -128,6 +128,11 @@ nsresult nsViewSourceChannel::InitSrcdoc(nsIURI* aURI, nsIURI* aBaseURI,
   return NS_OK;
 }
 
+void nsViewSourceChannel::ReleaseListeners() {
+  mListener = nullptr;
+  mCallbacks = nullptr;
+}
+
 nsresult nsViewSourceChannel::UpdateLoadInfoResultPrincipalURI() {
   nsresult rv;
 
@@ -336,6 +341,10 @@ nsViewSourceChannel::AsyncOpen(nsIStreamListener* aListener) {
     MOZ_ASSERT(mCallbacks != this, "We have a cycle");
 
     mOpened = true;
+  }
+
+  if (NS_FAILED(rv)) {
+    ReleaseListeners();
   }
 
   return rv;
@@ -689,11 +698,18 @@ nsViewSourceChannel::OnStopRequest(nsIRequest* aRequest, nsresult aStatus) {
                                nullptr, aStatus);
     }
   }
+
+  nsresult rv;
   if (mReplaceRequest) {
-    return mListener->OnStopRequest(static_cast<nsIViewSourceChannel*>(this),
-                                    aStatus);
+    rv = mListener->OnStopRequest(static_cast<nsIViewSourceChannel*>(this),
+                                  aStatus);
+  } else {
+    rv = mListener->OnStopRequest(aRequest, aStatus);
   }
-  return mListener->OnStopRequest(aRequest, aStatus);
+
+  ReleaseListeners();
+
+  return rv;
 }
 
 // nsIStreamListener methods

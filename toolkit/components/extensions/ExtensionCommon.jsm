@@ -505,6 +505,9 @@ class BaseContext {
       ...address,
     });
     this.callOnClose(conduit);
+    conduit.setCloseCallback(() => {
+      this.forgetOnClose(conduit);
+    });
     return conduit;
   }
 

@@ -1109,6 +1109,11 @@ menupopup::part(drop-indicator) {
 
 :root[uidensity="compact"] #urlbar {
   --urlbar-height: 26px !important;
+  --urlbar-toolbar-height: 32px !important;
+}
+
+:root[uidensity="compact"] #urlbar-container {
+  --urlbar-container-height: 32px !important;
 }
 
 #urlbar[breakout] > #urlbar-input-container {
@@ -1892,6 +1897,7 @@ hbox#customization-footer button[disabled="true"] {
 /* :::::: PRINT PREVIEW :::::: */
 
 #print-preview-toolbar {
+  background-color: var(--wfx-purple-navy-60);
   color: var(--wfx-content-color);
   border-bottom: 1px solid var(--wfx-border-color);
 }

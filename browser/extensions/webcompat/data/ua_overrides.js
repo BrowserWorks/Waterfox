@@ -35,6 +35,114 @@ const AVAILABLE_UA_OVERRIDES = [
     },
   },
   {
+    id: "whatsapp",
+    platform: "all",
+    domain: "whatsapp.com",
+    bug: "0000000",
+      config: {
+        matches: ["*://*.whatsapp.com/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
+    id: "discord",
+    platform: "all",
+    domain: "discord.com",
+    bug: "0000000",
+      config: {
+        matches: ["*://*.discord.com/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
+    id: "youtubestudio",
+    platform: "all",
+    domain: "studio.youtube.com",
+    bug: "0000000",
+      config: {
+        matches: ["*://studio.youtube.com/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
+    id: "chasebank",
+    platform: "all",
+    domain: "chase.com",
+    bug: "0000000",
+      config: {
+        matches: ["*://*.chase.com/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
+    id: "swedbank",
+    platform: "all",
+    domain: "swedbank.se",
+    bug: "0000000",
+      config: {
+        matches: ["*://*.swedbank.se/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
+    id: "slack",
+    platform: "all",
+    domain: "slack.com",
+    bug: "0000000",
+      config: {
+        matches: ["*://*.slack.com/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
+    id: "netflix",
+    platform: "all",
+    domain: "netflix.com",
+    bug: "0000000",
+      config: {
+        matches: ["*://*.netflix.com/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
+    id: "amazon",
+    platform: "all",
+    domain: "amazon.com",
+    bug: "0000000",
+      config: {
+        matches: ["*://*.amazon.com/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
+    id: "amazon",
+    platform: "all",
+    domain: "amazon.co.uk",
+    bug: "0000000",
+      config: {
+        matches: ["*://*.amazon.co.uk/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
     id: "addons",
     platform: "all",
     domain: "addons.mozilla.org",

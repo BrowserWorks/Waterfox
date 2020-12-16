@@ -25,7 +25,8 @@
 #include "mozilla/layers/ISurfaceAllocator.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor
-#include "mozilla/mozalloc.h"               // for operator delete
+#include "mozilla/layers/SyncObject.h"
+#include "mozilla/mozalloc.h"  // for operator delete
 #include "mozilla/gfx/CriticalSection.h"
 #include "mozilla/webrender/WebRenderTypes.h"
 #include "nsCOMPtr.h"         // for already_AddRefed
@@ -68,7 +69,6 @@ class TextureClientPool;
 #endif
 class TextureForwarder;
 class KeepAlive;
-class SyncObjectClient;
 
 /**
  * TextureClient is the abstraction that allows us to share data between the
@@ -297,7 +297,7 @@ class TextureData {
 
   virtual bool ReadBack(TextureReadbackSink* aReadbackSink) { return false; }
 
-  virtual void SyncWithObject(SyncObjectClient* aSyncObject){};
+  virtual void SyncWithObject(RefPtr<SyncObjectClient> aSyncObject){};
 
   virtual TextureFlags GetTextureFlags() const {
     return TextureFlags::NO_FLAGS;
@@ -593,7 +593,7 @@ class TextureClient : public AtomicRefCountedWithFinalize<TextureClient> {
     mReadbackSink = aReadbackSink;
   }
 
-  void SyncWithObject(SyncObjectClient* aSyncObject) {
+  void SyncWithObject(RefPtr<SyncObjectClient> aSyncObject) {
     mData->SyncWithObject(aSyncObject);
   }
 

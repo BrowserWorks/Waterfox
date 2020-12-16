@@ -59,7 +59,7 @@ already_AddRefed<MediaDataDecoder> GpuDecoderModule::CreateVideoDecoder(
             AutoCompleteTask complete(&task);
             result = child->InitIPDL(
                 aParams.VideoConfig(), aParams.mRate.mValue, aParams.mOptions,
-                aParams.mKnowsCompositor->GetTextureFactoryIdentifier());
+                Some(aParams.mKnowsCompositor->GetTextureFactoryIdentifier()));
           }),
       NS_DISPATCH_NORMAL);
   task.Wait();

@@ -7637,7 +7637,7 @@
 # Enables the predictive service.
 - name: network.predictor.enabled
   type: bool
-  value: true
+  value: false
   mirror: always
 
 # Allow CookieJarSettings to be unblocked for channels without a document.
@@ -7802,7 +7802,7 @@
 # API instead of PR_GetAddrInfoByName
 - name: network.dns.dns_query_single_label
   type: RelaxedAtomicBool
-  value: true
+  value: false
   mirror: always
 
 # Whether the SOCKS proxy should be in charge of DNS resolution.

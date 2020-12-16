@@ -158,6 +158,10 @@ void XULPopupElement::GetState(nsString& aState) {
   // set this here in case there's no frame for the popup
   aState.AssignLiteral("closed");
 
+#ifdef MOZ_WIDGET_GTK
+  nsAutoString nativeState;
+#endif
+
   nsMenuPopupFrame* menuPopupFrame = do_QueryFrame(GetPrimaryFrame());
   if (menuPopupFrame) {
     switch (menuPopupFrame->PopupState()) {
@@ -181,6 +185,11 @@ void XULPopupElement::GetState(nsString& aState) {
         break;
     }
   }
+#ifdef MOZ_WIDGET_GTK
+  else if (GetAttr(kNameSpaceID_None, nsGkAtoms::_moz_nativemenupopupstate, nativeState)) {
+    aState = nativeState;
+  }
+#endif
 }
 
 nsINode* XULPopupElement::GetTriggerNode() const {

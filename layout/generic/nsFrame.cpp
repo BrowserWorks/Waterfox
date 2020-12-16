@@ -6167,7 +6167,7 @@ LogicalSize nsIFrame::ComputeSize(gfxContext* aRenderingContext,
       mainAxisCoord = &maxContStyleCoord;
       // (Note: if our main axis is the block axis, then this 'max-content'
       // value will be treated like 'auto', via the IsAutoBSize() call below.)
-    } else if (!flexBasis->IsAuto()) {
+    } else if (flexBasis->IsSize() && !flexBasis->IsAuto()) {
       // For all other non-'auto' flex-basis values, we just swap in the
       // flex-basis itself for the main-size property.
       mainAxisCoord = &flexBasis->AsSize();
@@ -6423,7 +6423,7 @@ LogicalSize nsContainerFrame::ComputeSizeWithIntrinsicDimensions(
         // effectively trying to produce the 'auto' sizing behavior).
         static const StyleSize autoSize(StyleSize::Auto());
         mainAxisCoord = &autoSize;
-      } else if (!flexBasis->IsAuto()) {
+      } else if (flexBasis->IsSize() && !flexBasis->IsAuto()) {
         // For all other non-'auto' flex-basis values, we just swap in the
         // flex-basis itself for the main-size property.
         mainAxisCoord = &flexBasis->AsSize();

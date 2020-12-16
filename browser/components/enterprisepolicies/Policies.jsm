@@ -1249,6 +1249,8 @@ var Policies = {
     },
   },
 
+  ManagedBookmarks: {},
+
   NetworkPrediction: {
     onBeforeAddons(manager, param) {
       setAndLockPref("network.dns.disablePrefetch", !param);
@@ -1453,9 +1455,11 @@ var Policies = {
         "layout.",
         "media.",
         "network.",
+        "pdfjs.",
         "places.",
         "print.",
         "signon.",
+        "spellchecker.",
         "ui.",
         "widget.",
       ];
@@ -1982,10 +1986,7 @@ var Policies = {
 
   WebsiteFilter: {
     onBeforeUIStartup(manager, param) {
-      this.filter = new WebsiteFilter(
-        param.Block || [],
-        param.Exceptions || []
-      );
+      WebsiteFilter.init(param.Block || [], param.Exceptions || []);
     },
   },
 };
@@ -2220,6 +2221,7 @@ function replacePathVariables(path) {
 function installAddonFromURL(url, extensionID, addon) {
   if (
     addon &&
+    addon.sourceURI &&
     addon.sourceURI.spec == url &&
     !addon.sourceURI.schemeIs("file")
   ) {

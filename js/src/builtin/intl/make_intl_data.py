@@ -1641,20 +1641,12 @@ def readICUTimeZonesFromTimezoneTypes(icuTzDir):
         if name.startswith(typeAliasTimeZoneKey):
             links[toTimeZone(name[len(typeAliasTimeZoneKey):])] = value
 
-    # Remove the ICU placeholder time zone "Etc/Unknown".
-    zones.remove(Zone("Etc/Unknown"))
-
-    # tzdata2017c removed the link Canada/East-Saskatchewan -> America/Regina,
-    # but it is still present in ICU sources. Manually remove it to keep our
-    # tables consistent with IANA.
-    del links[Zone("Canada/East-Saskatchewan")]
-
     validateTimeZones(zones, links)
 
     return (zones, links)
 
 
-def readICUTimeZonesFromZoneInfo(icuTzDir, ignoreFactory):
+def readICUTimeZonesFromZoneInfo(icuTzDir):
     """ Read the ICU time zone information from `icuTzDir`/zoneinfo64.txt
         and returns the tuple (zones, links).
     """
@@ -1678,18 +1670,6 @@ def readICUTimeZonesFromZoneInfo(icuTzDir, ignoreFactory):
     links = {Zone(tzNames[zone]): tzNames[target] for (zone, target) in tzLinks.items()}
     zones = {Zone(v) for v in tzNames if Zone(v) not in links}
 
-    # Remove the ICU placeholder time zone "Etc/Unknown".
-    zones.remove(Zone("Etc/Unknown"))
-
-    # tzdata2017c removed the link Canada/East-Saskatchewan -> America/Regina,
-    # but it is still present in ICU sources. Manually remove it to keep our
-    # tables consistent with IANA.
-    del links[Zone("Canada/East-Saskatchewan")]
-
-    # Remove the placeholder time zone "Factory".
-    if ignoreFactory:
-        zones.remove(Zone("Factory"))
-
     validateTimeZones(zones, links)
 
     return (zones, links)
@@ -1698,21 +1678,32 @@ def readICUTimeZonesFromZoneInfo(icuTzDir, ignoreFactory):
 def readICUTimeZones(icuDir, icuTzDir, ignoreFactory):
     # zoneinfo64.txt contains the supported time zones by ICU. This data is
     # generated from tzdata files, it doesn't include "backzone" in stock ICU.
-    (zoneinfoZones, zoneinfoLinks) = readICUTimeZonesFromZoneInfo(icuTzDir, ignoreFactory)
+    (zoneinfoZones, zoneinfoLinks) = readICUTimeZonesFromZoneInfo(icuTzDir)
 
     # timezoneTypes.txt contains the canonicalization information for ICU. This
     # data is generated from CLDR files. It includes data about time zones from
     # tzdata's "backzone" file.
     (typesZones, typesLinks) = readICUTimeZonesFromTimezoneTypes(icuTzDir)
 
+    # Remove the placeholder time zone "Factory".
+    # See also <https://github.com/eggert/tz/blob/master/factory>.
+    if ignoreFactory:
+        zoneinfoZones.remove(Zone("Factory"))
+
+    # Remove the ICU placeholder time zone "Etc/Unknown".
+    # See also <https://unicode.org/reports/tr35/#Time_Zone_Identifiers>.
+    for zones in (zoneinfoZones, typesZones):
+        zones.remove(Zone("Etc/Unknown"))
+
+    # Remove any outdated ICU links.
+    for links in (zoneinfoLinks, typesLinks):
+        for zone in otherICULegacyLinks().keys():
+            if zone not in links:
+                raise KeyError(f"Can't remove non-existent link from '{zone}'")
+            del links[zone]
+
     # Information in zoneinfo64 should be a superset of timezoneTypes.
     def inZoneInfo64(zone): return zone in zoneinfoZones or zone in zoneinfoLinks
-
-    # Remove legacy ICU time zones from zoneinfo64 data.
-    (legacyZones, legacyLinks) = readICULegacyZones(icuDir)
-    zoneinfoZones = {zone for zone in zoneinfoZones if zone not in legacyZones}
-    zoneinfoLinks = {zone: target for (zone, target) in zoneinfoLinks.items()
-                     if zone not in legacyLinks}
 
     notFoundInZoneInfo64 = [zone for zone in typesZones if not inZoneInfo64(zone)]
     if notFoundInZoneInfo64:
@@ -1744,15 +1735,52 @@ def readICULegacyZones(icuDir):
     tzdir = TzDataDir(os.path.join(icuDir, "tools/tzcode"))
     (zones, links) = readIANAFiles(tzdir, ["icuzones"])
 
+    # Per spec we must recognize only IANA time zones and links, but ICU
+    # recognizes various legacy, non-IANA time zones and links. Compute these
+    # non-IANA time zones and links.
+
+    # Most legacy, non-IANA time zones and links are in the icuzones file.
+    (zones, links) = readIANAFiles(tzdir, ["icuzones"])
+
     # Remove the ICU placeholder time zone "Etc/Unknown".
+    # See also <https://unicode.org/reports/tr35/#Time_Zone_Identifiers>.
     zones.remove(Zone("Etc/Unknown"))
 
-    # tzdata2017c removed the link Canada/East-Saskatchewan -> America/Regina,
-    # but it is still present in ICU sources. Manually tag it as a legacy time
-    # zone so our tables are kept consistent with IANA.
-    links[Zone("Canada/East-Saskatchewan")] = "America/Regina"
+    # A handful of non-IANA zones/links are not in icuzones and must be added
+    # manually so that we won't invoke ICU with them.
+    for (zone, target) in otherICULegacyLinks().items():
+        if zone in links:
+            if links[zone] != target:
+                raise KeyError(
+                    f"Can't overwrite link '{zone} -> {links[zone]}' with '{target}'"
+                )
+            else:
+                print(
+                    f"Info: Link '{zone} -> {target}' can be removed from otherICULegacyLinks()"
+                )
+        links[zone] = target
 
     return (zones, links)
+
+
+def otherICULegacyLinks():
+    """The file `icuTzDir`/tools/tzcode/icuzones contains all ICU legacy time
+    zones with the exception of time zones which are removed by IANA after an
+    ICU release.
+
+    For example ICU 67 uses tzdata2018i, but tzdata2020b removed the link from
+    "US/Pacific-New" to "America/Los_Angeles". ICU standalone tzdata updates
+    don't include modified icuzones files, so we must manually record any IANA
+    modifications here.
+
+    After an ICU update, we can remove any no longer needed entries from this
+    function by checking if the relevant entries are now included in icuzones.
+    """
+
+    return {
+        # tzdata2020b removed the link US/Pacific-New -> America/Los_Angeles.
+        Zone("US/Pacific-New"): "America/Los_Angeles",
+    }
 
 
 def icuTzDataVersion(icuTzDir):
@@ -1858,6 +1886,12 @@ def processTimeZones(tzdataDir, icuDir, icuTzDir, version, ignoreBackzone, ignor
     (ianaZones, ianaLinks) = readIANATimeZones(tzdataDir, ignoreBackzone, ignoreFactory)
     (icuZones, icuLinks) = readICUTimeZones(icuDir, icuTzDir, ignoreFactory)
     (legacyZones, legacyLinks) = readICULegacyZones(icuDir)
+
+    # Remove all legacy ICU time zones.
+    icuZones = {zone for zone in icuZones if zone not in legacyZones}
+    icuLinks = {
+        zone: target for (zone, target) in icuLinks.items() if zone not in legacyLinks
+    }
 
     incorrectZones = findIncorrectICUZones(
         ianaZones, ianaLinks, icuZones, icuLinks, ignoreBackzone)
