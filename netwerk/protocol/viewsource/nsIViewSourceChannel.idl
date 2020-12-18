@@ -35,6 +35,11 @@ interface nsIViewSourceChannel : nsIChannel
     [must_use] attribute nsIURI baseURI;
 
     /**
+     * Get the inner channel wrapped by this nsIViewSourceChannel.
+     */
+    [notxpcom, nostdcall] nsIChannel getInnerChannel();
+
+    /**
      * If true (default), then replaces the nsIRequest* passed to
      * nsIStreamListener callback functions with itself, so that
      * nsIViewSourceChannel is available.
