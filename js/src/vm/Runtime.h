@@ -370,9 +370,6 @@ struct JSRuntime {
    */
   js::MainThreadData<bool> allowRelazificationForTesting;
 
-  /* Zone destroy callback. */
-  js::MainThreadData<JSDestroyZoneCallback> destroyZoneCallback;
-
   /* Compartment destroy callback. */
   js::MainThreadData<JSDestroyCompartmentCallback> destroyCompartmentCallback;
 
