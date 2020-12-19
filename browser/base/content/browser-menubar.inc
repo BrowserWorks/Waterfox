@@ -79,7 +79,6 @@
                           type="checkbox"
                           command="cmd_toggleOfflineStatus" data-l10n-id="menu-file-go-offline"/>
 <!-- We need to leave those strings in DTD until bug 1568133 is fixed. -->
-                          command="cmd_toggleOfflineStatus"/>
                 <menuitem id="app_restartBrowser"
 						              label="&restartMenu.label;"
                           oncommand="restartBrowser();"/>

@@ -313,10 +313,8 @@ toolbar[customizing] #whats-new-menu-button {
 }
 %ifdef MOZ_WIDGET_GTK
 @media (-moz-gtk-csd-reversed-placement: 0) {
-  :root:not([leftWindowControls]) .titlebar-spacer[type="pre-tabs"] {
-    display: none;
-  }
-  :root:not([sizemode=normal])[leftWindowControls] .titlebar-spacer[type="post-tabs"] {
+  :root:not([sizemode=normal]):not([leftWindowControls]) .titlebar-spacer[type="pre-tabs"],
+  :root[gtktiledwindow=true]:not([leftWindowControls]) .titlebar-spacer[type="pre-tabs"] {
     display: none;
   }
 }

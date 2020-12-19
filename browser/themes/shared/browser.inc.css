@@ -623,7 +623,6 @@ menupopup::part(drop-indicator) {
 
 .toolbar-statusbar {
   box-shadow: var(--lwt-text-color);
-  color: var(--lwt-text-color);
   fill: var(--lwt-text-color);
   height: 22px;
   border-top: 1px solid rgba(38,38,38,.15);
@@ -767,4 +766,8 @@ menupopup::part(drop-indicator) {
 
 #toolbar-menubar-pagetitle {
   display: none;
+}
+
+#PanelUI-menu-button.browser {
+  list-style-image: url("chrome://branding/content/icon16.png");
 }

@@ -105,23 +105,26 @@ Preferences.addAll([
   { id: "browser.restart_menu.purgecache", type: "bool" },
   { id: "browser.restart_menu.requireconfirm", type: "bool" },
   { id: "browser.restart_menu.showpanelmenubtn", type: "bool" },
-  
+
   // Tab Context Menu
   { id: "browser.tabs.duplicateTab", type: "bool" },
   { id: "browser.tabs.copyurl", type: "bool" },
   { id: "browser.tabs.copyurl.activetab", type: "bool" },
   { id: "browser.tabs.copyallurls", type: "bool" },
-  
+
   // Status Bar
   { id: "browser.statusbar.mode", type: "int" },
   { id: "browser.statusbar.showbtn", type: "bool" },
   { id: "browser.statusbar.showlinks", type: "bool" },
-  
+
   // Window Controls Position
   { id: "browser.windowControls.position", type: "wstring" },
-  
+
   // Bookmarks Toolbar Position
   { id: "browser.bookmarksBar.position", type: "wstring" },
+
+  // Menu Icon Style
+  { id: "browser.menuIcon.style", type: "int" },
 
   // Downloads
   { id: "browser.download.useDownloadDir", type: "bool" },
@@ -804,6 +807,33 @@ var gMainPane = {
     Preferences.addSyncFromPrefListener(
       document.getElementById("browserContainersCheckbox"),
       () => this.readBrowserContainersCheckbox()
+    );
+    Preferences.addSyncFromPrefListener(
+      document.getElementById("tabBarPositionGroup"),
+      () => moveTabBar()
+    );
+    Preferences.addSyncFromPrefListener(
+      document.getElementById("statusBarRadioGroup"),
+      () => toggleStatusBar()
+    );
+    Preferences.addSyncFromPrefListener(
+      document.getElementById("showButtonsRange"),
+      () => showBtnRange()
+    );
+    Preferences.addSyncFromPrefListener(
+      document.getElementById("windowControlsRadioGroup"),
+      () => {
+        gMainPane.toggleMoveWindowControls();
+        moveWindowControls();
+      }
+    );
+    Preferences.addSyncFromPrefListener(
+      document.getElementById("bookmarksBarPositionRadioGroup"),
+      () => moveBookmarksBar()
+    );
+    Preferences.addSyncFromPrefListener(
+      document.getElementById("menuIconStyleRadioGroup"),
+      () => changeMenuIconStyle()
     );
 
     this.setInitialized();
@@ -3117,7 +3147,7 @@ var gMainPane = {
     var currentDirPref = Preferences.get("browser.download.dir");
     return currentDirPref.value;
   },
-  
+
   toggleMoveWindowControls() {
     if(Services.prefs.getBoolPref("browser.tabs.drawInTitlebar", window.matchMedia("(-moz-gtk-csd-hide-titlebar-by-default)").matches) && window.matchMedia("(-moz-gtk-csd-reversed-placement)").matches == false)
     {

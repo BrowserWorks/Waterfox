@@ -1211,7 +1211,7 @@ function updateZoomStatus() {
 }
 
 function toggleStatusBar() {
-  var statuspanel = windowRoot.ownerGlobal.document.getElementById("statuspanel");
+  var statuspanel = windowRoot.ownerGlobal.document.getElementById("statuspanel-inner");
   var statusbar = windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar");
   var zoombtn = windowRoot.ownerGlobal.document.querySelector("#urlbar-zoom-button");
   var pageActionSeparator = windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator");
@@ -1290,6 +1290,13 @@ function moveTabBar()
     windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
     root.setAttribute("tabBarPosition", Services.prefs.getStringPref("browser.tabBar.position"));
  }
+
+ // Set title on top bar when title bar is disabled and tab bar position is different than default
+ const topBar = windowRoot.ownerGlobal.document.querySelector("#toolbar-menubar-pagetitle");
+ const activeTab = document.querySelector('tab[selected="true"]')
+ if (topBar && activeTab) {
+   topBar.textContent = activeTab.getAttribute("label");
+  }
 }
 
 function moveWindowControls() {
@@ -1320,5 +1327,17 @@ function moveBookmarksBar() {
     {
       windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', bookmarksBar);
     }
+  }
+}
+
+function changeMenuIconStyle() {
+  var menuBtn = windowRoot.ownerGlobal.document.querySelector("#PanelUI-menu-button");
+  if (Services.prefs.getIntPref("browser.menuIcon.style") == 0) {
+    if (menuBtn.classList.contains("browser")) {
+      menuBtn.classList.remove("browser");
+    }
+  }
+  else if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
+    menuBtn.classList.add("browser");
   }
 }

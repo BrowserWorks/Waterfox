@@ -115,9 +115,8 @@
       </hbox>
     </vbox>
     <label><html:h2 data-l10n-id="tab-bar-position"/></label>
-    <description xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" flex="1">Restart to view changes.</description>
     <vbox id="tabBarPositionSettingsContainer">
-    <radiogroup id="tabBarPositionGroup" preference="browser.tabBar.position" onsyncfrompreference="moveTabBar();">
+    <radiogroup id="tabBarPositionGroup" preference="browser.tabBar.position">
       <radio value="topAboveAB"
              data-l10n-id="tab-top-above-ab"/>
       <radio value="topUnderAB"
@@ -126,7 +125,6 @@
              data-l10n-id="tab-bottom"/>
     </radiogroup>
     </vbox>
-    
     <!-- Tab Context Menu preferences -->
     <label><html:h2 data-l10n-id="tabContextMenu-header"/></label>
     <vbox id="tabContextMenuSettingsContainer">
@@ -313,9 +311,8 @@
 data-category="paneGeneral"
 hidden="true">
 <label><html:h2 data-l10n-id="statusBar-header"/></label>
-<description xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" flex="1">Restart to view changes.</description>
 <vbox id="statusBarContainer">
-<radiogroup id="statusBarRadioGroup" preference="browser.statusbar.mode" onsyncfrompreference="toggleStatusBar();">
+<radiogroup id="statusBarRadioGroup" preference="browser.statusbar.mode">
 <radio id="showStatusBar"
    value="2"
    data-l10n-id="show-status-bar"/>
@@ -327,8 +324,7 @@ hidden="true">
    data-l10n-id="hide-status-bar"/>
 </radiogroup>
 <checkbox id="showButtonsRange" preference="browser.statusbar.showbtn"
-      data-l10n-id="show-btn-range"
-      onsyncfrompreference="showBtnRange();"/>
+data-l10n-id="show-btn-range"/>
 <checkbox id="showLinks" preference="browser.statusbar.showlinks"
 data-l10n-id="show-links"/>
 </vbox>
@@ -340,7 +336,7 @@ data-l10n-id="show-links"/>
           data-category="paneGeneral"
           hidden="true">
   <label><html:h2 data-l10n-id="window-controls-position-header"/></label>
-    <radiogroup id="windowControlsRadioGroup" preference="browser.windowControls.position" onsyncfrompreference="gMainPane.toggleMoveWindowControls(); moveWindowControls();">
+    <radiogroup id="windowControlsRadioGroup" preference="browser.windowControls.position">
       <radio value="right"
              data-l10n-id="right-side"/>
       <radio value="left"
@@ -354,12 +350,24 @@ data-l10n-id="show-links"/>
           data-category="paneGeneral"
           hidden="true">
   <label><html:h2 data-l10n-id="bookmarks-bar-position-header"/></label>
-  <description xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" flex="1">Restart to view changes.</description>
-    <radiogroup id="bookmarksBarPositionRadioGroup" preference="browser.bookmarksBar.position" onsyncfrompreference="moveBookmarksBar();">
+    <radiogroup id="bookmarksBarPositionRadioGroup" preference="browser.bookmarksBar.position">
       <radio value="top"
              data-l10n-id="top-bookmarks"/>
       <radio value="bottom"
              data-l10n-id="tab-bottom"/>
+    </radiogroup>
+</groupbox>
+
+<!-- Menu Icon Style preferences -->
+<groupbox id="menuIconStyleGroup"
+          data-category="paneGeneral"
+          hidden="true">
+  <label><html:h2 data-l10n-id="menu-icon-style-header"/></label>
+    <radiogroup id="menuIconStyleRadioGroup" preference="browser.menuIcon.style">
+      <radio value="0"
+             data-l10n-id="menu-icon"/>
+      <radio value="1"
+             data-l10n-id="browser-icon"/>
     </radiogroup>
 </groupbox>
 
@@ -423,8 +431,8 @@ data-l10n-id="show-links"/>
     </hbox>
   </hbox>
 
-  <checkbox id="useSystemLocale" hidden="true" 
-            data-l10n-id="use-system-locale" 
+  <checkbox id="useSystemLocale" hidden="true"
+            data-l10n-id="use-system-locale"
             data-l10n-args='{"localeName": "und"}'
             preference="intl.regional_prefs.use_os_locales"/>
 

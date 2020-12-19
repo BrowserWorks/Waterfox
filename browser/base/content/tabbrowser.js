@@ -976,7 +976,13 @@
 
     updateTitlebar() {
       document.title = this.getWindowTitleForBrowser(this.selectedBrowser);
-      // windowRoot.ownerGlobal.document.querySelector("#toolbar-menubar-pagetitle").textContent = this.getWindowTitleForBrowser(this.selectedBrowser).replace(' - '+windowRoot.ownerGlobal.document.querySelector("window").getAttribute("titlemodifier"), '');
+
+      // Set title on top bar when title bar is disabled and tab bar position is different than default
+      const topBar = windowRoot.ownerGlobal.document.querySelector("#toolbar-menubar-pagetitle");
+      const activeTab = document.querySelector('tab[selected="true"]')
+      if (topBar && activeTab) {
+        topBar.textContent = activeTab.getAttribute("label");
+       }
     },
 
     updateCurrentBrowser(aForceUpdate) {

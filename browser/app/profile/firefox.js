@@ -2441,3 +2441,8 @@ pref("browser.bookmarksBar.position", "top");
 
 // Show links on Status Bar or overlay
 pref("browser.statusbar.showlinks", true);
+
+// Menu Icon Style
+// 0 - Menu Icon
+// 1 - Browser Icon
+pref("browser.menuIcon.style", 0);
