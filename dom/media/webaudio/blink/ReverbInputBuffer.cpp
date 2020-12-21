@@ -33,55 +33,52 @@ using namespace mozilla;
 
 namespace WebCore {
 
-ReverbInputBuffer::ReverbInputBuffer(size_t length)
-    : m_writeIndex(0)
-{
+ReverbInputBuffer::ReverbInputBuffer(size_t length) : m_writeIndex(0) {
   m_buffer.SetLength(length);
   PodZero(m_buffer.Elements(), length);
 }
 
-void ReverbInputBuffer::write(const float* sourceP, size_t numberOfFrames)
-{
-    size_t bufferLength = m_buffer.Length();
-    bool isCopySafe = m_writeIndex + numberOfFrames <= bufferLength;
-    MOZ_ASSERT(isCopySafe);
-    if (!isCopySafe)
-        return;
+void ReverbInputBuffer::write(const float* sourceP, size_t numberOfFrames) {
+  // m_writeIndex is atomic and checked by other threads, so only touch
+  // it at the start and end.
+  size_t bufferLength = m_buffer.Length();
+  size_t index = m_writeIndex;
+  size_t newIndex = index + numberOfFrames;
 
-    memcpy(m_buffer.Elements() + m_writeIndex, sourceP, sizeof(float) * numberOfFrames);
+  MOZ_RELEASE_ASSERT(newIndex <= bufferLength);
 
-    m_writeIndex += numberOfFrames;
-    MOZ_ASSERT(m_writeIndex <= bufferLength);
+  memcpy(m_buffer.Elements() + index, sourceP, sizeof(float) * numberOfFrames);
 
-    if (m_writeIndex >= bufferLength)
-        m_writeIndex = 0;
-}
-
-float* ReverbInputBuffer::directReadFrom(int* readIndex, size_t numberOfFrames)
-{
-    size_t bufferLength = m_buffer.Length();
-    bool isPointerGood = readIndex && *readIndex >= 0 && *readIndex + numberOfFrames <= bufferLength;
-    MOZ_ASSERT(isPointerGood);
-    if (!isPointerGood) {
-        // Should never happen in practice but return pointer to start of buffer (avoid crash)
-        if (readIndex)
-            *readIndex = 0;
-        return m_buffer.Elements();
-    }
-
-    float* sourceP = m_buffer.Elements();
-    float* p = sourceP + *readIndex;
-
-    // Update readIndex
-    *readIndex = (*readIndex + numberOfFrames) % bufferLength;
-
-    return p;
-}
-
-void ReverbInputBuffer::reset()
-{
-    PodZero(m_buffer.Elements(), m_buffer.Length());
+  if (newIndex >= bufferLength) {
     m_writeIndex = 0;
+  }
 }
 
-} // namespace WebCore
+float* ReverbInputBuffer::directReadFrom(int* readIndex,
+                                         size_t numberOfFrames) {
+  size_t bufferLength = m_buffer.Length();
+  bool isPointerGood = readIndex && *readIndex >= 0 &&
+                       *readIndex + numberOfFrames <= bufferLength;
+  MOZ_ASSERT(isPointerGood);
+  if (!isPointerGood) {
+    // Should never happen in practice but return pointer to start of buffer
+    // (avoid crash)
+    if (readIndex) *readIndex = 0;
+    return m_buffer.Elements();
+  }
+
+  float* sourceP = m_buffer.Elements();
+  float* p = sourceP + *readIndex;
+
+  // Update readIndex
+  *readIndex = (*readIndex + numberOfFrames) % bufferLength;
+
+  return p;
+}
+
+void ReverbInputBuffer::reset() {
+  PodZero(m_buffer.Elements(), m_buffer.Length());
+  m_writeIndex = 0;
+}
+
+}  // namespace WebCore
