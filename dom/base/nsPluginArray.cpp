@@ -35,6 +35,7 @@ void nsPluginArray::Init() {
   if (obsService) {
     obsService->AddObserver(this, "plugin-info-updated", true);
   }
+  EnsurePlugins();
 }
 
 nsPluginArray::~nsPluginArray() = default;
