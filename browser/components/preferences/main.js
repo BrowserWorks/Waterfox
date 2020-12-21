@@ -820,13 +820,15 @@ var gMainPane = {
       document.getElementById("showButtonsRange"),
       () => showBtnRange()
     );
-    Preferences.addSyncFromPrefListener(
-      document.getElementById("windowControlsRadioGroup"),
-      () => {
-        gMainPane.toggleMoveWindowControls();
-        moveWindowControls();
-      }
-    );
+    if (AppConstants.platform == "linux") {
+      Preferences.addSyncFromPrefListener(
+        document.getElementById("windowControlsRadioGroup"),
+        () => {
+          gMainPane.toggleMoveWindowControls();
+          moveWindowControls();
+        }
+      );
+    }
     Preferences.addSyncFromPrefListener(
       document.getElementById("bookmarksBarPositionRadioGroup"),
       () => moveBookmarksBar()
