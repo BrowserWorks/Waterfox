@@ -307,14 +307,14 @@ toolbar[customizing] #whats-new-menu-button {
 %endif
 :root:not([chromemargin]) .titlebar-buttonbox-container,
 :root[inFullscreen] .titlebar-buttonbox-container,
-:root[inFullscreen] .titlebar-spacer,
+:root[inFullscreen]:not([leftWindowControls]) .titlebar-spacer,
 :root:not([tabsintitlebar]) .titlebar-spacer {
   display: none;
 }
 %ifdef MOZ_WIDGET_GTK
 @media (-moz-gtk-csd-reversed-placement: 0) {
-  :root:not([sizemode=normal]) .titlebar-spacer[type="pre-tabs"],
-  :root[gtktiledwindow=true] .titlebar-spacer[type="pre-tabs"] {
+  :root:not([sizemode=normal]):not([leftWindowControls]) .titlebar-spacer[type="pre-tabs"],
+  :root[gtktiledwindow=true]:not([leftWindowControls]) .titlebar-spacer[type="pre-tabs"] {
     display: none;
   }
 }

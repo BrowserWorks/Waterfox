@@ -148,12 +148,16 @@ menuitem.bookmark-item {
 }
 
 #TabsToolbar[brighttext] > #window-controls > #minimize-button:hover,
-#TabsToolbar[brighttext] > #window-controls > #restore-button:hover {
+#TabsToolbar[brighttext] > #window-controls > #restore-button:hover,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #minimize-button:hover,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #restore-button:hover {
   background-color: hsla(0,0%,100%,.12);
 }
 
 #TabsToolbar[brighttext] > #window-controls > #minimize-button:hover:active,
-#TabsToolbar[brighttext] > #window-controls > #restore-button:hover:active {
+#TabsToolbar[brighttext] > #window-controls > #restore-button:hover:active,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #minimize-button:hover,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #restore-button:hover {
   background-color: hsla(0,0%,100%,.22);
 }
 
@@ -487,7 +491,7 @@ notification[value="translation"] menulist::part(dropmarker) {
   :root[tabsintitlebar]:not([inDOMFullscreen]) #titlebar:-moz-lwtheme {
     visibility: hidden;
   }
-  :root[tabsintitlebar]:not([inDOMFullscreen]) #toolbar-menubar:-moz-lwtheme,
+  :root[tabsintitlebar]:not([inDOMFullscreen]):not([inFullscreen]) #toolbar-menubar:-moz-lwtheme,
   :root[tabsintitlebar]:not([inDOMFullscreen]) #TabsToolbar:-moz-lwtheme {
     visibility: visible;
   }
@@ -568,4 +572,11 @@ notification[value="translation"] menulist::part(dropmarker) {
       -moz-box-ordinal-group: 0;
     }
   }
+
+  @media (-moz-gtk-csd-reversed-placement: 0) {
+    :root[tabsintitlebar][leftWindowControls] .titlebar-buttonbox-container, :root[tabsintitlebar][leftWindowControls] .titlebar-buttonbox-container .titlebar-close, :root[tabsintitlebar][leftWindowControls][inFullscreen] #window-controls, :root[tabsintitlebar][leftWindowControls][inFullscreen] #window-controls #close-button{
+      -moz-box-ordinal-group: 0;
+    }
+  }
+
 }

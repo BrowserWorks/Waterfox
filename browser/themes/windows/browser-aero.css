@@ -214,10 +214,10 @@
         }
 
         #toolbar-menubar[brighttext] > #menubar-items > #main-menubar > menu[_moz-menuactive="true"],
-        toolbar[brighttext] .titlebar-button:not(.titlebar-close):hover {
+        :root[lwt-popup-brighttext] .titlebar-button:not(.titlebar-close):hover {
           background-color: hsla(0,0%,100%,.22);
         }
-        toolbar[brighttext] .titlebar-button:not(.titlebar-close):hover:active {
+        :root[lwt-popup-brighttext] .titlebar-button:not(.titlebar-close):hover:active {
           background-color: hsla(0,0%,100%,.32);
         }
 

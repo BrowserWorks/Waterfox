@@ -79,6 +79,9 @@
                           type="checkbox"
                           command="cmd_toggleOfflineStatus" data-l10n-id="menu-file-go-offline"/>
 <!-- We need to leave those strings in DTD until bug 1568133 is fixed. -->
+                <menuitem id="app_restartBrowser"
+						              label="&restartMenu.label;"
+                          oncommand="restartBrowser();"/>
                 <menuitem id="menu_FileQuitItem"
 #ifdef XP_WIN
                           label="&quitApplicationCmdWin2.label;"

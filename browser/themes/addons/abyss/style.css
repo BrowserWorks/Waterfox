@@ -8,7 +8,7 @@
   --wfx-dt-primary-color-a50: rgba(3,161,236,.5);
   --wfx-dt-primary-color-hover: rgb(3,142,206);
   --wfx-dt-primary-color-active: rgb(0,122,184);
-  
+
   /* Private browsing - primary color */
   --wfx-pbm-primary-color: rgb(156,115,186);
   --wfx-pbm-primary-color-a15: rgba(156,115,186,.15);
@@ -16,7 +16,7 @@
   --wfx-pbm-primary-color-a30: rgba(156,115,186,.3);
   --wfx-pbm-primary-color-hover: rgb(136,85,171);
   --wfx-pbm-primary-color-active: rgb(117,54,159);
-  
+
   /* Secondary color */
   --wfx-purple-navy-30: rgb(66,72,102);
   --wfx-purple-navy-40: rgb(55,60,86);
@@ -25,14 +25,14 @@
   --wfx-purple-navy-70: rgb(22,24,40);
   --wfx-purple-navy-80: rgb(11,12,27);
   --wfx-purple-navy-90: rgb(4,6,20);
-  
+
   /* Various attention colors */
   --wfx-green-color: rgb(150,240,100);
   --wfx-red-color: rgb(220,60,60);
   --wfx-red-color-a15: rgba(220,60,60,.15);
   --wfx-yellow-color: rgb(216,184,38);
   --wfx-yellow-color-a15: rgba(216,184,38,.15);
-  
+
   /* Forground/background colors */
   --wfx-content-color: rgba(249,249,255,.7);
   --wfx-dimmed-content-color: rgba(249,249,255,.3);
@@ -40,29 +40,29 @@
   --wfx-arrowpanel-bg-color: var(--wfx-purple-navy-50);
   --wfx-tree-bg-color: var(--wfx-purple-navy-60);
   --wfx-tree-row-bg-odd-color: rgba(22,24,40,.5);
-  
+
   /* Border radius */
   --wfx-border-radius: 3px;
   --wfx-large-radius: 1000px;
-  
+
   /* Border/separator/outline */
   --wfx-border-color: var(--wfx-purple-navy-90);
   --wfx-separator-color:  rgba(175,180,255,.25);
   --wfx-btn-focus-outline-color: var(--wfx-separator-color);
-  
+
   /* Button colors */
   --wfx-back-btn-bg-color: var(--wfx-purple-navy-80);
   --wfx-btn-bg-color: var(--wfx-purple-navy-50);
   --wfx-btn-hover-color: var(--wfx-purple-navy-40);
   --wfx-btn-lighter-hover-color: var(--wfx-purple-navy-30);
 
-  
+
   /* Default FX variables - with edited values */
   --focus-ring-box-shadow: 0 0 0 1px var(--wfx-btn-focus-outline-color) !important;
   --toolbarbutton-focus-outline: 1px dotted var(--wfx-dt-primary-color) !important;
   --arrowpanel-dimmed: var(--wfx-btn-hover-color) !important;
   --arrowpanel-dimmed-further: var(--wfx-btn-lighter-hover-color) !important;
-   
+
 }
 
 
@@ -359,7 +359,7 @@ toolbox:hover .tabbrowser-tab:not(:hover) > .tab-stack > .tab-content > .tab-ico
 }
 
 :root[uidensity=touch] {
-	
+
   --svg-selected-before: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:svg='http://www.w3.org/2000/svg' width='40px' height='41px' preserveAspectRatio='none'><defs><svg:clipPath id='tab-curve-clip-path-start' clipPathUnits='objectBoundingBox'><svg:path d='m 1,0.065 0.05,0 0,0.938 -1,0 0,-0.028 C 0.32082458,0.95840561 0.4353096,0.81970962 0.48499998,0.5625 0.51819998,0.3905 0.535,0.0659 1,0.065 z'/></svg:clipPath><svg:clipPath id='tab-curve-clip-path-end' clipPathUnits='objectBoundingBox'><svg:path d='m 0,0.065 -0.05,0 0,0.938 1,0 0,-0.028 C 0.67917542,0.95840561 0.56569036,0.81970962 0.51599998,0.5625 0.48279998,0.3905 0.465,0.0659 0,0.065 z'/></svg:clipPath><svg:clipPath id='tab-hover-clip-path' clipPathUnits='objectBoundingBox'><svg:path d='M 0,0.2 0,1 1,1, 1,0.2 z'/></svg:clipPath></defs><foreignObject width='40' height='41' clip-path='url(%23tab-curve-clip-path-start)'><div id='tab-background-fill' style='background-color:rgb(33, 36, 54);background-repeat:no-repeat;height:100%;width:100%;' xmlns='http://www.w3.org/1999/xhtml'></div></foreignObject></svg>");
 
   --svg-selected-after: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:svg='http://www.w3.org/2000/svg' width='40px' height='41px' preserveAspectRatio='none'><defs><svg:clipPath id='tab-curve-clip-path-start' clipPathUnits='objectBoundingBox'><svg:path d='m 1,0.065 0.05,0 0,0.938 -1,0 0,-0.028 C 0.32082458,0.95840561 0.4353096,0.81970962 0.48499998,0.5625 0.51819998,0.3905 0.535,0.0659 1,0.065 z'/></svg:clipPath><svg:clipPath id='tab-curve-clip-path-end' clipPathUnits='objectBoundingBox'><svg:path d='m 0,0.065 -0.05,0 0,0.938 1,0 0,-0.028 C 0.67917542,0.95840561 0.56569036,0.81970962 0.51599998,0.5625 0.48279998,0.3905 0.465,0.0659 0,0.065 z'/></svg:clipPath><svg:clipPath id='tab-hover-clip-path' clipPathUnits='objectBoundingBox'><svg:path d='M 0,0.2 0,1 1,1, 1,0.2 z'/></svg:clipPath></defs><foreignObject width='40' height='41' clip-path='url(%23tab-curve-clip-path-end)'><div id='tab-background-fill' style='background-color:rgb(33, 36, 54);background-repeat:no-repeat;height:100%;width:100%;' xmlns='http://www.w3.org/1999/xhtml'></div></foreignObject></svg>");
@@ -434,7 +434,7 @@ toolbar[brighttext] .titlebar-button:not(.titlebar-close):hover {
   color: rgb(255,255,255) !important;
 }
 
-#toolbar-menubar[brighttext] > #menubar-items > #main-menubar > menu[_moz-menuactive="true"][open]:hover, 
+#toolbar-menubar[brighttext] > #menubar-items > #main-menubar > menu[_moz-menuactive="true"][open]:hover,
 #toolbar-menubar[brighttext] > #menubar-items > #main-menubar > menu[_moz-menuactive="true"][open] {
   background-color: var(--wfx-purple-navy-90);
   color: var(--wfx-dt-primary-color) !important;
@@ -568,7 +568,7 @@ toolbarseparator {
   padding: 0 !important;
   margin-top: 3px !important;
   margin-bottom: 3px !important;
-  
+
 }
 
 :root[uidensity="compact"] toolbarseparator {
@@ -611,12 +611,12 @@ panel input,
 #editBookmarkPanelRows > vbox > textbox,
 #editBookmarkPanelRows > vbox > hbox > textbox,
 textbox:not(.findbar-textbox) {
-  background-color: var(--wfx-purple-navy-80);  
+  background-color: var(--wfx-purple-navy-80);
 }
 
 toolbarpaletteitem textbox.searchbar-textbox,
 #navigator-toolbox textbox {
-  background-color: var(--wfx-purple-navy-60);  
+  background-color: var(--wfx-purple-navy-60);
 }
 
 panel input {
@@ -991,11 +991,11 @@ toolbar .toolbarbutton-1:not([disabled="true"]):-moz-any([open], [checked], :hov
   padding: 6px;
 }
 
-#PanelUI-menu-button:not([open="true"]) .toolbarbutton-badge-stack {
+#PanelUI-menu-button:not([open="true"]):not(.browser) .toolbarbutton-badge-stack {
   background-color: var(--wfx-dt-primary-color);
 }
 
-#PanelUI-button:hover #PanelUI-menu-button:not([open="true"]) .toolbarbutton-badge-stack {
+#PanelUI-button:hover #PanelUI-menu-button:not([open="true"]):not(.browser) .toolbarbutton-badge-stack {
   background-color: var(--wfx-dt-primary-color-hover);
   fill: var(--wfx-purple-navy-80);
   color: var(--wfx-purple-navy-80);
@@ -1225,7 +1225,7 @@ menupopup::part(drop-indicator) {
 
 :root[lwt-toolbar-field-brighttext] #urlbar[pageproxystate="valid"] > #identity-box.verifiedIdentity > #identity-icon-labels,
 :root[lwt-popup-brighttext] .identity-popup-connection-secure {
-  color: var(--wfx-green-color); 
+  color: var(--wfx-green-color);
 }
 
 #urlbar[pageproxystate="valid"] > #identity-box.verifiedIdentity {
@@ -1773,13 +1773,13 @@ toolbar .toolbarbutton-1:not([disabled=true]):not([checked]):not([open]):not(:ac
 #wrapper-search-container #searchbar:-moz-window-inactive {
   opacity: .5;
 }
-  
+
 #wrapper-search-container .searchbar-search-icon {
   fill-opacity: 1;
   fill: currentColor !important;
   color: var(--wfx-content-color) !important;
 }
-  
+
 #wrapper-search-container #searchbar:-moz-window-inactive {
   opacity: .4;
 }
@@ -1812,16 +1812,16 @@ hbox#customization-footer button:not([disabled="true"]):hover {
   background-color: var(--wfx-btn-hover-color) !important;
   color: rgb(255,255,255) !important;
 }
-  
+
 hbox#customization-footer button#customization-done-button {
   background-color: var(--wfx-dt-primary-color) !important;
   color: rgb(255,255,255) !important;
 }
-  
+
 hbox#customization-footer button#customization-done-button:not([disabled="true"]):hover {
   background-color: var(--wfx-dt-primary-color-hover) !important;
 }
-  
+
 hbox#customization-footer button#customization-done-button:not([disabled="true"]):active,
 hbox#customization-footer button#customization-done-button:not([disabled="true"]):hover:active {
   background-color: var(--wfx-dt-primary-color-active) !important;
@@ -1838,7 +1838,7 @@ hbox#customization-footer button:not([disabled="true"]):focus{
   outline: 3px solid var(--wfx-btn-focus-outline-color) !important;
   -moz-outline-radius: 6px !important;
 }
-  
+
 hbox#customization-footer button#customization-done-button:not([disabled="true"]):focus{
   outline: 3px solid var(--wfx-dt-primary-color-a30) !important;
 }
@@ -1866,7 +1866,7 @@ hbox#customization-footer button[disabled="true"] {
 #customization-uidensity-touch-spacer {
   border-top: 1px solid var(--wfx-separator-color);
 }
-  
+
 .customizationmode-button > .box-inherit > .button-menu-dropmarker {
   fill: currentColor !important;
   -moz-context-properties: fill !important;

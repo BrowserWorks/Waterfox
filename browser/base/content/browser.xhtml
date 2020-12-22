@@ -53,6 +53,7 @@
         chromemargin="0,-1,-1,-1"
 #endif
         tabsintitlebar="true"
+        tabBarPosition="topAboveAB"
         windowtype="navigator:browser"
         macanimationtype="document"
         macnativefullscreen="true"
@@ -149,6 +150,8 @@
                 oncommand="duplicateTabIn(TabContextMenu.contextTab, 'tab');"/>
       <menuitem id="context_duplicateTabs" data-lazy-l10n-id="duplicate-tabs"
                 oncommand="TabContextMenu.duplicateSelectedTabs();"/>
+      <menuitem id="context_copyCurrentTabUrl" data-lazy-l10n-id="copy-tab-url"  oncommand="copyCurrentTabUrl(TabContextMenu.contextTab.linkedBrowser.currentURI.spec);"/>
+      <menuitem id="context_copyAllTabUrls" data-lazy-l10n-id="copy-all-tab-urls" oncommand="copyAllTabUrls();"/>
       <menuseparator/>
       <menuitem id="context_selectAllTabs" data-lazy-l10n-id="select-all-tabs"
                 oncommand="gBrowser.selectAllTabs();"/>
@@ -719,8 +722,7 @@
        margin-top to slide the toolbox off screen in fullscreen layout.-->
   <box>
   <toolbox id="navigator-toolbox" flex="1">
-
-    <vbox id="titlebar">
+      <vbox id="titlebar">
       <!-- Menu -->
       <toolbar type="menubar" id="toolbar-menubar"
                class="browser-toolbar chromeclass-menubar titlebar-color"
@@ -738,7 +740,9 @@
 #include browser-menubar.inc
         </toolbaritem>
         <spacer flex="1" skipintoolbarset="true" style="-moz-box-ordinal-group: 1000;"/>
+        <hbox id="toolbar-menubar-pagetitle"></hbox>
 #include titlebar-items.inc.xhtml
+#include titlebar-fs-items.inc.xhtml
       </toolbar>
 
       <toolbar id="TabsToolbar"
@@ -807,6 +811,7 @@
 #endif
 
 #include titlebar-items.inc.xhtml
+#include titlebar-fs-items.inc.xhtml
 
 #ifdef XP_MACOSX
         <!-- OS X does not natively support RTL for its titlebar items, so we prevent this secondary
@@ -1185,22 +1190,7 @@
                        label="&brandShortName;"
                        tooltiptext="&appmenu.tooltip;"/>
       </toolbaritem>
-
-      <hbox id="window-controls" hidden="true" pack="end" skipintoolbarset="true"
-            style="-moz-box-ordinal-group: 1000;">
-        <toolbarbutton id="minimize-button"
-                       data-l10n-id="browser-window-minimize-button"
-                       oncommand="window.minimize();"/>
-
-        <toolbarbutton id="restore-button"
-                       data-l10n-id="browser-window-restore-down-button"
-                       oncommand="BrowserFullScreen();"/>
-
-        <toolbarbutton id="close-button"
-                       data-l10n-id="browser-window-close-button"
-                       oncommand="BrowserTryToCloseWindow();"/>
-      </hbox>
-
+#include titlebar-fs-items.inc.xhtml
       <box id="library-animatable-box" class="toolbarbutton-animatable-box">
         <image class="toolbarbutton-animatable-image"/>
       </box>
@@ -1463,6 +1453,19 @@
 
   <vbox id="browser-bottombox" layer="true">
     <!-- gNotificationBox will be added here lazily. -->
+    <html:div class="toolbar-statusbar">
+      <toolbarbutton id="sidebar-button" widget-id="sidebar-button" widget-type="button" removable="true" overflows="true" class="toolbarbutton-1 chromeclass-toolbar-additional button-textonly statusbarbtn" cui-areatype="toolbar" oncommand="SidebarUI.toggle();"></toolbarbutton>
+    <html:div class="status-info"></html:div>
+    <html:div class="page-zoom-controls">
+      <button disabled="true" tabindex="-1" label="Reset Zoom" class="button-toolbar reset-zoom button-textonly" oncommand="FullZoom.reset(); resetZoomStatus();"></button>
+      <toolbarbutton id="zoomoutsb" class="toolbarbutton-1 chromeclass-toolbar-additional button-textonly statusbarbtn" command="cmd_fullZoomReduce"></toolbarbutton>
+      <html:input id="zoom-range-status" type="range" min="0.3" max="3" step="0.1" onchange="setZoom();" value="">
+      </html:input>
+      <span class="zoom-percent-status" data-editable=""></span>
+      <toolbarbutton id="zoominsb" class="toolbarbutton-1 chromeclass-toolbar-additional button-textonly statusbarbtn" command="cmd_fullZoomEnlarge"></toolbarbutton>
+      <toolbarbutton id="fullscreensb" class="toolbarbutton-1 chromeclass-toolbar-additional button-textonly statusbarbtn" onclick="BrowserFullScreen();"></toolbarbutton>
+    </html:div>
+  </html:div>
   </vbox>
 
   <html:div id="a11y-announcement" role="alert"/>
