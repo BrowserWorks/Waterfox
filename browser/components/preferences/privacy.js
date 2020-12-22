@@ -195,6 +195,21 @@ Preferences.addAll([
 
   // First-Party Isolation
   { id: "privacy.firstparty.isolate", type: "bool" },
+
+  // Referer
+  { id: "network.http.sendRefererHeader", type: "int" },
+
+  // WebRTC P2P
+  { id: "media.peerconnection.enabled", type: "bool" },
+
+  // Images
+  { id: "permissions.default.image", type: "int" },
+
+  // Scripts
+  { id: "javascript.enabled", type: "bool" },
+  { id: "dom.event.contextmenu.enabled", type: "bool", instantApply: true },
+  { id: "dom.disable_window_move_resize", type: "bool", inverted: true, instantApply: true },
+
 ]);
 
 // Study opt out
@@ -614,6 +629,16 @@ var gPrivacyPane = {
     );
     setSyncFromPrefListener("enableOCSP", () => this.readEnableOCSP());
     setSyncToPrefListener("enableOCSP", () => this.writeEnableOCSP());
+
+    setSyncFromPrefListener("enableJavaScript", () =>
+      this.updateButtons("advancedJSButton", "javascript.enabled")
+    );
+
+    setEventListener(
+      "advancedJSButton",
+      "command",
+      gPrivacyPane.showAdvancedJS
+    );
 
     if (AlertsServiceDND) {
       let notificationsDoNotDisturbBox = document.getElementById(
@@ -2454,5 +2479,15 @@ var gPrivacyPane = {
 
     // Revert the checkbox in case we didn't quit
     document.getElementById("a11yPrivacyCheckbox").checked = !checked;
+  },
+  // JAVASCRIPT
+
+  /**
+   * Displays the advanced JavaScript preferences for enabling or disabling
+   * various annoying behaviors.
+   */
+  showAdvancedJS() {
+    gSubDialog.open("chrome://browser/content/preferences/dialogs/advanced-scripts.xhtml",
+                    "resizable=no", null);
   },
 };

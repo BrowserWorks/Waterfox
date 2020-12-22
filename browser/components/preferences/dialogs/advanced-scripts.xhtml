@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+
+<!-- -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- -->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/global.css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/preferences.css"?>
+
+<dialog id="AdvancedJSDialog" type="child"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        xmlns:html="http://www.w3.org/1999/xhtml"
+        data-l10n-id="advancedJSDialog"
+        data-l10n-attrs="title"
+        buttons="accept,cancel"
+        role="dialog">
+
+  <linkset>
+    <html:link rel="localization" href="browser/preferences/permissions.ftl"/>
+  </linkset>
+
+    <vbox>
+
+      <description data-l10n-id="allowScripts"/>
+
+      <checkbox id="moveResizePopupWindows" data-l10n-id="moveResizePopupWindows"
+                preference="dom.disable_window_move_resize"/>
+      <checkbox id="disableContextMenus" data-l10n-id="disableContextMenus"
+                preference="dom.event.contextmenu.enabled"/>
+
+    </vbox>
+
+      <script src="chrome://browser/content/utilityOverlay.js"/>
+      <script src="chrome://global/content/preferencesBindings.js"/>
+      <script src="chrome://browser/content/preferences/privacy.js"/>
+
+</dialog>
