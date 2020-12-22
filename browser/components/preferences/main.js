@@ -814,7 +814,25 @@ var gMainPane = {
     );
     Preferences.addSyncFromPrefListener(
       document.getElementById("statusBarRadioGroup"),
-      () => toggleStatusBar()
+      () => {
+        toggleStatusBar();
+
+        const showButtonsRange = document.getElementById("showButtonsRange");
+        const showLinks = document.getElementById("showLinks");
+        const statusbarMode = Services.prefs.getIntPref("browser.statusbar.mode");
+
+        if (statusbarMode == 0) {
+          showLinks.disabled = true;
+        } else {
+          showLinks.disabled = "";
+        }
+
+        if (statusbarMode == 2) {
+          showButtonsRange.disabled = "";
+        } else {
+          showButtonsRange.disabled = true;
+        }
+      }
     );
     Preferences.addSyncFromPrefListener(
       document.getElementById("showButtonsRange"),
