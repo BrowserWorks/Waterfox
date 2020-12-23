@@ -21,9 +21,9 @@ PWD := $(CURDIR)
 ZIP_IN ?= $(ABS_DIST)/$(PACKAGE)
 
 ifdef MOZ_DEV_EDITION
-MOZ_LANGPACK_EID=langpack-$(AB_CD)@l10n.waterfox.net.xpi
+MOZ_LANGPACK_EID=langpack-$(AB_CD)@l10n.waterfox.net
 else
-MOZ_LANGPACK_EID=langpack-$(AB_CD)@l10n.waterfox.net.xpi
+MOZ_LANGPACK_EID=langpack-$(AB_CD)@l10n.waterfox.net
 endif
 # For Nightly, we know where to get the builds from to do local repacks
 ifdef NIGHTLY_BUILD
