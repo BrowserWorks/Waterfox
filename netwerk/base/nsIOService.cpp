@@ -108,6 +108,7 @@ int16_t gBadPortList[] = {
   42,   // name
   43,   // nicname
   53,   // domain
+  69,   // tftp
   77,   // priv-rjs
   79,   // finger
   87,   // ttylink
@@ -125,8 +126,10 @@ int16_t gBadPortList[] = {
   119,  // nntp
   123,  // NTP
   135,  // loc-srv / epmap
+  137,  // netbios
   139,  // netbios
   143,  // imap2
+  161,  // snmp
   179,  // BGP
   389,  // ldap
   465,  // smtp+ssl
@@ -139,6 +142,7 @@ int16_t gBadPortList[] = {
   531,  // Chat
   532,  // netnews
   540,  // uucp
+  554,  // rtsp
   556,  // remotefs
   563,  // nntp+ssl
   587,  //
@@ -146,15 +150,22 @@ int16_t gBadPortList[] = {
   636,  // ldap+ssl
   993,  // imap+ssl
   995,  // pop3+ssl
+  1719, // h323gatestat
+  1720, // h323hostcall
+  1723, // pptp
   2049, // nfs
   3659,    // apple-sasl / PasswordServer
   4045, // lockd
+  5060, // sip
+  5061, // sips
   6000, // x11
+  6566, // sane-port
   6665,    // Alternate IRC [Apple addition]
   6666,    // Alternate IRC [Apple addition]
   6667,    // Standard IRC [Apple addition]
   6668,    // Alternate IRC [Apple addition]
   6669,    // Alternate IRC [Apple addition]
+  10080,   // amanda
   0,    // This MUST be zero so that we can populating the array
 };
 
