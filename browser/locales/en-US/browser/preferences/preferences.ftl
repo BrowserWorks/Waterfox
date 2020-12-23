@@ -1417,3 +1417,25 @@ menu-icon =
 
 browser-icon =
     .label = { -brand-short-name } Icon
+
+sendRefererHeaderopt0 =
+    .label = Never send the referrer header
+
+sendRefererHeaderopt1 =
+    .label = Send the referrer header only when clicking on links and similar elements
+
+sendRefererHeaderopt2 =
+    .label = Send the referrer header on all requests (Default)
+
+webrtcp2preference =
+    .label = Enable WebRTC peer connection
+
+loadImages-checkbox =
+    .label = Load images automatically
+
+enableJavaScript-checkbox =
+    .label = Enable JavaScript
+
+webrtc-header = WebRTC peer connection
+
+ref-header = HTTP Referrer Header
