@@ -324,6 +324,43 @@
   </vbox>
 </groupbox>
 
+<!-- WebRTC peer connection -->
+<groupbox id="webrtc" data-category="panePrivacy" hidden="true">
+  <label><html:h2 data-l10n-id="webrtc-header"/></label>
+  <hbox align="center">
+    <checkbox id="media.peerconnection.enabled"
+              class="tail-with-learn-more"
+              data-l10n-id="webrtcp2preference"
+              preference="media.peerconnection.enabled"/>
+    <label class="learnMore" is="text-link" href="https://bugzilla.mozilla.org/show_bug.cgi?id=959893"
+           data-l10n-id="content-blocking-learn-more"/>
+  </hbox>
+</groupbox>
+
+<!-- HTTP Referrer Header-->
+<groupbox id="refheader" data-category="panePrivacy" hidden="true">
+   <label><html:h2 data-l10n-id="ref-header"/></label>
+
+  <hbox align="center">
+    <label id="historyModeLabel"
+           control="doNotsendSecureXSiteReferrer"
+           data-l10n-id="history-remember-label"/>
+    <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
+    <hbox>
+      <menulist id="doNotsendSecureXSiteReferrer" preference="network.http.sendRefererHeader">
+        <menupopup>
+          <menuitem data-l10n-id="sendRefererHeaderopt0"
+                    value="0"/>
+          <menuitem data-l10n-id="sendRefererHeaderopt1"
+                    value="1"/>
+          <menuitem data-l10n-id="sendRefererHeaderopt2"
+                    value="2"/>
+        </menupopup>
+      </menulist>
+    </hbox>
+  </hbox>
+</groupbox>
+
 <!-- Site Data -->
 <groupbox id="siteDataGroup" data-category="panePrivacy" hidden="true" aria-describedby="totalSiteDataSize">
   <label><html:h2 data-l10n-id="sitedata-header"/></label>
@@ -817,6 +854,27 @@
              data-l10n-id="permissions-a11y-privacy-link"/>
     </hbox>
   </vbox>
+
+  <hbox data-subcategory="permissions-images">
+    <checkbox id="loadImages" class="tail-with-learn-more"
+              data-l10n-id="loadImages-checkbox"
+              preference="permissions.default.image"
+              flex="1"/>
+  </hbox>
+
+  <hbox data-subcategory="permissions-scripts">
+    <checkbox id="enableJavaScript" class="tail-with-learn-more"
+              data-l10n-id="enableJavaScript-checkbox"
+              preference="javascript.enabled"
+              flex="1"/>
+    <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
+    <hbox>
+      <button id="advancedJSButton"
+              data-l10n-id="advanced-fonts"
+              is="highlightable-button"
+              class="accessory-button"/>
+    </hbox>
+  </hbox>
 
 </groupbox>
 

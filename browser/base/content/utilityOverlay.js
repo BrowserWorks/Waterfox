@@ -1148,3 +1148,196 @@ function updateImportCommandEnabledState() {
       .setAttribute("disabled", "true");
   }
 }
+
+function restartBrowser() {
+  let RestartMsg = Services.strings.createBundle("chrome://browser/locale/browser.properties");
+  try {
+        if (Services.prefs.getBoolPref("browser.restart_menu.requireconfirm")) {
+          if (Services.prompt.confirm(null, RestartMsg.formatStringFromName("restartPromptTitle.label", [Services.strings.createBundle("chrome://branding/locale/brand.properties").GetStringFromName("brandShortName")], 1),
+          RestartMsg.formatStringFromName("restartPromptQuestion.label", [Services.strings.createBundle("chrome://branding/locale/brand.properties").GetStringFromName("brandShortName")], 1))) {
+              if (Services.prefs.getBoolPref("browser.restart_menu.purgecache")) {
+                  Services.appinfo.invalidateCachesOnRestart();
+              }
+              Services.startup.quit(Services.startup.eRestart | Services.startup.eAttemptQuit);
+          }
+      } else {
+          if (Services.prefs.getBoolPref("browser.restart_menu.purgecache")) {
+              Services.appinfo.invalidateCachesOnRestart();
+          }
+          Services.startup.quit(Services.startup.eRestart | Services.startup.eAttemptQuit);
+      }
+  } catch (e) {
+      throw new Error("We're sorry but something has gone wrong with 'restartBrowser' " + e);
+  }
+};
+
+function setZoom() {
+  var zoomrange = document.getElementById("zoom-range-status");
+  FullZoom.setZoom(parseFloat(zoomrange.value));
+  var zoomValue = ZoomManager.getZoomForBrowser(gBrowser) * 100;
+  document.querySelector(".zoom-percent-status").textContent = parseInt(zoomValue) + " %";
+
+  if (parseInt(zoomValue) != 100){
+    document.querySelector('.reset-zoom.button-textonly').disabled = "";
+  }
+  else
+  {
+    document.querySelector('.reset-zoom.button-textonly').disabled = "true";
+  }
+}
+
+function resetZoomStatus() {
+  var zoomrange = document.getElementById("zoom-range-status");
+  var zoompercent = document.querySelector(".zoom-percent-status");
+  zoomrange.value = 1;
+  zoompercent.textContent = "100 %";
+  document.querySelector('.reset-zoom.button-textonly').disabled = "true";
+}
+
+
+function updateZoomStatus() {
+  var zoomValue =  windowRoot.ownerGlobal.ZoomManager.getZoomForBrowser(windowRoot.ownerGlobal.gBrowser);
+  var resetZoomBtn = windowRoot.ownerGlobal.document.querySelector('.reset-zoom.button-textonly');
+  windowRoot.ownerGlobal.document.querySelector('#zoom-range-status').value = zoomValue;
+  var zoomPercentValue = parseInt(zoomValue * 100);
+  windowRoot.ownerGlobal.document.querySelector('.zoom-percent-status').textContent = zoomPercentValue +' %';
+  if (zoomPercentValue != 100){
+    resetZoomBtn.disabled = "";
+  }
+  else
+  {
+    resetZoomBtn.disabled = "true";
+  }
+}
+
+function toggleStatusBar() {
+  var statuspanel = windowRoot.ownerGlobal.document.getElementById("statuspanel-inner");
+  var statusbar = windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar");
+  var zoombtn = windowRoot.ownerGlobal.document.querySelector("#urlbar-zoom-button");
+  var pageActionSeparator = windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator");
+
+  if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
+    statuspanel.hidden = true;
+    statusbar.style.display = "flex";
+    zoombtn.style.display = "none";
+    pageActionSeparator.style.display = "none";
+  }
+  else if (Services.prefs.getIntPref("browser.statusbar.mode") == 1) {
+    statusbar.style.display = "none";
+    zoombtn.style.display = "";
+    statuspanel.hidden = "";
+    pageActionSeparator.style.display = "";
+    pageActionSeparator.style.visibility = "visible";
+  }
+  else if (Services.prefs.getIntPref("browser.statusbar.mode") == 0) {
+    statusbar.style.display = "none";
+    statuspanel.hidden = true;
+    zoombtn.style.display = "";
+    pageActionSeparator.style.display = "";
+    pageActionSeparator.style.visibility = "visible";
+  }
+}
+
+function showBtnRange() {
+  var zoomoutsb = windowRoot.ownerGlobal.document.querySelector("#zoomoutsb");
+  var zoominsb = windowRoot.ownerGlobal.document.querySelector("#zoominsb");
+  var zoomStatus = windowRoot.ownerGlobal.document.querySelector("#zoom-range-status");
+
+  if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
+    if(Services.prefs.getBoolPref("browser.statusbar.showbtn", true)) {
+      zoomoutsb.style.display = "initial";
+      zoominsb.style.display = "initial";
+      zoomStatus.style.display = "none";
+    }
+    else
+    {
+      zoomoutsb.style.display = "none";
+      zoominsb.style.display = "none";
+      zoomStatus.style.display = "initial";
+    }
+  }
+}
+
+function moveTabBar()
+{
+  var bottomBookmarksBar = windowRoot.ownerGlobal.document.querySelector("#browser-bottombox #PersonalToolbar");
+  var tabsToolbar = windowRoot.ownerGlobal.document.querySelector("#TabsToolbar");
+  var titlebar = windowRoot.ownerGlobal.document.querySelector("#titlebar");
+  var root = windowRoot.ownerGlobal.document.querySelector(":root");
+
+  if(Services.prefs.getStringPref("browser.tabBar.position") == "topUnderAB")
+  {
+    windowRoot.ownerGlobal.document.querySelector("#navigator-toolbox").appendChild(tabsToolbar);
+    windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
+    root.setAttribute("tabBarPosition", Services.prefs.getStringPref("browser.tabBar.position"));
+  }
+  else if (Services.prefs.getStringPref("browser.tabBar.position") == "bottom")
+  {
+    if(bottomBookmarksBar)
+    {
+      bottomBookmarksBar.insertAdjacentElement('afterend', tabsToolbar);
+    }
+    else
+    {
+      windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', tabsToolbar);
+    }
+    windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
+    root.setAttribute("tabBarPosition", Services.prefs.getStringPref("browser.tabBar.position"));
+  }
+  else if (Services.prefs.getStringPref("browser.tabBar.position") == "topAboveAB")
+  {
+    titlebar.insertAdjacentElement('beforeend', tabsToolbar);
+    windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
+    root.setAttribute("tabBarPosition", Services.prefs.getStringPref("browser.tabBar.position"));
+ }
+
+ // Set title on top bar when title bar is disabled and tab bar position is different than default
+ const topBar = windowRoot.ownerGlobal.document.querySelector("#toolbar-menubar-pagetitle");
+ const activeTab = document.querySelector('tab[selected="true"]')
+ if (topBar && activeTab) {
+   topBar.textContent = activeTab.getAttribute("label");
+  }
+}
+
+function moveWindowControls() {
+  var root = windowRoot.ownerGlobal.document.querySelector(":root");
+
+  if(Services.prefs.getStringPref("browser.windowControls.position") == "left")
+  {
+    root.setAttribute("leftWindowControls", "true");
+  }
+  else
+  {
+    root.removeAttribute("leftWindowControls");
+  }
+}
+
+function moveBookmarksBar() {
+  var bottomTabs = windowRoot.ownerGlobal.document.querySelector("#browser-bottombox #TabsToolbar");
+  var bookmarksBar = windowRoot.ownerGlobal.document.querySelector("#PersonalToolbar");
+
+  if (Services.prefs.getStringPref("browser.bookmarksBar.position") == "top") {
+    windowRoot.ownerGlobal.document.querySelector("#nav-bar").insertAdjacentElement('afterend', bookmarksBar);
+  }
+  else if (Services.prefs.getStringPref("browser.bookmarksBar.position") == "bottom") {
+    if(bottomTabs) {
+      bottomTabs.insertAdjacentElement('beforebegin', bookmarksBar);
+    }
+    else
+    {
+      windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', bookmarksBar);
+    }
+  }
+}
+
+function changeMenuIconStyle() {
+  var menuBtn = windowRoot.ownerGlobal.document.querySelector("#PanelUI-menu-button");
+  if (Services.prefs.getIntPref("browser.menuIcon.style") == 0) {
+    if (menuBtn.classList.contains("browser")) {
+      menuBtn.classList.remove("browser");
+    }
+  }
+  else if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
+    menuBtn.classList.add("browser");
+  }
+}

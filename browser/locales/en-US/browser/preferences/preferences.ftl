@@ -159,6 +159,27 @@ startup-restore-previous-session =
 startup-restore-warn-on-quit =
     .label = Warn you when quitting the browser
 
+restart-paneluibtn =
+    .label = Show restart button in PanelUI
+
+clean-fast-restart-cache =
+    .label = Clear fast restart cache on browser restart
+
+restart-reqconfirmation =
+    .label = Require restart confirmation
+
+duplicate-tab-options =
+    .label = Show duplicate tab menu item
+
+copy-tab-url-options =
+    .label = Show copy tab url menu item
+
+copy-active-tab-url-options =
+    .label = Copy URL only from active tab
+
+copy-all-tab-urls-options =
+    .label = Show copy all tab urls menu item
+
 disable-extension =
     .label = Disable Extension
 
@@ -1229,7 +1250,7 @@ collection-header = { -brand-short-name } Data Collection and Use
 collection-description = We strive to provide you with choices and collect only what we need to provide and improve { -brand-short-name } for everyone. We always ask permission before receiving personal information.
 collection-privacy-notice = Privacy Notice
 
-collection-health-report-telemetry-disabled = You’re no longer allowing { -vendor-short-name } to capture technical and interaction data. All past data will be deleted within 30 days. 
+collection-health-report-telemetry-disabled = You’re no longer allowing { -vendor-short-name } to capture technical and interaction data. All past data will be deleted within 30 days.
 collection-health-report-telemetry-disabled-link = Learn more
 
 collection-health-report =
@@ -1339,3 +1360,82 @@ choose-download-folder-title = Choose Download Folder:
 #   $service-name (String) - Name of a cloud storage provider like Dropbox, Google Drive, etc...
 save-files-to-cloud-storage =
     .label = Save files to { $service-name }
+
+restart-header = Restart Menu Item
+
+tabContextMenu-header = Tab Context Menu
+
+statusBar-header = Status Bar
+
+show-status-bar =
+.label = Show Status Bar
+
+show-status-overlay =
+.label = Show Status Info Overlay
+
+hide-status-bar =
+.label = Hide Status Bar
+
+show-btn-range =
+    .label = Use buttons in range control
+
+show-links =
+    .label = Show links
+
+tab-bar-position = Tab Bar Position
+
+tab-top-above-ab =
+    .label = Top above address bar
+
+tab-top-under-ab =
+    .label = Top under address bar
+
+tab-bottom =
+    .label = Bottom
+
+window-controls-position-header = Window Controls Position
+
+left-side =
+.label = Left Side
+
+right-side =
+.label = Right Side
+
+bookmarks-bar-position-header = Bookmarks Toolbar Position
+
+top-bookmarks =
+    .label = Top
+
+pane-windowAppearance-title = Window Appearance
+
+pane-menu-title = Menu
+
+menu-icon-style-header = Menu Icon style
+
+menu-icon =
+    .label = Menu Icon
+
+browser-icon =
+    .label = { -brand-short-name } Icon
+
+sendRefererHeaderopt0 =
+    .label = Never send the referrer header
+
+sendRefererHeaderopt1 =
+    .label = Send the referrer header only when clicking on links and similar elements
+
+sendRefererHeaderopt2 =
+    .label = Send the referrer header on all requests (Default)
+
+webrtcp2preference =
+    .label = Enable WebRTC peer connection
+
+loadImages-checkbox =
+    .label = Load images automatically
+
+enableJavaScript-checkbox =
+    .label = Enable JavaScript
+
+webrtc-header = WebRTC peer connection
+
+ref-header = HTTP Referrer Header

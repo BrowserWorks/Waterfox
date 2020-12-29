@@ -17,6 +17,8 @@
       "chrome://browser/skin/privatebrowsing/favicon.svg",
   };
 
+  var urlArray = { url: [] };
+
   window._gBrowser = {
     init() {
       ChromeUtils.defineModuleGetter(
@@ -974,6 +976,13 @@
 
     updateTitlebar() {
       document.title = this.getWindowTitleForBrowser(this.selectedBrowser);
+
+      // Set title on top bar when title bar is disabled and tab bar position is different than default
+      const topBar = windowRoot.ownerGlobal.document.querySelector("#toolbar-menubar-pagetitle");
+      const activeTab = document.querySelector('tab[selected="true"]')
+      if (topBar && activeTab) {
+        topBar.textContent = activeTab.getAttribute("label");
+       }
     },
 
     updateCurrentBrowser(aForceUpdate) {
@@ -6406,10 +6415,12 @@ var StatusPanel = {
 
     if (val) {
       this._labelElement.value = val;
+      document.querySelector('.status-info').textContent = val;
       this.panel.removeAttribute("inactive");
       MousePosTracker.addListener(this);
     } else {
       this.panel.setAttribute("inactive", "true");
+      document.querySelector('.status-info').textContent = "";
       MousePosTracker.removeListener(this);
     }
 
@@ -6657,6 +6668,30 @@ var TabContextMenu = {
       toggleMute.accessKey = gNavigatorBundle.getString("muteTab.accesskey");
     }
 
+    // Adjust the state of duplicate Tab menu item.
+    let toggleDuplicateTab = document.getElementById("context_duplicateTab");
+    if (Services.prefs.getBoolPref("browser.tabs.duplicateTab")){
+      toggleDuplicateTab.hidden = false;
+    } else {
+      toggleDuplicateTab.hidden = true;
+    }
+
+    // Adjust the state of copy current tab url menu item.
+    let toggleCopyCurrentTabUrl = document.getElementById("context_copyCurrentTabUrl");
+    if (Services.prefs.getBoolPref("browser.tabs.copyurl")){
+      toggleCopyCurrentTabUrl.hidden = false;
+    } else {
+      toggleCopyCurrentTabUrl.hidden = true;
+    }
+
+    // Adjust the state of copy all tab url menu item.
+    let toggleCopyAllTabUrls = document.getElementById("context_copyAllTabUrls");
+     if (Services.prefs.getBoolPref("browser.tabs.copyallurls")){
+       toggleCopyAllTabUrls.hidden = false;
+     } else {
+       toggleCopyAllTabUrls.hidden = true;
+    }
+
     // Adjust the state of the toggle mute menu item for multi-selected tabs.
     if (this.contextTab.hasAttribute("activemedia-blocked")) {
       toggleMultiSelectMute.label = gNavigatorBundle.getString(
@@ -6788,4 +6823,68 @@ var TabContextMenu = {
       }
     }
   },
+};
+
+// Copies current tab url to clipboard
+function copyCurrentTabUrl(uri) {
+  try {
+      var gClipboardHelper = Cc["@mozilla.org/widget/clipboardhelper;1"]
+      .getService(Ci.nsIClipboardHelper);
+      if (Services.prefs.getBoolPref("browser.tabs.copyurl.activetab")) {
+          gClipboardHelper.copyString(gBrowser.currentURI.spec);
+      } else {
+          gClipboardHelper.copyString(uri);
+      }
+  } catch (e) {
+      throw new Error("We're sorry but something has gone wrong with 'CopyCurrentTabUrl' " + e);
+  }
+};
+
+// Get all the tab urls into a json array.
+function getAllUrls() {
+  // We don't want to copy about uri's
+  var blacklist = /^about:(about|accounts|addons|app-manager|buildconfig|cache|config|customizing|checkerboard|debugging|downloads|home|newtab|license|logo|memory|mozilla|networking|newaddon|permissions|plugins|preferences|performance|privatebrowsing|profiles|rights|robots|sessionrestore|support|serviceworkers|sync|sync-log|sync-tabs|telemetry|webrtc|welcomeback)/i;
+  var tabCount = gBrowser.browsers.length;
+  for (var i = 0; i < tabCount; i++) {
+      try {
+          var urlItems = gBrowser.getBrowserAtIndex(i).currentURI.spec;
+          if (!blacklist.test(urlItems)) {
+              urlArray.url.push({
+                  "url": urlItems
+              });
+          }
+      } catch (e) {
+          Cu.reportError(e);
+      }
+  }
+};
+
+// Copies all tab urls to clipboard
+function copyAllTabUrls() {
+  //Get all urls
+  getAllUrls();
+  try {
+      // Enumerate all urls in to a list.
+      var urlItems = urlArray.url;
+      var urlList = "";
+      for (i = 0; urlItems[i]; i++) {
+          try {
+              urlList += urlItems[i].url + "\n";
+          } catch (e) {
+              Cu.reportError(e);
+          }
+      }
+      // Send list to clipboard.
+      var gClipboardHelper = Cc["@mozilla.org/widget/clipboardhelper;1"]
+      .getService(Ci.nsIClipboardHelper);
+      gClipboardHelper.copyString(urlList.trim());
+      // Reset the array.
+      urlArray = {
+          url: []
+      };
+      // Clear url list after clipbaord event
+      urlList = "";
+  } catch (e) {
+      throw new Error("We're sorry but something has gone wrong with 'copyAllTabUrls' " + e);
+  }
 };

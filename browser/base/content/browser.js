@@ -1833,6 +1833,7 @@ var gBrowserInit = {
     this._setInitialFocus();
 
     updateFxaToolbarMenu(gFxaToolbarEnabled, true);
+    updateZoomStatus();
   },
 
   onLoad() {
@@ -1932,6 +1933,34 @@ var gBrowserInit = {
       // Setting disabled doesn't disable the shortcut, so we just remove
       // the keybinding.
       document.getElementById("key_privatebrowsing").remove();
+    }
+
+    if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
+      let customizableBundle = Services.strings.createBundle("chrome://browser/locale/customizableui/customizableWidgets.properties");
+      windowRoot.ownerGlobal.document.querySelector('.toolbar-statusbar #sidebar-button').setAttribute("tooltiptext", customizableBundle.GetStringFromName("sidebar-button.tooltiptext2"));
+      windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls .reset-zoom').setAttribute("tooltiptext",  GetDynamicShortcutTooltipText("appMenu-zoomReset-button"))
+      windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls #zoomoutsb').setAttribute("tooltiptext",   GetDynamicShortcutTooltipText("appMenu-zoomReduce-button"))
+      windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls #zoominsb').setAttribute("tooltiptext",  GetDynamicShortcutTooltipText("appMenu-zoomEnlarge-button"))
+      windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls #fullscreensb').setAttribute("tooltiptext",  GetDynamicShortcutTooltipText("fullscreen-button"))
+      updateZoomStatus();
+    }
+    showBtnRange();
+    toggleStatusBar();
+
+    if (Services.prefs.getStringPref("browser.tabBar.position") != "topAboveAB"){
+      moveTabBar();
+    }
+
+    if(Services.prefs.getStringPref("browser.windowControls.position") == "left"){
+      moveWindowControls();
+    }
+
+    if (Services.prefs.getStringPref("browser.bookmarksBar.position") == "bottom") {
+      moveBookmarksBar();
+    }
+
+    if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
+      changeMenuIconStyle();
     }
 
     this._loadHandled = true;
@@ -2197,6 +2226,7 @@ var gBrowserInit = {
     }
 
     CaptivePortalWatcher.delayedStartup();
+    updateZoomStatus();
 
     SessionStore.promiseAllWindowsRestored.then(() => {
       this._schedulePerWindowIdleTasks();
@@ -5095,8 +5125,10 @@ var XULBrowserWindow = {
       }
     }
 
-    this.overLink = url;
-    LinkTargetDisplay.update();
+    if (Services.prefs.getBoolPref("browser.statusbar.showlinks", true)) {
+      this.overLink = url;
+      LinkTargetDisplay.update();
+    }
   },
 
   showTooltip(x, y, tooltip, direction, browser) {
@@ -5537,6 +5569,7 @@ var XULBrowserWindow = {
   ) {
     if (FullZoom.updateBackgroundTabs) {
       FullZoom.onLocationChange(gBrowser.currentURI, true);
+      updateZoomStatus();
     }
 
     CombinedStopReload.onTabSwitch();
@@ -6007,6 +6040,7 @@ var TabsProgressListener = {
 
     FullZoom.onLocationChange(aLocationURI, false, aBrowser);
     CaptivePortalWatcher.onLocationChange(aBrowser);
+    updateZoomStatus();
   },
 
   onLinkIconAvailable(browser, dataURI, iconURI) {

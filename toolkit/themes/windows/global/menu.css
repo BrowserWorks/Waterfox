@@ -262,3 +262,7 @@ menulist > menupopup > menuseparator {
   border-top: 1px solid #000000;
   border-bottom: none;
 }
+
+#menu_FileRestartItem {
+  display: none !important;
+}

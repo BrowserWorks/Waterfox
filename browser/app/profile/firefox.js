@@ -2397,3 +2397,52 @@ pref("first-startup.timeout", 30000);
 #ifdef XP_WIN
   pref("default-browser-agent.enabled", false, locked);
 #endif
+
+// Set bool pref for restart browser purgecache enabled.
+pref("browser.restart_menu.purgecache", false);
+
+// Set bool pref for restart browser confirmation.
+pref("browser.restart_menu.requireconfirm", true);
+
+// Set bool pref for restart browser panelUI button
+pref("browser.restart_menu.showpanelmenubtn", false);
+
+// Set prefs for tab context menu options
+pref("browser.tabs.duplicateTab", true);
+pref("browser.tabs.copyurl", true);
+pref("browser.tabs.copyurl.activetab", true);
+pref("browser.tabs.copyallurls", true);
+
+// Status Bar mode
+// 0 - hide Status Bar
+// 1 - show Status Info Overlay
+// 2 - show Status Bar
+pref("browser.statusbar.mode", 0);
+
+// Don't use buttons in zoom range control in Status Bar
+pref("browser.statusbar.showbtn", false);
+
+// Tab Bar position
+pref("browser.tabBar.position", "topAboveAB");
+
+// Window controls position
+#ifdef XP_LINUX
+pref("browser.windowControls.position", "right");
+#endif
+#ifdef XP_WIN
+pref("browser.windowControls.position", "right");
+#endif
+#ifdef XP_MACOSX
+pref("browser.windowControls.position", "left");
+#endif
+
+// Bookmarks Toolbar Position
+pref("browser.bookmarksBar.position", "top");
+
+// Show links on Status Bar or overlay
+pref("browser.statusbar.showlinks", true);
+
+// Menu Icon Style
+// 0 - Menu Icon
+// 1 - Browser Icon
+pref("browser.menuIcon.style", 0);

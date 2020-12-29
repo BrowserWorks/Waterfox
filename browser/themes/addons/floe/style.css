@@ -8,7 +8,7 @@
   --wfx-lt-primary-color-a50: rgba(3,142,206,.5);
   --wfx-lt-primary-color-hover: rgb(0,122,184);
   --wfx-lt-primary-color-active: rgb(0,102,153);
-  
+
   /* Private browsing - primary color */
   --wfx-pbm-primary-color: rgb(156,115,186);
   --wfx-pbm-primary-color-a15: rgba(156,115,186,.15);
@@ -16,7 +16,7 @@
   --wfx-pbm-primary-color-a30: rgba(156,115,186,.3);
   --wfx-pbm-primary-color-hover: rgb(136,85,171);
   --wfx-pbm-primary-color-active: rgb(117,54,159);
-  
+
   /* Secondary colors */
   --wfx-gray-05: rgb(252,252,254);
   --wfx-gray-10: rgb(250,250,253);
@@ -33,7 +33,7 @@
   --wfx-gray-70: rgb(161,161,164);
   --wfx-gray-80: rgb(120,120,123);
   --wfx-gray-90: rgb(100,100,103);
-  
+
   --wfx-purple-navy-30: rgb(66,72,102);
   --wfx-purple-navy-40: rgb(55,60,86);
   --wfx-purple-navy-50: rgb(44,48,70);
@@ -41,14 +41,14 @@
   --wfx-purple-navy-70: rgb(22,24,40);
   --wfx-purple-navy-80: rgb(11,12,27);
   --wfx-purple-navy-90: rgb(4,6,20);
-  
+
   /* Various attention colors */
   --wfx-green-color: rgb(60,144,14);
   --wfx-red-color: rgb(220,60,60);
   --wfx-red-color-a15: rgba(220,60,60,.15);
   --wfx-yellow-color: rgb(216,184,38);
   --wfx-yellow-color-a15: rgba(216,184,38,.15);
-  
+
   /* Foreground/background colors */
   --wfx-content-color: rgba(11,12,27,.7);
   --wfx-dimmed-content-color: rgba(11,12,27,.4);
@@ -56,16 +56,16 @@
   --wfx-arrowpanel-bg-color: var(--wfx-gray-05);
   --wfx-tree-bg-color: var(--wfx-gray-10);
   --wfx-tree-row-bg-odd-color: rgba(250,250,253,.5);
-  
+
   /* Border radius */
   --wfx-border-radius: 3px;
   --wfx-large-radius: 1000px;
-  
+
   /* Border/separator/outline */
   --wfx-border-color: var(--wfx-gray-60);
   --wfx-separator-color:  rgba(33,36,54,.25);
   --wfx-btn-focus-outline-color: rgba(33,36,54,.35);
-  
+
   /* Button colors */
   --wfx-back-btn-bg-color: var(--wfx-gray-40);
   --wfx-btn-bg-color: var(--wfx-gray-60-a80);
@@ -78,7 +78,7 @@
   --arrowpanel-dimmed: var(--wfx-btn-hover-color) !important;
   --arrowpanel-dimmed-further: var(--wfx-btn-lighter-hover-color) !important;
   --arrowpanel-dimmed-even-further: var(--wfx-gray-40) !important;
-   
+
 }
 
 .browserContainer {
@@ -374,7 +374,7 @@ toolbox:hover .tabbrowser-tab:not(:hover) > .tab-stack > .tab-content > .tab-ico
 }
 
 :root[uidensity=touch] {
-	
+
   --svg-selected-before: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:svg='http://www.w3.org/2000/svg' width='40px' height='41px' preserveAspectRatio='none'><defs><svg:clipPath id='tab-curve-clip-path-start' clipPathUnits='objectBoundingBox'><svg:path d='m 1,0.065 0.05,0 0,0.938 -1,0 0,-0.028 C 0.32082458,0.95840561 0.4353096,0.81970962 0.48499998,0.5625 0.51819998,0.3905 0.535,0.0659 1,0.065 z'/></svg:clipPath><svg:clipPath id='tab-curve-clip-path-end' clipPathUnits='objectBoundingBox'><svg:path d='m 0,0.065 -0.05,0 0,0.938 1,0 0,-0.028 C 0.67917542,0.95840561 0.56569036,0.81970962 0.51599998,0.5625 0.48279998,0.3905 0.465,0.0659 0,0.065 z'/></svg:clipPath><svg:clipPath id='tab-hover-clip-path' clipPathUnits='objectBoundingBox'><svg:path d='M 0,0.2 0,1 1,1, 1,0.2 z'/></svg:clipPath></defs><foreignObject width='40' height='41' clip-path='url(%23tab-curve-clip-path-start)'><div id='tab-background-fill' style='background-color:rgb(255,255,255);background-repeat:no-repeat;height:100%;width:100%;' xmlns='http://www.w3.org/1999/xhtml'></div></foreignObject></svg>");
 
   --svg-selected-after: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:svg='http://www.w3.org/2000/svg' width='40px' height='41px' preserveAspectRatio='none'><defs><svg:clipPath id='tab-curve-clip-path-start' clipPathUnits='objectBoundingBox'><svg:path d='m 1,0.065 0.05,0 0,0.938 -1,0 0,-0.028 C 0.32082458,0.95840561 0.4353096,0.81970962 0.48499998,0.5625 0.51819998,0.3905 0.535,0.0659 1,0.065 z'/></svg:clipPath><svg:clipPath id='tab-curve-clip-path-end' clipPathUnits='objectBoundingBox'><svg:path d='m 0,0.065 -0.05,0 0,0.938 1,0 0,-0.028 C 0.67917542,0.95840561 0.56569036,0.81970962 0.51599998,0.5625 0.48279998,0.3905 0.465,0.0659 0,0.065 z'/></svg:clipPath><svg:clipPath id='tab-hover-clip-path' clipPathUnits='objectBoundingBox'><svg:path d='M 0,0.2 0,1 1,1, 1,0.2 z'/></svg:clipPath></defs><foreignObject width='40' height='41' clip-path='url(%23tab-curve-clip-path-end)'><div id='tab-background-fill' style='background-color:rgb(255,255,255);background-repeat:no-repeat;height:100%;width:100%;' xmlns='http://www.w3.org/1999/xhtml'></div></foreignObject></svg>");
@@ -447,7 +447,7 @@ toolbox:hover .tabbrowser-tab:not(:hover) > .tab-stack > .tab-content > .tab-ico
   color: rgb(255,255,255) !important;
 }
 
-#toolbar-menubar > #menubar-items > #main-menubar > menu[_moz-menuactive="true"][open]:hover, 
+#toolbar-menubar > #menubar-items > #main-menubar > menu[_moz-menuactive="true"][open]:hover,
 #toolbar-menubar > #menubar-items > #main-menubar > menu[_moz-menuactive="true"][open] {
   background-color: var(--wfx-purple-navy-90);
   color: var(--wfx-lt-primary-color) !important;
@@ -580,7 +580,7 @@ toolbarseparator {
   padding: 0 !important;
   margin-top: 3px !important;
   margin-bottom: 3px !important;
-  
+
 }
 
 :root[uidensity="compact"] toolbarseparator {
@@ -622,12 +622,12 @@ panel input,
 #editBookmarkPanelRows > vbox > textbox,
 #editBookmarkPanelRows > vbox > hbox > textbox,
 textbox:not(.findbar-textbox) {
-  background-color: var(--wfx-gray-40);  
+  background-color: var(--wfx-gray-40);
 }
 
 toolbarpaletteitem textbox.searchbar-textbox,
 #navigator-toolbox textbox {
-  background-color: var(--wfx-gray-10);  
+  background-color: var(--wfx-gray-10);
 }
 
 panel input {
@@ -1004,11 +1004,11 @@ toolbar .toolbarbutton-1:not([disabled="true"]):-moz-any([open], [checked], :hov
   padding: 6px;
 }
 
-#PanelUI-menu-button:not([open="true"]) .toolbarbutton-badge-stack {
+#PanelUI-menu-button:not([open="true"]):not(.browser) .toolbarbutton-badge-stack {
   background-color: var(--wfx-lt-primary-color);
 }
 
-#PanelUI-button:hover #PanelUI-menu-button:not([open="true"]) .toolbarbutton-badge-stack {
+#PanelUI-button:hover #PanelUI-menu-button:not([open="true"]):not(.browser) .toolbarbutton-badge-stack {
   background-color: var(--wfx-lt-primary-color-hover);
   fill: var(--wfx-gray-20);
   color: var(--wfx-gray-20);
@@ -1244,7 +1244,7 @@ menupopup::part(drop-indicator) {
 
 #urlbar[pageproxystate="valid"] > #identity-box.verifiedIdentity > #identity-icon-labels,
 .identity-popup-connection-secure {
-  color: var(--wfx-green-color); 
+  color: var(--wfx-green-color);
 }
 
 #urlbar[pageproxystate="valid"] > #identity-box.verifiedIdentity {
@@ -1803,13 +1803,13 @@ toolbar .toolbarbutton-1:not([disabled=true]):not([checked]):not([open]):not(:ac
 #wrapper-search-container #searchbar:-moz-window-inactive {
   opacity: .5;
 }
-  
+
 #wrapper-search-container .searchbar-search-icon {
   fill-opacity: 1;
   fill: currentColor !important;
   color: var(--wfx-content-color) !important;
 }
-  
+
 #wrapper-search-container #searchbar:-moz-window-inactive {
   opacity: .4;
 }
@@ -1817,7 +1817,7 @@ toolbar .toolbarbutton-1:not([disabled=true]):not([checked]):not([open]):not(:ac
 #customization-footer {
   border-top: 1px solid var(--wfx-separator-color) !important;
 }
-  
+
 #customization-lwtheme-menu-footer,
 .customization-lwtheme-menu-footeritem:hover {
   background-image: none !important;
@@ -1843,16 +1843,16 @@ hbox#customization-footer button:not([disabled="true"]):hover {
   background-color: var(--wfx-btn-hover-color) !important;
   color: var(--wfx-purple-navy-90) !important;
 }
-  
+
 hbox#customization-footer button#customization-done-button {
   background-color: var(--wfx-lt-primary-color) !important;
   color: rgb(255,255,255) !important;
 }
-  
+
 hbox#customization-footer button#customization-done-button:not([disabled="true"]):hover {
   background-color: var(--wfx-lt-primary-color-hover) !important;
 }
- 
+
 hbox#customization-footer button#customization-done-button:not([disabled="true"]):active,
 hbox#customization-footer button#customization-done-button:not([disabled="true"]):hover:active {
   background-color: var(--wfx-lt-primary-color-active) !important;
@@ -1869,7 +1869,7 @@ hbox#customization-footer button:not([disabled="true"]):focus{
   outline: 3px solid var(--wfx-btn-focus-outline-color) !important;
   -moz-outline-radius: 6px !important;
 }
-  
+
 hbox#customization-footer button#customization-done-button:not([disabled="true"]):focus{
   outline: 3px solid var(--wfx-lt-primary-color-a30) !important;
 }
@@ -1877,7 +1877,7 @@ hbox#customization-footer button#customization-done-button:not([disabled="true"]
 hbox#customization-footer button[disabled="true"] {
   opacity: .5;
 }
-  
+
 .customization-uidensity-menuitem[active="true"],
 .customization-uidensity-menuitem:hover,
 .customization-lwtheme-menu-theme[active="true"],
@@ -1886,18 +1886,18 @@ hbox#customization-footer button[disabled="true"] {
   border-radius: var(--wfx-border-radius);
   color: var(--wfx-purple-navy-90);
 }
-  
+
 .customization-lwtheme-menu-theme:focus,
 .customization-uidensity-menuitem:focus {
   background-color: var(--wfx-gray-50);
   border-radius: var(--wfx-border-radius);
   outline: 0px !important;
 }
-  
+
 #customization-uidensity-touch-spacer {
   border-top: 1px solid var(--wfx-separator-color);
 }
-  
+
 .customizationmode-button > .box-inherit > .button-menu-dropmarker {
   fill: currentColor !important;
   -moz-context-properties: fill !important;
