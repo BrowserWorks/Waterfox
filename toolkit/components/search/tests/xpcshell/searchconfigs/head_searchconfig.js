@@ -538,12 +538,6 @@ class SearchConfigTest {
         (this._config.noSuggestionsURL || rules.noSuggestionsURL)
       ) {
         this.assertOk(!submission, "Should not have a submission url");
-      } else if (this._config.searchUrlBase) {
-        this.assertEqual(
-          submission.uri.prePath + submission.uri.filePath,
-          this._config.searchUrlBase + rules.searchUrlEnd,
-          `Should have the correct domain for type: ${urlType} ${location}.`
-        );
       } else {
         this.assertOk(
           submission.uri.host.endsWith(rules.domain),
