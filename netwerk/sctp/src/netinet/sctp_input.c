@@ -2159,10 +2159,6 @@ sctp_process_cookie_new(struct mbuf *m, int iphlen, int offset,
 		                       vrf_id, port);
 		return (NULL);
 	}
-	/* get the correct sctp_nets */
-	if (netp)
-		*netp = sctp_findnet(stcb, init_src);
-
 	asoc = &stcb->asoc;
 	/* get scope variables out of cookie */
 	asoc->scope.ipv4_local_scope = cookie->ipv4_scope;
@@ -2219,10 +2215,7 @@ sctp_process_cookie_new(struct mbuf *m, int iphlen, int offset,
 	asoc->advanced_peer_ack_point = asoc->last_acked_seq;
 
 	/* process the INIT info (peer's info) */
-	if (netp)
-		retval = sctp_process_init(init_cp, stcb);
-	else
-		retval = 0;
+	retval = sctp_process_init(init_cp, stcb);
 	if (retval < 0) {
 		atomic_add_int(&stcb->asoc.refcnt, 1);
 #if defined(__APPLE__) || defined(SCTP_SO_LOCK_TESTING)
@@ -2401,17 +2394,24 @@ sctp_process_cookie_new(struct mbuf *m, int iphlen, int offset,
 		 */
 		;
 	}
-	/* since we did not send a HB make sure we don't double things */
-	if ((netp) && (*netp))
-		(*netp)->hb_responded = 1;
-
 	if (stcb->asoc.sctp_autoclose_ticks &&
 	    sctp_is_feature_on(inp, SCTP_PCB_FLAGS_AUTOCLOSE)) {
 		sctp_timer_start(SCTP_TIMER_TYPE_AUTOCLOSE, inp, stcb, NULL);
 	}
 	/* calculate the RTT */
 	(void)SCTP_GETTIME_TIMEVAL(&stcb->asoc.time_entered);
-	if ((netp) && (*netp)) {
+	*netp = sctp_findnet(stcb, init_src);
+	if (*netp != NULL) {
+		struct timeval old;
+
+		/*
+		 * Since we did not send a HB, make sure we don't double
+		 * things.
+		 */
+		(*netp)->hb_responded = 1;
+		/* Calculate the RTT. */
+		old.tv_sec = cookie->time_entered.tv_sec;
+		old.tv_usec = cookie->time_entered.tv_usec;
 		(*netp)->RTO = sctp_calculate_rto(stcb, asoc, *netp,
 						  &cookie->time_entered, sctp_align_unsafe_makecopy,
 						  SCTP_RTT_FROM_NON_DATA);
