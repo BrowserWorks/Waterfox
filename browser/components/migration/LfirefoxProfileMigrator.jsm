@@ -11,6 +11,9 @@
  * user's profile.  Data is only migrated where the benefits outweigh the
  * potential problems caused by importing undesired/invalid configurations
  * from the source profile.
+ * Caveats:
+  *  - Will fail to set currentProfileDir if current profile path doesn't match a 
+  *    profile in the database, i.e. when browser being run from ./mach run
  */
 
 const { MigrationUtils, MigratorPrototype } = ChromeUtils.import(
@@ -164,7 +167,7 @@ LfirefoxProfileMigrator.prototype._getFileObject = function(dir, fileName) {
 
 LfirefoxProfileMigrator.prototype.getResources = function(aProfile) {
   Services.console.logStringMessage("LfirefoxProfileMigrator.prototype.getResources: " + aProfile);
-
+  
   let sourceProfileDir = aProfile = this._getAllProfiles().get(aProfile.id);
   if (
     !sourceProfileDir ||
@@ -434,9 +437,9 @@ LfirefoxProfileMigrator.prototype._getResourcesInternal = function(
   ].filter(r => r);
 };
 
-Object.defineProperty(LfirefoxProfileMigrator.prototype, "startupOnlyMigrator", {
-  get: () => true,
-});
+// Object.defineProperty(LfirefoxProfileMigrator.prototype, "startupOnlyMigrator", {
+//   get: () => true,
+// });
 
 LfirefoxProfileMigrator.prototype.classDescription = "Local Firefox Profile Migrator";
 LfirefoxProfileMigrator.prototype.contractID =
