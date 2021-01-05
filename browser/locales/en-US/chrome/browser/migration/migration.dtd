@@ -30,8 +30,8 @@
 <!ENTITY importFromChromeDev.accesskey  "D">
 <!ENTITY importFromChromium.label       "Chromium">
 <!ENTITY importFromChromium.accesskey   "u">
-<!ENTITY importFromWaterfoxRefresh.label        "Waterfox">
-<!ENTITY importFromWaterfoxRefresh.accesskey    "X">
+<!ENTITY importFromWaterfox.label       "Waterfox">
+<!ENTITY importFromWaterfox.accesskey   "X">
 <!ENTITY importFrom360se.label          "360 Secure Browser">
 <!ENTITY importFrom360se.accesskey      "3">
 <!ENTITY importFromFirefox.label        "Firefox">

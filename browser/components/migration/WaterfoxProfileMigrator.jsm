@@ -40,13 +40,13 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/ProfileAge.jsm"
 );
 
-function WaterfoxRefreshProfileMigrator() {
+function WaterfoxProfileMigrator() {
   this.wrappedJSObject = this; // for testing...
 }
 
-WaterfoxRefreshProfileMigrator.prototype = Object.create(MigratorPrototype);
+WaterfoxProfileMigrator.prototype = Object.create(MigratorPrototype);
 
-WaterfoxRefreshProfileMigrator.prototype._getAllProfiles = function() {
+WaterfoxProfileMigrator.prototype._getAllProfiles = function() {
   let allProfiles = new Map();
   let profileService = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
     Ci.nsIToolkitProfileService
@@ -69,13 +69,13 @@ function sorter(a, b) {
   return a.id.toLocaleLowerCase().localeCompare(b.id.toLocaleLowerCase());
 }
 
-WaterfoxRefreshProfileMigrator.prototype.getSourceProfiles = function() {
+WaterfoxProfileMigrator.prototype.getSourceProfiles = function() {
   return [...this._getAllProfiles().keys()]
     .map(x => ({ id: x, name: x }))
     .sort(sorter);
 };
 
-WaterfoxRefreshProfileMigrator.prototype._getFileObject = function(dir, fileName) {
+WaterfoxProfileMigrator.prototype._getFileObject = function(dir, fileName) {
   let file = dir.clone();
   file.append(fileName);
 
@@ -85,7 +85,7 @@ WaterfoxRefreshProfileMigrator.prototype._getFileObject = function(dir, fileName
   return file.exists() ? file : null;
 };
 
-WaterfoxRefreshProfileMigrator.prototype.getResources = function(aProfile) {
+WaterfoxProfileMigrator.prototype.getResources = function(aProfile) {
   let sourceProfileDir = aProfile
     ? this._getAllProfiles().get(aProfile.id)
     : Cc["@mozilla.org/toolkit/profile-service;1"].getService(
@@ -111,14 +111,14 @@ WaterfoxRefreshProfileMigrator.prototype.getResources = function(aProfile) {
   return this._getResourcesInternal(sourceProfileDir, currentProfileDir);
 };
 
-WaterfoxRefreshProfileMigrator.prototype.getLastUsedDate = function() {
+WaterfoxProfileMigrator.prototype.getLastUsedDate = function() {
   // We always pretend we're really old, so that we don't mess
   // up the determination of which browser is the most 'recent'
   // to import from.
   return Promise.resolve(new Date(0));
 };
 
-WaterfoxRefreshProfileMigrator.prototype._getResourcesInternal = function(
+WaterfoxProfileMigrator.prototype._getResourcesInternal = function(
   sourceProfileDir,
   currentProfileDir
 ) {
@@ -369,15 +369,15 @@ WaterfoxRefreshProfileMigrator.prototype._getResourcesInternal = function(
   ].filter(r => r);
 };
 
-Object.defineProperty(WaterfoxRefreshProfileMigrator.prototype, "startupOnlyMigrator", {
+Object.defineProperty(WaterfoxProfileMigrator.prototype, "startupOnlyMigrator", {
   get: () => true,
 });
 
-WaterfoxRefreshProfileMigrator.prototype.classDescription = "Waterfox Refresh Profile Migrator";
-WaterfoxRefreshProfileMigrator.prototype.contractID =
-  "@mozilla.org/profile/migrator;1?app=browser&type=waterfoxrefresh";
-WaterfoxRefreshProfileMigrator.prototype.classID = Components.ID(
+WaterfoxProfileMigrator.prototype.classDescription = "Waterfox Profile Migrator";
+WaterfoxProfileMigrator.prototype.contractID =
+  "@mozilla.org/profile/migrator;1?app=browser&type=waterfox";
+WaterfoxProfileMigrator.prototype.classID = Components.ID(
   "{91185366-ba97-4438-acba-48deaca63386}"
 );
 
-var EXPORTED_SYMBOLS = ["WaterfoxRefreshProfileMigrator"];
+var EXPORTED_SYMBOLS = ["WaterfoxProfileMigrator"];
