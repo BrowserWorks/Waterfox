@@ -18,12 +18,12 @@ XPIDL_MODULE = 'migration'
 
 EXTRA_JS_MODULES += [
     'ChromeMigrationUtils.jsm',
-    'ChromeProfileMigrator.jsm',
-    'FirefoxProfileMigrator.jsm',
-    'LfirefoxProfileMigrator.jsm',    
+    'ChromeProfileMigrator.jsm',   
+    'FirefoxProfileMigrator.jsm',    
     'MigrationUtils.jsm',
     'ProfileMigrator.jsm',
-    'WaterfoxClassicProfileMigrator.jsm',    
+    'WaterfoxClassicProfileMigrator.jsm',
+    'WaterfoxProfileMigrator.jsm',   
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
@@ -66,4 +66,4 @@ XPCOM_MANIFESTS += [
 FINAL_LIBRARY = 'browsercomps'
 
 with Files('**'):
-    BUG_COMPONENT = ('Firefox', 'Migration')
+    BUG_COMPONENT = ('WaterfoxRefresh', 'Migration')

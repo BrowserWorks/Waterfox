@@ -30,12 +30,12 @@
 <!ENTITY importFromChromeDev.accesskey  "D">
 <!ENTITY importFromChromium.label       "Chromium">
 <!ENTITY importFromChromium.accesskey   "u">
-<!ENTITY importFromFirefox.label        "Firefox">
-<!ENTITY importFromFirefox.accesskey    "X">
+<!ENTITY importFromWaterfox.label       "Waterfox">
+<!ENTITY importFromWaterfox.accesskey   "X">
 <!ENTITY importFrom360se.label          "360 Secure Browser">
 <!ENTITY importFrom360se.accesskey      "3">
-<!ENTITY importFromLFirefox.label       "Local Firefox">
-<!ENTITY importFromLFirefox.accesskey   "L">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "L">
 <!ENTITY importFromWaterfoxClassic.label "Waterfox Classic">
 <!ENTITY importFromWaterfoxClassic.accesskey   "W">
 

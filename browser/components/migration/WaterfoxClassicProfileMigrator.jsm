@@ -10,7 +10,12 @@
  * Migrates from a Waterfox Classic profile in a lossy manner in order to clean up a
  * user's profile.  Data is only migrated where the benefits outweigh the
  * potential problems caused by importing undesired/invalid configurations
- * from the source profile.
+ * from the source profile. 
+ * Caveats:
+ *  - Requires an install of Waterfox Classic prior to install of Waterfox Current,
+ *    else Profile0 is append with 68-edition and _getAllProfiles will be null
+ *  - Will fail to set currentProfileDir if current profile path doesn't match a 
+ *    profile in the database, i.e. when browser being run from ./mach run
  */
 
 const { MigrationUtils, MigratorPrototype } = ChromeUtils.import(
@@ -84,8 +89,6 @@ function getAllProfilesNative() {
 
 WaterfoxClassicProfileMigrator.prototype._getAllProfiles = function() {
   //return getAllProfilesNative();
-  debugger;
-
   let allProfiles = new Map();
   let profileConfig = this._waterfoxUserDataFolder.clone();
   profileConfig.append("profiles.ini");
@@ -441,9 +444,9 @@ WaterfoxClassicProfileMigrator.prototype._getResourcesInternal = function(
   ].filter(r => r);
 };
 
-Object.defineProperty(WaterfoxClassicProfileMigrator.prototype, "startupOnlyMigrator", {
-  get: () => true,
-});
+// Object.defineProperty(WaterfoxClassicProfileMigrator.prototype, "startupOnlyMigrator", {
+//   get: () => true,
+// });
 
 WaterfoxClassicProfileMigrator.prototype.classDescription = "Waterfox Classic Profile Migrator";
 WaterfoxClassicProfileMigrator.prototype.contractID =
