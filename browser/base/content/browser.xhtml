@@ -1459,7 +1459,7 @@
         <button disabled="true" tabindex="-1" label="Reset Zoom" class="button-toolbar reset-zoom button-textonly" oncommand="FullZoom.reset(); resetZoomStatus();"></button>
         <toolbarbutton id="zoomoutsb" class="toolbarbutton-1 chromeclass-toolbar-additional button-textonly statusbarbtn" command="cmd_fullZoomReduce"></toolbarbutton>
         <html:input id="zoom-range-status" type="range" min="0.3" max="3" step="0.1" onchange="setZoom();" value=""></html:input>
-        <span class="zoom-percent-status" data-editable=""></span>
+        <span class="zoom-percent-status" onclick="toggleEditZoom(this, true);"></span>
         <toolbarbutton id="zoominsb" class="toolbarbutton-1 chromeclass-toolbar-additional button-textonly statusbarbtn" command="cmd_fullZoomEnlarge"></toolbarbutton>
         <toolbarbutton id="fullscreensb" class="toolbarbutton-1 chromeclass-toolbar-additional button-textonly statusbarbtn" onclick="BrowserFullScreen();"></toolbarbutton>
       </html:div>

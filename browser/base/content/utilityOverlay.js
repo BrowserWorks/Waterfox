@@ -1173,7 +1173,20 @@ function restartBrowser() {
 
 function setZoom() {
   var zoomrange = document.getElementById("zoom-range-status");
-  FullZoom.setZoom(parseFloat(zoomrange.value));
+  var zoomPercentStatus = document.querySelector(".zoom-percent-status");
+
+  if (zoomrange.style.display == "none") {
+    if (zoomPercentStatus.tagName == "input") {
+      FullZoom.setZoom(parseFloat(zoomPercentStatus.value / 100));
+    }
+    else {
+      FullZoom.setZoom(parseFloat(zoomPercentStatus.textContent.replace(" %", "") / 100));
+    }
+  }
+  else {
+    FullZoom.setZoom(parseFloat(zoomrange.value));
+  }
+
   var zoomValue = ZoomManager.getZoomForBrowser(gBrowser) * 100;
   document.querySelector(".zoom-percent-status").textContent = parseInt(zoomValue) + " %";
 
@@ -1194,13 +1207,21 @@ function resetZoomStatus() {
   document.querySelector('.reset-zoom.button-textonly').disabled = "true";
 }
 
-
 function updateZoomStatus() {
-  var zoomValue =  windowRoot.ownerGlobal.ZoomManager.getZoomForBrowser(windowRoot.ownerGlobal.gBrowser);
-  var resetZoomBtn = windowRoot.ownerGlobal.document.querySelector('.reset-zoom.button-textonly');
-  windowRoot.ownerGlobal.document.querySelector('#zoom-range-status').value = zoomValue;
+  var zoomValue = windowRoot.ownerGlobal.ZoomManager.getZoomForBrowser(windowRoot.ownerGlobal.gBrowser);
   var zoomPercentValue = parseInt(zoomValue * 100);
-  windowRoot.ownerGlobal.document.querySelector('.zoom-percent-status').textContent = zoomPercentValue +' %';
+  var zoomPercentStatus = document.querySelector(".zoom-percent-status");
+  var resetZoomBtn = windowRoot.ownerGlobal.document.querySelector('.reset-zoom.button-textonly');
+
+  windowRoot.ownerGlobal.document.querySelector('#zoom-range-status').value = zoomValue;
+
+  if (zoomPercentStatus.tagName == "input") {
+    zoomPercentStatus.value = zoomPercentValue;
+  }
+  else {
+    zoomPercentStatus.textContent = zoomPercentValue + ' %';
+  }
+
   if (zoomPercentValue != 100){
     resetZoomBtn.disabled = "";
   }
@@ -1339,5 +1360,56 @@ function changeMenuIconStyle() {
   }
   else if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
     menuBtn.classList.add("browser");
+  }
+}
+
+function toggleEditZoom(el, edit) {
+  if (edit === true) {
+    const inputEdit = document.createElement("input");
+    inputEdit.value = el.textContent.replace(" %", "");
+    inputEdit.type = "number";
+    inputEdit.step = "1";
+    inputEdit.min = "30"
+    inputEdit.max = "300"
+    inputEdit.className = el.className;
+    inputEdit.onblur = function(){
+      toggleEditZoom(this, false);
+      setZoom();
+    };
+    inputEdit.addEventListener("keydown", event => {
+      switch(event.code) {
+        case "Enter":
+          setZoom();
+          break;
+        case "NumpadAdd":
+          if(parseFloat(inputEdit.value) < 300) {
+            inputEdit.value = parseFloat(inputEdit.value) + 10;
+          }
+          // else {
+          //   inputEdit.value = parseFloat(inputEdit.value) + 0;
+          // }
+          event.preventDefault();
+          break;
+        case "NumpadSubtract":
+          if(parseFloat(inputEdit.value) >= 30) {
+            inputEdit.value = parseFloat(inputEdit.value) - 10;
+          }
+          // else {
+          //   inputEdit.value = parseFloat(inputEdit.value) + 0;
+          // }
+          event.preventDefault();
+          break;
+      }
+    });
+    el.replaceWith(inputEdit);
+    inputEdit.focus();
+    inputEdit.select();
+  }
+  else {
+    const spanEdit = document.createElement("span");
+    spanEdit.textContent = el.value + " %";
+    spanEdit.className = el.className;
+    spanEdit.onclick = function(){toggleEditZoom(this, true)};
+    el.replaceWith(spanEdit);
   }
 }
