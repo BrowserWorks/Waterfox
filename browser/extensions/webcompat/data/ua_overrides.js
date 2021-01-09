@@ -143,6 +143,30 @@ const AVAILABLE_UA_OVERRIDES = [
     },
   },
   {
+    id: "yahoomail",
+    platform: "all",
+    domain: "mail.yahoo.com",
+    bug: "0000000",
+      config: {
+        matches: ["*://mail.yahoo.com/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
+    id: "vk",
+    platform: "all",
+    domain: "vk.com",
+    bug: "0000000",
+      config: {
+        matches: ["*://vk.com/*"],
+        uaTransformer: originalUA => {
+          return originalUA.replace(/Waterfox.+$/, "");
+        },
+    },
+  },
+  {
     id: "addons",
     platform: "all",
     domain: "addons.mozilla.org",
