@@ -394,7 +394,6 @@ var BingTokenManager = {
     if (remainingMs > 60 * 1000) {
       return Promise.resolve(this._currentToken);
     }
-
     return this._getNewToken();
   },
 
@@ -406,26 +405,14 @@ var BingTokenManager = {
    */
   _getNewToken() {
     let url = getUrlParam(
-      "https://datamarket.accesscontrol.windows.net/v2/OAuth2-13",
+      "https://westeurope.api.cognitive.microsoft.com/sts/v1.0/issueToken",
       "browser.translation.bing.authURL"
     );
-    let params = [
-      ["grant_type", "client_credentials"],
-      ["scope", "http://api.microsofttranslator.com"],
-      [
-        "client_id",
-        getUrlParam(
-          "%BING_API_CLIENTID%",
-          "browser.translation.bing.clientIdOverride"
-        ),
-      ],
-      [
-        "client_secret",
-        getUrlParam(
-          "%BING_API_KEY%",
-          "browser.translation.bing.apiKeyOverride"
-        ),
-      ],
+    let headers = [
+      ["Ocp-Apim-Subscription-Key", getUrlParam(
+        "%BING_TRANSLATOR_KEY%",
+        "browser.translation.bing.apikey"
+      )]
     ];
 
     this._pendingRequest = new Promise((resolve, reject) => {
@@ -433,18 +420,15 @@ var BingTokenManager = {
         onLoad(responseText, xhr) {
           BingTokenManager._pendingRequest = null;
           try {
-            let json = JSON.parse(responseText);
+            let token = responseText;
 
-            if (json.error) {
-              reject(json.error);
-              return;
-            }
-
-            let token = json.access_token;
-            let expires_in = json.expires_in;
             BingTokenManager._currentToken = token;
+            /**
+             * token expires in 10 minutes as per
+             * https://docs.microsoft.com/en-us/azure/cognitive-services/translator/reference/v3-0-reference#authentication
+             */
             BingTokenManager._currentExpiryTime = new Date(
-              Date.now() + expires_in * 1000
+              Date.now() + 600 * 1000
             );
             resolve(token);
           } catch (e) {
@@ -455,7 +439,9 @@ var BingTokenManager = {
           BingTokenManager._pendingRequest = null;
           reject(e);
         },
-        postData: params,
+        postData: "",
+        headers: headers,
+        method: "POST",
       };
 
       httpRequest(url, options);
