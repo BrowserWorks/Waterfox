@@ -18,7 +18,7 @@ class MessagePortService;
 
 class MessagePortParent final
     : public PMessagePortParent,
-      public SupportsWeakPtr,
+      public SupportsWeakPtr<MessagePortParent>,
       public SupportsCheckedUnsafePtr<CheckIf<DiagnosticAssertEnabled>> {
   friend class PMessagePortParent;
 
