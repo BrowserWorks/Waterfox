@@ -40,6 +40,8 @@ class MessagePortParent final
   static bool ForceClose(const nsID& aUUID, const nsID& aDestinationUUID,
                          const uint32_t& aSequenceID);
 
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(MessagePortParent)
+
  private:
   mozilla::ipc::IPCResult RecvPostMessages(nsTArray<MessageData>&& aMessages);
 
