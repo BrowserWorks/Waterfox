@@ -1,0 +1,41 @@
+CROSS_BUILD=1
+EXTRA_PATH="/mnt/MICROS~1/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64:"
+TOOLTOOL_DIR=$HOME/tooltool11
+FXC=${TOOLTOOL_DIR}/fxc2/bin/fxc2.exe
+X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)*3/2))
+
+export CC="$TOOLTOOL_DIR/mingw-w64-clang/bin/clang-cl"
+export CXX="$TOOLTOOL_DIR/mingw-w64-clang/bin/clang-cl"
+export DIA_SDK_PATH="/mnt/MICROS~1/2017/Community/DIASDK~1/"
+export HOST_CC="$TOOLTOOL_DIR/mingw-w64-clang/bin/clang"
+export HOST_CXX="$TOOLTOOL_DIR/mingw-w64-clang/bin/clang++"
+export MOZ_INCLUDE_SOURCE_INFO=1
+export MOZ_REQUIRE_SIGNING=0
+export WINDOWSSDKDIR="/mnt/WINDOW~1/10/"
+
+mk_add_options "export LD_PRELOAD=$HOME/tooltool11/liblowercase/liblowercase.so"
+mk_add_options "export LOWERCASE_DIRS=/mnt"
+mk_add_options "export PATH=${TOOLTOOL_DIR}/wine/bin:{TOOLTOOL_DIR}/fxc2/bin:/mnt/LLVM/bin:/home/akontos/tooltool11/mingw-w64-clang/bin:$EXTRA_PATH$PATH"
+mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
+
+ac_add_options "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
+ac_add_options --disable-bits-download
+ac_add_options --disable-debug
+ac_add_options --disable-default-browser-agent
+ac_add_options --disable-dmd
+ac_add_options --disable-geckodriver
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-parental-controls
+ac_add_options --disable-profiling
+ac_add_options --disable-tests
+ac_add_options --disable-verify-mar
+
+ac_add_options --enable-lto
+ac_add_options --enable-optimize="-O2 -Qvec -w"
+ac_add_options --enable-proxy-bypass-protection
+ac_add_options --enable-rust-simd
+ac_add_options --enable-updater
+
+ac_add_options --target=x86_64-pc-mingw32
+
+ac_add_options --with-branding=browser/branding/waterfox
