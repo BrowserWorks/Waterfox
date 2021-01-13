@@ -408,6 +408,14 @@ workers:
             implementation: generic-worker
             os: windows
             worker-type: '{alias}'
+        b-osx-1015:
+            provisioner: releng-hardware
+            implementation: generic-worker
+            os: macosx
+            worker-type:
+                by-level:
+                    '3': 'gecko-3-b-osx-1015'
+                    default: 'gecko-1-b-osx-1015'
         images:
             provisioner: '{trust-domain}-{level}'
             implementation: docker-worker
@@ -526,22 +534,6 @@ workers:
             implementation: docker-worker
             os: linux
             worker-type: 't-linux-xlarge'
-        t-osx-1010-pgo:
-            provisioner: releng-hardware
-            implementation: generic-worker
-            os: macosx
-            worker-type:
-                by-level:
-                    '3': 'gecko-{level}-t-osx-1010'
-                    default: 'gecko-t-osx-1010'
-        t-osx-1014-pgo:
-            provisioner: releng-hardware
-            implementation: generic-worker
-            os: macosx
-            worker-type:
-                by-level:
-                    '3': 'gecko-{level}-t-osx-1014'
-                    default: 'gecko-t-osx-1014'
         t-win10-64(|-gpu-s|-source):
             provisioner: '{trust-domain}-t'
             implementation: generic-worker
