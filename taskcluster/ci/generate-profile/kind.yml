@@ -34,7 +34,6 @@ jobs:
             platform: linux32-shippable/opt
         worker-type: b-linux
         worker:
-            chain-of-trust: true
             env:
                 NEED_XVFB: "true"
             max-run-time: 1200
@@ -65,7 +64,6 @@ jobs:
             platform: linux64-shippable/opt
         worker-type: b-linux
         worker:
-            chain-of-trust: true
             env:
                 NEED_XVFB: "true"
             max-run-time: 1200
@@ -95,7 +93,6 @@ jobs:
             platform: android-4-0-armv7-api16/pgo
         worker-type: t-linux-xlarge-pgo
         worker:
-            chain-of-trust: true
             max-run-time: 5400
             docker-image: {in-tree: ubuntu1804-test}
             env:
@@ -132,7 +129,6 @@ jobs:
             platform: windows2012-32-shippable/opt
         worker-type: b-win2012
         worker:
-            chain-of-trust: true
             max-run-time: 1200
             env:
                 UPLOAD_PATH: "artifacts"
@@ -161,7 +157,6 @@ jobs:
             platform: windows2012-64-shippable/opt
         worker-type: b-win2012
         worker:
-            chain-of-trust: true
             max-run-time: 1200
             env:
                 UPLOAD_PATH: "artifacts"
@@ -188,9 +183,8 @@ jobs:
             job-name: macosx64-profile
         treeherder:
             platform: macosx1014-64-shippable/opt
-        worker-type: b-osx-1015
+        worker-type: t-osx-1014-pgo
         worker:
-            chain-of-trust: true
             max-run-time: 7200
             env:
                 SHELL: "/bin/bash"
