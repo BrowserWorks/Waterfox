@@ -9,7 +9,8 @@ DIRS += [
     'pdfjs',
     'screenshots',
     'webcompat',
-    'report-site-issue'
+    'report-site-issue',
+    'addon-stores'
 ]
 
 # FINAL_TARGET_FILES.features += [
