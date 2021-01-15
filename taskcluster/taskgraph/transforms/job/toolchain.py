@@ -171,6 +171,7 @@ def windows_toolchain(config, job, taskdesc):
     run = job['run']
 
     worker = taskdesc['worker'] = job['worker']
+    worker["chain-of-trust"] = True
 
     # Allow the job to specify where artifacts come from.
     worker.setdefault('artifacts', [{
@@ -178,12 +179,11 @@ def windows_toolchain(config, job, taskdesc):
         'type': 'directory',
     }])
 
-    worker['chain-of-trust'] = True
-
-    # There were no caches on generic-worker before bug 1519472, and they cause
-    # all sorts of problems with toolchain tasks, disable them until
-    # tasks are ready.
-    run['use-caches'] = False
+    if job["worker"]["os"] == "windows":
+        # There were no caches on generic-worker before bug 1519472, and they cause
+        # all sorts of problems with Windows toolchain tasks, disable them until
+        # tasks are ready.
+        run["use-caches"] = False
 
     env = worker.setdefault('env', {})
     env.update({
