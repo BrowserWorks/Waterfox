@@ -2708,9 +2708,8 @@ void net_EnsurePSMInit() {
   MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsresult rv;
-  nsCOMPtr<nsISupports> psm = do_GetService(PSM_COMPONENT_CONTRACTID, &rv);
-  MOZ_ASSERT(NS_SUCCEEDED(rv));
+  DebugOnly<bool> rv = EnsureNSSInitializedChromeOrContent();
+  MOZ_ASSERT(rv);
 
   nsCOMPtr<nsISupports> sss = do_GetService(NS_SSSERVICE_CONTRACTID);
 #ifdef MOZ_NEW_CERT_STORAGE
