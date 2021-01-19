@@ -160,14 +160,14 @@ bool nsStandardURL::gPunycodeHost = true;
 // Note that the array below will be initialized at compile time,
 // so we do not need to "optimize" TestForInvalidHostCharacters.
 //
-constexpr bool TestForInvalidHostCharacters(char c)
-{
-    // Testing for these:
-    // CONTROL_CHARACTERS " #/:?@[\\]*<>|\"";
-    return (c > 0 && c < 32) || // The control characters are [1, 31]
-           c == ' ' || c == '#' || c == '/' || c == ':' || c == '?' ||
-           c == '@' || c == '[' || c == '\\' || c == ']' || c == '*' ||
-           c == '<' || c == '>' || c == '|' || c == '"';
+constexpr bool TestForInvalidHostCharacters(char c) {
+  // Testing for these:
+  // CONTROL_CHARACTERS " #/:?@[\\]*<>|\"";
+  return (c > 0 && c < 32) ||  // The control characters are [1, 31]
+         c == ' ' || c == '#' || c == '/' || c == ':' || c == '?' || c == '@' ||
+         c == '[' || c == '\\' || c == ']' || c == '*' || c == '<' ||
+         c == '^' ||
+         c == '>' || c == '|' || c == '"';
 }
 constexpr ASCIIMaskArray sInvalidHostChars = CreateASCIIMask(TestForInvalidHostCharacters);
 
