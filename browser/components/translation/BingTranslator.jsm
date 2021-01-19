@@ -16,6 +16,9 @@ const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
 
+const uuidGen = Components.classes["@mozilla.org/uuid-generator;1"]
+.getService(Components.interfaces.nsIUUIDGenerator);
+
 XPCOMUtils.defineLazyGlobalGetters(this, ["XMLHttpRequest"]);
 
 // The maximum amount of net data allowed per request on Bing's API.
@@ -142,10 +145,8 @@ BingTranslator.prototype = {
    * @param   aError   [optional] The XHR object of the request that failed.
    */
   _chunkFailed(aError) {
-    if (
-      aError instanceof XMLHttpRequest &&
-      [400, 401].includes(aError.status)
-    ) {
+    if (aError instanceof XMLHttpRequest &&
+      [400, 401].includes(aError.status)) {
       let body = aError.responseText;
       if (
         body &&
@@ -155,7 +156,7 @@ BingTranslator.prototype = {
         this._serviceUnavailable = true;
       }
     }
-
+    
     this._checkIfFinished();
   },
 
@@ -185,51 +186,46 @@ BingTranslator.prototype = {
 
   /**
    * This function parses the result returned by Bing's Http.svc API,
-   * which is a XML file that contains a number of elements. To our
+   * which is a JSON response that contains a number of elements. To our
    * particular interest, the only part of the response that matters
-   * are the <TranslatedText> nodes, which contains the resulting
+   * are the text values, which contains the resulting
    * items that were sent to be translated.
    *
    * @param   request      The request sent to the server.
    * @returns boolean      True if parsing of this chunk was successful.
    */
-  _parseChunkResult(bingRequest) {
-    let results;
-    try {
-      let doc = bingRequest.networkRequest.responseXML;
-      results = doc.querySelectorAll("TranslatedText");
-    } catch (e) {
-      return false;
-    }
-
-    let len = results.length;
-    if (len != bingRequest.translationData.length) {
-      // This should never happen, but if the service returns a different number
-      // of items (from the number of items submitted), we can't use this chunk
-      // because all items would be paired incorrectly.
-      return false;
-    }
-
-    let error = false;
-    for (let i = 0; i < len; i++) {
-      try {
-        let result = results[i].firstChild.nodeValue;
-        let root = bingRequest.translationData[i][0];
-
-        if (root.isSimpleRoot) {
-          // Workaround for Bing's service problem in which "&" chars in
-          // plain-text TranslationItems are double-escaped.
-          result = result.replace(/&amp;/g, "&");
-        }
-
-        root.parseResult(result);
-      } catch (e) {
-        error = true;
-      }
-    }
-
-    return !error;
-  },
+   _parseChunkResult(bingRequest) {
+     let results;
+     try {
+       let response = JSON.parse(bingRequest.networkRequest.response);
+       // response in form
+       // [{"translations":[{"text":"text1","to":"en"}]},
+       // {"translations":[{"text":"text2","to":"en"}]}]
+       results = response.map((result) => {
+         return result["translations"][0]["text"];
+       });
+     } catch (e) {
+       return false;
+     }
+     let len = results.length;
+     if (len != bingRequest.translationData.length) {
+       // This should never happen, but if the service returns a different number
+       // of items (from the number of items submitted), we can't use this chunk
+       // because all items would be paired incorrectly.
+       return false;
+     }
+     let error = false;
+     for (let i = 0; i < len; i++) {
+       try {
+         let result = results[i];
+         let root = bingRequest.translationData[i][0];
+         root.parseResult(result);
+       } catch (e) {
+         error = true;
+       }
+     }
+     return !error;
+   },
 
   /**
    * This function will determine what is the data to be used for
@@ -251,7 +247,6 @@ BingTranslator.prototype = {
         continue;
       }
 
-      text = escapeXML(text);
       let newCurSize = currentDataSize + text.length;
       let newChunks = currentChunks + 1;
 
@@ -309,41 +304,29 @@ BingRequest.prototype = {
 
       // Prepare URL.
       let url = getUrlParam(
-        "https://api.microsofttranslator.com/v2/Http.svc/TranslateArray",
+        "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0",
         "browser.translation.bing.translateArrayURL"
       );
-
-      // Prepare request headers.
-      let headers = [
-        ["Content-type", "text/xml"],
-        ["Authorization", auth],
-      ];
-
+      url += "&to=" + this.targetLanguage + "&from=" + this.sourceLanguage;
+      
+      // Prepare uuid
+      let uuidString = uuidGen.generateUUID().toString().slice(1, -1);
+      
       // Prepare the request body.
-      let requestString =
-        "<TranslateArrayRequest>" +
-        "<AppId/>" +
-        "<From>" +
-        this.sourceLanguage +
-        "</From>" +
-        "<Options>" +
-        '<ContentType xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2">text/html</ContentType>' +
-        '<ReservedFlags xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2" />' +
-        "</Options>" +
-        '<Texts xmlns:s="http://schemas.microsoft.com/2003/10/Serialization/Arrays">';
-
+      let requestArray = [];
       for (let [, text] of this.translationData) {
-        requestString += "<s:string>" + text + "</s:string>";
+        requestArray.push({"Text": text});
         this.characterCount += text.length;
       }
-
-      requestString +=
-        "</Texts>" +
-        "<To>" +
-        this.targetLanguage +
-        "</To>" +
-        "</TranslateArrayRequest>";
-
+      requestArray = JSON.stringify(requestArray);
+      
+      // Prepare request headers.
+      let headers = [
+        ["Content-Type", "application/json; charset=UTF-8"],
+        ["Authorization", auth],
+        ["X-ClientTraceId", uuidString]
+      ];
+      
       // Set up request options.
       return new Promise((resolve, reject) => {
         let options = {
@@ -353,16 +336,12 @@ BingRequest.prototype = {
           onError(e, responseText, xhr) {
             reject(xhr);
           },
-          postData: requestString,
+          postData: requestArray,
           headers,
         };
 
         // Fire the request.
-        let request = httpRequest(url, options);
-
-        // Override the response MIME type.
-        request.overrideMimeType("text/xml");
-        this.networkRequest = request;
+        this.networkRequest = httpRequest(url, options);
       });
     })();
   },
@@ -394,7 +373,6 @@ var BingTokenManager = {
     if (remainingMs > 60 * 1000) {
       return Promise.resolve(this._currentToken);
     }
-
     return this._getNewToken();
   },
 
@@ -406,26 +384,14 @@ var BingTokenManager = {
    */
   _getNewToken() {
     let url = getUrlParam(
-      "https://datamarket.accesscontrol.windows.net/v2/OAuth2-13",
+      "https://westeurope.api.cognitive.microsoft.com/sts/v1.0/issueToken",
       "browser.translation.bing.authURL"
     );
-    let params = [
-      ["grant_type", "client_credentials"],
-      ["scope", "http://api.microsofttranslator.com"],
-      [
-        "client_id",
-        getUrlParam(
-          "%BING_API_CLIENTID%",
-          "browser.translation.bing.clientIdOverride"
-        ),
-      ],
-      [
-        "client_secret",
-        getUrlParam(
-          "%BING_API_KEY%",
-          "browser.translation.bing.apiKeyOverride"
-        ),
-      ],
+    let headers = [
+      ["Ocp-Apim-Subscription-Key", getUrlParam(
+        "%BING_TRANSLATOR_KEY%",
+        "browser.translation.bing.apikey"
+      )]
     ];
 
     this._pendingRequest = new Promise((resolve, reject) => {
@@ -433,18 +399,15 @@ var BingTokenManager = {
         onLoad(responseText, xhr) {
           BingTokenManager._pendingRequest = null;
           try {
-            let json = JSON.parse(responseText);
+            let token = responseText;
 
-            if (json.error) {
-              reject(json.error);
-              return;
-            }
-
-            let token = json.access_token;
-            let expires_in = json.expires_in;
             BingTokenManager._currentToken = token;
+            /**
+             * token expires in 10 minutes as per
+             * https://docs.microsoft.com/en-us/azure/cognitive-services/translator/reference/v3-0-reference#authentication
+             */
             BingTokenManager._currentExpiryTime = new Date(
-              Date.now() + expires_in * 1000
+              Date.now() + 600 * 1000
             );
             resolve(token);
           } catch (e) {
@@ -455,7 +418,9 @@ var BingTokenManager = {
           BingTokenManager._pendingRequest = null;
           reject(e);
         },
-        postData: params,
+        postData: "",
+        headers: headers,
+        method: "POST",
       };
 
       httpRequest(url, options);
@@ -463,19 +428,6 @@ var BingTokenManager = {
     return this._pendingRequest;
   },
 };
-
-/**
- * Escape a string to be valid XML content.
- */
-function escapeXML(aStr) {
-  return aStr
-    .toString()
-    .replace(/&/g, "&amp;")
-    .replace(/\"/g, "&quot;")
-    .replace(/\'/g, "&apos;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
 
 /**
  * Fetch an auth token (clientID or client secret), which may be overridden by
