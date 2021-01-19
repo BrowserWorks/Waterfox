@@ -1,21 +1,17 @@
-MOZ_FETCHES_DIR=$HOME/workspace
+MOZ_FETCHES_DIR=$HOME/toolmac11
 
-export RUSTC="$MOZ_FETCHES_DIR/rustc/bin/rustc"
-export CARGO="$MOZ_FETCHES_DIR/rustc/bin/cargo"
-export RUSTDOC="$MOZ_FETCHES_DIR/rustc/bin/rustdoc"
-export RUSTFMT="$MOZ_FETCHES_DIR/rustc/bin/rustfmt"
 export CBINDGEN="$MOZ_FETCHES_DIR/cbindgen/cbindgen"
 
 CROSS_SYSROOT=$MOZ_FETCHES_DIR/MacOSX10.13.sdk
 CROSS_PRIVATE_FRAMEWORKS=$CROSS_SYSROOT/System/Library/PrivateFrameworks
-FLAGS="-target x86_64-apple-darwin -B $MOZ_FETCHES_DIR/cctools/bin -isysroot $CROSS_SYSROOT"
+FLAGS="-target x86_64-apple-darwin -B -isysroot $CROSS_SYSROOT"
 
 export BINDGEN_CFLAGS="$FLAGS"
 export CC="$MOZ_FETCHES_DIR/clang/bin/clang $FLAGS"
 export CPP="$MOZ_FETCHES_DIR/clang/bin/clang $FLAGS -E"
 export CXX="$MOZ_FETCHES_DIR/clang/bin/clang++ $FLAGS"
 export DMG_TOOL=$MOZ_FETCHES_DIR/dmg/dmg
-export DSYMUTIL=$topsrcdir/build/macosx/llvm-dsymutil
+export DSYMUTIL=$MOZ_FETCHES_DIR/clang/bin/dsymutil
 export HFS_TOOL=$MOZ_FETCHES_DIR/dmg/hfsplus
 export HOST_CC="$MOZ_FETCHES_DIR/clang/bin/clang"
 export HOST_CFLAGS="-g"
@@ -32,7 +28,7 @@ export MACOS_PRIVATE_FRAMEWORKS_DIR=$CROSS_PRIVATE_FRAMEWORKS
 
 export CROSS_COMPILE=1
 
-mk_add_options "export PATH=$MOZ_FETCHES_DIR/cctools/bin:$MOZ_FETCHES_DIR/binutils/bin:$MOZ_FETCHES_DIR/llvm-dsymutil/bin:$PATH"
+mk_add_options "export PATH=$MOZ_FETCHES_DIR/llvm-dsymutil/bin:$PATH"
 mk_add_options "export REAL_DSYMUTIL=$MOZ_FETCHES_DIR/llvm-dsymutil/bin/dsymutil"
 mk_add_options "export LD_LIBRARY_PATH=$MOZ_FETCHES_DIR/clang/lib"
 
