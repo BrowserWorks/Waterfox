@@ -81,21 +81,25 @@ function handleInstall(e) {
 
 	// start figure out id
 	// Thanks to @Rob--W the id is accurately obtained: "It is the first 32 characters of the public key's sha256 hash, with the 0-9a-f replaced with a-p"
-	const extidPatt = /[^a-p]([a-p]{32})[^a-p]/i;
-	const extid = parentNodeUntil(e.target, 100, node => {
+	const extIdPatt = /[^a-p]([a-p]{32})[^a-p]/i;
+	const extId = parentNodeUntil(e.target, 100, node => {
 		if (node.nodeType === Node.ELEMENT_NODE) {
-			const [, extid] = extidPatt.exec(node.innerHTML) || [];
-			console.log('extid:', extid);
-			return extid;
+			const [, extId] = extIdPatt.exec(node.innerHTML) || [];
+			console.log('extId:', extId);
+			return extId;
 		}
-	});
-
-	if (!extid) alert('Addon Stores Compatability enecountered an error. Failed to figure out extension ID.')
-	else {extension.runtime.sendMessage({
-		action: 'request-add',
-		kind: 'cws',
-		extid
-	})};
+	})
+	if (!extId) alert('Addon Stores Compatability enecountered an error. Failed to determine extension ID.')
+	else {
+		// let msgPort = browser.runtime.connect({name:"chrome-ext-install"});
+		// msgPort.onMessage.addListener(message => {
+		// 	console.log("message received");
+		// 	console.log(message.response);
+		// });
+		let downloadURL = buildDownloadURL(extId);
+		location.href = downloadURL;
+		// msgPort.postMessage({url: downloadURL, extId: extId});
+	}
 }
 
 function addInstallClickHandlers(node) {
@@ -143,4 +147,9 @@ function watchForAddingInstallHandlers() {
 
 function unwatchAddingInstallHandlers() {
 	gObserver.disconnect();
+}
+
+function buildDownloadURL(extId) {
+	let baseUrl = 'https://clients2.google.com/service/update2/crx?response=redirect&prodversion=49.0&acceptformat=crx3&x=id%3D***%26installsource%3Dondemand%26uc';
+	return baseUrl.replace('***', extId);
 }

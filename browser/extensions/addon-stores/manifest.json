@@ -29,7 +29,7 @@
 		}
 	],
 	"permissions": [
-		"storage", "webNavigation", "webRequest", "webRequestBlocking", 
+		"storage", "webNavigation", "webRequest", "webRequestBlocking",
 		"<all_urls>", "cookies", "tabs", "notifications", "downloads"
 	]
 }
