@@ -26,6 +26,9 @@ const ReusableStreamInstance = Components.Constructor(
     "init"
 );
 
+const uuidGenerator = Components.classes["@mozilla.org/uuid-generator;1"]
+                    .getService(Components.interfaces.nsIUUIDGenerator);
+
 var EXPORTED_SYMBOLS = ["StoreHandler"];
 
 /**
@@ -37,8 +40,7 @@ var StoreHandler = {
 
     /**
      * Open a channel to be used to fetch a resource
-     * @param options
-     *        options Object to create channel
+     * @param options Object to create channel
      *        example:
      *        {uri: uri.spec, loadUsingSystemPrincipal: true}
      */
@@ -47,8 +49,8 @@ var StoreHandler = {
     },
 
     /**
-     * 
-     * @param path
+     * Get an nsiFile object from a given path
+     * @param path string path to file
      */
     getNsiFile(path) {
         let nsiFile = new FileUtils.File(path);
@@ -56,10 +58,14 @@ var StoreHandler = {
     },
 
     /**
-     * 
-     * @param channel
+     * Attempt to install a crx extension
+     * @param channel nsiChannel from download uri
+     * @param xpiPath string path to tmp extension file
+     * @param manifestPath string path to tmp manifest.json
+     * @param nsiFileXpi nsiFile tmp xpi file
+     * @param nsiManifest nsiFile tmp manifest.json
      */
-    attemptInstall(channel, xpiPath, nsiFileXpi, nsiManifest) {
+    attemptInstall(channel, xpiPath, manifestPath, nsiFileXpi, nsiManifest) {
         Services.console.logStringMessage("opens fs");
         NetUtil.asyncFetch(channel, function(aInputStream, aResult) {
             // Check that we had success.
@@ -82,13 +88,14 @@ var StoreHandler = {
                 StoreHandler.writeTmpManifest(nsiManifest, manifest);
                 StoreHandler.replaceManifestInXpi(nsiFileXpi, nsiManifest);
                 await StoreHandler.installXpi(nsiFileXpi);
+                StoreHandler.cleanup(xpiPath, manifestPath);
             });
         });
     },
 
     /**
-     * 
-     * @param path
+     * Remove Chrome headers from crx addon
+     * @param path string path to downloaded extension file
      */
     async removeChromeHeaders(path) {
         try {
@@ -115,8 +122,8 @@ var StoreHandler = {
     },
 
     /**
-     * 
-     * @param file
+     * Add id and remove update_url from manifest
+     * @param file nsiFile tmp extension file
      */
     amendManifest(file) {
         try {
@@ -132,9 +139,11 @@ var StoreHandler = {
                 let fileContents = rsi.read(entry.realSize);
                 manifest = JSON.parse(fileContents);
                 // determine potential incompatibilties here, return installation error if found
+                let uuid = uuidGenerator.generateUUID();
+                let uuidString = uuid.toString();
                 manifest.applications = {
                     gecko: {
-                        id: "test" + "@waterfox-unsigned"
+                        id: uuidString + "@waterfox-unsigned"
                     }
                 };
                 delete manifest.update_url;
@@ -150,20 +159,19 @@ var StoreHandler = {
     },
 
     /**
-     *
-     * @param file
-     * @param manifest
+     * Write amended manifest to temporary manifest.json
+     * @param file nsiFile tmp manifest.json
+     * @param manifest string JSON string of amended manifest
      */
     writeTmpManifest(file, manifest) {
-        // create new manifest
         let manifestOutputStream = FileUtils.openAtomicFileOutputStream(file);
         manifestOutputStream.write(manifest, manifest.length);
     },
 
     /**
-     *
-     * @param xpiFile
-     * @param manifestFile
+     * Replace the manifest in the tmp extension file with the amended version
+     * @param xpiFile nsiFile tmp extension file
+     * @param manifestFile nsiFile tmp manifest.json
      */
     replaceManifestInXpi(xpiFile, manifestFile) {
         try {
@@ -179,13 +187,12 @@ var StoreHandler = {
     },
 
     /**
-     * 
-     * @param xpiFile
+     * Silently install extension
+     * @param xpiFile nsiFile tmp extension file to install
      */
     async installXpi(xpiFile) {
-        // attempt to install the xpi
         let install = await AddonManager.getInstallForFile(xpiFile)
-        install.install(); //installs silently
+        await install.install(); //installs silently
             // let win = Services.wm.getMostRecentWindow("navigator:browser");
             // let browser = win.gBrowser;
             // let systemPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
@@ -195,5 +202,15 @@ var StoreHandler = {
             //     systemPrincipal,
             //     install
             // );
+    },
+
+    /**
+     * Remove tmp files
+     * @param zipPath nsiFile tmp extension file
+     * @param manifestPath nsiFile tmp manifest.json
+     */
+    cleanup(zipPath, manifestPath) {
+        OS.File.remove(zipPath);
+        OS.File.remove(manifestPath);
     }
 }
