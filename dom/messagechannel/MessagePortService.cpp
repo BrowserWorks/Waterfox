@@ -11,6 +11,7 @@
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Unused.h"
+#include "mozilla/WeakPtr.h"
 #include "nsTArray.h"
 
 using mozilla::ipc::AssertIsOnBackgroundThread;
@@ -31,17 +32,11 @@ void AssertIsInMainProcess() {
 struct MessagePortService::NextParent {
   uint32_t mSequenceID;
   // MessagePortParent keeps the service alive, and we don't want a cycle.
-  CheckedUnsafePtr<MessagePortParent> mParent;
+  WeakPtr<MessagePortParent> mParent;
 };
 
 }  // namespace dom
 }  // namespace mozilla
-
-// Need to call CheckedUnsafePtr's copy constructor and destructor when
-// resizing dynamic arrays containing NextParent (by calling NextParent's
-// implicit copy constructor/destructor rather than memmove-ing NextParents).
-MOZ_DECLARE_RELOCATE_USING_MOVE_CONSTRUCTOR(
-    mozilla::dom::MessagePortService::NextParent);
 
 namespace mozilla {
 namespace dom {
@@ -280,14 +275,13 @@ void MessagePortService::CloseAll(const nsID& aUUID, bool aForced) {
     data->mParent = nullptr;
   }
 
-  for (auto& nextParent : data->mNextParents) {
-    // CloseAndDelete may delete the pointee, so ensure no CheckedUnsafePtrs
-    // exist when that happens.
-    MessagePortParent* parent = nextParent.mParent;
-    nextParent.mParent = nullptr;
-
-    parent->CloseAndDelete();
+  for (const auto& nextParent : data->mNextParents) {
+    MessagePortParent* const parent = nextParent.mParent;
+    if (parent) {
+      parent->CloseAndDelete();
+    }
   }
+  data->mNextParents.Clear();
 
   nsID destinationUUID = data->mDestinationUUID;
 

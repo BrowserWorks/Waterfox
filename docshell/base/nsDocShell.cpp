@@ -6388,7 +6388,10 @@ nsresult nsDocShell::CreateAboutBlankContentViewer(
 
   if (docFactory) {
     nsCOMPtr<nsIPrincipal> principal, storagePrincipal;
-    uint32_t sandboxFlags = mBrowsingContext->GetSandboxFlags();
+    const uint32_t sandboxFlags =
+        mBrowsingContext->GetHasLoadedNonInitialDocument()
+            ? mBrowsingContext->GetSandboxFlags()
+            : mBrowsingContext->GetInitialSandboxFlags();
     // If we're sandboxed, then create a new null principal. We skip
     // this if we're being created from WindowGlobalChild, since in
     // that case we already have a null principal if required.
@@ -7641,6 +7644,10 @@ nsresult nsDocShell::CreateContentViewer(const nsACString& aContentType,
   }
 
   NS_ENSURE_SUCCESS(Embed(viewer), NS_ERROR_FAILURE);
+
+  if (!mBrowsingContext->GetHasLoadedNonInitialDocument()) {
+    mBrowsingContext->SetHasLoadedNonInitialDocument(true);
+  }
 
   if (TreatAsBackgroundLoad()) {
     nsCOMPtr<nsIRunnable> triggerParentCheckDocShell =

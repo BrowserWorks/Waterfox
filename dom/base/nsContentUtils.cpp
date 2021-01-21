@@ -9035,8 +9035,9 @@ bool nsContentUtils::ComputeIsSecureContext(nsIChannel* aChannel) {
     return false;
   }
 
+  const RefPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
+
   if (principal->IsSystemPrincipal()) {
-    nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
     // If the load would've been sandboxed, treat this load as an untrusted
     // load, as system code considers sandboxed resources insecure.
     return !loadInfo->GetLoadingSandboxed();
@@ -9044,6 +9045,13 @@ bool nsContentUtils::ComputeIsSecureContext(nsIChannel* aChannel) {
 
   if (principal->GetIsNullPrincipal()) {
     return false;
+  }
+
+  if (const RefPtr<WindowContext> windowContext =
+          WindowContext::GetById(loadInfo->GetInnerWindowID())) {
+    if (!windowContext->GetIsSecureContext()) {
+      return false;
+    }
   }
 
   return principal->GetIsOriginPotentiallyTrustworthy();

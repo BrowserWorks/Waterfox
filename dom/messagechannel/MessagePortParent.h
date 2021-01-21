@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_MessagePortParent_h
 #define mozilla_dom_MessagePortParent_h
 
+#include "mozilla/WeakPtr.h"
 #include "mozilla/dom/PMessagePortParent.h"
 #include "mozilla/dom/quota/CheckedUnsafePtr.h"
 
@@ -17,6 +18,7 @@ class MessagePortService;
 
 class MessagePortParent final
     : public PMessagePortParent,
+      public SupportsWeakPtr<MessagePortParent>,
       public SupportsCheckedUnsafePtr<CheckIf<DiagnosticAssertEnabled>> {
   friend class PMessagePortParent;
 
@@ -37,6 +39,8 @@ class MessagePortParent final
 
   static bool ForceClose(const nsID& aUUID, const nsID& aDestinationUUID,
                          const uint32_t& aSequenceID);
+
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(MessagePortParent)
 
  private:
   mozilla::ipc::IPCResult RecvPostMessages(nsTArray<MessageData>&& aMessages);

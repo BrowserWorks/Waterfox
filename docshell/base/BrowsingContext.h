@@ -107,6 +107,7 @@ class WindowProxyHolder;
   FIELD(FeaturePolicy, RefPtr<mozilla::dom::FeaturePolicy>)                  \
   /* See nsSandboxFlags.h for the possible flags. */                         \
   FIELD(SandboxFlags, uint32_t)                                              \
+  FIELD(InitialSandboxFlags, uint32_t)                                       \
   FIELD(HistoryID, nsID)                                                     \
   FIELD(InRDMPane, bool)                                                     \
   FIELD(Loading, bool)                                                       \
@@ -137,7 +138,8 @@ class WindowProxyHolder;
   /* Signals that session history is enabled for this browsing context tree. \
    * This is only ever set to true on the top BC, so consumers need to get   \
    * the value from the top BC! */                                           \
-  FIELD(HasSessionHistory, bool)
+  FIELD(HasSessionHistory, bool)                                             \
+  FIELD(HasLoadedNonInitialDocument, bool)
 
 // BrowsingContext, in this context, is the cross process replicated
 // environment in which information about documents is stored. In

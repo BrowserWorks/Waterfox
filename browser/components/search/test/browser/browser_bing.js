@@ -47,7 +47,7 @@ add_task(async function test() {
   const EXPECTED_ENGINE = {
     name: "Bing",
     alias: null,
-    description: "Bing. Search by Microsoft.",
+    description: "Microsoft Bing",
     searchForm: "https://www.bing.com/search?pc=MOZI&q=",
     hidden: false,
     wrappedJSObject: {

@@ -569,6 +569,10 @@ class GCRuntime {
   void checkHashTablesAfterMovingGC();
 #endif
 
+#ifdef DEBUG
+  bool hasZone(Zone* target);
+#endif
+
   // Queue memory memory to be freed on a background thread if possible.
   void queueUnusedLifoBlocksForFree(LifoAlloc* lifo);
   void queueAllLifoBlocksForFree(LifoAlloc* lifo);

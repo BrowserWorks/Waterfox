@@ -494,9 +494,9 @@ class MediaTrack : public mozilla::LinkedListElement<MediaTrack> {
   virtual void DecrementSuspendCount();
 
  protected:
-  // Called on graph thread before handing control to the main thread to
-  // release tracks.
-  virtual void NotifyForcedShutdown() {}
+  // Called on graph thread either during destroy handling or before handing
+  // graph control to the main thread to release tracks.
+  virtual void OnGraphThreadDone() {}
 
   // |AdvanceTimeVaryingValuesToCurrentTime| will be override in
   // SourceMediaTrack.
