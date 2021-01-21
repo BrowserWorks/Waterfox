@@ -1,27 +1,25 @@
 "use-strict";
 
-window.addEventListener('click', genericClick, true);
-
 (function() {
 	const style = document.createElement('style');
-	style.setAttribute('id', 'foxified-style')
+	style.setAttribute('id', 'wf-addons-store-style')
 	style.textContent = `
-		a.btn-install.btn-install-gray
+		a.btn-install.btn-with-plus
 		{
-			background: #28bd00;
 			border-radius: 2px;
 			box-shadow: 1px 1px 5px rgba(0,0,0,0.3);
 			background: linear-gradient(top,#28bd00 0%,#21a100 100%);
+			width: 150px;
 
 			/* to get "Add to Waterfox" to be over "Add to Opera" */
 			display: flex;
 			color: transparent;
 		}
-		a.btn-install.btn-install-gray::before {
+		a.btn-install.btn-with-plus::before {
 			border-right: 1px solid #71BD4C; /* overide btn-gray border-right */
 			color: white; /* override color:transparent i set above */
 		}
-		a.btn-install::after
+		a.btn-install.btn-with-plus::after
 		{
 			display: block;
 			content: "Add To Waterfox";
@@ -38,31 +36,6 @@ window.addEventListener('click', genericClick, true);
 })()
 
 function uninit() {
-	var style = document.getElementById('foxified-style');
+	var style = document.getElementById('wf-addons-store-style');
 	if (style) style.parentNode.removeChild(style);
-
-	window.removeEventListener('click', genericClick, false);
-}
-
-function genericClick(e) {
-	const target = e.target;
-	if (target) {
-		if (e.button !== 0) return;
-
-		const isInstallButton = target.classList.contains('btn-install');
-
-		if (isInstallButton) {
-			e.preventDefault();
-			e.stopPropagation();
-			const extid = getExtensionID(window.location.href);
-			if (!extid) alert('Addon Stores Compatability enecountered an error. Failed to figure out extension ID.')
-			else extension.runtime.sendMessage({ action:'request-add', kind:'ows', extid });
-		}
-	}
-}
-
-function getExtensionID(url) {
-	var ows_pattern = /^https?:\/\/addons.opera.com\/.*?extensions\/(?:details|download)\/([^\/?#]+)/i;
-	var match = ows_pattern.exec(url);
-	if (match) return match[1];
 }

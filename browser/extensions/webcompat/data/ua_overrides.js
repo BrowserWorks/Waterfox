@@ -201,6 +201,21 @@ const AVAILABLE_UA_OVERRIDES = [
     },
   },
   {
+    id: "bug1577518",
+    platform: "desktop",
+    domain: "att.tv",
+    bug: "1577518",
+    config: {
+      matches: ["*://addons.opera.com/*"],
+      uaTransformer: originalUA => {
+        return (
+          UAHelpers.getPrefix(originalUA) +
+          " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36 OPR/73.0.3856.284"
+        );
+      },
+    },
+  },
+  {
     /*
      * Bug 1570108 - steamcommunity.com - UA override for steamcommunity.com
      * WebCompat issue #34171 - https://webcompat.com/issues/34171

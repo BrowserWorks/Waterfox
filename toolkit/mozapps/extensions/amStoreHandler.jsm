@@ -140,7 +140,7 @@ var StoreHandler = {
                 manifest = JSON.parse(fileContents);
                 // determine potential incompatibilties here, return installation error if found
                 let uuid = uuidGenerator.generateUUID();
-                let uuidString = uuid.toString();
+                let uuidString = uuid.toString().slice(1, -1);
                 manifest.applications = {
                     gecko: {
                         id: uuidString + "@waterfox-unsigned"
