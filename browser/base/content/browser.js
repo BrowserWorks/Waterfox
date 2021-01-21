@@ -1937,12 +1937,10 @@ var gBrowserInit = {
     }
 
     if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
-      let customizableBundle = Services.strings.createBundle("chrome://browser/locale/customizableui/customizableWidgets.properties");
-      windowRoot.ownerGlobal.document.querySelector('.toolbar-statusbar #sidebar-button').setAttribute("tooltiptext", customizableBundle.GetStringFromName("sidebar-button.tooltiptext2"));
-      windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls .reset-zoom').setAttribute("tooltiptext",  GetDynamicShortcutTooltipText("appMenu-zoomReset-button"))
-      windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls #zoomoutsb').setAttribute("tooltiptext",   GetDynamicShortcutTooltipText("appMenu-zoomReduce-button"))
-      windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls #zoominsb').setAttribute("tooltiptext",  GetDynamicShortcutTooltipText("appMenu-zoomEnlarge-button"))
-      windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls #fullscreensb').setAttribute("tooltiptext",  GetDynamicShortcutTooltipText("fullscreen-button"))
+      windowRoot.ownerGlobal.document.querySelector('#page-zoom-controls #zoomresetsb').setAttribute("tooltiptext",  GetDynamicShortcutTooltipText("appMenu-zoomReset-button"));
+      windowRoot.ownerGlobal.document.querySelector('#page-zoom-controls #zoomoutsb').setAttribute("tooltiptext",   GetDynamicShortcutTooltipText("appMenu-zoomReduce-button"));
+      windowRoot.ownerGlobal.document.querySelector('#page-zoom-controls #zoominsb').setAttribute("tooltiptext",  GetDynamicShortcutTooltipText("appMenu-zoomEnlarge-button"));
+      windowRoot.ownerGlobal.document.querySelector('#page-zoom-controls #fullscreensb').setAttribute("tooltiptext",  GetDynamicShortcutTooltipText("fullscreen-button"));
       updateZoomStatus();
     }
     showBtnRange();

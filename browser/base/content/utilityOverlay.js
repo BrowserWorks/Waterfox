@@ -1171,90 +1171,63 @@ function restartBrowser() {
   }
 };
 
-function setZoom() {
-  var zoomrange = document.getElementById("zoom-range-status");
-  FullZoom.setZoom(parseFloat(zoomrange.value));
-  var zoomValue = ZoomManager.getZoomForBrowser(gBrowser) * 100;
-  document.querySelector(".zoom-percent-status").textContent = parseInt(zoomValue) + " %";
+function setZoom(el) {
+  var zoomPercentStatus = document.querySelector("#zoom-percent-status");
 
-  if (parseInt(zoomValue) != 100){
-    document.querySelector('.reset-zoom.button-textonly').disabled = "";
-  }
-  else
-  {
-    document.querySelector('.reset-zoom.button-textonly').disabled = "true";
+  switch (el.tagName + "#"+ el.id) {
+    case "html:input#zoom-range-status":
+      FullZoom.setZoom(parseFloat(document.querySelector("#zoom-range-status").value));
+      break;
+    case "input#zoom-percent-status":
+      FullZoom.setZoom(parseFloat(zoomPercentStatus.value / 100));
+      break;
+    default:
+      FullZoom.setZoom(parseFloat(zoomPercentStatus.textContent.replace(" %", "") / 100));
+      break;
   }
 }
 
 function resetZoomStatus() {
   var zoomrange = document.getElementById("zoom-range-status");
-  var zoompercent = document.querySelector(".zoom-percent-status");
+  var zoompercent = document.querySelector("#zoom-percent-status");
   zoomrange.value = 1;
   zoompercent.textContent = "100 %";
-  document.querySelector('.reset-zoom.button-textonly').disabled = "true";
+  document.querySelector('#zoomresetsb.button-textonly').disabled = "true";
 }
 
-
 function updateZoomStatus() {
-  var zoomValue =  windowRoot.ownerGlobal.ZoomManager.getZoomForBrowser(windowRoot.ownerGlobal.gBrowser);
-  var resetZoomBtn = windowRoot.ownerGlobal.document.querySelector('.reset-zoom.button-textonly');
-  windowRoot.ownerGlobal.document.querySelector('#zoom-range-status').value = zoomValue;
-  var zoomPercentValue = parseInt(zoomValue * 100);
-  windowRoot.ownerGlobal.document.querySelector('.zoom-percent-status').textContent = zoomPercentValue +' %';
-  if (zoomPercentValue != 100){
-    resetZoomBtn.disabled = "";
-  }
-  else
-  {
-    resetZoomBtn.disabled = "true";
+  if (windowRoot.ownerGlobal.document.querySelector("#page-zoom-controls")) {
+    var zoomValue = windowRoot.ownerGlobal.ZoomManager.getZoomForBrowser(windowRoot.ownerGlobal.gBrowser);
+    var zoomPercentValue = parseInt(zoomValue * 100);
+    var zoomPercentStatus = document.querySelector("#zoom-percent-status");
+    var resetZoomBtn = windowRoot.ownerGlobal.document.querySelector('#zoomresetsb.button-textonly');
+
+    windowRoot.ownerGlobal.document.querySelector('#zoom-range-status').value = zoomValue;
+
+    if (zoomPercentStatus.tagName == "input") {
+      zoomPercentStatus.value = zoomPercentValue;
+    }
+    else {
+      zoomPercentStatus.textContent = zoomPercentValue + ' %';
+    }
+
+    if (zoomPercentValue != 100){
+      resetZoomBtn.disabled = "";
+    }
+    else
+    {
+      resetZoomBtn.disabled = "true";
+    }
   }
 }
 
 function toggleStatusBar() {
-  var statuspanel = windowRoot.ownerGlobal.document.getElementById("statuspanel-inner");
-  var statusbar = windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar");
-  var zoombtn = windowRoot.ownerGlobal.document.querySelector("#urlbar-zoom-button");
-  var pageActionSeparator = windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator");
-
-  if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
-    statuspanel.hidden = true;
-    statusbar.style.display = "flex";
-    zoombtn.style.display = "none";
-    pageActionSeparator.style.display = "none";
-  }
-  else if (Services.prefs.getIntPref("browser.statusbar.mode") == 1) {
-    statusbar.style.display = "none";
-    zoombtn.style.display = "";
-    statuspanel.hidden = "";
-    pageActionSeparator.style.display = "";
-    pageActionSeparator.style.visibility = "visible";
-  }
-  else if (Services.prefs.getIntPref("browser.statusbar.mode") == 0) {
-    statusbar.style.display = "none";
-    statuspanel.hidden = true;
-    zoombtn.style.display = "";
-    pageActionSeparator.style.display = "";
-    pageActionSeparator.style.visibility = "visible";
-  }
+  windowRoot.ownerGlobal.document.querySelector(":root").setAttribute("sbMode", Services.prefs.getIntPref("browser.statusbar.mode"));
 }
 
 function showBtnRange() {
-  var zoomoutsb = windowRoot.ownerGlobal.document.querySelector("#zoomoutsb");
-  var zoominsb = windowRoot.ownerGlobal.document.querySelector("#zoominsb");
-  var zoomStatus = windowRoot.ownerGlobal.document.querySelector("#zoom-range-status");
-
   if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
-    if(Services.prefs.getBoolPref("browser.statusbar.showbtn", true)) {
-      zoomoutsb.style.display = "initial";
-      zoominsb.style.display = "initial";
-      zoomStatus.style.display = "none";
-    }
-    else
-    {
-      zoomoutsb.style.display = "none";
-      zoominsb.style.display = "none";
-      zoomStatus.style.display = "initial";
-    }
+    windowRoot.ownerGlobal.document.querySelector(":root").setAttribute("sbRangeBtn", Services.prefs.getBoolPref("browser.statusbar.showbtn"));
   }
 }
 
@@ -1339,5 +1312,51 @@ function changeMenuIconStyle() {
   }
   else if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
     menuBtn.classList.add("browser");
+  }
+}
+
+function toggleEditZoom(el, edit) {
+  if (edit === true) {
+    const inputEdit = document.createElement("input");
+    inputEdit.value = el.textContent.replace(" %", "");
+    inputEdit.type = "number";
+    inputEdit.step = "1";
+    inputEdit.min = "30"
+    inputEdit.max = "300"
+    inputEdit.id = el.id;
+    inputEdit.classList = "toolbaritem-combined-buttons toolbarbutton-1";
+    inputEdit.onblur = function(){
+      setZoom(this);
+      toggleEditZoom(this, false);
+    };
+    inputEdit.addEventListener("keydown", event => {
+      switch(event.code) {
+        case "Enter":
+          setZoom(inputEdit);
+          break;
+        case "NumpadAdd":
+          if(parseFloat(inputEdit.value) < 300) {
+            inputEdit.value = parseFloat(inputEdit.value) + 10;
+          }
+          event.preventDefault();
+          break;
+        case "NumpadSubtract":
+          if(parseFloat(inputEdit.value) >= 30) {
+            inputEdit.value = parseFloat(inputEdit.value) - 10;
+          }
+          event.preventDefault();
+          break;
+      }
+    });
+    el.replaceWith(inputEdit);
+    inputEdit.focus();
+    inputEdit.select();
+  }
+  else {
+    const spanEdit = document.createElement("span");
+    spanEdit.textContent = el.value + " %";
+    spanEdit.id = el.id;
+    spanEdit.onclick = function(){toggleEditZoom(this, true)};
+    el.replaceWith(spanEdit);
   }
 }

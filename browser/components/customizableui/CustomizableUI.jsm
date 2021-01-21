@@ -245,6 +245,15 @@ var CustomizableUIInternal = {
       true
     );
 
+    this.registerArea(
+      CustomizableUI.AREA_STATUSBAR,
+      {
+        type: CustomizableUI.TYPE_TOOLBAR,
+        defaultCollapsed: false,
+      },
+      true
+    );
+
     if (AppConstants.MENUBAR_CAN_AUTOHIDE) {
       this.registerArea(
         CustomizableUI.AREA_MENUBAR,
@@ -3400,6 +3409,11 @@ var CustomizableUI = {
    * Constant reference to the ID of the non-dymanic (fixed) list in the overflow panel.
    */
   AREA_FIXED_OVERFLOW_PANEL: "widget-overflow-fixed-list",
+
+  /**
+   * Constant reference to the ID of the statusbar toolbar.
+   */
+  AREA_STATUSBAR: "status-bar",
 
   /**
    * Constant indicating the area is a menu panel.
